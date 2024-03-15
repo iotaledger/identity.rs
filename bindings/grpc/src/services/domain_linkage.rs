@@ -2,17 +2,22 @@ use std::error::Error;
 
 use domain_linkage::domain_linkage_server::DomainLinkage;
 use domain_linkage::domain_linkage_server::DomainLinkageServer;
+use domain_linkage::LinkedDidEndpointValidationStatus;
+use domain_linkage::LinkedDidValidationStatus;
 use domain_linkage::ValidateDidRequest;
-use domain_linkage::ValidateDomainLinkedDidValidationResult;
+use domain_linkage::ValidateDidResponse;
 use domain_linkage::ValidateDomainRequest;
 use domain_linkage::ValidateDomainResponse;
+use futures::stream::FuturesOrdered;
+use futures::TryStreamExt;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::Url;
 use identity_iota::credential::DomainLinkageConfiguration;
 use identity_iota::credential::JwtCredentialValidationOptions;
 use identity_iota::credential::JwtDomainLinkageValidator;
+use identity_iota::credential::LinkedDomainService;
 use identity_iota::did::CoreDID;
-// use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
 use iota_sdk::client::Client;
@@ -32,8 +37,6 @@ mod domain_linkage {
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "error", content = "reason")]
 enum DomainLinkageError {
-  #[error("Failed to fetch domain linkage configuration: {0}")]
-  DomainLinkageConfiguration(String),
   #[error("domain argument invalid: {0}")]
   DomainParsingFailed(String),
 }
@@ -41,14 +44,26 @@ enum DomainLinkageError {
 impl From<DomainLinkageError> for tonic::Status {
   fn from(value: DomainLinkageError) -> Self {
     let code = match &value {
-      DomainLinkageError::DomainLinkageConfiguration(_) => tonic::Code::Internal,
       DomainLinkageError::DomainParsingFailed(_) => tonic::Code::InvalidArgument,
     };
     let message = value.to_string();
     let error_json = serde_json::to_vec(&value).expect("plenty of memory!"); // ?
 
-    dbg!(&message);
     tonic::Status::with_details(code, message, error_json.into())
+  }
+}
+
+fn get_validation_failed_status(message: &str, err: &impl Error) -> LinkedDidValidationStatus {
+  let source_suffix = err
+    .source()
+    .map(|err| format!("; {}", &err.to_string()))
+    .unwrap_or_default();
+  let inner_error_message = format!("{}{}", &err.to_string(), source_suffix);
+
+  LinkedDidValidationStatus {
+    valid: false,
+    document: None,
+    error: Some(format!("{}; {}", message, inner_error_message)),
   }
 }
 
@@ -81,22 +96,112 @@ impl DomainLinkage for DomainLinkageService {
     // fetch DID configuration resource
     let domain: Url = Url::parse(&req.into_inner().domain.to_string())
       .map_err(|err| DomainLinkageError::DomainParsingFailed(err.to_string()))?;
-    let configuration_resource: DomainLinkageConfiguration =
-      DomainLinkageConfiguration::fetch_configuration(domain.clone())
-        .await
-        .map_err(|err| DomainLinkageError::DomainLinkageConfiguration(err.source().unwrap_or(&err).to_string()))?;
 
-    // get issuers of `linked_dids` credentials
-    let linked_dids: Vec<CoreDID> = configuration_resource
-      .issuers()
-      .map_err(|e| Status::internal(e.to_string()))?;
+    // get validation status for all issuer dids
+    let status_infos = self.validate_domains_linked_dids(domain, None).await?;
 
-    // resolve all issuers
-    let resolved = self
+    Ok(Response::new(ValidateDomainResponse {
+      linked_dids: status_infos,
+    }))
+  }
+
+  #[tracing::instrument(
+    name = "domain_linkage_validate_did",
+    skip_all,
+    fields(request = ?req.get_ref())
+    ret,
+    err,
+  )]
+  async fn validate_did(&self, req: Request<ValidateDidRequest>) -> Result<Response<ValidateDidResponse>, Status> {
+    // fetch DID document for given DID
+    let did: IotaDID = IotaDID::parse(&req.into_inner().did).map_err(|e| Status::internal(e.to_string()))?;
+    let did_document = self
       .resolver
-      .resolve_multiple(&linked_dids)
+      .resolve(&did)
       .await
       .map_err(|e| Status::internal(e.to_string()))?;
+
+    let services: Vec<LinkedDomainService> = did_document
+      .service()
+      .iter()
+      .cloned()
+      .filter_map(|service| LinkedDomainService::try_from(service).ok())
+      .collect();
+
+    // check validation for all services and endpoints in them
+    let mut service_futures = FuturesOrdered::new();
+    for service in services {
+      let service_id = service.id().did().clone();
+      let domains: Vec<Url> = service.domains().into();
+      service_futures.push_back(async move {
+        let mut domain_futures = FuturesOrdered::new();
+        for domain in domains {
+          domain_futures.push_back(self.validate_domains_linked_dids(domain.clone(), Some(service_id.clone())));
+        }
+        domain_futures
+          .try_collect::<Vec<Vec<LinkedDidValidationStatus>>>()
+          .await
+          .map(|value| LinkedDidEndpointValidationStatus {
+            id: service_id.to_string(),
+            service_endpoint: value.into_iter().flatten().collect(),
+          })
+      });
+    }
+    let endpoint_validation_status = service_futures
+      .try_collect::<Vec<LinkedDidEndpointValidationStatus>>()
+      .await?;
+
+    let response = ValidateDidResponse {
+      service: endpoint_validation_status,
+    };
+
+    Ok(Response::new(response))
+  }
+}
+
+impl DomainLinkageService {
+  async fn validate_domains_linked_dids(
+    &self,
+    domain: Url,
+    did: Option<CoreDID>,
+  ) -> Result<Vec<LinkedDidValidationStatus>, DomainLinkageError> {
+    // get domain linkage config
+    let configuration_resource: DomainLinkageConfiguration =
+      match DomainLinkageConfiguration::fetch_configuration(domain.clone()).await {
+        Ok(value) => value,
+        Err(err) => {
+          return Ok(vec![get_validation_failed_status(
+            "could not get domain linkage config",
+            &err,
+          )]);
+        }
+      };
+
+    // get issuers of `linked_dids` credentials
+    let linked_dids: Vec<CoreDID> = if let Some(issuer_did) = did {
+      vec![issuer_did]
+    } else {
+      match configuration_resource.issuers() {
+        Ok(value) => value,
+        Err(err) => {
+          return Ok(vec![get_validation_failed_status(
+            "could not get issuers from domain linkage config credential",
+            &err,
+          )]);
+        }
+      }
+    };
+
+    // resolve all issuers
+    let resolved = match self.resolver.resolve_multiple(&linked_dids).await {
+      Ok(value) => value,
+      Err(err) => {
+        return Ok(vec![get_validation_failed_status(
+          "could not resolve linked DIDs from domain linkage config",
+          &err,
+        )]);
+      }
+    };
 
     // check linked DIDs separately
     let errors: Vec<Option<String>> = resolved
@@ -115,31 +220,18 @@ impl DomainLinkage for DomainLinkageService {
       .collect();
 
     // collect resolved documents and their validation status into array following the order of `linked_dids`
-    let response = ValidateDomainResponse {
-      linked_dids: configuration_resource
-        .linked_dids()
-        .iter()
-        .zip(errors.iter())
-        .map(|(credential, error)| ValidateDomainLinkedDidValidationResult {
-          document: credential.as_str().to_string(),
-          valid: error.is_none(),
-          error: error.clone(),
-        })
-        .collect(),
-    };
+    let status_infos = configuration_resource
+      .linked_dids()
+      .iter()
+      .zip(errors.iter())
+      .map(|(credential, error)| LinkedDidValidationStatus {
+        valid: error.is_none(),
+        document: Some(credential.as_str().to_string()),
+        error: error.clone(),
+      })
+      .collect();
 
-    Ok(Response::new(response))
-  }
-
-  #[tracing::instrument(
-    name = "domain_linkage_validate_did",
-    skip_all,
-    fields(request = ?_req.get_ref())
-    ret,
-    err,
-  )]
-  async fn validate_did(&self, _req: Request<ValidateDidRequest>) -> Result<Response<()>, Status> {
-    todo!("implement validate_did")
+    Ok(status_infos)
   }
 }
 

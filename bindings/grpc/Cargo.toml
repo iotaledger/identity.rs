@@ -21,6 +21,7 @@ tonic = "0.10"
 prost = "0.12"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 anyhow = "1.0.75"
+futures = { version = "0.3" }
 tokio-stream = { version = "0.1.14", features = ["net"] }
 identity_iota = { path = "../../identity_iota", features = ["resolver", "sd-jwt", "domain-linkage", "domain-linkage-fetch"] }
 identity_eddsa_verifier = { path = "../../identity_eddsa_verifier" }
