@@ -6,6 +6,13 @@ message ValidateDomainRequest {
     string domain = 1;
 }
 
+message ValidateDomainAgainstDidConfigurationRequest {
+    // domain to validate
+    string domain = 1;
+    // already resolved domain linkage config
+    string did_configuration = 2;
+}
+
 message LinkedDidValidationStatus {
     // validation succeeded or not, `error` property is added for `false` cases
     bool valid = 1;
@@ -32,6 +39,13 @@ message ValidateDidRequest {
     string did = 1;
 }
 
+message ValidateDidAgainstDidConfigurationsRequest {
+    // DID to validate
+    string did = 1;
+    // already resolved domain linkage configs
+    repeated ValidateDomainAgainstDidConfigurationRequest did_configurations = 2;
+}
+
 message ValidateDidResponse {
     // mapping of service entries from DID with validation status for endpoint URLs
     repeated LinkedDidEndpointValidationStatus service = 1;
@@ -39,5 +53,8 @@ message ValidateDidResponse {
 
 service DomainLinkage {
     rpc validate_domain(ValidateDomainRequest) returns (ValidateDomainResponse);
+    rpc validate_domain_against_did_configuration(ValidateDomainAgainstDidConfigurationRequest) returns (ValidateDomainResponse);
+
     rpc validate_did(ValidateDidRequest) returns (ValidateDidResponse);
+    rpc validate_did_against_did_configurations(ValidateDidAgainstDidConfigurationsRequest) returns (ValidateDidResponse);
 }

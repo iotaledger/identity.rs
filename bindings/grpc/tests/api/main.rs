@@ -1,4 +1,5 @@
 mod credential_revocation_check;
+mod domain_linkage;
 mod health_check;
 mod helpers;
 mod jwt;
