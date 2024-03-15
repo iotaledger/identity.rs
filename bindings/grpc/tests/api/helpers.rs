@@ -35,8 +35,8 @@ use tonic::transport::Uri;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
-pub static API_ENDPOINT: &str = "http://localhost:14265";
-pub static FAUCET_ENDPOINT: &str = "http://localhost:8091/api/enqueue";
+pub static API_ENDPOINT: &str = "http://localhost";
+pub static FAUCET_ENDPOINT: &str = "http://localhost/faucet/api/enqueue";
 
 #[derive(Debug)]
 pub struct TestServer {

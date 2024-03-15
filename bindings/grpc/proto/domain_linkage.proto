@@ -1,0 +1,31 @@
+syntax = "proto3";
+package domain_linkage;
+import "google/protobuf/empty.proto";
+
+message ValidateDomainRequest {
+    // domain to validate
+    string domain = 1;
+}
+
+message ValidateDomainLinkedDidValidationResult {
+    // credential from `linked_dids` as compact JWT domain linkage credential 
+    string document = 1;
+    // validation succeeded or not, `error` property is added for `false` cases
+    bool valid = 2;
+    // an error message, that occurred when validated, omitted if valid
+    optional string error = 3;
+}
+
+message ValidateDomainResponse {
+    // list of JWT domain linkage credential, uses the same order as the `did-configuration.json` file for domain
+    repeated ValidateDomainLinkedDidValidationResult linked_dids  = 1;
+}
+
+message ValidateDidRequest {
+    string did = 1;
+}
+
+service DomainLinkage {
+    rpc validate_domain(ValidateDomainRequest) returns (ValidateDomainResponse);
+    rpc validate_did(ValidateDidRequest) returns (google.protobuf.Empty);
+}
