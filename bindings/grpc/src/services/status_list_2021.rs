@@ -144,9 +144,7 @@ impl StatusList2021Svc for StatusList2021Service {
     status_list_credential
       .update(move |status_list| {
         for (idx, value) in entries {
-          if let Err(e) = status_list.set_entry(idx as usize, value) {
-            return Err(e);
-          }
+          status_list.set_entry(idx as usize, value)?
         }
 
         Ok(())
