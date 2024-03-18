@@ -43,19 +43,19 @@ mod domain_linkage {
 #[serde(tag = "error", content = "reason")]
 enum DomainLinkageError {
   #[error("domain argument invalid: {0}")]
-  DomainParsingFailed(String),
+  DomainParsing(String),
   #[error("did configuration argument invalid: {0}")]
-  DidConfigurationParsingFailed(String),
+  DidConfigurationParsing(String),
   #[error("did resolving failed: {0}")]
-  DidResolvingFailed(String),
+  DidResolving(String),
 }
 
 impl From<DomainLinkageError> for tonic::Status {
   fn from(value: DomainLinkageError) -> Self {
     let code = match &value {
-      DomainLinkageError::DomainParsingFailed(_) => tonic::Code::InvalidArgument,
-      DomainLinkageError::DidConfigurationParsingFailed(_) => tonic::Code::InvalidArgument,
-      DomainLinkageError::DidResolvingFailed(_) => tonic::Code::Internal,
+      DomainLinkageError::DomainParsing(_) => tonic::Code::InvalidArgument,
+      DomainLinkageError::DidConfigurationParsing(_) => tonic::Code::InvalidArgument,
+      DomainLinkageError::DidResolving(_) => tonic::Code::Internal,
     };
     let message = value.to_string();
     let error_json = serde_json::to_vec(&value).expect("plenty of memory!"); // ?
@@ -78,9 +78,9 @@ impl DomainValidationConfig {
   /// - `validate_did_against_did_configurations`
   pub fn try_parse(request_config: &ValidateDomainAgainstDidConfigurationRequest) -> Result<Self, DomainLinkageError> {
     Ok(Self {
-      domain: Url::parse(&request_config.domain).map_err(|e| DomainLinkageError::DomainParsingFailed(e.to_string()))?,
+      domain: Url::parse(&request_config.domain).map_err(|e| DomainLinkageError::DomainParsing(e.to_string()))?,
       config: DomainLinkageConfiguration::from_json(&request_config.did_configuration).map_err(|err| {
-        DomainLinkageError::DidConfigurationParsingFailed(format!("could not parse given DID configuration; {}", &err))
+        DomainLinkageError::DidConfigurationParsing(format!("could not parse given DID configuration; {}", &err))
       })?,
     })
   }
@@ -124,7 +124,7 @@ impl DomainLinkageService {
       .resolver
       .resolve(did)
       .await
-      .map_err(|e| DomainLinkageError::DidResolvingFailed(e.to_string()))?;
+      .map_err(|e| DomainLinkageError::DidResolving(e.to_string()))?;
 
     let services: Vec<LinkedDomainService> = did_document
       .service()
@@ -275,8 +275,8 @@ impl DomainLinkage for DomainLinkageService {
   ) -> Result<Response<ValidateDomainResponse>, Status> {
     let request_data = &req.into_inner();
     // parse given domain
-    let domain: Url = Url::parse(&request_data.domain.to_string())
-      .map_err(|err| DomainLinkageError::DomainParsingFailed(err.to_string()))?;
+    let domain: Url = Url::parse(&request_data.domain)
+      .map_err(|err| DomainLinkageError::DomainParsing(err.to_string()))?;
 
     // get validation status for all issuer dids
     let status_infos = self
@@ -301,11 +301,11 @@ impl DomainLinkage for DomainLinkageService {
   ) -> Result<Response<ValidateDomainResponse>, Status> {
     let request_data = &req.into_inner();
     // parse given domain
-    let domain: Url = Url::parse(&request_data.domain.to_string())
-      .map_err(|err| DomainLinkageError::DomainParsingFailed(err.to_string()))?;
+    let domain: Url = Url::parse(&request_data.domain)
+      .map_err(|err| DomainLinkageError::DomainParsing(err.to_string()))?;
     // parse config
     let config = DomainLinkageConfiguration::from_json(&request_data.did_configuration.to_string()).map_err(|err| {
-      DomainLinkageError::DidConfigurationParsingFailed(format!("could not parse given DID configuration; {}", &err))
+      DomainLinkageError::DidConfigurationParsing(format!("could not parse given DID configuration; {}", &err))
     })?;
 
     // get validation status for all issuer dids
@@ -327,7 +327,7 @@ impl DomainLinkage for DomainLinkageService {
   )]
   async fn validate_did(&self, req: Request<ValidateDidRequest>) -> Result<Response<ValidateDidResponse>, Status> {
     // fetch DID document for given DID
-    let did: IotaDID = IotaDID::parse(&req.into_inner().did).map_err(|e| Status::internal(e.to_string()))?;
+    let did: IotaDID = IotaDID::parse(req.into_inner().did).map_err(|e| Status::internal(e.to_string()))?;
 
     let endpoint_validation_status = self.validate_did_with_optional_configurations(&did, None).await?;
 
@@ -354,7 +354,7 @@ impl DomainLinkage for DomainLinkageService {
     let did_configurations = request_data
       .did_configurations
       .iter()
-      .map(|configuration| DomainValidationConfig::try_parse(&configuration))
+      .map(DomainValidationConfig::try_parse)
       .collect::<Result<Vec<DomainValidationConfig>, DomainLinkageError>>()?;
 
     let endpoint_validation_status = self
