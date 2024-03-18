@@ -22,4 +22,6 @@ Make sure to provide a valid stronghold snapshot at the provided `SNAPSHOT_PATH`
 | Credential JWT creation | `credentials/Jwt.create` | [credentials.proto](https://github.com/iotaledger/identity.rs/blob/grpc-bindings/bindings/grpc/proto/credentials.proto) |
 | Credential JWT validation | `credentials/VcValidation.validate` | [credentials.proto](https://github.com/iotaledger/identity.rs/blob/grpc-bindings/bindings/grpc/proto/credentials.proto) |
 | DID Document Creation | `document/DocumentService.create` | [document.proto](https://github.com/iotaledger/identity.rs/blob/grpc-bindings/bindings/grpc/proto/document.proto) |
+| `StatusList2021Credential` creation | `status_list_2021/StatusList2021Svc.create` | [status_list_2021.proto](https://github.com/iotaledger/identity.rs/blob/grpc-bindings/bindings/grpc/proto/status_list_2021.proto) |
+| `StatusList2021Credential` update | `status_list_2021/StatusList2021Svc.update` | [status_list_2021.proto](https://github.com/iotaledger/identity.rs/blob/grpc-bindings/bindings/grpc/proto/status_list_2021.proto) |
 
