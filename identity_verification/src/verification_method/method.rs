@@ -20,6 +20,7 @@ use crate::verification_method::MethodBuilder;
 use crate::verification_method::MethodData;
 use crate::verification_method::MethodRef;
 use crate::verification_method::MethodType;
+use crate::CustomMethodData;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_did::DID;
@@ -247,8 +248,8 @@ impl KeyComparable for VerificationMethod {
 }
 
 // Horrible workaround for a tracked serde issue https://github.com/serde-rs/serde/issues/2200. Serde doesn't "consume"
-// the input when deserializing flattened enums (MethodData in this case) cousing duplication of data (in this case
-// it ends up in the properties object). This workaround simply remove the duplication.
+// the input when deserializing flattened enums (MethodData in this case) causing duplication of data (in this case
+// it ends up in the properties object). This workaround simply removes the duplication.
 #[derive(Deserialize)]
 struct _VerificationMethod {
   #[serde(deserialize_with = "deserialize_id_with_fragment")]
@@ -271,9 +272,13 @@ impl From<_VerificationMethod> for VerificationMethod {
       data,
       mut properties,
     } = value;
-    let data_json = serde_json::to_value(&data).unwrap();
-    let data_type = data_json.as_object().unwrap().into_iter().next().unwrap().0;
-    properties.remove(data_type);
+    let key = match &data {
+      MethodData::PublicKeyBase58(_) => "publicKeyBase58",
+      MethodData::PublicKeyJwk(_) => "publicKeyJwk",
+      MethodData::PublicKeyMultibase(_) => "publicKeyMultibase",
+      MethodData::Custom(CustomMethodData { name, .. }) => name.as_str(),
+    };
+    properties.remove(key);
 
     VerificationMethod {
       id,
