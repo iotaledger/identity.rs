@@ -4,7 +4,9 @@
 mod ec;
 mod ecx;
 mod ed;
+mod bls;
 
 pub use self::ec::*;
 pub use self::ecx::*;
 pub use self::ed::*;
+pub use self::bls::*;

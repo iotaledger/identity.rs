@@ -11,6 +11,7 @@ use identity_verification::jose::jws::JwsAlgorithm;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jwp::header::IssuerProtectedHeader;
+use zkryptium::bbsplus::signature::BBSplusSignature;
 
 use super::jwk_gen_output::JwkGenOutput;
 
@@ -88,7 +89,7 @@ pub trait JwkStorageExt: JwkStorage {
     &self,
     key_id: &KeyId,
     public_key: &Jwk,
-    proof: &[u8; 112],
+    proof: &[u8; BBSplusSignature::BYTES],
     ctx: ProofUpdateCtx,
-  ) -> KeyStorageResult<[u8; 112]>;
+  ) -> KeyStorageResult<[u8; BBSplusSignature::BYTES]>;
 }

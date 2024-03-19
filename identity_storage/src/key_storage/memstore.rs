@@ -12,11 +12,11 @@ use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkType;
 use identity_verification::jose::jws::JwsAlgorithm;
+use identity_verification::jwk::BlsCurve;
 use identity_verification::jwu;
 use jsonprooftoken::encoding::SerializationType;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use jsonprooftoken::jpt::claims::JptClaims;
-use jsonprooftoken::jwk::curves::EllipticCurveTypes;
 use jsonprooftoken::jwk::key::Jwk as JwkExt;
 use jsonprooftoken::jwk::types::KeyPairSubtype;
 use jsonprooftoken::jwp::header::IssuerProtectedHeader;
@@ -25,12 +25,11 @@ use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
-use zkryptium::bbsplus::keys::BBSplusPublicKey;
 use zkryptium::bbsplus::keys::BBSplusSecretKey;
-use zkryptium::schemes::algorithms::BBS_BLS12381_SHA256;
-use zkryptium::schemes::algorithms::BBS_BLS12381_SHAKE256;
+use zkryptium::bbsplus::signature::BBSplusSignature;
+use zkryptium::schemes::algorithms::BbsBls12381Sha256;
+use zkryptium::schemes::algorithms::BbsBls12381Shake256;
 use zkryptium::schemes::generics::Signature;
-use zkryptium::utils::message::BBSplusMessage;
 
 use super::ed25519::encode_jwk;
 use super::ed25519::expand_secret_jwk;
@@ -339,16 +338,16 @@ impl JwkStorageExt for JwkMemStore {
 
     match alg {
       ProofAlgorithm::BLS12381_SHA256 | ProofAlgorithm::BLS12381_SHAKE256 => {
-        let okp_params = public_key.try_okp_params().map_err(|err| {
+        let ec_params = public_key.try_ec_params().map_err(|err| {
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-            .with_custom_message(format!("expected a Jwk with Okp params in order to sign with {alg}"))
+            .with_custom_message(format!("expected a Jwk with EC params in order to sign with {alg}"))
             .with_source(err)
         })?;
-        if okp_params.crv != EllipticCurveTypes::Bls12381G2.to_string() {
+        if ec_params.crv != BlsCurve::BLS12381G2.to_string() {
           return Err(
             KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message(format!(
-              "expected Jwk with Okp {} crv in order to generate the proof with {alg}",
-              EllipticCurveTypes::Bls12381G2
+              "expected Jwk with EC {} crv in order to generate the proof with {alg}",
+              BlsCurve::BLS12381G2
             )),
           );
         }
@@ -384,9 +383,9 @@ impl JwkStorageExt for JwkMemStore {
     &self,
     key_id: &KeyId,
     public_key: &Jwk,
-    proof: &[u8; 112],
+    proof: &[u8; BBSplusSignature::BYTES],
     ctx: ProofUpdateCtx,
-  ) -> KeyStorageResult<[u8; 112]> {
+  ) -> KeyStorageResult<[u8; BBSplusSignature::BYTES]> {
     let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
 
     let ProofUpdateCtx {
@@ -409,16 +408,16 @@ impl JwkStorageExt for JwkMemStore {
 
     match alg {
       ProofAlgorithm::BLS12381_SHA256 | ProofAlgorithm::BLS12381_SHAKE256 => {
-        let okp_params = public_key.try_okp_params().map_err(|err| {
+        let ec_params = public_key.try_ec_params().map_err(|err| {
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-            .with_custom_message(format!("expected a Jwk with Okp params in order to sign with {alg}"))
+            .with_custom_message(format!("expected a Jwk with EC params in order to sign with {alg}"))
             .with_source(err)
         })?;
-        if okp_params.crv != EllipticCurveTypes::Bls12381G2.to_string() {
+        if ec_params.crv != BlsCurve::BLS12381G2.to_string() {
           return Err(
             KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message(format!(
-              "expected Jwk with Okp {} crv in order to generate the proof with {alg}",
-              EllipticCurveTypes::Bls12381G2
+              "expected Jwk with EC {} crv in order to generate the proof with {alg}",
+              BlsCurve::BLS12381G2
             )),
           );
         }
@@ -436,13 +435,7 @@ impl JwkStorageExt for JwkMemStore {
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
 
-    let params = jwk.try_okp_params().map_err(|_| KeyStorageErrorKind::Unspecified)?;
-
-    let pk = BBSplusPublicKey::from_bytes(&jwu::decode_b64(&params.x).map_err(|err| {
-      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-        .with_custom_message("unable to decode `d` param")
-        .with_source(err)
-    })?);
+    let params = jwk.try_ec_params().map_err(|_| KeyStorageErrorKind::Unspecified)?;
 
     let sk = BBSplusSecretKey::from_bytes(
       &params
@@ -458,94 +451,65 @@ impl JwkStorageExt for JwkMemStore {
             .with_custom_message("unable to decode `d` param")
             .with_source(err)
         })?,
-    );
+    ).map_err(|_| {
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+      .with_custom_message("key not valid")
+    })?;
 
     let new_proof = match alg {
       ProofAlgorithm::BLS12381_SHA256 => {
-        let vec_old_start_validity_timeframe = serde_json::to_vec(&old_start_validity_timeframe)
-          .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified))?;
-        let old_start_validity_timeframe =
-          BBSplusMessage::map_message_to_scalar_as_hash::<BBS_BLS12381_SHA256>(&vec_old_start_validity_timeframe, None);
-
-        let vec_new_start_validity_timeframe = serde_json::to_vec(&new_start_validity_timeframe)
-          .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified))?;
-        let new_start_validity_timeframe =
-          BBSplusMessage::map_message_to_scalar_as_hash::<BBS_BLS12381_SHA256>(&vec_new_start_validity_timeframe, None);
-
-        let vec_old_end_validity_timeframe = serde_json::to_vec(&old_end_validity_timeframe)
-          .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified))?;
-        let old_end_validity_timeframe =
-          BBSplusMessage::map_message_to_scalar_as_hash::<BBS_BLS12381_SHA256>(&vec_old_end_validity_timeframe, None);
-
-        let vec_new_end_validity_timeframe = serde_json::to_vec(&new_end_validity_timeframe)
-          .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified))?;
-        let new_end_validity_timeframe =
-          BBSplusMessage::map_message_to_scalar_as_hash::<BBS_BLS12381_SHA256>(&vec_new_end_validity_timeframe, None);
-
-        let proof = Signature::<BBS_BLS12381_SHA256>::from_bytes(proof).update_signature(
+        let proof = Signature::<BbsBls12381Sha256>::from_bytes(proof)
+        .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature not valid"))?
+        .update_signature(
           &sk,
-          &pk,
-          number_of_signed_messages,
           &old_start_validity_timeframe,
           &new_start_validity_timeframe,
           index_start_validity_timeframe,
-        );
+          number_of_signed_messages,
+        ).map_err(|_| {
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+          .with_custom_message("Signature update failed")
+        })?;
 
         proof
-          .update_signature(
-            &sk,
-            &pk,
-            number_of_signed_messages,
-            &old_end_validity_timeframe,
-            &new_end_validity_timeframe,
-            index_end_validity_timeframe,
-          )
-          .to_bytes()
+        .update_signature(
+          &sk,
+          &old_end_validity_timeframe,
+          &new_end_validity_timeframe,
+          index_end_validity_timeframe,
+          number_of_signed_messages,
+        ).map_err(|_| {
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+          .with_custom_message("Signature update failed")
+        })?
+        .to_bytes()
       }
       ProofAlgorithm::BLS12381_SHAKE256 => {
-        let vec_old_start_validity_timeframe = serde_json::to_vec(&old_start_validity_timeframe)
-          .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified))?;
-        let old_start_validity_timeframe = BBSplusMessage::map_message_to_scalar_as_hash::<BBS_BLS12381_SHAKE256>(
-          &vec_old_start_validity_timeframe,
-          None,
-        );
-
-        let vec_new_start_validity_timeframe = serde_json::to_vec(&new_start_validity_timeframe)
-          .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified))?;
-        let new_start_validity_timeframe = BBSplusMessage::map_message_to_scalar_as_hash::<BBS_BLS12381_SHAKE256>(
-          &vec_new_start_validity_timeframe,
-          None,
-        );
-
-        let vec_old_end_validity_timeframe = serde_json::to_vec(&old_end_validity_timeframe)
-          .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified))?;
-        let old_end_validity_timeframe =
-          BBSplusMessage::map_message_to_scalar_as_hash::<BBS_BLS12381_SHAKE256>(&vec_old_end_validity_timeframe, None);
-
-        let vec_new_end_validity_timeframe = serde_json::to_vec(&new_end_validity_timeframe)
-          .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified))?;
-        let new_end_validity_timeframe =
-          BBSplusMessage::map_message_to_scalar_as_hash::<BBS_BLS12381_SHAKE256>(&vec_new_end_validity_timeframe, None);
-
-        let proof = Signature::<BBS_BLS12381_SHAKE256>::from_bytes(proof).update_signature(
+        let proof = Signature::<BbsBls12381Shake256>::from_bytes(proof)
+        .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature not valid"))?
+        .update_signature(
           &sk,
-          &pk,
-          number_of_signed_messages,
           &old_start_validity_timeframe,
           &new_start_validity_timeframe,
           index_start_validity_timeframe,
-        );
+          number_of_signed_messages,
+        ).map_err(|_| {
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+          .with_custom_message("Signature update failed")
+        })?;
 
         proof
-          .update_signature(
-            &sk,
-            &pk,
-            number_of_signed_messages,
-            &old_end_validity_timeframe,
-            &new_end_validity_timeframe,
-            index_end_validity_timeframe,
-          )
-          .to_bytes()
+        .update_signature(
+          &sk,
+          &old_end_validity_timeframe,
+          &new_end_validity_timeframe,
+          index_end_validity_timeframe,
+          number_of_signed_messages,
+        ).map_err(|_| {
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+          .with_custom_message("Signature update failed")
+        })?
+        .to_bytes()
       }
       other => {
         return Err(

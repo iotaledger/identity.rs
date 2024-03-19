@@ -1,14 +1,14 @@
 use super::Jwk;
 use super::JwkOperation;
 use super::JwkParams;
-use super::JwkParamsOkp;
+use super::JwkParamsEc;
 use super::JwkType;
 use super::JwkUse;
 use identity_core::common::Url;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use jsonprooftoken::jwk::alg_parameters::Algorithm;
 use jsonprooftoken::jwk::alg_parameters::JwkAlgorithmParameters;
-use jsonprooftoken::jwk::alg_parameters::JwkOctetKeyPairParameters;
+use jsonprooftoken::jwk::alg_parameters::JwkEllipticCurveKeyParameters;
 use jsonprooftoken::jwk::curves::EllipticCurveTypes;
 use jsonprooftoken::jwk::key::Jwk as JwkExt;
 use jsonprooftoken::jwk::key::KeyOps;
@@ -50,23 +50,6 @@ impl From<JwkOperation> for KeyOps {
   }
 }
 
-// impl Into<KeyOps> for JwkOperation {
-//     fn into(self) -> KeyOps {
-//         match self {
-//             Self::Sign => KeyOps::Sign,
-//             Self::Verify => KeyOps::Verify,
-//             Self::Encrypt => KeyOps::Encrypt,
-//             Self::Decrypt => KeyOps::Decrypt,
-//             Self::WrapKey => KeyOps::WrapKey,
-//             Self::UnwrapKey => KeyOps::UnwrapKey,
-//             Self::DeriveKey => KeyOps::DeriveKey,
-//             Self::DeriveBits => KeyOps::DeriveBits,
-//             Self::ProofGeneration => KeyOps::ProofGeneration,
-//             Self::ProofVerification => KeyOps::ProofVerification,
-//         }
-//     }
-// }
-
 impl From<PKUse> for JwkUse {
   fn from(value: PKUse) -> Self {
     match value {
@@ -87,24 +70,26 @@ impl From<JwkUse> for PKUse {
   }
 }
 
-impl From<JwkOctetKeyPairParameters> for JwkParamsOkp {
-  fn from(value: JwkOctetKeyPairParameters) -> Self {
+impl From<JwkEllipticCurveKeyParameters> for JwkParamsEc {
+  fn from(value: JwkEllipticCurveKeyParameters) -> Self {
     Self {
       crv: value.crv.to_string(),
       x: value.x,
+      y: value.y,
       d: value.d,
     }
   }
 }
 
-impl TryInto<JwkOctetKeyPairParameters> for &JwkParamsOkp {
+impl TryInto<JwkEllipticCurveKeyParameters> for &JwkParamsEc {
   type Error = crate::error::Error;
 
-  fn try_into(self) -> Result<JwkOctetKeyPairParameters, Self::Error> {
-    Ok(JwkOctetKeyPairParameters {
-      kty: KeyType::OctetKeyPair,
-      crv: EllipticCurveTypes::from_str(&self.crv).map_err(|_| Self::Error::KeyError("Invalid crv!"))?,
+  fn try_into(self) -> Result<JwkEllipticCurveKeyParameters, Self::Error> {
+    Ok(JwkEllipticCurveKeyParameters {
+      kty: KeyType::EllipticCurve,
+      crv: EllipticCurveTypes::from_str(&self.crv).map_err(|_| Self::Error::KeyError("crv not supported!"))?,
       x: self.x.clone(),
+      y: self.y.clone(),
       d: self.d.clone(),
     })
   }
@@ -120,7 +105,8 @@ impl TryFrom<JwkExt> for Jwk {
     };
 
     let (kty, params) = match value.key_params {
-      JwkAlgorithmParameters::OctetKeyPair(p) => (JwkType::Okp, JwkParams::Okp(JwkParamsOkp::from(p))),
+      JwkAlgorithmParameters::EllipticCurve(p) => (JwkType::Ec, JwkParams::Ec(JwkParamsEc::from(p))),
+      _ => return Err(Self::Error::KeyError("invalid kty"))
     };
 
     Ok(Self {
@@ -145,7 +131,7 @@ impl TryInto<JwkExt> for &Jwk {
 
   fn try_into(self) -> Result<JwkExt, Self::Error> {
     let params = match &self.params {
-      JwkParams::Okp(p) => JwkAlgorithmParameters::OctetKeyPair(p.try_into()?),
+      JwkParams::Ec(p) => JwkAlgorithmParameters::EllipticCurve(p.try_into()?),
       _ => return Err(Self::Error::InvalidParam("Parameters not supported!")),
     };
 

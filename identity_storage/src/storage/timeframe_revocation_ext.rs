@@ -16,17 +16,18 @@ use jsonprooftoken::encoding::SerializationType;
 use jsonprooftoken::jpt::payloads::Payloads;
 use jsonprooftoken::jwp::issued::JwpIssued;
 use serde_json::Value;
+use zkryptium::bbsplus::signature::BBSplusSignature;
 
 /// Contains information needed to update the signature in the RevocationTimeframe2024 revocation mechanism.
 pub struct ProofUpdateCtx {
   /// Old `startValidityTimeframe` value
-  pub old_start_validity_timeframe: String,
+  pub old_start_validity_timeframe: Vec<u8>,
   /// New `startValidityTimeframe` value to be signed
-  pub new_start_validity_timeframe: String,
+  pub new_start_validity_timeframe: Vec<u8>,
   /// Old `endValidityTimeframe` value
-  pub old_end_validity_timeframe: String,
+  pub old_end_validity_timeframe: Vec<u8>,
   /// New `endValidityTimeframe` value to be signed
-  pub new_end_validity_timeframe: String,
+  pub new_end_validity_timeframe: Vec<u8>,
   /// Index of `startValidityTimeframe` claim inside the array of Claims
   pub index_start_validity_timeframe: usize,
   /// Index of `endValidityTimeframe` claim inside the array of Claims
@@ -132,15 +133,15 @@ impl TimeframeRevocationExtension for CoreDocument {
       .map_err(|_| Error::ProofUpdateError("'endValidityTimeframe' value NOT found".to_owned()))?
       .map_err(|_| Error::ProofUpdateError("'endValidityTimeframe' value NOT a JSON String".to_owned()))?;
 
-    let proof: [u8; 112] = proof
+    let proof: [u8; BBSplusSignature::BYTES] = proof
       .try_into()
       .map_err(|_| Error::ProofUpdateError("Invalid bytes length of JWP proof".to_owned()))?;
 
     let proof_update_ctx = ProofUpdateCtx {
-      old_start_validity_timeframe,
-      new_start_validity_timeframe,
-      old_end_validity_timeframe,
-      new_end_validity_timeframe,
+      old_start_validity_timeframe: serde_json::to_vec(&old_start_validity_timeframe).unwrap(),
+      new_start_validity_timeframe: serde_json::to_vec(&new_start_validity_timeframe).unwrap(),
+      old_end_validity_timeframe: serde_json::to_vec(&old_end_validity_timeframe).unwrap(),
+      new_end_validity_timeframe: serde_json::to_vec(&new_end_validity_timeframe).unwrap(),
       index_start_validity_timeframe,
       index_end_validity_timeframe,
       number_of_signed_messages: payloads.0.len(),
