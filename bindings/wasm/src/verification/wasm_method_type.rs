@@ -27,6 +27,11 @@ impl WasmMethodType {
     WasmMethodType(MethodType::JSON_WEB_KEY)
   }
 
+  /// A custom method.
+  pub fn custom(type_: String) -> WasmMethodType {
+    WasmMethodType(MethodType::custom(type_))
+  }
+
   /// Returns the {@link MethodType} as a string.
   #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]
