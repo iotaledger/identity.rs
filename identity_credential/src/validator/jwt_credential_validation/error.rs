@@ -109,7 +109,7 @@ pub enum JwtValidationError {
   /// Indicates that the JWP representation of an issued credential or presentation could not be decoded.
   #[error("could not decode jwp")]
   JwpDecodingError(#[source] jsonprooftoken::errors::CustomError),
-  /// Indicates that the verfication of the JWP has failed
+  /// Indicates that the verification of the JWP has failed
   #[error("could not verify jwp")]
   JwpProofVerificationError(#[source] jsonprooftoken::errors::CustomError),
 
