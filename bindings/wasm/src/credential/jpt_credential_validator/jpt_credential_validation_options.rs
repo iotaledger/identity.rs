@@ -45,8 +45,8 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JPT_CREDENTIAL_VALIDATION_OPTIONS: &'static str = r#"
-/** Holds options to create a new {@link JwtPresentationValidationOptions}. */
-interface IJwtPresentationValidationOptions {
+/** Holds options to create a new {@link JptCredentialValidationOptions}. */
+interface IJptCredentialValidationOptions {
     /**
      * Declare that the credential is **not** considered valid if it expires before this {@link Timestamp}.
      * Uses the current datetime during validation if not set. 

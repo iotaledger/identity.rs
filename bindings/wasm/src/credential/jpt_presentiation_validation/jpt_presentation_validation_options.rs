@@ -44,8 +44,8 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JPT_PRESENTATION_VALIDATION_OPTIONS: &'static str = r#"
-/** Holds options to create a new {@link JwtPresentationValidationOptions}. */
-interface IJwtPresentationValidationOptions {
+/** Holds options to create a new {@link JptPresentationValidationOptions}. */
+interface IJptPresentationValidationOptions {
     /**
      * The nonce to be placed in the Presentation Protected Header.
      */
