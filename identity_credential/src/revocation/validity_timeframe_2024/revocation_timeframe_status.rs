@@ -8,10 +8,13 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::common::Value;
 use identity_did::DIDUrl;
+use serde::Deserialize;
+use serde::Serialize;
 use std::str::FromStr;
 
 /// Information used to determine the current status of a [`Credential`][crate::credential::Credential]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "Status", into = "Status")]
 pub struct RevocationTimeframeStatus(Status);
 
 impl RevocationTimeframeStatus {
@@ -57,7 +60,7 @@ impl RevocationTimeframeStatus {
     )))
   }
 
-  /// Get startValidityTimeframe value
+  /// Get startValidityTimeframe value.
   pub fn start_validity_timeframe(&self) -> Result<Timestamp> {
     if let Some(Value::String(timeframe)) = self.0.properties.get(Self::START_TIMEFRAME_PROPERTY) {
       Timestamp::from_str(timeframe)
@@ -70,7 +73,7 @@ impl RevocationTimeframeStatus {
     }
   }
 
-  /// Get endValidityTimeframe value
+  /// Get endValidityTimeframe value.
   pub fn end_validity_timeframe(&self) -> Result<Timestamp> {
     if let Some(Value::String(timeframe)) = self.0.properties.get(Self::END_TIMEFRAME_PROPERTY) {
       Timestamp::from_str(timeframe)

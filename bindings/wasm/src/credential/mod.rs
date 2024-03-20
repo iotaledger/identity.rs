@@ -6,6 +6,8 @@
 pub use self::credential::WasmCredential;
 pub use self::credential_builder::*;
 pub use self::domain_linkage_configuration::WasmDomainLinkageConfiguration;
+pub use self::jpt::*;
+pub use self::jpt_credential_validator::*;
 pub use self::jws::WasmJws;
 pub use self::jwt::WasmJwt;
 pub use self::jwt_credential_validation::*;
@@ -22,6 +24,8 @@ mod credential_builder;
 mod domain_linkage_configuration;
 mod domain_linkage_credential_builder;
 mod domain_linkage_validator;
+mod jpt;
+mod jpt_credential_validator;
 mod jws;
 mod jwt;
 mod jwt_credential_validation;
