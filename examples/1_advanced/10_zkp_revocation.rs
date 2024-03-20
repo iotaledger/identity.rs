@@ -188,8 +188,13 @@ async fn main() -> anyhow::Result<()> {
   let credential_index: u32 = 5;
 
   let start_validity_timeframe = Timestamp::now_utc();
-  let status: Status =
-    RevocationTimeframeStatus::new(Some(start_validity_timeframe), duration, service_url, credential_index)?.into();
+  let status: Status = RevocationTimeframeStatus::new(
+    Some(start_validity_timeframe),
+    duration,
+    service_url.into(),
+    credential_index,
+  )?
+  .into();
 
   // Build credential using subject above and issuer.
   let credential: Credential = CredentialBuilder::default()

@@ -25,7 +25,7 @@ reqwest = { version = "0.11", default-features = false, features = ["default-tls
 roaring = { version = "0.10", default-features = false, features = ["std"], optional = true }
 sd-jwt-payload = { version = "0.2.0", default-features = false, features = ["sha"], optional = true }
 serde.workspace = true
-serde-aux = { version = "4.3.1", default-features = false, optional = true }
+serde-aux = { version = "4.3.1", default-features = false }
 serde_json.workspace = true
 serde_repr = { version = "0.1", default-features = false, optional = true }
 strum.workspace = true
@@ -53,7 +53,7 @@ default = ["revocation-bitmap", "validator", "credential", "presentation", "doma
 credential = []
 presentation = ["credential"]
 revocation-bitmap = ["dep:flate2", "dep:roaring"]
-status-list-2021 = ["revocation-bitmap", "dep:serde-aux"]
+status-list-2021 = ["revocation-bitmap"]
 validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation"]
 domain-linkage = ["validator"]
 domain-linkage-fetch = ["domain-linkage", "dep:reqwest", "dep:futures"]
