@@ -18,6 +18,7 @@ pub use self::presentation::*;
 pub use self::proof::WasmProof;
 pub use self::revocation::*;
 pub use self::types::*;
+pub use self::jpt_presentiation_validation::*;
 
 mod credential;
 mod credential_builder;
@@ -36,3 +37,4 @@ mod presentation;
 mod proof;
 mod revocation;
 mod types;
+mod jpt_presentiation_validation;
