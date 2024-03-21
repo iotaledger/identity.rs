@@ -75,5 +75,5 @@ pub enum Error {
 
   /// Cause by an invalid attribute path
   #[error("Attribute Not found")]
-  SelectiveDiscosureError,
+  SelectiveDisclosureError,
 }

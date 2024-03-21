@@ -770,7 +770,7 @@ impl CoreDocument {
   }
 
   /// Returns the first [`Service`] with an `id` property matching the provided `service_query`, if present.
-  // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
+  // NOTE: This method demonstrates unexpected behavior in the edge cases where the document contains
   // services whose ids are of the form <did different from this document's>#<fragment>.
   pub fn resolve_service<'query, 'me, Q>(&'me self, service_query: Q) -> Option<&Service>
   where

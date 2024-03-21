@@ -93,7 +93,7 @@ impl JptCredentialValidatorUtils {
       Some(status) => {
         if status.type_ == RevocationTimeframeStatus::TYPE {
           let status: RevocationTimeframeStatus =
-            RevocationTimeframeStatus::try_from(status.clone()).map_err(JwtValidationError::InvalidStatus)?;
+            RevocationTimeframeStatus::try_from(status).map_err(JwtValidationError::InvalidStatus)?;
 
           Self::check_validity_timeframe(status, validity_timeframe)
         } else {
@@ -115,11 +115,7 @@ impl JptCredentialValidatorUtils {
   ) -> ValidationUnitResult {
     let timeframe = validity_timeframe.unwrap_or(Timestamp::now_utc());
 
-    let check = status.start_validity_timeframe().is_ok_and(|start| {
-      status
-        .end_validity_timeframe()
-        .is_ok_and(|end| timeframe >= start && timeframe <= end)
-    });
+    let check = timeframe >= status.start_validity_timeframe() && timeframe <= status.end_validity_timeframe();
 
     if !check {
       Err(JwtValidationError::OutsideTimeframe)
@@ -148,7 +144,7 @@ impl JptCredentialValidatorUtils {
       Some(status) => {
         if status.type_ == RevocationTimeframeStatus::TYPE {
           let status: RevocationTimeframeStatus =
-            RevocationTimeframeStatus::try_from(status.clone()).map_err(JwtValidationError::InvalidStatus)?;
+            RevocationTimeframeStatus::try_from(status).map_err(JwtValidationError::InvalidStatus)?;
 
           Self::check_revocation_bitmap(issuer, status)
         } else {
@@ -169,19 +165,26 @@ impl JptCredentialValidatorUtils {
     issuer: &DOC,
     status: RevocationTimeframeStatus,
   ) -> ValidationUnitResult {
-    let issuer_service_url: identity_did::DIDUrl = status.id().map_err(JwtValidationError::InvalidStatus)?;
+    let issuer_service_url: identity_did::DIDUrl =
+      identity_did::DIDUrl::parse(status.id().to_string()).map_err(|err| {
+        JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
+          "could not convert status id to DIDUrl; {}",
+          err,
+        )))
+      })?;
 
     // Check whether index is revoked.
     let revocation_bitmap: crate::revocation::RevocationBitmap = issuer
       .as_ref()
       .resolve_revocation_bitmap(issuer_service_url.into())
       .map_err(|_| JwtValidationError::ServiceLookupError)?;
-    let index: u32 = status.index().map_err(JwtValidationError::InvalidStatus)?;
-    if revocation_bitmap.is_revoked(index) {
-      Err(JwtValidationError::Revoked)
-    } else {
-      Ok(())
+
+    if let Some(index) = status.index() {
+      if revocation_bitmap.is_revoked(index) {
+        return Err(JwtValidationError::Revoked);
+      }
     }
+    Ok(())
   }
 
   /// Checks whether the credential status has been revoked or the timeframe interval is INVALID
@@ -205,7 +208,7 @@ impl JptCredentialValidatorUtils {
       Some(status) => {
         if status.type_ == RevocationTimeframeStatus::TYPE {
           let status: RevocationTimeframeStatus =
-            RevocationTimeframeStatus::try_from(status.clone()).map_err(JwtValidationError::InvalidStatus)?;
+            RevocationTimeframeStatus::try_from(status).map_err(JwtValidationError::InvalidStatus)?;
 
           let revocation = std::iter::once_with(|| Self::check_revocation_bitmap(issuer, status.clone()));
 

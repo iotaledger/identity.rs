@@ -22,8 +22,8 @@ pub struct SelectiveDisclosurePresentation {
 }
 
 impl SelectiveDisclosurePresentation {
-  /// Inizialize a presentation starting from an Issued JWP.
-  /// The properties `jti`, `nbf`, `issuanceDate`, `expirationDate` and `terminsOfUse` are concealed by default.
+  /// Initialize a presentation starting from an Issued JWP.
+  /// The properties `jti`, `nbf`, `issuanceDate`, `expirationDate` and `termsOfUse` are concealed by default.
   pub fn new(issued_jwp: &JwpIssued) -> Self {
     let mut jwp_builder = JwpPresentedBuilder::new(issued_jwp);
 
@@ -70,7 +70,7 @@ impl SelectiveDisclosurePresentation {
     let _ = self
       .jwp_builder
       .set_undisclosed(&("vc.credentialSubject.".to_owned() + path))
-      .map_err(|_| Error::SelectiveDiscosureError);
+      .map_err(|_| Error::SelectiveDisclosureError);
     Ok(())
   }
 
@@ -79,11 +79,11 @@ impl SelectiveDisclosurePresentation {
     let _ = self
       .jwp_builder
       .set_undisclosed(&("vc.evidence.".to_owned() + path))
-      .map_err(|_| Error::SelectiveDiscosureError);
+      .map_err(|_| Error::SelectiveDisclosureError);
     Ok(())
   }
 
-  /// Set Presenation Protected Header.
+  /// Set Presentation Protected Header.
   pub fn set_presentation_header(&mut self, ph: PresentationProtectedHeader) {
     self.jwp_builder.presentation_protected_header(ph);
   }
