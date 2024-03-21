@@ -124,7 +124,7 @@ impl JptCredentialValidatorUtils {
     }
   }
 
-  /// Checks whether the credential status has been revoked
+  /// Checks whether the credential status has been revoked.
   ///
   /// Only supports `RevocationTimeframe2024`.
   pub fn check_revocation_with_validity_timeframe_2024<

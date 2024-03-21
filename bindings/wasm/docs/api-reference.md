@@ -11,9 +11,16 @@ if the object is being concurrently modified.</p>
 </dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
+<dt><a href="#CustomMethodData">CustomMethodData</a></dt>
+<dd><p>A custom verification method data format.</p>
+</dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd><p>A method agnostic DID Url.</p>
 </dd>
+<dt><a href="#DecodedJptCredential">DecodedJptCredential</a></dt>
+<dd></dd>
+<dt><a href="#DecodedJptPresentation">DecodedJptPresentation</a></dt>
+<dd></dd>
 <dt><a href="#DecodedJws">DecodedJws</a></dt>
 <dd><p>A cryptographically verified decoded token from a JWS.</p>
 <p>Contains the decoded headers and the raw claims.</p>
@@ -64,11 +71,32 @@ if the object is being concurrently modified.</p>
 <dd><p>An extension interface that provides helper functions for publication
 and resolution of DID documents in Alias Outputs.</p>
 </dd>
+<dt><a href="#Jpt">Jpt</a></dt>
+<dd><p>A JSON Proof Token (JPT).</p>
+</dd>
+<dt><a href="#JptCredentialValidationOptions">JptCredentialValidationOptions</a></dt>
+<dd><p>Options to declare validation criteria for <a href="#Jpt">Jpt</a>.</p>
+</dd>
+<dt><a href="#JptCredentialValidator">JptCredentialValidator</a></dt>
+<dd></dd>
+<dt><a href="#JptCredentialValidatorUtils">JptCredentialValidatorUtils</a></dt>
+<dd><p>Utility functions for validating JPT credentials.</p>
+</dd>
+<dt><a href="#JptPresentationValidationOptions">JptPresentationValidationOptions</a></dt>
+<dd><p>Options to declare validation criteria for a <a href="#Jpt">Jpt</a> presentation.</p>
+</dd>
+<dt><a href="#JptPresentationValidator">JptPresentationValidator</a></dt>
+<dd></dd>
+<dt><a href="#JptPresentationValidatorUtils">JptPresentationValidatorUtils</a></dt>
+<dd><p>Utility functions for verifying JPT presentations.</p>
+</dd>
 <dt><a href="#Jwk">Jwk</a></dt>
 <dd></dd>
 <dt><a href="#JwkGenOutput">JwkGenOutput</a></dt>
 <dd><p>The result of a key generation in <code>JwkStorage</code>.</p>
 </dd>
+<dt><a href="#JwpVerificationOptions">JwpVerificationOptions</a></dt>
+<dd></dd>
 <dt><a href="#Jws">Jws</a></dt>
 <dd><p>A wrapper around a JSON Web Signature (JWS).</p>
 </dd>
@@ -141,6 +169,9 @@ verifiable <a href="#Credential">Credential</a>s and <a href="#Presentation">Pre
 <dt><a href="#RevocationBitmap">RevocationBitmap</a></dt>
 <dd><p>A compressed bitmap for managing credential revocation.</p>
 </dd>
+<dt><a href="#RevocationTimeframeStatus">RevocationTimeframeStatus</a></dt>
+<dd><p>Information used to determine the current status of a <a href="#Credential">Credential</a>.</p>
+</dd>
 <dt><a href="#SdJwt">SdJwt</a></dt>
 <dd><p>Representation of an SD-JWT of the format
 <code>&lt;Issuer-signed JWT&gt;~&lt;Disclosure 1&gt;~&lt;Disclosure 2&gt;~...~&lt;Disclosure N&gt;~&lt;optional KB-JWT&gt;</code>.</p>
@@ -187,25 +218,6 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
-<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
-<dd></dd>
-<dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
-<dd><p>Declares how credential subjects must relate to the presentation holder.</p>
-<p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
-</dd>
-<dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
-<dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
-This variant is the default.</p>
-</dd>
-<dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
-<dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
-</dd>
-<dt><a href="#Any">Any</a></dt>
-<dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
-</dd>
-<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
-<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
-</dd>
 <dt><a href="#FailFast">FailFast</a></dt>
 <dd><p>Declares when validation should return if an error occurs.</p>
 </dd>
@@ -214,6 +226,15 @@ This variant is the default.</p>
 </dd>
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
+</dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
+<dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
+<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
 </dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
@@ -232,17 +253,30 @@ This variant is the default.</p>
 <dt><a href="#SkipAll">SkipAll</a></dt>
 <dd><p>Skip all status checks.</p>
 </dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
+<dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
+<dd><p>Declares how credential subjects must relate to the presentation holder.</p>
+<p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
+</dd>
+<dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
+<dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
+This variant is the default.</p>
+</dd>
+<dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
+<dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
+</dd>
+<dt><a href="#Any">Any</a></dt>
+<dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
+</dd>
 </dl>
 
 ## Functions
 
 <dl>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
+<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
+<dd><p>Encode the given bytes in url-safe base64.</p>
+</dd>
+<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
+<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
 <dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
@@ -252,11 +286,8 @@ This variant is the default.</p>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
 prior to calling the function.</p>
 </dd>
-<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
-<dd><p>Encode the given bytes in url-safe base64.</p>
-</dd>
-<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
-<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 </dl>
 
@@ -1138,6 +1169,53 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="CustomMethodData"></a>
+
+## CustomMethodData
+A custom verification method data format.
+
+**Kind**: global class  
+
+* [CustomMethodData](#CustomMethodData)
+    * [new CustomMethodData(name, data)](#new_CustomMethodData_new)
+    * _instance_
+        * [.clone()](#CustomMethodData+clone) ⇒ [<code>CustomMethodData</code>](#CustomMethodData)
+        * [.toJSON()](#CustomMethodData+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#CustomMethodData.fromJSON) ⇒ [<code>CustomMethodData</code>](#CustomMethodData)
+
+<a name="new_CustomMethodData_new"></a>
+
+### new CustomMethodData(name, data)
+
+| Param | Type |
+| --- | --- |
+| name | <code>string</code> | 
+| data | <code>any</code> | 
+
+<a name="CustomMethodData+clone"></a>
+
+### customMethodData.clone() ⇒ [<code>CustomMethodData</code>](#CustomMethodData)
+Deep clones the object.
+
+**Kind**: instance method of [<code>CustomMethodData</code>](#CustomMethodData)  
+<a name="CustomMethodData+toJSON"></a>
+
+### customMethodData.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>CustomMethodData</code>](#CustomMethodData)  
+<a name="CustomMethodData.fromJSON"></a>
+
+### CustomMethodData.fromJSON(json) ⇒ [<code>CustomMethodData</code>](#CustomMethodData)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>CustomMethodData</code>](#CustomMethodData)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="DIDUrl"></a>
 
 ## DIDUrl
@@ -1285,6 +1363,69 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="DecodedJptCredential"></a>
+
+## DecodedJptCredential
+**Kind**: global class  
+
+* [DecodedJptCredential](#DecodedJptCredential)
+    * [.clone()](#DecodedJptCredential+clone) ⇒ [<code>DecodedJptCredential</code>](#DecodedJptCredential)
+    * [.credential()](#DecodedJptCredential+credential) ⇒ [<code>Credential</code>](#Credential)
+    * [.customClaims()](#DecodedJptCredential+customClaims) ⇒ <code>Map.&lt;string, any&gt;</code>
+
+<a name="DecodedJptCredential+clone"></a>
+
+### decodedJptCredential.clone() ⇒ [<code>DecodedJptCredential</code>](#DecodedJptCredential)
+Deep clones the object.
+
+**Kind**: instance method of [<code>DecodedJptCredential</code>](#DecodedJptCredential)  
+<a name="DecodedJptCredential+credential"></a>
+
+### decodedJptCredential.credential() ⇒ [<code>Credential</code>](#Credential)
+Returns the [Credential](#Credential) embedded into this JPT.
+
+**Kind**: instance method of [<code>DecodedJptCredential</code>](#DecodedJptCredential)  
+<a name="DecodedJptCredential+customClaims"></a>
+
+### decodedJptCredential.customClaims() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns the custom claims parsed from the JPT.
+
+**Kind**: instance method of [<code>DecodedJptCredential</code>](#DecodedJptCredential)  
+<a name="DecodedJptPresentation"></a>
+
+## DecodedJptPresentation
+**Kind**: global class  
+
+* [DecodedJptPresentation](#DecodedJptPresentation)
+    * [.clone()](#DecodedJptPresentation+clone) ⇒ [<code>DecodedJptPresentation</code>](#DecodedJptPresentation)
+    * [.credential()](#DecodedJptPresentation+credential) ⇒ [<code>Credential</code>](#Credential)
+    * [.customClaims()](#DecodedJptPresentation+customClaims) ⇒ <code>Map.&lt;string, any&gt;</code>
+    * [.aud()](#DecodedJptPresentation+aud) ⇒ <code>string</code> \| <code>undefined</code>
+
+<a name="DecodedJptPresentation+clone"></a>
+
+### decodedJptPresentation.clone() ⇒ [<code>DecodedJptPresentation</code>](#DecodedJptPresentation)
+Deep clones the object.
+
+**Kind**: instance method of [<code>DecodedJptPresentation</code>](#DecodedJptPresentation)  
+<a name="DecodedJptPresentation+credential"></a>
+
+### decodedJptPresentation.credential() ⇒ [<code>Credential</code>](#Credential)
+Returns the [Credential](#Credential) embedded into this JPT.
+
+**Kind**: instance method of [<code>DecodedJptPresentation</code>](#DecodedJptPresentation)  
+<a name="DecodedJptPresentation+customClaims"></a>
+
+### decodedJptPresentation.customClaims() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns the custom claims parsed from the JPT.
+
+**Kind**: instance method of [<code>DecodedJptPresentation</code>](#DecodedJptPresentation)  
+<a name="DecodedJptPresentation+aud"></a>
+
+### decodedJptPresentation.aud() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the `aud` property parsed from the JWT claims.
+
+**Kind**: instance method of [<code>DecodedJptPresentation</code>](#DecodedJptPresentation)  
 <a name="DecodedJws"></a>
 
 ## DecodedJws
@@ -1967,7 +2108,7 @@ if the object is being concurrently modified.
     * _instance_
         * [.id()](#IotaDocument+id) ⇒ [<code>IotaDID</code>](#IotaDID)
         * [.controller()](#IotaDocument+controller) ⇒ [<code>Array.&lt;IotaDID&gt;</code>](#IotaDID)
-        * [.setController(controllers)](#IotaDocument+setController)
+        * [.setController(controller)](#IotaDocument+setController)
         * [.alsoKnownAs()](#IotaDocument+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
         * [.setAlsoKnownAs(urls)](#IotaDocument+setAlsoKnownAs)
         * [.properties()](#IotaDocument+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
@@ -2042,7 +2183,7 @@ during resolution and are omitted when publishing.
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+setController"></a>
 
-### iotaDocument.setController(controllers)
+### iotaDocument.setController(controller)
 Sets the controllers of the document.
 
 Note: Duplicates will be ignored.
@@ -2052,7 +2193,7 @@ Use `null` to remove all controllers.
 
 | Param | Type |
 | --- | --- |
-| controllers | [<code>CoreDID</code>](#CoreDID) \| [<code>Array.&lt;CoreDID&gt;</code>](#CoreDID) \| <code>null</code> | 
+| controller | [<code>Array.&lt;IotaDID&gt;</code>](#IotaDID) \| <code>null</code> | 
 
 <a name="IotaDocument+alsoKnownAs"></a>
 
@@ -2747,6 +2888,292 @@ Fetches the `IAliasOutput` associated with the given DID.
 | client | <code>IIotaIdentityClient</code> | 
 | did | [<code>IotaDID</code>](#IotaDID) | 
 
+<a name="Jpt"></a>
+
+## Jpt
+A JSON Proof Token (JPT).
+
+**Kind**: global class  
+
+* [Jpt](#Jpt)
+    * [new Jpt(jpt_string)](#new_Jpt_new)
+    * [.toString()](#Jpt+toString) ⇒ <code>string</code>
+    * [.clone()](#Jpt+clone) ⇒ [<code>Jpt</code>](#Jpt)
+
+<a name="new_Jpt_new"></a>
+
+### new Jpt(jpt_string)
+Creates a new [Jpt](#Jpt).
+
+
+| Param | Type |
+| --- | --- |
+| jpt_string | <code>string</code> | 
+
+<a name="Jpt+toString"></a>
+
+### jpt.toString() ⇒ <code>string</code>
+**Kind**: instance method of [<code>Jpt</code>](#Jpt)  
+<a name="Jpt+clone"></a>
+
+### jpt.clone() ⇒ [<code>Jpt</code>](#Jpt)
+Deep clones the object.
+
+**Kind**: instance method of [<code>Jpt</code>](#Jpt)  
+<a name="JptCredentialValidationOptions"></a>
+
+## JptCredentialValidationOptions
+Options to declare validation criteria for [Jpt](#Jpt).
+
+**Kind**: global class  
+
+* [JptCredentialValidationOptions](#JptCredentialValidationOptions)
+    * [new JptCredentialValidationOptions([opts])](#new_JptCredentialValidationOptions_new)
+    * _instance_
+        * [.clone()](#JptCredentialValidationOptions+clone) ⇒ [<code>JptCredentialValidationOptions</code>](#JptCredentialValidationOptions)
+        * [.toJSON()](#JptCredentialValidationOptions+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#JptCredentialValidationOptions.fromJSON) ⇒ [<code>JptCredentialValidationOptions</code>](#JptCredentialValidationOptions)
+
+<a name="new_JptCredentialValidationOptions_new"></a>
+
+### new JptCredentialValidationOptions([opts])
+Creates a new default istance.
+
+
+| Param | Type |
+| --- | --- |
+| [opts] | <code>IJptCredentialValidationOptions</code> \| <code>undefined</code> | 
+
+<a name="JptCredentialValidationOptions+clone"></a>
+
+### jptCredentialValidationOptions.clone() ⇒ [<code>JptCredentialValidationOptions</code>](#JptCredentialValidationOptions)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JptCredentialValidationOptions</code>](#JptCredentialValidationOptions)  
+<a name="JptCredentialValidationOptions+toJSON"></a>
+
+### jptCredentialValidationOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JptCredentialValidationOptions</code>](#JptCredentialValidationOptions)  
+<a name="JptCredentialValidationOptions.fromJSON"></a>
+
+### JptCredentialValidationOptions.fromJSON(json) ⇒ [<code>JptCredentialValidationOptions</code>](#JptCredentialValidationOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JptCredentialValidationOptions</code>](#JptCredentialValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JptCredentialValidator"></a>
+
+## JptCredentialValidator
+**Kind**: global class  
+<a name="JptCredentialValidator.validate"></a>
+
+### JptCredentialValidator.validate(credential_jpt, issuer, options, fail_fast) ⇒ [<code>DecodedJptCredential</code>](#DecodedJptCredential)
+**Kind**: static method of [<code>JptCredentialValidator</code>](#JptCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential_jpt | [<code>Jpt</code>](#Jpt) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) | 
+| options | [<code>JptCredentialValidationOptions</code>](#JptCredentialValidationOptions) | 
+| fail_fast | [<code>FailFast</code>](#FailFast) | 
+
+<a name="JptCredentialValidatorUtils"></a>
+
+## JptCredentialValidatorUtils
+Utility functions for validating JPT credentials.
+
+**Kind**: global class  
+
+* [JptCredentialValidatorUtils](#JptCredentialValidatorUtils)
+    * [.extractIssuer(credential)](#JptCredentialValidatorUtils.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID)
+    * [.extractIssuerFromIssuedJpt(credential)](#JptCredentialValidatorUtils.extractIssuerFromIssuedJpt) ⇒ [<code>CoreDID</code>](#CoreDID)
+    * [.checkTimeframesWithValidityTimeframe2024(credential, validity_timeframe, status_check)](#JptCredentialValidatorUtils.checkTimeframesWithValidityTimeframe2024)
+    * [.checkRevocationWithValidityTimeframe2024(credential, issuer, status_check)](#JptCredentialValidatorUtils.checkRevocationWithValidityTimeframe2024)
+    * [.checkTimeframesAndRevocationWithValidityTimeframe2024(credential, issuer, validity_timeframe, status_check)](#JptCredentialValidatorUtils.checkTimeframesAndRevocationWithValidityTimeframe2024)
+
+<a name="JptCredentialValidatorUtils.extractIssuer"></a>
+
+### JptCredentialValidatorUtils.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
+Utility for extracting the issuer field of a [`Credential`](`Credential`) as a DID.
+# Errors
+Fails if the issuer field is not a valid DID.
+
+**Kind**: static method of [<code>JptCredentialValidatorUtils</code>](#JptCredentialValidatorUtils)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+
+<a name="JptCredentialValidatorUtils.extractIssuerFromIssuedJpt"></a>
+
+### JptCredentialValidatorUtils.extractIssuerFromIssuedJpt(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
+Utility for extracting the issuer field of a credential in JPT representation as DID.
+# Errors
+If the JPT decoding fails or the issuer field is not a valid DID.
+
+**Kind**: static method of [<code>JptCredentialValidatorUtils</code>](#JptCredentialValidatorUtils)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Jpt</code>](#Jpt) | 
+
+<a name="JptCredentialValidatorUtils.checkTimeframesWithValidityTimeframe2024"></a>
+
+### JptCredentialValidatorUtils.checkTimeframesWithValidityTimeframe2024(credential, validity_timeframe, status_check)
+**Kind**: static method of [<code>JptCredentialValidatorUtils</code>](#JptCredentialValidatorUtils)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| validity_timeframe | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
+| status_check | [<code>StatusCheck</code>](#StatusCheck) | 
+
+<a name="JptCredentialValidatorUtils.checkRevocationWithValidityTimeframe2024"></a>
+
+### JptCredentialValidatorUtils.checkRevocationWithValidityTimeframe2024(credential, issuer, status_check)
+Checks whether the credential status has been revoked.
+
+Only supports `RevocationTimeframe2024`.
+
+**Kind**: static method of [<code>JptCredentialValidatorUtils</code>](#JptCredentialValidatorUtils)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) | 
+| status_check | [<code>StatusCheck</code>](#StatusCheck) | 
+
+<a name="JptCredentialValidatorUtils.checkTimeframesAndRevocationWithValidityTimeframe2024"></a>
+
+### JptCredentialValidatorUtils.checkTimeframesAndRevocationWithValidityTimeframe2024(credential, issuer, validity_timeframe, status_check)
+Checks whether the credential status has been revoked or the timeframe interval is INVALID
+
+Only supports `RevocationTimeframe2024`.
+
+**Kind**: static method of [<code>JptCredentialValidatorUtils</code>](#JptCredentialValidatorUtils)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) | 
+| validity_timeframe | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
+| status_check | [<code>StatusCheck</code>](#StatusCheck) | 
+
+<a name="JptPresentationValidationOptions"></a>
+
+## JptPresentationValidationOptions
+Options to declare validation criteria for a [Jpt](#Jpt) presentation.
+
+**Kind**: global class  
+
+* [JptPresentationValidationOptions](#JptPresentationValidationOptions)
+    * [new JptPresentationValidationOptions([opts])](#new_JptPresentationValidationOptions_new)
+    * _instance_
+        * [.clone()](#JptPresentationValidationOptions+clone) ⇒ [<code>JptPresentationValidationOptions</code>](#JptPresentationValidationOptions)
+        * [.toJSON()](#JptPresentationValidationOptions+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#JptPresentationValidationOptions.fromJSON) ⇒ [<code>JptPresentationValidationOptions</code>](#JptPresentationValidationOptions)
+
+<a name="new_JptPresentationValidationOptions_new"></a>
+
+### new JptPresentationValidationOptions([opts])
+
+| Param | Type |
+| --- | --- |
+| [opts] | <code>IJptPresentationValidationOptions</code> \| <code>undefined</code> | 
+
+<a name="JptPresentationValidationOptions+clone"></a>
+
+### jptPresentationValidationOptions.clone() ⇒ [<code>JptPresentationValidationOptions</code>](#JptPresentationValidationOptions)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JptPresentationValidationOptions</code>](#JptPresentationValidationOptions)  
+<a name="JptPresentationValidationOptions+toJSON"></a>
+
+### jptPresentationValidationOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JptPresentationValidationOptions</code>](#JptPresentationValidationOptions)  
+<a name="JptPresentationValidationOptions.fromJSON"></a>
+
+### JptPresentationValidationOptions.fromJSON(json) ⇒ [<code>JptPresentationValidationOptions</code>](#JptPresentationValidationOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JptPresentationValidationOptions</code>](#JptPresentationValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JptPresentationValidator"></a>
+
+## JptPresentationValidator
+**Kind**: global class  
+<a name="JptPresentationValidator.validate"></a>
+
+### JptPresentationValidator.validate(presentation_jpt, issuer, options, fail_fast) ⇒ [<code>DecodedJptPresentation</code>](#DecodedJptPresentation)
+Decodes and validates a Presented [Credential](#Credential) issued as a JPT (JWP Presented Form). A
+[DecodedJptPresentation](#DecodedJptPresentation) is returned upon success.
+
+The following properties are validated according to `options`:
+- the holder's proof on the JWP,
+- the expiration date,
+- the issuance date,
+- the semantic structure.
+
+**Kind**: static method of [<code>JptPresentationValidator</code>](#JptPresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation_jpt | [<code>Jpt</code>](#Jpt) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) | 
+| options | [<code>JptPresentationValidationOptions</code>](#JptPresentationValidationOptions) | 
+| fail_fast | [<code>FailFast</code>](#FailFast) | 
+
+<a name="JptPresentationValidatorUtils"></a>
+
+## JptPresentationValidatorUtils
+Utility functions for verifying JPT presentations.
+
+**Kind**: global class  
+
+* [JptPresentationValidatorUtils](#JptPresentationValidatorUtils)
+    * [.extractIssuerFromPresentedJpt(presentation)](#JptPresentationValidatorUtils.extractIssuerFromPresentedJpt) ⇒ [<code>CoreDID</code>](#CoreDID)
+    * [.checkTimeframesWithValidityTimeframe2024(credential, validity_timeframe, status_check)](#JptPresentationValidatorUtils.checkTimeframesWithValidityTimeframe2024)
+
+<a name="JptPresentationValidatorUtils.extractIssuerFromPresentedJpt"></a>
+
+### JptPresentationValidatorUtils.extractIssuerFromPresentedJpt(presentation) ⇒ [<code>CoreDID</code>](#CoreDID)
+Utility for extracting the issuer field of a credential in JPT representation as DID.
+# Errors
+If the JPT decoding fails or the issuer field is not a valid DID.
+
+**Kind**: static method of [<code>JptPresentationValidatorUtils</code>](#JptPresentationValidatorUtils)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Jpt</code>](#Jpt) | 
+
+<a name="JptPresentationValidatorUtils.checkTimeframesWithValidityTimeframe2024"></a>
+
+### JptPresentationValidatorUtils.checkTimeframesWithValidityTimeframe2024(credential, validity_timeframe, status_check)
+Check timeframe interval in credentialStatus with `RevocationTimeframeStatus`.
+
+**Kind**: static method of [<code>JptPresentationValidatorUtils</code>](#JptPresentationValidatorUtils)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| validity_timeframe | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
+| status_check | [<code>StatusCheck</code>](#StatusCheck) | 
+
 <a name="Jwk"></a>
 
 ## Jwk
@@ -2962,6 +3389,51 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="JwpVerificationOptions"></a>
+
+## JwpVerificationOptions
+**Kind**: global class  
+
+* [JwpVerificationOptions](#JwpVerificationOptions)
+    * _instance_
+        * [.clone()](#JwpVerificationOptions+clone) ⇒ [<code>JwpVerificationOptions</code>](#JwpVerificationOptions)
+        * [.toJSON()](#JwpVerificationOptions+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#JwpVerificationOptions.fromJSON) ⇒ [<code>JwpVerificationOptions</code>](#JwpVerificationOptions)
+        * [.new([opts])](#JwpVerificationOptions.new) ⇒ [<code>JwpVerificationOptions</code>](#JwpVerificationOptions)
+
+<a name="JwpVerificationOptions+clone"></a>
+
+### jwpVerificationOptions.clone() ⇒ [<code>JwpVerificationOptions</code>](#JwpVerificationOptions)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwpVerificationOptions</code>](#JwpVerificationOptions)  
+<a name="JwpVerificationOptions+toJSON"></a>
+
+### jwpVerificationOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwpVerificationOptions</code>](#JwpVerificationOptions)  
+<a name="JwpVerificationOptions.fromJSON"></a>
+
+### JwpVerificationOptions.fromJSON(json) ⇒ [<code>JwpVerificationOptions</code>](#JwpVerificationOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwpVerificationOptions</code>](#JwpVerificationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JwpVerificationOptions.new"></a>
+
+### JwpVerificationOptions.new([opts]) ⇒ [<code>JwpVerificationOptions</code>](#JwpVerificationOptions)
+**Kind**: static method of [<code>JwpVerificationOptions</code>](#JwpVerificationOptions)  
+
+| Param | Type |
+| --- | --- |
+| [opts] | <code>IJwpVerificationOptions</code> \| <code>undefined</code> | 
 
 <a name="Jws"></a>
 
@@ -4343,6 +4815,7 @@ Supported verification method data formats.
 
 * [MethodData](#MethodData)
     * _instance_
+        * [.tryCustom()](#MethodData+tryCustom) ⇒ [<code>CustomMethodData</code>](#CustomMethodData)
         * [.tryDecode()](#MethodData+tryDecode) ⇒ <code>Uint8Array</code>
         * [.tryPublicKeyJwk()](#MethodData+tryPublicKeyJwk) ⇒ [<code>Jwk</code>](#Jwk)
         * [.toJSON()](#MethodData+toJSON) ⇒ <code>any</code>
@@ -4351,8 +4824,15 @@ Supported verification method data formats.
         * [.newBase58(data)](#MethodData.newBase58) ⇒ [<code>MethodData</code>](#MethodData)
         * [.newMultibase(data)](#MethodData.newMultibase) ⇒ [<code>MethodData</code>](#MethodData)
         * [.newJwk(key)](#MethodData.newJwk) ⇒ [<code>MethodData</code>](#MethodData)
+        * [.newCustom(name, data)](#MethodData.newCustom) ⇒ [<code>MethodData</code>](#MethodData)
         * [.fromJSON(json)](#MethodData.fromJSON) ⇒ [<code>MethodData</code>](#MethodData)
 
+<a name="MethodData+tryCustom"></a>
+
+### methodData.tryCustom() ⇒ [<code>CustomMethodData</code>](#CustomMethodData)
+Returns the wrapped custom method data format is `Custom`.
+
+**Kind**: instance method of [<code>MethodData</code>](#MethodData)  
 <a name="MethodData+tryDecode"></a>
 
 ### methodData.tryDecode() ⇒ <code>Uint8Array</code>
@@ -4418,6 +4898,18 @@ An error is thrown if the given `key` contains any private components.
 | Param | Type |
 | --- | --- |
 | key | [<code>Jwk</code>](#Jwk) | 
+
+<a name="MethodData.newCustom"></a>
+
+### MethodData.newCustom(name, data) ⇒ [<code>MethodData</code>](#MethodData)
+Creates a new custom [MethodData](#MethodData).
+
+**Kind**: static method of [<code>MethodData</code>](#MethodData)  
+
+| Param | Type |
+| --- | --- |
+| name | <code>string</code> | 
+| data | <code>any</code> | 
 
 <a name="MethodData.fromJSON"></a>
 
@@ -4570,6 +5062,7 @@ Supported verification method types.
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
         * [.X25519KeyAgreementKey2019()](#MethodType.X25519KeyAgreementKey2019) ⇒ [<code>MethodType</code>](#MethodType)
         * [.JsonWebKey()](#MethodType.JsonWebKey) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.custom(type_)](#MethodType.custom) ⇒ [<code>MethodType</code>](#MethodType)
         * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
 
 <a name="MethodType+toString"></a>
@@ -4605,6 +5098,17 @@ A verification method for use with JWT verification as prescribed by the [Jwk](#
 in the `publicKeyJwk` entry.
 
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType.custom"></a>
+
+### MethodType.custom(type_) ⇒ [<code>MethodType</code>](#MethodType)
+A custom method.
+
+**Kind**: static method of [<code>MethodType</code>](#MethodType)  
+
+| Param | Type |
+| --- | --- |
+| type_ | <code>string</code> | 
+
 <a name="MethodType.fromJSON"></a>
 
 ### MethodType.fromJSON(json) ⇒ [<code>MethodType</code>](#MethodType)
@@ -4990,6 +5494,85 @@ if it is a valid Revocation Bitmap Service.
 | --- | --- |
 | service | [<code>Service</code>](#Service) | 
 
+<a name="RevocationTimeframeStatus"></a>
+
+## RevocationTimeframeStatus
+Information used to determine the current status of a [Credential](#Credential).
+
+**Kind**: global class  
+
+* [RevocationTimeframeStatus](#RevocationTimeframeStatus)
+    * [new RevocationTimeframeStatus(id, index, duration, [start_validity])](#new_RevocationTimeframeStatus_new)
+    * _instance_
+        * [.clone()](#RevocationTimeframeStatus+clone) ⇒ [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)
+        * [.toJSON()](#RevocationTimeframeStatus+toJSON) ⇒ <code>any</code>
+        * [.startValidityTimeframe()](#RevocationTimeframeStatus+startValidityTimeframe) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.endValidityTimeframe()](#RevocationTimeframeStatus+endValidityTimeframe) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.id()](#RevocationTimeframeStatus+id) ⇒ <code>string</code>
+        * [.index()](#RevocationTimeframeStatus+index) ⇒ <code>number</code>
+    * _static_
+        * [.fromJSON(json)](#RevocationTimeframeStatus.fromJSON) ⇒ [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)
+
+<a name="new_RevocationTimeframeStatus_new"></a>
+
+### new RevocationTimeframeStatus(id, index, duration, [start_validity])
+Creates a new `RevocationTimeframeStatus`.
+
+
+| Param | Type |
+| --- | --- |
+| id | <code>string</code> | 
+| index | <code>number</code> | 
+| duration | [<code>Duration</code>](#Duration) | 
+| [start_validity] | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
+
+<a name="RevocationTimeframeStatus+clone"></a>
+
+### revocationTimeframeStatus.clone() ⇒ [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)
+Deep clones the object.
+
+**Kind**: instance method of [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)  
+<a name="RevocationTimeframeStatus+toJSON"></a>
+
+### revocationTimeframeStatus.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)  
+<a name="RevocationTimeframeStatus+startValidityTimeframe"></a>
+
+### revocationTimeframeStatus.startValidityTimeframe() ⇒ [<code>Timestamp</code>](#Timestamp)
+Get startValidityTimeframe value.
+
+**Kind**: instance method of [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)  
+<a name="RevocationTimeframeStatus+endValidityTimeframe"></a>
+
+### revocationTimeframeStatus.endValidityTimeframe() ⇒ [<code>Timestamp</code>](#Timestamp)
+Get endValidityTimeframe value.
+
+**Kind**: instance method of [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)  
+<a name="RevocationTimeframeStatus+id"></a>
+
+### revocationTimeframeStatus.id() ⇒ <code>string</code>
+Return the URL fo the `RevocationBitmapStatus`.
+
+**Kind**: instance method of [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)  
+<a name="RevocationTimeframeStatus+index"></a>
+
+### revocationTimeframeStatus.index() ⇒ <code>number</code>
+Return the index of the credential in the issuer's revocation bitmap if it can be decoded.
+
+**Kind**: instance method of [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)  
+<a name="RevocationTimeframeStatus.fromJSON"></a>
+
+### RevocationTimeframeStatus.fromJSON(json) ⇒ [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="SdJwt"></a>
 
 ## SdJwt
@@ -5006,11 +5589,9 @@ Representation of an SD-JWT of the format
         * [.jwt()](#SdJwt+jwt) ⇒ <code>string</code>
         * [.disclosures()](#SdJwt+disclosures) ⇒ <code>Array.&lt;string&gt;</code>
         * [.keyBindingJwt()](#SdJwt+keyBindingJwt) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.toJSON()](#SdJwt+toJSON) ⇒ <code>any</code>
         * [.clone()](#SdJwt+clone) ⇒ [<code>SdJwt</code>](#SdJwt)
     * _static_
         * [.parse(sd_jwt)](#SdJwt.parse) ⇒ [<code>SdJwt</code>](#SdJwt)
-        * [.fromJSON(json)](#SdJwt.fromJSON) ⇒ [<code>SdJwt</code>](#SdJwt)
 
 <a name="new_SdJwt_new"></a>
 
@@ -5054,12 +5635,6 @@ The disclosures part.
 The optional key binding JWT.
 
 **Kind**: instance method of [<code>SdJwt</code>](#SdJwt)  
-<a name="SdJwt+toJSON"></a>
-
-### sdJwt.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>SdJwt</code>](#SdJwt)  
 <a name="SdJwt+clone"></a>
 
 ### sdJwt.clone() ⇒ [<code>SdJwt</code>](#SdJwt)
@@ -5079,17 +5654,6 @@ Returns `DeserializationError` if parsing fails.
 | Param | Type |
 | --- | --- |
 | sd_jwt | <code>string</code> | 
-
-<a name="SdJwt.fromJSON"></a>
-
-### SdJwt.fromJSON(json) ⇒ [<code>SdJwt</code>](#SdJwt)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>SdJwt</code>](#SdJwt)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
 
 <a name="SdJwtCredentialValidator"></a>
 
@@ -5967,6 +6531,7 @@ A DID Document Verification Method.
 **Kind**: global class  
 
 * [VerificationMethod](#VerificationMethod)
+    * [new VerificationMethod(id, controller, type_, data)](#new_VerificationMethod_new)
     * _instance_
         * [.id()](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.setId(id)](#VerificationMethod+setId)
@@ -5983,6 +6548,19 @@ A DID Document Verification Method.
     * _static_
         * [.newFromJwk(did, key, [fragment])](#VerificationMethod.newFromJwk) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(json)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+
+<a name="new_VerificationMethod_new"></a>
+
+### new VerificationMethod(id, controller, type_, data)
+Create a custom [VerificationMethod](#VerificationMethod).
+
+
+| Param | Type |
+| --- | --- |
+| id | [<code>DIDUrl</code>](#DIDUrl) | 
+| controller | [<code>CoreDID</code>](#CoreDID) | 
+| type_ | [<code>MethodType</code>](#MethodType) | 
+| data | [<code>MethodData</code>](#MethodData) | 
 
 <a name="VerificationMethod+id"></a>
 
@@ -6119,43 +6697,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="CredentialStatus"></a>
-
-## CredentialStatus
-**Kind**: global variable  
-<a name="SubjectHolderRelationship"></a>
-
-## SubjectHolderRelationship
-Declares how credential subjects must relate to the presentation holder.
-
-See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
-
-**Kind**: global variable  
-<a name="AlwaysSubject"></a>
-
-## AlwaysSubject
-The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
-This variant is the default.
-
-**Kind**: global variable  
-<a name="SubjectOnNonTransferable"></a>
-
-## SubjectOnNonTransferable
-The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
-
-**Kind**: global variable  
-<a name="Any"></a>
-
-## Any
-The holder is not required to have any kind of relationship to any credential subject.
-
-**Kind**: global variable  
-<a name="StatusPurpose"></a>
-
-## StatusPurpose
-Purpose of a [StatusList2021](#StatusList2021).
-
-**Kind**: global variable  
 <a name="FailFast"></a>
 
 ## FailFast
@@ -6172,6 +6713,24 @@ Return all errors that occur during validation.
 
 ## FirstError
 Return after the first error occurs.
+
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
+<a name="CredentialStatus"></a>
+
+## CredentialStatus
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="StatusPurpose"></a>
+
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
 
 **Kind**: global variable  
 <a name="StatusCheck"></a>
@@ -6205,42 +6764,33 @@ Validate the status if supported, skip any unsupported
 Skip all status checks.
 
 **Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
+<a name="SubjectHolderRelationship"></a>
 
-## StateMetadataEncoding
+## SubjectHolderRelationship
+Declares how credential subjects must relate to the presentation holder.
+
+See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
+
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
+<a name="AlwaysSubject"></a>
 
-## MethodRelationship
+## AlwaysSubject
+The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
+This variant is the default.
+
 **Kind**: global variable  
-<a name="start"></a>
+<a name="SubjectOnNonTransferable"></a>
 
-## start()
-Initializes the console error panic hook for better error messages
+## SubjectOnNonTransferable
+The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
 
-**Kind**: global function  
-<a name="verifyEd25519"></a>
+**Kind**: global variable  
+<a name="Any"></a>
 
-## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
-Verify a JWS signature secured with the `EdDSA` algorithm and curve `Ed25519`.
+## Any
+The holder is not required to have any kind of relationship to any credential subject.
 
-This function is useful when one is composing a `IJwsVerifier` that delegates
-`EdDSA` verification with curve `Ed25519` to this function.
-
-# Warning
-
-This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
-prior to calling the function.
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| alg | <code>JwsAlgorithm</code> | 
-| signingInput | <code>Uint8Array</code> | 
-| decodedSignature | <code>Uint8Array</code> | 
-| publicKey | [<code>Jwk</code>](#Jwk) | 
-
+**Kind**: global variable  
 <a name="encodeB64"></a>
 
 ## encodeB64(data) ⇒ <code>string</code>
@@ -6263,3 +6813,31 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | --- | --- |
 | data | <code>Uint8Array</code> | 
 
+<a name="verifyEd25519"></a>
+
+## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
+Verify a JWS signature secured with the `EdDSA` algorithm and curve `Ed25519`.
+
+This function is useful when one is composing a `IJwsVerifier` that delegates
+`EdDSA` verification with curve `Ed25519` to this function.
+
+# Warning
+
+This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
+prior to calling the function.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| alg | <code>JwsAlgorithm</code> | 
+| signingInput | <code>Uint8Array</code> | 
+| decodedSignature | <code>Uint8Array</code> | 
+| publicKey | [<code>Jwk</code>](#Jwk) | 
+
+<a name="start"></a>
+
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function  

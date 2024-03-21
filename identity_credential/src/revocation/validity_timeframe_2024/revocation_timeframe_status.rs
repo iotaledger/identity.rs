@@ -79,12 +79,12 @@ impl RevocationTimeframeStatus {
     })
   }
 
-  /// Get startValidityTimeframe value
+  /// Get startValidityTimeframe value.
   pub fn start_validity_timeframe(&self) -> Timestamp {
     self.start_validity_timeframe
   }
 
-  /// Get endValidityTimeframe value
+  /// Get endValidityTimeframe value.
   pub fn end_validity_timeframe(&self) -> Timestamp {
     self.end_validity_timeframe
   }
