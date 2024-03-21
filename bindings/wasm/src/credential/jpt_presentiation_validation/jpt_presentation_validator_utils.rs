@@ -1,7 +1,10 @@
 use crate::common::WasmTimestamp;
-use crate::credential::{options::WasmStatusCheck, WasmCredential, WasmJpt};
+use crate::credential::options::WasmStatusCheck;
+use crate::credential::WasmCredential;
+use crate::credential::WasmJpt;
 use crate::did::WasmCoreDID;
-use crate::error::{Result, WasmResult};
+use crate::error::Result;
+use crate::error::WasmResult;
 use identity_iota::credential::JptPresentationValidatorUtils;
 use wasm_bindgen::prelude::*;
 

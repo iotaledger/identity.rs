@@ -121,6 +121,7 @@ impl TryFrom<JwkExt> for Jwk {
 
     let (kty, params) = match value.key_params {
       JwkAlgorithmParameters::OctetKeyPair(p) => (JwkType::Okp, JwkParams::Okp(JwkParamsOkp::from(p))),
+      _ => unreachable!(),
     };
 
     Ok(Self {

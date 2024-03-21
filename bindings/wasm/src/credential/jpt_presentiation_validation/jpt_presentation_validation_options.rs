@@ -17,7 +17,10 @@ impl WasmJptPresentationValidationOptions {
   #[wasm_bindgen(constructor)]
   pub fn new(opts: Option<IJptPresentationValidationOptions>) -> Result<WasmJptPresentationValidationOptions> {
     if let Some(opts) = opts {
-      opts.into_serde().wasm_result().map(WasmJptPresentationValidationOptions)
+      opts
+        .into_serde()
+        .wasm_result()
+        .map(WasmJptPresentationValidationOptions)
     } else {
       Ok(WasmJptPresentationValidationOptions::default())
     }
@@ -56,4 +59,3 @@ interface IJptPresentationValidationOptions {
      */
     readonly verificationOptions?: JwpVerificationOptions;
 }"#;
-

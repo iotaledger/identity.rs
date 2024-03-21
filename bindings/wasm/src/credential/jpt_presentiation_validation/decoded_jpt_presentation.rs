@@ -32,7 +32,7 @@ impl WasmDecodedJptPresentation {
   #[wasm_bindgen]
   pub fn aud(&self) -> Option<String> {
     self.0.aud.as_ref().map(ToString::to_string)
-  } 
+  }
 }
 
 impl From<DecodedJptPresentation> for WasmDecodedJptPresentation {
