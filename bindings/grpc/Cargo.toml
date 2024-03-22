@@ -20,7 +20,7 @@ path = "src/main.rs"
 anyhow = "1.0.75"
 futures = { version = "0.3" }
 identity_eddsa_verifier = { path = "../../identity_eddsa_verifier" }
-identity_iota = { path = "../../identity_iota", features = ["resolver", "sd-jwt", "domain-linkage", "domain-linkage-fetch"] }
+identity_iota = { path = "../../identity_iota", features = ["resolver", "sd-jwt", "domain-linkage", "domain-linkage-fetch", "status-list-2021"] }
 identity_stronghold = { path = "../../identity_stronghold", features = ["send-sync-storage"] }
 iota-sdk = { version = "1.1.2", features = ["stronghold"] }
 prost = "0.12"
