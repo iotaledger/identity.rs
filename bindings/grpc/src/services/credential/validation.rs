@@ -35,7 +35,7 @@ pub enum VcValidationError {
   #[error("DID resolution error")]
   DidResolutionError(#[source] resolver::Error),
   #[error("Provided an invalid StatusList2021Credential")]
-  InvalidStatusList2020Credential(#[source] identity_iota::core::Error),
+  InvalidStatusList2021Credential(#[source] identity_iota::core::Error),
   #[error("The provided credential has been revoked")]
   RevokedCredential,
   #[error("The provided credential has expired")]
@@ -47,7 +47,7 @@ pub enum VcValidationError {
 impl From<VcValidationError> for Status {
   fn from(error: VcValidationError) -> Self {
     let code = match &error {
-      VcValidationError::InvalidStatusList2020Credential(_) => Code::InvalidArgument,
+      VcValidationError::InvalidStatusList2021Credential(_) => Code::InvalidArgument,
       _ => Code::Internal,
     };
 
@@ -106,7 +106,7 @@ impl VcValidation for VcValidator {
 
     if let Some(status_list_json) = status_list_credential_json {
       let status_list = StatusList2021Credential::from_json(&status_list_json)
-        .map_err(VcValidationError::InvalidStatusList2020Credential)?;
+        .map_err(VcValidationError::InvalidStatusList2021Credential)?;
       JwtCredentialValidatorUtils::check_status_with_status_list_2021(
         &decoded_credential.credential,
         &status_list,
