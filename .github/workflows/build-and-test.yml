@@ -129,7 +129,7 @@ jobs:
         with:
           branch: add-action
         env:
-          COMPOSE_PROFILES: 'inx-faucet.inx-indexer'
+          COMPOSE_PROFILES: 'inx-faucet,inx-indexer'
 
       - name: Run tests
         run: cargo test --workspace --all-features --release
