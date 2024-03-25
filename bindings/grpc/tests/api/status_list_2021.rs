@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::helpers::TestServer;
 use _status_list_2021::status_list2021_svc_client::StatusList2021SvcClient;
 use _status_list_2021::CreateRequest;

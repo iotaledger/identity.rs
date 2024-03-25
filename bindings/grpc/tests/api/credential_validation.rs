@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use _credentials::vc_validation_client::VcValidationClient;
 use _credentials::VcValidationRequest;
 use identity_iota::core::FromJson;

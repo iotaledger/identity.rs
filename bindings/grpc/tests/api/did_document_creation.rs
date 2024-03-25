@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_stronghold::StrongholdStorage;
 use iota_sdk::types::block::address::ToBech32Ext;
 use tonic::Request;

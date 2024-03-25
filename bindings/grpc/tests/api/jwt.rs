@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use _credentials::jwt_client::JwtClient;
 use _credentials::JwtCreationRequest;
 use identity_iota::core::Object;

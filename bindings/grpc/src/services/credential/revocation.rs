@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use credential_verification::credential_revocation_server::CredentialRevocation;
 use credential_verification::credential_revocation_server::CredentialRevocationServer;
 use credential_verification::RevocationCheckRequest;
