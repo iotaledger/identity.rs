@@ -23,8 +23,8 @@ serde = { version = "1.0", default-features = false, features = ["alloc", "deriv
 thiserror = { version = "1.0", default-features = false }
 strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0", default-features = false }
-json-proof-token = { version = "0.3.3" }
-zkryptium = { version = "0.1.9", default-features = false, features = ["bbsplus"] }
+json-proof-token = { version = "0.3.4" }
+zkryptium = { version = "0.2.0", default-features = false, features = ["bbsplus"] }
 
 [workspace.package]
 authors = ["IOTA Stiftung"]
