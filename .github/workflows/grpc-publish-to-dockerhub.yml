@@ -40,3 +40,13 @@ jobs:
         file: bindings/grpc/Dockerfile
         push: ${{ !inputs.dry-run }}
         labels: iotaledger/identity-grpc:${{ inputs.tag }}
+
+    - name: Docker Hub Description
+      uses: peter-evans/dockerhub-description@e98e4d1628a5f3be2be7c231e50981aee98723ae
+      with:
+        username: ${{ secrets.IOTALEDGER_DOCKER_USERNAME }}
+        password: ${{ secrets.IOTALEDGER_DOCKER_PASSWORD }}
+        repository: iotaledger/identity-grpc
+        readme-filepath: ./bindigns/grpc/README.md
+        short-description: ${{ github.event.repository.description }}
+
