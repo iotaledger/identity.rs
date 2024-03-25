@@ -75,3 +75,9 @@ impl TryFrom<&Object> for MapStringAny {
     Ok(map.unchecked_into::<MapStringAny>())
   }
 }
+
+impl Default for MapStringAny {
+  fn default() -> Self {
+    js_sys::Map::new().unchecked_into()
+  }
+}
