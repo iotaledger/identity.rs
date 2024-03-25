@@ -30,6 +30,7 @@ Make sure to provide a valid stronghold snapshot at the provided `SNAPSHOT_PATH`
 | `StatusList2021Credential` update                                              | `status_list_2021/StatusList2021Svc.update`                              | [status_list_2021.proto](https://github.com/iotaledger/identity.rs/blob/grpc-bindings/bindings/grpc/proto/status_list_2021.proto) |
 
 ## Testing
+
 ### Domain Linkage
 
 #### Http server
@@ -75,7 +76,7 @@ The arguments can be taken from examples, e.g. after running a `6_domain_linkage
 1. for convenience, you can find a script to start the GRPC server, that you can adjust in `tooling/start-rpc-server.sh`, don't forget to insert the env variables as described above
 
 #### Calling the endpoints
-- call the `validate_domain` endpoint with your domain, e.g with:
+1. call the `validate_domain` endpoint with your domain, e.g with:
     
     ```json
     {
@@ -96,7 +97,7 @@ The arguments can be taken from examples, e.g. after running a `6_domain_linkage
     }
     ```
 
-- to call the `validate_did` endpoint, you need a DID to check, you can find a testable in you domain linkage credential. for this just decode it (e.g. on jwt.io) and get the `iss` value, then you can submit as "did" like following
+1. to call the `validate_did` endpoint, you need a DID to check, you can find a testable in you domain linkage credential. for this just decode it (e.g. on jwt.io) and get the `iss` value, then you can submit as "did" like following
 
     ```json
     {
