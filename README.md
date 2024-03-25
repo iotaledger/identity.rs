@@ -24,7 +24,7 @@
 
 ## Introduction
 
-IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) specifications. This library can be used to create, resolve and authenticate digital identities and to create verifiable credentials and presentations in order to share information in a verifiable manner and establish trust in the digital world. It does so while supporting secure storage of cryptographic keys, which can be implemented for your preferred key management system. Many of the individual libraries (Rust crates) are agnostic over the concrete DID method, with the exception of some libraries dedicated to implement the [IOTA DID method](https://wiki.iota.org/shimmer/identity.rs/specs/did/iota_did_method_spec/), which is an implementation of decentralized digital identity on the IOTA and Shimmer networks. Written in stable Rust, IOTA Identity has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
+IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) specifications. This library can be used to create, resolve and authenticate digital identities and to create verifiable credentials and presentations in order to share information in a verifiable manner and establish trust in the digital world. It does so while supporting secure storage of cryptographic keys, which can be implemented for your preferred key management system. Many of the individual libraries (Rust crates) are agnostic over the concrete DID method, with the exception of some libraries dedicated to implement the [IOTA DID method](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec/), which is an implementation of decentralized digital identity on the IOTA and Shimmer networks. Written in stable Rust, IOTA Identity has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
 ## Bindings
 
@@ -39,8 +39,8 @@ We provide a collection of experimental [gRPC services](https://github.com/iotal
 
 - API References:
   - [Rust API Reference](https://docs.rs/identity_iota/latest/identity_iota/): Package documentation (cargo docs).
-  - [Wasm API Reference](https://wiki.iota.org/shimmer/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation.
-- [Identity Documentation Pages](https://wiki.iota.org/shimmer/identity.rs/introduction): Supplementing documentation with context around identity and simple examples on library usage.
+  - [Wasm API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation.
+- [Identity Documentation Pages](https://wiki.iota.org/identity.rs/introduction): Supplementing documentation with context around identity and simple examples on library usage.
 - [Examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples): Practical code snippets to get you started with the library.
 
 ## Prerequisites
@@ -241,7 +241,7 @@ For detailed development progress, see the IOTA Identity development [kanban boa
 
 We would love to have you help us with the development of IOTA Identity. Each and every contribution is greatly valued!
 
-Please review the [contribution](https://wiki.iota.org/shimmer/identity.rs/contribute) and [workflow](https://wiki.iota.org/shimmer/identity.rs/workflow) sections in the [IOTA Wiki](https://wiki.iota.org/).
+Please review the [contribution](https://wiki.iota.org/identity.rs/contribute) and [workflow](https://wiki.iota.org/identity.rs/workflow) sections in the [IOTA Wiki](https://wiki.iota.org/).
 
 To contribute directly to the repository, simply fork the project, push your changes to your fork and create a pull request to get them included!
 
