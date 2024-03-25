@@ -11,14 +11,17 @@ message KeyBindingOptions {
 }
 
 message VerificationRequest {
+    // SD-JWT encoded credential.
     string jwt = 1;
     optional KeyBindingOptions kb_options = 2;
 }
 
 message VerificationResponse {
+    // JSON encoded credential, extracted from the request's SD-JWT.
     string credential = 1;
 }
 
 service Verification {
+    // Performs all validation steps on a SD-JWT encoded credential.
     rpc verify(VerificationRequest) returns (VerificationResponse);
 }
