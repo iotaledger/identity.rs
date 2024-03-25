@@ -8,7 +8,7 @@ Run `docker build -f bindings/grpc/Dockerfile -t iotaleger/identity-grpc .` from
 
 ### Dockerimage env variables and volume binds
 The provided docker image requires the following variables to be set in order to properly work:
-- `API_ENDPOINT`: IOTA's node address.
+- `API_ENDPOINT`: IOTA node address.
 - `STRONGHOLD_PWD`: Stronghold password.
 - `SNAPSHOT_PATH`: Stronghold's snapshot location.
 
@@ -31,19 +31,18 @@ Make sure to provide a valid stronghold snapshot at the provided `SNAPSHOT_PATH`
 
 ## Testing
 ### Domain Linkage
-Following is a description about how to manually test the domain linkage service. The steps for the other services might vary a bit.
 
 #### Http server
-If you want to test domain linkage, you need a server, that's reachable via HTTPS. If you already have one, ignore the server setup steps here and just make sure your server provides the `did-configuration.json` file as described here.
+In order to test domain linkage, you need access to a server that is reachable via HTTPS. If you already have one, you can ignore the server setup steps here and and provide the `did-configuration.json` on your server.
 
-- create test server folder with did configuration in it, e.g. (you can also use the template in `./tooling/domain-linkage-test-server`)
+1. create a folder with did configuration in it, e.g. (you can also use the template in `./tooling/domain-linkage-test-server`)
     ```raw
     test-server/
     └── .well-known
         └── did-configuration.json
     ```
     
-    `did-configuration` looks like this for now:  
+    the `did-configuration` should look like this for now:  
     
     ```json
     {
@@ -53,26 +52,27 @@ If you want to test domain linkage, you need a server, that's reachable via HTTP
         ]
     }
     ```
-- start a server, that will serve this folder, e.g. with a "http-server" from NodeJs : `http-server  ./test-server/`, in this example the server should now be running on local port 8080
-- now tunnel your server's port (here 8080) to a public domain with https, e.g. with ngrok:
+1. start a server that will serve this folder, e.g. with a NodeJs "http-server": `http-server ./test-server/`, in this example the server should now be running on local port 8080
+1. tunnel your server's port (here 8080) to a public domain with https, e.g. with ngrok:
     `ngrok http http://127.0.0.1:8080`  
     the output should now have a line like  
     `Forwarding                    https://0d40-2003-d3-2710-e200-485f-e8bb-7431-79a7.ngrok-free.app -> http://127.0.0.1:8080`  
-    check that the https url is reachable, this will be used in the next step. you can also start ngrok with a static domain, that you do not have to update credentials after each http server restart
-- for convenience, you can find a script to start the HTTP server, that you can adjust in `tooling/start-http-server.sh`, don't forget to insert your static domain or to remove the `--domain` parameter
+    check that the https url is reachable, this will be used in the next step. You can also start ngrok with a static domain, which means you don't have to update credentials after each http server restart
+1. for convenience, you can find a script to start the HTTP server, that you can adjust in `tooling/start-http-server.sh`, don't forget to insert your static domain or to remove the `--domain` parameter
 
 #### Domain linkage credential
-- copy this public url and insert it into the advanced test 6 (the one for domain linkage) as domain 1, e.g. `let domain_1: Url = Url::parse("https://0d40-2003-d3-2710-e200-485f-e8bb-7431-79a7.ngrok-free.app")?;`
-- run the example with `cargo run --release --example 6_domain_linkage`
+1. copy the public url and insert it into [6_domain_linkage.rs](../../examples/1_advanced/6_domain_linkage.rs) as domain 1, e.g. `let domain_1: Url = Url::parse("https://0d40-2003-d3-2710-e200-485f-e8bb-7431-79a7.ngrok-free.app")?;`
+.1 run the example with `cargo run --release --example 6_domain_linkage`
 
 #### GRPC server
-- grab the configuration resource from the log and replace the contents of your `did-configuration.json` with it
-- you now have a publicly reachable (sub)domain, that serves a `did-configuration` file containing a credential pointing to your DID
-- to verify this, run the server via Docker or with the following command, remember to replace the placeholders ;) `API_ENDPOINT=replace_me STRONGHOLD_PWD=replace_me SNAPSHOT_PATH=replace_me cargo run --release`, arguments can be taken from examples, e.g. after running a `6_domain_linkage.rs`, that also logs snapshot path passed to secret manager (`let snapshot_path = random_stronghold_path(); dbg!(&snapshot_path.to_str());`), for example
+1. grab the configuration resource from the log and replace the contents of your `did-configuration.json` with it
+1. you now have a publicly reachable (sub)domain, that serves a `did-configuration` file containing a credential pointing to your DID
+1. to verify this, run the server via Docker or with the following command, remember to replace the placeholders ;) `API_ENDPOINT=replace_me STRONGHOLD_PWD=replace_me SNAPSHOT_PATH=replace_me cargo run --release`
+The arguments can be taken from examples, e.g. after running a `6_domain_linkage.rs`, which also logs snapshot path passed to secret manager (`let snapshot_path = random_stronghold_path(); dbg!(&snapshot_path.to_str());`), for example
     - API_ENDPOINT: `"http://localhost"`
     - STRONGHOLD_PWD: `"secure_password"`
     - SNAPSHOT_PATH: `"/var/folders/41/s1sm86jx0xl4x435t81j81440000gn/T/test_strongholds/8o2Nyiv5ENBi7Ik3dEDq9gNzSrqeUdqi.stronghold"`
-- for convenience, you can find a script to start the GRPC server, that you can adjust in `tooling/start-rpc-server.sh`, don't forget to insert the env variables as described above
+1. for convenience, you can find a script to start the GRPC server, that you can adjust in `tooling/start-rpc-server.sh`, don't forget to insert the env variables as described above
 
 #### Calling the endpoints
 - call the `validate_domain` endpoint with your domain, e.g with:
