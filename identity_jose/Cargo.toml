@@ -29,3 +29,6 @@ signature = { version = "2", default-features = false }
 [[example]]
 name = "jws_encoding_decoding"
 test = true
+
+[lints]
+workspace = true

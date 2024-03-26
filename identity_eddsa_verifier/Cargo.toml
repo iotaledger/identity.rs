@@ -18,3 +18,6 @@ iota-crypto = { version = "0.23", default-features = false, features = ["std"] }
 [features]
 ed25519 = ["iota-crypto/ed25519"]
 default = ["ed25519"]
+
+[lints]
+workspace = true

@@ -28,3 +28,6 @@ serde_json.workspace = true
 [[bench]]
 name = "deserialize_document"
 harness = false
+
+[lints]
+workspace = true
