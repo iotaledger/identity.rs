@@ -43,6 +43,7 @@ jobs:
 
     - name: Docker Hub Description
       uses: peter-evans/dockerhub-description@e98e4d1628a5f3be2be7c231e50981aee98723ae
+      if: ${{ !inputs.dry-run }}
       with:
         username: ${{ secrets.IOTALEDGER_DOCKER_USERNAME }}
         password: ${{ secrets.IOTALEDGER_DOCKER_PASSWORD }}
