@@ -47,6 +47,6 @@ jobs:
         username: ${{ secrets.IOTALEDGER_DOCKER_USERNAME }}
         password: ${{ secrets.IOTALEDGER_DOCKER_PASSWORD }}
         repository: iotaledger/identity-grpc
-        readme-filepath: ./bindigns/grpc/README.md
+        readme-filepath: ./bindings/grpc/README.md
         short-description: ${{ github.event.repository.description }}
 
