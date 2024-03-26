@@ -55,3 +55,6 @@ validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation"]
 domain-linkage = ["validator"]
 domain-linkage-fetch = ["domain-linkage", "dep:reqwest", "dep:futures"]
 sd-jwt = ["credential", "validator", "sd-jwt-payload"]
+
+[lints]
+workspace = true
