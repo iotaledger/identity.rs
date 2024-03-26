@@ -278,8 +278,8 @@ impl DomainLinkage for DomainLinkageService {
   ) -> Result<Response<ValidateDomainResponse>, Status> {
     let request_data = &req.into_inner();
     // parse given domain
-    let domain: Url = Url::parse(&request_data.domain)
-      .map_err(|err| DomainLinkageError::DomainParsing(err.to_string()))?;
+    let domain: Url =
+      Url::parse(&request_data.domain).map_err(|err| DomainLinkageError::DomainParsing(err.to_string()))?;
 
     // get validation status for all issuer dids
     let status_infos = self
@@ -304,8 +304,8 @@ impl DomainLinkage for DomainLinkageService {
   ) -> Result<Response<ValidateDomainResponse>, Status> {
     let request_data = &req.into_inner();
     // parse given domain
-    let domain: Url = Url::parse(&request_data.domain)
-      .map_err(|err| DomainLinkageError::DomainParsing(err.to_string()))?;
+    let domain: Url =
+      Url::parse(&request_data.domain).map_err(|err| DomainLinkageError::DomainParsing(err.to_string()))?;
     // parse config
     let config = DomainLinkageConfiguration::from_json(&request_data.did_configuration.to_string()).map_err(|err| {
       DomainLinkageError::DidConfigurationParsing(format!("could not parse given DID configuration; {}", &err))

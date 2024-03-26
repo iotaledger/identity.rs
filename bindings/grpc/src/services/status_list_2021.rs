@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collection::HashSet;
+use std::collections::HashSet;
 
 use identity_iota::core::Context;
 use identity_iota::core::FromJson;
@@ -103,13 +103,13 @@ impl StatusList2021Svc for StatusList2021Service {
       .map_err(|_| Error::InvalidStatusListLength)?;
 
     let mut builder = StatusList2021CredentialBuilder::new(status_list);
-    let contexts = contexts.into_iter().collect::<HashSet>();
+    let contexts = contexts.into_iter().collect::<HashSet<_>>();
     for ctx in contexts {
       let url = Url::parse(&ctx).map_err(move |_| Error::InvalidContext(ctx))?;
       builder = builder.context(Context::Url(url));
     }
 
-    let types = types.into_iter().collect::<HashSet>();
+    let types = types.into_iter().collect::<HashSet<_>>();
     for t in types {
       builder = builder.add_type(t);
     }
