@@ -32,6 +32,9 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 - [Web Assembly](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm/) (JavaScript/TypeScript)
 
+## gRPC
+
+We provide a collection of experimental [gRPC services](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/grpc/)
 ## Documentation and Resources
 
 - API References:

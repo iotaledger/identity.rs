@@ -1,0 +1,43 @@
+[package]
+name = "identity-grpc"
+version = "0.1.0"
+authors = ["IOTA Stiftung"]
+edition = "2021"
+homepage = "https://www.iota.org"
+license = "Apache-2.0"
+repository = "https://github.com/iotaledger/identity.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "identity-grpc"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.75"
+futures = { version = "0.3" }
+identity_eddsa_verifier = { path = "../../identity_eddsa_verifier" }
+identity_iota = { path = "../../identity_iota", features = ["resolver", "sd-jwt", "domain-linkage", "domain-linkage-fetch", "status-list-2021"] }
+identity_stronghold = { path = "../../identity_stronghold", features = ["send-sync-storage"] }
+iota-sdk = { version = "1.1.2", features = ["stronghold"] }
+openssl = { version = "0.10", features = ["vendored"] }
+prost = "0.12"
+rand = "0.8.5"
+serde = { version = "1.0.193", features = ["derive", "alloc"] }
+serde_json = { version = "1.0.108", features = ["alloc"] }
+thiserror = "1.0.50"
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+tokio-stream = { version = "0.1.14", features = ["net"] }
+tonic = "0.10"
+tracing = { version = "0.1.40", features = ["async-await"] }
+tracing-subscriber = "0.3.18"
+url = { version = "2.5", default-features = false }
+
+[dev-dependencies]
+identity_storage = { path = "../../identity_storage", features = ["memstore"] }
+
+[build-dependencies]
+tonic-build = "0.10"
