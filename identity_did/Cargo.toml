@@ -11,7 +11,7 @@ repository.workspace = true
 description = "Agnostic implementation of the Decentralized Identifiers (DID) standard."
 
 [dependencies]
-did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
+did_url_parser = { version = "0.2.0", features = ["std", "serde"] }
 form_urlencoded = { version = "1.2.0", default-features = false, features = ["alloc"] }
 identity_core = { version = "=1.1.1", path = "../identity_core" }
 serde.workspace = true
