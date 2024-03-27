@@ -8,7 +8,7 @@ use core::fmt::Formatter;
 use core::str::FromStr;
 use std::hash::Hash;
 
-use did_url::DID as BaseDIDUrl;
+use did_url_parser::DID as BaseDIDUrl;
 
 use identity_core::common::KeyComparable;
 
