@@ -25,6 +25,10 @@ impl MethodType {
   /// A verification method for use with JWT verification as prescribed by the [`Jwk`](::identity_jose::jwk::Jwk)
   /// in the [`publicKeyJwk`](crate::MethodData::PublicKeyJwk) entry.
   pub const JSON_WEB_KEY: Self = Self(Cow::Borrowed(JSON_WEB_KEY_METHOD_TYPE));
+  /// Construct a custom method type.
+  pub fn custom(type_: impl AsRef<str>) -> Self {
+    Self(Cow::Owned(type_.as_ref().to_owned()))
+  }
 }
 
 impl MethodType {

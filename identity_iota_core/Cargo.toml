@@ -53,3 +53,6 @@ revocation-bitmap = ["identity_credential/revocation-bitmap"]
 send-sync-client-ext = []
 # Disables the blanket implementation of `IotaIdentityClientExt`.
 test = ["client"]
+
+[lints]
+workspace = true
