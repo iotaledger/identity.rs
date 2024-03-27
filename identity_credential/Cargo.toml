@@ -22,8 +22,8 @@ indexmap = { version = "2.0", default-features = false, features = ["std", "serd
 itertools = { version = "0.11", default-features = false, features = ["use_std"], optional = true }
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
 reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json", "stream"], optional = true }
-roaring = { version = "0.10.2", default-features = false, features = ["serde"], optional = true }
-sd-jwt-payload = { version = "0.2.1", default-features = false, features = ["sha"], optional = true }
+roaring = { version = "0.10", default-features = false, features = ["std"], optional = true }
+sd-jwt-payload = { version = "0.2.0", default-features = false, features = ["sha"], optional = true }
 serde.workspace = true
 serde-aux = { version = "4.3.1", default-features = false, optional = true }
 serde_json.workspace = true
@@ -55,6 +55,3 @@ validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation"]
 domain-linkage = ["validator"]
 domain-linkage-fetch = ["domain-linkage", "dep:reqwest", "dep:futures"]
 sd-jwt = ["credential", "validator", "sd-jwt-payload"]
-
-[lints]
-workspace = true

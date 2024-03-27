@@ -30,6 +30,3 @@ tokio = { version = "1.29.0", default-features = false, features = ["macros", "s
 default = []
 # Enables `Send` + `Sync` bounds for the trait implementations on `StrongholdStorage`.
 send-sync-storage = ["identity_storage/send-sync-storage"]
-
-[lints]
-workspace = true

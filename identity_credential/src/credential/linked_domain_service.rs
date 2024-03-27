@@ -144,11 +144,6 @@ impl LinkedDomainService {
         .as_slice(),
     }
   }
-
-  /// Returns a reference to the `Service` id.
-  pub fn id(&self) -> &DIDUrl {
-    self.service.id()
-  }
 }
 
 #[cfg(test)]

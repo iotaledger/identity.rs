@@ -15,7 +15,6 @@ mod method_scope;
 mod method_type;
 
 pub use self::builder::MethodBuilder;
-pub use self::material::CustomMethodData;
 pub use self::material::MethodData;
 pub use self::method::VerificationMethod;
 pub use self::method_ref::MethodRef;

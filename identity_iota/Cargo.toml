@@ -69,6 +69,3 @@ sd-jwt = ["identity_credential/sd-jwt"]
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
-
-[lints]
-workspace = true

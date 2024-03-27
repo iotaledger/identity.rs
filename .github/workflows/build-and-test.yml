@@ -101,7 +101,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           cargo metadata --format-version 1 | \
-          jq -r '.workspace_members[]' | \
+          jq -r '.workspace_members[] | select(contains("examples") | not)' | \
           awk '{print $1}' | \
           xargs -I {} cargo check -p {} --no-default-features
 
@@ -109,7 +109,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           cargo metadata --format-version 1 | \
-          jq -r '.workspace_members[]' | \
+          jq -r '.workspace_members[] | select(contains("examples") | not)' | \
           awk '{print $1}' | \
           xargs -I {} cargo check -p {}
 

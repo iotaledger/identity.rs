@@ -27,6 +27,3 @@ serde_json.workspace = true
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
-
-[lints]
-workspace = true

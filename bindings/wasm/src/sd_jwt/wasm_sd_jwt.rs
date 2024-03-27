@@ -77,4 +77,5 @@ impl WasmSdJwt {
   }
 }
 
+impl_wasm_json!(WasmSdJwt, SdJwt);
 impl_wasm_clone!(WasmSdJwt, SdJwt);

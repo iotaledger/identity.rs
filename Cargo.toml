@@ -16,7 +16,7 @@ members = [
   "examples",
 ]
 
-exclude = ["bindings/wasm", "bindings/grpc"]
+exclude = ["bindings/wasm"]
 
 [workspace.dependencies]
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
@@ -31,6 +31,3 @@ homepage = "https://www.iota.org"
 license = "Apache-2.0"
 repository = "https://github.com/iotaledger/identity.rs"
 rust-version = "1.65"
-
-[workspace.lints.clippy]
-result_large_err = "allow"

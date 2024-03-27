@@ -20,7 +20,6 @@ use crate::verification_method::MethodBuilder;
 use crate::verification_method::MethodData;
 use crate::verification_method::MethodRef;
 use crate::verification_method::MethodType;
-use crate::CustomMethodData;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_did::DID;
@@ -29,8 +28,8 @@ use identity_did::DID;
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#verification-method-properties)
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(from = "_VerificationMethod")]
 pub struct VerificationMethod {
+  #[serde(deserialize_with = "deserialize_id_with_fragment")]
   pub(crate) id: DIDUrl,
   pub(crate) controller: CoreDID,
   #[serde(rename = "type")]
@@ -244,48 +243,5 @@ impl KeyComparable for VerificationMethod {
   #[inline]
   fn key(&self) -> &Self::Key {
     self.id()
-  }
-}
-
-// Horrible workaround for a tracked serde issue https://github.com/serde-rs/serde/issues/2200. Serde doesn't "consume"
-// the input when deserializing flattened enums (MethodData in this case) causing duplication of data (in this case
-// it ends up in the properties object). This workaround simply removes the duplication.
-#[derive(Deserialize)]
-struct _VerificationMethod {
-  #[serde(deserialize_with = "deserialize_id_with_fragment")]
-  pub(crate) id: DIDUrl,
-  pub(crate) controller: CoreDID,
-  #[serde(rename = "type")]
-  pub(crate) type_: MethodType,
-  #[serde(flatten)]
-  pub(crate) data: MethodData,
-  #[serde(flatten)]
-  pub(crate) properties: Object,
-}
-
-impl From<_VerificationMethod> for VerificationMethod {
-  fn from(value: _VerificationMethod) -> Self {
-    let _VerificationMethod {
-      id,
-      controller,
-      type_,
-      data,
-      mut properties,
-    } = value;
-    let key = match &data {
-      MethodData::PublicKeyBase58(_) => "publicKeyBase58",
-      MethodData::PublicKeyJwk(_) => "publicKeyJwk",
-      MethodData::PublicKeyMultibase(_) => "publicKeyMultibase",
-      MethodData::Custom(CustomMethodData { name, .. }) => name.as_str(),
-    };
-    properties.remove(key);
-
-    VerificationMethod {
-      id,
-      controller,
-      type_,
-      data,
-      properties,
-    }
   }
 }

@@ -8,7 +8,6 @@ use crate::did::WasmCoreDID;
 use crate::did::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity_iota::core::Object;
 use identity_iota::did::CoreDID;
 use identity_iota::verification::VerificationMethod;
 use wasm_bindgen::prelude::*;
@@ -34,24 +33,6 @@ impl WasmVerificationMethod {
   #[wasm_bindgen(js_name = newFromJwk)]
   pub fn new_from_jwk(did: &IToCoreDID, key: &WasmJwk, fragment: Option<String>) -> Result<WasmVerificationMethod> {
     VerificationMethod::new_from_jwk(CoreDID::from(did), key.0.clone(), fragment.as_deref())
-      .map(Self)
-      .wasm_result()
-  }
-
-  /// Create a custom {@link VerificationMethod}.
-  #[wasm_bindgen(constructor)]
-  pub fn new(
-    id: &WasmDIDUrl,
-    controller: &WasmCoreDID,
-    type_: &WasmMethodType,
-    data: &WasmMethodData,
-  ) -> Result<WasmVerificationMethod> {
-    VerificationMethod::builder(Object::new())
-      .type_(type_.0.clone())
-      .data(data.0.clone())
-      .controller(controller.0.clone())
-      .id(id.0.clone())
-      .build()
       .map(Self)
       .wasm_result()
   }
