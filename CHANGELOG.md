@@ -6,7 +6,7 @@
 
 ### Patch
 
-- Fix compilation error caused by the roaring crate [\#1306](https://github.com/iotaledger/identity.rs/pull/1306)
+- Fix compilation error caused by the `roaring` crate [\#1306](https://github.com/iotaledger/identity.rs/pull/1306)
 
 ## [v1.1.0](https://github.com/iotaledger/identity.rs/tree/v1.1.0) (2024-02-07)
 
@@ -14,15 +14,15 @@
 
 ### Added
 
-- Support Selective Disclosure SD-JWT [\#1268](https://github.com/iotaledger/identity.rs/pull/1268)
+- Update `sd-jwt-payload` dependency [\#1296](https://github.com/iotaledger/identity.rs/pull/1296)
 - Add support for StatusList2021 [\#1273](https://github.com/iotaledger/identity.rs/pull/1273)
-- Update sd-jwt-payload dependency [\#1296](https://github.com/iotaledger/identity.rs/pull/1296)
+- Support Selective Disclosure SD-JWT [\#1268](https://github.com/iotaledger/identity.rs/pull/1268)
 
 ### Patch
 
-- Validate domain-linkage URL making sure they only include an origin [\#1267](https://github.com/iotaledger/identity.rs/pull/1267)
-- Credentials cannot be unrevoked with StatusList2021 [\#1284](https://github.com/iotaledger/identity.rs/pull/1284)
 - Fix RevocationBitmap2022 encoding bug [\#1292](https://github.com/iotaledger/identity.rs/pull/1292)
+- Credentials cannot be unrevoked with StatusList2021 [\#1284](https://github.com/iotaledger/identity.rs/pull/1284)
+- Validate domain-linkage URL making sure they only include an origin [\#1267](https://github.com/iotaledger/identity.rs/pull/1267)
 
 ## [v1.0.0](https://github.com/iotaledger/identity.rs/tree/v1.0.0) (2023-11-02)
 
