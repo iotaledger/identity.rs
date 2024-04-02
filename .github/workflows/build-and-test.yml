@@ -126,8 +126,6 @@ jobs:
       - name: Start iota sandbox
         if: matrix.os == 'ubuntu-latest'
         uses: 'iotaledger/iota-sandbox/.github/actions/setup@v1.1.0'
-        with:
-          branch: add-action
         env:
           COMPOSE_PROFILES: 'inx-faucet,inx-indexer'
 
@@ -200,8 +198,6 @@ jobs:
 
       - name: Start iota sandbox
         uses: 'iotaledger/iota-sandbox/.github/actions/setup@v1.1.0'
-        with:
-          branch: add-action
         env:
           COMPOSE_PROFILES: 'inx-faucet,inx-indexer'
 
