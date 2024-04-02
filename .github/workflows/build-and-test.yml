@@ -125,7 +125,7 @@ jobs:
 
       - name: Start iota sandbox
         if: matrix.os == 'ubuntu-latest'
-        uses: 'iotaledger/iota-sandbox/.github/actions/setup@add-action'
+        uses: 'iotaledger/iota-sandbox/.github/actions/setup@v1.1.0'
         with:
           branch: add-action
         env:
@@ -154,7 +154,7 @@ jobs:
 
       - name: Tear down iota sandbox
         if: matrix.os == 'ubuntu-latest' && always()
-        uses: 'iotaledger/iota-sandbox/.github/actions/tear-down@add-action'
+        uses: 'iotaledger/iota-sandbox/.github/actions/tear-down@v1.1.0'
       
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
@@ -199,7 +199,7 @@ jobs:
           path: bindings/wasm
 
       - name: Start iota sandbox
-        uses: 'iotaledger/iota-sandbox/.github/actions/setup@add-action'
+        uses: 'iotaledger/iota-sandbox/.github/actions/setup@v1.1.0'
         with:
           branch: add-action
         env:
@@ -211,4 +211,4 @@ jobs:
 
       - name: Tear down iota sandbox
         if: always()
-        uses: 'iotaledger/iota-sandbox/.github/actions/tear-down@add-action'
+        uses: 'iotaledger/iota-sandbox/.github/actions/tear-down@v1.1.0'
