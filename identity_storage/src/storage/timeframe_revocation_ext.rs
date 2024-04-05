@@ -147,7 +147,7 @@ impl TimeframeRevocationExtension for CoreDocument {
       number_of_signed_messages: payloads.0.len(),
     };
 
-    let new_proof = <K as JwkStorageExt>::update_proof(storage.key_storage(), &key_id, jwk, &proof, proof_update_ctx)
+    let new_proof = <K as JwkStorageExt>::update_signature(storage.key_storage(), &key_id, jwk, &proof, proof_update_ctx)
       .await
       .map_err(Error::KeyStorageError)?;
 

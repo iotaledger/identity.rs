@@ -8,6 +8,8 @@
 
 #[cfg(feature = "memstore")]
 mod ed25519;
+#[cfg(feature = "memstore")]
+mod bls;
 mod jwk_gen_output;
 mod jwk_storage;
 mod key_id;
