@@ -106,7 +106,7 @@ impl TryFrom<JwkExt> for Jwk {
 
     let (kty, params) = match value.key_params {
       JwkAlgorithmParameters::EllipticCurve(p) => (JwkType::Ec, JwkParams::Ec(JwkParamsEc::from(p))),
-      _ => unreachable!()
+      _ => unreachable!(),
     };
 
     Ok(Self {

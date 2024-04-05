@@ -213,7 +213,6 @@ impl JwkMemStore {
   const BLS12381G2_KEY_TYPE_STR: &'static str = "BLS12381G2";
   /// The BLS12381G2 key type
   pub const BLS12381G2_KEY_TYPE: KeyType = KeyType::from_static_str(Self::BLS12381G2_KEY_TYPE_STR);
-
 }
 
 impl MemStoreKeyType {
@@ -336,30 +335,28 @@ impl JwkStorageExt for JwkMemStore {
     check_key_proof_alg_compatibility(key_type, alg)?;
 
     let (private_key, public_key) = match key_type {
-      MemStoreKeyType::BLS12381G2 => {
-        match alg {
-          ProofAlgorithm::BLS12381_SHA256 => {
-            let keypair = KeyPair::<BbsBls12381Sha256>::random()
+      MemStoreKeyType::BLS12381G2 => match alg {
+        ProofAlgorithm::BLS12381_SHA256 => {
+          let keypair = KeyPair::<BbsBls12381Sha256>::random()
             .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err))?;
-            let sk = keypair.private_key().clone();
-            let pk = keypair.public_key().clone();
-            (sk, pk)
-          },
-          ProofAlgorithm::BLS12381_SHAKE256 =>  {
-            let keypair = KeyPair::<BbsBls12381Shake256>::random()
-            .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err))?;
-            let sk = keypair.private_key().clone();
-            let pk = keypair.public_key().clone();
-            (sk, pk)
-          },
-          other => {
-            return Err(
-              KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
-                .with_custom_message(format!("{other} is not supported")),
-            );
-          }
+          let sk = keypair.private_key().clone();
+          let pk = keypair.public_key().clone();
+          (sk, pk)
         }
-      }
+        ProofAlgorithm::BLS12381_SHAKE256 => {
+          let keypair = KeyPair::<BbsBls12381Shake256>::random()
+            .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err))?;
+          let sk = keypair.private_key().clone();
+          let pk = keypair.public_key().clone();
+          (sk, pk)
+        }
+        other => {
+          return Err(
+            KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+              .with_custom_message(format!("{other} is not supported")),
+          );
+        }
+      },
       other => {
         return Err(
           KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
@@ -429,14 +426,13 @@ impl JwkStorageExt for JwkMemStore {
 
     let (sk, pk) = expand_bls_jwk(jwk)?;
 
-    
     let signature = match alg {
       ProofAlgorithm::BLS12381_SHA256 => {
         Signature::<BbsBls12381Sha256>::sign(Some(data), &sk, &pk, Some(header)).map(|s| s.to_bytes())
-      },
+      }
       ProofAlgorithm::BLS12381_SHAKE256 => {
         Signature::<BbsBls12381Shake256>::sign(Some(data), &sk, &pk, Some(header)).map(|s| s.to_bytes())
-      },
+      }
       other => {
         return Err(
           KeyStorageError::new(KeyStorageErrorKind::UnsupportedProofAlgorithm)
@@ -445,14 +441,12 @@ impl JwkStorageExt for JwkMemStore {
       }
     }
     .map_err(|_| {
-      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-        .with_custom_message(format!("signature failed"))
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message(format!("signature failed"))
     })?;
-    
+
     Ok(signature.to_vec())
   }
 
-  
   async fn update_signature(
     &self,
     key_id: &KeyId,
@@ -525,65 +519,67 @@ impl JwkStorageExt for JwkMemStore {
             .with_custom_message("unable to decode `d` param")
             .with_source(err)
         })?,
-    ).map_err(|_| {
-      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-      .with_custom_message("key not valid")
-    })?;
+    )
+    .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("key not valid"))?;
 
     let new_proof = match alg {
       ProofAlgorithm::BLS12381_SHA256 => {
         let signature = Signature::<BbsBls12381Sha256>::from_bytes(signature)
-        .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature not valid"))?
-        .update_signature(
-          &sk,
-          &old_start_validity_timeframe,
-          &new_start_validity_timeframe,
-          index_start_validity_timeframe,
-          number_of_signed_messages,
-        ).map_err(|_| {
-          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("Signature update failed")
-        })?;
+          .map_err(|_| {
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature not valid")
+          })?
+          .update_signature(
+            &sk,
+            &old_start_validity_timeframe,
+            &new_start_validity_timeframe,
+            index_start_validity_timeframe,
+            number_of_signed_messages,
+          )
+          .map_err(|_| {
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature update failed")
+          })?;
 
         signature
-        .update_signature(
-          &sk,
-          &old_end_validity_timeframe,
-          &new_end_validity_timeframe,
-          index_end_validity_timeframe,
-          number_of_signed_messages,
-        ).map_err(|_| {
-          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("Signature update failed")
-        })?
-        .to_bytes()
+          .update_signature(
+            &sk,
+            &old_end_validity_timeframe,
+            &new_end_validity_timeframe,
+            index_end_validity_timeframe,
+            number_of_signed_messages,
+          )
+          .map_err(|_| {
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature update failed")
+          })?
+          .to_bytes()
       }
       ProofAlgorithm::BLS12381_SHAKE256 => {
         let proof = Signature::<BbsBls12381Shake256>::from_bytes(signature)
-        .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature not valid"))?
-        .update_signature(
-          &sk,
-          &old_start_validity_timeframe,
-          &new_start_validity_timeframe,
-          index_start_validity_timeframe,
-          number_of_signed_messages,
-        ).map_err(|_| {
-          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("Signature update failed")
-        })?;
+          .map_err(|_| {
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature not valid")
+          })?
+          .update_signature(
+            &sk,
+            &old_start_validity_timeframe,
+            &new_start_validity_timeframe,
+            index_start_validity_timeframe,
+            number_of_signed_messages,
+          )
+          .map_err(|_| {
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature update failed")
+          })?;
 
         proof
-        .update_signature(
-          &sk,
-          &old_end_validity_timeframe,
-          &new_end_validity_timeframe,
-          index_end_validity_timeframe,
-          number_of_signed_messages,
-        ).map_err(|_| {
-          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("Signature update failed")
-        })?
-        .to_bytes()
+          .update_signature(
+            &sk,
+            &old_end_validity_timeframe,
+            &new_end_validity_timeframe,
+            index_end_validity_timeframe,
+            number_of_signed_messages,
+          )
+          .map_err(|_| {
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature update failed")
+          })?
+          .to_bytes()
       }
       other => {
         return Err(

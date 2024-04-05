@@ -1,4 +1,3 @@
-
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwu;
 use identity_verification::jwk::BlsCurve;
@@ -38,11 +37,10 @@ pub(crate) fn expand_bls_jwk(jwk: &Jwk) -> KeyStorageResult<(BBSplusSecretKey, B
         .with_source(err)
     })?
     .map_err(|_| {
-      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-        .with_custom_message(format!("invalid BBS+ secret key"))
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message(format!("invalid BBS+ secret key"))
     })?;
 
-    let x: [u8; BBSplusPublicKey::COORDINATE_LEN] = jwu::decode_b64(&params.x)
+  let x: [u8; BBSplusPublicKey::COORDINATE_LEN] = jwu::decode_b64(&params.x)
     .map_err(|err| {
       KeyStorageError::new(KeyStorageErrorKind::Unspecified)
         .with_custom_message("unable to decode `x` param")
@@ -54,7 +52,7 @@ pub(crate) fn expand_bls_jwk(jwk: &Jwk) -> KeyStorageResult<(BBSplusSecretKey, B
         .with_custom_message(format!("expected key of length {}", BBSplusPublicKey::COORDINATE_LEN))
     })?;
 
-    let y: [u8; BBSplusPublicKey::COORDINATE_LEN] = jwu::decode_b64(&params.y)
+  let y: [u8; BBSplusPublicKey::COORDINATE_LEN] = jwu::decode_b64(&params.y)
     .map_err(|err| {
       KeyStorageError::new(KeyStorageErrorKind::Unspecified)
         .with_custom_message("unable to decode `y` param")
@@ -66,11 +64,9 @@ pub(crate) fn expand_bls_jwk(jwk: &Jwk) -> KeyStorageResult<(BBSplusSecretKey, B
         .with_custom_message(format!("expected key of length {}", BBSplusPublicKey::COORDINATE_LEN))
     })?;
 
-    let pk = BBSplusPublicKey::from_coordinates(&x, &y)
-    .map_err(|_| {
-      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-        .with_custom_message(format!("invalid BBS+ public key"))
-    })?;
+  let pk = BBSplusPublicKey::from_coordinates(&x, &y).map_err(|_| {
+    KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message(format!("invalid BBS+ public key"))
+  })?;
 
   Ok((sk, pk))
 }

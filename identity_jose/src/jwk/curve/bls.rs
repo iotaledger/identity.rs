@@ -7,13 +7,17 @@ use core::fmt::Result;
 /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-bls-key-representations-05#name-curve-parameter-registratio)
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BlsCurve {
-  /// A cryptographic key on the Barreto-Lynn-Scott (BLS) curve featuring an embedding degree 12 with 381-bit p in the subgroup of G1.
+  /// A cryptographic key on the Barreto-Lynn-Scott (BLS) curve featuring an embedding degree 12 with 381-bit p in the
+  /// subgroup of G1.
   BLS12381G1,
-  /// A cryptographic key on the Barreto-Lynn-Scott (BLS) curve featuring an embedding degree 12 with 381-bit p in the subgroup of G2.
+  /// A cryptographic key on the Barreto-Lynn-Scott (BLS) curve featuring an embedding degree 12 with 381-bit p in the
+  /// subgroup of G2.
   BLS12381G2,
-  /// A cryptographic key on the Barreto-Lynn-Scott (BLS) curve featuring an embedding degree 48 with 581-bit p in the subgroup of G1.
+  /// A cryptographic key on the Barreto-Lynn-Scott (BLS) curve featuring an embedding degree 48 with 581-bit p in the
+  /// subgroup of G1.
   BLS48581G1,
-  /// A cryptographic key on the Barreto-Lynn-Scott (BLS) curve featuring an embedding degree 48 with 581-bit p in the subgroup of G2.
+  /// A cryptographic key on the Barreto-Lynn-Scott (BLS) curve featuring an embedding degree 48 with 581-bit p in the
+  /// subgroup of G2.
   BLS48581G2,
 }
 

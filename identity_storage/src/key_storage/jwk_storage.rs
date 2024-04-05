@@ -73,9 +73,15 @@ pub trait JwkStorageExt: JwkStorage {
   /// Generates a JWK representing a BBS+ signature
   async fn generate_bbs(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput>;
 
-  /// Sign the provided `data` and `header` using the private key identified by `key_id` according to the requirements of
-  /// the corresponding `public_key` (see [`Jwk::alg`](Jwk::alg()) etc.).
-  async fn sign_bbs(&self, key_id: &KeyId, data: &[Vec<u8>], header: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>>;
+  /// Sign the provided `data` and `header` using the private key identified by `key_id` according to the requirements
+  /// of the corresponding `public_key` (see [`Jwk::alg`](Jwk::alg()) etc.).
+  async fn sign_bbs(
+    &self,
+    key_id: &KeyId,
+    data: &[Vec<u8>],
+    header: &[u8],
+    public_key: &Jwk,
+  ) -> KeyStorageResult<Vec<u8>>;
 
   /// Update proof functionality for timeframe revocation mechanism
   async fn update_signature(

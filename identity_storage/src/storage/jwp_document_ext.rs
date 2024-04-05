@@ -167,29 +167,25 @@ impl JwpDocumentExt for CoreDocument {
 
     let jwp_builder = JwpIssuedBuilder::new(issuer_header, jpt_claims.clone());
 
-    let header = jwp_builder.get_issuer_protected_header()
-    .map_or_else(|| Err(Error::JwpBuildingError), 
-      |h| h.to_json_vec().map_err(|_| Error::JwpBuildingError))?;
+    let header = jwp_builder.get_issuer_protected_header().map_or_else(
+      || Err(Error::JwpBuildingError),
+      |h| h.to_json_vec().map_err(|_| Error::JwpBuildingError),
+    )?;
 
-    let data = jwp_builder.get_payloads()
-    .map_or_else(|| Err(Error::JwpBuildingError), 
-      |p| p.to_bytes().map_err(|_| Error::JwpBuildingError))?;
+    let data = jwp_builder.get_payloads().map_or_else(
+      || Err(Error::JwpBuildingError),
+      |p| p.to_bytes().map_err(|_| Error::JwpBuildingError),
+    )?;
 
-    let signature = <K as JwkStorageExt>::sign_bbs(
-      storage.key_storage(),
-      &key_id,
-      &data,
-      &header,
-      jwk,
-    )
-    .await
-    .map_err(Error::KeyStorageError)?;
+    let signature = <K as JwkStorageExt>::sign_bbs(storage.key_storage(), &key_id, &data, &header, jwk)
+      .await
+      .map_err(Error::KeyStorageError)?;
 
-    jwp_builder.build_with_proof(signature)
-    .map_err(|_| Error::JwpBuildingError)?
-    .encode(SerializationType::COMPACT)
-    .map_err(|err| Error::EncodingError(Box::new(err)))
-    
+    jwp_builder
+      .build_with_proof(signature)
+      .map_err(|_| Error::JwpBuildingError)?
+      .encode(SerializationType::COMPACT)
+      .map_err(|err| Error::EncodingError(Box::new(err)))
   }
 
   async fn create_presented_jwp(
