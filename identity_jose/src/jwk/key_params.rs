@@ -10,6 +10,8 @@ use crate::jwk::EcxCurve;
 use crate::jwk::EdCurve;
 use crate::jwk::JwkType;
 
+use super::BlsCurve;
+
 /// Algorithm-specific parameters for JSON Web Keys.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6)
@@ -147,6 +149,17 @@ impl JwkParamsEc {
       "P-521" => Ok(EcCurve::P521),
       "secp256k1" => Ok(EcCurve::Secp256K1),
       _ => Err(Error::KeyError("Ec Curve")),
+    }
+  }
+
+  /// Returns the [`BlsCurve`] if it is of a supported type.
+  pub fn try_bls_curve(&self) -> Result<BlsCurve> {
+    match &*self.crv {
+      "BLS12381G1" => Ok(BlsCurve::BLS12381G1),
+      "BLS12381G2" => Ok(BlsCurve::BLS12381G2),
+      "BLS48581G1" => Ok(BlsCurve::BLS48581G1),
+      "BLS48581G2" => Ok(BlsCurve::BLS48581G2),
+      _ => Err(Error::KeyError("BLS Curve")),
     }
   }
 }

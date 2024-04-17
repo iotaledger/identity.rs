@@ -85,7 +85,7 @@ impl SelectiveDisclosurePresentation {
 
   /// Set Presentation Protected Header.
   pub fn set_presentation_header(&mut self, ph: PresentationProtectedHeader) {
-    self.jwp_builder.presentation_protected_header(ph);
+    self.jwp_builder.set_presentation_protected_header(ph);
   }
 
   /// Get the builder.

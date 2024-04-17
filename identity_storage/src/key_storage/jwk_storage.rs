@@ -9,8 +9,6 @@ use async_trait::async_trait;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::JwsAlgorithm;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
-use jsonprooftoken::jpt::claims::JptClaims;
-use jsonprooftoken::jwp::header::IssuerProtectedHeader;
 use zkryptium::bbsplus::signature::BBSplusSignature;
 
 use super::jwk_gen_output::JwkGenOutput;
@@ -73,23 +71,24 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait JwkStorageExt: JwkStorage {
   /// Generates a JWK representing a BBS+ signature
-  async fn generate_bbs_key(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput>;
+  async fn generate_bbs(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput>;
 
-  /// Generate the JPT representing a JWP in the Issuer form
-  async fn generate_issuer_proof(
+  /// Sign the provided `data` and `header` using the private key identified by `key_id` according to the requirements
+  /// of the corresponding `public_key` (see [`Jwk::alg`](Jwk::alg()) etc.).
+  async fn sign_bbs(
     &self,
     key_id: &KeyId,
-    header: IssuerProtectedHeader,
-    claims: JptClaims,
+    data: &[Vec<u8>],
+    header: &[u8],
     public_key: &Jwk,
-  ) -> KeyStorageResult<String>;
+  ) -> KeyStorageResult<Vec<u8>>;
 
   /// Update proof functionality for timeframe revocation mechanism
-  async fn update_proof(
+  async fn update_signature(
     &self,
     key_id: &KeyId,
     public_key: &Jwk,
-    proof: &[u8; BBSplusSignature::BYTES],
+    signature: &[u8; BBSplusSignature::BYTES],
     ctx: ProofUpdateCtx,
   ) -> KeyStorageResult<[u8; BBSplusSignature::BYTES]>;
 }

@@ -14,23 +14,20 @@ use identity_verification::jose::jwk::JwkType;
 use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::jwk::BlsCurve;
 use identity_verification::jwu;
-use jsonprooftoken::encoding::SerializationType;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
-use jsonprooftoken::jpt::claims::JptClaims;
-use jsonprooftoken::jwk::key::Jwk as JwkExt;
-use jsonprooftoken::jwk::types::KeyPairSubtype;
-use jsonprooftoken::jwp::header::IssuerProtectedHeader;
-use jsonprooftoken::jwp::issued::JwpIssuedBuilder;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 use zkryptium::bbsplus::keys::BBSplusSecretKey;
 use zkryptium::bbsplus::signature::BBSplusSignature;
+use zkryptium::keys::pair::KeyPair;
 use zkryptium::schemes::algorithms::BbsBls12381Sha256;
 use zkryptium::schemes::algorithms::BbsBls12381Shake256;
 use zkryptium::schemes::generics::Signature;
 
+use super::bls::encode_bls_jwk;
+use super::bls::expand_bls_jwk;
 use super::ed25519::encode_jwk;
 use super::ed25519::expand_secret_jwk;
 use super::jwk_gen_output::JwkGenOutput;
@@ -81,6 +78,12 @@ impl JwkStorage for JwkMemStore {
           .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(err))?;
         let public_key = private_key.public_key();
         (private_key, public_key)
+      }
+      other => {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message(format!("{other} is not supported")),
+        );
       }
     };
 
@@ -199,6 +202,7 @@ impl JwkStorage for JwkMemStore {
 #[derive(Debug, Copy, Clone)]
 enum MemStoreKeyType {
   Ed25519,
+  BLS12381G2,
 }
 
 impl JwkMemStore {
@@ -206,19 +210,16 @@ impl JwkMemStore {
   /// The Ed25519 key type.
   pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(Self::ED25519_KEY_TYPE_STR);
 
-  const BLS12381SHA256_KEY_TYPE_STR: &'static str = "Bls12381Sha256";
-  /// The BLS12381-SHA256 key type
-  pub const BLS12381SHA256_KEY_TYPE: KeyType = KeyType::from_static_str(Self::BLS12381SHA256_KEY_TYPE_STR);
-
-  const BLS12381SHAKE256_KEY_TYPE_STR: &'static str = "Bls12381Shake256";
-  /// The BLS12381-SHAKE256 key type
-  pub const BLS12381SHAKE256_KEY_TYPE: KeyType = KeyType::from_static_str(Self::BLS12381SHAKE256_KEY_TYPE_STR);
+  const BLS12381G2_KEY_TYPE_STR: &'static str = "BLS12381G2";
+  /// The BLS12381G2 key type
+  pub const BLS12381G2_KEY_TYPE: KeyType = KeyType::from_static_str(Self::BLS12381G2_KEY_TYPE_STR);
 }
 
 impl MemStoreKeyType {
   const fn name(&self) -> &'static str {
     match self {
       MemStoreKeyType::Ed25519 => "Ed25519",
+      MemStoreKeyType::BLS12381G2 => "BLS12381G2",
     }
   }
 }
@@ -235,6 +236,7 @@ impl TryFrom<&KeyType> for MemStoreKeyType {
   fn try_from(value: &KeyType) -> Result<Self, Self::Error> {
     match value.as_str() {
       JwkMemStore::ED25519_KEY_TYPE_STR => Ok(MemStoreKeyType::Ed25519),
+      JwkMemStore::BLS12381G2_KEY_TYPE_STR => Ok(MemStoreKeyType::BLS12381G2),
       _ => Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)),
     }
   }
@@ -257,6 +259,24 @@ impl TryFrom<&Jwk> for MemStoreKeyType {
             .with_source(err)
         })? {
           EdCurve::Ed25519 => Ok(MemStoreKeyType::Ed25519),
+          curve => Err(
+            KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+              .with_custom_message(format!("{curve} not supported")),
+          ),
+        }
+      }
+      JwkType::Ec => {
+        let ec_params = jwk.try_ec_params().map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message("expected EC parameters for a JWK with `kty` Ec")
+            .with_source(err)
+        })?;
+        match ec_params.try_bls_curve().map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message("only Ed curves are supported for signing")
+            .with_source(err)
+        })? {
+          BlsCurve::BLS12381G2 => Ok(MemStoreKeyType::BLS12381G2),
           curve => Err(
             KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
               .with_custom_message(format!("{curve} not supported")),
@@ -293,22 +313,61 @@ fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: JwsAlgorithm) -> 
   }
 }
 
+/// Check that the key type can be used with the algorithm.
+fn check_key_proof_alg_compatibility(key_type: MemStoreKeyType, alg: ProofAlgorithm) -> KeyStorageResult<()> {
+  match (key_type, alg) {
+    (MemStoreKeyType::BLS12381G2, ProofAlgorithm::BLS12381_SHA256) => Ok(()),
+    (MemStoreKeyType::BLS12381G2, ProofAlgorithm::BLS12381_SHAKE256) => Ok(()),
+    (key_type, alg) => Err(
+      KeyStorageError::new(crate::key_storage::KeyStorageErrorKind::KeyAlgorithmMismatch)
+        .with_custom_message(format!("`cannot use key type `{key_type}` with algorithm `{alg}`")),
+    ),
+  }
+}
+
 /// JwkStorageExt implementation for JwkMemStore
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl JwkStorageExt for JwkMemStore {
-  async fn generate_bbs_key(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput> {
-    let keysubtype =
-      KeyPairSubtype::from_str(key_type.as_str()).map_err(|_| KeyStorageErrorKind::UnsupportedKeyType)?;
+  async fn generate_bbs(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput> {
+    let key_type: MemStoreKeyType = MemStoreKeyType::try_from(&key_type)?;
 
-    let mut jwk = Jwk::try_from(
-      JwkExt::generate(keysubtype)
-        .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(err))?,
-    )
-    .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(err))?;
+    check_key_proof_alg_compatibility(key_type, alg)?;
+
+    let (private_key, public_key) = match key_type {
+      MemStoreKeyType::BLS12381G2 => match alg {
+        ProofAlgorithm::BLS12381_SHA256 => {
+          let keypair = KeyPair::<BbsBls12381Sha256>::random()
+            .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err))?;
+          let sk = keypair.private_key().clone();
+          let pk = keypair.public_key().clone();
+          (sk, pk)
+        }
+        ProofAlgorithm::BLS12381_SHAKE256 => {
+          let keypair = KeyPair::<BbsBls12381Shake256>::random()
+            .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err))?;
+          let sk = keypair.private_key().clone();
+          let pk = keypair.public_key().clone();
+          (sk, pk)
+        }
+        other => {
+          return Err(
+            KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+              .with_custom_message(format!("{other} is not supported")),
+          );
+        }
+      },
+      other => {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message(format!("{other} is not supported")),
+        );
+      }
+    };
 
     let kid: KeyId = random_key_id();
 
+    let mut jwk: Jwk = encode_bls_jwk(&private_key, &public_key);
     jwk.set_alg(alg.to_string());
     jwk.set_kid(jwk.thumbprint_sha256_b64());
     let public_jwk: Jwk = jwk.to_public().expect("should only panic if kty == oct");
@@ -319,13 +378,13 @@ impl JwkStorageExt for JwkMemStore {
     Ok(JwkGenOutput::new(kid, public_jwk))
   }
 
-  async fn generate_issuer_proof(
+  async fn sign_bbs(
     &self,
     key_id: &KeyId,
-    header: IssuerProtectedHeader,
-    claims: JptClaims,
+    data: &[Vec<u8>],
+    header: &[u8],
     public_key: &Jwk,
-  ) -> KeyStorageResult<String> {
+  ) -> KeyStorageResult<Vec<u8>> {
     let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
 
     // Extract the required alg from the given public key
@@ -365,25 +424,34 @@ impl JwkStorageExt for JwkMemStore {
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
 
-    // Deserialize JSON to JwkExt
-    let jwk_ext: JwkExt = jwk.try_into().map_err(|_| KeyStorageErrorKind::SerializationError)?;
+    let (sk, pk) = expand_bls_jwk(jwk)?;
 
-    let jwp = JwpIssuedBuilder::new()
-      .issuer_protected_header(header)
-      .jpt_claims(claims)
-      .build(&jwk_ext)
-      .map_err(|_| KeyStorageErrorKind::Unspecified)?
-      .encode(SerializationType::COMPACT)
-      .map_err(|_| KeyStorageErrorKind::Unspecified)?;
+    let signature = match alg {
+      ProofAlgorithm::BLS12381_SHA256 => {
+        Signature::<BbsBls12381Sha256>::sign(Some(data), &sk, &pk, Some(header)).map(|s| s.to_bytes())
+      }
+      ProofAlgorithm::BLS12381_SHAKE256 => {
+        Signature::<BbsBls12381Shake256>::sign(Some(data), &sk, &pk, Some(header)).map(|s| s.to_bytes())
+      }
+      other => {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedProofAlgorithm)
+            .with_custom_message(format!("{other} is not supported")),
+        );
+      }
+    }
+    .map_err(|_| {
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message(format!("signature failed"))
+    })?;
 
-    Ok(jwp)
+    Ok(signature.to_vec())
   }
 
-  async fn update_proof(
+  async fn update_signature(
     &self,
     key_id: &KeyId,
     public_key: &Jwk,
-    proof: &[u8; BBSplusSignature::BYTES],
+    signature: &[u8; BBSplusSignature::BYTES],
     ctx: ProofUpdateCtx,
   ) -> KeyStorageResult<[u8; BBSplusSignature::BYTES]> {
     let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
@@ -451,65 +519,67 @@ impl JwkStorageExt for JwkMemStore {
             .with_custom_message("unable to decode `d` param")
             .with_source(err)
         })?,
-    ).map_err(|_| {
-      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-      .with_custom_message("key not valid")
-    })?;
+    )
+    .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("key not valid"))?;
 
     let new_proof = match alg {
       ProofAlgorithm::BLS12381_SHA256 => {
-        let proof = Signature::<BbsBls12381Sha256>::from_bytes(proof)
-        .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature not valid"))?
-        .update_signature(
-          &sk,
-          &old_start_validity_timeframe,
-          &new_start_validity_timeframe,
-          index_start_validity_timeframe,
-          number_of_signed_messages,
-        ).map_err(|_| {
-          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("Signature update failed")
-        })?;
+        let signature = Signature::<BbsBls12381Sha256>::from_bytes(signature)
+          .map_err(|_| {
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature not valid")
+          })?
+          .update_signature(
+            &sk,
+            &old_start_validity_timeframe,
+            &new_start_validity_timeframe,
+            index_start_validity_timeframe,
+            number_of_signed_messages,
+          )
+          .map_err(|_| {
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature update failed")
+          })?;
 
-        proof
-        .update_signature(
-          &sk,
-          &old_end_validity_timeframe,
-          &new_end_validity_timeframe,
-          index_end_validity_timeframe,
-          number_of_signed_messages,
-        ).map_err(|_| {
-          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("Signature update failed")
-        })?
-        .to_bytes()
+        signature
+          .update_signature(
+            &sk,
+            &old_end_validity_timeframe,
+            &new_end_validity_timeframe,
+            index_end_validity_timeframe,
+            number_of_signed_messages,
+          )
+          .map_err(|_| {
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature update failed")
+          })?
+          .to_bytes()
       }
       ProofAlgorithm::BLS12381_SHAKE256 => {
-        let proof = Signature::<BbsBls12381Shake256>::from_bytes(proof)
-        .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature not valid"))?
-        .update_signature(
-          &sk,
-          &old_start_validity_timeframe,
-          &new_start_validity_timeframe,
-          index_start_validity_timeframe,
-          number_of_signed_messages,
-        ).map_err(|_| {
-          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("Signature update failed")
-        })?;
+        let proof = Signature::<BbsBls12381Shake256>::from_bytes(signature)
+          .map_err(|_| {
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature not valid")
+          })?
+          .update_signature(
+            &sk,
+            &old_start_validity_timeframe,
+            &new_start_validity_timeframe,
+            index_start_validity_timeframe,
+            number_of_signed_messages,
+          )
+          .map_err(|_| {
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature update failed")
+          })?;
 
         proof
-        .update_signature(
-          &sk,
-          &old_end_validity_timeframe,
-          &new_end_validity_timeframe,
-          index_end_validity_timeframe,
-          number_of_signed_messages,
-        ).map_err(|_| {
-          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("Signature update failed")
-        })?
-        .to_bytes()
+          .update_signature(
+            &sk,
+            &old_end_validity_timeframe,
+            &new_end_validity_timeframe,
+            index_end_validity_timeframe,
+            number_of_signed_messages,
+          )
+          .map_err(|_| {
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("Signature update failed")
+          })?
+          .to_bytes()
       }
       other => {
         return Err(

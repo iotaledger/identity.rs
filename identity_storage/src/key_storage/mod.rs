@@ -7,6 +7,8 @@
 //! abstracts over storages that store JSON Web Keys.
 
 #[cfg(feature = "memstore")]
+mod bls;
+#[cfg(feature = "memstore")]
 mod ed25519;
 mod jwk_gen_output;
 mod jwk_storage;

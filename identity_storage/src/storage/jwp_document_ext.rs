@@ -9,6 +9,7 @@ use crate::Storage;
 use crate::StorageResult;
 use async_trait::async_trait;
 use identity_core::common::Object;
+use identity_core::convert::ToJson;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jpt;
 use identity_credential::credential::JwpCredentialOptions;
@@ -25,6 +26,7 @@ use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jwk::key::Jwk;
 use jsonprooftoken::jwp::header::IssuerProtectedHeader;
 use jsonprooftoken::jwp::header::PresentationProtectedHeader;
+use jsonprooftoken::jwp::issued::JwpIssuedBuilder;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -99,7 +101,7 @@ generate_method_for_document_type!(
   CoreDocument,
   ProofAlgorithm,
   JwkStorageExt,
-  JwkStorageExt::generate_bbs_key,
+  JwkStorageExt::generate_bbs,
   generate_method_core_document
 );
 
@@ -163,17 +165,27 @@ impl JwpDocumentExt for CoreDocument {
       .await
       .map_err(Error::KeyIdStorageError)?;
 
-    let jwp = <K as JwkStorageExt>::generate_issuer_proof(
-      storage.key_storage(),
-      &key_id,
-      issuer_header,
-      jpt_claims.clone(),
-      jwk,
-    )
-    .await
-    .map_err(Error::KeyStorageError)?;
+    let jwp_builder = JwpIssuedBuilder::new(issuer_header, jpt_claims.clone());
 
-    Ok(jwp)
+    let header = jwp_builder.get_issuer_protected_header().map_or_else(
+      || Err(Error::JwpBuildingError),
+      |h| h.to_json_vec().map_err(|_| Error::JwpBuildingError),
+    )?;
+
+    let data = jwp_builder.get_payloads().map_or_else(
+      || Err(Error::JwpBuildingError),
+      |p| p.to_bytes().map_err(|_| Error::JwpBuildingError),
+    )?;
+
+    let signature = <K as JwkStorageExt>::sign_bbs(storage.key_storage(), &key_id, &data, &header, jwk)
+      .await
+      .map_err(Error::KeyStorageError)?;
+
+    jwp_builder
+      .build_with_proof(signature)
+      .map_err(|_| Error::JwpBuildingError)?
+      .encode(SerializationType::COMPACT)
+      .map_err(|err| Error::EncodingError(Box::new(err)))
   }
 
   async fn create_presented_jwp(
@@ -262,7 +274,7 @@ mod iota_document {
     IotaDocument,
     ProofAlgorithm,
     JwkStorageExt,
-    JwkStorageExt::generate_bbs_key,
+    JwkStorageExt::generate_bbs,
     generate_method_iota_document
   );
 

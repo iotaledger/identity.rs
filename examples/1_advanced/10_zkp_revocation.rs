@@ -151,7 +151,7 @@ async fn main() -> anyhow::Result<()> {
     &client,
     &secret_manager_issuer,
     &storage_issuer,
-    JwkMemStore::BLS12381SHA256_KEY_TYPE,
+    JwkMemStore::BLS12381G2_KEY_TYPE,
     None,
     Some(ProofAlgorithm::BLS12381_SHA256),
   )
