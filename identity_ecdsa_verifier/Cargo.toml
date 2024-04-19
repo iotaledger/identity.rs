@@ -1,0 +1,29 @@
+[package]
+name = "identity_ecdsa_verifier"
+# TODO: description for consistency?
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+identity_verification.workspace = true
+k256 = { workspace = true, features = ["std", "ecdsa", "ecdsa-core"], optional = true }
+p256 = { workspace = true, features = ["std", "ecdsa", "ecdsa-core"], optional = true }
+signature.workspace = true
+
+[dev-dependencies]
+josekit.workspace = true
+serde_json.workspace = true
+
+[features]
+default = ["es256", "es256k"]
+# Enables the EcDSAJwsVerifier to verify JWS with alg = ES256.
+es256 = ["dep:p256"]
+# Enables the EcDSAJwsVerifier to verify JWS with alg = ES256K.
+es256k = ["dep:k256"]
