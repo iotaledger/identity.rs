@@ -40,7 +40,7 @@ pub fn get_client(stronghold: &Stronghold) -> KeyStorageResult<Client> {
   }
 }
 
-pub fn load_or_create_client(stronghold: &Stronghold) -> KeyStorageResult<Client> {
+fn load_or_create_client(stronghold: &Stronghold) -> KeyStorageResult<Client> {
   match stronghold.load_client(IDENTITY_CLIENT_PATH) {
     Ok(client) => Ok(client),
     Err(ClientError::ClientDataNotPresent) => stronghold

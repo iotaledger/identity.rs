@@ -441,7 +441,7 @@ impl JwkStorageExt for JwkMemStore {
       }
     }
     .map_err(|_| {
-      KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message(format!("signature failed"))
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("signature failed".to_owned())
     })?;
 
     Ok(signature.to_vec())

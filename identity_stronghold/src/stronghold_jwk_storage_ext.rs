@@ -78,6 +78,8 @@ impl JwkStorageExt for StrongholdStorage {
           .with_source(e)
       })?;
 
+    persist_changes(self, stronghold).await?;
+
     Ok(JwkGenOutput::new(kid, jwk))
   }
 
