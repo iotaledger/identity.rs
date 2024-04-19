@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 
 use identity_core::convert::ToJson;
+#[cfg(feature = "jpt-bbs-plus")]
 use jsonprooftoken::jpt::claims::JptClaims;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
@@ -177,6 +178,7 @@ impl<T> Credential<T> {
   }
 
   ///Serializes the [`Credential`] as a JPT claims set
+  #[cfg(feature = "jpt-bbs-plus")]
   pub fn serialize_jpt(&self, custom_claims: Option<Object>) -> Result<JptClaims>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
