@@ -3,8 +3,8 @@ use crate::common::WasmTimestamp;
 use crate::credential::options::WasmStatusCheck;
 use crate::credential::WasmCredential;
 use crate::credential::WasmJpt;
+use crate::did::IToCoreDocument;
 use crate::did::WasmCoreDID;
-use crate::did::WasmCoreDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 use identity_iota::core::Object;
@@ -63,13 +63,17 @@ impl WasmJptCredentialValidatorUtils {
   #[wasm_bindgen(js_name = "checkRevocationWithValidityTimeframe2024")]
   pub fn check_revocation_with_validity_timeframe_2024(
     credential: &WasmCredential,
-    issuer: WasmCoreDocument,
+    issuer: &IToCoreDocument,
     status_check: WasmStatusCheck,
   ) -> Result<()> {
-    let issuer_doc = ImportedDocumentLock::Core(issuer.0);
-    let doc = issuer_doc.try_read()?;
-    JptCredentialValidatorUtils::check_revocation_with_validity_timeframe_2024(&credential.0, &doc, status_check.into())
-      .wasm_result()
+    let issuer_lock = ImportedDocumentLock::from(issuer);
+    let issuer_guard = issuer_lock.try_read()?;
+    JptCredentialValidatorUtils::check_revocation_with_validity_timeframe_2024(
+      &credential.0,
+      &issuer_guard,
+      status_check.into(),
+    )
+    .wasm_result()
   }
 
   /// Checks whether the credential status has been revoked or the timeframe interval is INVALID
@@ -78,15 +82,15 @@ impl WasmJptCredentialValidatorUtils {
   #[wasm_bindgen(js_name = "checkTimeframesAndRevocationWithValidityTimeframe2024")]
   pub fn check_timeframes_and_revocation_with_validity_timeframe_2024(
     credential: &WasmCredential,
-    issuer: WasmCoreDocument,
+    issuer: &IToCoreDocument,
     validity_timeframe: Option<WasmTimestamp>,
     status_check: WasmStatusCheck,
   ) -> Result<()> {
-    let issuer_doc = ImportedDocumentLock::Core(issuer.0);
-    let doc = issuer_doc.try_read()?;
+    let issuer_lock = ImportedDocumentLock::from(issuer);
+    let issuer_guard = issuer_lock.try_read()?;
     JptCredentialValidatorUtils::check_timeframes_and_revocation_with_validity_timeframe_2024(
       &credential.0,
-      &doc,
+      &issuer_guard,
       validity_timeframe.map(|t| t.0),
       status_check.into(),
     )

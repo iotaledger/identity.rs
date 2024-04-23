@@ -18,6 +18,12 @@ import {
     JptPresentationValidatorUtils,
     JptPresentationValidationOptions,
     JptPresentationValidator,
+    RevocationBitmap,
+    RevocationTimeframeStatus,
+    Timestamp,
+    Duration,
+    Status,
+    StatusCheck,
 } from "@iota/identity-wasm/node";
 import {
     type Address,
@@ -29,6 +35,7 @@ import {
     MnemonicSecretManager,
 } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
+import { duration_minutes } from "@iota/identity-wasm/node/identity_wasm_bg.wasm";
 
 /** Creates a DID Document and publishes it in a new Alias Output.
 
@@ -68,6 +75,11 @@ export async function createDid(client: Client, secretManager: SecretManagerType
         undefined,
         MethodScope.VerificationMethod(),
     );
+    const revocationBitmap = new RevocationBitmap();
+    const serviceId = document.id().toUrl().join("#my-revocation-service");
+    const service = revocationBitmap.toService(serviceId);
+
+    document.insertService(service);
     // Construct an Alias Output containing the DID document, with the wallet address
     // set as both the state controller and governor.
     const aliasOutput: AliasOutput = await didClient.newDidOutput(address, document);
@@ -77,11 +89,7 @@ export async function createDid(client: Client, secretManager: SecretManagerType
 
     return { address, document: published, fragment };
 }
-export async function zkp() {
-    // ===========================================================================
-    // Step 1: Create identity for the issuer.
-    // ===========================================================================
-
+export async function zkp_revocation() {
     // Create a new client to interact with the IOTA ledger.
     const client = new Client({
         primaryNode: API_ENDPOINT,
@@ -101,10 +109,24 @@ export async function zkp() {
         issuerSecretManager,
         issuerStorage,
     );
+    const holderSecretManager: MnemonicSecretManager = {
+        mnemonic: Utils.generateMnemonic(),
+    };
+    const holderStorage: Storage = new Storage(
+        new JwkMemStore(),
+        new KeyIdMemStore(),
+    );
+    let { document: holderDocument, fragment: holderFragment } = await createDid(
+        client,
+        holderSecretManager,
+        holderStorage,
+    )
+    // =========================================================================================
+    // Step 1: Create a new RevocationTimeframeStatus containing the current validityTimeframe
+    // =======================================================================================
 
-    // ===========================================================================
-    // Step 2: Issuer creates and signs a Verifiable Credential with BBS algorithm.
-    // ===========================================================================
+    const timeframeId = issuerDocument.id().toUrl().join("#my-revocation-service");
+    let revocationTimeframeStatus = new RevocationTimeframeStatus(timeframeId.toString(), 5, Duration.minutes(1), Timestamp.nowUTC());
 
     // Create a credential subject indicating the degree earned by Alice.
     const subject = {
@@ -123,6 +145,7 @@ export async function zkp() {
         issuer: issuerDocument.id(),
         type: "UniversityDegreeCredential",
         credentialSubject: subject,
+        credentialStatus: revocationTimeframeStatus as any as Status,
     });
     const credentialJpt = await issuerDocument
         .createCredentialJpt(
@@ -140,85 +163,115 @@ export async function zkp() {
         FailFast.FirstError,
     )
 
-    // ===========================================================================
-    // Step 3: Issuer sends the Verifiable Credential to the holder.
-    // ===========================================================================
     console.log("Sending credential (as JPT) to the holder: " + credentialJpt.toString());
-
-    // ============================================================================================
-    // Step 4: Holder resolve Issuer's DID, retrieve Issuer's document and validate the Credential
-    // ============================================================================================
-    const identityClient = new IotaIdentityClient(client);
-
-    // Holder resolves issuer's DID.
-    let issuerDid = IotaDID.parse(JptCredentialValidatorUtils.extractIssuerFromIssuedJpt(credentialJpt).toString());
-    let issuerDoc = await identityClient.resolveDid(issuerDid);
 
     // Holder validates the credential and retrieve the JwpIssued, needed to construct the JwpPresented
     let decodedCredential = JptCredentialValidator.validate(
         credentialJpt,
-        issuerDoc,
+        issuerDocument,
         new JptCredentialValidationOptions(),
         FailFast.FirstError,
     );
 
     // ===========================================================================
-    // Step 5: Verifier sends the holder a challenge and requests a Presentation.
-    //
-    // Please be aware that when we mention "Presentation," we are not alluding to the Verifiable Presentation standard as defined by W3C (https://www.w3.org/TR/vc-data-model/#presentations).
-    // Instead, our reference is to a JWP Presentation (https://datatracker.ietf.org/doc/html/draft-ietf-jose-json-web-proof#name-presented-form), which differs from the W3C standard.
+    // Credential's Status check
     // ===========================================================================
+    JptCredentialValidatorUtils.checkTimeframesAndRevocationWithValidityTimeframe2024(
+        decodedCredential.credential(),
+        issuerDocument,
+        undefined,
+        StatusCheck.Strict,
+    )
 
     // A unique random challenge generated by the requester per presentation can mitigate replay attacks.
     const challenge = "475a7984-1bb5-4c4c-a56f-822bccd46440";
 
-    // =========================================================================================================
-    // Step 6: Holder engages in the Selective Disclosure of credential's attributes.
-    // =========================================================================================================
     const methodId = decodedCredential
         .decodedJwp()
         .getIssuerProtectedHeader()
         .kid!;
+
     const selectiveDisclosurePresentation = new SelectiveDisclosurePresentation(decodedCredential.decodedJwp());
     selectiveDisclosurePresentation.concealInSubject("mainCourses[1]");
     selectiveDisclosurePresentation.concealInSubject("degree.name");
 
-    // =======================================================================================================================================
-    // Step 7: Holder needs Issuer's Public Key to compute the Signature Proof of Knowledge and construct the Presentation
-    // JPT.
-    // =======================================================================================================================================
-
     // Construct a JPT(JWP in the Presentation form) representing the Selectively Disclosed Verifiable Credential
     const presentationOptions = new JwpPresentationOptions();
     presentationOptions.nonce = challenge;
-    const presentationJpt = await issuerDoc
+    const presentationJpt = await issuerDocument
         .createPresentationJpt(
             selectiveDisclosurePresentation,
             methodId,
             presentationOptions,
         );
 
-    // ===========================================================================
-    // Step 8: Holder sends a Presentation JPT to the Verifier.
-    // ===========================================================================
-
     console.log("Sending presentation (as JPT) to the verifier: " + presentationJpt.toString());
 
     // ===========================================================================
-    // Step 9: Verifier receives the Presentation and verifies it.
+    // Step 2: Verifier receives the Presentation and verifies it.
     // ===========================================================================
-
-    // Verifier resolve Issuer DID
-    const issuerDidV = IotaDID.parse(JptPresentationValidatorUtils.extractIssuerFromPresentedJpt(presentationJpt).toString());
-    const issuerDocV = await identityClient.resolveDid(issuerDidV);
 
     const presentationValidationOptions = new JptPresentationValidationOptions({ nonce: challenge });
     const decodedPresentedCredential = JptPresentationValidator.validate(
         presentationJpt,
-        issuerDocV,
+        issuerDocument,
         presentationValidationOptions,
         FailFast.FirstError,
     );
 
+    JptPresentationValidatorUtils.checkTimeframesWithValidityTimeframe2024(
+        decodedPresentedCredential.credential(),
+        undefined,
+        StatusCheck.Strict,
+    )
+
     console.log("Presented credential successfully validated: " + decodedPresentedCredential.credential);
+
+    // ===========================================================================
+    // Step 2b: Waiting for the next validityTimeframe, will result in the Credential timeframe interval NOT valid
+    // ===========================================================================
+
+    try {
+        const now = new Date();
+        const timeInTwoMinutes = new Date(now.setMinutes(now.getMinutes() + 2));
+        JptPresentationValidatorUtils.checkTimeframesWithValidityTimeframe2024(
+            decodedPresentedCredential.credential(),
+            Timestamp.parse(timeInTwoMinutes.toISOString()),
+            StatusCheck.Strict,
+        )
+    } catch (_) {
+        console.log("successfully expired!")
+    }
+
+    // ===========================================================================
+    // Issuer decides to Revoke Holder's Credential
+    // ===========================================================================
+
+    console.log("Issuer decides to revoke the Credential");
+
+    const identityClient = new IotaIdentityClient(client);
+
+    // Update the RevocationBitmap service in the issuer's DID Document.
+    // This revokes the credential's unique index.
+    issuerDocument.revokeCredentials("my-revocation-service", 5);
+    let aliasOutput = await identityClient.updateDidOutput(issuerDocument);
+    const rent = await identityClient.getRentStructure();
+    aliasOutput = await client.buildAliasOutput({
+        ...aliasOutput,
+        amount: Utils.computeStorageDeposit(aliasOutput, rent),
+        aliasId: aliasOutput.getAliasId(),
+        unlockConditions: aliasOutput.getUnlockConditions(),
+    });
+    issuerDocument = await identityClient.publishDidOutput(issuerSecretManager, aliasOutput);
+
+    // Holder checks if his credential has been revoked by the Issuer
+    try {
+        JptCredentialValidatorUtils.checkRevocationWithValidityTimeframe2024(
+            decodedPresentedCredential.credential(),
+            issuerDocument,
+            StatusCheck.Strict,
+        )
+    } catch (_) {
+        console.log("Credential revoked!");
+    }
 }
