@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 mod es256 {
     use identity_verification::jwk::EcCurve;
     use identity_verification::jwk::Jwk;
