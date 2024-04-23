@@ -17,6 +17,7 @@ import { customResolution } from "./1_advanced/4_custom_resolution";
 import { domainLinkage } from "./1_advanced/5_domain_linkage";
 import { sdJwt } from "./1_advanced/6_sd_jwt";
 import { statusList2021 } from "./1_advanced/7_status_list_2021";
+import { zkp } from "./1_advanced/8_zkp";
 
 async function main() {
     // Extract example name.
@@ -58,6 +59,8 @@ async function main() {
             return await sdJwt();
         case "7_status_list_2021":
             return await statusList2021();
+        case "8_zkp":
+            return await zkp();
         default:
             throw "Unknown example name: '" + argument + "'";
     }

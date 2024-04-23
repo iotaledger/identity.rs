@@ -36,10 +36,10 @@ impl From<PayloadType> for WasmPayloadType {
   }
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = PayloadEntry)]
 pub struct WasmPayloadEntry(JsValue, pub WasmPayloadType);
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = PayloadEntry)]
 impl WasmPayloadEntry {
   #[wasm_bindgen(setter)]
   pub fn set_value(&mut self, value: JsValue) {
@@ -69,7 +69,7 @@ impl WasmPayloads {
       .map(WasmPayloads)
   }
 
-  #[wasm_bindgen(constructor)]
+  #[wasm_bindgen(js_name = newFromValues)]
   pub fn new_from_values(values: Vec<JsValue>) -> Result<WasmPayloads> {
     let values = values
       .into_iter()

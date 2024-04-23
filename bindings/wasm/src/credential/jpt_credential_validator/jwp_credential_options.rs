@@ -5,7 +5,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen(inspectable)]
+#[wasm_bindgen(js_name = JwpCredentialOptions, inspectable)]
 #[derive(Serialize, Deserialize, Default)]
 pub struct WasmJwpCredentialOptions {
   #[wasm_bindgen(getter_with_clone)]

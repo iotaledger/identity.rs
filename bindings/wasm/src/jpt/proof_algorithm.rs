@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = ProofAlgorithm)]
 pub enum WasmProofAlgorithm {
   BLS12381_SHA256,
   BLS12381_SHAKE256,
