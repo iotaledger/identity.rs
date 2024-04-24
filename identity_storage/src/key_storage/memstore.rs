@@ -309,7 +309,7 @@ mod bbs_plus_impl {
   use crate::key_storage::bls::expand_bls_jwk;
   use crate::JwkGenOutput;
   use crate::JwkMemStore;
-  use crate::JwkStorageExt;
+  use crate::JwkStorageBbsPlusExt;
   use crate::KeyId;
   use crate::KeyStorageError;
   use crate::KeyStorageErrorKind;
@@ -343,10 +343,10 @@ mod bbs_plus_impl {
     }
   }
 
-  /// JwkStorageExt implementation for JwkMemStore
+  /// JwkStorageBbsPlusExt implementation for JwkMemStore
   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
   #[cfg_attr(feature = "send-sync-storage", async_trait)]
-  impl JwkStorageExt for JwkMemStore {
+  impl JwkStorageBbsPlusExt for JwkMemStore {
     async fn generate_bbs(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput> {
       let key_type: MemStoreKeyType = MemStoreKeyType::try_from(&key_type)?;
 

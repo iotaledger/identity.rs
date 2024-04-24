@@ -175,7 +175,7 @@ mod tests {
     "startValidityTimeframe": "2024-03-19T13:57:50Z",
     "endValidityTimeframe": "2024-03-19T13:58:50Z",
     "revocationBitmapIndex": "5",
-    "type": "revocationBitmapIndex"
+    "type": "RevocationTimeframe2024"
   }"#;
 
   fn get_example_status() -> anyhow::Result<RevocationTimeframeStatus> {

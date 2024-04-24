@@ -1,5 +1,5 @@
 use super::JwkStorageDocumentError as Error;
-use crate::JwkStorageExt;
+use crate::JwkStorageBbsPlusExt;
 use crate::KeyIdStorage;
 use crate::MethodDigest;
 use crate::Storage;
@@ -50,7 +50,7 @@ pub trait TimeframeRevocationExtension {
     credential_jwp: &mut JwpIssued,
   ) -> StorageResult<Jpt>
   where
-    K: JwkStorageExt,
+    K: JwkStorageBbsPlusExt,
     I: KeyIdStorage;
 }
 
@@ -70,7 +70,7 @@ impl TimeframeRevocationExtension for CoreDocument {
     credential_jwp: &mut JwpIssued,
   ) -> StorageResult<Jpt>
   where
-    K: JwkStorageExt,
+    K: JwkStorageBbsPlusExt,
     I: KeyIdStorage,
   {
     // Obtain the method corresponding to the given fragment.
@@ -148,7 +148,7 @@ impl TimeframeRevocationExtension for CoreDocument {
     };
 
     let new_proof =
-      <K as JwkStorageExt>::update_signature(storage.key_storage(), &key_id, jwk, &proof, proof_update_ctx)
+      <K as JwkStorageBbsPlusExt>::update_signature(storage.key_storage(), &key_id, jwk, &proof, proof_update_ctx)
         .await
         .map_err(Error::KeyStorageError)?;
 
@@ -183,7 +183,7 @@ mod iota_document {
       credential_jwp: &mut JwpIssued,
     ) -> StorageResult<Jpt>
     where
-      K: JwkStorageExt,
+      K: JwkStorageBbsPlusExt,
       I: KeyIdStorage,
     {
       self

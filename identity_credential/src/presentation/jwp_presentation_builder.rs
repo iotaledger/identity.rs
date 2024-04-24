@@ -49,7 +49,7 @@ impl SelectiveDisclosurePresentation {
 
   /// Selectively disclose "credentialSubject" attributes.
   /// # Example
-  /// ```
+  /// ```ignore
   /// {
   ///     "id": 1234,
   ///     "name": "Alice",
@@ -62,7 +62,7 @@ impl SelectiveDisclosurePresentation {
   /// }
   /// ```
   /// If you want to undisclose for example the Mathematics course and the name of the degree:
-  /// ```
+  /// ```ignore
   /// undisclose_subject("mainCourses[1]");
   /// undisclose_subject("degree.name");
   /// ```

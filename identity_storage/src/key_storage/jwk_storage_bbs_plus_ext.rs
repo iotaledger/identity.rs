@@ -13,7 +13,7 @@ use crate::ProofUpdateCtx;
 /// Extension to the JwkStorage to handle BBS+ keys
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-pub trait JwkStorageExt: JwkStorage {
+pub trait JwkStorageBbsPlusExt: JwkStorage {
   /// Generates a JWK representing a BBS+ signature
   async fn generate_bbs(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput>;
 

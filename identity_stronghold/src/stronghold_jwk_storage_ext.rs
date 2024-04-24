@@ -7,7 +7,7 @@ use anyhow::Context;
 use async_trait::async_trait;
 use identity_storage::key_storage::JwkStorage;
 use identity_storage::JwkGenOutput;
-use identity_storage::JwkStorageExt;
+use identity_storage::JwkStorageBbsPlusExt;
 use identity_storage::KeyId;
 use identity_storage::KeyStorageError;
 use identity_storage::KeyStorageErrorKind;
@@ -39,7 +39,7 @@ use crate::StrongholdStorage;
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-impl JwkStorageExt for StrongholdStorage {
+impl JwkStorageBbsPlusExt for StrongholdStorage {
   async fn generate_bbs(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput> {
     let key_type = StrongholdKeyType::try_from(&key_type)?;
 

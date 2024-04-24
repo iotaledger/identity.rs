@@ -2,7 +2,7 @@ use super::JwkStorageDocumentError as Error;
 use crate::key_id_storage::MethodDigest;
 use crate::try_undo_key_generation;
 use crate::JwkGenOutput;
-use crate::JwkStorageExt;
+use crate::JwkStorageBbsPlusExt;
 use crate::KeyIdStorage;
 use crate::KeyType;
 use crate::Storage;
@@ -45,7 +45,7 @@ pub trait JwpDocumentExt {
     scope: MethodScope,
   ) -> StorageResult<String>
   where
-    K: JwkStorageExt,
+    K: JwkStorageBbsPlusExt,
     I: KeyIdStorage;
 
   /// Compute a JWP in the Issued form representing the Verifiable Credential
@@ -58,7 +58,7 @@ pub trait JwpDocumentExt {
     options: &JwpCredentialOptions,
   ) -> StorageResult<String>
   where
-    K: JwkStorageExt,
+    K: JwkStorageBbsPlusExt,
     I: KeyIdStorage;
 
   /// Compute a JWP in the Presented form representing the presented Verifiable Credential after the Selective
@@ -80,7 +80,7 @@ pub trait JwpDocumentExt {
     custom_claims: Option<Object>,
   ) -> StorageResult<Jpt>
   where
-    K: JwkStorageExt,
+    K: JwkStorageBbsPlusExt,
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync;
 
@@ -100,8 +100,8 @@ pub trait JwpDocumentExt {
 generate_method_for_document_type!(
   CoreDocument,
   ProofAlgorithm,
-  JwkStorageExt,
-  JwkStorageExt::generate_bbs,
+  JwkStorageBbsPlusExt,
+  JwkStorageBbsPlusExt::generate_bbs,
   generate_method_core_document
 );
 
@@ -117,7 +117,7 @@ impl JwpDocumentExt for CoreDocument {
     scope: MethodScope,
   ) -> StorageResult<String>
   where
-    K: JwkStorageExt,
+    K: JwkStorageBbsPlusExt,
     I: KeyIdStorage,
   {
     generate_method_core_document(self, storage, key_type, alg, fragment, scope).await
@@ -131,7 +131,7 @@ impl JwpDocumentExt for CoreDocument {
     options: &JwpCredentialOptions,
   ) -> StorageResult<String>
   where
-    K: JwkStorageExt,
+    K: JwkStorageBbsPlusExt,
     I: KeyIdStorage,
   {
     // Obtain the method corresponding to the given fragment.
@@ -177,7 +177,7 @@ impl JwpDocumentExt for CoreDocument {
       |p| p.to_bytes().map_err(|_| Error::JwpBuildingError),
     )?;
 
-    let signature = <K as JwkStorageExt>::sign_bbs(storage.key_storage(), &key_id, &data, &header, jwk)
+    let signature = <K as JwkStorageBbsPlusExt>::sign_bbs(storage.key_storage(), &key_id, &data, &header, jwk)
       .await
       .map_err(Error::KeyStorageError)?;
 
@@ -235,7 +235,7 @@ impl JwpDocumentExt for CoreDocument {
     custom_claims: Option<Object>,
   ) -> StorageResult<Jpt>
   where
-    K: JwkStorageExt,
+    K: JwkStorageBbsPlusExt,
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
   {
@@ -273,8 +273,8 @@ mod iota_document {
   generate_method_for_document_type!(
     IotaDocument,
     ProofAlgorithm,
-    JwkStorageExt,
-    JwkStorageExt::generate_bbs,
+    JwkStorageBbsPlusExt,
+    JwkStorageBbsPlusExt::generate_bbs,
     generate_method_iota_document
   );
 
@@ -290,7 +290,7 @@ mod iota_document {
       scope: MethodScope,
     ) -> StorageResult<String>
     where
-      K: JwkStorageExt,
+      K: JwkStorageBbsPlusExt,
       I: KeyIdStorage,
     {
       generate_method_iota_document(self, storage, key_type, alg, fragment, scope).await
@@ -304,7 +304,7 @@ mod iota_document {
       options: &JwpCredentialOptions,
     ) -> StorageResult<String>
     where
-      K: JwkStorageExt,
+      K: JwkStorageBbsPlusExt,
       I: KeyIdStorage,
     {
       self
@@ -334,7 +334,7 @@ mod iota_document {
       custom_claims: Option<Object>,
     ) -> StorageResult<Jpt>
     where
-      K: JwkStorageExt,
+      K: JwkStorageBbsPlusExt,
       I: KeyIdStorage,
       T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
     {

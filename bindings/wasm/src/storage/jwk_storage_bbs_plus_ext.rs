@@ -11,7 +11,7 @@ use super::WasmProofUpdateCtx;
 
 use identity_iota::storage::JwkGenOutput;
 use identity_iota::storage::JwkStorage;
-use identity_iota::storage::JwkStorageExt;
+use identity_iota::storage::JwkStorageBbsPlusExt;
 use identity_iota::storage::KeyId;
 use identity_iota::storage::KeyStorageError;
 use identity_iota::storage::KeyStorageErrorKind;
@@ -233,7 +233,7 @@ impl WasmJwkStorage {
 }
 
 #[async_trait::async_trait(?Send)]
-impl JwkStorageExt for WasmJwkStorage {
+impl JwkStorageBbsPlusExt for WasmJwkStorage {
   async fn generate_bbs(&self, _key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput> {
     let (sk, pk) = match alg {
       ProofAlgorithm::BLS12381_SHA256 => generate_bbs_keypair::<Bls12381Sha256>(),
