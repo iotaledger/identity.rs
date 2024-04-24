@@ -1,32 +1,32 @@
 import {
     Credential,
     FailFast,
-    JwkMemStore,
-    KeyIdMemStore,
-    Storage,
+    IotaDID,
     IotaDocument,
     IotaIdentityClient,
-    ProofAlgorithm,
-    MethodScope,
-    JwpCredentialOptions,
-    JptCredentialValidator,
     JptCredentialValidationOptions,
+    JptCredentialValidator,
     JptCredentialValidatorUtils,
-    IotaDID,
-    SelectiveDisclosurePresentation,
-    JwpPresentationOptions,
-    JptPresentationValidatorUtils,
     JptPresentationValidationOptions,
     JptPresentationValidator,
+    JptPresentationValidatorUtils,
+    JwkMemStore,
+    JwpCredentialOptions,
+    JwpPresentationOptions,
+    KeyIdMemStore,
+    MethodScope,
+    ProofAlgorithm,
+    SelectiveDisclosurePresentation,
+    Storage,
 } from "@iota/identity-wasm/node";
 import {
     type Address,
     AliasOutput,
     Client,
+    MnemonicSecretManager,
     SecretManager,
     SecretManagerType,
     Utils,
-    MnemonicSecretManager,
 } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
 
@@ -129,7 +129,7 @@ export async function zkp() {
             credential,
             issuerStorage,
             issuerFragment,
-            new JwpCredentialOptions,
+            new JwpCredentialOptions(),
         );
     // Validate the credential's proof using the issuer's DID Document, the credential's semantic structure,
     // that the issuance date is not in the future and that the expiration date is not in the past:
@@ -138,7 +138,7 @@ export async function zkp() {
         issuerDocument,
         new JptCredentialValidationOptions(),
         FailFast.FirstError,
-    )
+    );
 
     // ===========================================================================
     // Step 3: Issuer sends the Verifiable Credential to the holder.
@@ -209,7 +209,9 @@ export async function zkp() {
     // ===========================================================================
 
     // Verifier resolve Issuer DID
-    const issuerDidV = IotaDID.parse(JptPresentationValidatorUtils.extractIssuerFromPresentedJpt(presentationJpt).toString());
+    const issuerDidV = IotaDID.parse(
+        JptPresentationValidatorUtils.extractIssuerFromPresentedJpt(presentationJpt).toString(),
+    );
     const issuerDocV = await identityClient.resolveDid(issuerDidV);
 
     const presentationValidationOptions = new JptPresentationValidationOptions({ nonce: challenge });
@@ -220,5 +222,5 @@ export async function zkp() {
         FailFast.FirstError,
     );
 
-    console.log("Presented credential successfully validated: " + decodedPresentedCredential.credential);
+    console.log("Presented credential successfully validated: " + decodedPresentedCredential.credential());
 }

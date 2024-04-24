@@ -5,15 +5,13 @@ use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen(js_name = JwpCredentialOptions, inspectable)]
+#[wasm_bindgen(js_name = JwpCredentialOptions, getter_with_clone, inspectable)]
 #[derive(Serialize, Deserialize, Default)]
 pub struct WasmJwpCredentialOptions {
-  #[wasm_bindgen(getter_with_clone)]
-  #[serde(skip_serializing_if = "Option::is_none")]
   pub kid: Option<String>,
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = JwpCredentialOptions)]
 impl WasmJwpCredentialOptions {
   #[wasm_bindgen(constructor)]
   pub fn new() -> WasmJwpCredentialOptions {
