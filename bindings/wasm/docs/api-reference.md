@@ -71,6 +71,8 @@ if the object is being concurrently modified.</p>
 <dd><p>An extension interface that provides helper functions for publication
 and resolution of DID documents in Alias Outputs.</p>
 </dd>
+<dt><a href="#IssuerProtectedHeader">IssuerProtectedHeader</a></dt>
+<dd></dd>
 <dt><a href="#Jpt">Jpt</a></dt>
 <dd><p>A JSON Proof Token (JPT).</p>
 </dd>
@@ -95,8 +97,13 @@ and resolution of DID documents in Alias Outputs.</p>
 <dt><a href="#JwkGenOutput">JwkGenOutput</a></dt>
 <dd><p>The result of a key generation in <code>JwkStorage</code>.</p>
 </dd>
+<dt><a href="#JwpCredentialOptions">JwpCredentialOptions</a></dt>
+<dd></dd>
 <dt><a href="#JwpIssued">JwpIssued</a></dt>
 <dd></dd>
+<dt><a href="#JwpPresentationOptions">JwpPresentationOptions</a></dt>
+<dd><p>Options to be set in the JWT claims of a verifiable presentation.</p>
+</dd>
 <dt><a href="#JwpVerificationOptions">JwpVerificationOptions</a></dt>
 <dd></dd>
 <dt><a href="#Jws">Jws</a></dt>
@@ -240,53 +247,15 @@ working with storage backed DID documents.</p>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd><p>A DID Document Verification Method.</p>
 </dd>
-<dt><a href="#WasmJwpCredentialOptions">WasmJwpCredentialOptions</a></dt>
-<dd></dd>
 </dl>
 
 ## Members
 
 <dl>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
-<dd></dd>
-<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
-<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
-</dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dt><a href="#PresentationProofAlgorithm">PresentationProofAlgorithm</a></dt>
 <dd></dd>
 <dt><a href="#ProofAlgorithm">ProofAlgorithm</a></dt>
 <dd></dd>
-<dt><a href="#PresentationProofAlgorithm">PresentationProofAlgorithm</a></dt>
-<dd></dd>
-<dt><a href="#PayloadType">PayloadType</a></dt>
-<dd></dd>
-<dt><a href="#SerializationType">SerializationType</a></dt>
-<dd></dd>
-<dt><a href="#FailFast">FailFast</a></dt>
-<dd><p>Declares when validation should return if an error occurs.</p>
-</dd>
-<dt><a href="#AllErrors">AllErrors</a></dt>
-<dd><p>Return all errors that occur during validation.</p>
-</dd>
-<dt><a href="#FirstError">FirstError</a></dt>
-<dd><p>Return after the first error occurs.</p>
-</dd>
-<dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
-<dd><p>Declares how credential subjects must relate to the presentation holder.</p>
-<p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
-</dd>
-<dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
-<dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
-This variant is the default.</p>
-</dd>
-<dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
-<dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
-</dd>
-<dt><a href="#Any">Any</a></dt>
-<dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
-</dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -304,17 +273,47 @@ This variant is the default.</p>
 <dt><a href="#SkipAll">SkipAll</a></dt>
 <dd><p>Skip all status checks.</p>
 </dd>
+<dt><a href="#SerializationType">SerializationType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
+<dd><p>Declares how credential subjects must relate to the presentation holder.</p>
+<p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
+</dd>
+<dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
+<dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
+This variant is the default.</p>
+</dd>
+<dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
+<dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
+</dd>
+<dt><a href="#Any">Any</a></dt>
+<dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
+</dd>
+<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
+<dd></dd>
+<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
+<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
+</dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#FailFast">FailFast</a></dt>
+<dd><p>Declares when validation should return if an error occurs.</p>
+</dd>
+<dt><a href="#AllErrors">AllErrors</a></dt>
+<dd><p>Return all errors that occur during validation.</p>
+</dd>
+<dt><a href="#FirstError">FirstError</a></dt>
+<dd><p>Return after the first error occurs.</p>
+</dd>
+<dt><a href="#PayloadType">PayloadType</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
 
 <dl>
-<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
-<dd><p>Encode the given bytes in url-safe base64.</p>
-</dd>
-<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
-<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
-</dd>
 <dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
 <p>This function is useful when one is composing a <code>IJwsVerifier</code> that delegates
@@ -325,6 +324,12 @@ prior to calling the function.</p>
 </dd>
 <dt><a href="#start">start()</a></dt>
 <dd><p>Initializes the console error panic hook for better error messages</p>
+</dd>
+<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
+<dd><p>Encode the given bytes in url-safe base64.</p>
+</dd>
+<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
+<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
 </dl>
 
@@ -1409,6 +1414,7 @@ Deserializes an instance from a JSON object.
     * [.clone()](#DecodedJptCredential+clone) ⇒ [<code>DecodedJptCredential</code>](#DecodedJptCredential)
     * [.credential()](#DecodedJptCredential+credential) ⇒ [<code>Credential</code>](#Credential)
     * [.customClaims()](#DecodedJptCredential+customClaims) ⇒ <code>Map.&lt;string, any&gt;</code>
+    * [.decodedJwp()](#DecodedJptCredential+decodedJwp) ⇒ [<code>JwpIssued</code>](#JwpIssued)
 
 <a name="DecodedJptCredential+clone"></a>
 
@@ -1427,6 +1433,10 @@ Returns the [Credential](#Credential) embedded into this JPT.
 ### decodedJptCredential.customClaims() ⇒ <code>Map.&lt;string, any&gt;</code>
 Returns the custom claims parsed from the JPT.
 
+**Kind**: instance method of [<code>DecodedJptCredential</code>](#DecodedJptCredential)  
+<a name="DecodedJptCredential+decodedJwp"></a>
+
+### decodedJptCredential.decodedJwp() ⇒ [<code>JwpIssued</code>](#JwpIssued)
 **Kind**: instance method of [<code>DecodedJptCredential</code>](#DecodedJptCredential)  
 <a name="DecodedJptPresentation"></a>
 
@@ -2186,6 +2196,11 @@ if the object is being concurrently modified.
         * [.createJws(storage, fragment, payload, options)](#IotaDocument+createJws) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
         * [.createCredentialJwt(storage, fragment, credential, options, [custom_claims])](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
         * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#IotaDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+        * [.generateMethodJwp(storage, alg, fragment, scope)](#IotaDocument+generateMethodJwp) ⇒ <code>Promise.&lt;string&gt;</code>
+        * [.createIssuedJwp(storage, fragment, jpt_claims, options)](#IotaDocument+createIssuedJwp) ⇒ <code>Promise.&lt;string&gt;</code>
+        * [.createPresentedJwp(presentation, method_id, options)](#IotaDocument+createPresentedJwp) ⇒ <code>Promise.&lt;string&gt;</code>
+        * [.createCredentialJpt(credential, storage, fragment, options, [custom_claims])](#IotaDocument+createCredentialJpt) ⇒ [<code>Promise.&lt;Jpt&gt;</code>](#Jpt)
+        * [.createPresentationJpt(presentation, method_id, options)](#IotaDocument+createPresentationJpt) ⇒ [<code>Promise.&lt;Jpt&gt;</code>](#Jpt)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2691,6 +2706,65 @@ private key backed by the `storage` in accordance with the passed `options`.
 | signature_options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
 | presentation_options | [<code>JwtPresentationOptions</code>](#JwtPresentationOptions) | 
 
+<a name="IotaDocument+generateMethodJwp"></a>
+
+### iotaDocument.generateMethodJwp(storage, alg, fragment, scope) ⇒ <code>Promise.&lt;string&gt;</code>
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| alg | [<code>ProofAlgorithm</code>](#ProofAlgorithm) | 
+| fragment | <code>string</code> \| <code>undefined</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) | 
+
+<a name="IotaDocument+createIssuedJwp"></a>
+
+### iotaDocument.createIssuedJwp(storage, fragment, jpt_claims, options) ⇒ <code>Promise.&lt;string&gt;</code>
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| jpt_claims | <code>JptClaims</code> | 
+| options | [<code>JwpCredentialOptions</code>](#JwpCredentialOptions) | 
+
+<a name="IotaDocument+createPresentedJwp"></a>
+
+### iotaDocument.createPresentedJwp(presentation, method_id, options) ⇒ <code>Promise.&lt;string&gt;</code>
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>SelectiveDisclosurePresentation</code>](#SelectiveDisclosurePresentation) | 
+| method_id | <code>string</code> | 
+| options | [<code>JwpPresentationOptions</code>](#JwpPresentationOptions) | 
+
+<a name="IotaDocument+createCredentialJpt"></a>
+
+### iotaDocument.createCredentialJpt(credential, storage, fragment, options, [custom_claims]) ⇒ [<code>Promise.&lt;Jpt&gt;</code>](#Jpt)
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| options | [<code>JwpCredentialOptions</code>](#JwpCredentialOptions) | 
+| [custom_claims] | <code>Map.&lt;string, any&gt;</code> \| <code>undefined</code> | 
+
+<a name="IotaDocument+createPresentationJpt"></a>
+
+### iotaDocument.createPresentationJpt(presentation, method_id, options) ⇒ [<code>Promise.&lt;Jpt&gt;</code>](#Jpt)
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>SelectiveDisclosurePresentation</code>](#SelectiveDisclosurePresentation) | 
+| method_id | <code>string</code> | 
+| options | [<code>JwpPresentationOptions</code>](#JwpPresentationOptions) | 
+
 <a name="IotaDocument.newWithId"></a>
 
 ### IotaDocument.newWithId(id) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2925,6 +2999,94 @@ Fetches the `IAliasOutput` associated with the given DID.
 | client | <code>IIotaIdentityClient</code> | 
 | did | [<code>IotaDID</code>](#IotaDID) | 
 
+<a name="IssuerProtectedHeader"></a>
+
+## IssuerProtectedHeader
+**Kind**: global class  
+
+* [IssuerProtectedHeader](#IssuerProtectedHeader)
+    * [.typ](#IssuerProtectedHeader+typ) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.typ](#IssuerProtectedHeader+typ)
+    * [.alg](#IssuerProtectedHeader+alg) ⇒ [<code>ProofAlgorithm</code>](#ProofAlgorithm)
+    * [.alg](#IssuerProtectedHeader+alg)
+    * [.kid](#IssuerProtectedHeader+kid) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.kid](#IssuerProtectedHeader+kid)
+    * [.cid](#IssuerProtectedHeader+cid) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.cid](#IssuerProtectedHeader+cid)
+    * [.claims()](#IssuerProtectedHeader+claims) ⇒ <code>Array.&lt;string&gt;</code>
+
+<a name="IssuerProtectedHeader+typ"></a>
+
+### issuerProtectedHeader.typ ⇒ <code>string</code> \| <code>undefined</code>
+JWP type (JPT).
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+<a name="IssuerProtectedHeader+typ"></a>
+
+### issuerProtectedHeader.typ
+JWP type (JPT).
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
+<a name="IssuerProtectedHeader+alg"></a>
+
+### issuerProtectedHeader.alg ⇒ [<code>ProofAlgorithm</code>](#ProofAlgorithm)
+Algorithm used for the JWP.
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+<a name="IssuerProtectedHeader+alg"></a>
+
+### issuerProtectedHeader.alg
+Algorithm used for the JWP.
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+
+| Param | Type |
+| --- | --- |
+| arg0 | [<code>ProofAlgorithm</code>](#ProofAlgorithm) | 
+
+<a name="IssuerProtectedHeader+kid"></a>
+
+### issuerProtectedHeader.kid ⇒ <code>string</code> \| <code>undefined</code>
+ID for the key used for the JWP.
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+<a name="IssuerProtectedHeader+kid"></a>
+
+### issuerProtectedHeader.kid
+ID for the key used for the JWP.
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
+<a name="IssuerProtectedHeader+cid"></a>
+
+### issuerProtectedHeader.cid ⇒ <code>string</code> \| <code>undefined</code>
+Not handled for now. Will be used in the future to resolve external claims
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+<a name="IssuerProtectedHeader+cid"></a>
+
+### issuerProtectedHeader.cid
+Not handled for now. Will be used in the future to resolve external claims
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
+<a name="IssuerProtectedHeader+claims"></a>
+
+### issuerProtectedHeader.claims() ⇒ <code>Array.&lt;string&gt;</code>
+**Kind**: instance method of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
 <a name="Jpt"></a>
 
 ## Jpt
@@ -3017,7 +3179,7 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | credential_jpt | [<code>Jpt</code>](#Jpt) | 
-| issuer | [<code>CoreDocument</code>](#CoreDocument) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>JptCredentialValidationOptions</code>](#JptCredentialValidationOptions) | 
 | fail_fast | [<code>FailFast</code>](#FailFast) | 
 
@@ -3084,7 +3246,7 @@ Only supports `RevocationTimeframe2024`.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| issuer | [<code>CoreDocument</code>](#CoreDocument) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | status_check | [<code>StatusCheck</code>](#StatusCheck) | 
 
 <a name="JptCredentialValidatorUtils.checkTimeframesAndRevocationWithValidityTimeframe2024"></a>
@@ -3099,7 +3261,7 @@ Only supports `RevocationTimeframe2024`.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| issuer | [<code>CoreDocument</code>](#CoreDocument) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | validity_timeframe | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
 | status_check | [<code>StatusCheck</code>](#StatusCheck) | 
 
@@ -3170,7 +3332,7 @@ The following properties are validated according to `options`:
 | Param | Type |
 | --- | --- |
 | presentation_jpt | [<code>Jpt</code>](#Jpt) | 
-| issuer | [<code>CoreDocument</code>](#CoreDocument) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>JptPresentationValidationOptions</code>](#JptPresentationValidationOptions) | 
 | fail_fast | [<code>FailFast</code>](#FailFast) | 
 
@@ -3427,6 +3589,45 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="JwpCredentialOptions"></a>
+
+## JwpCredentialOptions
+**Kind**: global class  
+
+* [JwpCredentialOptions](#JwpCredentialOptions)
+    * _instance_
+        * [.kid](#JwpCredentialOptions+kid) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.kid](#JwpCredentialOptions+kid)
+        * [.toJSON()](#JwpCredentialOptions+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#JwpCredentialOptions.fromJSON) ⇒ [<code>JwpCredentialOptions</code>](#JwpCredentialOptions)
+
+<a name="JwpCredentialOptions+kid"></a>
+
+### jwpCredentialOptions.kid ⇒ <code>string</code> \| <code>undefined</code>
+**Kind**: instance property of [<code>JwpCredentialOptions</code>](#JwpCredentialOptions)  
+<a name="JwpCredentialOptions+kid"></a>
+
+### jwpCredentialOptions.kid
+**Kind**: instance property of [<code>JwpCredentialOptions</code>](#JwpCredentialOptions)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
+<a name="JwpCredentialOptions+toJSON"></a>
+
+### jwpCredentialOptions.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>JwpCredentialOptions</code>](#JwpCredentialOptions)  
+<a name="JwpCredentialOptions.fromJSON"></a>
+
+### JwpCredentialOptions.fromJSON(value) ⇒ [<code>JwpCredentialOptions</code>](#JwpCredentialOptions)
+**Kind**: static method of [<code>JwpCredentialOptions</code>](#JwpCredentialOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
 <a name="JwpIssued"></a>
 
 ## JwpIssued
@@ -3441,6 +3642,7 @@ Deserializes an instance from a JSON object.
         * [.getProof()](#JwpIssued+getProof) ⇒ <code>Uint8Array</code>
         * [.getPayloads()](#JwpIssued+getPayloads) ⇒ [<code>Payloads</code>](#Payloads)
         * [.setPayloads(payloads)](#JwpIssued+setPayloads)
+        * [.getIssuerProtectedHeader()](#JwpIssued+getIssuerProtectedHeader) ⇒ [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)
     * _static_
         * [.fromJSON(json)](#JwpIssued.fromJSON) ⇒ [<code>JwpIssued</code>](#JwpIssued)
 
@@ -3491,6 +3693,10 @@ Deep clones the object.
 | --- | --- |
 | payloads | [<code>Payloads</code>](#Payloads) | 
 
+<a name="JwpIssued+getIssuerProtectedHeader"></a>
+
+### jwpIssued.getIssuerProtectedHeader() ⇒ [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)
+**Kind**: instance method of [<code>JwpIssued</code>](#JwpIssued)  
 <a name="JwpIssued.fromJSON"></a>
 
 ### JwpIssued.fromJSON(json) ⇒ [<code>JwpIssued</code>](#JwpIssued)
@@ -3501,6 +3707,53 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="JwpPresentationOptions"></a>
+
+## JwpPresentationOptions
+Options to be set in the JWT claims of a verifiable presentation.
+
+**Kind**: global class  
+
+* [JwpPresentationOptions](#JwpPresentationOptions)
+    * [.audience](#JwpPresentationOptions+audience) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.audience](#JwpPresentationOptions+audience)
+    * [.nonce](#JwpPresentationOptions+nonce) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.nonce](#JwpPresentationOptions+nonce)
+
+<a name="JwpPresentationOptions+audience"></a>
+
+### jwpPresentationOptions.audience ⇒ <code>string</code> \| <code>undefined</code>
+Sets the audience for presentation (`aud` property in JWP Presentation Header).
+
+**Kind**: instance property of [<code>JwpPresentationOptions</code>](#JwpPresentationOptions)  
+<a name="JwpPresentationOptions+audience"></a>
+
+### jwpPresentationOptions.audience
+Sets the audience for presentation (`aud` property in JWP Presentation Header).
+
+**Kind**: instance property of [<code>JwpPresentationOptions</code>](#JwpPresentationOptions)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
+<a name="JwpPresentationOptions+nonce"></a>
+
+### jwpPresentationOptions.nonce ⇒ <code>string</code> \| <code>undefined</code>
+The nonce to be placed in the Presentation Protected Header.
+
+**Kind**: instance property of [<code>JwpPresentationOptions</code>](#JwpPresentationOptions)  
+<a name="JwpPresentationOptions+nonce"></a>
+
+### jwpPresentationOptions.nonce
+The nonce to be placed in the Presentation Protected Header.
+
+**Kind**: instance property of [<code>JwpPresentationOptions</code>](#JwpPresentationOptions)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="JwpVerificationOptions"></a>
 
@@ -7252,123 +7505,13 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="WasmJwpCredentialOptions"></a>
-
-## WasmJwpCredentialOptions
-**Kind**: global class  
-
-* [WasmJwpCredentialOptions](#WasmJwpCredentialOptions)
-    * _instance_
-        * [.kid](#WasmJwpCredentialOptions+kid) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.kid](#WasmJwpCredentialOptions+kid)
-        * [.toJSON()](#WasmJwpCredentialOptions+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#WasmJwpCredentialOptions.fromJSON) ⇒ [<code>WasmJwpCredentialOptions</code>](#WasmJwpCredentialOptions)
-
-<a name="WasmJwpCredentialOptions+kid"></a>
-
-### wasmJwpCredentialOptions.kid ⇒ <code>string</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>WasmJwpCredentialOptions</code>](#WasmJwpCredentialOptions)  
-<a name="WasmJwpCredentialOptions+kid"></a>
-
-### wasmJwpCredentialOptions.kid
-**Kind**: instance property of [<code>WasmJwpCredentialOptions</code>](#WasmJwpCredentialOptions)  
-
-| Param | Type |
-| --- | --- |
-| [arg0] | <code>string</code> \| <code>undefined</code> | 
-
-<a name="WasmJwpCredentialOptions+toJSON"></a>
-
-### wasmJwpCredentialOptions.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>WasmJwpCredentialOptions</code>](#WasmJwpCredentialOptions)  
-<a name="WasmJwpCredentialOptions.fromJSON"></a>
-
-### WasmJwpCredentialOptions.fromJSON(value) ⇒ [<code>WasmJwpCredentialOptions</code>](#WasmJwpCredentialOptions)
-**Kind**: static method of [<code>WasmJwpCredentialOptions</code>](#WasmJwpCredentialOptions)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
-<a name="CredentialStatus"></a>
-
-## CredentialStatus
-**Kind**: global variable  
-<a name="StatusPurpose"></a>
-
-## StatusPurpose
-Purpose of a [StatusList2021](#StatusList2021).
-
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="ProofAlgorithm"></a>
-
-## ProofAlgorithm
-**Kind**: global variable  
 <a name="PresentationProofAlgorithm"></a>
 
 ## PresentationProofAlgorithm
 **Kind**: global variable  
-<a name="PayloadType"></a>
+<a name="ProofAlgorithm"></a>
 
-## PayloadType
-**Kind**: global variable  
-<a name="SerializationType"></a>
-
-## SerializationType
-**Kind**: global variable  
-<a name="FailFast"></a>
-
-## FailFast
-Declares when validation should return if an error occurs.
-
-**Kind**: global variable  
-<a name="AllErrors"></a>
-
-## AllErrors
-Return all errors that occur during validation.
-
-**Kind**: global variable  
-<a name="FirstError"></a>
-
-## FirstError
-Return after the first error occurs.
-
-**Kind**: global variable  
-<a name="SubjectHolderRelationship"></a>
-
-## SubjectHolderRelationship
-Declares how credential subjects must relate to the presentation holder.
-
-See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
-
-**Kind**: global variable  
-<a name="AlwaysSubject"></a>
-
-## AlwaysSubject
-The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
-This variant is the default.
-
-**Kind**: global variable  
-<a name="SubjectOnNonTransferable"></a>
-
-## SubjectOnNonTransferable
-The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
-
-**Kind**: global variable  
-<a name="Any"></a>
-
-## Any
-The holder is not required to have any kind of relationship to any credential subject.
-
+## ProofAlgorithm
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
@@ -7401,28 +7544,77 @@ Validate the status if supported, skip any unsupported
 Skip all status checks.
 
 **Kind**: global variable  
-<a name="encodeB64"></a>
+<a name="SerializationType"></a>
 
-## encodeB64(data) ⇒ <code>string</code>
-Encode the given bytes in url-safe base64.
+## SerializationType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
 
-**Kind**: global function  
+## MethodRelationship
+**Kind**: global variable  
+<a name="SubjectHolderRelationship"></a>
 
-| Param | Type |
-| --- | --- |
-| data | <code>Uint8Array</code> | 
+## SubjectHolderRelationship
+Declares how credential subjects must relate to the presentation holder.
 
-<a name="decodeB64"></a>
+See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
 
-## decodeB64(data) ⇒ <code>Uint8Array</code>
-Decode the given url-safe base64-encoded slice into its raw bytes.
+**Kind**: global variable  
+<a name="AlwaysSubject"></a>
 
-**Kind**: global function  
+## AlwaysSubject
+The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
+This variant is the default.
 
-| Param | Type |
-| --- | --- |
-| data | <code>Uint8Array</code> | 
+**Kind**: global variable  
+<a name="SubjectOnNonTransferable"></a>
 
+## SubjectOnNonTransferable
+The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
+
+**Kind**: global variable  
+<a name="Any"></a>
+
+## Any
+The holder is not required to have any kind of relationship to any credential subject.
+
+**Kind**: global variable  
+<a name="CredentialStatus"></a>
+
+## CredentialStatus
+**Kind**: global variable  
+<a name="StatusPurpose"></a>
+
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
+
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="FailFast"></a>
+
+## FailFast
+Declares when validation should return if an error occurs.
+
+**Kind**: global variable  
+<a name="AllErrors"></a>
+
+## AllErrors
+Return all errors that occur during validation.
+
+**Kind**: global variable  
+<a name="FirstError"></a>
+
+## FirstError
+Return after the first error occurs.
+
+**Kind**: global variable  
+<a name="PayloadType"></a>
+
+## PayloadType
+**Kind**: global variable  
 <a name="verifyEd25519"></a>
 
 ## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
@@ -7451,3 +7643,25 @@ prior to calling the function.
 Initializes the console error panic hook for better error messages
 
 **Kind**: global function  
+<a name="encodeB64"></a>
+
+## encodeB64(data) ⇒ <code>string</code>
+Encode the given bytes in url-safe base64.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
+<a name="decodeB64"></a>
+
+## decodeB64(data) ⇒ <code>Uint8Array</code>
+Decode the given url-safe base64-encoded slice into its raw bytes.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
