@@ -37,7 +37,7 @@ pub(crate) fn expand_bls_jwk(jwk: &Jwk) -> KeyStorageResult<(BBSplusSecretKey, B
         .with_source(err)
     })?
     .map_err(|_| {
-      KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message(format!("invalid BBS+ secret key"))
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("invalid BBS+ secret key".to_owned())
     })?;
 
   let x: [u8; BBSplusPublicKey::COORDINATE_LEN] = jwu::decode_b64(&params.x)
@@ -65,7 +65,7 @@ pub(crate) fn expand_bls_jwk(jwk: &Jwk) -> KeyStorageResult<(BBSplusSecretKey, B
     })?;
 
   let pk = BBSplusPublicKey::from_coordinates(&x, &y).map_err(|_| {
-    KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message(format!("invalid BBS+ public key"))
+    KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("invalid BBS+ public key".to_owned())
   })?;
 
   Ok((sk, pk))

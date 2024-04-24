@@ -1,5 +1,5 @@
+use identity_iota::core::Url;
 use identity_iota::credential::RevocationTimeframeStatus;
-use identity_iota::did::DIDUrl;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmDuration;
@@ -27,7 +27,7 @@ impl WasmRevocationTimeframeStatus {
     RevocationTimeframeStatus::new(
       start_validity.map(|t| t.0),
       duration.0,
-      DIDUrl::parse(id).wasm_result()?,
+      Url::parse(id).wasm_result()?,
       index,
     )
     .wasm_result()
@@ -36,26 +36,26 @@ impl WasmRevocationTimeframeStatus {
 
   /// Get startValidityTimeframe value.
   #[wasm_bindgen(js_name = "startValidityTimeframe")]
-  pub fn start_validity_timeframe(&self) -> Result<WasmTimestamp> {
-    self.0.start_validity_timeframe().wasm_result().map(WasmTimestamp)
+  pub fn start_validity_timeframe(&self) -> WasmTimestamp {
+    self.0.start_validity_timeframe().into()
   }
 
   /// Get endValidityTimeframe value.
   #[wasm_bindgen(js_name = "endValidityTimeframe")]
-  pub fn end_validity_timeframe(&self) -> Result<WasmTimestamp> {
-    self.0.end_validity_timeframe().wasm_result().map(WasmTimestamp)
+  pub fn end_validity_timeframe(&self) -> WasmTimestamp {
+    self.0.end_validity_timeframe().into()
   }
 
   /// Return the URL fo the `RevocationBitmapStatus`.
   #[wasm_bindgen]
-  pub fn id(&self) -> Result<String> {
-    self.0.id().wasm_result().map(|url| url.to_string())
+  pub fn id(&self) -> String {
+    self.0.id().to_string()
   }
 
-  /// Return the index of the credential in the issuer's revocation bitmap if it can be decoded.
+  /// Return the index of the credential in the issuer's revocation bitmap
   #[wasm_bindgen]
-  pub fn index(&self) -> Result<u32> {
-    self.0.index().wasm_result()
+  pub fn index(&self) -> Option<u32> {
+    self.0.index()
   }
 }
 

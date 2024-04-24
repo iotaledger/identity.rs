@@ -71,6 +71,8 @@ if the object is being concurrently modified.</p>
 <dd><p>An extension interface that provides helper functions for publication
 and resolution of DID documents in Alias Outputs.</p>
 </dd>
+<dt><a href="#IssuerProtectedHeader">IssuerProtectedHeader</a></dt>
+<dd></dd>
 <dt><a href="#Jpt">Jpt</a></dt>
 <dd><p>A JSON Proof Token (JPT).</p>
 </dd>
@@ -94,6 +96,13 @@ and resolution of DID documents in Alias Outputs.</p>
 <dd></dd>
 <dt><a href="#JwkGenOutput">JwkGenOutput</a></dt>
 <dd><p>The result of a key generation in <code>JwkStorage</code>.</p>
+</dd>
+<dt><a href="#JwpCredentialOptions">JwpCredentialOptions</a></dt>
+<dd></dd>
+<dt><a href="#JwpIssued">JwpIssued</a></dt>
+<dd></dd>
+<dt><a href="#JwpPresentationOptions">JwpPresentationOptions</a></dt>
+<dd><p>Options to be set in the JWT claims of a verifiable presentation.</p>
 </dd>
 <dt><a href="#JwpVerificationOptions">JwpVerificationOptions</a></dt>
 <dd></dd>
@@ -148,7 +157,13 @@ use the methods <code>pack</code> and <code>unpack</code> instead.</p>
 <dt><a href="#MethodType">MethodType</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
+<dt><a href="#PayloadEntry">PayloadEntry</a></dt>
+<dd></dd>
+<dt><a href="#Payloads">Payloads</a></dt>
+<dd></dd>
 <dt><a href="#Presentation">Presentation</a></dt>
+<dd></dd>
+<dt><a href="#PresentationProtectedHeader">PresentationProtectedHeader</a></dt>
 <dd></dd>
 <dt><a href="#Proof">Proof</a></dt>
 <dd><p>Represents a cryptographic proof that can be used to validate verifiable credentials and
@@ -159,6 +174,8 @@ can be utilized to implement standards or user-defined proofs. The presence of t
 <p>Note that this proof is not related to JWT and can be used in combination or as an alternative
 to it.</p>
 </dd>
+<dt><a href="#ProofUpdateCtx">ProofUpdateCtx</a></dt>
+<dd></dd>
 <dt><a href="#Resolver">Resolver</a></dt>
 <dd><p>Convenience type for resolving DID documents from different DID methods.</p>
 <p>Also provides methods for resolving DID Documents associated with
@@ -186,6 +203,23 @@ verifiable <a href="#Credential">Credential</a>s and <a href="#Presentation">Pre
 <dd><p>Transforms a JSON object into an SD-JWT object by substituting selected values
 with their corresponding disclosure digests.</p>
 <p>Note: digests are created using the sha-256 algorithm.</p>
+</dd>
+<dt><a href="#SelectiveDisclosurePresentation">SelectiveDisclosurePresentation</a></dt>
+<dd><p>Used to construct a JwpPresentedBuilder and handle the selective disclosure of attributes</p>
+<ul>
+<li>@context MUST NOT be blinded</li>
+<li>id MUST be blinded</li>
+<li>type MUST NOT be blinded</li>
+<li>issuer MUST NOT be blinded</li>
+<li>issuanceDate MUST be blinded (if Timeframe Revocation mechanism is used)</li>
+<li>expirationDate MUST be blinded (if Timeframe Revocation mechanism is used)</li>
+<li>credentialSubject (User have to choose which attribute must be blinded)</li>
+<li>credentialSchema MUST NOT be blinded</li>
+<li>credentialStatus MUST NOT be blinded</li>
+<li>refreshService MUST NOT be blinded (probably will be used for Timeslot Revocation mechanism)</li>
+<li>termsOfUse NO reason to use it in ZK VC (will be in any case blinded)</li>
+<li>evidence (User have to choose which attribute must be blinded)</li>
+</ul>
 </dd>
 <dt><a href="#Service">Service</a></dt>
 <dd><p>A DID Document Service used to enable trusted interactions associated with a DID subject.</p>
@@ -218,24 +252,10 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
-<dt><a href="#FailFast">FailFast</a></dt>
-<dd><p>Declares when validation should return if an error occurs.</p>
-</dd>
-<dt><a href="#AllErrors">AllErrors</a></dt>
-<dd><p>Return all errors that occur during validation.</p>
-</dd>
-<dt><a href="#FirstError">FirstError</a></dt>
-<dd><p>Return after the first error occurs.</p>
-</dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dt><a href="#PresentationProofAlgorithm">PresentationProofAlgorithm</a></dt>
 <dd></dd>
-<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
+<dt><a href="#ProofAlgorithm">ProofAlgorithm</a></dt>
 <dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
-<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
-</dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -253,6 +273,10 @@ working with storage backed DID documents.</p>
 <dt><a href="#SkipAll">SkipAll</a></dt>
 <dd><p>Skip all status checks.</p>
 </dd>
+<dt><a href="#SerializationType">SerializationType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder.</p>
 <p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
@@ -267,17 +291,29 @@ This variant is the default.</p>
 <dt><a href="#Any">Any</a></dt>
 <dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
 </dd>
+<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
+<dd></dd>
+<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
+<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
+</dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#FailFast">FailFast</a></dt>
+<dd><p>Declares when validation should return if an error occurs.</p>
+</dd>
+<dt><a href="#AllErrors">AllErrors</a></dt>
+<dd><p>Return all errors that occur during validation.</p>
+</dd>
+<dt><a href="#FirstError">FirstError</a></dt>
+<dd><p>Return after the first error occurs.</p>
+</dd>
+<dt><a href="#PayloadType">PayloadType</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
 
 <dl>
-<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
-<dd><p>Encode the given bytes in url-safe base64.</p>
-</dd>
-<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
-<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
-</dd>
 <dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
 <p>This function is useful when one is composing a <code>IJwsVerifier</code> that delegates
@@ -288,6 +324,12 @@ prior to calling the function.</p>
 </dd>
 <dt><a href="#start">start()</a></dt>
 <dd><p>Initializes the console error panic hook for better error messages</p>
+</dd>
+<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
+<dd><p>Encode the given bytes in url-safe base64.</p>
+</dd>
+<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
+<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
 </dl>
 
@@ -1372,6 +1414,7 @@ Deserializes an instance from a JSON object.
     * [.clone()](#DecodedJptCredential+clone) ⇒ [<code>DecodedJptCredential</code>](#DecodedJptCredential)
     * [.credential()](#DecodedJptCredential+credential) ⇒ [<code>Credential</code>](#Credential)
     * [.customClaims()](#DecodedJptCredential+customClaims) ⇒ <code>Map.&lt;string, any&gt;</code>
+    * [.decodedJwp()](#DecodedJptCredential+decodedJwp) ⇒ [<code>JwpIssued</code>](#JwpIssued)
 
 <a name="DecodedJptCredential+clone"></a>
 
@@ -1390,6 +1433,10 @@ Returns the [Credential](#Credential) embedded into this JPT.
 ### decodedJptCredential.customClaims() ⇒ <code>Map.&lt;string, any&gt;</code>
 Returns the custom claims parsed from the JPT.
 
+**Kind**: instance method of [<code>DecodedJptCredential</code>](#DecodedJptCredential)  
+<a name="DecodedJptCredential+decodedJwp"></a>
+
+### decodedJptCredential.decodedJwp() ⇒ [<code>JwpIssued</code>](#JwpIssued)
 **Kind**: instance method of [<code>DecodedJptCredential</code>](#DecodedJptCredential)  
 <a name="DecodedJptPresentation"></a>
 
@@ -2149,6 +2196,11 @@ if the object is being concurrently modified.
         * [.createJws(storage, fragment, payload, options)](#IotaDocument+createJws) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
         * [.createCredentialJwt(storage, fragment, credential, options, [custom_claims])](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
         * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#IotaDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+        * [.generateMethodJwp(storage, alg, fragment, scope)](#IotaDocument+generateMethodJwp) ⇒ <code>Promise.&lt;string&gt;</code>
+        * [.createIssuedJwp(storage, fragment, jpt_claims, options)](#IotaDocument+createIssuedJwp) ⇒ <code>Promise.&lt;string&gt;</code>
+        * [.createPresentedJwp(presentation, method_id, options)](#IotaDocument+createPresentedJwp) ⇒ <code>Promise.&lt;string&gt;</code>
+        * [.createCredentialJpt(credential, storage, fragment, options, [custom_claims])](#IotaDocument+createCredentialJpt) ⇒ [<code>Promise.&lt;Jpt&gt;</code>](#Jpt)
+        * [.createPresentationJpt(presentation, method_id, options)](#IotaDocument+createPresentationJpt) ⇒ [<code>Promise.&lt;Jpt&gt;</code>](#Jpt)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2654,6 +2706,65 @@ private key backed by the `storage` in accordance with the passed `options`.
 | signature_options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
 | presentation_options | [<code>JwtPresentationOptions</code>](#JwtPresentationOptions) | 
 
+<a name="IotaDocument+generateMethodJwp"></a>
+
+### iotaDocument.generateMethodJwp(storage, alg, fragment, scope) ⇒ <code>Promise.&lt;string&gt;</code>
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| alg | [<code>ProofAlgorithm</code>](#ProofAlgorithm) | 
+| fragment | <code>string</code> \| <code>undefined</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) | 
+
+<a name="IotaDocument+createIssuedJwp"></a>
+
+### iotaDocument.createIssuedJwp(storage, fragment, jpt_claims, options) ⇒ <code>Promise.&lt;string&gt;</code>
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| jpt_claims | <code>JptClaims</code> | 
+| options | [<code>JwpCredentialOptions</code>](#JwpCredentialOptions) | 
+
+<a name="IotaDocument+createPresentedJwp"></a>
+
+### iotaDocument.createPresentedJwp(presentation, method_id, options) ⇒ <code>Promise.&lt;string&gt;</code>
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>SelectiveDisclosurePresentation</code>](#SelectiveDisclosurePresentation) | 
+| method_id | <code>string</code> | 
+| options | [<code>JwpPresentationOptions</code>](#JwpPresentationOptions) | 
+
+<a name="IotaDocument+createCredentialJpt"></a>
+
+### iotaDocument.createCredentialJpt(credential, storage, fragment, options, [custom_claims]) ⇒ [<code>Promise.&lt;Jpt&gt;</code>](#Jpt)
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| options | [<code>JwpCredentialOptions</code>](#JwpCredentialOptions) | 
+| [custom_claims] | <code>Map.&lt;string, any&gt;</code> \| <code>undefined</code> | 
+
+<a name="IotaDocument+createPresentationJpt"></a>
+
+### iotaDocument.createPresentationJpt(presentation, method_id, options) ⇒ [<code>Promise.&lt;Jpt&gt;</code>](#Jpt)
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>SelectiveDisclosurePresentation</code>](#SelectiveDisclosurePresentation) | 
+| method_id | <code>string</code> | 
+| options | [<code>JwpPresentationOptions</code>](#JwpPresentationOptions) | 
+
 <a name="IotaDocument.newWithId"></a>
 
 ### IotaDocument.newWithId(id) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2888,6 +2999,94 @@ Fetches the `IAliasOutput` associated with the given DID.
 | client | <code>IIotaIdentityClient</code> | 
 | did | [<code>IotaDID</code>](#IotaDID) | 
 
+<a name="IssuerProtectedHeader"></a>
+
+## IssuerProtectedHeader
+**Kind**: global class  
+
+* [IssuerProtectedHeader](#IssuerProtectedHeader)
+    * [.typ](#IssuerProtectedHeader+typ) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.typ](#IssuerProtectedHeader+typ)
+    * [.alg](#IssuerProtectedHeader+alg) ⇒ [<code>ProofAlgorithm</code>](#ProofAlgorithm)
+    * [.alg](#IssuerProtectedHeader+alg)
+    * [.kid](#IssuerProtectedHeader+kid) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.kid](#IssuerProtectedHeader+kid)
+    * [.cid](#IssuerProtectedHeader+cid) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.cid](#IssuerProtectedHeader+cid)
+    * [.claims()](#IssuerProtectedHeader+claims) ⇒ <code>Array.&lt;string&gt;</code>
+
+<a name="IssuerProtectedHeader+typ"></a>
+
+### issuerProtectedHeader.typ ⇒ <code>string</code> \| <code>undefined</code>
+JWP type (JPT).
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+<a name="IssuerProtectedHeader+typ"></a>
+
+### issuerProtectedHeader.typ
+JWP type (JPT).
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
+<a name="IssuerProtectedHeader+alg"></a>
+
+### issuerProtectedHeader.alg ⇒ [<code>ProofAlgorithm</code>](#ProofAlgorithm)
+Algorithm used for the JWP.
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+<a name="IssuerProtectedHeader+alg"></a>
+
+### issuerProtectedHeader.alg
+Algorithm used for the JWP.
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+
+| Param | Type |
+| --- | --- |
+| arg0 | [<code>ProofAlgorithm</code>](#ProofAlgorithm) | 
+
+<a name="IssuerProtectedHeader+kid"></a>
+
+### issuerProtectedHeader.kid ⇒ <code>string</code> \| <code>undefined</code>
+ID for the key used for the JWP.
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+<a name="IssuerProtectedHeader+kid"></a>
+
+### issuerProtectedHeader.kid
+ID for the key used for the JWP.
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
+<a name="IssuerProtectedHeader+cid"></a>
+
+### issuerProtectedHeader.cid ⇒ <code>string</code> \| <code>undefined</code>
+Not handled for now. Will be used in the future to resolve external claims
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+<a name="IssuerProtectedHeader+cid"></a>
+
+### issuerProtectedHeader.cid
+Not handled for now. Will be used in the future to resolve external claims
+
+**Kind**: instance property of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
+<a name="IssuerProtectedHeader+claims"></a>
+
+### issuerProtectedHeader.claims() ⇒ <code>Array.&lt;string&gt;</code>
+**Kind**: instance method of [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)  
 <a name="Jpt"></a>
 
 ## Jpt
@@ -2980,7 +3179,7 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | credential_jpt | [<code>Jpt</code>](#Jpt) | 
-| issuer | [<code>CoreDocument</code>](#CoreDocument) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>JptCredentialValidationOptions</code>](#JptCredentialValidationOptions) | 
 | fail_fast | [<code>FailFast</code>](#FailFast) | 
 
@@ -3047,7 +3246,7 @@ Only supports `RevocationTimeframe2024`.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| issuer | [<code>CoreDocument</code>](#CoreDocument) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | status_check | [<code>StatusCheck</code>](#StatusCheck) | 
 
 <a name="JptCredentialValidatorUtils.checkTimeframesAndRevocationWithValidityTimeframe2024"></a>
@@ -3062,7 +3261,7 @@ Only supports `RevocationTimeframe2024`.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| issuer | [<code>CoreDocument</code>](#CoreDocument) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | validity_timeframe | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
 | status_check | [<code>StatusCheck</code>](#StatusCheck) | 
 
@@ -3133,7 +3332,7 @@ The following properties are validated according to `options`:
 | Param | Type |
 | --- | --- |
 | presentation_jpt | [<code>Jpt</code>](#Jpt) | 
-| issuer | [<code>CoreDocument</code>](#CoreDocument) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>JptPresentationValidationOptions</code>](#JptPresentationValidationOptions) | 
 | fail_fast | [<code>FailFast</code>](#FailFast) | 
 
@@ -3389,6 +3588,172 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="JwpCredentialOptions"></a>
+
+## JwpCredentialOptions
+**Kind**: global class  
+
+* [JwpCredentialOptions](#JwpCredentialOptions)
+    * _instance_
+        * [.kid](#JwpCredentialOptions+kid) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.kid](#JwpCredentialOptions+kid)
+        * [.toJSON()](#JwpCredentialOptions+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#JwpCredentialOptions.fromJSON) ⇒ [<code>JwpCredentialOptions</code>](#JwpCredentialOptions)
+
+<a name="JwpCredentialOptions+kid"></a>
+
+### jwpCredentialOptions.kid ⇒ <code>string</code> \| <code>undefined</code>
+**Kind**: instance property of [<code>JwpCredentialOptions</code>](#JwpCredentialOptions)  
+<a name="JwpCredentialOptions+kid"></a>
+
+### jwpCredentialOptions.kid
+**Kind**: instance property of [<code>JwpCredentialOptions</code>](#JwpCredentialOptions)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
+<a name="JwpCredentialOptions+toJSON"></a>
+
+### jwpCredentialOptions.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>JwpCredentialOptions</code>](#JwpCredentialOptions)  
+<a name="JwpCredentialOptions.fromJSON"></a>
+
+### JwpCredentialOptions.fromJSON(value) ⇒ [<code>JwpCredentialOptions</code>](#JwpCredentialOptions)
+**Kind**: static method of [<code>JwpCredentialOptions</code>](#JwpCredentialOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
+<a name="JwpIssued"></a>
+
+## JwpIssued
+**Kind**: global class  
+
+* [JwpIssued](#JwpIssued)
+    * _instance_
+        * [.toJSON()](#JwpIssued+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwpIssued+clone) ⇒ [<code>JwpIssued</code>](#JwpIssued)
+        * [.encode(serialization)](#JwpIssued+encode) ⇒ <code>string</code>
+        * [.setProof(proof)](#JwpIssued+setProof)
+        * [.getProof()](#JwpIssued+getProof) ⇒ <code>Uint8Array</code>
+        * [.getPayloads()](#JwpIssued+getPayloads) ⇒ [<code>Payloads</code>](#Payloads)
+        * [.setPayloads(payloads)](#JwpIssued+setPayloads)
+        * [.getIssuerProtectedHeader()](#JwpIssued+getIssuerProtectedHeader) ⇒ [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)
+    * _static_
+        * [.fromJSON(json)](#JwpIssued.fromJSON) ⇒ [<code>JwpIssued</code>](#JwpIssued)
+
+<a name="JwpIssued+toJSON"></a>
+
+### jwpIssued.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwpIssued</code>](#JwpIssued)  
+<a name="JwpIssued+clone"></a>
+
+### jwpIssued.clone() ⇒ [<code>JwpIssued</code>](#JwpIssued)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwpIssued</code>](#JwpIssued)  
+<a name="JwpIssued+encode"></a>
+
+### jwpIssued.encode(serialization) ⇒ <code>string</code>
+**Kind**: instance method of [<code>JwpIssued</code>](#JwpIssued)  
+
+| Param | Type |
+| --- | --- |
+| serialization | [<code>SerializationType</code>](#SerializationType) | 
+
+<a name="JwpIssued+setProof"></a>
+
+### jwpIssued.setProof(proof)
+**Kind**: instance method of [<code>JwpIssued</code>](#JwpIssued)  
+
+| Param | Type |
+| --- | --- |
+| proof | <code>Uint8Array</code> | 
+
+<a name="JwpIssued+getProof"></a>
+
+### jwpIssued.getProof() ⇒ <code>Uint8Array</code>
+**Kind**: instance method of [<code>JwpIssued</code>](#JwpIssued)  
+<a name="JwpIssued+getPayloads"></a>
+
+### jwpIssued.getPayloads() ⇒ [<code>Payloads</code>](#Payloads)
+**Kind**: instance method of [<code>JwpIssued</code>](#JwpIssued)  
+<a name="JwpIssued+setPayloads"></a>
+
+### jwpIssued.setPayloads(payloads)
+**Kind**: instance method of [<code>JwpIssued</code>](#JwpIssued)  
+
+| Param | Type |
+| --- | --- |
+| payloads | [<code>Payloads</code>](#Payloads) | 
+
+<a name="JwpIssued+getIssuerProtectedHeader"></a>
+
+### jwpIssued.getIssuerProtectedHeader() ⇒ [<code>IssuerProtectedHeader</code>](#IssuerProtectedHeader)
+**Kind**: instance method of [<code>JwpIssued</code>](#JwpIssued)  
+<a name="JwpIssued.fromJSON"></a>
+
+### JwpIssued.fromJSON(json) ⇒ [<code>JwpIssued</code>](#JwpIssued)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwpIssued</code>](#JwpIssued)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JwpPresentationOptions"></a>
+
+## JwpPresentationOptions
+Options to be set in the JWT claims of a verifiable presentation.
+
+**Kind**: global class  
+
+* [JwpPresentationOptions](#JwpPresentationOptions)
+    * [.audience](#JwpPresentationOptions+audience) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.audience](#JwpPresentationOptions+audience)
+    * [.nonce](#JwpPresentationOptions+nonce) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.nonce](#JwpPresentationOptions+nonce)
+
+<a name="JwpPresentationOptions+audience"></a>
+
+### jwpPresentationOptions.audience ⇒ <code>string</code> \| <code>undefined</code>
+Sets the audience for presentation (`aud` property in JWP Presentation Header).
+
+**Kind**: instance property of [<code>JwpPresentationOptions</code>](#JwpPresentationOptions)  
+<a name="JwpPresentationOptions+audience"></a>
+
+### jwpPresentationOptions.audience
+Sets the audience for presentation (`aud` property in JWP Presentation Header).
+
+**Kind**: instance property of [<code>JwpPresentationOptions</code>](#JwpPresentationOptions)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
+<a name="JwpPresentationOptions+nonce"></a>
+
+### jwpPresentationOptions.nonce ⇒ <code>string</code> \| <code>undefined</code>
+The nonce to be placed in the Presentation Protected Header.
+
+**Kind**: instance property of [<code>JwpPresentationOptions</code>](#JwpPresentationOptions)  
+<a name="JwpPresentationOptions+nonce"></a>
+
+### jwpPresentationOptions.nonce
+The nonce to be placed in the Presentation Protected Header.
+
+**Kind**: instance property of [<code>JwpPresentationOptions</code>](#JwpPresentationOptions)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="JwpVerificationOptions"></a>
 
@@ -5120,6 +5485,143 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="PayloadEntry"></a>
+
+## PayloadEntry
+**Kind**: global class  
+
+* [PayloadEntry](#PayloadEntry)
+    * [.1](#PayloadEntry+1) ⇒ [<code>PayloadType</code>](#PayloadType)
+    * [.1](#PayloadEntry+1)
+    * [.value](#PayloadEntry+value)
+    * [.value](#PayloadEntry+value) ⇒ <code>any</code>
+
+<a name="PayloadEntry+1"></a>
+
+### payloadEntry.1 ⇒ [<code>PayloadType</code>](#PayloadType)
+**Kind**: instance property of [<code>PayloadEntry</code>](#PayloadEntry)  
+<a name="PayloadEntry+1"></a>
+
+### payloadEntry.1
+**Kind**: instance property of [<code>PayloadEntry</code>](#PayloadEntry)  
+
+| Param | Type |
+| --- | --- |
+| arg0 | [<code>PayloadType</code>](#PayloadType) | 
+
+<a name="PayloadEntry+value"></a>
+
+### payloadEntry.value
+**Kind**: instance property of [<code>PayloadEntry</code>](#PayloadEntry)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
+<a name="PayloadEntry+value"></a>
+
+### payloadEntry.value ⇒ <code>any</code>
+**Kind**: instance property of [<code>PayloadEntry</code>](#PayloadEntry)  
+<a name="Payloads"></a>
+
+## Payloads
+**Kind**: global class  
+
+* [Payloads](#Payloads)
+    * [new Payloads(entries)](#new_Payloads_new)
+    * _instance_
+        * [.toJSON()](#Payloads+toJSON) ⇒ <code>any</code>
+        * [.clone()](#Payloads+clone) ⇒ [<code>Payloads</code>](#Payloads)
+        * [.getValues()](#Payloads+getValues) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.getUndisclosedIndexes()](#Payloads+getUndisclosedIndexes) ⇒ <code>Uint32Array</code>
+        * [.getDisclosedIndexes()](#Payloads+getDisclosedIndexes) ⇒ <code>Uint32Array</code>
+        * [.getUndisclosedPayloads()](#Payloads+getUndisclosedPayloads) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.getDisclosedPayloads()](#Payloads+getDisclosedPayloads) ⇒ [<code>Payloads</code>](#Payloads)
+        * [.setUndisclosed(index)](#Payloads+setUndisclosed)
+        * [.replacePayloadAtIndex(index, value)](#Payloads+replacePayloadAtIndex) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#Payloads.fromJSON) ⇒ [<code>Payloads</code>](#Payloads)
+        * [.newFromValues(values)](#Payloads.newFromValues) ⇒ [<code>Payloads</code>](#Payloads)
+
+<a name="new_Payloads_new"></a>
+
+### new Payloads(entries)
+
+| Param | Type |
+| --- | --- |
+| entries | [<code>Array.&lt;PayloadEntry&gt;</code>](#PayloadEntry) | 
+
+<a name="Payloads+toJSON"></a>
+
+### payloads.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>Payloads</code>](#Payloads)  
+<a name="Payloads+clone"></a>
+
+### payloads.clone() ⇒ [<code>Payloads</code>](#Payloads)
+Deep clones the object.
+
+**Kind**: instance method of [<code>Payloads</code>](#Payloads)  
+<a name="Payloads+getValues"></a>
+
+### payloads.getValues() ⇒ <code>Array.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Payloads</code>](#Payloads)  
+<a name="Payloads+getUndisclosedIndexes"></a>
+
+### payloads.getUndisclosedIndexes() ⇒ <code>Uint32Array</code>
+**Kind**: instance method of [<code>Payloads</code>](#Payloads)  
+<a name="Payloads+getDisclosedIndexes"></a>
+
+### payloads.getDisclosedIndexes() ⇒ <code>Uint32Array</code>
+**Kind**: instance method of [<code>Payloads</code>](#Payloads)  
+<a name="Payloads+getUndisclosedPayloads"></a>
+
+### payloads.getUndisclosedPayloads() ⇒ <code>Array.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Payloads</code>](#Payloads)  
+<a name="Payloads+getDisclosedPayloads"></a>
+
+### payloads.getDisclosedPayloads() ⇒ [<code>Payloads</code>](#Payloads)
+**Kind**: instance method of [<code>Payloads</code>](#Payloads)  
+<a name="Payloads+setUndisclosed"></a>
+
+### payloads.setUndisclosed(index)
+**Kind**: instance method of [<code>Payloads</code>](#Payloads)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="Payloads+replacePayloadAtIndex"></a>
+
+### payloads.replacePayloadAtIndex(index, value) ⇒ <code>any</code>
+**Kind**: instance method of [<code>Payloads</code>](#Payloads)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+| value | <code>any</code> | 
+
+<a name="Payloads.fromJSON"></a>
+
+### Payloads.fromJSON(json) ⇒ [<code>Payloads</code>](#Payloads)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>Payloads</code>](#Payloads)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="Payloads.newFromValues"></a>
+
+### Payloads.newFromValues(values) ⇒ [<code>Payloads</code>](#Payloads)
+**Kind**: static method of [<code>Payloads</code>](#Payloads)  
+
+| Param | Type |
+| --- | --- |
+| values | <code>Array.&lt;any&gt;</code> | 
+
 <a name="Presentation"></a>
 
 ## Presentation
@@ -5257,6 +5759,85 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="PresentationProtectedHeader"></a>
+
+## PresentationProtectedHeader
+**Kind**: global class  
+
+* [PresentationProtectedHeader](#PresentationProtectedHeader)
+    * [.alg](#PresentationProtectedHeader+alg) ⇒ [<code>PresentationProofAlgorithm</code>](#PresentationProofAlgorithm)
+    * [.alg](#PresentationProtectedHeader+alg)
+    * [.kid](#PresentationProtectedHeader+kid) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.kid](#PresentationProtectedHeader+kid)
+    * [.aud](#PresentationProtectedHeader+aud) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.aud](#PresentationProtectedHeader+aud)
+    * [.nonce](#PresentationProtectedHeader+nonce) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.nonce](#PresentationProtectedHeader+nonce)
+
+<a name="PresentationProtectedHeader+alg"></a>
+
+### presentationProtectedHeader.alg ⇒ [<code>PresentationProofAlgorithm</code>](#PresentationProofAlgorithm)
+**Kind**: instance property of [<code>PresentationProtectedHeader</code>](#PresentationProtectedHeader)  
+<a name="PresentationProtectedHeader+alg"></a>
+
+### presentationProtectedHeader.alg
+**Kind**: instance property of [<code>PresentationProtectedHeader</code>](#PresentationProtectedHeader)  
+
+| Param | Type |
+| --- | --- |
+| arg0 | [<code>PresentationProofAlgorithm</code>](#PresentationProofAlgorithm) | 
+
+<a name="PresentationProtectedHeader+kid"></a>
+
+### presentationProtectedHeader.kid ⇒ <code>string</code> \| <code>undefined</code>
+ID for the key used for the JWP.
+
+**Kind**: instance property of [<code>PresentationProtectedHeader</code>](#PresentationProtectedHeader)  
+<a name="PresentationProtectedHeader+kid"></a>
+
+### presentationProtectedHeader.kid
+ID for the key used for the JWP.
+
+**Kind**: instance property of [<code>PresentationProtectedHeader</code>](#PresentationProtectedHeader)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
+<a name="PresentationProtectedHeader+aud"></a>
+
+### presentationProtectedHeader.aud ⇒ <code>string</code> \| <code>undefined</code>
+Who have received the JPT.
+
+**Kind**: instance property of [<code>PresentationProtectedHeader</code>](#PresentationProtectedHeader)  
+<a name="PresentationProtectedHeader+aud"></a>
+
+### presentationProtectedHeader.aud
+Who have received the JPT.
+
+**Kind**: instance property of [<code>PresentationProtectedHeader</code>](#PresentationProtectedHeader)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
+<a name="PresentationProtectedHeader+nonce"></a>
+
+### presentationProtectedHeader.nonce ⇒ <code>string</code> \| <code>undefined</code>
+For replay attacks.
+
+**Kind**: instance property of [<code>PresentationProtectedHeader</code>](#PresentationProtectedHeader)  
+<a name="PresentationProtectedHeader+nonce"></a>
+
+### presentationProtectedHeader.nonce
+For replay attacks.
+
+**Kind**: instance property of [<code>PresentationProtectedHeader</code>](#PresentationProtectedHeader)  
+
+| Param | Type |
+| --- | --- |
+| [arg0] | <code>string</code> \| <code>undefined</code> | 
+
 <a name="Proof"></a>
 
 ## Proof
@@ -5325,6 +5906,146 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="ProofUpdateCtx"></a>
+
+## ProofUpdateCtx
+**Kind**: global class  
+
+* [ProofUpdateCtx](#ProofUpdateCtx)
+    * [.old_start_validity_timeframe](#ProofUpdateCtx+old_start_validity_timeframe) ⇒ <code>Uint8Array</code>
+    * [.old_start_validity_timeframe](#ProofUpdateCtx+old_start_validity_timeframe)
+    * [.new_start_validity_timeframe](#ProofUpdateCtx+new_start_validity_timeframe) ⇒ <code>Uint8Array</code>
+    * [.new_start_validity_timeframe](#ProofUpdateCtx+new_start_validity_timeframe)
+    * [.old_end_validity_timeframe](#ProofUpdateCtx+old_end_validity_timeframe) ⇒ <code>Uint8Array</code>
+    * [.old_end_validity_timeframe](#ProofUpdateCtx+old_end_validity_timeframe)
+    * [.new_end_validity_timeframe](#ProofUpdateCtx+new_end_validity_timeframe) ⇒ <code>Uint8Array</code>
+    * [.new_end_validity_timeframe](#ProofUpdateCtx+new_end_validity_timeframe)
+    * [.index_start_validity_timeframe](#ProofUpdateCtx+index_start_validity_timeframe) ⇒ <code>number</code>
+    * [.index_start_validity_timeframe](#ProofUpdateCtx+index_start_validity_timeframe)
+    * [.index_end_validity_timeframe](#ProofUpdateCtx+index_end_validity_timeframe) ⇒ <code>number</code>
+    * [.index_end_validity_timeframe](#ProofUpdateCtx+index_end_validity_timeframe)
+    * [.number_of_signed_messages](#ProofUpdateCtx+number_of_signed_messages) ⇒ <code>number</code>
+    * [.number_of_signed_messages](#ProofUpdateCtx+number_of_signed_messages)
+
+<a name="ProofUpdateCtx+old_start_validity_timeframe"></a>
+
+### proofUpdateCtx.old\_start\_validity\_timeframe ⇒ <code>Uint8Array</code>
+Old `startValidityTimeframe` value
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+<a name="ProofUpdateCtx+old_start_validity_timeframe"></a>
+
+### proofUpdateCtx.old\_start\_validity\_timeframe
+Old `startValidityTimeframe` value
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+
+| Param | Type |
+| --- | --- |
+| arg0 | <code>Uint8Array</code> | 
+
+<a name="ProofUpdateCtx+new_start_validity_timeframe"></a>
+
+### proofUpdateCtx.new\_start\_validity\_timeframe ⇒ <code>Uint8Array</code>
+New `startValidityTimeframe` value to be signed
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+<a name="ProofUpdateCtx+new_start_validity_timeframe"></a>
+
+### proofUpdateCtx.new\_start\_validity\_timeframe
+New `startValidityTimeframe` value to be signed
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+
+| Param | Type |
+| --- | --- |
+| arg0 | <code>Uint8Array</code> | 
+
+<a name="ProofUpdateCtx+old_end_validity_timeframe"></a>
+
+### proofUpdateCtx.old\_end\_validity\_timeframe ⇒ <code>Uint8Array</code>
+Old `endValidityTimeframe` value
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+<a name="ProofUpdateCtx+old_end_validity_timeframe"></a>
+
+### proofUpdateCtx.old\_end\_validity\_timeframe
+Old `endValidityTimeframe` value
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+
+| Param | Type |
+| --- | --- |
+| arg0 | <code>Uint8Array</code> | 
+
+<a name="ProofUpdateCtx+new_end_validity_timeframe"></a>
+
+### proofUpdateCtx.new\_end\_validity\_timeframe ⇒ <code>Uint8Array</code>
+New `endValidityTimeframe` value to be signed
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+<a name="ProofUpdateCtx+new_end_validity_timeframe"></a>
+
+### proofUpdateCtx.new\_end\_validity\_timeframe
+New `endValidityTimeframe` value to be signed
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+
+| Param | Type |
+| --- | --- |
+| arg0 | <code>Uint8Array</code> | 
+
+<a name="ProofUpdateCtx+index_start_validity_timeframe"></a>
+
+### proofUpdateCtx.index\_start\_validity\_timeframe ⇒ <code>number</code>
+Index of `startValidityTimeframe` claim inside the array of Claims
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+<a name="ProofUpdateCtx+index_start_validity_timeframe"></a>
+
+### proofUpdateCtx.index\_start\_validity\_timeframe
+Index of `startValidityTimeframe` claim inside the array of Claims
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+
+| Param | Type |
+| --- | --- |
+| arg0 | <code>number</code> | 
+
+<a name="ProofUpdateCtx+index_end_validity_timeframe"></a>
+
+### proofUpdateCtx.index\_end\_validity\_timeframe ⇒ <code>number</code>
+Index of `endValidityTimeframe` claim inside the array of Claims
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+<a name="ProofUpdateCtx+index_end_validity_timeframe"></a>
+
+### proofUpdateCtx.index\_end\_validity\_timeframe
+Index of `endValidityTimeframe` claim inside the array of Claims
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+
+| Param | Type |
+| --- | --- |
+| arg0 | <code>number</code> | 
+
+<a name="ProofUpdateCtx+number_of_signed_messages"></a>
+
+### proofUpdateCtx.number\_of\_signed\_messages ⇒ <code>number</code>
+Number of signed messages, number of payloads in a JWP
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+<a name="ProofUpdateCtx+number_of_signed_messages"></a>
+
+### proofUpdateCtx.number\_of\_signed\_messages
+Number of signed messages, number of payloads in a JWP
+
+**Kind**: instance property of [<code>ProofUpdateCtx</code>](#ProofUpdateCtx)  
+
+| Param | Type |
+| --- | --- |
+| arg0 | <code>number</code> | 
 
 <a name="Resolver"></a>
 
@@ -5509,7 +6230,7 @@ Information used to determine the current status of a [Credential](#Credential).
         * [.startValidityTimeframe()](#RevocationTimeframeStatus+startValidityTimeframe) ⇒ [<code>Timestamp</code>](#Timestamp)
         * [.endValidityTimeframe()](#RevocationTimeframeStatus+endValidityTimeframe) ⇒ [<code>Timestamp</code>](#Timestamp)
         * [.id()](#RevocationTimeframeStatus+id) ⇒ <code>string</code>
-        * [.index()](#RevocationTimeframeStatus+index) ⇒ <code>number</code>
+        * [.index()](#RevocationTimeframeStatus+index) ⇒ <code>number</code> \| <code>undefined</code>
     * _static_
         * [.fromJSON(json)](#RevocationTimeframeStatus.fromJSON) ⇒ [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)
 
@@ -5558,8 +6279,8 @@ Return the URL fo the `RevocationBitmapStatus`.
 **Kind**: instance method of [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)  
 <a name="RevocationTimeframeStatus+index"></a>
 
-### revocationTimeframeStatus.index() ⇒ <code>number</code>
-Return the index of the credential in the issuer's revocation bitmap if it can be decoded.
+### revocationTimeframeStatus.index() ⇒ <code>number</code> \| <code>undefined</code>
+Return the index of the credential in the issuer's revocation bitmap
 
 **Kind**: instance method of [<code>RevocationTimeframeStatus</code>](#RevocationTimeframeStatus)  
 <a name="RevocationTimeframeStatus.fromJSON"></a>
@@ -5909,6 +6630,93 @@ If path is an empty slice, decoys will be added to the top level.
 | --- | --- |
 | path | <code>string</code> | 
 | number_of_decoys | <code>number</code> | 
+
+<a name="SelectiveDisclosurePresentation"></a>
+
+## SelectiveDisclosurePresentation
+Used to construct a JwpPresentedBuilder and handle the selective disclosure of attributes
+- @context MUST NOT be blinded
+- id MUST be blinded
+- type MUST NOT be blinded
+- issuer MUST NOT be blinded
+- issuanceDate MUST be blinded (if Timeframe Revocation mechanism is used)
+- expirationDate MUST be blinded (if Timeframe Revocation mechanism is used)
+- credentialSubject (User have to choose which attribute must be blinded)
+- credentialSchema MUST NOT be blinded
+- credentialStatus MUST NOT be blinded
+- refreshService MUST NOT be blinded (probably will be used for Timeslot Revocation mechanism)
+- termsOfUse NO reason to use it in ZK VC (will be in any case blinded)
+- evidence (User have to choose which attribute must be blinded)
+
+**Kind**: global class  
+
+* [SelectiveDisclosurePresentation](#SelectiveDisclosurePresentation)
+    * [new SelectiveDisclosurePresentation(issued_jwp)](#new_SelectiveDisclosurePresentation_new)
+    * [.concealInSubject(path)](#SelectiveDisclosurePresentation+concealInSubject)
+    * [.concealInEvidence(path)](#SelectiveDisclosurePresentation+concealInEvidence)
+    * [.setPresentationHeader(header)](#SelectiveDisclosurePresentation+setPresentationHeader)
+
+<a name="new_SelectiveDisclosurePresentation_new"></a>
+
+### new SelectiveDisclosurePresentation(issued_jwp)
+Initialize a presentation starting from an Issued JWP.
+The properties `jti`, `nbf`, `issuanceDate`, `expirationDate` and `termsOfUse` are concealed by default.
+
+
+| Param | Type |
+| --- | --- |
+| issued_jwp | [<code>JwpIssued</code>](#JwpIssued) | 
+
+<a name="SelectiveDisclosurePresentation+concealInSubject"></a>
+
+### selectiveDisclosurePresentation.concealInSubject(path)
+Selectively disclose "credentialSubject" attributes.
+# Example
+```
+{
+    "id": 1234,
+    "name": "Alice",
+    "mainCourses": ["Object-oriented Programming", "Mathematics"],
+    "degree": {
+        "type": "BachelorDegree",
+        "name": "Bachelor of Science and Arts",
+    },
+    "GPA": "4.0",
+}
+```
+If you want to undisclose for example the Mathematics course and the name of the degree:
+```
+undisclose_subject("mainCourses[1]");
+undisclose_subject("degree.name");
+```
+
+**Kind**: instance method of [<code>SelectiveDisclosurePresentation</code>](#SelectiveDisclosurePresentation)  
+
+| Param | Type |
+| --- | --- |
+| path | <code>string</code> | 
+
+<a name="SelectiveDisclosurePresentation+concealInEvidence"></a>
+
+### selectiveDisclosurePresentation.concealInEvidence(path)
+Undiscloses "evidence" attributes.
+
+**Kind**: instance method of [<code>SelectiveDisclosurePresentation</code>](#SelectiveDisclosurePresentation)  
+
+| Param | Type |
+| --- | --- |
+| path | <code>string</code> | 
+
+<a name="SelectiveDisclosurePresentation+setPresentationHeader"></a>
+
+### selectiveDisclosurePresentation.setPresentationHeader(header)
+Sets presentation protected header.
+
+**Kind**: instance method of [<code>SelectiveDisclosurePresentation</code>](#SelectiveDisclosurePresentation)  
+
+| Param | Type |
+| --- | --- |
+| header | [<code>PresentationProtectedHeader</code>](#PresentationProtectedHeader) | 
 
 <a name="Service"></a>
 
@@ -6697,41 +7505,13 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="FailFast"></a>
+<a name="PresentationProofAlgorithm"></a>
 
-## FailFast
-Declares when validation should return if an error occurs.
-
+## PresentationProofAlgorithm
 **Kind**: global variable  
-<a name="AllErrors"></a>
+<a name="ProofAlgorithm"></a>
 
-## AllErrors
-Return all errors that occur during validation.
-
-**Kind**: global variable  
-<a name="FirstError"></a>
-
-## FirstError
-Return after the first error occurs.
-
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
-<a name="CredentialStatus"></a>
-
-## CredentialStatus
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="StatusPurpose"></a>
-
-## StatusPurpose
-Purpose of a [StatusList2021](#StatusList2021).
-
+## ProofAlgorithm
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
@@ -6764,6 +7544,14 @@ Validate the status if supported, skip any unsupported
 Skip all status checks.
 
 **Kind**: global variable  
+<a name="SerializationType"></a>
+
+## SerializationType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -6791,28 +7579,42 @@ The holder must match the subject only for credentials where the [`nonTransferab
 The holder is not required to have any kind of relationship to any credential subject.
 
 **Kind**: global variable  
-<a name="encodeB64"></a>
+<a name="CredentialStatus"></a>
 
-## encodeB64(data) ⇒ <code>string</code>
-Encode the given bytes in url-safe base64.
+## CredentialStatus
+**Kind**: global variable  
+<a name="StatusPurpose"></a>
 
-**Kind**: global function  
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
 
-| Param | Type |
-| --- | --- |
-| data | <code>Uint8Array</code> | 
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
 
-<a name="decodeB64"></a>
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="FailFast"></a>
 
-## decodeB64(data) ⇒ <code>Uint8Array</code>
-Decode the given url-safe base64-encoded slice into its raw bytes.
+## FailFast
+Declares when validation should return if an error occurs.
 
-**Kind**: global function  
+**Kind**: global variable  
+<a name="AllErrors"></a>
 
-| Param | Type |
-| --- | --- |
-| data | <code>Uint8Array</code> | 
+## AllErrors
+Return all errors that occur during validation.
 
+**Kind**: global variable  
+<a name="FirstError"></a>
+
+## FirstError
+Return after the first error occurs.
+
+**Kind**: global variable  
+<a name="PayloadType"></a>
+
+## PayloadType
+**Kind**: global variable  
 <a name="verifyEd25519"></a>
 
 ## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
@@ -6841,3 +7643,25 @@ prior to calling the function.
 Initializes the console error panic hook for better error messages
 
 **Kind**: global function  
+<a name="encodeB64"></a>
+
+## encodeB64(data) ⇒ <code>string</code>
+Encode the given bytes in url-safe base64.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
+<a name="decodeB64"></a>
+
+## decodeB64(data) ⇒ <code>Uint8Array</code>
+Decode the given url-safe base64-encoded slice into its raw bytes.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+

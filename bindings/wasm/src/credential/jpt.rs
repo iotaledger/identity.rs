@@ -34,3 +34,9 @@ impl From<WasmJpt> for Jpt {
     value.0
   }
 }
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<Jpt>")]
+  pub type PromiseJpt;
+}

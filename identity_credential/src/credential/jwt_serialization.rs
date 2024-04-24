@@ -3,6 +3,7 @@
 
 use std::borrow::Cow;
 
+#[cfg(feature = "jpt-bbs-plus")]
 use jsonprooftoken::jpt::claims::JptClaims;
 use serde::Deserialize;
 use serde::Serialize;
@@ -361,6 +362,7 @@ where
   proof: Option<Cow<'credential, Proof>>,
 }
 
+#[cfg(feature = "jpt-bbs-plus")]
 impl<'credential, T> From<CredentialJwtClaims<'credential, T>> for JptClaims
 where
   T: ToOwned + Serialize,
