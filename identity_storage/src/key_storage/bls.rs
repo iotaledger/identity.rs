@@ -173,15 +173,21 @@ where
 /// Updates BBS+ signature's timeframe data.
 pub fn update_bbs_signature(
   alg: ProofAlgorithm,
-  sig: &[u8; 80],
+  sig: &[u8],
   sk: &BBSplusSecretKey,
   update_ctx: &ProofUpdateCtx,
-) -> Result<[u8; 80], KeyStorageError> {
+) -> KeyStorageResult<Vec<u8>> {
+  let exact_size_signature = sig.try_into().map_err(|_| {
+    KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("invalid signature size".to_owned())
+  })?;
   match alg {
-    ProofAlgorithm::BLS12381_SHA256 => _update_bbs_signature::<Bls12381Sha256>(sig, sk, update_ctx),
-    ProofAlgorithm::BLS12381_SHAKE256 => _update_bbs_signature::<Bls12381Shake256>(sig, sk, update_ctx),
+    ProofAlgorithm::BLS12381_SHA256 => _update_bbs_signature::<Bls12381Sha256>(exact_size_signature, sk, update_ctx),
+    ProofAlgorithm::BLS12381_SHAKE256 => {
+      _update_bbs_signature::<Bls12381Shake256>(exact_size_signature, sk, update_ctx)
+    }
     _ => return Err(KeyStorageErrorKind::UnsupportedProofAlgorithm.into()),
   }
+  .map(Vec::from)
   .map_err(|e| {
     KeyStorageError::new(KeyStorageErrorKind::Unspecified)
       .with_custom_message("signature failed")

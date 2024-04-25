@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 use identity_verification::jwk::Jwk;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
-use zkryptium::bbsplus::signature::BBSplusSignature;
 
 use crate::JwkGenOutput;
 use crate::JwkStorage;
@@ -32,7 +31,7 @@ pub trait JwkStorageBbsPlusExt: JwkStorage {
     &self,
     key_id: &KeyId,
     public_key: &Jwk,
-    signature: &[u8; BBSplusSignature::BYTES],
+    signature: &[u8],
     ctx: ProofUpdateCtx,
-  ) -> KeyStorageResult<[u8; BBSplusSignature::BYTES]>;
+  ) -> KeyStorageResult<Vec<u8>>;
 }

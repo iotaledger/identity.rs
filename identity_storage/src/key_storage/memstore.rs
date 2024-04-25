@@ -323,7 +323,6 @@ mod bbs_plus_impl {
   use identity_verification::jwk::BlsCurve;
   use identity_verification::jwk::Jwk;
   use jsonprooftoken::jpa::algs::ProofAlgorithm;
-  use zkryptium::bbsplus::signature::BBSplusSignature;
 
   use super::random_key_id;
 
@@ -386,9 +385,9 @@ mod bbs_plus_impl {
       &self,
       key_id: &KeyId,
       public_key: &Jwk,
-      signature: &[u8; BBSplusSignature::BYTES],
+      signature: &[u8],
       ctx: ProofUpdateCtx,
-    ) -> KeyStorageResult<[u8; BBSplusSignature::BYTES]> {
+    ) -> KeyStorageResult<Vec<u8>> {
       let jwk_store = self.jwk_store.read().await;
 
       // Extract the required alg from the given public key

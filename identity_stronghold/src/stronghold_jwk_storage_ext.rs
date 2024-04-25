@@ -23,7 +23,6 @@ use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use std::str::FromStr;
 use zeroize::Zeroizing;
 use zkryptium::bbsplus::keys::BBSplusSecretKey;
-use zkryptium::bbsplus::signature::BBSplusSignature;
 
 use crate::stronghold_key_type::*;
 use crate::utils::*;
@@ -46,10 +45,14 @@ impl JwkStorageBbsPlusExt for StrongholdStorage {
       return Err(KeyStorageErrorKind::UnsupportedProofAlgorithm.into());
     }
 
+    // Get a key id that's not already used.
+    let mut kid = random_key_id();
+    while self.exists(&kid).await? {
+      kid = random_key_id();
+    }
+
     let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
-
-    let kid: KeyId = random_key_id();
     let target_key_location = Location::generic(
       IDENTITY_VAULT_PATH.as_bytes().to_vec(),
       kid.to_string().as_bytes().to_vec(),
@@ -109,7 +112,11 @@ impl JwkStorageBbsPlusExt for StrongholdStorage {
     client
       .get_guards([sk_location], |[sk]| {
         let sk = BBSplusSecretKey::from_bytes(&sk.borrow()).map_err(|e| FatalProcedureError::from(e.to_string()))?;
-        sign_bbs(alg, data, &sk, &pk, header).map_err(|e| FatalProcedureError::from(e.to_string()))
+        let signature_result =
+          sign_bbs(alg, data, &sk, &pk, header).map_err(|e| FatalProcedureError::from(e.to_string()));
+        // clean up `sk` to avoid leaking.
+        drop(Zeroizing::new(sk.to_bytes()));
+        signature_result
       })
       .map(|sig| sig.to_vec())
       .map_err(|e| {
@@ -123,9 +130,9 @@ impl JwkStorageBbsPlusExt for StrongholdStorage {
     &self,
     key_id: &KeyId,
     public_key: &Jwk,
-    signature: &[u8; BBSplusSignature::BYTES],
+    signature: &[u8],
     ctx: ProofUpdateCtx,
-  ) -> KeyStorageResult<[u8; BBSplusSignature::BYTES]> {
+  ) -> KeyStorageResult<Vec<u8>> {
     // Extract the required alg from the given public key
     let alg = public_key
       .alg()
