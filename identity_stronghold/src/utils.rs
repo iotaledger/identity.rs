@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_storage::KeyId;
 use identity_storage::KeyStorageError;
 use identity_storage::KeyStorageErrorKind;

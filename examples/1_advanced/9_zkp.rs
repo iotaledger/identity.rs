@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
 use examples::MemStorage;

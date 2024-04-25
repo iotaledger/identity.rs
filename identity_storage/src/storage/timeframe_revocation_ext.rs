@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use super::JwkStorageDocumentError as Error;
 use crate::JwkStorageBbsPlusExt;
 use crate::KeyIdStorage;

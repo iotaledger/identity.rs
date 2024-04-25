@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_core::common::Object;
 use jsonprooftoken::jwp::issued::JwpIssued;
 
