@@ -114,6 +114,7 @@ pub mod storage {
     pub use identity_storage::key_storage::public_modules::*;
   }
   /// Storage types and functionalities.
+  #[allow(clippy::module_inception)]
   pub mod storage {
     pub use identity_storage::storage::*;
   }

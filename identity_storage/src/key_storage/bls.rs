@@ -111,7 +111,7 @@ fn _sign_bbs<S>(
 where
   S: BbsCiphersuite,
 {
-  Signature::<BBSplus<S>>::sign(Some(data), &sk, &pk, Some(header)).map(|s| s.to_bytes().to_vec())
+  Signature::<BBSplus<S>>::sign(Some(data), sk, pk, Some(header)).map(|s| s.to_bytes().to_vec())
 }
 
 /// Signs data and header using the given keys.
