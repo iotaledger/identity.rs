@@ -1,20 +1,24 @@
 [package]
 name = "identity_verification"
-version = "1.1.1"
+version = "1.2.0"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
 license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
 description = "Verification data types and functionality for identity.rs"
 
 [dependencies]
-identity_core = { version = "=1.1.1", path = "./../identity_core", default-features = false }
-identity_did = { version = "=1.1.1", path = "./../identity_did", default-features = false }
-identity_jose = { version = "=1.1.1", path = "./../identity_jose", default-features = false }
+identity_core = { version = "=1.2.0", path = "./../identity_core", default-features = false }
+identity_did = { version = "=1.2.0", path = "./../identity_did", default-features = false }
+identity_jose = { version = "=1.2.0", path = "./../identity_jose", default-features = false }
 serde.workspace = true
 serde_json.workspace = true
 strum.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
+
+[lints]
+workspace = true

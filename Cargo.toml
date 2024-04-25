@@ -16,7 +16,7 @@ members = [
   "examples",
 ]
 
-exclude = ["bindings/wasm"]
+exclude = ["bindings/wasm", "bindings/grpc"]
 
 [workspace.dependencies]
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
@@ -36,3 +36,6 @@ rust-version = "1.65"
 
 [patch.crates-io]
 iota_stronghold = {git = "https://github.com/tensor-programming/stronghold.rs.git", branch = "feat/expose_runner"}
+
+[workspace.lints.clippy]
+result_large_err = "allow"

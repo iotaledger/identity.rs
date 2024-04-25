@@ -32,6 +32,9 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 - [Web Assembly](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm/) (JavaScript/TypeScript)
 
+## gRPC
+
+We provide a collection of experimental [gRPC services](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/grpc/)
 ## Documentation and Resources
 
 - API References:
@@ -51,7 +54,7 @@ If you want to include IOTA Identity in your project, simply add it as a depende
 
 ```toml
 [dependencies]
-identity_iota = { version = "1.1.1" }
+identity_iota = { version = "1.2.0" }
 ```
 
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
@@ -85,7 +88,7 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { version = "1.1.1", features = ["memstore"] }
+identity_iota = { version = "1.2.0", features = ["memstore"] }
 iota-sdk = { version = "1.0.2", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.62"

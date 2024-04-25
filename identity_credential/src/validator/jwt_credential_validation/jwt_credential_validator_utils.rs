@@ -171,7 +171,7 @@ impl JwtCredentialValidatorUtils {
   /// Check the given `status` against the matching [`RevocationBitmap`] service in the
   /// issuer's DID Document.
   #[cfg(feature = "revocation-bitmap")]
-  fn check_revocation_bitmap_status<DOC: AsRef<identity_document::document::CoreDocument> + ?Sized>(
+  pub fn check_revocation_bitmap_status<DOC: AsRef<identity_document::document::CoreDocument> + ?Sized>(
     issuer: &DOC,
     status: crate::credential::RevocationBitmapStatus,
   ) -> ValidationUnitResult {

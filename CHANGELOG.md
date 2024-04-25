@@ -1,12 +1,26 @@
 # Changelog
 
+## [v1.2.0](https://github.com/iotaledger/identity.rs/tree/v1.2.0) (2024-03-27)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v1.1.1...v1.2.0)
+
+### Added
+- Add `get_public_key` for `StrongholdStorage` [\#1311](https://github.com/iotaledger/identity.rs/pull/1311)
+- Support multiple IOTA networks in the Resolver [\#1304](https://github.com/iotaledger/identity.rs/pull/1304)
+- Allow setting additional controllers for `IotaDocument` [\#1314](https://github.com/iotaledger/identity.rs/pull/1314)
+- use latest release of sd-jwt-payload `IotaDocument` [\#1333](https://github.com/iotaledger/identity.rs/pull/1333)
+- Allow arbitrary verification methods [\#1334](https://github.com/iotaledger/identity.rs/pull/1334)
+
+### Patch
+- Support %-encoded characters in DID method id [\#1303](https://github.com/iotaledger/identity.rs/pull/1303)
+
 ## [v1.1.1](https://github.com/iotaledger/identity.rs/tree/v1.1.1) (2024-02-19)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v1.1.0...v1.1.1)
 
 ### Patch
 
-- Fix compilation error caused by the roaring crate [\#1306](https://github.com/iotaledger/identity.rs/pull/1306)
+- Fix compilation error caused by the `roaring` crate [\#1306](https://github.com/iotaledger/identity.rs/pull/1306)
 
 ## [v1.1.0](https://github.com/iotaledger/identity.rs/tree/v1.1.0) (2024-02-07)
 
@@ -14,15 +28,15 @@
 
 ### Added
 
-- Support Selective Disclosure SD-JWT [\#1268](https://github.com/iotaledger/identity.rs/pull/1268)
+- Update `sd-jwt-payload` dependency [\#1296](https://github.com/iotaledger/identity.rs/pull/1296)
 - Add support for StatusList2021 [\#1273](https://github.com/iotaledger/identity.rs/pull/1273)
-- Update sd-jwt-payload dependency [\#1296](https://github.com/iotaledger/identity.rs/pull/1296)
+- Support Selective Disclosure SD-JWT [\#1268](https://github.com/iotaledger/identity.rs/pull/1268)
 
 ### Patch
 
-- Validate domain-linkage URL making sure they only include an origin [\#1267](https://github.com/iotaledger/identity.rs/pull/1267)
-- Credentials cannot be unrevoked with StatusList2021 [\#1284](https://github.com/iotaledger/identity.rs/pull/1284)
 - Fix RevocationBitmap2022 encoding bug [\#1292](https://github.com/iotaledger/identity.rs/pull/1292)
+- Credentials cannot be unrevoked with StatusList2021 [\#1284](https://github.com/iotaledger/identity.rs/pull/1284)
+- Validate domain-linkage URL making sure they only include an origin [\#1267](https://github.com/iotaledger/identity.rs/pull/1267)
 
 ## [v1.0.0](https://github.com/iotaledger/identity.rs/tree/v1.0.0) (2023-11-02)
 

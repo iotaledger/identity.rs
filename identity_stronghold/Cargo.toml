@@ -1,6 +1,6 @@
 [package]
 name = "identity_stronghold"
-version = "1.1.1"
+version = "1.2.0"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -13,8 +13,8 @@ description = "Secure JWK storage with Stronghold for IOTA Identity"
 
 [dependencies]
 async-trait = { version = "0.1.64", default-features = false }
-identity_storage = { version = "=1.1.1", path = "../identity_storage", default_features = false }
-identity_verification = { version = "=1.1.1", path = "../identity_verification", default_features = false }
+identity_storage = { version = "=1.2.0", path = "../identity_storage", default_features = false }
+identity_verification = { version = "=1.2.0", path = "../identity_verification", default_features = false }
 iota-crypto = { version = "0.23", default-features = false, features = ["ed25519"] }
 iota-sdk = { version = "1.0.2", default-features = false, features = ["client", "stronghold"] }
 iota_stronghold = { version = "2.0.0", default-features = false }
@@ -27,7 +27,7 @@ json-proof-token = { workspace = true, optional = true }
 
 
 [dev-dependencies]
-identity_did = { version = "=1.1.1", path = "../identity_did", default_features = false }
+identity_did = { version = "=1.2.0", path = "../identity_did", default_features = false }
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
 
 [features]
@@ -35,3 +35,6 @@ default = []
 # Enables `Send` + `Sync` bounds for the trait implementations on `StrongholdStorage`.
 send-sync-storage = ["identity_storage/send-sync-storage"]
 bbs-plus = ["identity_storage/jpt-bbs-plus", "dep:zkryptium", "dep:json-proof-token"]
+
+[lints]
+workspace = true

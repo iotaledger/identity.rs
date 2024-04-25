@@ -1,6 +1,6 @@
 [package]
 name = "identity_eddsa_verifier"
-version = "1.1.1"
+version = "1.2.0"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -12,9 +12,12 @@ rust-version.workspace = true
 description = "JWS EdDSA signature verification for IOTA Identity"
 
 [dependencies]
-identity_jose = { version = "=1.1.1", path = "../identity_jose", default-features = false }
+identity_jose = { version = "=1.2.0", path = "../identity_jose", default-features = false }
 iota-crypto = { version = "0.23", default-features = false, features = ["std"] }
 
 [features]
 ed25519 = ["iota-crypto/ed25519"]
 default = ["ed25519"]
+
+[lints]
+workspace = true
