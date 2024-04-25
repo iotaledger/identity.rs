@@ -3,7 +3,7 @@
 
 pub(crate) mod ed25519;
 mod stronghold_jwk_storage;
-#[cfg(feature = "bbs-plus")]
+#[cfg(any(feature = "bbs-plus", test))]
 mod stronghold_jwk_storage_ext;
 mod stronghold_key_id;
 pub(crate) mod stronghold_key_type;

@@ -42,6 +42,10 @@ impl JwkStorageBbsPlusExt for StrongholdStorage {
       );
     }
 
+    if !matches!(alg, ProofAlgorithm::BLS12381_SHA256 | ProofAlgorithm::BLS12381_SHAKE256) {
+      return Err(KeyStorageErrorKind::UnsupportedProofAlgorithm.into());
+    }
+
     let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
 
@@ -78,9 +82,6 @@ impl JwkStorageBbsPlusExt for StrongholdStorage {
     header: &[u8],
     public_key: &Jwk,
   ) -> KeyStorageResult<Vec<u8>> {
-    let stronghold = self.get_stronghold().await;
-    let client = get_client(&stronghold)?;
-
     // Extract the required alg from the given public key
     let alg = public_key
       .alg()
@@ -103,6 +104,8 @@ impl JwkStorageBbsPlusExt for StrongholdStorage {
       record_path: key_id.to_string().as_bytes().to_vec(),
     };
 
+    let stronghold = self.get_stronghold().await;
+    let client = get_client(&stronghold)?;
     client
       .get_guards([sk_location], |[sk]| {
         let sk = BBSplusSecretKey::from_bytes(&sk.borrow()).map_err(|e| FatalProcedureError::from(e.to_string()))?;
@@ -123,9 +126,6 @@ impl JwkStorageBbsPlusExt for StrongholdStorage {
     signature: &[u8; BBSplusSignature::BYTES],
     ctx: ProofUpdateCtx,
   ) -> KeyStorageResult<[u8; BBSplusSignature::BYTES]> {
-    let stronghold = self.get_stronghold().await;
-    let client = get_client(&stronghold)?;
-
     // Extract the required alg from the given public key
     let alg = public_key
       .alg()
@@ -143,6 +143,8 @@ impl JwkStorageBbsPlusExt for StrongholdStorage {
       vault_path: IDENTITY_VAULT_PATH.as_bytes().to_vec(),
       record_path: key_id.to_string().as_bytes().to_vec(),
     };
+    let stronghold = self.get_stronghold().await;
+    let client = get_client(&stronghold)?;
 
     client
       .get_guards([sk_location], |[sk]| {

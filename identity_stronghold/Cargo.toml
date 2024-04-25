@@ -27,7 +27,10 @@ zkryptium = { workspace = true, optional = true }
 
 [dev-dependencies]
 identity_did = { version = "=1.2.0", path = "../identity_did", default_features = false }
+identity_storage = { version = "=1.2.0", path = "../identity_storage", default_features = false, features = ["jpt-bbs-plus"] }
+json-proof-token = { workspace = true }
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
+zkryptium = { workspace = true }
 
 [features]
 default = []

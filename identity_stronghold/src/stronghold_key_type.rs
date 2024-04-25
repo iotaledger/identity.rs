@@ -48,6 +48,12 @@ impl TryFrom<&KeyType> for StrongholdKeyType {
   }
 }
 
+impl From<StrongholdKeyType> for KeyType {
+  fn from(key_type: StrongholdKeyType) -> KeyType {
+    KeyType::from_static_str(key_type.name())
+  }
+}
+
 impl TryFrom<&Jwk> for StrongholdKeyType {
   type Error = KeyStorageError;
 
