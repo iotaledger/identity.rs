@@ -309,6 +309,27 @@ This variant is the default.</p>
 </dd>
 <dt><a href="#PayloadType">PayloadType</a></dt>
 <dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
+<dd></dd>
+<dt><a href="#StatusCheck">StatusCheck</a></dt>
+<dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
+<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
+</dd>
+<dt><a href="#Strict">Strict</a></dt>
+<dd><p>Validate the status if supported, reject any unsupported
+<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
+<p>Only <code>RevocationBitmap2022</code> is currently supported.</p>
+<p>This is the default.</p>
+</dd>
+<dt><a href="#SkipUnsupported">SkipUnsupported</a></dt>
+<dd><p>Validate the status if supported, skip any unsupported
+<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
+</dd>
+<dt><a href="#SkipAll">SkipAll</a></dt>
+<dd><p>Skip all status checks.</p>
+</dd>
 </dl>
 
 ## Functions
@@ -7508,21 +7529,7 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="PresentationProofAlgorithm"></a>
 
-## PresentationProofAlgorithm
-**Kind**: global variable  
-<a name="ProofAlgorithm"></a>
-
-## ProofAlgorithm
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
-<a name="CredentialStatus"></a>
-
-## CredentialStatus
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
@@ -7589,16 +7596,7 @@ The holder must match the subject only for credentials where the [`nonTransferab
 ## Any
 The holder is not required to have any kind of relationship to any credential subject.
 
-**Kind**: global variable  
-<a name="CredentialStatus"></a>
-
-## CredentialStatus
-**Kind**: global variable  
-<a name="StatusPurpose"></a>
-
-## StatusPurpose
-Purpose of a [StatusList2021](#StatusList2021).
-
+## StateMetadataEncoding
 **Kind**: global variable  
 <a name="StateMetadataEncoding"></a>
 
@@ -7622,9 +7620,7 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="PayloadType"></a>
 
-## PayloadType
 **Kind**: global variable  
 <a name="verifyEd25519"></a>
 

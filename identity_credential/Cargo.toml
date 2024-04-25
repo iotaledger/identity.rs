@@ -59,5 +59,6 @@ domain-linkage = ["validator"]
 domain-linkage-fetch = ["domain-linkage", "dep:reqwest", "dep:futures"]
 sd-jwt = ["credential", "validator", "dep:sd-jwt-payload"]
 jpt-bbs-plus = ["credential", "validator", "dep:zkryptium", "dep:json-proof-token"]
+
 [lints]
 workspace = true
