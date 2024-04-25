@@ -35,7 +35,7 @@ repository = "https://github.com/iotaledger/identity.rs"
 rust-version = "1.65"
 
 [patch.crates-io]
-iota_stronghold = {git = "https://github.com/tensor-programming/stronghold.rs.git", branch = "feat/expose_runner"}
+iota_stronghold = { git = "https://github.com/tensor-programming/stronghold.rs.git", branch = "feat/expose_runner" }
 
 [workspace.lints.clippy]
 result_large_err = "allow"

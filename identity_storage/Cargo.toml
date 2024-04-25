@@ -12,6 +12,7 @@ rust-version.workspace = true
 description = "Abstractions over storage for cryptographic keys used in DID Documents"
 
 [dependencies]
+anyhow = "1.0.82"
 async-trait = { version = "0.1.64", default-features = false }
 futures = { version = "0.3.27", default-features = false, features = ["async-await"] }
 identity_core = { version = "=1.2.0", path = "../identity_core", default-features = false }
@@ -21,6 +22,7 @@ identity_document = { version = "=1.2.0", path = "../identity_document", default
 identity_iota_core = { version = "=1.2.0", path = "../identity_iota_core", default-features = false, optional = true }
 identity_verification = { version = "=1.2.0", path = "../identity_verification", default_features = false }
 iota-crypto = { version = "0.23", default-features = false, features = ["ed25519"], optional = true }
+json-proof-token = { workspace = true, optional = true }
 rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"], optional = true }
 seahash = { version = "4.1.0", default_features = false }
 serde.workspace = true
@@ -28,8 +30,6 @@ serde_json.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync"], optional = true }
 zkryptium = { workspace = true, optional = true }
-json-proof-token = { workspace = true, optional = true }
-anyhow = "1.0.82"
 
 [dev-dependencies]
 identity_credential = { version = "=1.2.0", path = "../identity_credential", features = ["revocation-bitmap"] }
