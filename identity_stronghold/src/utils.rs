@@ -6,6 +6,7 @@ use identity_storage::KeyStorageError;
 use identity_storage::KeyStorageErrorKind;
 use identity_storage::KeyStorageResult;
 use identity_verification::jws::JwsAlgorithm;
+use iota_sdk::client::secret::SecretManager;
 use iota_stronghold::Client;
 use iota_stronghold::ClientError;
 use iota_stronghold::Stronghold;
@@ -13,7 +14,6 @@ use rand::distributions::DistString as _;
 use tokio::sync::MutexGuard;
 
 use crate::stronghold_key_type::StrongholdKeyType;
-use crate::StrongholdStorage;
 
 pub static IDENTITY_VAULT_PATH: &str = "iota_identity_vault";
 pub static IDENTITY_CLIENT_PATH: &[u8] = b"iota_identity_client";
@@ -54,7 +54,7 @@ fn load_or_create_client(stronghold: &Stronghold) -> KeyStorageResult<Client> {
 }
 
 pub async fn persist_changes(
-  secret_manager: &StrongholdStorage,
+  secret_manager: &SecretManager,
   stronghold: MutexGuard<'_, Stronghold>,
 ) -> KeyStorageResult<()> {
   stronghold.write_client(IDENTITY_CLIENT_PATH).map_err(|err| {
@@ -65,7 +65,7 @@ pub async fn persist_changes(
   // Must be dropped since `write_stronghold_snapshot` needs to acquire the stronghold lock.
   drop(stronghold);
 
-  match secret_manager.as_secret_manager() {
+  match secret_manager {
     iota_sdk::client::secret::SecretManager::Stronghold(stronghold_manager) => {
       stronghold_manager
         .write_stronghold_snapshot(None)

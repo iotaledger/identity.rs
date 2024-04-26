@@ -136,7 +136,6 @@ impl JwkStorage for StrongholdStorage {
           .with_custom_message("stronghold public key procedure failed")
           .with_source(err)
       })?;
-    persist_changes(self, stronghold).await?;
     let public_key: Vec<u8> = procedure_result.into();
 
     let mut params = JwkParamsOkp::new();
@@ -188,7 +187,6 @@ impl JwkStorage for StrongholdStorage {
           .with_custom_message("stronghold write secret failed")
           .with_source(err)
       })?;
-    persist_changes(self, stronghold).await?;
 
     Ok(key_id)
   }
@@ -263,7 +261,6 @@ impl JwkStorage for StrongholdStorage {
     if !deleted {
       return Err(KeyStorageError::new(KeyStorageErrorKind::KeyNotFound));
     }
-    persist_changes(self, stronghold).await?;
 
     Ok(())
   }
@@ -281,5 +278,19 @@ impl JwkStorage for StrongholdStorage {
         .with_source(err)
     })?;
     Ok(exists)
+  }
+}
+
+/// Calls `persist_changes` when `StrongholdStorage` gets dropped.
+impl Drop for StrongholdStorage {
+  fn drop(&mut self) {
+    let secret_manager = std::mem::replace(&mut self.0, Arc::new(SecretManager::Placeholder));
+    tokio::spawn(async move {
+      let SecretManager::Stronghold(stronghold) = secret_manager.as_ref() else {
+        return;
+      };
+      let stronghold = stronghold.inner().await;
+      let _ = persist_changes(&secret_manager, stronghold).await;
+    });
   }
 }
