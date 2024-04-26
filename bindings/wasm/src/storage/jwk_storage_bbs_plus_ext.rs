@@ -29,7 +29,6 @@ use identity_iota::storage::ProofUpdateCtx;
 use identity_iota::verification::jwk::Jwk;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use wasm_bindgen::prelude::*;
-use zkryptium::bbsplus::signature::BBSplusSignature;
 
 #[wasm_bindgen(js_class = JwkStorage)]
 impl WasmJwkStorage {
@@ -70,9 +69,6 @@ impl WasmJwkStorage {
     ctx: WasmProofUpdateCtx,
   ) -> WasmResult<js_sys::Uint8Array> {
     let key_id = KeyId::new(key_id);
-    let signature = signature
-      .try_into()
-      .map_err(|_| JsError::new("Invalid signature length"))?;
     self
       .update_signature(&key_id, &public_key.0, &signature, ctx.into())
       .await
@@ -116,9 +112,9 @@ impl JwkStorageBbsPlusExt for WasmJwkStorage {
     &self,
     key_id: &KeyId,
     public_key: &Jwk,
-    signature: &[u8; BBSplusSignature::BYTES],
+    signature: &[u8],
     ctx: ProofUpdateCtx,
-  ) -> KeyStorageResult<[u8; BBSplusSignature::BYTES]> {
+  ) -> KeyStorageResult<Vec<u8>> {
     // Extract the required alg from the given public key
     let alg = public_key
       .alg()
