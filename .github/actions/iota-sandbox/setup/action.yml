@@ -23,7 +23,7 @@ runs:
 
         # Start Tangle
         sudo ./bootstrap.sh
-        docker compose up -d
+        docker compose --profile inx-faucet up -d
     - name: Wait for tangle to start
       shell: bash
       run: wget -qO- https://raw.githubusercontent.com/eficode/wait-for/$WAIT_FOR_VERSION/wait-for | sh -s -- -t 60 http://localhost/health -- echo "Tangle is up"
