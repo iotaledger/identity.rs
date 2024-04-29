@@ -4,6 +4,7 @@
 //! Wrapper around [`StrongholdSecretManager`](StrongholdSecretManager).
 
 use async_trait::async_trait;
+use identity_storage::key_storage::bls::encode_bls_jwk;
 use identity_storage::key_storage::JwkStorage;
 use identity_storage::JwkGenOutput;
 use identity_storage::KeyId;
@@ -19,14 +20,19 @@ use identity_verification::jwu;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_stronghold::procedures::Ed25519Sign;
+use iota_stronghold::procedures::FatalProcedureError;
 use iota_stronghold::procedures::GenerateKey;
 use iota_stronghold::procedures::KeyType as ProceduresKeyType;
+use iota_stronghold::procedures::Runner;
 use iota_stronghold::procedures::StrongholdProcedure;
 use iota_stronghold::Location;
 use iota_stronghold::Stronghold;
+use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::MutexGuard;
+use zeroize::Zeroizing;
+use zkryptium::bbsplus::keys::BBSplusSecretKey;
 
 use crate::ed25519;
 use crate::stronghold_key_type::StrongholdKeyType;
@@ -56,7 +62,68 @@ impl StrongholdStorage {
     }
   }
 
+  async fn get_ed25519_public_key(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
+    let stronghold = self.get_stronghold().await;
+    let client = get_client(&stronghold)?;
+
+    let location = Location::generic(
+      IDENTITY_VAULT_PATH.as_bytes().to_vec(),
+      key_id.to_string().as_bytes().to_vec(),
+    );
+
+    let public_key_procedure = iota_stronghold::procedures::PublicKey {
+      ty: ProceduresKeyType::Ed25519,
+      private_key: location,
+    };
+
+    let procedure_result = client
+      .execute_procedure(StrongholdProcedure::PublicKey(public_key_procedure))
+      .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound).with_source(err))?;
+
+    let public_key: Vec<u8> = procedure_result.into();
+
+    let mut params = JwkParamsOkp::new();
+    params.x = jwu::encode_b64(public_key);
+    params.crv = EdCurve::Ed25519.name().to_owned();
+    let mut jwk: Jwk = Jwk::from_params(params);
+    jwk.set_alg(JwsAlgorithm::EdDSA.name());
+    jwk.set_kid(jwk.thumbprint_sha256_b64());
+
+    Ok(jwk)
+  }
+
+  async fn get_bls12381g2_public_key(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
+    let stronghold = self.get_stronghold().await;
+    let client = get_client(&stronghold)?;
+
+    let location = Location::generic(
+      IDENTITY_VAULT_PATH.as_bytes().to_vec(),
+      key_id.to_string().as_bytes().to_vec(),
+    );
+
+    client
+      .get_guards([location], |[sk]| {
+        let sk = BBSplusSecretKey::from_bytes(&sk.borrow()).map_err(|e| FatalProcedureError::from(e.to_string()))?;
+        let pk = sk.public_key();
+        let public_jwk = encode_bls_jwk(&sk, &pk, ProofAlgorithm::BLS12381_SHA256).1;
+
+        drop(Zeroizing::new(sk.to_bytes()));
+        Ok(public_jwk)
+      })
+      .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound).with_source(e))
+  }
+
+  /// Attepts to retrieve the public key corresponding to the key of id `key_id`,
+  /// returning it as a `key_type` encoded public JWK.
+  pub async fn get_public_key_with_type(&self, key_id: &KeyId, key_type: StrongholdKeyType) -> KeyStorageResult<Jwk> {
+    match key_type {
+      StrongholdKeyType::Ed25519 => self.get_ed25519_public_key(key_id).await,
+      StrongholdKeyType::Bls12381G2 => self.get_bls12381g2_public_key(key_id).await,
+    }
+  }
+
   /// Retrieve the public key corresponding to `key_id`.
+  #[deprecated(since = "1.3.0", note = "use `get_public_key_with_type` instead")]
   pub async fn get_public_key(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
     let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
@@ -100,8 +167,12 @@ impl JwkStorage for StrongholdStorage {
 
     let keytype: ProceduresKeyType = match key_type {
       StrongholdKeyType::Ed25519 => ProceduresKeyType::Ed25519,
-      StrongholdKeyType::BLS12381G2 => {
-        todo!("return an error that instruct the user to call the BBS+ flavor for this function.")
+      StrongholdKeyType::Bls12381G2 => {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message(format!(
+            "`{key_type}` is supported but `JwkStorageBbsPlusExt::generate_bbs` should be called instead."
+          )),
+        )
       }
     };
 

@@ -20,7 +20,7 @@ const BLS12381G2_KEY_TYPE_STR: &str = "BLS12381G2";
 #[derive(Debug, Copy, Clone)]
 pub enum StrongholdKeyType {
   Ed25519,
-  BLS12381G2,
+  Bls12381G2,
 }
 
 impl StrongholdKeyType {
@@ -28,7 +28,7 @@ impl StrongholdKeyType {
   const fn name(&self) -> &'static str {
     match self {
       StrongholdKeyType::Ed25519 => ED25519_KEY_TYPE_STR,
-      StrongholdKeyType::BLS12381G2 => BLS12381G2_KEY_TYPE_STR,
+      StrongholdKeyType::Bls12381G2 => BLS12381G2_KEY_TYPE_STR,
     }
   }
 }
@@ -45,7 +45,7 @@ impl TryFrom<&KeyType> for StrongholdKeyType {
   fn try_from(value: &KeyType) -> Result<Self, Self::Error> {
     match value.as_str() {
       ED25519_KEY_TYPE_STR => Ok(StrongholdKeyType::Ed25519),
-      BLS12381G2_KEY_TYPE_STR => Ok(StrongholdKeyType::BLS12381G2),
+      BLS12381G2_KEY_TYPE_STR => Ok(StrongholdKeyType::Bls12381G2),
       _ => Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)),
     }
   }
@@ -91,7 +91,7 @@ impl TryFrom<&Jwk> for StrongholdKeyType {
             .with_custom_message("only Ed curves are supported for signing")
             .with_source(err)
         })? {
-          BlsCurve::BLS12381G2 => Ok(StrongholdKeyType::BLS12381G2),
+          BlsCurve::BLS12381G2 => Ok(StrongholdKeyType::Bls12381G2),
           curve => Err(
             KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
               .with_custom_message(format!("{curve} not supported")),

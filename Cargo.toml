@@ -24,7 +24,7 @@ thiserror = { version = "1.0", default-features = false }
 strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0", default-features = false }
 json-proof-token = { version = "0.3.5" }
-zkryptium = { version = "0.2.1", default-features = false, features = ["bbsplus"] }
+zkryptium = { version = "0.2.2", default-features = false, features = ["bbsplus"] }
 
 [workspace.package]
 authors = ["IOTA Stiftung"]

@@ -33,7 +33,10 @@ async fn retrieve() {
     .unwrap();
   let key_id = &generate.key_id;
 
-  let pub_key: Jwk = stronghold_storage.get_public_key(key_id).await.unwrap();
+  let pub_key: Jwk = stronghold_storage
+    .get_public_key_with_type(key_id, crate::stronghold_key_type::StrongholdKeyType::Ed25519)
+    .await
+    .unwrap();
   assert_eq!(generate.jwk, pub_key);
 }
 

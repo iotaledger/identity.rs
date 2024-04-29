@@ -25,8 +25,7 @@ fn random_bbs_keypair<S>() -> Result<(BBSplusSecretKey, BBSplusPublicKey), zkryp
 where
   S: BbsCiphersuite,
 {
-  let key_pair = KeyPair::<BBSplus<S>>::random()?;
-  Ok((key_pair.private_key().clone(), key_pair.public_key().clone()))
+  KeyPair::<BBSplus<S>>::random().map(KeyPair::into_parts)
 }
 
 /// Generates a new BBS+ keypair using either `BLS12381-SHA256` or `BLS12381-SHAKE256`.

@@ -23,7 +23,7 @@ use crate::StrongholdStorage;
 async fn stronghold_bbs_keypair_gen_works() -> anyhow::Result<()> {
   let stronghold_storage = StrongholdStorage::new(create_stronghold_secret_manager());
   let JwkGenOutput { key_id, jwk, .. } = stronghold_storage
-    .generate_bbs(StrongholdKeyType::BLS12381G2.into(), ProofAlgorithm::BLS12381_SHA256)
+    .generate_bbs(StrongholdKeyType::Bls12381G2.into(), ProofAlgorithm::BLS12381_SHA256)
     .await?;
 
   assert!(jwk.is_public());
@@ -48,7 +48,7 @@ async fn stronghold_bbs_keypair_gen_fails_with_wrong_key_type() -> anyhow::Resul
 async fn stronghold_bbs_keypair_gen_fails_with_wrong_alg() -> anyhow::Result<()> {
   let stronghold_storage = StrongholdStorage::new(create_stronghold_secret_manager());
   let error = stronghold_storage
-    .generate_bbs(StrongholdKeyType::BLS12381G2.into(), ProofAlgorithm::MAC_H256)
+    .generate_bbs(StrongholdKeyType::Bls12381G2.into(), ProofAlgorithm::MAC_H256)
     .await
     .unwrap_err();
 
@@ -61,7 +61,7 @@ async fn stronghold_bbs_keypair_gen_fails_with_wrong_alg() -> anyhow::Result<()>
 async fn stronghold_sign_bbs_works() -> anyhow::Result<()> {
   let stronghold_storage = StrongholdStorage::new(create_stronghold_secret_manager());
   let JwkGenOutput { key_id, jwk, .. } = stronghold_storage
-    .generate_bbs(StrongholdKeyType::BLS12381G2.into(), ProofAlgorithm::BLS12381_SHA256)
+    .generate_bbs(StrongholdKeyType::Bls12381G2.into(), ProofAlgorithm::BLS12381_SHA256)
     .await?;
   let pk = expand_bls_jwk(&jwk)?.1;
   let sk = {
