@@ -30,7 +30,7 @@ serde_repr = { version = "0.1", default-features = false }
 tokio = { version = "1.29", default-features = false, features = ["sync"] }
 wasm-bindgen = { version = "0.2.85", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
-zkryptium = "0.2.1"
+zkryptium = "0.2.2"
 
 [dependencies.identity_iota]
 path = "../../identity_iota"
