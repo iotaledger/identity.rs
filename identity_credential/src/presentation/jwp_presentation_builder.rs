@@ -34,9 +34,9 @@ impl SelectiveDisclosurePresentation {
   ///   - `jti`
   ///   - `nbf`
   ///   - `sub`
-  ///   - `termsOfUse` 
-  ///   - `vc.credentialStatus.revocationBitmapIndex` 
-  ///   - `vc.credentialSubject.id` 
+  ///   - `termsOfUse`
+  ///   - `vc.credentialStatus.revocationBitmapIndex`
+  ///   - `vc.credentialSubject.id`
   pub fn new(issued_jwp: &JwpIssued) -> Self {
     let mut jwp_builder = JwpPresentedBuilder::new(issued_jwp);
 

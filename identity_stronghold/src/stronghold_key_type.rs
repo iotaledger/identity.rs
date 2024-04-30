@@ -11,10 +11,12 @@ use identity_verification::jwk::EdCurve;
 use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkType;
 
+pub const ED25519_KEY_TYPE_STR: &str = "Ed25519";
 /// The Ed25519 key type.
-const ED25519_KEY_TYPE_STR: &str = "Ed25519";
+pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(ED25519_KEY_TYPE_STR);
+pub const BLS12381G2_KEY_TYPE_STR: &str = "BLS12381G2";
 /// The BLS12381G2 key type
-const BLS12381G2_KEY_TYPE_STR: &str = "BLS12381G2";
+pub const BLS12381G2_KEY_TYPE: KeyType = KeyType::from_static_str(BLS12381G2_KEY_TYPE_STR);
 
 /// Key Types supported by the stronghold storage implementation.
 #[derive(Debug, Copy, Clone)]

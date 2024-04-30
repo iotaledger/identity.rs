@@ -9,3 +9,4 @@ mod tests;
 pub(crate) mod utils;
 
 pub use storage::*;
+pub use stronghold_key_type::*;
