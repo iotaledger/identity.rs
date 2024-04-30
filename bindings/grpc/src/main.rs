@@ -1,6 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::Context;
 use identity_grpc::server::GRpcServer;
 use identity_stronghold::StrongholdStorage;
 use iota_sdk::client::stronghold::StrongholdAdapter;
@@ -29,11 +30,17 @@ async fn main() -> anyhow::Result<()> {
 
 #[tracing::instrument]
 fn init_stronghold() -> anyhow::Result<StrongholdStorage> {
-  let stronghold_password = std::env::var("STRONGHOLD_PWD")?;
-  let snapshot_path = std::env::var("SNAPSHOT_PATH")?;
+  use std::env;
+  use std::fs;
+  let stronghold_password = env::var("STRONGHOLD_PWD_FILE")
+    .context("Unset \"STRONGHOLD_PWD_FILE\" env variable")
+    .and_then(|path| fs::read_to_string(&path).context(format!("{path} does not exists")))
+    .or(env::var("STRONGHOLD_PWD"))
+    .context("No password for stronghold was provided")?;
+  let snapshot_path = env::var("SNAPSHOT_PATH")?;
 
   // Check for snapshot file at specified path
-  let metadata = std::fs::metadata(&snapshot_path)?;
+  let metadata = fs::metadata(&snapshot_path)?;
   if !metadata.is_file() {
     return Err(anyhow::anyhow!("No snapshot at provided path \"{}\"", &snapshot_path));
   }
