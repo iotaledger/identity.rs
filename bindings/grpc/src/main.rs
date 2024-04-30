@@ -35,6 +35,7 @@ fn init_stronghold() -> anyhow::Result<StrongholdStorage> {
   let stronghold_password = env::var("STRONGHOLD_PWD_FILE")
     .context("Unset \"STRONGHOLD_PWD_FILE\" env variable")
     .and_then(|path| fs::read_to_string(&path).context(format!("{path} does not exists")))
+    .map(sanitize_pwd)
     .or(env::var("STRONGHOLD_PWD"))
     .context("No password for stronghold was provided")?;
   let snapshot_path = env::var("SNAPSHOT_PATH")?;
@@ -51,4 +52,12 @@ fn init_stronghold() -> anyhow::Result<StrongholdStorage> {
       .build(snapshot_path)
       .map(StrongholdStorage::new)?,
   )
+}
+
+/// Remove any trailing whitespace in-place.
+fn sanitize_pwd(mut pwd: String) -> String {
+  let trimmed = pwd.trim_end();
+  pwd.truncate(trimmed.len());
+  pwd.shrink_to_fit();
+  pwd
 }
