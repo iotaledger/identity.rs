@@ -33,12 +33,12 @@ use jsonprooftoken::jwp::issued::JwpIssuedBuilder;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-///New trait to handle JWP-based operations on DID Documents
+/// Handle JWP-based operations on DID Documents.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait JwpDocumentExt {
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
-  /// public key material into the DID document. This support BBS+ keys.
+  /// public key material into the DID document. This supports BBS+ keys.
   async fn generate_method_jwp<K, I>(
     &mut self,
     storage: &Storage<K, I>,
@@ -52,7 +52,7 @@ pub trait JwpDocumentExt {
     I: KeyIdStorage;
 
   /// Compute a JWP in the Issued form representing the Verifiable Credential
-  /// See [JSON Web Proof draft section 4.1](https://datatracker.ietf.org/doc/html/draft-ietf-jose-json-web-proof#name-issued-form)
+  /// See [JSON Web Proof draft](https://datatracker.ietf.org/doc/html/draft-ietf-jose-json-web-proof#name-issued-form)
   async fn create_issued_jwp<K, I>(
     &self,
     storage: &Storage<K, I>,
@@ -65,7 +65,7 @@ pub trait JwpDocumentExt {
     I: KeyIdStorage;
 
   /// Compute a JWP in the Presented form representing the presented Verifiable Credential after the Selective
-  /// Disclosure of attributes See [JSON Web Proof draft section 4.2](https://datatracker.ietf.org/doc/html/draft-ietf-jose-json-web-proof#name-presented-form)
+  /// Disclosure of attributes See [JSON Web Proof draft](https://datatracker.ietf.org/doc/html/draft-ietf-jose-json-web-proof#name-presented-form)
   async fn create_presented_jwp(
     &self,
     presentation: &mut SelectiveDisclosurePresentation,

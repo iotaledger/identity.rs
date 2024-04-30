@@ -7,19 +7,19 @@ use jsonprooftoken::jwp::header::PresentationProtectedHeader;
 use jsonprooftoken::jwp::issued::JwpIssued;
 use jsonprooftoken::jwp::presented::JwpPresentedBuilder;
 
-/// Used to construct a JwpPresentedBuilder and handle the selective disclosure of attributes
-/// - @context MUST NOT be blinded
-/// - id MUST be blinded
-/// - type MUST NOT be blinded
-/// - issuer MUST NOT be blinded
-/// - issuanceDate MUST be blinded (if Timeframe Revocation mechanism is used)
-/// - expirationDate MUST be blinded (if Timeframe Revocation mechanism is used)
-/// - credentialSubject (User have to choose which attribute must be blinded)
-/// - credentialSchema MUST NOT be blinded
-/// - credentialStatus MUST NOT be blinded
-/// - refreshService MUST NOT be blinded (probably will be used for Timeslot Revocation mechanism)
-/// - termsOfUse NO reason to use it in ZK VC (will be in any case blinded)
-/// - evidence (User have to choose which attribute must be blinded)
+/// Used to construct a JwpPresentedBuilder and handle the selective disclosure of attributes.
+// - @context MUST NOT be blinded
+// - id MUST be blinded
+// - type MUST NOT be blinded
+// - issuer MUST NOT be blinded
+// - issuanceDate MUST be blinded (if Timeframe Revocation mechanism is used)
+// - expirationDate MUST be blinded (if Timeframe Revocation mechanism is used)
+// - credentialSubject (Users have to choose which attribute must be blinded)
+// - credentialSchema MUST NOT be blinded
+// - credentialStatus MUST NOT be blinded
+// - refreshService MUST NOT be blinded (probably will be used for Timeslot Revocation mechanism)
+// - termsOfUse NO reason to use it in ZK VC (will be in any case blinded)
+// - evidence (Users have to choose which attribute must be blinded)
 pub struct SelectiveDisclosurePresentation {
   jwp_builder: JwpPresentedBuilder,
 }
@@ -50,7 +50,7 @@ impl SelectiveDisclosurePresentation {
     Self { jwp_builder }
   }
 
-  /// Selectively disclose "credentialSubject" attributes.
+  /// Selectively conceal "credentialSubject" attributes.
   /// # Example
   /// ```ignore
   /// {
@@ -66,8 +66,8 @@ impl SelectiveDisclosurePresentation {
   /// ```
   /// If you want to undisclose for example the Mathematics course and the name of the degree:
   /// ```ignore
-  /// undisclose_subject("mainCourses[1]");
-  /// undisclose_subject("degree.name");
+  /// presentation_builder.conceal_in_subject("mainCourses[1]");
+  /// presentation_builder.conceal_in_subject("degree.name");
   /// ```
   pub fn conceal_in_subject(&mut self, path: &str) -> Result<(), Error> {
     let _ = self
@@ -78,6 +78,22 @@ impl SelectiveDisclosurePresentation {
   }
 
   /// Undisclose "evidence" attributes.
+  /// # Example
+  /// ```ignore
+  /// {
+  ///   "id": "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192d4231",
+  ///   "type": ["DocumentVerification"],
+  ///   "verifier": "https://example.edu/issuers/14",
+  ///   "evidenceDocument": "DriversLicense",
+  ///   "subjectPresence": "Physical",
+  ///   "documentPresence": "Physical",
+  ///   "licenseNumber": "123AB4567"
+  /// }
+  /// ```
+  /// To conceal the `licenseNumber` field:
+  /// ```ignore
+  /// presentation_builder.conceal_in_evidence("licenseNumber");
+  /// ```
   pub fn conceal_in_evidence(&mut self, path: &str) -> Result<(), Error> {
     let _ = self
       .jwp_builder
