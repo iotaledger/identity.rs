@@ -1,8 +1,6 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Wrapper around [`StrongholdSecretManager`](StrongholdSecretManager).
-
 use async_trait::async_trait;
 use identity_storage::key_storage::bls::*;
 use identity_storage::key_storage::JwkStorage;
@@ -72,6 +70,8 @@ impl JwkStorageBbsPlusExt for StrongholdStorage {
           .with_custom_message("Failed to execute stronghold procedure")
           .with_source(e)
       })?;
+
+    persist_changes(self.as_secret_manager(), stronghold).await?;
 
     Ok(JwkGenOutput::new(kid, jwk))
   }
