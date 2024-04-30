@@ -26,7 +26,17 @@ pub struct SelectiveDisclosurePresentation {
 
 impl SelectiveDisclosurePresentation {
   /// Initialize a presentation starting from an Issued JWP.
-  /// The properties `jti`, `nbf`, `issuanceDate`, `expirationDate` and `termsOfUse` are concealed by default.
+  /// The following properties are concealed by default:
+  ///
+  ///   - `exp`
+  ///   - `expirationDate`
+  ///   - `issuanceDate`
+  ///   - `jti`
+  ///   - `nbf`
+  ///   - `sub`
+  ///   - `termsOfUse` 
+  ///   - `vc.credentialStatus.revocationBitmapIndex` 
+  ///   - `vc.credentialSubject.id` 
   pub fn new(issued_jwp: &JwpIssued) -> Self {
     let mut jwp_builder = JwpPresentedBuilder::new(issued_jwp);
 
