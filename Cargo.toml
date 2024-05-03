@@ -13,6 +13,7 @@ members = [
   "identity_stronghold",
   "identity_jose",
   "identity_eddsa_verifier",
+  "identity_sui_name_tbd",
   "examples",
 ]
 
