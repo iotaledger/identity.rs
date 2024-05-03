@@ -1,0 +1,26 @@
+[package]
+name = "identity_sui_name_tbd"
+version = "0.0.1"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords = ["iota", "identity", "sui"]
+license.workspace = true
+readme = "./README.md"
+repository.workspace = true
+rust-version.workspace = true
+description = "SUI related tooling for identity-rs"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+strum.workspace = true
+sui-sdk = { git = "https://github.com/mystenlabs/sui", package = "sui-sdk"}
+thiserror.workspace = true
+
+[dev-dependencies]
+anyhow = "1.0.75"
+tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
+
+[lints]
+workspace = true
