@@ -83,6 +83,10 @@ impl Secp256K1Verifier {
                     .with_source(err)
             })?;
 
+        if let Some(normalized) = signature.normalize_s() {
+            signature = normalized;
+        }
+
         match signature::Verifier::verify(&verifying_key, &input.signing_input, &signature) {
             Ok(()) => Ok(()),
             Err(err) => Err(SignatureVerificationError::new(
