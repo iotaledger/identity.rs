@@ -72,8 +72,6 @@ impl Secp256R1Verifier {
                 ));
             } else {
                 opt_public_key.unwrap()
-                // opt_public_key.expect("we should have asserted that the
-                // contained value is some")
             }
         };
 
