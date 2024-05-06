@@ -18,17 +18,17 @@ use identity_verification::jws::SignatureVerificationErrorKind;
 pub struct EcDSAJwsVerifier {}
 
 impl JwsVerifier for EcDSAJwsVerifier {
-    fn verify(
-        &self,
-        input: identity_verification::jws::VerificationInput,
-        public_key: &identity_verification::jwk::Jwk,
-    ) -> Result<(), identity_verification::jws::SignatureVerificationError> {
-        match input.alg {
-            #[cfg(feature = "es256")]
-            JwsAlgorithm::ES256 => crate::Secp256R1Verifier::verify(&input, public_key),
-            #[cfg(feature = "es256k")]
-            JwsAlgorithm::ES256K => crate::Secp256K1Verifier::verify(&input, public_key),
-            _ => Err(SignatureVerificationErrorKind::UnsupportedAlg.into()),
-        }
+  fn verify(
+    &self,
+    input: identity_verification::jws::VerificationInput,
+    public_key: &identity_verification::jwk::Jwk,
+  ) -> Result<(), identity_verification::jws::SignatureVerificationError> {
+    match input.alg {
+      #[cfg(feature = "es256")]
+      JwsAlgorithm::ES256 => crate::Secp256R1Verifier::verify(&input, public_key),
+      #[cfg(feature = "es256k")]
+      JwsAlgorithm::ES256K => crate::Secp256K1Verifier::verify(&input, public_key),
+      _ => Err(SignatureVerificationErrorKind::UnsupportedAlg.into()),
     }
+  }
 }
