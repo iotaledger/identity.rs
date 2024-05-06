@@ -12,13 +12,13 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-identity_verification.workspace = true
-k256 = { workspace = true, features = ["std", "ecdsa", "ecdsa-core"], optional = true }
-p256 = { workspace = true, features = ["std", "ecdsa", "ecdsa-core"], optional = true }
-signature.workspace = true
+identity_verification = { version = "=1.2.0", path = "../identity_verification", default-features = false }
+k256 = { version = "0.13.3", default-features = false, features = ["std", "ecdsa", "ecdsa-core"], optional = true }
+p256 = { version = "0.13.2", default-features = false, features = ["std", "ecdsa", "ecdsa-core"], optional = true }
+signature = { version = "2", default-features = false }
 
 [dev-dependencies]
-josekit.workspace = true
+josekit = "0.8.6"
 serde_json.workspace = true
 
 [features]
