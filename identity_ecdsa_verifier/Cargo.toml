@@ -1,12 +1,15 @@
 [package]
 name = "identity_ecdsa_verifier"
-# TODO: description for consistency?
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
+keywords = ["iota", "identity", "jose", "jwk", "jws"]
 license.workspace = true
+readme = "./README.md"
+repository.workspace = true
 rust-version.workspace = true
+description = "JWS ECDSA signature verification for IOTA Identity"
 
 [lints]
 workspace = true
