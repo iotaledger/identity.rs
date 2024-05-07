@@ -9,28 +9,20 @@ if [ -z "$1" ]
     exit 1
 fi
 
-
-# create_for_testing args:
-#        legacy_state_controller: Option<address>,
-#        state_index: u32,
-#        state_metadata: Option<vector<u8>>,
-#        sender: Option<address>,
-#        metadata: Option<vector<u8>>,
-#        immutable_issuer: Option<address>,
-#        immutable_metadata: Option<vector<u8>>,
-#        ctx: &mut TxContext
-sui \
-  client \
-    call \
-      --package $1 \
-      --module alias \
-      --function create_for_testing \
-      --args \
-        [] \
-        123 \
-        [] \
-        [] \
-        [] \
-        [] \
-        [] \
-      --gas-budget 10000000
+sui client ptb \
+  --gas-budget 50000000 \
+  --move-call sui::tx_context::sender \
+  --assign sender \
+  --move-call $1::alias::create_for_testing \
+    none \
+    123u32 \
+    'some("DIDwhatever")' \
+    none \
+    none \
+    none \
+    none \
+  --assign "alias" \
+  --move-call $1::alias_output::create_empty_for_testing \
+  --assign alias_output \
+  --move-call $1::alias_output::attach_alias alias_output "alias" \
+  --transfer-objects "[alias_output]" sender 

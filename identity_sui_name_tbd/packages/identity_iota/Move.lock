@@ -2,17 +2,27 @@
 
 [move]
 version = 0
-manifest_digest = "5D20B4D5C9D91B3D962F447225225C662ADD77CA8DB9994269E198B802862C93"
-deps_digest = "3C4103934B1E040BB6B23F1D610B4EF9F2F1166A50A104EADCF77467C004C600"
+manifest_digest = "5302BCFBECBC30D467D03B2D18F53E3EE90CFEB854C9E73696E0BE70EF064980"
+deps_digest = "060AD7E57DFB13104F21BE5F5C3759D03F0553FC3229247D9A7A6B45F50D03A3"
 
 dependencies = [
   { name = "MoveStdlib" },
+  { name = "StardustTest" },
   { name = "Sui" },
 ]
 
 [[move.package]]
 name = "MoveStdlib"
 source = { git = "https://github.com/iotaledger/kinesis.git", rev = "7899dc9ce682c3d0a97f249ce7eaa27b9473b920", subdir = "crates/sui-framework/packages/move-stdlib" }
+
+[[move.package]]
+name = "StardustTest"
+source = { local = "../stardust-test" }
+
+dependencies = [
+  { name = "MoveStdlib" },
+  { name = "Sui" },
+]
 
 [[move.package]]
 name = "Sui"

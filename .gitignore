@@ -28,3 +28,6 @@ index.html
 *.hodl.*
 
 !/bindings/wasm/static/index.html
+
+# ignore SUI build artifacts
+build

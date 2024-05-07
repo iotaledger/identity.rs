@@ -57,16 +57,13 @@ impl UnmigratedResolver {
       .content
       .ok_or_else(|| Error::ObjectLookup(format!("no content in retrieved object in object id {object_id}")))?;
 
-    let object = match content {
-      SuiParsedData::MoveObject(value) => value,
-      _ => {
-        return Err(Error::ObjectLookup(format!(
-          "found data at object id {object_id} is not an object"
-        )));
-      }
+    let SuiParsedData::MoveObject(value) = content else {
+      return Err(Error::ObjectLookup(format!(
+        "found data at object id {object_id} is not an object"
+      )));
     };
 
-    let alias_output = object.fields.to_json_value();
+    let alias_output = value.fields.to_json_value();
 
     Ok(alias_output)
   }
