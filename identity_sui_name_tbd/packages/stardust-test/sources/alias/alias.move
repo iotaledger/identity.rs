@@ -27,6 +27,20 @@ module stardust::alias {
     }
 
     // === Public-Mutative Functions ===
+    public fun destructure(self: Alias):
+        (UID, Option<address>, u32, Option<vector<u8>>, Option<address>, Option<vector<u8>>, Option<address>, Option<vector<u8>>) {
+        let Alias {
+            id,
+            legacy_state_controller,
+            state_index,
+            state_metadata,
+            sender,
+            metadata,
+            immutable_issuer,
+            immutable_metadata,
+        } = self;
+        (id, legacy_state_controller, state_index, state_metadata, sender, metadata, immutable_issuer, immutable_metadata)
+    }
 
     /// Destroy the `Alias` object, equivalent to `burning` an Alias Output in Stardust.
     public fun destroy(self: Alias) {
