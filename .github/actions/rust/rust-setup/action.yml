@@ -48,16 +48,21 @@ runs:
       shell: bash
       run: |
 
-        if ! rustup self update; then
-            echo "rustup self update failed"
-        fi
+        # self update is currently broken on Windows runners:
+        #   https://github.com/rust-lang/rustup/issues/3709
+        # if ! rustup self update; then
+        #     echo "rustup self update failed"
+        # fi
         
         TARGET=${{ inputs.target }}
         if [[ $TARGET != '' ]]; then
           rustup target add $TARGET
         fi
 
-        rustup update
+        # self update is currently broken on Windows runners:
+        #   https://github.com/rust-lang/rustup/issues/3709
+        # rustup update
+        rustup update --no-self-update
         
         TOOLCHAIN=${{ inputs.toolchain }}
         if [[ $TOOLCHAIN != 'stable' ]]; then
