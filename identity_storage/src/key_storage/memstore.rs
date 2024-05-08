@@ -362,9 +362,9 @@ mod tests {
     let store: JwkMemStore = JwkMemStore::new();
 
     let mut ec_params = JwkParamsEc::new();
-    ec_params.crv = EcCurve::P256.name().to_owned();
-    ec_params.x = "".to_owned();
-    ec_params.y = "".to_owned();
+    EcCurve::P256.name().clone_into(&mut ec_params.crv);
+    "".clone_into(&mut ec_params.x);
+    "".clone_into(&mut ec_params.y);
     ec_params.d = Some("".to_owned());
     let jwk_ec = Jwk::from_params(ec_params);
 
