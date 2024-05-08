@@ -104,9 +104,9 @@ pub struct JwkParamsEc {
 }
 
 impl Default for JwkParamsEc {
-    fn default() -> Self {
-        Self::new()
-    }
+  fn default() -> Self {
+    Self::new()
+  }
 }
 
 impl JwkParamsEc {
@@ -245,9 +245,9 @@ pub struct JwkParamsRsaPrime {
 }
 
 impl Default for JwkParamsRsa {
-    fn default() -> Self {
-        Self::new()
-    }
+  fn default() -> Self {
+    Self::new()
+  }
 }
 
 impl JwkParamsRsa {
@@ -333,9 +333,9 @@ pub struct JwkParamsOct {
 }
 
 impl Default for JwkParamsOct {
-    fn default() -> Self {
-        Self::new()
-    }
+  fn default() -> Self {
+    Self::new()
+  }
 }
 
 impl JwkParamsOct {
@@ -388,9 +388,9 @@ pub struct JwkParamsOkp {
 }
 
 impl Default for JwkParamsOkp {
-    fn default() -> Self {
-        Self::new()
-    }
+  fn default() -> Self {
+    Self::new()
+  }
 }
 
 impl JwkParamsOkp {

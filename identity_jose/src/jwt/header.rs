@@ -106,9 +106,9 @@ pub struct JwtHeader {
 }
 
 impl Default for JwtHeader {
-    fn default() -> Self {
-        Self::new()
-    }
+  fn default() -> Self {
+    Self::new()
+  }
 }
 
 impl JwtHeader {
