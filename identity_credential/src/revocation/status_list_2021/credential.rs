@@ -279,7 +279,11 @@ impl StatusList2021CredentialSubject {
       return Err(StatusList2021CredentialError::MultipleCredentialSubject);
     };
     if let Some(subject_type) = subject.properties.get("type") {
-      if !subject_type.as_str().is_some_and(|t| t == CREDENTIAL_SUBJECT_TYPE) {
+      if !subject_type
+        .as_str()
+        .map(|t| t == CREDENTIAL_SUBJECT_TYPE)
+        .unwrap_or(false)
+      {
         return Err(StatusList2021CredentialError::InvalidProperty("credentialSubject.type"));
       }
     } else {

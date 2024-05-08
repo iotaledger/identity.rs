@@ -71,7 +71,12 @@ pub fn expand_bls_jwk(jwk: &Jwk) -> KeyStorageResult<(Option<BBSplusSecretKey>, 
   let params = jwk
     .try_ec_params()
     .ok()
-    .filter(|params| params.try_bls_curve().is_ok_and(|curve| curve == BlsCurve::BLS12381G2))
+    .filter(|params| {
+      params
+        .try_bls_curve()
+        .map(|curve| curve == BlsCurve::BLS12381G2)
+        .unwrap_or(false)
+    })
     .context(format!("not a {} curve key", BlsCurve::BLS12381G2))
     .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType).with_source(e))?;
 

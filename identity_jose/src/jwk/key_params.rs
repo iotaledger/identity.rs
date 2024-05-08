@@ -105,6 +105,12 @@ pub struct JwkParamsEc {
   pub d: Option<String>, // ECC Private Key
 }
 
+impl Default for JwkParamsEc {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl JwkParamsEc {
   /// Creates new JWK EC Params.
   pub const fn new() -> Self {
@@ -251,6 +257,12 @@ pub struct JwkParamsRsaPrime {
   pub t: String, // Factor CRT Coefficient
 }
 
+impl Default for JwkParamsRsa {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl JwkParamsRsa {
   /// Creates new JWK RSA Params.
   pub const fn new() -> Self {
@@ -333,6 +345,12 @@ pub struct JwkParamsOct {
   pub k: String, // Key Value
 }
 
+impl Default for JwkParamsOct {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl JwkParamsOct {
   /// Creates new JWK Oct Params.
   pub const fn new() -> Self {
@@ -380,6 +398,12 @@ pub struct JwkParamsOkp {
   /// [More Info](https://tools.ietf.org/html/rfc8037#section-2)
   #[serde(skip_serializing_if = "Option::is_none")]
   pub d: Option<String>, // Private Key
+}
+
+impl Default for JwkParamsOkp {
+  fn default() -> Self {
+    Self::new()
+  }
 }
 
 impl JwkParamsOkp {

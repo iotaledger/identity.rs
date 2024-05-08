@@ -366,7 +366,8 @@ mod bbs_plus_impl {
       // Check the provided JWK represents a BLS12381G2 key.
       if !public_key
         .try_ec_params()
-        .is_ok_and(|ec| ec.crv == BlsCurve::BLS12381G2.to_string())
+        .map(|ec| ec.crv == BlsCurve::BLS12381G2.to_string())
+        .unwrap_or(false)
       {
         return Err(
           KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
@@ -401,7 +402,8 @@ mod bbs_plus_impl {
       // Check the provided JWK represents a BLS12381G2 key.
       if !public_key
         .try_ec_params()
-        .is_ok_and(|ec| ec.crv == BlsCurve::BLS12381G2.to_string())
+        .map(|ec| ec.crv == BlsCurve::BLS12381G2.to_string())
+        .unwrap_or(false)
       {
         return Err(
           KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
