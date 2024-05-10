@@ -23,7 +23,7 @@ module identity_iota::document {
         // Extract required data from output.
         let (iota, native_tokens, alias_data) = extract_assets(alias_output);
         let (
-            legacy_alias_id,
+            alias_id,
             _,
             _,
             mut state_metadata,
@@ -34,21 +34,26 @@ module identity_iota::document {
         ) = alias_data.destructure();
         // Check if `state_metadata` contains a DID document.
         assert!(is_did_output(state_metadata.borrow()), ENotADidOutput);
+        let legacy_id = alias_id.to_inner();
+        // Destroy alias.
+        object::delete(alias_id);
 
-        // Create a new shared DID document.
-        let new_id = object::new(ctx);
-        let document_address = new_id.uid_to_inner();
+        let id = object::new(ctx);
+        let doc_id = id.to_inner();
         // Create a capability for the governor.
-        let controller_capability = controller::new(document_address, ctx);
+        let controller_capability = controller::new(doc_id, ctx);
+        // Create and share the new DID document.
         let document = Document {
-            id: new_id,
+            id,
             iota,
             native_tokens,
             doc: state_metadata.extract()
         };
         share_object(document);
-        // Add a the mapping `legacy_alias_id` -> `document_address` to the migration registry.
-        migration_registry.add(legacy_alias_id.uid_to_inner(), document_address);
+
+        // Add a migration record.
+        migration_registry.add(legacy_id, doc_id, ctx);
+
         // Transfer the capability to the governor.
         controller_capability
     }
@@ -56,7 +61,7 @@ module identity_iota::document {
     /// Updates the DID document.
     public fun update(self: &mut Document, data: vector<u8>, controller_capability: &ControllerCap) {
         // Check the provided capability is for this document.
-        assert!(self.id.uid_to_inner() == controller_capability.did(), EInvalidCapability);
+        assert!(self.id.to_inner() == controller_capability.did(), EInvalidCapability);
         // Check `data` is a DID document.
         assert!(is_did_output(&data), ENotADidOutput);
         self.doc = data;

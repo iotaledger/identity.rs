@@ -1,6 +1,8 @@
 module stardust::alias_output {
 
+    use sui::bag;
     use sui::bag::Bag;
+    use sui::balance;
     use sui::balance::Balance;
     use sui::dynamic_object_field;
     use sui::sui::SUI;
@@ -12,7 +14,7 @@ module stardust::alias_output {
     const ALIAS_NAME: vector<u8> = b"alias";
 
     /// Owned Object controlled by the Governor Address.
-    public struct AliasOutput has key {
+    public struct AliasOutput has key, store {
         /// This is a "random" UID, not the AliasID from Stardust.
         id: UID,
 
@@ -64,7 +66,7 @@ module stardust::alias_output {
 
     // === Test Functions ===
 
-    #[test_only]
+    // #[test_only]
     public fun create_for_testing(
         iota: Balance<SUI>,
         native_tokens: Bag,
@@ -77,7 +79,16 @@ module stardust::alias_output {
         }
     }
 
-    #[test_only]
+    // #[test_only]
+    public fun create_empty_for_testing(ctx: &mut TxContext): AliasOutput {
+        AliasOutput {
+            id: object::new(ctx),
+            iota: balance::zero<SUI>(),
+            native_tokens: bag::new(ctx),
+        }
+    }
+
+    // #[test_only]
     public fun attach_alias(output: &mut AliasOutput, alias: Alias) {
         dynamic_object_field::add(&mut output.id, ALIAS_NAME, alias)
     }

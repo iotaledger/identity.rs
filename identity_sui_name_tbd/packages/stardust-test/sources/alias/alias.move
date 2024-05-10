@@ -114,8 +114,9 @@ module stardust::alias {
         immutable_issuer: Option<address>,
         immutable_metadata: Option<vector<u8>>,
         ctx: &mut TxContext
-    )  {
-        let alias = Alias {
+    ): Alias
+    {
+        Alias {
             id: object::new(ctx),
             legacy_state_controller,
             state_index,
@@ -124,7 +125,6 @@ module stardust::alias {
             metadata,
             immutable_issuer,
             immutable_metadata,
-        };
-        transfer::transfer(alias, ctx.sender());
+        }
     }
 }
