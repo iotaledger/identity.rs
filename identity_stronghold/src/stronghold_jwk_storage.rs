@@ -89,7 +89,7 @@ impl StrongholdStorage {
 
     let mut params = JwkParamsOkp::new();
     params.x = jwu::encode_b64(public_key);
-    params.crv = EdCurve::Ed25519.name().to_owned();
+    params.crv = EdCurve::Ed25519.name().to_string();
     let mut jwk: Jwk = Jwk::from_params(params);
     jwk.set_alg(JwsAlgorithm::EdDSA.name());
     jwk.set_kid(jwk.thumbprint_sha256_b64());
@@ -148,7 +148,7 @@ impl JwkStorage for StrongholdStorage {
 
     let mut params = JwkParamsOkp::new();
     params.x = jwu::encode_b64(public_key);
-    params.crv = EdCurve::Ed25519.name().to_owned();
+    params.crv = EdCurve::Ed25519.name().to_string();
     let mut jwk: Jwk = Jwk::from_params(params);
     jwk.set_alg(alg.name());
     jwk.set_kid(jwk.thumbprint_sha256_b64());
