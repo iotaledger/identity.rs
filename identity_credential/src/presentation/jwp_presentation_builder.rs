@@ -1,4 +1,4 @@
-// Copyright 2020-2024 IOTA Stiftung
+// Copyright 2020-2024 IOTA Stiftung, Fondazione Links
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::error::Error;
