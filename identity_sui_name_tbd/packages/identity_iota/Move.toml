@@ -1,5 +1,5 @@
 [package]
-name = "identity_iota"
+name = "IdentityIota"
 edition = "2024.beta"
 
 [dependencies]

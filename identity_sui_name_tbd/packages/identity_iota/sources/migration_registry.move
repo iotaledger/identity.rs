@@ -1,13 +1,13 @@
 module identity_iota::migration_registry {
-    use sui::{dynamic_object_field as ofield, transfer::share_object};
+    use sui::{dynamic_field as field, transfer::share_object, event};
 
     /// One time witness needed to construct a singleton migration registry.
     public struct MIGRATION_REGISTRY has drop {}
 
-    /// A wrapper `key` type for `ID`.
-    public struct Entry has key, store {
-        id: UID,
-        target: ID,
+
+    /// Event type that is fired upon creation of a `MigrationRegistry`.
+    public struct MigrationRegistryCreated has copy, drop {
+        id: ID
     }
 
     /// Object that tracks migrated alias outputs to their corresponding object IDs.
@@ -17,28 +17,28 @@ module identity_iota::migration_registry {
 
     /// Creates a singleton instance of `MigrationRegistry` when publishing this package.
     fun init(_otw: MIGRATION_REGISTRY, ctx: &mut TxContext) {
+        let id = object::new(ctx);
+        let registry_id = id.to_inner();
         let registry = MigrationRegistry {
-            id: object::new(ctx),
+            id
         };
         share_object(registry);
+        // Signal the creation of a migration registry.
+        event::emit(MigrationRegistryCreated { id: registry_id });
     }
 
     /// Lookup an alias ID into the migration registry.
     public fun lookup(self: &MigrationRegistry, alias_id: ID): Option<ID> {
-        if (ofield::exists_(&self.id, alias_id)) {
-            let entry = ofield::borrow<ID, Entry>(&self.id, alias_id);
-            option::some(entry.target)
+        if (field::exists_(&self.id, alias_id)) {
+            let entry = field::borrow<ID, ID>(&self.id, alias_id);
+            option::some(*entry)
         } else {
             option::none()
         }
     }
 
     /// Adds a new Alias ID -> Object ID binding to the regitry.
-    public(package) fun add(self: &mut MigrationRegistry, alias_id: ID, object_id: ID, ctx: &mut TxContext) {
-        let entry = Entry {
-            id: object::new(ctx),
-            target: object_id,
-        };
-        ofield::add(&mut self.id, alias_id, entry);
+    public(package) fun add(self: &mut MigrationRegistry, alias_id: ID, object_id: ID) {
+        field::add(&mut self.id, alias_id, object_id);
     }
 }

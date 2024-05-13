@@ -17,9 +17,9 @@ serde_json.workspace = true
 strum.workspace = true
 sui-sdk = { git = "https://github.com/mystenlabs/sui", package = "sui-sdk"}
 thiserror.workspace = true
+anyhow = "1.0.75"
 
 [dev-dependencies]
-anyhow = "1.0.75"
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
 
 [lints]

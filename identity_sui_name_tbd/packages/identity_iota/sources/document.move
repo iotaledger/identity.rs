@@ -52,7 +52,7 @@ module identity_iota::document {
         share_object(document);
 
         // Add a migration record.
-        migration_registry.add(legacy_id, doc_id, ctx);
+        migration_registry.add(legacy_id, doc_id);
 
         // Transfer the capability to the governor.
         controller_capability
