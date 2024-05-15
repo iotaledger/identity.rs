@@ -20,6 +20,7 @@
 mod did;
 mod did_url;
 mod error;
+mod did_key;
 
 pub use crate::did_url::DIDUrl;
 pub use crate::did_url::RelativeDIDUrl;
