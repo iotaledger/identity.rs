@@ -53,6 +53,8 @@ impl TryFrom<DIDUrl> for DIDKey {
       Err(Error::InvalidPath)
     } else if value.query().is_some() {
       Err(Error::InvalidQuery)
+    } else if !value.did().method_id().starts_with('z') {
+      Err(Error::InvalidMethodId)
     } else {
       Ok(Self(value))
     }
@@ -81,11 +83,7 @@ impl From<DIDKey> for String {
 impl TryFrom<CoreDID> for DIDKey {
   type Error = Error;
   fn try_from(value: CoreDID) -> Result<Self, Self::Error> {
-    if value.method() != METHOD {
-      return Err(Error::InvalidMethodName);
-    }
-
-    Ok(Self(DIDUrl::new(value, None)))
+    DIDUrl::new(value, None).try_into()
   }
 }
 
@@ -116,6 +114,9 @@ mod tests {
       .parse::<DIDKey>()
       .is_err());
     assert!("did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp?somequery"
+      .parse::<DIDKey>()
+      .is_err());
+    assert!("did:key:6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp"
       .parse::<DIDKey>()
       .is_err());
   }
