@@ -7,8 +7,6 @@ use crate::DIDUrl;
 use crate::Error;
 use crate::DID;
 
-const METHOD: &str = "key";
-
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Deserialize, serde::Serialize)]
 #[repr(transparent)]
 #[serde(into = "DIDUrl", try_from = "DIDUrl")]
@@ -16,6 +14,9 @@ const METHOD: &str = "key";
 pub struct DIDKey(DIDUrl);
 
 impl DIDKey {
+  /// [`DIDKey`]'s method.
+  pub const METHOD: &'static str = "key";
+
   /// Tries to parse a [`DIDKey`] from a string.
   pub fn parse(s: &str) -> Result<Self, Error> {
     s.parse()
@@ -44,10 +45,17 @@ impl From<DIDKey> for CoreDID {
   }
 }
 
+impl<'a> TryFrom<&'a str> for DIDKey {
+  type Error = Error;
+  fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+    value.parse()
+  }
+}
+
 impl TryFrom<DIDUrl> for DIDKey {
   type Error = Error;
   fn try_from(value: DIDUrl) -> Result<Self, Self::Error> {
-    if value.did().method() != METHOD {
+    if value.did().method() != Self::METHOD {
       Err(Error::InvalidMethodName)
     } else if value.path().is_some() {
       Err(Error::InvalidPath)

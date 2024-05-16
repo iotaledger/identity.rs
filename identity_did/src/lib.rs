@@ -28,4 +28,4 @@ pub use ::did_url_parser::DID as BaseDIDUrl;
 pub use did::CoreDID;
 pub use did::DID;
 pub use error::Error;
-pub use did_key::DIDKey;
+pub use did_key::*;

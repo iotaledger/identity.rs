@@ -4,6 +4,7 @@
 use core::future::Future;
 use futures::stream::FuturesUnordered;
 use futures::TryStreamExt;
+use identity_did::DIDKey;
 use identity_did::DID;
 use std::collections::HashSet;
 
@@ -247,6 +248,38 @@ impl<DOC: 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
   }
 }
 
+impl<DOC: From<CoreDocument> + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
+  /// Creates a new [`Resolver`] with a default handler for `did:key` DIDs.
+  pub fn new_with_did_key_handler() -> Self {
+    let mut command_map = HashMap::new();
+    let handler = |did_key: DIDKey| {
+      async move { CoreDocument::expand_did_key(did_key).into() }
+    };
+
+    command_map.insert(DIDKey::METHOD.to_string(), SingleThreadedCommand::new(handler));
+    Self {
+      command_map,
+      _required: PhantomData::<DOC>,
+    }
+  }
+}
+
+impl<DOC: From<CoreDocument> + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
+  /// Creates a new [`Resolver`] with a default handler for `did:key` DIDs.
+  pub fn new_with_did_key_handler() -> Self {
+    let mut command_map = HashMap::new();
+    let handler = |did_key: DIDKey| {
+      async move { CoreDocument::expand_did_key(did_key).into() }
+    };
+
+    command_map.insert(DIDKey::METHOD.to_string(), SendSyncCommand::new(handler));
+    Self {
+      command_map,
+      _required: PhantomData::<DOC>,
+    }
+  }
+}
+
 #[cfg(feature = "iota")]
 mod iota_handler {
   use crate::ErrorCause;
@@ -413,5 +446,14 @@ mod tests {
 
     let doc = resolver.resolve(&did2).await.unwrap();
     assert_eq!(doc.id(), &did2);
+  }
+
+  #[tokio::test]
+  async fn test_did_key_resolution() {
+    let resolver = Resolver::<CoreDocument>::new_with_did_key_handler();
+    let did_key = "did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp".parse::<DIDKey>().unwrap();
+
+    let doc = resolver.resolve(&did_key).await.unwrap();
+    assert_eq!(doc.id(), did_key.as_ref());
   }
 }
