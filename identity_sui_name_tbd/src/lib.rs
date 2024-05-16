@@ -3,6 +3,6 @@
 
 mod error;
 pub mod resolution;
-mod utils;
+pub mod utils;
 
 pub use error::Error;

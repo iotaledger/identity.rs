@@ -12,14 +12,19 @@ rust-version.workspace = true
 description = "SUI related tooling for identity-rs"
 
 [dependencies]
+identity_stronghold = { path = "../identity_stronghold", default-features = false }
+iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
 serde.workspace = true
 serde_json.workspace = true
 strum.workspace = true
-sui-sdk = { git = "https://github.com/mystenlabs/sui", package = "sui-sdk"}
+sui-sdk = { git = "https://github.com/iotaledger/kinesis.git", package = "sui-sdk" }
 thiserror.workspace = true
 
 [dev-dependencies]
 anyhow = "1.0.75"
+bcs = "0.1.4"
+fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "d7a33a9f79271bfc19fc4c8816ea5467e4205e17" }
+shared-crypto = { git = "https://github.com/iotaledger/kinesis.git", package = "shared-crypto" }
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
 
 [lints]
