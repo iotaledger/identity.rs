@@ -47,3 +47,8 @@ instant = { version = "0.1", default-features = false, features = ["wasm-bindgen
 [profile.release]
 opt-level = 's'
 lto = true
+
+[lints.clippy]
+# can be removed as soon as fix has been added to clippy
+# see https://github.com/rust-lang/rust-clippy/issues/12377
+empty_docs = "allow"

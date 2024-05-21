@@ -12,6 +12,7 @@ members = [
   "identity_verification",
   "identity_stronghold",
   "identity_jose",
+  "identity_ecdsa_verifier",
   "identity_eddsa_verifier",
   "examples",
 ]

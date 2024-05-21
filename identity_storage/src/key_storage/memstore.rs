@@ -513,10 +513,10 @@ mod tests {
     let store: JwkMemStore = JwkMemStore::new();
 
     let mut ec_params = JwkParamsEc::new();
-    ec_params.crv = EcCurve::P256.name().to_owned();
-    ec_params.x = "".to_owned();
-    ec_params.y = "".to_owned();
-    ec_params.d = Some("".to_owned());
+    ec_params.crv = EcCurve::P256.name().to_string();
+    ec_params.x = String::new();
+    ec_params.y = String::new();
+    ec_params.d = Some(String::new());
     let jwk_ec = Jwk::from_params(ec_params);
 
     let err = store.insert(jwk_ec).await.unwrap_err();
