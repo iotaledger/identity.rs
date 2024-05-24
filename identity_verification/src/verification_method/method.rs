@@ -220,7 +220,7 @@ impl VerificationMethod {
     MethodBuilder::default()
       .id(id)
       .controller(did.into())
-      .type_(MethodType::JSON_WEB_KEY)
+      .type_(MethodType::JSON_WEB_KEY_2020)
       .data(MethodData::PublicKeyJwk(key))
       .build()
   }
