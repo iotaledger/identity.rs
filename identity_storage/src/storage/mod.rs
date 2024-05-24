@@ -4,14 +4,25 @@
 //! This module provides a type wrapping a key and key id storage.
 
 mod error;
+#[macro_use]
 mod jwk_document_ext;
+#[cfg(feature = "jpt-bbs-plus")]
+mod jwp_document_ext;
 mod signature_options;
+#[cfg(feature = "jpt-bbs-plus")]
+mod timeframe_revocation_ext;
+
 #[cfg(all(test, feature = "memstore"))]
 pub(crate) mod tests;
 
 pub use error::*;
+
 pub use jwk_document_ext::*;
+#[cfg(feature = "jpt-bbs-plus")]
+pub use jwp_document_ext::*;
 pub use signature_options::*;
+#[cfg(feature = "jpt-bbs-plus")]
+pub use timeframe_revocation_ext::*;
 
 /// A type wrapping a key and key id storage, typically used with [`JwkStorage`](crate::key_storage::JwkStorage) and
 /// [`KeyIdStorage`](crate::key_id_storage::KeyIdStorage) that should always be used together when calling methods from

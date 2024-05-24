@@ -50,6 +50,9 @@ extern "C" {
 
   #[wasm_bindgen(method)]
   pub fn exists(this: &WasmJwkStorage, key_id: String) -> PromiseBool;
+
+  #[wasm_bindgen(method)]
+  pub(crate) fn _get_key(this: &WasmJwkStorage, key_id: &str) -> Option<WasmJwk>;
 }
 
 #[async_trait::async_trait(?Send)]

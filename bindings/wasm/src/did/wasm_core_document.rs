@@ -835,6 +835,9 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Promise<Jwt>")]
   pub type PromiseJwt;
+
+  #[wasm_bindgen(typescript_type = "Promise<Jpt>")]
+  pub type PromiseJpt;
 }
 
 #[wasm_bindgen(typescript_custom_section)]

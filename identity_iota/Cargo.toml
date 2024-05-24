@@ -23,7 +23,7 @@ identity_verification = { version = "=1.2.0", path = "../identity_verification",
 
 [dev-dependencies]
 anyhow = "1.0.64"
-iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client"] }
+iota-sdk = { version = "1.1.5", default-features = false, features = ["tls", "client"] }
 rand = "0.8.5"
 tokio = { version = "1.29.0", features = ["full"] }
 
@@ -63,6 +63,9 @@ memstore = ["identity_storage/memstore"]
 
 # Enables selective disclosure features.
 sd-jwt = ["identity_credential/sd-jwt"]
+
+# Enables zero knowledge selective disclosurable VCs
+jpt-bbs-plus = ["identity_storage/jpt-bbs-plus", "identity_credential/jpt-bbs-plus"]
 
 [package.metadata.docs.rs]
 # To build locally:

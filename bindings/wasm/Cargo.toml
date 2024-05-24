@@ -21,6 +21,7 @@ console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
 identity_eddsa_verifier = { path = "../../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 js-sys = { version = "0.3.61" }
+json-proof-token = "0.3.4"
 proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
@@ -29,11 +30,12 @@ serde_repr = { version = "0.1", default-features = false }
 tokio = { version = "1.29", default-features = false, features = ["sync"] }
 wasm-bindgen = { version = "0.2.85", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
+zkryptium = "0.2.2"
 
 [dependencies.identity_iota]
 path = "../../identity_iota"
 default-features = false
-features = ["client", "revocation-bitmap", "resolver", "domain-linkage", "sd-jwt", "status-list-2021"]
+features = ["client", "revocation-bitmap", "resolver", "domain-linkage", "sd-jwt", "status-list-2021", "jpt-bbs-plus"]
 
 [dev-dependencies]
 rand = "0.8.5"

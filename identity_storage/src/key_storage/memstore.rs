@@ -1,4 +1,4 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung, Fondazione Links
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -12,6 +12,7 @@ use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkType;
 use identity_verification::jose::jws::JwsAlgorithm;
+use identity_verification::jwk::BlsCurve;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
@@ -65,6 +66,12 @@ impl JwkStorage for JwkMemStore {
           .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(err))?;
         let public_key = private_key.public_key();
         (private_key, public_key)
+      }
+      other => {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message(format!("{other} is not supported")),
+        );
       }
     };
 
@@ -183,18 +190,24 @@ impl JwkStorage for JwkMemStore {
 #[derive(Debug, Copy, Clone)]
 enum MemStoreKeyType {
   Ed25519,
+  BLS12381G2,
 }
 
 impl JwkMemStore {
   const ED25519_KEY_TYPE_STR: &'static str = "Ed25519";
   /// The Ed25519 key type.
   pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(Self::ED25519_KEY_TYPE_STR);
+
+  const BLS12381G2_KEY_TYPE_STR: &'static str = "BLS12381G2";
+  /// The BLS12381G2 key type
+  pub const BLS12381G2_KEY_TYPE: KeyType = KeyType::from_static_str(Self::BLS12381G2_KEY_TYPE_STR);
 }
 
 impl MemStoreKeyType {
   const fn name(&self) -> &'static str {
     match self {
-      MemStoreKeyType::Ed25519 => "Ed25519",
+      MemStoreKeyType::Ed25519 => JwkMemStore::ED25519_KEY_TYPE_STR,
+      MemStoreKeyType::BLS12381G2 => JwkMemStore::BLS12381G2_KEY_TYPE_STR,
     }
   }
 }
@@ -211,6 +224,7 @@ impl TryFrom<&KeyType> for MemStoreKeyType {
   fn try_from(value: &KeyType) -> Result<Self, Self::Error> {
     match value.as_str() {
       JwkMemStore::ED25519_KEY_TYPE_STR => Ok(MemStoreKeyType::Ed25519),
+      JwkMemStore::BLS12381G2_KEY_TYPE_STR => Ok(MemStoreKeyType::BLS12381G2),
       _ => Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)),
     }
   }
@@ -233,6 +247,24 @@ impl TryFrom<&Jwk> for MemStoreKeyType {
             .with_source(err)
         })? {
           EdCurve::Ed25519 => Ok(MemStoreKeyType::Ed25519),
+          curve => Err(
+            KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+              .with_custom_message(format!("{curve} not supported")),
+          ),
+        }
+      }
+      JwkType::Ec => {
+        let ec_params = jwk.try_ec_params().map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message("expected EC parameters for a JWK with `kty` Ec")
+            .with_source(err)
+        })?;
+        match ec_params.try_bls_curve().map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message("only Ed curves are supported for signing")
+            .with_source(err)
+        })? {
+          BlsCurve::BLS12381G2 => Ok(MemStoreKeyType::BLS12381G2),
           curve => Err(
             KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
               .with_custom_message(format!("{curve} not supported")),
@@ -269,6 +301,125 @@ fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: JwsAlgorithm) -> 
   }
 }
 
+#[cfg(feature = "jpt-bbs-plus")]
+mod bbs_plus_impl {
+  use std::str::FromStr as _;
+
+  use crate::key_storage::bls::encode_bls_jwk;
+  use crate::key_storage::bls::expand_bls_jwk;
+  use crate::key_storage::bls::generate_bbs_keypair;
+  use crate::key_storage::bls::sign_bbs;
+  use crate::key_storage::bls::update_bbs_signature;
+  use crate::JwkGenOutput;
+  use crate::JwkMemStore;
+  use crate::JwkStorageBbsPlusExt;
+  use crate::KeyId;
+  use crate::KeyStorageError;
+  use crate::KeyStorageErrorKind;
+  use crate::KeyStorageResult;
+  use crate::KeyType;
+  use crate::ProofUpdateCtx;
+  use async_trait::async_trait;
+  use identity_verification::jwk::BlsCurve;
+  use identity_verification::jwk::Jwk;
+  use jsonprooftoken::jpa::algs::ProofAlgorithm;
+
+  use super::random_key_id;
+
+  /// JwkStorageBbsPlusExt implementation for JwkMemStore
+  #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+  #[cfg_attr(feature = "send-sync-storage", async_trait)]
+  impl JwkStorageBbsPlusExt for JwkMemStore {
+    async fn generate_bbs(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput> {
+      if key_type != JwkMemStore::BLS12381G2_KEY_TYPE {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message(format!("unsupported key type {key_type}")),
+        );
+      }
+
+      let (private_key, public_key) = generate_bbs_keypair(alg)?;
+      let (jwk, public_jwk) = encode_bls_jwk(&private_key, &public_key, alg);
+
+      let kid: KeyId = random_key_id();
+      let mut jwk_store = self.jwk_store.write().await;
+      jwk_store.insert(kid.clone(), jwk);
+
+      Ok(JwkGenOutput::new(kid, public_jwk))
+    }
+
+    async fn sign_bbs(
+      &self,
+      key_id: &KeyId,
+      data: &[Vec<u8>],
+      header: &[u8],
+      public_key: &Jwk,
+    ) -> KeyStorageResult<Vec<u8>> {
+      let jwk_store = self.jwk_store.read().await;
+
+      // Extract the required alg from the given public key
+      let alg = public_key
+        .alg()
+        .and_then(|alg_str| ProofAlgorithm::from_str(alg_str).ok())
+        .ok_or(KeyStorageErrorKind::UnsupportedProofAlgorithm)?;
+
+      // Check the provided JWK represents a BLS12381G2 key.
+      if !public_key
+        .try_ec_params()
+        .map(|ec| ec.crv == BlsCurve::BLS12381G2.to_string())
+        .unwrap_or(false)
+      {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message(format!("expected a key from the {} curve", BlsCurve::BLS12381G2)),
+        );
+      }
+
+      // Obtain the corresponding private key.
+      let jwk: &Jwk = jwk_store.get(key_id).ok_or(KeyStorageErrorKind::KeyNotFound)?;
+      let (sk, pk) = expand_bls_jwk(jwk)?;
+
+      sign_bbs(alg, data, &sk.expect("jwk is private"), &pk, header)
+    }
+
+    async fn update_signature(
+      &self,
+      key_id: &KeyId,
+      public_key: &Jwk,
+      signature: &[u8],
+      ctx: ProofUpdateCtx,
+    ) -> KeyStorageResult<Vec<u8>> {
+      let jwk_store = self.jwk_store.read().await;
+
+      // Extract the required alg from the given public key
+      let alg = public_key
+        .alg()
+        .ok_or(KeyStorageErrorKind::UnsupportedProofAlgorithm)
+        .and_then(|alg_str| {
+          ProofAlgorithm::from_str(alg_str).map_err(|_| KeyStorageErrorKind::UnsupportedProofAlgorithm)
+        })?;
+
+      // Check the provided JWK represents a BLS12381G2 key.
+      if !public_key
+        .try_ec_params()
+        .map(|ec| ec.crv == BlsCurve::BLS12381G2.to_string())
+        .unwrap_or(false)
+      {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message(format!("expected a key from the {} curve", BlsCurve::BLS12381G2)),
+        );
+      }
+
+      // Obtain the corresponding private key.
+      let jwk = jwk_store.get(key_id).ok_or(KeyStorageErrorKind::KeyNotFound)?;
+      let sk = expand_bls_jwk(jwk)?.0.expect("jwk is private");
+
+      // Update the signature.
+      update_bbs_signature(alg, signature, &sk, &ctx)
+    }
+  }
+}
 pub(crate) mod shared {
   use core::fmt::Debug;
   use core::fmt::Formatter;
