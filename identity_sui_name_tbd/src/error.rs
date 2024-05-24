@@ -20,4 +20,7 @@ pub enum Error {
   /// could not lookup an object ID
   #[error("failed to lookup an object; {0}")]
   ObjectLookup(String),
+  /// MigrationRegistry error.
+  #[error(transparent)]
+  MigrationRegistryNotFound(crate::migration::Error),
 }
