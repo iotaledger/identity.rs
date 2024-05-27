@@ -2,6 +2,7 @@
 name = "StardustTest"
 version = "0.0.1"
 edition = "2024.beta"
+published-at = "0xd2ee1f1775868aed0e8375a7469624e3c39a559b62ab92dddad99544c1d90565"
 
 [dependencies]
 # as we don't have the tag, reference to the respective commit hash
@@ -9,4 +10,4 @@ MoveStdlib = { git = "https://github.com/iotaledger/kinesis.git", subdir = "crat
 Sui = { git = "https://github.com/iotaledger/kinesis.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "7899dc9ce682c3d0a97f249ce7eaa27b9473b920" }
 
 [addresses]
-stardust = "0x0"
+stardust = "0xd2ee1f1775868aed0e8375a7469624e3c39a559b62ab92dddad99544c1d90565"

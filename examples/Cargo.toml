@@ -15,6 +15,7 @@ primitive-types = "0.12.1"
 rand = "0.8.5"
 sd-jwt-payload = { version = "0.2.1", default-features = false, features = ["sha"] }
 serde_json = { version = "1.0", default-features = false }
+sui-sdk = { git = "https://github.com/iotaledger/kinesis.git", package = "sui-sdk" }
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
 
 [lib]
@@ -31,6 +32,10 @@ name = "1_update_did"
 [[example]]
 path = "0_basic/2_resolve_did.rs"
 name = "2_resolve_did"
+
+[[example]]
+path = "0_basic/2b_resolve_did_via_kinesis.rs"
+name = "2b_resolve_did_via_kinesis"
 
 [[example]]
 path = "0_basic/3_deactivate_did.rs"

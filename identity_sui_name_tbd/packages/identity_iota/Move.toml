@@ -9,6 +9,7 @@ StardustTest = { local = "../stardust-test" }
 
 [addresses]
 identity_iota = "0x0"
+stardust = "0xd2ee1f1775868aed0e8375a7469624e3c39a559b62ab92dddad99544c1d90565"
 
 [dev-dependencies]
 

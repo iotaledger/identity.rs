@@ -5,7 +5,7 @@
 
 if [ -z "$1" ]
   then
-    echo "No arguments supplied, please pass package id as hex string"
+    echo "No arguments supplied, please pass identity package id as hex string"
     exit 1
 fi
 

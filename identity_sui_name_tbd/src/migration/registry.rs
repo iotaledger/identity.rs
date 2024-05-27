@@ -3,6 +3,7 @@
 
 use std::sync::OnceLock;
 
+use serde;
 use serde::Deserialize;
 use sui_sdk::rpc_types::EventFilter;
 use sui_sdk::rpc_types::SuiData;
