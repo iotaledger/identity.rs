@@ -127,4 +127,27 @@ module stardust::alias {
             immutable_metadata,
         }
     }
+
+    public fun create_with_state_metadata_for_testing(
+        legacy_state_controller: Option<address>,
+        state_index: u32,
+        state_metadata: vector<u8>,
+        sender: Option<address>,
+        metadata: Option<vector<u8>>,
+        immutable_issuer: Option<address>,
+        immutable_metadata: Option<vector<u8>>,
+        ctx: &mut TxContext
+    ): Alias
+    {
+        Alias {
+            id: object::new(ctx),
+            legacy_state_controller,
+            state_index,
+            state_metadata: option::some(state_metadata),
+            sender,
+            metadata,
+            immutable_issuer,
+            immutable_metadata,
+        }
+    }
 }

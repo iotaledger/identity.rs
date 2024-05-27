@@ -256,6 +256,7 @@ mod iota_handler {
   use identity_iota_core::IotaDID;
   use identity_iota_core::IotaDocument;
   use identity_iota_core::IotaIdentityClientExt;
+  use identity_iota_core::KinesisIotaIdentityClientExt;
   use std::collections::HashMap;
   use std::sync::Arc;
 
@@ -269,6 +270,23 @@ mod iota_handler {
     pub fn attach_iota_handler<CLI>(&mut self, client: CLI)
     where
       CLI: IotaIdentityClientExt + Send + Sync + 'static,
+    {
+      let arc_client: Arc<CLI> = Arc::new(client);
+
+      let handler = move |did: IotaDID| {
+        let future_client = arc_client.clone();
+        async move { future_client.resolve_did(&did).await }
+      };
+
+      self.attach_handler(IotaDID::METHOD.to_owned(), handler);
+    }
+
+    /// Convenience method for attaching a new handler responsible for resolving IOTA DIDs via kinesis.
+    ///
+    /// See also [`attach_handler`](Self::attach_handler)
+    pub fn attach_kinesis_iota_handler<CLI>(&mut self, client: CLI)
+    where
+      CLI: KinesisIotaIdentityClientExt + Send + Sync + 'static,
     {
       let arc_client: Arc<CLI> = Arc::new(client);
 

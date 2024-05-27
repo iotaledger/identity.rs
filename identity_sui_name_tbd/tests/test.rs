@@ -6,9 +6,9 @@ use std::str::FromStr;
 
 use fastcrypto::hash::HashFunction;
 use fastcrypto::traits::ToFromBytes;
-use identity_sui_name_tbd::resolution::UnmigratedResolver;
-use identity_sui_name_tbd::resolution::LOCAL_NETWORK;
+use identity_sui_name_tbd::migration::get_alias;
 use identity_sui_name_tbd::utils::get_client;
+use identity_sui_name_tbd::utils::LOCAL_NETWORK;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManage;
 use iota_sdk::crypto::keys::bip39::Mnemonic;
@@ -57,8 +57,8 @@ async fn can_import_the_test_mnemonic() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn can_initialize_resolver_for_unmigrated_alias_outputs() -> anyhow::Result<()> {
-  let result = UnmigratedResolver::new(LOCAL_NETWORK).await;
+async fn can_initialize_new_client() -> anyhow::Result<()> {
+  let result = get_client(LOCAL_NETWORK).await;
 
   assert!(result.is_ok());
 
@@ -68,12 +68,13 @@ async fn can_initialize_resolver_for_unmigrated_alias_outputs() -> anyhow::Resul
 #[tokio::test]
 #[ignore]
 async fn can_fetch_alias_output_by_object_id() -> anyhow::Result<()> {
-  let resolver = UnmigratedResolver::new(LOCAL_NETWORK).await?;
-  let result = resolver
-    .get_alias_output("0x669c70a008a5e226813927a7b62a5029306d8f7e7366b0634ef6027b3dbda850")
-    .await;
+  let client = get_client(LOCAL_NETWORK).await?;
+  let result = get_alias(
+    &client,
+    "0x669c70a008a5e226813927a7b62a5029306d8f7e7366b0634ef6027b3dbda850",
+  )
+  .await;
 
-  dbg!(&result);
   assert!(result.is_ok());
 
   Ok(())

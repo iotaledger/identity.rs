@@ -25,6 +25,9 @@ pub enum Error {
   /// Caused by a client failure during resolution.
   #[error("DID resolution failed")]
   DIDResolutionError(#[source] iota_sdk::client::error::Error),
+  /// Caused by a look failures during resolution.
+  #[error("DID resolution failed: {0}")]
+  DIDResolutionErrorKinesis(String),
   #[cfg(feature = "iota-client")]
   /// Caused by an error when building a basic output.
   #[error("basic output build error")]

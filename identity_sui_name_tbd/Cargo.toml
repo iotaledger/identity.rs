@@ -13,7 +13,7 @@ description = "SUI related tooling for identity-rs"
 
 [dependencies]
 anyhow = "1.0.75"
-identity_stronghold = { path = "../identity_stronghold", default-features = false }
+# identity_stronghold = { path = "../identity_stronghold", default-features = false }
 iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
 serde.workspace = true
 serde_json.workspace = true

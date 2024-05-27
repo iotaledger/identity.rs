@@ -6,6 +6,8 @@ use sui_sdk::SuiClientBuilder;
 
 use crate::Error;
 
+pub const LOCAL_NETWORK: &str = "http://127.0.0.1:9000";
+
 pub async fn get_client(network: &str) -> Result<SuiClient, Error> {
   let client = SuiClientBuilder::default()
     .build(network)
