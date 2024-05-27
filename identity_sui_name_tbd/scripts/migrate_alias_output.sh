@@ -25,6 +25,6 @@ sui client ptb \
   --gas-budget 50000000 \
   --move-call sui::tx_context::sender \
   --assign sender \
-  --move-call $1::document::from_legacy_alias_output @$2 @$3 \
+  --move-call $1::migration::migrate_alias_output @$2 @$3 \
   --assign controller_cap \
   --transfer-objects "[controller_cap]" sender

@@ -10,6 +10,8 @@ use sui_sdk::rpc_types::SuiData;
 use sui_sdk::types::base_types::ObjectID;
 use sui_sdk::SuiClient;
 
+use super::Document;
+
 static MIGRATION_REGISTRY_ID: OnceLock<ObjectID> = OnceLock::new();
 
 #[derive(thiserror::Error, Debug)]
@@ -62,7 +64,7 @@ async fn migration_registry_id(sui_client: &SuiClient) -> Result<ObjectID, Error
 
 /// Lookup a legacy `alias_id` into the migration registry
 /// to get the UID of the corresponding migrated DID document if any.
-pub async fn lookup(sui_client: &SuiClient, alias_id: ObjectID) -> Result<Option<ObjectID>, Error> {
+pub async fn lookup(sui_client: &SuiClient, alias_id: ObjectID) -> Result<Option<Document>, Error> {
   let dynamic_field_name = serde_json::from_value(serde_json::json!({
     "type": "0x2::object::ID",
     "value": alias_id.to_string()
@@ -79,8 +81,7 @@ pub async fn lookup(sui_client: &SuiClient, alias_id: ObjectID) -> Result<Option
       data
         .content
         .and_then(|content| content.try_into_move())
-        .and_then(|move_object| move_object.read_dynamic_field_value("value"))
-        .and_then(|address_value| serde_json::from_value(address_value.to_json_value()).ok())
+        .and_then(|move_object| serde_json::from_value(move_object.fields.to_json_value()).ok())
         .ok_or(Error::Malformed(
           "invalid MigrationRegistry's Entry encoding".to_string(),
         ))

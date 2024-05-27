@@ -4,7 +4,6 @@
 use std::str::FromStr;
 
 use identity_sui_name_tbd::migration::get_alias;
-use identity_sui_name_tbd::migration::get_identity_document;
 use identity_sui_name_tbd::migration::lookup;
 use iota_sdk::types::block::output::AliasId;
 use sui_sdk::types::base_types::ObjectID;
@@ -46,25 +45,15 @@ impl KinesisIotaIdentityClientExt for SuiClient {
       // otherwise check registry for a migrated alias
       let object_id = ObjectID::from_str(&alias_id_string)
         .map_err(|_| Error::DIDSyntaxError(identity_did::Error::InvalidMethodId))?;
-      let mapped_id = lookup(self, object_id).await.map_err(|err| {
-        Error::DIDResolutionErrorKinesis(format!("failed to look up alias id in migration registry; {err}"))
-      })?;
-      // if we found a mapping, resolve to identity package `Document` object
-      let document = if let Some(mapped_id_value) = mapped_id {
-        let mapped_id_value_string = mapped_id_value.to_string();
-        get_identity_document(self, &mapped_id_value_string)
-          .await
-          .map_err(|err| Error::DIDResolutionErrorKinesis(format!("failed to resolve identity document; {err}")))?
-          .ok_or_else(|| {
-            Error::DIDResolutionErrorKinesis(format!(
-              "no identity document found for mapped id value {mapped_id_value_string}"
-            ))
-          })?
-      } else {
-        return Err(Error::DIDResolutionErrorKinesis(format!(
+      let document = lookup(self, object_id)
+        .await
+        .map_err(|err| {
+          Error::DIDResolutionErrorKinesis(format!("failed to look up alias id in migration registry; {err}"))
+        })?
+        .ok_or(Error::DIDResolutionErrorKinesis(format!(
           "could not find alias id {alias_id_string} in migration registry"
-        )));
-      };
+        )))?;
+      // if we found a mapping, resolve to identity package `Document` object
       // and get state metadata / serialized document from it
       document.doc
     };
