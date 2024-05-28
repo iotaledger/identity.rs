@@ -18,9 +18,9 @@
 ### Added
 
 - Allow arbitrary verification methods [\#1334](https://github.com/iotaledger/identity.rs/pull/1334)
-- Wasm bindings for `BlockChainAccountId` verification method. [\#1326](https://github.com/iotaledger/identity.rs/pull/1326)
+- use latest release of sd-jwt-payload [\#1333](https://github.com/iotaledger/identity.rs/pull/1333)
 - Add constructor for `VerificationMethod` in TS [\#1321](https://github.com/iotaledger/identity.rs/pull/1321)
-- Add new Verification method type [\#1305](https://github.com/iotaledger/identity.rs/pull/1305)
+- Allow setting additional controllers for `IotaDocument` [\#1314](https://github.com/iotaledger/identity.rs/pull/1314)
 
 ### Patch
 
