@@ -22,7 +22,6 @@
 - use latest release of sd-jwt-payload [\#1333](https://github.com/iotaledger/identity.rs/pull/1333)
 - Allow setting additional controllers for `IotaDocument` [\#1314](https://github.com/iotaledger/identity.rs/pull/1314)
 - Add `get_public_key` for `StrongholdStorage` [\#1311](https://github.com/iotaledger/identity.rs/pull/1311)
-- Add new Verification method type [\#1305](https://github.com/iotaledger/identity.rs/pull/1305)
 - Support multiple IOTA networks in the `Resolver` [\#1304](https://github.com/iotaledger/identity.rs/pull/1304)
 
 ### Patch
