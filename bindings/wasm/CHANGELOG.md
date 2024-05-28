@@ -1,5 +1,16 @@
 # Changelog
 
+## [wasm-v1.3.0](https://github.com/iotaledger/identity.rs/tree/wasm-v1.3.0) (2024-05-28)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v1.2.0...wasm-v1.3.0)
+
+### Added
+- Add ZK BBS+-based selectively disclosable credentials (JPT) [\#1355](https://github.com/iotaledger/identity.rs/pull/1355)
+- Add EcDSA verifier [\#1353](https://github.com/iotaledger/identity.rs/pull/1353)
+
+### Patch
+- Support for specification-compliant verification method type `JsonWebKey2020` [\#1367](https://github.com/iotaledger/identity.rs/pull/1367)
+
 ## [wasm-v1.2.0](https://github.com/iotaledger/identity.rs/tree/wasm-v1.2.0) (2024-03-27)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v1.1.0...wasm-v1.2.0)
