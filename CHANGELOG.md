@@ -5,13 +5,15 @@
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v1.1.1...v1.2.0)
 
 ### Added
-- Add `get_public_key` for `StrongholdStorage` [\#1311](https://github.com/iotaledger/identity.rs/pull/1311)
-- Support multiple IOTA networks in the Resolver [\#1304](https://github.com/iotaledger/identity.rs/pull/1304)
-- Allow setting additional controllers for `IotaDocument` [\#1314](https://github.com/iotaledger/identity.rs/pull/1314)
-- use latest release of sd-jwt-payload `IotaDocument` [\#1333](https://github.com/iotaledger/identity.rs/pull/1333)
+
 - Allow arbitrary verification methods [\#1334](https://github.com/iotaledger/identity.rs/pull/1334)
+- use latest release of sd-jwt-payload [\#1333](https://github.com/iotaledger/identity.rs/pull/1333)
+- Allow setting additional controllers for `IotaDocument` [\#1314](https://github.com/iotaledger/identity.rs/pull/1314)
+- Add `get_public_key` for `StrongholdStorage` [\#1311](https://github.com/iotaledger/identity.rs/pull/1311)
+- Support multiple IOTA networks in the `Resolver` [\#1304](https://github.com/iotaledger/identity.rs/pull/1304)
 
 ### Patch
+
 - Support %-encoded characters in DID method id [\#1303](https://github.com/iotaledger/identity.rs/pull/1303)
 
 ## [v1.1.1](https://github.com/iotaledger/identity.rs/tree/v1.1.1) (2024-02-19)
