@@ -334,6 +334,116 @@ mod iota_handler {
   }
 }
 
+//TODO: Web - resolver handler
+// #[cfg(feature = "web")]
+mod web_handler {
+  use crate::ErrorCause;
+
+  use super::Resolver;
+  use hickory_resolver::config::ResolverConfig;
+use hickory_resolver::config::ResolverOpts;
+use hickory_resolver::TokioAsyncResolver;
+use identity_document::document::CoreDocument;
+  use identity_iota_core::IotaDID;
+  use identity_iota_core::IotaDocument;
+  use identity_iota_core::IotaIdentityClientExt;
+  use identity_iota_core::WebDID;
+use identity_iota_core::WebDocument;
+use once_cell::sync::OnceCell;
+use reqwest::dns::Addrs;
+use reqwest::ClientBuilder;
+use reqwest::IntoUrl;
+  use std::collections::HashMap;
+  use std::io;
+use std::net::SocketAddr;
+use std::str::FromStr;
+use std::sync::Arc;
+use crate::Error;
+use crate::Result;
+
+
+  /// Wrapper around an `AsyncResolver`, which implements the `Resolve` trait.
+  #[derive(Debug, Default, Clone)]
+  pub(crate) struct DnsOverHttpsResolver {
+      /// Since we might not have been called in the context of a
+      /// Tokio Runtime in initialization, so we must delay the actual
+      /// construction of the resolver.
+      state: Arc<OnceCell<TokioAsyncResolver>>,
+  }
+
+  impl DnsOverHttpsResolver {
+      fn new_https_resolver()-> io::Result<TokioAsyncResolver> {
+          let mut opt = ResolverOpts::default();
+          opt.validate=true; 
+          Ok(TokioAsyncResolver::tokio(
+              ResolverConfig::cloudflare_https(),
+          opt
+          ))
+      }
+  }
+
+  impl reqwest::dns::Resolve for DnsOverHttpsResolver {
+      fn resolve(&self, name: reqwest::dns::Name) -> reqwest::dns::Resolving {
+          let resolver = self.clone();
+          Box::pin(async move {
+              let resolver = resolver.state.get_or_try_init(DnsOverHttpsResolver::new_https_resolver)?;
+              let lookup = resolver.lookup_ip(name.as_str()).await?;
+              let addrs: Addrs = Box::new(
+                  lookup.into_iter().map(|ip_addr| SocketAddr::new(ip_addr, 0))
+              );
+              Ok(addrs)
+          })
+      }
+  }
+
+
+  impl<DOC> Resolver<DOC>
+  where
+    DOC: From<WebDocument> + AsRef<CoreDocument> + 'static,
+  {
+    /// Convenience method for attaching a new handler responsible for resolving Web DIDs.
+    ///
+    /// See also [`attach_handler`](Self::attach_handler).
+    pub fn attach_web_handler(&mut self) -> Result<(), Error>
+    {
+
+      //TODO: to be moved in a folder identity_web with all the other Web DID Method related structures and functionalities.
+      // Construct a new Resolver with default configuration options
+      let resolver = DnsOverHttpsResolver::default();
+
+      let client = ClientBuilder::new()
+      .use_rustls_tls()
+      .dns_resolver(resolver.into())
+      .build()
+      .map_err(|e| Error::new(ErrorCause::HandlerError { source: Box::new(e) }))?;
+
+
+
+      let handler = move |did: WebDID| {
+        let future_client = client.clone();
+        async move {
+          let did_url = reqwest::Url::from_str(&did.to_url().to_string())
+          .map_err(|e| Error::new(ErrorCause::HandlerError { source: Box::new(e) }))?;
+
+          future_client.get(did_url)
+            .send()
+            .await
+            .map_err(|e| Error::new(ErrorCause::HandlerError { source: Box::new(e) }))?
+            .json::<WebDocument>()
+            .await
+            .map_err(|e| Error::new(ErrorCause::HandlerError { source: Box::new(e) }))
+
+        }
+      };
+
+      self.attach_handler(WebDID::METHOD.to_owned(), handler);
+      Ok(())
+    }
+
+  }
+}
+
+
 impl<CMD, DOC> Default for Resolver<DOC, CMD>
 where
   CMD: for<'r> Command<'r, Result<DOC>>,

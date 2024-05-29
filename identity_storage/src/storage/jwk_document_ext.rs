@@ -142,6 +142,10 @@ mod private {
   impl Sealed for identity_document::document::CoreDocument {}
   #[cfg(feature = "iota-document")]
   impl Sealed for identity_iota_core::IotaDocument {}
+
+  //TODO: Web DID -  Sealed
+  // #[cfg(feature = "web-document")]
+  impl Sealed for identity_iota_core::WebDocument {}
 }
 
 // ====================================================================================================================
@@ -549,6 +553,109 @@ mod iota_document {
   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
   #[cfg_attr(feature = "send-sync-storage", async_trait)]
   impl JwkDocumentExt for IotaDocument {
+    async fn generate_method<K, I>(
+      &mut self,
+      storage: &Storage<K, I>,
+      key_type: KeyType,
+      alg: JwsAlgorithm,
+      fragment: Option<&str>,
+      scope: MethodScope,
+    ) -> StorageResult<String>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
+    {
+      generate_method_iota_document(self, storage, key_type, alg, fragment, scope).await
+    }
+
+    async fn purge_method<K, I>(&mut self, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
+    {
+      purge_method_iota_document(self, storage, id).await
+    }
+
+    async fn create_jws<K, I>(
+      &self,
+      storage: &Storage<K, I>,
+      fragment: &str,
+      payload: &[u8],
+      options: &JwsSignatureOptions,
+    ) -> StorageResult<Jws>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
+    {
+      self
+        .core_document()
+        .create_jws(storage, fragment, payload, options)
+        .await
+    }
+
+    async fn create_credential_jwt<K, I, T>(
+      &self,
+      credential: &Credential<T>,
+      storage: &Storage<K, I>,
+      fragment: &str,
+      options: &JwsSignatureOptions,
+      custom_claims: Option<Object>,
+    ) -> StorageResult<Jwt>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
+      T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+    {
+      self
+        .core_document()
+        .create_credential_jwt(credential, storage, fragment, options, custom_claims)
+        .await
+    }
+    async fn create_presentation_jwt<K, I, CRED, T>(
+      &self,
+      presentation: &Presentation<CRED, T>,
+      storage: &Storage<K, I>,
+      fragment: &str,
+      options: &JwsSignatureOptions,
+      jwt_options: &JwtPresentationOptions,
+    ) -> StorageResult<Jwt>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
+      T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+      CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync,
+    {
+      self
+        .core_document()
+        .create_presentation_jwt(presentation, storage, fragment, options, jwt_options)
+        .await
+    }
+  }
+}
+
+
+// ====================================================================================================================
+// WebDocument
+// ====================================================================================================================
+// #[cfg(feature = "web-document")]
+// TODO: Web DID - JwkDocumentExt for WebDocument
+mod web_document {
+  use super::*;
+  use identity_credential::credential::Jwt;
+  use identity_iota_core::WebDocument;
+
+  generate_method_for_document_type!(
+    WebDocument,
+    JwsAlgorithm,
+    JwkStorage,
+    JwkStorage::generate,
+    generate_method_iota_document
+  );
+  purge_method_for_document_type!(WebDocument, purge_method_iota_document);
+
+  #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+  #[cfg_attr(feature = "send-sync-storage", async_trait)]
+  impl JwkDocumentExt for WebDocument {
     async fn generate_method<K, I>(
       &mut self,
       storage: &Storage<K, I>,

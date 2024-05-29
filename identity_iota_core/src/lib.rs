@@ -26,6 +26,7 @@ pub mod block {
 #[cfg(feature = "client")]
 pub use client::*;
 pub use did::IotaDID;
+pub use did::WebDID; //TODO: Web DID - lib
 pub use document::*;
 pub use network::NetworkName;
 pub use state_metadata::*;

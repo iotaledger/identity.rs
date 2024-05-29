@@ -100,3 +100,7 @@ name = "9_zkp"
 [[example]]
 path = "1_advanced/10_zkp_revocation.rs"
 name = "10_zkp_revocation"
+
+[[example]]
+path = "1_advanced/11_did_web.rs"
+name = "11_did_web"
