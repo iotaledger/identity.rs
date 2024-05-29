@@ -8,4 +8,4 @@ package_dir=$script_dir/../packages/identity_iota
 
 echo "publishing package from $package_dir"
 cd $package_dir
-sui client publish --gas-budget 100000000 .
+sui client publish --with-unpublished-dependencies --json --gas-budget 500000000 .
