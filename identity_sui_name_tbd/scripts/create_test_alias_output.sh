@@ -29,4 +29,5 @@ sui client ptb \
   --move-call $1::alias_output::create_empty_for_testing \
   --assign alias_output \
   --move-call $1::alias_output::attach_alias alias_output "alias" \
-  --transfer-objects "[alias_output]" sender 
+  --transfer-objects "[alias_output]" sender \
+  --json 
