@@ -32,6 +32,9 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 - [Web Assembly](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm/) (JavaScript/TypeScript)
 
+## gRPC
+
+We provide a collection of experimental [gRPC services](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/grpc/)
 ## Documentation and Resources
 
 - API References:
@@ -51,7 +54,7 @@ If you want to include IOTA Identity in your project, simply add it as a depende
 
 ```toml
 [dependencies]
-identity_iota = { version = "1.2.0" }
+identity_iota = { version = "1.3.0" }
 ```
 
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
@@ -67,6 +70,17 @@ See the [instructions](https://github.com/iotaledger/iota-sandbox) on running yo
 
 _Cargo.toml_
 
+<!--
+Test this example using https://github.com/anko/txm: `txm README.md`
+
+!test program
+cd ../..
+mkdir tmp
+cat | sed -e 's#identity_iota = { version = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
+echo '[workspace]' >>tmp/Cargo.toml
+-->
+<!-- !test check Cargo Example -->
+
 ```toml
 [package]
 name = "iota_identity_example"
@@ -74,7 +88,7 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { version = "1.2.0", features = ["memstore"] }
+identity_iota = { version = "1.3.0", features = ["memstore"] }
 iota-sdk = { version = "1.0.2", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.62"
@@ -82,6 +96,19 @@ rand = "0.8.5"
 ```
 
 _main._<span></span>_rs_
+
+<!--
+Test this example using https://github.com/anko/txm: `txm README.md`
+
+!test program
+cd ../..
+mkdir tmp/src
+cat > tmp/src/main.rs 
+cd tmp
+timeout 360 cargo build || (echo "Process timed out after 360 seconds" && exit 1)
+-->
+<!-- !test check Rust Example -->
+
 
 ```rust,no_run
 use identity_iota::core::ToJson;

@@ -4,6 +4,7 @@
 //! JSON Web Keys ([JWK](https://tools.ietf.org/html/rfc7517))
 
 mod curve;
+mod jwk_ext;
 mod key;
 mod key_operation;
 mod key_params;

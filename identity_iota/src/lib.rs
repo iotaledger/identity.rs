@@ -105,7 +105,22 @@ pub mod verification {
 
 pub mod storage {
   //! Storage traits.
-  pub use identity_storage::*;
+  /// KeyIdStorage types and functionalities.
+  pub mod key_id_storage {
+    pub use identity_storage::key_id_storage::*;
+  }
+  /// KeyStorage types and functionalities.
+  pub mod key_storage {
+    pub use identity_storage::key_storage::public_modules::*;
+  }
+  /// Storage types and functionalities.
+  #[allow(clippy::module_inception)]
+  pub mod storage {
+    pub use identity_storage::storage::*;
+  }
+  pub use identity_storage::key_id_storage::*;
+  pub use identity_storage::key_storage::*;
+  pub use identity_storage::storage::*;
 }
 
 #[cfg(feature = "sd-jwt")]

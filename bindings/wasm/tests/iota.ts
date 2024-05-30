@@ -100,7 +100,7 @@ describe("IotaDocument", function() {
             // Resolve.
             const resolved = doc.resolveMethod(fragment, scope)!;
             assert.deepStrictEqual(resolved.id().fragment(), fragment);
-            assert.deepStrictEqual(resolved.type().toString(), MethodType.JsonWebKey().toString());
+            assert.deepStrictEqual(resolved.type().toString(), MethodType.JsonWebKey2020().toString());
             assert.deepStrictEqual(resolved.controller().toString(), doc.id().toString());
             assert.deepStrictEqual(resolved.data().tryPublicKeyJwk().toJSON(), JWK.toJSON());
             assert.deepStrictEqual(resolved.toJSON(), method.toJSON());

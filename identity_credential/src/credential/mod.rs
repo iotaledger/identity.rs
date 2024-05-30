@@ -9,6 +9,10 @@ mod builder;
 mod credential;
 mod evidence;
 mod issuer;
+#[cfg(feature = "jpt-bbs-plus")]
+mod jpt;
+#[cfg(feature = "jpt-bbs-plus")]
+mod jwp_credential_options;
 mod jws;
 mod jwt;
 mod jwt_serialization;
@@ -26,12 +30,18 @@ pub use self::builder::CredentialBuilder;
 pub use self::credential::Credential;
 pub use self::evidence::Evidence;
 pub use self::issuer::Issuer;
+#[cfg(feature = "jpt-bbs-plus")]
+pub use self::jpt::Jpt;
+#[cfg(feature = "jpt-bbs-plus")]
+pub use self::jwp_credential_options::JwpCredentialOptions;
 pub use self::jws::Jws;
 pub use self::jwt::Jwt;
 pub use self::linked_domain_service::LinkedDomainService;
 pub use self::policy::Policy;
 pub use self::proof::Proof;
 pub use self::refresh::RefreshService;
+#[cfg(feature = "revocation-bitmap")]
+pub use self::revocation_bitmap_status::try_index_to_u32;
 #[cfg(feature = "revocation-bitmap")]
 pub use self::revocation_bitmap_status::RevocationBitmapStatus;
 pub use self::schema::Schema;
