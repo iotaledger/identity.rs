@@ -16,7 +16,7 @@ use tokio::sync::OnceCell;
 
 static CLIENT: OnceCell<TestClient> = OnceCell::const_new();
 const SCRIPT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/scripts/");
-const CHACHED_PKG_ID: &str = "/tmp/identity_iota_pkg_id.txt";
+const CACHED_PKG_ID: &str = "/tmp/identity_iota_pkg_id.txt";
 
 pub async fn get_client() -> anyhow::Result<TestClient> {
   CLIENT.get_or_try_init(init).await.cloned()
@@ -27,13 +27,13 @@ async fn init() -> anyhow::Result<TestClient> {
   let address = get_active_address().await?;
 
   let package_id = if let Some(id) = std::env::var("IDENTITY_IOTA_PKG_ID")
-    .or(std::fs::read_to_string(CHACHED_PKG_ID))
+    .or(get_cached_id(address).await)
     .ok()
   {
     std::env::set_var("IDENTITY_IOTA_PKG_ID", id.clone());
     id.parse()?
   } else {
-    publish_package().await?
+    publish_package(address).await?
   };
 
   Ok(TestClient {
@@ -41,6 +41,17 @@ async fn init() -> anyhow::Result<TestClient> {
     package_id,
     address,
   })
+}
+
+async fn get_cached_id(active_address: SuiAddress) -> anyhow::Result<String> {
+  let cache = tokio::fs::read_to_string(CACHED_PKG_ID).await?;
+  let (cached_id, cached_address) = cache.split_once(';').ok_or(anyhow!("Invalid or empty cached data"))?;
+
+  if cached_address == active_address.to_string().as_str() {
+    Ok(cached_id.to_owned())
+  } else {
+    Err(anyhow!("A network change has invalidated the cached data"))
+  }
 }
 
 async fn get_active_address() -> anyhow::Result<SuiAddress> {
@@ -54,7 +65,7 @@ async fn get_active_address() -> anyhow::Result<SuiAddress> {
     .and_then(|output| Ok(serde_json::from_slice::<SuiAddress>(&output.stdout)?))
 }
 
-async fn publish_package() -> anyhow::Result<ObjectID> {
+async fn publish_package(active_address: SuiAddress) -> anyhow::Result<ObjectID> {
   let output = Command::new("sh")
     .current_dir(SCRIPT_DIR)
     .arg("publish_identity_package.sh")
@@ -83,9 +94,10 @@ async fn publish_package() -> anyhow::Result<ObjectID> {
     .ok_or_else(|| anyhow!("Failed to parse package ID after publishing"))?;
 
   // Persist package ID in order to avoid publishing the package for every test.
-  std::env::set_var("IDENTITY_IOTA_PKG_ID", package_id.to_string());
-  let mut file = std::fs::File::create(CHACHED_PKG_ID)?;
-  file.write_all(package_id.to_string().as_bytes())?;
+  let package_id_str = package_id.to_string();
+  std::env::set_var("IDENTITY_IOTA_PKG_ID", package_id_str.as_str());
+  let mut file = std::fs::File::create(CACHED_PKG_ID)?;
+  write!(&mut file, "{};{}", package_id_str, active_address.to_string())?;
 
   Ok(package_id)
 }
