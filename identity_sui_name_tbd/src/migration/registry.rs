@@ -80,10 +80,7 @@ pub async fn lookup(sui_client: &SuiClient, alias_id: ObjectID) -> Result<Option
       data
         .content
         .and_then(|content| content.try_into_move())
-        .and_then(|move_object| {
-          let value = move_object.fields.to_json_value();
-          serde_json::from_value(value).inspect_err(|e| println!("{e}")).ok()
-        })
+        .and_then(|move_object| serde_json::from_value(move_object.fields.to_json_value()).ok())
         .ok_or(Error::Malformed(
           "invalid MigrationRegistry's Entry encoding".to_string(),
         ))
