@@ -1,22 +1,46 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
-
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 use sui_sdk::rpc_types::SuiObjectDataOptions;
 use sui_sdk::rpc_types::SuiParsedData;
+use sui_sdk::rpc_types::SuiParsedMoveObject;
 use sui_sdk::types::base_types::ObjectID;
 use sui_sdk::types::id::UID;
 use sui_sdk::SuiClient;
 
 use crate::Error;
 
-pub async fn get_alias(client: &SuiClient, object_id: &str) -> Result<Option<UnmigratedAlias>, Error> {
-  let object_id = ObjectID::from_str(object_id)
-    .map_err(|err| Error::ObjectLookup(format!("Could not parse given object id {object_id}; {err}")))?;
+const MODULE: &str = "alias";
+const NAME: &str = "Alias";
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UnmigratedAlias {
+  /// The ID of the Alias = hash of the Output ID that created the Alias Output in Stardust.
+  /// This is the AliasID from Stardust.
+  pub id: UID,
+
+  /// The last State Controller address assigned before the migration.
+  pub legacy_state_controller: Option<String>,
+  /// A counter increased by 1 every time the alias was state transitioned.
+  pub state_index: u32,
+  /// State metadata that can be used to store additional information.
+  pub state_metadata: Option<Vec<u8>>,
+
+  /// The sender feature.
+  pub sender: Option<String>,
+  /// The metadata feature.
+  pub metadata: Option<Vec<u8>>,
+
+  /// The immutable issuer feature.
+  pub immutable_issuer: Option<String>,
+  /// The immutable metadata feature.
+  pub immutable_metadata: Option<Vec<u8>>,
+}
+
+pub async fn get_alias(client: &SuiClient, object_id: ObjectID) -> Result<Option<UnmigratedAlias>, Error> {
   let options = SuiObjectDataOptions {
     show_type: true,
     show_owner: true,
@@ -52,33 +76,17 @@ pub async fn get_alias(client: &SuiClient, object_id: &str) -> Result<Option<Unm
     )));
   };
 
-  dbg!(&value);
+  if !is_alias(&value) {
+    return Ok(None);
+  }
 
   let alias: UnmigratedAlias = serde_json::from_value(value.fields.to_json_value()).unwrap();
 
   Ok(Some(alias))
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct UnmigratedAlias {
-  /// The ID of the Alias = hash of the Output ID that created the Alias Output in Stardust.
-  /// This is the AliasID from Stardust.
-  pub id: UID,
-
-  /// The last State Controller address assigned before the migration.
-  pub legacy_state_controller: Option<String>,
-  /// A counter increased by 1 every time the alias was state transitioned.
-  pub state_index: u32,
-  /// State metadata that can be used to store additional information.
-  pub state_metadata: Option<Vec<u8>>,
-
-  /// The sender feature.
-  pub sender: Option<String>,
-  /// The metadata feature.
-  pub metadata: Option<Vec<u8>>,
-
-  /// The immutable issuer feature.
-  pub immutable_issuer: Option<String>,
-  /// The immutable metadata feature.
-  pub immutable_metadata: Option<Vec<u8>>,
+fn is_alias(value: &SuiParsedMoveObject) -> bool {
+  // if available we might also check if object stems from expected module
+  // but how would this act upon package updates?
+  value.type_.module.as_ident_str().as_str() == MODULE && value.type_.name.as_ident_str().as_str() == NAME
 }

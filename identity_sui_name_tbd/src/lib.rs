@@ -3,6 +3,7 @@
 
 mod error;
 pub mod migration;
+pub mod resolution;
 pub mod utils;
 
 pub use error::Error;
