@@ -1,4 +1,5 @@
-use std::str::FromStr;
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
 use serde;
 use serde::Deserialize;
@@ -6,11 +7,15 @@ use serde::Serialize;
 use serde_json::Value;
 use sui_sdk::rpc_types::SuiObjectDataOptions;
 use sui_sdk::rpc_types::SuiParsedData;
+use sui_sdk::rpc_types::SuiParsedMoveObject;
 use sui_sdk::types::base_types::ObjectID;
 use sui_sdk::types::id::UID;
 use sui_sdk::SuiClient;
 
 use crate::Error;
+
+const MODULE: &str = "document";
+const NAME: &str = "Document";
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Document {
@@ -20,9 +25,7 @@ pub struct Document {
   pub native_tokens: Value,
 }
 
-pub async fn get_identity_document(client: &SuiClient, object_id: &str) -> Result<Option<Document>, Error> {
-  let object_id = ObjectID::from_str(object_id)
-    .map_err(|err| Error::ObjectLookup(format!("Could not parse given object id {object_id}; {err}")))?;
+pub async fn get_identity_document(client: &SuiClient, object_id: ObjectID) -> Result<Option<Document>, Error> {
   let options = SuiObjectDataOptions {
     show_type: true,
     show_owner: true,
@@ -57,9 +60,20 @@ pub async fn get_identity_document(client: &SuiClient, object_id: &str) -> Resul
       "found data at object id {object_id} is not an object"
     )));
   };
-  dbg!(&value);
 
-  let alias: Document = serde_json::from_value(value.fields.to_json_value()).unwrap();
+  if !is_document(&value) {
+    return Ok(None);
+  }
 
-  Ok(Some(alias))
+  serde_json::from_value(value.fields.to_json_value()).map_err(|err| {
+    Error::ObjectLookup(format!(
+      "could not parse identity document with object id {object_id}; {err}"
+    ))
+  })
+}
+
+fn is_document(value: &SuiParsedMoveObject) -> bool {
+  // if available we might also check if object stems from expected module
+  // but how would this act upon package updates?
+  value.type_.module.as_ident_str().as_str() == MODULE && value.type_.name.as_ident_str().as_str() == NAME
 }

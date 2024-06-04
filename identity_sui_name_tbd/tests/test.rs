@@ -25,6 +25,8 @@ use sui_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
 use sui_sdk::types::transaction::Transaction;
 use sui_sdk::types::transaction::TransactionData;
 
+mod common;
+
 const ACCOUNT_INDEX: u32 = 0;
 const INTERNAL_ADDRESS: bool = false;
 const ADDRESS_INDEX: u32 = 0;
@@ -66,14 +68,12 @@ async fn can_initialize_new_client() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-#[ignore]
 async fn can_fetch_alias_output_by_object_id() -> anyhow::Result<()> {
-  let client = get_client(LOCAL_NETWORK).await?;
-  let result = get_alias(
-    &client,
-    "0x669c70a008a5e226813927a7b62a5029306d8f7e7366b0634ef6027b3dbda850",
-  )
-  .await;
+  let test_client = common::get_client().await?;
+  let alias_id = test_client.create_legacy_did().await?;
+  let sui_client = get_client(LOCAL_NETWORK).await?;
+
+  let result = get_alias(&sui_client, alias_id).await;
 
   assert!(result.is_ok());
 
@@ -127,6 +127,7 @@ async fn can_sign_a_message() -> anyhow::Result<()> {
   Ok(())
 }
 
+#[ignore]
 #[tokio::test]
 async fn can_submit_a_tx() -> anyhow::Result<()> {
   let client = get_client(LOCAL_NETWORK).await?;

@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::io::Write;
 use std::ops::Deref;
 
@@ -148,6 +151,36 @@ impl TestClient {
       .first()
       .copied()
       .ok_or_else(|| anyhow!("No `AliasOutput` object was created"))
+  }
+
+  pub async fn create_did_document(&self) -> anyhow::Result<ObjectID> {
+    let output = Command::new("sh")
+      .current_dir(SCRIPT_DIR)
+      .arg("create_test_document.sh")
+      .arg(self.package_id.to_string())
+      .output()
+      .await?;
+
+    if !output.status.success() {
+      anyhow::bail!(
+        "Failed to create did document: {}",
+        std::str::from_utf8(&output.stderr).unwrap()
+      );
+    }
+
+    let result = {
+      let output_str = std::str::from_utf8(&output.stdout).unwrap();
+      let start_of_json = output_str.find('{').ok_or(anyhow!("No json in output"))?;
+      serde_json::from_str::<Value>(output_str[start_of_json..].trim())?
+    };
+
+    result
+      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*Document$')].objectId")
+      .map_err(|e| anyhow!("Failed to parse JSONPath: {e}"))
+      .and_then(|value| Ok(serde_json::from_value::<Vec<ObjectID>>(value)?))?
+      .first()
+      .copied()
+      .ok_or_else(|| anyhow!("No `Document` object was created"))
   }
 
   /// Migrates a legacy DID document into the new Iota 3.0 DID document format.

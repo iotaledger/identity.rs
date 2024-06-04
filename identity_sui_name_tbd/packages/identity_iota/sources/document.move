@@ -42,4 +42,19 @@ module identity_iota::document {
             data[1] == 0x49 &&  // b'I'
             data[2] == 0x44     // b'D'
     }
+
+    #[test]
+    fun test_document_create() {
+        use sui::test_utils::assert_eq;
+
+        let mut ctx = tx_context::dummy();
+        let doc = b"DIDtest";
+
+        let (document, controller) = new( doc, sui::balance::zero(), sui::bag::new(&mut ctx), &mut ctx);
+
+        assert_eq(document.doc, doc);
+
+        transfer::share_object(document);
+        transfer::public_transfer(controller, tx_context::sender(&ctx));
+    }
 }

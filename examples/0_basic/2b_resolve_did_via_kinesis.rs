@@ -23,8 +23,8 @@ async fn main() -> anyhow::Result<()> {
   // This convenience method only requires us to provide a client.
   resolver.attach_kinesis_iota_handler(client.clone());
 
-  // let did = IotaDID::parse("did:iota:0x737794842572ee0a98ff46b2aadf9219de707998bd9f767a9b24b82ff9d437c8")?; // a
-  let did = IotaDID::parse("did:iota:0x439308c50ba8ac17972dd595c4cb6866e5721ddcc63d6ab0e9749d4c3a777cb2")?; // a (mig)
+  let did = IotaDID::parse("did:iota:0x49f0cf61970ccf7006da235fcef43802b85c4bf09dd587db7f5cfe629b3bd1da")?;
+
   let result = resolver.resolve(&did).await;
 
   dbg!(&result);

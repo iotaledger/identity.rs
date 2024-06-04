@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use fastcrypto::hash::HashFunction;
 use fastcrypto::traits::ToFromBytes;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;

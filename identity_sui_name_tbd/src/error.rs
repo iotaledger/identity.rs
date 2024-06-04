@@ -7,13 +7,6 @@
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
 pub enum Error {
-  // because we'll most probably need them later anyway
-  //   /// Caused by a failure to encode Rust types as JSON.
-  //   #[error("failed to encode JSON")]
-  //   EncodeJSON(#[source] serde_json::Error),
-  //   /// Caused by a failure to decode Rust types from JSON.
-  //   #[error("failed to decode JSON")]
-  //   DecodeJSON(#[source] serde_json::Error),
   /// failed to connect to network
   #[error("failed to connect to sui network node; {0:?}")]
   Network(String, #[source] sui_sdk::error::Error),
@@ -23,4 +16,7 @@ pub enum Error {
   /// MigrationRegistry error.
   #[error(transparent)]
   MigrationRegistryNotFound(crate::migration::Error),
+  /// Caused by a look failures during resolution.
+  #[error("DID resolution failed: {0}")]
+  DIDResolutionErrorKinesis(String),
 }
