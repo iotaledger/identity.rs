@@ -185,7 +185,7 @@ impl TestClient {
 
     let document_id = result
       .clone()
-      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*Document$')].objectId")
+      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*Identity$')].objectId")
       .map_err(|e| anyhow!("Failed to parse JSONPath: {e}"))
       .and_then(|value| Ok(serde_json::from_value::<Vec<ObjectID>>(value)?))?
       .first()

@@ -9,7 +9,7 @@ use sui_sdk::types::base_types::ObjectID;
 use sui_sdk::SuiClient;
 use tokio::sync::OnceCell;
 
-use super::Document;
+use super::Identity;
 
 static MIGRATION_REGISTRY_ID: OnceCell<ObjectID> = OnceCell::const_new();
 
@@ -63,7 +63,7 @@ pub async fn migration_registry_id(sui_client: &SuiClient) -> Result<ObjectID, E
 
 /// Lookup a legacy `alias_id` into the migration registry
 /// to get the UID of the corresponding migrated DID document if any.
-pub async fn lookup(sui_client: &SuiClient, alias_id: ObjectID) -> Result<Option<Document>, Error> {
+pub async fn lookup(sui_client: &SuiClient, alias_id: ObjectID) -> Result<Option<Identity>, Error> {
   let dynamic_field_name = serde_json::from_value(serde_json::json!({
     "type": "0x2::object::ID",
     "value": alias_id.to_string()
@@ -80,7 +80,10 @@ pub async fn lookup(sui_client: &SuiClient, alias_id: ObjectID) -> Result<Option
       data
         .content
         .and_then(|content| content.try_into_move())
-        .and_then(|move_object| serde_json::from_value(move_object.fields.to_json_value()).ok())
+        .and_then(|move_object| {
+          let value = move_object.fields.to_json_value();
+          serde_json::from_value(value).inspect_err(|e| println!("{e}")).ok()
+        })
         .ok_or(Error::Malformed(
           "invalid MigrationRegistry's Entry encoding".to_string(),
         ))

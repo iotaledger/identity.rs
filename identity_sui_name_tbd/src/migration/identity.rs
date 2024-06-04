@@ -1,9 +1,13 @@
+use std::ops::Deref;
+use std::ops::DerefMut;
 use std::str::FromStr;
+use std::collections::HashSet;
+use std::hash::Hash;
 
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
-use serde_json::Value;
+use serde_aux::field_attributes::deserialize_number_from_string;
 use sui_sdk::rpc_types::SuiObjectDataOptions;
 use sui_sdk::rpc_types::SuiParsedData;
 use sui_sdk::types::base_types::ObjectID;
@@ -13,14 +17,34 @@ use sui_sdk::SuiClient;
 use crate::Error;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Document {
-  pub id: UID,
-  pub doc: Vec<u8>,
-  pub iota: String,
-  pub native_tokens: Value,
+pub struct SuiVecSet<T: Hash + Eq> {
+  contents: HashSet<T>,
 }
 
-pub async fn get_identity_document(client: &SuiClient, object_id: &str) -> Result<Option<Document>, Error> {
+impl<T: Hash + Eq> Deref for SuiVecSet<T> {
+  type Target = HashSet<T>;
+  fn deref(&self) -> &Self::Target {
+    &self.contents
+  }
+}
+
+impl<T: Hash + Eq> DerefMut for SuiVecSet<T> {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.contents
+  }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Identity {
+  pub id: UID,
+  pub doc: Vec<u8>,
+  pub can_trade_controllers: bool,
+  pub controllers: SuiVecSet<ObjectID>,
+  #[serde(deserialize_with = "deserialize_number_from_string")]
+  pub threshold: u64,
+}
+
+pub async fn get_identity(client: &SuiClient, object_id: &str) -> Result<Option<Identity>, Error> {
   let object_id = ObjectID::from_str(object_id)
     .map_err(|err| Error::ObjectLookup(format!("Could not parse given object id {object_id}; {err}")))?;
   let options = SuiObjectDataOptions {
@@ -57,9 +81,8 @@ pub async fn get_identity_document(client: &SuiClient, object_id: &str) -> Resul
       "found data at object id {object_id} is not an object"
     )));
   };
-  dbg!(&value);
 
-  let alias: Document = serde_json::from_value(value.fields.to_json_value()).unwrap();
+  let alias = serde_json::from_value(value.fields.to_json_value()).unwrap();
 
   Ok(Some(alias))
 }
