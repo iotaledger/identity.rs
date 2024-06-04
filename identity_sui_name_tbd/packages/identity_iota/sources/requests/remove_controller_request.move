@@ -1,14 +1,5 @@
 module identity_iota::remove_controller_request {
     use identity_iota::{controller::ControllerCap, request_common::{Self, Request}};
-    use sui::event;
-
-    public struct RequestCreated has copy, drop {
-        id: ID
-    }
-
-    public struct RequestResolved has copy, drop {
-        id: ID
-    }
 
     public struct RemoveControllerRequest has key {
         id: UID,
@@ -26,18 +17,15 @@ module identity_iota::remove_controller_request {
 
     public(package) fun new(
         cap: &ControllerCap,
-        threshold: u32,
         id_to_remove: ID,
         ctx: &mut TxContext
     ) {
         let request = RemoveControllerRequest {
             id: object::new(ctx),
             id_to_remove,
-            inner: request_common::new(cap, threshold),
+            inner: request_common::new(cap),
         };
         
-        event::emit(RequestCreated { id: request.id.to_inner() });
-
         transfer::share_object(request);
     }
     
@@ -50,8 +38,8 @@ module identity_iota::remove_controller_request {
         object::delete(id)
     }
 
-    public fun is_resolved(self: &RemoveControllerRequest): bool {
-        self.inner.is_resolved()
+    public fun is_resolved(self: &RemoveControllerRequest, threshold: u64): bool {
+        self.inner.is_resolved(threshold)
     }
 
     /// Vote in favor for this request, possibly resolving it.
@@ -60,9 +48,5 @@ module identity_iota::remove_controller_request {
         cap: &ControllerCap,
     ) {
         self.inner.approve(cap);
-
-        if (self.is_resolved()) {
-            event::emit(RequestResolved { id: self.id.to_inner() })
-        }
     }
 }

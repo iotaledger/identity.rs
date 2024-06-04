@@ -7,14 +7,12 @@ module identity_iota::request_common {
 
     public struct Request has store, drop {
         did: ID,
-        votes: u32,
-        threshold: u32,
+        votes: u64,
         voters: VecSet<ID>,
     }
 
-    public(package) fun new(controller: &ControllerCap, threshold: u32): Request {
+    public(package) fun new(controller: &ControllerCap): Request {
         Request {
-            threshold,
             did: controller.did(),
             votes: controller.weight(),
             voters: vec_set::singleton(controller.id().to_inner()),
@@ -25,8 +23,8 @@ module identity_iota::request_common {
         self.did
     }
 
-    public(package) fun is_resolved(self: &Request): bool {
-        self.votes >= self.threshold
+    public(package) fun is_resolved(self: &Request, threshold: u64): bool {
+        self.votes >= threshold
     }
 
     public(package) fun approve(self: &mut Request, cap: &ControllerCap) {

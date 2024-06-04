@@ -2,14 +2,14 @@ module identity_iota::controller {
 
     const EWeightCannotBeZero: u64 = 0; 
 
-    const DEFAULT_WEIGHT: u32 = 1;
+    const DEFAULT_WEIGHT: u64 = 1;
 
-    public struct ControllerCap has key, store {
+    public struct ControllerCap has key {
         id: UID,
         /// The DID this capability has control over.
         did: ID,
         /// Voting weight of this capability.
-        weight: u32,
+        weight: u64,
     }
 
     public(package) fun new(did: ID, ctx: &mut TxContext): ControllerCap {
@@ -20,8 +20,12 @@ module identity_iota::controller {
         }
     }
 
+    public(package) fun transfer(self: ControllerCap, recipient: address) {
+        transfer::transfer(self, recipient);
+    }
+
     /// Creates a new capability for document `did`, with a voting weight of `weight`.
-    public(package) fun new_with_weight(did: ID, weight: u32, ctx: &mut TxContext): ControllerCap {
+    public(package) fun new_with_weight(did: ID, weight: u64, ctx: &mut TxContext): ControllerCap {
         assert!(weight >= 1, EWeightCannotBeZero);
 
         ControllerCap {
@@ -39,7 +43,7 @@ module identity_iota::controller {
         self.did
     }
 
-    public fun weight(self: &ControllerCap): u32 {
+    public fun weight(self: &ControllerCap): u64 {
         self.weight
     }
 }
