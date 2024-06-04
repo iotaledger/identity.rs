@@ -1,6 +1,8 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::ops::Deref;
 use std::ops::DerefMut;
-use std::str::FromStr;
 use std::collections::HashSet;
 use std::hash::Hash;
 
@@ -10,11 +12,15 @@ use serde::Serialize;
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sui_sdk::rpc_types::SuiObjectDataOptions;
 use sui_sdk::rpc_types::SuiParsedData;
+use sui_sdk::rpc_types::SuiParsedMoveObject;
 use sui_sdk::types::base_types::ObjectID;
 use sui_sdk::types::id::UID;
 use sui_sdk::SuiClient;
 
 use crate::Error;
+
+const MODULE: &str = "document";
+const NAME: &str = "Document";
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SuiVecSet<T: Hash + Eq> {
@@ -44,9 +50,7 @@ pub struct Identity {
   pub threshold: u64,
 }
 
-pub async fn get_identity(client: &SuiClient, object_id: &str) -> Result<Option<Identity>, Error> {
-  let object_id = ObjectID::from_str(object_id)
-    .map_err(|err| Error::ObjectLookup(format!("Could not parse given object id {object_id}; {err}")))?;
+pub async fn get_identity_document(client: &SuiClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
   let options = SuiObjectDataOptions {
     show_type: true,
     show_owner: true,
@@ -82,7 +86,19 @@ pub async fn get_identity(client: &SuiClient, object_id: &str) -> Result<Option<
     )));
   };
 
-  let alias = serde_json::from_value(value.fields.to_json_value()).unwrap();
+  if !is_document(&value) {
+    return Ok(None);
+  }
 
-  Ok(Some(alias))
+  serde_json::from_value(value.fields.to_json_value()).map_err(|err| {
+    Error::ObjectLookup(format!(
+      "could not parse identity document with object id {object_id}; {err}"
+    ))
+  })
+}
+
+fn is_document(value: &SuiParsedMoveObject) -> bool {
+  // if available we might also check if object stems from expected module
+  // but how would this act upon package updates?
+  value.type_.module.as_ident_str().as_str() == MODULE && value.type_.name.as_ident_str().as_str() == NAME
 }
