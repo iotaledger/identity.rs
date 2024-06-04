@@ -4,6 +4,7 @@ module identity_iota::identity {
         controller::{Self, ControllerCap},
         add_controller_request::{Self, AddControllerRequest},
         remove_controller_request::{Self, RemoveControllerRequest},
+        update_document_request::{Self, UpdateDocumentRequest},
     };
 
     const ENotADidDocument: u64 = 0;
@@ -124,6 +125,19 @@ module identity_iota::identity {
         remove_controller_request::new(cap, controller_to_remove, ctx);
     }
 
+    public fun request_document_update(
+        self: &mut Identity,
+        cap: &ControllerCap,
+        updated_doc: vector<u8>,
+        ctx: &mut TxContext,
+    ) {
+        // Check the provided capability is for this document.
+        assert!(self.is_capability_valid(cap), EInvalidCapability);
+        assert!(is_did_output(&updated_doc), ENotADidDocument);
+
+        update_document_request::new(cap, updated_doc, ctx);
+    }
+
     /// Consume an approved request for adding a controller, creating a new controller.
     public fun add_controller(
         self: &mut Identity,
@@ -153,6 +167,15 @@ module identity_iota::identity {
         req.destroy();
     }
 
+    public fun update_document(
+        self: &mut Identity,
+        mut req: UpdateDocumentRequest,
+    ) {
+        assert!(self.id.to_inner() == req.did() && req.is_resolved(self.threshold), EInvalidRequest);
+
+        self.doc = req.take_doc();
+        req.destroy();
+    }
 
     /// Checks if `data` is a state matadata representing a DID.
     /// i.e. starts with the bytes b"DID".
