@@ -5,6 +5,7 @@ module identity_iota::identity {
         add_controller_request::{Self, AddControllerRequest},
         remove_controller_request::{Self, RemoveControllerRequest},
         update_document_request::{Self, UpdateDocumentRequest},
+        transfer_control_request::{Self, TransferControlRequest},
     };
 
     const ENotADidDocument: u64 = 0;
@@ -16,6 +17,7 @@ module identity_iota::identity {
     const EInvalidControllersList: u64 = 3;
     const EInvalidWeight: u64 = 4;
     const EInvalidRequest: u64 = 5;
+    const ECannotTradeControllers: u64 = 6;
 
     /// On-chain Identity.
     public struct Identity has key, store {
@@ -26,6 +28,8 @@ module identity_iota::identity {
         threshold: u64,
         /// Set of capability's IDs tied to this DID document.
         controllers: VecSet<ID>,
+        /// Can controllers be traded.
+        can_trade_controllers: bool,
     }
 
     /// Creates a new DID Document with a single controller.
@@ -38,7 +42,7 @@ module identity_iota::identity {
         controller: address,
         ctx: &mut TxContext,
     ): Identity {
-        new_with_controllers(doc, 1, vector[1], vector[controller], ctx)
+        new_with_controllers(doc, 1, vector[1], vector[controller], false, ctx)
     }
 
     /// Creates a new DID Document controlled by multiple controllers.
@@ -49,6 +53,7 @@ module identity_iota::identity {
         threshold: u64,
         mut weights: vector<u64>,
         mut recipients: vector<address>,
+        can_trade_controllers: bool,
         ctx: &mut TxContext,
     ): Identity {
         assert!(is_did_output(&doc), ENotADidDocument);
@@ -72,7 +77,8 @@ module identity_iota::identity {
             id: identity_uid,
             doc,
             threshold,
-            controllers
+            controllers,
+            can_trade_controllers,
         };
 
         document
@@ -134,6 +140,19 @@ module identity_iota::identity {
         update_document_request::new(cap, updated_doc, ctx);
     }
 
+    public fun request_controller_transfer(
+        self: &mut Identity,
+        cap: &ControllerCap,
+        recipient: address,
+        ctx: &mut TxContext,
+    ) {
+        // Check the provided capability is for this document.
+        assert!(self.is_capability_valid(cap), EInvalidCapability);
+        assert!(self.can_trade_controllers, ECannotTradeControllers);
+
+        transfer_control_request::new(cap, recipient, ctx);
+    }
+
     /// Consume an approved request for adding a controller, creating a new controller.
     public fun add_controller(
         self: &mut Identity,
@@ -170,6 +189,18 @@ module identity_iota::identity {
         assert!(self.id.to_inner() == req.did() && req.is_resolved(self.threshold), EInvalidRequest);
 
         self.doc = *req.doc();
+        req.destroy();
+    }
+
+    public fun transfer_control(
+        self: &mut Identity,
+        req: TransferControlRequest,
+        cap: ControllerCap,
+    ) {
+        assert!(self.id.to_inner() == req.did() && req.is_resolved(self.threshold), EInvalidRequest);
+        assert!(cap.id().to_inner() == req.capability_id(), EInvalidCapability);
+
+        cap.transfer(req.recipient());
         req.destroy();
     }
 
@@ -236,6 +267,7 @@ module identity_iota::identity {
             2,
             vector[1, 1, 1],
             vector[controller1, controller2, controller3],
+            false,
             scenario.ctx()
         );
         transfer::public_share_object(identity);
