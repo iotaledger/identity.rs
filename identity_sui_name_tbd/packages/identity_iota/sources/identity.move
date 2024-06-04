@@ -30,20 +30,15 @@ module identity_iota::identity {
 
     /// Creates a new DID Document with a single controller.
     public fun new(doc: vector<u8>, ctx: &mut TxContext): Identity {
-        assert!(is_did_output(&doc), ENotADidDocument);
+        new_with_controller(doc, ctx.sender(), ctx)
+    }
 
-        let identity_id = object::new(ctx);
-        let controller = controller::new(identity_id.to_inner(), ctx);
-        let doc = Identity {
-            id: identity_id,
-            doc,
-            threshold: 1,
-            controllers: vec_set::singleton(controller.id().to_inner()),
-        };
-        
-        controller.transfer(ctx.sender());
-        
-        doc
+    public fun new_with_controller(
+        doc: vector<u8>,
+        controller: address,
+        ctx: &mut TxContext,
+    ): Identity {
+        new_with_controllers(doc, 1, vector[1], vector[controller], ctx)
     }
 
     /// Creates a new DID Document controlled by multiple controllers.
@@ -56,6 +51,7 @@ module identity_iota::identity {
         mut recipients: vector<address>,
         ctx: &mut TxContext,
     ): Identity {
+        assert!(is_did_output(&doc), ENotADidDocument);
         assert!(threshold >= 1, EInvalidThreshold);
         assert!(weights.length() >= 1, EInvalidControllersList);
         assert!(weights.length() == recipients.length(), EInvalidControllersList);
@@ -169,11 +165,11 @@ module identity_iota::identity {
 
     public fun update_document(
         self: &mut Identity,
-        mut req: UpdateDocumentRequest,
+        req: UpdateDocumentRequest,
     ) {
         assert!(self.id.to_inner() == req.did() && req.is_resolved(self.threshold), EInvalidRequest);
 
-        self.doc = req.take_doc();
+        self.doc = *req.doc();
         req.destroy();
     }
 

@@ -49,10 +49,4 @@ module identity_iota::update_document_request {
     ) {
         self.inner.approve(cap);
     }
-
-    public(package) fun take_doc(self: &mut UpdateDocumentRequest): vector<u8> {
-        let doc = self.doc;
-
-        doc
-    }
 }
