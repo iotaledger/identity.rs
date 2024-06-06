@@ -144,8 +144,8 @@ mod private {
   impl Sealed for identity_iota_core::IotaDocument {}
 
   //TODO: Web DID -  Sealed
-  // #[cfg(feature = "web-document")]
-  impl Sealed for identity_iota_core::WebDocument {}
+  #[cfg(feature = "web-document")]
+  impl Sealed for identity_did_methods::WebDocument {}
 }
 
 // ====================================================================================================================
@@ -637,12 +637,13 @@ mod iota_document {
 // ====================================================================================================================
 // WebDocument
 // ====================================================================================================================
-// #[cfg(feature = "web-document")]
+
 // TODO: Web DID - JwkDocumentExt for WebDocument
+#[cfg(feature = "web-document")]
 mod web_document {
   use super::*;
   use identity_credential::credential::Jwt;
-  use identity_iota_core::WebDocument;
+  use identity_did_methods::WebDocument;
 
   generate_method_for_document_type!(
     WebDocument,

@@ -1,6 +1,8 @@
 use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Display;
+use std::fs::File;
+use std::path::Path;
 use identity_credential::credential::Jws;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
@@ -21,19 +23,13 @@ use identity_document::utils::DIDUrlQuery;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
-
-use crate::error::Result;
+use crate::did_web::WebDID;
 use crate::Error;
-use crate::IotaDID;
-use crate::IotaDocumentMetadata;
-use crate::NetworkName;
-use crate::StateMetadataDocument;
-use crate::StateMetadataEncoding;
-use crate::WebDID;
+use crate::Result;
 
 
-
-
+// TODO: Web DID - Introduce other errors for these, so you dont have to depend on Errors defined in identity_iota_core
+// Maybe introduce Deref and remove all reimplamentation of methods
 
 /// A DID Document adhering to the Web DID method specification.
 ///
@@ -48,7 +44,7 @@ impl WebDocument {
 
   /// Constructs an empty DID Document with a [`WebDID`] identifier.
   pub fn new(url: &str) -> Result<Self, Error> {
-    Ok(Self::new_with_id(WebDID::new(url).map_err(|e| Error::DIDSyntaxError(e))?))
+    Ok(Self::new_with_id(WebDID::new(url).map_err(Error::DIDSyntaxError)?))
   }
 
   /// Constructs an empty DID Document with the given identifier.
@@ -58,7 +54,7 @@ impl WebDocument {
       .id(id.into())
       .build()
       .expect("empty IotaDocument constructor failed");
-    let metadata: IotaDocumentMetadata = IotaDocumentMetadata::new();
+
     Self(document)
   }
 
@@ -330,6 +326,13 @@ impl WebDocument {
       .verify_jws(jws.as_str(), detached_payload, signature_verifier, options)
       .map_err(Error::JwsVerificationError)
   }
+
+  pub fn write_to_file(&self, path: Option<&str>) -> Result<()> {
+    let path = Path::new(path.unwrap_or_else(|| "did.json"));
+    let file = File::create(path).map_err(|_| Error::DocumentFileWriteError("Failed to create Path"))?;
+    serde_json::to_writer_pretty(file, self).map_err(|_| Error::DocumentFileWriteError("Failed to write document on file"))?;
+    Ok(())
+  } 
 
 
 }

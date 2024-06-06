@@ -20,6 +20,7 @@ identity_credential = { version = "=1.2.0", path = "../identity_credential", def
 identity_did = { version = "=1.2.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.2.0", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=1.2.0", path = "../identity_iota_core", default-features = false, optional = true }
+identity_did_methods = { version = "=1.2.0", path = "../identity_did_methods", default-features = false, optional = true }
 identity_verification = { version = "=1.2.0", path = "../identity_verification", default_features = false }
 iota-crypto = { version = "0.23", default-features = false, features = ["ed25519"], optional = true }
 json-proof-token = { workspace = true, optional = true }
@@ -38,13 +39,15 @@ once_cell = { version = "1.18", default-features = false }
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
 
 [features]
-default = ["iota-document", "memstore"]
+default = ["iota-document", "web-document", "memstore"]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
 memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto"]
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = []
 # Implements the JwkStorageDocumentExt trait for IotaDocument
 iota-document = ["dep:identity_iota_core"]
+# Implements the JwkStorageDocumentExt trait for WebDocument
+web-document = ["dep:identity_did_methods"]
 # Enables JSON Proof Token & BBS+ related features
 jpt-bbs-plus = ["identity_credential/jpt-bbs-plus", "dep:zkryptium", "dep:json-proof-token"]
 

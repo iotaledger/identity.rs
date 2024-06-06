@@ -4,7 +4,6 @@ use std::{fmt::{Display, Formatter}, str::FromStr};
 
 use identity_core::common::Url;
 use identity_did::{CoreDID, Error, DID};
-use iota_sdk::utils::serde;
 use ref_cast::{ref_cast_custom, RefCastCustom};
 use ::serde::{Deserialize, Serialize};
 use identity_did::Error as DIDError;
@@ -141,14 +140,14 @@ impl WebDID {
     .map_or(Ok(None), |r| r.map(Some)
     .map_err(|_| Error::InvalidMethodId))?;
 
-    let mut url = Url::parse(&format!("https://{}", domain))
+    let mut url = Url::parse(&format!("https://{}", domain))//TODO: change to HTTPS
     .map_err(|_| Error::InvalidMethodId)?;
 
     url.set_port(port).map_err(|_| Error::InvalidMethodId)?;
 
     path.and_then(|p| Some(url.set_path(&p)));
 
-    url.domain().ok_or(Error::InvalidMethodId)?;
+    // url.domain().ok_or(Error::InvalidMethodId)?; //TODO: Web DID - Disabled just for testing with 127.0.0.1
 
     Ok(url)
   }

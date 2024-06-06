@@ -69,6 +69,18 @@ pub mod iota {
   pub use identity_iota_core::*;
 }
 
+#[cfg(feature = "web-method")]
+pub mod web {
+    //! The Web DID method implementation for the IOTA ledger.
+    
+    pub use identity_did_methods::WebDID;
+    pub use identity_did_methods::WebDocument;
+    pub use identity_did_methods::WebClient;
+    pub use identity_did_methods::WebClientBuilder;
+}
+
+//TODO: Web DID - IOTA principal module extension 
+
 pub mod prelude {
   //! Prelude of commonly used types
 

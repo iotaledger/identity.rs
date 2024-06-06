@@ -8,9 +8,10 @@ publish = false
 [dependencies]
 anyhow = "1.0.62"
 identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false }
-identity_iota = { path = "../identity_iota", default-features = false, features = ["iota-client", "client", "memstore", "domain-linkage", "revocation-bitmap", "status-list-2021", "jpt-bbs-plus"] }
+identity_iota = { path = "../identity_iota", default-features = false, features = ["iota-client", "resolver", "client", "memstore", "domain-linkage", "revocation-bitmap", "status-list-2021", "jpt-bbs-plus", "web-method"] }
 identity_stronghold = { path = "../identity_stronghold", default-features = false, features = ["bbs-plus"] }
 iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
+reqwest = { version = "0.12.4", default-features = false, features = ["rustls-tls", "json", "hickory-dns"]}
 json-proof-token.workspace = true
 primitive-types = "0.12.1"
 rand = "0.8.5"
