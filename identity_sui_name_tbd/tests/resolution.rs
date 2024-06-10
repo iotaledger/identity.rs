@@ -57,9 +57,9 @@ mod direct_lookup {
   #[tokio::test]
   async fn new_did_document_resolution_works() -> anyhow::Result<()> {
     let client = get_client().await?;
-    let object_id = client.create_did_document().await?;
+    let object_id = client.create_identity().await?;
 
-    let document = migration::get_identity_document(&client, object_id).await?;
+    let document = migration::get_identity(&client, object_id).await?;
 
     assert!(document.is_some());
 
@@ -68,7 +68,7 @@ mod direct_lookup {
 }
 
 mod parallel_lookup {
-  use identity_sui_name_tbd::resolution::get_did_document;
+  use identity_sui_name_tbd::resolution::get_identity;
 
   use super::*;
 
@@ -78,7 +78,7 @@ mod parallel_lookup {
     let client = get_client().await?;
     let alias_id = client.create_legacy_did().await?;
 
-    let result = get_did_document(&client, alias_id).await;
+    let result = get_identity(&client, alias_id).await;
 
     assert!(result.is_ok());
 
@@ -92,7 +92,7 @@ mod parallel_lookup {
     let alias_id = client.create_legacy_did().await?;
     let _ = client.migrate_legacy_did(alias_id).await?;
 
-    let result = get_did_document(&client, alias_id).await;
+    let result = get_identity(&client, alias_id).await;
 
     assert!(result.is_ok());
 
@@ -103,9 +103,9 @@ mod parallel_lookup {
   #[tokio::test]
   async fn new_did_document_resolution_works() -> anyhow::Result<()> {
     let client = get_client().await?;
-    let object_id = client.create_did_document().await?;
+    let object_id = client.create_identity().await?;
 
-    let result = get_did_document(&client, object_id).await;
+    let result = get_identity(&client, object_id).await;
 
     assert!(result.is_ok());
 

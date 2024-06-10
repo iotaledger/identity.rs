@@ -9,7 +9,7 @@ use sui_sdk::types::base_types::ObjectID;
 use sui_sdk::SuiClient;
 use tokio::sync::OnceCell;
 
-use super::Identity;
+use super::OnChainIdentity;
 
 static MIGRATION_REGISTRY_ID: OnceCell<ObjectID> = OnceCell::const_new();
 
@@ -63,7 +63,7 @@ pub async fn migration_registry_id(sui_client: &SuiClient) -> Result<ObjectID, E
 
 /// Lookup a legacy `alias_id` into the migration registry
 /// to get the UID of the corresponding migrated DID document if any.
-pub async fn lookup(sui_client: &SuiClient, alias_id: ObjectID) -> Result<Option<Identity>, Error> {
+pub async fn lookup(sui_client: &SuiClient, alias_id: ObjectID) -> Result<Option<OnChainIdentity>, Error> {
   let dynamic_field_name = serde_json::from_value(serde_json::json!({
     "type": "0x2::object::ID",
     "value": alias_id.to_string()

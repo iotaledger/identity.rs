@@ -1,5 +1,6 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+#![allow(dead_code)]
 
 use std::io::Write;
 use std::ops::Deref;
@@ -153,10 +154,10 @@ impl TestClient {
       .ok_or_else(|| anyhow!("No `AliasOutput` object was created"))
   }
 
-  pub async fn create_did_document(&self) -> anyhow::Result<ObjectID> {
+  pub async fn create_identity(&self) -> anyhow::Result<ObjectID> {
     let output = Command::new("sh")
       .current_dir(SCRIPT_DIR)
-      .arg("create_test_document.sh")
+      .arg("create_test_identity.sh")
       .arg(self.package_id.to_string())
       .output()
       .await?;
@@ -175,7 +176,7 @@ impl TestClient {
     };
 
     result
-      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*Document$')].objectId")
+      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*Identity$')].objectId")
       .map_err(|e| anyhow!("Failed to parse JSONPath: {e}"))
       .and_then(|value| Ok(serde_json::from_value::<Vec<ObjectID>>(value)?))?
       .first()

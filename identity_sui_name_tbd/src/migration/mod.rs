@@ -3,8 +3,10 @@
 
 mod alias;
 mod identity;
+mod multicontroller;
 mod registry;
 
 pub use alias::*;
 pub use identity::*;
+pub use multicontroller::*;
 pub use registry::*;

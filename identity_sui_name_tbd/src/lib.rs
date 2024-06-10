@@ -4,6 +4,7 @@
 mod error;
 pub mod migration;
 pub mod resolution;
+mod sui_types;
 pub mod utils;
 
 pub use error::Error;

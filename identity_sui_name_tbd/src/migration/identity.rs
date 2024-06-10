@@ -1,15 +1,9 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::Deref;
-use std::ops::DerefMut;
-use std::collections::HashSet;
-use std::hash::Hash;
-
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
-use serde_aux::field_attributes::deserialize_number_from_string;
 use sui_sdk::rpc_types::SuiObjectDataOptions;
 use sui_sdk::rpc_types::SuiParsedData;
 use sui_sdk::rpc_types::SuiParsedMoveObject;
@@ -19,38 +13,31 @@ use sui_sdk::SuiClient;
 
 use crate::Error;
 
-const MODULE: &str = "document";
-const NAME: &str = "Document";
+use super::Multicontroller;
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct SuiVecSet<T: Hash + Eq> {
-  contents: HashSet<T>,
+const MODULE: &str = "identity";
+const NAME: &str = "Identity";
+pub enum Identity {
+  RawDid(Vec<u8>),
+  FullFledged(OnChainIdentity),
 }
 
-impl<T: Hash + Eq> Deref for SuiVecSet<T> {
-  type Target = HashSet<T>;
-  fn deref(&self) -> &Self::Target {
-    &self.contents
-  }
-}
-
-impl<T: Hash + Eq> DerefMut for SuiVecSet<T> {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.contents
+impl Identity {
+  pub fn doc_bytes(&self) -> &[u8] {
+    match self {
+      Self::FullFledged(identity) => identity.did_doc.controlled_value().as_ref(),
+      Self::RawDid(bytes) => &bytes[..],
+    }
   }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Identity {
+pub struct OnChainIdentity {
   pub id: UID,
-  pub doc: Vec<u8>,
-  pub can_trade_controllers: bool,
-  pub controllers: SuiVecSet<ObjectID>,
-  #[serde(deserialize_with = "deserialize_number_from_string")]
-  pub threshold: u64,
+  pub did_doc: Multicontroller<Vec<u8>>,
 }
 
-pub async fn get_identity_document(client: &SuiClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+pub async fn get_identity(client: &SuiClient, object_id: ObjectID) -> Result<Option<OnChainIdentity>, Error> {
   let options = SuiObjectDataOptions {
     show_type: true,
     show_owner: true,
@@ -86,7 +73,7 @@ pub async fn get_identity_document(client: &SuiClient, object_id: ObjectID) -> R
     )));
   };
 
-  if !is_document(&value) {
+  if !is_identity(&value) {
     return Ok(None);
   }
 
@@ -97,7 +84,7 @@ pub async fn get_identity_document(client: &SuiClient, object_id: ObjectID) -> R
   })
 }
 
-fn is_document(value: &SuiParsedMoveObject) -> bool {
+fn is_identity(value: &SuiParsedMoveObject) -> bool {
   // if available we might also check if object stems from expected module
   // but how would this act upon package updates?
   value.type_.module.as_ident_str().as_str() == MODULE && value.type_.name.as_ident_str().as_str() == NAME
