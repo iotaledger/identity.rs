@@ -27,7 +27,6 @@ module stardust::alias_output {
     }
 
     // === Public-Mutative Functions ===
-    
     /// The function extracts assets from a legacy `AliasOutput`.
     ///    - returns the IOTA Balance,
     ///    - the native tokens Bag,

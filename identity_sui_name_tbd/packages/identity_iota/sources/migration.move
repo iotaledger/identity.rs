@@ -38,25 +38,25 @@ module identity_iota::migration {
 #[test_only]
 module identity_iota::migration_tests {
     use sui::test_scenario;
-    use stardust::alias_output::{create_for_testing, create_empty_for_testing, extract_assets, AliasOutput, load_alias, attach_alias};
-    use sui::{balance, bag, sui::SUI};
+    use stardust::alias_output::{create_empty_for_testing, AliasOutput, attach_alias};
+    use identity_iota::identity::{Identity};
     use identity_iota::migration::migrate_alias_output;
-    use std::debug;
-    use sui::dynamic_object_field;
     use stardust::alias::{Alias, create_with_state_metadata_for_testing};
     use identity_iota::migration_registry::{MigrationRegistry, init_testing};
-    // migration of legacy did_output - create a did_output (look at the script and replicate it in a move test), migrate it and make sure MigrationRegistry::lookup(old_id) resolves to an Identity
+    use identity_iota::multicontroller::ControllerCap;
+
     #[test]
     fun test_migration_of_legacy_did_output() {
         let controller_a = @0x1;
         let mut scenario = test_scenario::begin(controller_a);
 
         let alias_output = create_empty_for_testing(scenario.ctx());
-        transfer::public_share_object(alias_output);
+        transfer::public_transfer(alias_output, controller_a);
 
         scenario.next_tx(controller_a);
+        let mut alias_output = scenario.take_from_sender<AliasOutput>();
 
-        let mut alias_output = scenario.take_shared<AliasOutput>();
+        scenario.next_tx(controller_a);
 
         let alias: Alias = create_with_state_metadata_for_testing(
             option::none(),
@@ -68,23 +68,30 @@ module identity_iota::migration_tests {
             option::none(),
             scenario.ctx()
         );
-        transfer::public_share_object(alias);
 
-        scenario.next_tx(controller_a);
-        let alias = scenario.take_shared<Alias>();
-        let id = alias.to_id();
+        let alias_id = object::id(&alias);
+        alias_output.attach_alias(alias);
 
-        scenario.next_tx(controller_a);
         init_testing(scenario.ctx());
 
         scenario.next_tx(controller_a);
         let mut registry = scenario.take_shared<MigrationRegistry>();
 
-        alias_output.attach_alias(alias);
         migrate_alias_output(alias_output, &mut registry, scenario.ctx());
 
-        assert!(registry.exists(id.to_inner()), 1);
+        let identity: &Identity = registry.borrow(alias_id);
 
+        scenario.next_tx(controller_a);
+        let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
+
+        // Assert the sender is controller
+        identity.did_doc().assert_is_member(&controller_a_cap);
+
+        // assert the metadata is b"DID"
+        let did = identity.did_doc().get_value();
+        assert!(did == b"DID", 0);
+
+        test_scenario::return_to_address(controller_a, controller_a_cap);
         test_scenario::return_shared(registry);
         let _ = scenario.end();
     }

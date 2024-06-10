@@ -604,9 +604,4 @@ module identity_iota::identity_tests {
 
         let _ = scenario.end();
     }
-
-
-
-
-
 }
