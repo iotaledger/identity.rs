@@ -171,7 +171,7 @@ module identity_iota::multicontroller {
         let cap_id = cap.id.to_inner();
         let vp = multi.voting_power(cap_id);
 
-        let mut proposal = multi.proposals.get_mut(&key);
+        let proposal = multi.proposals.get_mut(&key);
         assert!(proposal.voters.contains(&cap_id), ENotVotedYet);
 
         proposal.voters.remove(&cap_id);
@@ -232,6 +232,6 @@ module identity_iota::multicontroller {
         multi.controlled_value = controlled_value;
     }
     public fun get_value<V: store>(multi: &Multicontroller<V>): &V {
-        &multi.value
+        &multi.controlled_value
     }
 }

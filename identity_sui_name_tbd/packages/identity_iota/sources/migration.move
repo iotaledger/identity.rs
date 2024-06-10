@@ -30,7 +30,7 @@ module identity_iota::migration {
         let document_addr = document.id().to_address();
 
         // Add a migration record.
-        migration_registry.add(legacy_id, document);        
+        migration_registry.add(legacy_id, document);
 
         document_addr
     }

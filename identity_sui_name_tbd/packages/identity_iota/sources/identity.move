@@ -117,8 +117,8 @@ module identity_iota::identity {
     ) {
         config_proposal::propose_modify(
             &mut self.did_doc,
-            cap, 
-            name, 
+            cap,
+            name,
             expiration,
             threshold,
             controllers_to_add,
@@ -208,7 +208,7 @@ module identity_iota::identity_tests {
     use sui::test_scenario;
     use std::string;
     use identity_iota::identity::{new, Identity, new_with_controllers};
-    use identity_iota::multicontroller::{ControllerCap, EThresholdNotReached};
+    use identity_iota::multicontroller::{ControllerCap, EExpiredProposal, EThresholdNotReached};
     use sui::{vec_map::{Self}};
 
 
@@ -345,7 +345,7 @@ module identity_iota::identity_tests {
             let proposal_name = string::utf8(b"add controller_d");
 
             // Create a request to add a new controller.
-            identity.propose_new_controller(&controller_a_cap, proposal_name, controller_d, 1, scenario.ctx());
+            identity.propose_new_controller(&controller_a_cap, proposal_name,  option::none(), controller_d, 1, scenario.ctx());
 
             scenario.next_tx(controller_a);
             identity.execute_config_change(&controller_a_cap, proposal_name, scenario.ctx());
@@ -377,7 +377,7 @@ module identity_iota::identity_tests {
             let controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
             let proposal_name = string::utf8(b"add controller_d");
 
-            identity.propose_new_controller(&controller_b_cap, proposal_name, controller_d, 1, scenario.ctx());
+            identity.propose_new_controller(&controller_b_cap, proposal_name,option::none(), controller_d, 1, scenario.ctx());
 
             scenario.next_tx(controller_b);
             identity.execute_config_change(&controller_b_cap, proposal_name, scenario.ctx());
@@ -426,7 +426,7 @@ module identity_iota::identity_tests {
         let proposal_name = string::utf8(b"add controller_d");
 
         // Create a request to add a new controller.
-        identity.propose_new_controller(&controller_b_cap, proposal_name, controller_d, 10, scenario.ctx());
+        identity.propose_new_controller(&controller_b_cap, proposal_name, option::none(), controller_d, 10, scenario.ctx());
 
         scenario.next_tx(controller_b);
         let controller_c_cap = scenario.take_from_address<ControllerCap>(controller_c);
@@ -483,7 +483,7 @@ module identity_iota::identity_tests {
 
             let proposal_name = string::utf8(b"add controller_a");
 
-            second_identity.propose_new_controller(&first_identity_cap, proposal_name, controller_a, 10, scenario.ctx());
+            second_identity.propose_new_controller(&first_identity_cap, proposal_name, option::none(), controller_a, 10, scenario.ctx());
 
             second_identity.execute_config_change(&first_identity_cap, proposal_name, scenario.ctx());
             scenario.next_tx(controller_a);
@@ -525,13 +525,13 @@ module identity_iota::identity_tests {
             let mut identity = scenario.take_shared<Identity>();
             let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
             let proposal_a = string::utf8(b"proposal_a");
-            identity.propose_update(&controller_a_cap, proposal_a, b"Updated DID A", scenario.ctx());
+            identity.propose_update(&controller_a_cap, proposal_a, b"Updated DID A",option::none(), scenario.ctx());
 
             // Controller B proposes a different update
             scenario.next_tx(controller_b);
             let controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
             let proposal_b = string::utf8(b"proposal_b");
-            identity.propose_update(&controller_b_cap, proposal_b, b"Updated DID B", scenario.ctx());
+            identity.propose_update(&controller_b_cap, proposal_b, b"Updated DID B", option::none(), scenario.ctx());
 
             // Controller C approves proposal B
             scenario.next_tx(controller_c);
@@ -540,13 +540,13 @@ module identity_iota::identity_tests {
             identity.approve_proposal(&controller_c_cap, proposal_a);
 
             // Execute proposal B (meets threshold)
-            identity.execute_update(&controller_c_cap, proposal_b);
+            identity.execute_update(&controller_c_cap, proposal_b, scenario.ctx());
 
             // Verify that the DID document is updated with proposal B
             assert!(identity.did_doc().get_value() == b"Updated DID B", 0);
 
             // Try to execute proposal A (doesn't meet threshold)
-            identity.execute_update(&controller_a_cap, proposal_a);
+            identity.execute_update(&controller_a_cap, proposal_a, scenario.ctx());
 
             // Verify that the DID document has changed
             assert!(identity.did_doc().get_value() == b"Updated DID A", 0);
@@ -585,13 +585,13 @@ module identity_iota::identity_tests {
         let mut identity = scenario.take_shared<Identity>();
         let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
         let proposal_a = string::utf8(b"proposal_a");
-        identity.propose_update(&controller_a_cap, proposal_a, b"Updated DID A", scenario.ctx());
+        identity.propose_update(&controller_a_cap, proposal_a, b"Updated DID A", option::none(), scenario.ctx());
 
         // Controller B proposes a different update
         scenario.next_tx(controller_b);
         let controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
         let proposal_b = string::utf8(b"proposal_b");
-        identity.propose_update(&controller_b_cap, proposal_b, b"Updated DID B", scenario.ctx());
+        identity.propose_update(&controller_b_cap, proposal_b, b"Updated DID B",option::none(), scenario.ctx());
 
         // Controller C approves proposal B
         scenario.next_tx(controller_c);
@@ -599,13 +599,13 @@ module identity_iota::identity_tests {
         identity.approve_proposal(&controller_c_cap, proposal_b);
 
         // Execute proposal B (meets threshold)
-        identity.execute_update(&controller_c_cap, proposal_b);
+        identity.execute_update(&controller_c_cap, proposal_b, scenario.ctx());
 
         // Verify that the DID document is updated with proposal B
         assert!(identity.did_doc().get_value() == b"Updated DID B", 0);
 
         // Try to execute proposal A (doesn't meet threshold) - should fail
-        identity.execute_update(&controller_a_cap, proposal_a);
+        identity.execute_update(&controller_a_cap, proposal_a, scenario.ctx());
 
         test_scenario::return_shared(identity);
         test_scenario::return_to_address(controller_a, controller_a_cap);
@@ -615,7 +615,7 @@ module identity_iota::identity_tests {
         let _ = scenario.end();
     }
 
-    #[test, expected_failure(abort_code = 4)]
+    #[test, expected_failure(abort_code = EExpiredProposal)]
     fun expired_proposals_cannot_be_executed() {
         let controller = @0x1;
         let new_controller = @0x2;
