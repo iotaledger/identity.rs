@@ -15,6 +15,7 @@ module identity_iota::transfer_proposal {
         multi: &mut Multicontroller<V>,
         cap: &ControllerCap,
         key: String,
+        expiration: Option<u64>,
         objects: VecSet<ID>,
         recipients: vector<address>,
         ctx: &mut TxContext,
@@ -23,7 +24,7 @@ module identity_iota::transfer_proposal {
         let withdraw = owned::new_withdraw(objects);
         let action = Send { withdraw, recipients };
 
-        multi.create_proposal(cap, action, key, ctx);
+        multi.create_proposal(cap, action, key, expiration, ctx);
     }
 
     public fun send<T: key + store>(

@@ -6,6 +6,8 @@ module identity_iota::multicontroller {
     const EControllerAlreadyVoted: u64 = 1;    
     const EThresholdNotReached: u64 = 2;
     const EInvalidThreshold: u64 = 3;
+    const EExpiredProposal: u64 = 4;
+    const ENotVotedYet: u64 = 5;
 
     public struct ControllerCap has key {
         id: UID,
@@ -19,26 +21,26 @@ module identity_iota::multicontroller {
         threshold: u64,
         controllers: VecMap<ID, u64>,
         proposals: VecMap<String, Proposal>,
-        value: V,
+        controlled_value: V,
     }
 
-    public fun new<V>(value: V, ctx: &mut TxContext): Multicontroller<V> {
-        new_with_controller(value, ctx.sender(), ctx)
+    public fun new<V>(controlled_value: V, ctx: &mut TxContext): Multicontroller<V> {
+        new_with_controller(controlled_value, ctx.sender(), ctx)
     }
 
     public fun new_with_controller<V>(
-        value: V,
+        controlled_value: V,
         controller: address,
         ctx: &mut TxContext
     ): Multicontroller<V> {
         let mut controllers = vec_map::empty();
         controllers.insert(controller, 1);
 
-        new_with_controllers(value, controllers, 1, ctx)
+        new_with_controllers(controlled_value, controllers, 1, ctx)
     }
 
     public fun new_with_controllers<V>(
-        value: V,
+        controlled_value: V,
         controllers: VecMap<address, u64>,
         threshold: u64,
         ctx: &mut TxContext,
@@ -56,7 +58,7 @@ module identity_iota::multicontroller {
         };
 
         let mut multi = Multicontroller {
-            value,
+            controlled_value,
             controllers,
             threshold,
             proposals: vec_map::empty(),
@@ -70,6 +72,16 @@ module identity_iota::multicontroller {
         id: UID,
         votes: u64,
         voters: VecSet<ID>,
+        expiration_epoch: Option<u64>,
+    }
+
+    public fun is_expired(self: &Proposal, ctx: &mut TxContext): bool {
+        if (self.expiration_epoch.is_some()) {
+            let expiration = *self.expiration_epoch.borrow();
+            expiration < ctx.epoch()
+        } else {
+            false
+        }
     }
 
     public struct Action<T: store> {
@@ -91,6 +103,7 @@ module identity_iota::multicontroller {
         cap: &ControllerCap,
         action: T,
         key: String,
+        expiration_epoch: Option<u64>,
         ctx: &mut TxContext,
     ) {
         multi.assert_is_member(cap);
@@ -101,6 +114,7 @@ module identity_iota::multicontroller {
             id: object::new(ctx),
             votes: voting_power,
             voters: vec_set::singleton(cap.id.to_inner()),
+            expiration_epoch
         };
 
         df::add(&mut proposal.id, ActionKey {}, action);
@@ -128,22 +142,40 @@ module identity_iota::multicontroller {
         multi: &mut Multicontroller<V>,
         cap: &ControllerCap,
         key: String,
+        ctx: &mut TxContext,
     ): Action<T> {
         multi.assert_is_member(cap);
 
         let (_, proposal) = multi.proposals.remove(&key);
         assert!(proposal.votes >= multi.threshold, EThresholdNotReached);
+        assert!(!proposal.is_expired(ctx), EExpiredProposal);
 
         let Proposal {
             mut id,
             votes: _,
             voters: _,
+            expiration_epoch: _,
         } = proposal;
 
         let inner = df::remove(&mut id, ActionKey {});
         id.delete();
 
         Action { inner }
+    }
+
+    public fun remove_approval<V>(
+        multi: &mut Multicontroller<V>,
+        cap: &ControllerCap,
+        key: String,
+    ) {
+        let cap_id = cap.id.to_inner();
+        let vp = multi.voting_power(cap_id);
+
+        let mut proposal = multi.proposals.get_mut(&key);
+        assert!(proposal.voters.contains(&cap_id), ENotVotedYet);
+
+        proposal.voters.remove(&cap_id);
+        proposal.votes = proposal.votes - vp;
     }
 
     public fun controllers<V>(multi: &Multicontroller<V>): vector<ID> {
@@ -196,8 +228,8 @@ module identity_iota::multicontroller {
         multi.threshold = threshold;
     }
 
-    public(package) fun set_value<V: store + drop>(multi: &mut Multicontroller<V>, value: V) {
-        multi.value = value;
+    public(package) fun set_controlled_value<V: store + drop>(multi: &mut Multicontroller<V>, controlled_value: V) {
+        multi.controlled_value = controlled_value;
     }
     public fun get_value<V: store>(multi: &Multicontroller<V>): &V {
         &multi.value

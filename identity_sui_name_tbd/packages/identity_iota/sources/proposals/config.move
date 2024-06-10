@@ -16,6 +16,7 @@ module identity_iota::config_proposal {
         multi: &mut Multicontroller<V>,
         cap: &ControllerCap,
         key: String,
+        expiration: Option<u64>,
         mut threshold: Option<u64>,
         controllers_to_add: VecMap<address, u64>,
         controllers_to_remove: vector<ID>,
@@ -42,11 +43,12 @@ module identity_iota::config_proposal {
 
         let threshold = if (threshold.is_some()) {
             let threshold = threshold.extract();
-            assert!(threshold > 0 && threshold <= new_max_votes, EInvalidThreshold);
             threshold
         } else {
             multi.threshold()
         };
+
+        assert!(threshold > 0 && threshold <= new_max_votes, EInvalidThreshold);
 
         let action = Modify {
             threshold: option::some(threshold),
@@ -54,7 +56,7 @@ module identity_iota::config_proposal {
             controllers_to_remove,
         };
 
-        multi.create_proposal(cap, action, key, ctx);
+        multi.create_proposal(cap, action, key, expiration, ctx);
     }
 
     public fun execute_modify<V>(
@@ -63,7 +65,7 @@ module identity_iota::config_proposal {
         key: String,
         ctx: &mut TxContext,
     ) {
-        let action = multi.execute_proposal(cap, key);
+        let action = multi.execute_proposal(cap, key, ctx);
         let Modify { mut threshold, controllers_to_add, controllers_to_remove } = action.unpack_action();
 
         if (threshold.is_some()) multi.set_threshold(threshold.extract());
