@@ -49,7 +49,7 @@ module identity_iota::migration_registry {
         field::add(&mut self.id, alias_id, doc);
     }
 
-    //=
+    //= Test Functions
     #[test_only]
     public fun init_testing(ctx: &mut TxContext) {
         init(MIGRATION_REGISTRY {}, ctx);

@@ -543,13 +543,13 @@ module identity_iota::identity_tests {
             identity.execute_update(&controller_c_cap, proposal_b, scenario.ctx());
 
             // Verify that the DID document is updated with proposal B
-            assert!(identity.did_doc().get_value() == b"Updated DID B", 0);
+            assert!(identity.did_doc().value() == b"Updated DID B", 0);
 
             // Try to execute proposal A (doesn't meet threshold)
             identity.execute_update(&controller_a_cap, proposal_a, scenario.ctx());
 
             // Verify that the DID document has changed
-            assert!(identity.did_doc().get_value() == b"Updated DID A", 0);
+            assert!(identity.did_doc().value() == b"Updated DID A", 0);
 
             test_scenario::return_shared(identity);
             test_scenario::return_to_address(controller_a, controller_a_cap);
@@ -602,7 +602,7 @@ module identity_iota::identity_tests {
         identity.execute_update(&controller_c_cap, proposal_b, scenario.ctx());
 
         // Verify that the DID document is updated with proposal B
-        assert!(identity.did_doc().get_value() == b"Updated DID B", 0);
+        assert!(identity.did_doc().value() == b"Updated DID B", 0);
 
         // Try to execute proposal A (doesn't meet threshold) - should fail
         identity.execute_update(&controller_a_cap, proposal_a, scenario.ctx());

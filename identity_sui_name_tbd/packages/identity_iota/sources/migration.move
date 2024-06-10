@@ -102,7 +102,7 @@ module identity_iota::migration_tests {
         identity.did_doc().assert_is_member(&controller_a_cap);
 
         // assert the metadata is b"DID"
-        let did = identity.did_doc().get_value();
+        let did = identity.did_doc().value();
         assert!(did == b"DID", 0);
 
         test_scenario::return_to_address(controller_a, controller_a_cap);

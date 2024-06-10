@@ -231,7 +231,7 @@ module identity_iota::multicontroller {
     public(package) fun set_controlled_value<V: store + drop>(multi: &mut Multicontroller<V>, controlled_value: V) {
         multi.controlled_value = controlled_value;
     }
-    public fun get_value<V: store>(multi: &Multicontroller<V>): &V {
+    public fun value<V: store>(multi: &Multicontroller<V>): &V {
         &multi.controlled_value
     }
 }
