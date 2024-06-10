@@ -40,12 +40,10 @@ impl Issuer {
     }
   }
 }
-impl<T> From<T> for Issuer
-where
-  T: Into<Url>,
-{
-  fn from(other: T) -> Self {
-    Self::Url(other.into())
+
+impl From<Url> for Issuer {
+  fn from(other: Url) -> Self {
+    Self::Url(other)
   }
 }
 
