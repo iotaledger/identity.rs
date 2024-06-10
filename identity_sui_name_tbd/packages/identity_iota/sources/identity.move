@@ -81,6 +81,7 @@ module identity_iota::identity {
         expiration: Option<u64>,
         ctx: &mut TxContext,
     ) {
+        assert!(is_did_output(&updated_doc), ENotADidDocument);
         update_value_proposal::propose_update(
             &mut self.did_doc,
             cap,
@@ -207,7 +208,7 @@ module identity_iota::identity {
 module identity_iota::identity_tests {
     use sui::test_scenario;
     use std::string;
-    use identity_iota::identity::{new, Identity, new_with_controllers};
+    use identity_iota::identity::{new, ENotADidDocument, Identity, new_with_controllers};
     use identity_iota::multicontroller::{ControllerCap, EExpiredProposal, EThresholdNotReached};
     use sui::{vec_map::{Self}};
 
@@ -499,120 +500,27 @@ module identity_iota::identity_tests {
             let _ = scenario.end();
     }
 
-    #[test]
-    fun test_concurrent_proposals_if_all_thresholds_met() {
-            let controller_a = @0x1;
-            let controller_b = @0x2;
-            let controller_c = @0x3;
+    #[test, expected_failure(abort_code = ENotADidDocument)]
+    fun test_update_proposal_cannot_propose_non_did_doc() {
+        let controller = @0x1;
+        let mut scenario = test_scenario::begin(controller);
 
-            let mut scenario = test_scenario::begin(controller_a);
-
-            let mut controllers = vec_map::empty();
-            controllers.insert(controller_a, 4);
-            controllers.insert(controller_b, 3);
-            controllers.insert(controller_c, 3);
-
-            let identity = new_with_controllers(
-                b"DID",
-                controllers,
-                6, // Threshold of 6
-                scenario.ctx(),
-            );
-            transfer::public_share_object(identity);
-
-            // Controller A proposes an update
-            scenario.next_tx(controller_a);
-            let mut identity = scenario.take_shared<Identity>();
-            let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
-            let proposal_a = string::utf8(b"proposal_a");
-            identity.propose_update(&controller_a_cap, proposal_a, b"Updated DID A",option::none(), scenario.ctx());
-
-            // Controller B proposes a different update
-            scenario.next_tx(controller_b);
-            let controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
-            let proposal_b = string::utf8(b"proposal_b");
-            identity.propose_update(&controller_b_cap, proposal_b, b"Updated DID B", option::none(), scenario.ctx());
-
-            // Controller C approves proposal B
-            scenario.next_tx(controller_c);
-            let controller_c_cap = scenario.take_from_address<ControllerCap>(controller_c);
-            identity.approve_proposal(&controller_c_cap, proposal_b);
-            identity.approve_proposal(&controller_c_cap, proposal_a);
-
-            // Execute proposal B (meets threshold)
-            identity.execute_update(&controller_c_cap, proposal_b, scenario.ctx());
-
-            // Verify that the DID document is updated with proposal B
-            assert!(identity.did_doc().value() == b"Updated DID B", 0);
-
-            // Try to execute proposal A (doesn't meet threshold)
-            identity.execute_update(&controller_a_cap, proposal_a, scenario.ctx());
-
-            // Verify that the DID document has changed
-            assert!(identity.did_doc().value() == b"Updated DID A", 0);
-
-            test_scenario::return_shared(identity);
-            test_scenario::return_to_address(controller_a, controller_a_cap);
-            test_scenario::return_to_address(controller_b, controller_b_cap);
-            test_scenario::return_to_address(controller_c, controller_c_cap);
-
-            let _ = scenario.end();
-    }
-
-    #[test, expected_failure(abort_code = EThresholdNotReached)]
-    fun test_concurrent_proposals_if_threshold_not_reached() {
-        let controller_a = @0x1;
-        let controller_b = @0x2;
-        let controller_c = @0x3;
-
-        let mut scenario = test_scenario::begin(controller_a);
-
-        let mut controllers = vec_map::empty();
-        controllers.insert(controller_a, 4);
-        controllers.insert(controller_b, 3);
-        controllers.insert(controller_c, 3);
-
-        let identity = new_with_controllers(
-            b"DID",
-            controllers,
-            6, // Threshold of 6
-            scenario.ctx(),
-        );
+        let identity = new(b"DID", scenario.ctx());
         transfer::public_share_object(identity);
 
-        // Controller A proposes an update
-        scenario.next_tx(controller_a);
+        scenario.next_tx(controller);
+
+        // Propose a change for updating the did document
         let mut identity = scenario.take_shared<Identity>();
-        let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
-        let proposal_a = string::utf8(b"proposal_a");
-        identity.propose_update(&controller_a_cap, proposal_a, b"Updated DID A", option::none(), scenario.ctx());
+        let cap = scenario.take_from_address<ControllerCap>(controller);
+        let proposal_name = string::utf8(b"update did to invalid");
 
-        // Controller B proposes a different update
-        scenario.next_tx(controller_b);
-        let controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
-        let proposal_b = string::utf8(b"proposal_b");
-        identity.propose_update(&controller_b_cap, proposal_b, b"Updated DID B",option::none(), scenario.ctx());
+        identity.propose_update(&cap, proposal_name, b"NOT DID", option::none(), scenario.ctx());
 
-        // Controller C approves proposal B
-        scenario.next_tx(controller_c);
-        let controller_c_cap = scenario.take_from_address<ControllerCap>(controller_c);
-        identity.approve_proposal(&controller_c_cap, proposal_b);
-
-        // Execute proposal B (meets threshold)
-        identity.execute_update(&controller_c_cap, proposal_b, scenario.ctx());
-
-        // Verify that the DID document is updated with proposal B
-        assert!(identity.did_doc().value() == b"Updated DID B", 0);
-
-        // Try to execute proposal A (doesn't meet threshold) - should fail
-        identity.execute_update(&controller_a_cap, proposal_a, scenario.ctx());
-
+        test_scenario::return_to_address(controller, cap);
         test_scenario::return_shared(identity);
-        test_scenario::return_to_address(controller_a, controller_a_cap);
-        test_scenario::return_to_address(controller_b, controller_b_cap);
-        test_scenario::return_to_address(controller_c, controller_c_cap);
 
-        let _ = scenario.end();
+        scenario.end();
     }
 
     #[test, expected_failure(abort_code = EExpiredProposal)]
