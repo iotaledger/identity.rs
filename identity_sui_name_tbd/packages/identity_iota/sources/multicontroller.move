@@ -145,7 +145,7 @@ module identity_iota::multicontroller {
         ctx: &mut TxContext,
     ): Action<T> {
         multi.assert_is_member(cap);
-        
+
         let (_, proposal) = multi.proposals.remove(&key);
         assert!(proposal.votes >= multi.threshold, EThresholdNotReached);
         assert!(!proposal.is_expired(ctx), EExpiredProposal);
@@ -171,7 +171,7 @@ module identity_iota::multicontroller {
         let cap_id = cap.id.to_inner();
         let vp = multi.voting_power(cap_id);
 
-        let mut proposal = multi.proposals.get_mut(&key);
+        let proposal = multi.proposals.get_mut(&key);
         assert!(proposal.voters.contains(&cap_id), ENotVotedYet);
 
         proposal.voters.remove(&cap_id);
@@ -184,7 +184,7 @@ module identity_iota::multicontroller {
 
     public fun threshold<V>(multi: &Multicontroller<V>): u64 {
         multi.threshold
-    }    
+    }
 
     public fun voting_power<V>(multi: &Multicontroller<V>, controller_id: ID): u64 {
         *multi.controllers.get(&controller_id)
@@ -230,5 +230,8 @@ module identity_iota::multicontroller {
 
     public(package) fun set_controlled_value<V: store + drop>(multi: &mut Multicontroller<V>, controlled_value: V) {
         multi.controlled_value = controlled_value;
+    }
+    public fun value<V: store>(multi: &Multicontroller<V>): &V {
+        &multi.controlled_value
     }
 }

@@ -28,7 +28,7 @@ module identity_iota::migration_registry {
         event::emit(MigrationRegistryCreated { id: registry_id });
     }
 
-    /// Checks whether the given alias ID exists in the migration registry.    
+    /// Checks whether the given alias ID exists in the migration registry.
     public fun exists(self: &MigrationRegistry, alias_id: ID): bool {
         field::exists_(&self.id, alias_id)
     }
@@ -47,5 +47,11 @@ module identity_iota::migration_registry {
     /// Adds a new Alias ID -> Object ID binding to the regitry.
     public(package) fun add(self: &mut MigrationRegistry, alias_id: ID, doc: Identity) {
         field::add(&mut self.id, alias_id, doc);
+    }
+
+    //= Test Functions
+    #[test_only]
+    public fun init_testing(ctx: &mut TxContext) {
+        init(MIGRATION_REGISTRY {}, ctx);
     }
 }
