@@ -1,0 +1,20 @@
+[package]
+name = "compound_resolver"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+proc-macro2 = "1.0.85"
+quote = "1.0.36"
+syn = { versin = "2.0.66", features = ["parsing"] }
+
+[lints]
+workspace = true
+
+[lib]
+proc-macro = true
