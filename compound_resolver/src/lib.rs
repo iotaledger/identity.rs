@@ -29,8 +29,9 @@ pub fn derive_macro_compound_resolver(input: TokenStream) -> TokenStream {
     // generates code that forward the implementation of Resolver<T, I> to field_name.
     .map(|(field_name, input_ty, target_ty)| {
       quote! {
-        impl ::identity_new_resolver::Resolver<#input_ty, #target_ty> for #struct_ident #generics {
-          async fn resolve(&self, input: &#input_ty) -> std::result::Result<#target_ty, ::identity_new_resolver::Error> {
+        impl ::identity_new_resolver::Resolver<#input_ty> for #struct_ident #generics {
+          type Target = #target_ty;
+          async fn resolve(&self, input: &#input_ty) -> std::result::Result<Self::Target, ::identity_new_resolver::Error> {
             self.#field_name.resolve(input).await
           }
         }

@@ -2,6 +2,7 @@
 
 use crate::Result;
 
-pub trait Resolver<I, T> {
-  async fn resolve(&self, input: &I) -> Result<T>;
+pub trait Resolver<I> {
+  type Target;
+  async fn resolve(&self, input: &I) -> Result<Self::Target>;
 }

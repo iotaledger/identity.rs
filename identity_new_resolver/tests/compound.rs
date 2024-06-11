@@ -7,20 +7,23 @@ struct DidWeb;
 struct CoreDoc;
 
 struct DidKeyResolver;
-impl Resolver<DidKey, CoreDoc> for DidKeyResolver {
-  async fn resolve(&self, _input: &DidKey) -> Result<CoreDoc> {
+impl Resolver<DidKey> for DidKeyResolver {
+  type Target = CoreDoc;
+  async fn resolve(&self, _input: &DidKey) -> Result<Self::Target> {
     Ok(CoreDoc {})
   }
 }
 struct DidJwkResolver;
-impl Resolver<DidJwk, CoreDoc> for DidJwkResolver {
-  async fn resolve(&self, _input: &DidJwk) -> Result<CoreDoc> {
+impl Resolver<DidJwk> for DidJwkResolver {
+  type Target = CoreDoc;
+  async fn resolve(&self, _input: &DidJwk) -> Result<Self::Target> {
     Ok(CoreDoc {})
   }
 }
 struct DidWebResolver;
-impl Resolver<DidWeb, CoreDoc> for DidWebResolver {
-  async fn resolve(&self, _input: &DidWeb) -> Result<CoreDoc> {
+impl Resolver<DidWeb> for DidWebResolver {
+  type Target = CoreDoc;
+  async fn resolve(&self, _input: &DidWeb) -> Result<Self::Target> {
     Ok(CoreDoc {})
   }
 }
