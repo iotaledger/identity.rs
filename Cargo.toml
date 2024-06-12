@@ -20,6 +20,7 @@ members = [
 exclude = ["bindings/wasm", "bindings/grpc"]
 
 [workspace.dependencies]
+bls12_381_plus = { version = "=0.8.15" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 thiserror = { version = "1.0", default-features = false }
 strum = { version = "0.25", default-features = false, features = ["std", "derive"] }

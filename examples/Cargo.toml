@@ -7,6 +7,7 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.62"
+bls12_381_plus.workspace = true
 identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false }
 identity_iota = { path = "../identity_iota", default-features = false, features = ["iota-client", "client", "memstore", "domain-linkage", "revocation-bitmap", "status-list-2021", "jpt-bbs-plus"] }
 identity_stronghold = { path = "../identity_stronghold", default-features = false, features = ["bbs-plus"] }
