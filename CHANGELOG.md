@@ -5,12 +5,13 @@
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v1.2.0...v1.3.0)
 
 ### Added
-- Add ZK BBS+-based selectively disclosable credentials (JPT) [\#1355](https://github.com/iotaledger/identity.rs/pull/1355)
+
+- Add ZK BBS+-based selectively disclosable credentials \(JPT\) [\#1355](https://github.com/iotaledger/identity.rs/pull/1355)
 - Add EcDSA verifier [\#1353](https://github.com/iotaledger/identity.rs/pull/1353)
 
 ### Patch
-- Support for specification-compliant verification method type `JsonWebKey2020` [\#1367](https://github.com/iotaledger/identity.rs/pull/1367)
 
+- Support for specification-compliant verification method type `JsonWebKey2020` [\#1367](https://github.com/iotaledger/identity.rs/pull/1367)
 
 ## [v1.2.0](https://github.com/iotaledger/identity.rs/tree/v1.2.0) (2024-03-27)
 

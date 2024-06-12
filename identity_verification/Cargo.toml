@@ -1,6 +1,6 @@
 [package]
 name = "identity_verification"
-version = "1.3.0"
+version = "1.3.1"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -10,9 +10,9 @@ rust-version.workspace = true
 description = "Verification data types and functionality for identity.rs"
 
 [dependencies]
-identity_core = { version = "=1.3.0", path = "./../identity_core", default-features = false }
-identity_did = { version = "=1.3.0", path = "./../identity_did", default-features = false }
-identity_jose = { version = "=1.3.0", path = "./../identity_jose", default-features = false }
+identity_core = { version = "=1.3.1", path = "./../identity_core", default-features = false }
+identity_did = { version = "=1.3.1", path = "./../identity_did", default-features = false }
+identity_jose = { version = "=1.3.1", path = "./../identity_jose", default-features = false }
 serde.workspace = true
 serde_json.workspace = true
 strum.workspace = true
