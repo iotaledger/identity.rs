@@ -27,7 +27,7 @@ impl WasmJptCredentialValidatorUtils {
     WasmJptCredentialValidatorUtils
   }
 
-  /// Utility for extracting the issuer field of a {@link `Credential`} as a DID.
+  /// Utility for extracting the issuer field of a {@link Credential} as a DID.
   /// # Errors
   /// Fails if the issuer field is not a valid DID.
   #[wasm_bindgen(js_name = "extractIssuer")]

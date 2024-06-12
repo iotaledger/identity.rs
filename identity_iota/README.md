@@ -54,7 +54,7 @@ If you want to include IOTA Identity in your project, simply add it as a depende
 
 ```toml
 [dependencies]
-identity_iota = { version = "1.3.0" }
+identity_iota = { version = "1.3.1" }
 ```
 
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
@@ -88,7 +88,7 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { version = "1.3.0", features = ["memstore"] }
+identity_iota = { version = "1.3.1", features = ["memstore"] }
 iota-sdk = { version = "1.0.2", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.62"
