@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung, Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_document::verifiable::JwpVerificationOptions;
 use serde::Deserialize;
 use serde::Serialize;
@@ -7,21 +10,13 @@ use serde::Serialize;
 #[non_exhaustive]
 #[serde(rename_all = "camelCase")]
 pub struct JptPresentationValidationOptions {
+  /// The nonce to be placed in the Presentation Protected Header.
+  #[serde(default)]
+  pub nonce: Option<String>,
 
-    /// The nonce to be placed in the Presentation Protected Header.
-    #[serde(default)]
-    pub nonce: Option<String>,
-
-    /// Validation behaviour for [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
-    ///
-    /// Default: [`StatusCheck::Strict`](crate::validator::StatusCheck::Strict).
-    #[serde(default)]
-    pub status: crate::validator::StatusCheck,
-
-    /// Options which affect the verification of the proof on the credential.
-    #[serde(default)]
-    pub verification_options: JwpVerificationOptions,
-
+  /// Options which affect the verification of the proof on the credential.
+  #[serde(default)]
+  pub verification_options: JwpVerificationOptions,
 }
 
 impl JptPresentationValidationOptions {
@@ -37,17 +32,9 @@ impl JptPresentationValidationOptions {
     self
   }
 
-
-  /// Sets the validation behaviour for [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
-  pub fn status_check(mut self, status_check: crate::validator::StatusCheck) -> Self {
-    self.status = status_check;
-    self
-  }
-
   /// Set options which affect the verification of the JWP proof.
   pub fn verification_options(mut self, options: JwpVerificationOptions) -> Self {
     self.verification_options = options;
     self
   }
-
 }

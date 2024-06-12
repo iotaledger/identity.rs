@@ -1,6 +1,6 @@
 [package]
 name = "identity_iota"
-version = "1.1.0-alpha.1"
+version = "1.3.0"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -12,18 +12,18 @@ rust-version.workspace = true
 description = "Framework for Self-Sovereign Identity with IOTA DID."
 
 [dependencies]
-identity_core = { version = "=1.1.0-alpha.1", path = "../identity_core", default-features = false }
-identity_credential = { version = "=1.1.0-alpha.1", path = "../identity_credential", features = ["validator"], default-features = false }
-identity_did = { version = "=1.1.0-alpha.1", path = "../identity_did", default-features = false }
-identity_document = { version = "=1.1.0-alpha.1", path = "../identity_document", default-features = false }
-identity_iota_core = { version = "=1.1.0-alpha.1", path = "../identity_iota_core", default-features = false }
-identity_resolver = { version = "=1.1.0-alpha.1", path = "../identity_resolver", default-features = false, optional = true }
-identity_storage = { version = "=1.1.0-alpha.1", path = "../identity_storage", default-features = false, features = ["iota-document"] }
-identity_verification = { version = "=1.1.0-alpha.1", path = "../identity_verification", default-features = false }
+identity_core = { version = "=1.3.0", path = "../identity_core", default-features = false }
+identity_credential = { version = "=1.3.0", path = "../identity_credential", features = ["validator"], default-features = false }
+identity_did = { version = "=1.3.0", path = "../identity_did", default-features = false }
+identity_document = { version = "=1.3.0", path = "../identity_document", default-features = false }
+identity_iota_core = { version = "=1.3.0", path = "../identity_iota_core", default-features = false }
+identity_resolver = { version = "=1.3.0", path = "../identity_resolver", default-features = false, optional = true }
+identity_storage = { version = "=1.3.0", path = "../identity_storage", default-features = false, features = ["iota-document"] }
+identity_verification = { version = "=1.3.0", path = "../identity_verification", default-features = false }
 
 [dev-dependencies]
 anyhow = "1.0.64"
-iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client"] }
+iota-sdk = { version = "1.1.5", default-features = false, features = ["tls", "client"] }
 rand = "0.8.5"
 tokio = { version = "1.29.0", features = ["full"] }
 
@@ -64,8 +64,14 @@ memstore = ["identity_storage/memstore"]
 # Enables selective disclosure features.
 sd-jwt = ["identity_credential/sd-jwt"]
 
+# Enables zero knowledge selective disclosurable VCs
+jpt-bbs-plus = ["identity_storage/jpt-bbs-plus", "identity_credential/jpt-bbs-plus"]
+
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[lints]
+workspace = true

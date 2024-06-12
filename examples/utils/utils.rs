@@ -28,8 +28,8 @@ use iota_sdk::types::block::address::Hrp;
 use rand::distributions::DistString;
 use serde_json::Value;
 
-pub static API_ENDPOINT: &str = "https://api.testnet.shimmer.network";
-pub static FAUCET_ENDPOINT: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
+pub static API_ENDPOINT: &str = "http://localhost";
+pub static FAUCET_ENDPOINT: &str = "http://localhost/faucet/api/enqueue";
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 

@@ -12,21 +12,23 @@ members = [
   "identity_verification",
   "identity_stronghold",
   "identity_jose",
+  "identity_ecdsa_verifier",
   "identity_eddsa_verifier",
   "identity_pqc_verifier",
   "examples",
 ]
 
-exclude = ["bindings/wasm"]
+exclude = ["bindings/wasm", "bindings/grpc"]
 
 [workspace.dependencies]
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 thiserror = { version = "1.0", default-features = false }
 strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0", default-features = false }
-json-proof-token = {git = "https://github.com/Cybersecurity-LINKS/json-proof-token.git"}
-zkryptium = { git = "https://github.com/Cybersecurity-LINKS/zkryptium.git", default-features = false, features = ["bbsplus"] }
+json-proof-token = { version = "0.3.5" }
+zkryptium = { version = "0.2.2", default-features = false, features = ["bbsplus"] }
 oqs = {version = "0.9.0", default-features = false, features = ["sigs", "std", "vendored"] }
+
 
 
 [workspace.package]
@@ -36,3 +38,6 @@ homepage = "https://www.iota.org"
 license = "Apache-2.0"
 repository = "https://github.com/iotaledger/identity.rs"
 rust-version = "1.65"
+
+[workspace.lints.clippy]
+result_large_err = "allow"

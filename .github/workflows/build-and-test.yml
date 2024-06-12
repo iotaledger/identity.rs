@@ -82,6 +82,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Ensure, OpenSSL is available in Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Append
+          vcpkg install openssl:x64-windows-static-md
+
       - name: Setup Rust and cache
         uses: './.github/actions/rust/rust-setup'
         with:
@@ -101,7 +107,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           cargo metadata --format-version 1 | \
-          jq -r '.workspace_members[] | select(contains("examples") | not)' | \
+          jq -r '.workspace_members[]' | \
           awk '{print $1}' | \
           xargs -I {} cargo check -p {} --no-default-features
 
@@ -109,7 +115,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           cargo metadata --format-version 1 | \
-          jq -r '.workspace_members[] | select(contains("examples") | not)' | \
+          jq -r '.workspace_members[]' | \
           awk '{print $1}' | \
           xargs -I {} cargo check -p {}
 
@@ -123,9 +129,9 @@ jobs:
       - name: Build with all features
         run: cargo build --workspace --tests --examples --all-features --release
 
-      - name: Start private tangle
+      - name: Start iota sandbox
         if: matrix.os == 'ubuntu-latest'
-        uses: './.github/actions/private-tangle/setup'
+        uses: './.github/actions/iota-sandbox/setup'
 
       - name: Run tests
         run: cargo test --workspace --all-features --release
@@ -140,9 +146,17 @@ jobs:
           parallel -k -j 4 --retries 3 --joblog report.log ./target/release/examples/{}
           cat report.log
 
-      - name: Tear down private tangle
+      - name: Run Rust Readme examples
+        # run examples only on ubuntu for now
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cd bindings/wasm
+          npm ci
+          npm run test:readme:rust
+
+      - name: Tear down iota sandbox
         if: matrix.os == 'ubuntu-latest' && always()
-        uses: './.github/actions/private-tangle/tear-down'
+        uses: './.github/actions/iota-sandbox/tear-down'
       
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
@@ -186,13 +200,13 @@ jobs:
           name: identity-wasm-bindings-build
           path: bindings/wasm
 
-      - name: Start private tangle
-        uses: './.github/actions/private-tangle/setup'
+      - name: Start iota sandbox
+        uses: './.github/actions/iota-sandbox/setup'
 
       - name: Run Wasm examples
         run: npm run test:examples
         working-directory: bindings/wasm
 
-      - name: Tear down private tangle
+      - name: Tear down iota sandbox
         if: always()
-        uses: './.github/actions/private-tangle/tear-down'
+        uses: './.github/actions/iota-sandbox/tear-down'

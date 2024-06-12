@@ -23,6 +23,24 @@ async fn insert() {
 }
 
 #[tokio::test]
+async fn retrieve() {
+  let stronghold_secret_manager = create_stronghold_secret_manager();
+  let stronghold_storage = StrongholdStorage::new(stronghold_secret_manager);
+
+  let generate = stronghold_storage
+    .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
+    .await
+    .unwrap();
+  let key_id = &generate.key_id;
+
+  let pub_key: Jwk = stronghold_storage
+    .get_public_key_with_type(key_id, crate::stronghold_key_type::StrongholdKeyType::Ed25519)
+    .await
+    .unwrap();
+  assert_eq!(generate.jwk, pub_key);
+}
+
+#[tokio::test]
 async fn incompatible_key_alg() {
   let stronghold_secret_manager = create_stronghold_secret_manager();
   let stronghold_storage = StrongholdStorage::new(stronghold_secret_manager);
@@ -53,6 +71,7 @@ async fn key_exists() {
 // Tests the cases that require persisting to disk, generate, insert and delete.
 #[tokio::test]
 async fn write_to_disk() {
+  iota_stronghold::engine::snapshot::try_set_encrypt_work_factor(0).unwrap();
   const PASS: &str = "secure_password";
   let file: PathBuf = create_temp_file();
   let secret_manager = StrongholdSecretManager::builder()
@@ -152,10 +171,10 @@ mod jwk_storage_tests {
 
   pub(crate) async fn test_incompatible_key_type(store: impl JwkStorage) {
     let mut ec_params = JwkParamsEc::new();
-    ec_params.crv = EcCurve::P256.name().to_owned();
-    ec_params.x = "".to_owned();
-    ec_params.y = "".to_owned();
-    ec_params.d = Some("".to_owned());
+    ec_params.crv = EcCurve::P256.name().to_string();
+    ec_params.x = String::new();
+    ec_params.y = String::new();
+    ec_params.d = Some(String::new());
     let jwk_ec = Jwk::from_params(ec_params);
 
     let err = store.insert(jwk_ec).await.unwrap_err();

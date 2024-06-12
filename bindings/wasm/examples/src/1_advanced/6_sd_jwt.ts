@@ -99,16 +99,16 @@ export async function sdJwt() {
     // Make "locality", "postal_code", "street_address"  and the first entry of "nationalities"
     // selectively disclosable while keeping other properties in plain text.
     let disclosures = [
-        encoder.conceal(["vc", "credentialSubject", "address", "locality"]),
-        encoder.conceal(["vc", "credentialSubject", "address", "postal_code"]),
-        encoder.conceal(["vc", "credentialSubject", "address", "street_address"]),
-        encoder.concealArrayEntry(["vc", "credentialSubject", "nationalities"], 1),
+        encoder.conceal("/vc/credentialSubject/address/locality"),
+        encoder.conceal("/vc/credentialSubject/address/postal_code"),
+        encoder.conceal("/vc/credentialSubject/address/street_address"),
+        encoder.conceal("/vc/credentialSubject/nationalities/1"),
     ];
 
     // Add decoys in the credential top level, nationalities array and address object.
-    encoder.addDecoys(["vc", "credentialSubject", "nationalities"], 3);
-    encoder.addDecoys(["vc"], 4);
-    encoder.addDecoys(["vc", "credentialSubject", "address"], 2);
+    encoder.addDecoys("/vc/credentialSubject/nationalities", 3);
+    encoder.addDecoys("/vc", 4);
+    encoder.addDecoys("/vc/credentialSubject/address", 2);
 
     // Add the `_sd_alg` property.
     encoder.addSdAlgProperty();

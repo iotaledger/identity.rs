@@ -1,9 +1,10 @@
+// Copyright 2020-2024 IOTA Stiftung, Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
+
 use serde::Deserialize;
 use serde::Serialize;
 
-
-///TODO: ZKP - JPT
-/// This JSON Proof Token could represent a JWP both in the Issued and Presented forms 
+/// This JSON Proof Token could represent a JWP both in the Issued and Presented forms.
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub struct Jpt(String);
 

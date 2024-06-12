@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { SdJwt, SdObjectDecoder, SdObjectEncoder } from "../node";
+import { SdObjectDecoder, SdObjectEncoder } from "../node";
 
 describe("sd-jwt-payload", function() {
     describe("#encoder", function() {
@@ -26,7 +26,7 @@ describe("sd-jwt-payload", function() {
             };
 
             let encoder = new SdObjectEncoder(obj);
-            let emailDisclosure = encoder.conceal(["email"], "tstsalt");
+            let emailDisclosure = encoder.conceal("/email", "tstsalt");
             console.log(emailDisclosure);
             assert.deepStrictEqual(emailDisclosure.claimName(), "email");
             assert.deepStrictEqual(emailDisclosure.claimValue(), "johndoe@example.com");
@@ -38,11 +38,11 @@ describe("sd-jwt-payload", function() {
 
             let disclosures = [
                 emailDisclosure.toEncodedString(),
-                encoder.conceal(["address", "street_address"]).toEncodedString(),
-                encoder.concealArrayEntry(["nationalities"], 0).toEncodedString(),
+                encoder.conceal("/address/street_address").toEncodedString(),
+                encoder.conceal("/nationalities/0").toEncodedString(),
             ];
             encoder.addSdAlgProperty();
-            encoder.addDecoys([], 3);
+            encoder.addDecoys("", 3);
             let encoded = encoder.encodeToObject();
             assert.equal(encoded._sd.length, 4);
 

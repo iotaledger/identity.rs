@@ -24,7 +24,7 @@
 
 ## Introduction
 
-IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) specifications. This library can be used to create, resolve and authenticate digital identities and to create verifiable credentials and presentations in order to share information in a verifiable manner and establish trust in the digital world. It does so while supporting secure storage of cryptographic keys, which can be implemented for your preferred key management system. Many of the individual libraries (Rust crates) are agnostic over the concrete DID method, with the exception of some libraries dedicated to implement the [IOTA DID method](https://wiki.iota.org/shimmer/identity.rs/specs/did/iota_did_method_spec/), which is an implementation of decentralized digital identity on the IOTA and Shimmer networks. Written in stable Rust, IOTA Identity has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
+IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) specifications. This library can be used to create, resolve and authenticate digital identities and to create verifiable credentials and presentations in order to share information in a verifiable manner and establish trust in the digital world. It does so while supporting secure storage of cryptographic keys, which can be implemented for your preferred key management system. Many of the individual libraries (Rust crates) are agnostic over the concrete DID method, with the exception of some libraries dedicated to implement the [IOTA DID method](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec/), which is an implementation of decentralized digital identity on the IOTA and Shimmer networks. Written in stable Rust, IOTA Identity has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
 ## Bindings
 
@@ -32,12 +32,15 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 - [Web Assembly](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm/) (JavaScript/TypeScript)
 
+## gRPC
+
+We provide a collection of experimental [gRPC services](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/grpc/)
 ## Documentation and Resources
 
 - API References:
   - [Rust API Reference](https://docs.rs/identity_iota/latest/identity_iota/): Package documentation (cargo docs).
-  - [Wasm API Reference](https://wiki.iota.org/shimmer/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation.
-- [Identity Documentation Pages](https://wiki.iota.org/shimmer/identity.rs/introduction): Supplementing documentation with context around identity and simple examples on library usage.
+  - [Wasm API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation.
+- [Identity Documentation Pages](https://wiki.iota.org/identity.rs/introduction): Supplementing documentation with context around identity and simple examples on library usage.
 - [Examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples): Practical code snippets to get you started with the library.
 
 ## Prerequisites
@@ -51,21 +54,32 @@ If you want to include IOTA Identity in your project, simply add it as a depende
 
 ```toml
 [dependencies]
-identity_iota = { version = "1.0.0" }
+identity_iota = { version = "1.3.0" }
 ```
 
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
 
 1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs`
-2. Start a private Tangle as described in the [next section](#example-creating-an-identity)
+2. Start IOTA Sandbox as described in the [next section](#example-creating-an-identity)
 3. Run the example to create a DID using `cargo run --release --example 0_create_did`
 
 ## Example: Creating an Identity
 
 The following code creates and publishes a new IOTA DID Document to a locally running private network.
-See the [instructions](https://github.com/iotaledger/hornet/tree/develop/private_tangle) on running your own private network.
+See the [instructions](https://github.com/iotaledger/iota-sandbox) on running your own private network for development.
 
 _Cargo.toml_
+
+<!--
+Test this example using https://github.com/anko/txm: `txm README.md`
+
+!test program
+cd ../..
+mkdir tmp
+cat | sed -e 's#identity_iota = { version = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
+echo '[workspace]' >>tmp/Cargo.toml
+-->
+<!-- !test check Cargo Example -->
 
 ```toml
 [package]
@@ -74,12 +88,27 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { version = "1.0.0" }
+identity_iota = { version = "1.3.0", features = ["memstore"] }
 iota-sdk = { version = "1.0.2", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
+anyhow = "1.0.62"
+rand = "0.8.5"
 ```
 
 _main._<span></span>_rs_
+
+<!--
+Test this example using https://github.com/anko/txm: `txm README.md`
+
+!test program
+cd ../..
+mkdir tmp/src
+cat > tmp/src/main.rs 
+cd tmp
+timeout 360 cargo build || (echo "Process timed out after 360 seconds" && exit 1)
+-->
+<!-- !test check Rust Example -->
+
 
 ```rust,no_run
 use identity_iota::core::ToJson;
@@ -104,7 +133,7 @@ use iota_sdk::types::block::output::dto::AliasOutputDto;
 use tokio::io::AsyncReadExt;
 
 // The endpoint of the IOTA node to use.
-static API_ENDPOINT: &str = "http://127.0.0.1:14265";
+static API_ENDPOINT: &str = "http://localhost";
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 #[tokio::main]
@@ -142,7 +171,7 @@ async fn main() -> anyhow::Result<()> {
   .await?[0];
 
   println!("Your wallet address is: {}", address);
-  println!("Please request funds from http://127.0.0.1:8091/, wait for a couple of seconds and then press Enter.");
+  println!("Please request funds from http://localhost/faucet/, wait for a couple of seconds and then press Enter.");
   tokio::io::stdin().read_u8().await?;
 
   // Create a new DID document with a placeholder DID.
@@ -212,7 +241,7 @@ For detailed development progress, see the IOTA Identity development [kanban boa
 
 We would love to have you help us with the development of IOTA Identity. Each and every contribution is greatly valued!
 
-Please review the [contribution](https://wiki.iota.org/shimmer/identity.rs/contribute) and [workflow](https://wiki.iota.org/shimmer/identity.rs/workflow) sections in the [IOTA Wiki](https://wiki.iota.org/).
+Please review the [contribution](https://wiki.iota.org/identity.rs/contribute) and [workflow](https://wiki.iota.org/identity.rs/workflow) sections in the [IOTA Wiki](https://wiki.iota.org/).
 
 To contribute directly to the repository, simply fork the project, push your changes to your fork and create a pull request to get them included!
 

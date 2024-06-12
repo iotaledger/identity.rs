@@ -5,12 +5,14 @@ use std::rc::Rc;
 
 use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
+
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
 use identity_iota::credential::JwtPresentationOptions;
 use identity_iota::credential::Presentation;
+
 use identity_iota::did::DIDUrl;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasOutput;
@@ -42,8 +44,12 @@ use crate::common::RecordStringAny;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
+use crate::credential::PromiseJpt;
 use crate::credential::UnknownCredential;
 use crate::credential::WasmCredential;
+use crate::credential::WasmJpt;
+use crate::credential::WasmJwpCredentialOptions;
+use crate::credential::WasmJwpPresentationOptions;
 use crate::credential::WasmJws;
 use crate::credential::WasmJwt;
 use crate::credential::WasmPresentation;
@@ -62,6 +68,9 @@ use crate::iota::WasmIotaDocumentMetadata;
 use crate::iota::WasmStateMetadataEncoding;
 use crate::jose::WasmDecodedJws;
 use crate::jose::WasmJwsAlgorithm;
+use crate::jpt::WasmJptClaims;
+use crate::jpt::WasmProofAlgorithm;
+use crate::jpt::WasmSelectiveDisclosurePresentation;
 use crate::storage::WasmJwsSignatureOptions;
 use crate::storage::WasmJwtPresentationOptions;
 use crate::storage::WasmStorage;
@@ -72,6 +81,7 @@ use crate::verification::WasmJwsVerifier;
 use crate::verification::WasmMethodRelationship;
 use crate::verification::WasmMethodScope;
 use crate::verification::WasmVerificationMethod;
+use identity_iota::storage::JwpDocumentExt;
 
 pub(crate) struct IotaDocumentLock(tokio::sync::RwLock<IotaDocument>);
 
@@ -154,6 +164,20 @@ impl WasmIotaDocument {
         .collect::<js_sys::Array>()
         .unchecked_into::<ArrayIotaDID>(),
     )
+  }
+
+  /// Sets the controllers of the document.
+  ///
+  /// Note: Duplicates will be ignored.
+  /// Use `null` to remove all controllers.
+  #[wasm_bindgen(js_name = setController)]
+  pub fn set_controller(&mut self, controller: &OptionArrayIotaDID) -> Result<()> {
+    let controller: Option<Vec<IotaDID>> = controller.into_serde().wasm_result()?;
+    match controller {
+      Some(controller) => self.0.try_write()?.set_controller(controller),
+      None => self.0.try_write()?.set_controller([]),
+    };
+    Ok(())
   }
 
   /// Returns a copy of the document's `alsoKnownAs` set.
@@ -835,6 +859,140 @@ impl WasmIotaDocument {
     });
     Ok(promise.unchecked_into())
   }
+
+  #[wasm_bindgen(js_name = generateMethodJwp)]
+  pub fn generate_method_jwp(
+    &self,
+    storage: &WasmStorage,
+    alg: WasmProofAlgorithm,
+    fragment: Option<String>,
+    scope: WasmMethodScope,
+  ) -> Result<PromiseString> {
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      let method_fragment: String = document_lock_clone
+        .write()
+        .await
+        .generate_method_jwp(
+          &storage_clone,
+          KeyType::from_static_str("BLS12381"),
+          alg.into(),
+          fragment.as_deref(),
+          scope.0,
+        )
+        .await
+        .wasm_result()?;
+      Ok(JsValue::from(method_fragment))
+    });
+
+    Ok(promise.unchecked_into())
+  }
+
+  #[wasm_bindgen(js_name = createIssuedJwp)]
+  pub fn create_issued_jwp(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    jpt_claims: WasmJptClaims,
+    options: WasmJwpCredentialOptions,
+  ) -> Result<PromiseString> {
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let jpt_claims = jpt_claims.into_serde().wasm_result()?;
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options = options.into();
+    let promise: Promise = future_to_promise(async move {
+      let jwp: String = document_lock_clone
+        .write()
+        .await
+        .create_issued_jwp(&storage_clone, fragment.as_str(), &jpt_claims, &options)
+        .await
+        .wasm_result()?;
+      Ok(JsValue::from(jwp))
+    });
+
+    Ok(promise.unchecked_into())
+  }
+
+  #[wasm_bindgen(js_name = createPresentedJwp)]
+  pub fn create_presented_jwp(
+    &self,
+    presentation: WasmSelectiveDisclosurePresentation,
+    method_id: String,
+    options: WasmJwpPresentationOptions,
+  ) -> Result<PromiseString> {
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let options = options.try_into()?;
+    let promise: Promise = future_to_promise(async move {
+      let mut presentation = presentation.0;
+      let jwp: String = document_lock_clone
+        .write()
+        .await
+        .create_presented_jwp(&mut presentation, method_id.as_str(), &options)
+        .await
+        .wasm_result()?;
+      Ok(JsValue::from(jwp))
+    });
+
+    Ok(promise.unchecked_into())
+  }
+
+  #[wasm_bindgen(js_name = createCredentialJpt)]
+  pub fn create_credential_jpt(
+    &self,
+    credential: WasmCredential,
+    storage: &WasmStorage,
+    fragment: String,
+    options: WasmJwpCredentialOptions,
+    custom_claims: Option<MapStringAny>,
+  ) -> Result<PromiseJpt> {
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options = options.into();
+    let custom_claims = custom_claims.and_then(|claims| claims.into_serde().ok());
+    let promise: Promise = future_to_promise(async move {
+      let jpt = document_lock_clone
+        .write()
+        .await
+        .create_credential_jpt(
+          &credential.0,
+          &storage_clone,
+          fragment.as_str(),
+          &options,
+          custom_claims,
+        )
+        .await
+        .map(WasmJpt)
+        .wasm_result()?;
+      Ok(JsValue::from(jpt))
+    });
+
+    Ok(promise.unchecked_into())
+  }
+
+  #[wasm_bindgen(js_name = createPresentationJpt)]
+  pub fn create_presentation_jpt(
+    &self,
+    presentation: WasmSelectiveDisclosurePresentation,
+    method_id: String,
+    options: WasmJwpPresentationOptions,
+  ) -> Result<PromiseJpt> {
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let options = options.try_into()?;
+    let promise: Promise = future_to_promise(async move {
+      let mut presentation = presentation.0;
+      let jpt = document_lock_clone
+        .write()
+        .await
+        .create_presentation_jpt(&mut presentation, method_id.as_str(), &options)
+        .await
+        .map(WasmJpt)
+        .wasm_result()?;
+      Ok(JsValue::from(jpt))
+    });
+
+    Ok(promise.unchecked_into())
+  }
 }
 
 impl From<IotaDocument> for WasmIotaDocument {
@@ -845,6 +1003,9 @@ impl From<IotaDocument> for WasmIotaDocument {
 
 #[wasm_bindgen]
 extern "C" {
+  #[wasm_bindgen(typescript_type = "IotaDID[] | null")]
+  pub type OptionArrayIotaDID;
+
   #[wasm_bindgen(typescript_type = "IotaDID[]")]
   pub type ArrayIotaDID;
 

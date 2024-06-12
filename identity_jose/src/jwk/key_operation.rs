@@ -27,12 +27,10 @@ pub enum JwkOperation {
   DeriveKey,
   /// Derive bits not to be used as a key.
   DeriveBits,
-
-  //TODO: ZKP - added ProofGeneration/ProofVerification
   /// Compute proof
   ProofGeneration,
   /// Verify proof
-  ProofVerification
+  ProofVerification,
 }
 
 impl JwkOperation {
@@ -64,7 +62,7 @@ impl JwkOperation {
       Self::DeriveKey => Self::DeriveKey,
       Self::DeriveBits => Self::DeriveBits,
       Self::ProofGeneration => Self::ProofVerification,
-      Self::ProofVerification => Self::ProofGeneration
+      Self::ProofVerification => Self::ProofGeneration,
     }
   }
 }

@@ -1,9 +1,9 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::borrow::Cow;
 use std::io::Write;
 
-use dataurl::DataUrl;
 use flate2::write::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
@@ -18,7 +18,7 @@ use crate::revocation::error::RevocationError;
 use identity_document::service::Service;
 use identity_document::service::ServiceEndpoint;
 
-const DATA_URL_MEDIA_TYPE: &str = "application/octet-stream";
+const DATA_URL_PATTERN: &str = "data:application/octet-stream;base64,";
 
 /// A compressed bitmap for managing credential revocation.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -80,11 +80,8 @@ impl RevocationBitmap {
   pub(crate) fn to_endpoint(&self) -> Result<ServiceEndpoint, RevocationError> {
     let endpoint_data: String = self.serialize_compressed_base64()?;
 
-    let mut data_url: DataUrl = DataUrl::new();
-    data_url.set_media_type(Some(DATA_URL_MEDIA_TYPE.to_owned()));
-    data_url.set_is_base64_encoded(true);
-    data_url.set_data(endpoint_data.as_bytes());
-    Url::parse(data_url.to_string())
+    let data_url = format!("{DATA_URL_PATTERN}{endpoint_data}");
+    Url::parse(data_url)
       .map(ServiceEndpoint::One)
       .map_err(|e| RevocationError::UrlConstructionError(e.into()))
   }
@@ -92,19 +89,13 @@ impl RevocationBitmap {
   /// Construct a `RevocationBitmap` from a data url embedded in `service_endpoint`.
   pub(crate) fn try_from_endpoint(service_endpoint: &ServiceEndpoint) -> Result<Self, RevocationError> {
     if let ServiceEndpoint::One(url) = service_endpoint {
-      let data_url: DataUrl = DataUrl::parse(url.as_str())
-        .map_err(|_| RevocationError::InvalidService("invalid url - expected a data url"))?;
-
-      if !data_url.get_is_base64_encoded() || data_url.get_media_type() != DATA_URL_MEDIA_TYPE {
+      let Some(encoded_bitmap) = url.as_str().strip_prefix(DATA_URL_PATTERN) else {
         return Err(RevocationError::InvalidService(
           "invalid url - expected an `application/octet-stream;base64` data url",
         ));
-      }
+      };
 
-      RevocationBitmap::deserialize_compressed_base64(
-        std::str::from_utf8(data_url.get_data())
-          .map_err(|_| RevocationError::InvalidService("invalid data url - expected valid utf-8"))?,
-      )
+      RevocationBitmap::deserialize_compressed_base64(encoded_bitmap)
     } else {
       Err(RevocationError::InvalidService(
         "invalid endpoint - expected a single data url",
@@ -117,7 +108,22 @@ impl RevocationBitmap {
   where
     T: AsRef<str> + ?Sized,
   {
-    let decoded_data: Vec<u8> = BaseEncoding::decode(data, Base::Base64Url)
+    // Fixes issue #1291.
+    // Before this fix, revocation bitmaps had been encoded twice, like so:
+    // Base64Url(Base64(compressed_bitmap)).
+    // This fix checks if the encoded string it receives as input has undergone such process
+    // and undo the inner Base64 encoding before processing the input further.
+    let mut data = Cow::Borrowed(data.as_ref());
+    if !data.starts_with("eJy") {
+      // Base64 encoded zlib default compression header
+      let decoded = BaseEncoding::decode(&data, Base::Base64)
+        .map_err(|e| RevocationError::Base64DecodingError(data.into_owned(), e))?;
+      data = Cow::Owned(
+        String::from_utf8(decoded)
+          .map_err(|_| RevocationError::InvalidService("invalid data url - expected valid utf-8"))?,
+      );
+    }
+    let decoded_data: Vec<u8> = BaseEncoding::decode(&data, Base::Base64Url)
       .map_err(|e| RevocationError::Base64DecodingError(data.as_ref().to_owned(), e))?;
     let decompressed_data: Vec<u8> = Self::decompress_zlib(decoded_data)?;
     Self::deserialize_slice(&decompressed_data)
@@ -215,7 +221,7 @@ mod tests {
 
   #[test]
   fn test_revocation_bitmap_test_vector_1() {
-    const URL: &str = "data:application/octet-stream;base64,ZUp5ek1tQUFBd0FES0FCcg==";
+    const URL: &str = "data:application/octet-stream;base64,eJyzMmAAAwADKABr";
 
     let bitmap: RevocationBitmap = RevocationBitmap::try_from_endpoint(
       &identity_document::service::ServiceEndpoint::One(Url::parse(URL).unwrap()),
@@ -227,6 +233,38 @@ mod tests {
 
   #[test]
   fn test_revocation_bitmap_test_vector_2() {
+    const URL: &str = "data:application/octet-stream;base64,eJyzMmBgYGQAAWYGATDNysDGwMEAAAscAJI";
+    const EXPECTED: &[u32] = &[0, 5, 6, 8];
+
+    let bitmap: RevocationBitmap = RevocationBitmap::try_from_endpoint(
+      &identity_document::service::ServiceEndpoint::One(Url::parse(URL).unwrap()),
+    )
+    .unwrap();
+
+    for revoked in EXPECTED {
+      assert!(bitmap.is_revoked(*revoked));
+    }
+
+    assert_eq!(bitmap.len(), 4);
+  }
+
+  #[test]
+  fn test_revocation_bitmap_test_vector_3() {
+    const URL: &str = "data:application/octet-stream;base64,eJyzMmBgYGQAAWYGASCpxbCEMUNAYAkAEpcCeg";
+    const EXPECTED: &[u32] = &[42, 420, 4200, 42000];
+
+    let bitmap: RevocationBitmap = RevocationBitmap::try_from_endpoint(
+      &identity_document::service::ServiceEndpoint::One(Url::parse(URL).unwrap()),
+    )
+    .unwrap();
+
+    for &index in EXPECTED {
+      assert!(bitmap.is_revoked(index));
+    }
+  }
+
+  #[test]
+  fn test_revocation_bitmap_pre_1291_fix() {
     const URL: &str = "data:application/octet-stream;base64,ZUp5ek1tQmdZR0lBQVVZZ1pHQ1FBR0laSUdabDZHUGN3UW9BRXVvQjlB";
     const EXPECTED: &[u32] = &[5, 398, 67000];
 
@@ -240,21 +278,5 @@ mod tests {
     }
 
     assert_eq!(bitmap.len(), 3);
-  }
-
-  #[test]
-  fn test_revocation_bitmap_test_vector_3() {
-    const URL: &str = "data:application/octet-stream;base64,ZUp6dHhERVJBQ0FNQkxESEFWS1lXZkN2Q3E0MmFESmtyMlNrM0ROckFLQ2RBQUFBQUFBQTMzbGhHZm9q";
-
-    let bitmap: RevocationBitmap = RevocationBitmap::try_from_endpoint(
-      &identity_document::service::ServiceEndpoint::One(Url::parse(URL).unwrap()),
-    )
-    .unwrap();
-
-    for index in 0..2u32.pow(14) {
-      assert!(bitmap.is_revoked(index));
-    }
-
-    assert_eq!(bitmap.len(), 2u64.pow(14));
   }
 }

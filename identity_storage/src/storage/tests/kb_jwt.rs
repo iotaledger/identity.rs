@@ -57,12 +57,8 @@ async fn setup_test() -> (Setup<IotaDocument, IotaDocument>, Credential, SdJwt) 
 
   let mut encoder = SdObjectEncoder::new(&payload).unwrap();
   let disclosures = vec![
-    encoder
-      .conceal(&["vc", "credentialSubject", "degree", "type"], None)
-      .unwrap(),
-    encoder
-      .conceal(&["vc", "credentialSubject", "degree", "name"], None)
-      .unwrap(),
+    encoder.conceal("/vc/credentialSubject/degree/type", None).unwrap(),
+    encoder.conceal("/vc/credentialSubject/degree/name", None).unwrap(),
   ];
   encoder.add_sd_alg_property();
   let encoded_payload = encoder.try_to_string().unwrap();

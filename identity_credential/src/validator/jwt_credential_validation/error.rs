@@ -115,6 +115,18 @@ pub enum JwtValidationError {
   /// Indicates that the credential has been suspended.
   #[error("credential has been suspended")]
   Suspended,
+  /// Indicates that the credential's timeframe interval is not valid
+  #[cfg(feature = "jpt-bbs-plus")]
+  #[error("timeframe interval not valid")]
+  OutsideTimeframe,
+  /// Indicates that the JWP representation of an issued credential or presentation could not be decoded.
+  #[cfg(feature = "jpt-bbs-plus")]
+  #[error("could not decode jwp")]
+  JwpDecodingError(#[source] jsonprooftoken::errors::CustomError),
+  /// Indicates that the verification of the JWP has failed
+  #[cfg(feature = "jpt-bbs-plus")]
+  #[error("could not verify jwp")]
+  JwpProofVerificationError(#[source] jsonprooftoken::errors::CustomError),
 }
 
 /// Specifies whether an error is related to a credential issuer or the presentation holder.
