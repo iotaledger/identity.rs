@@ -5,8 +5,6 @@
 
 pub use self::jwp_verification_options::JwpVerificationOptions;
 pub use self::jws_verification_options::JwsVerificationOptions;
-pub use self::jwp_verification_options::JwpVerificationOptions;
 
 mod jwp_verification_options;
 mod jws_verification_options;
-mod jwp_verification_options;

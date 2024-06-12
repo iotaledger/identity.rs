@@ -23,12 +23,6 @@ use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
-use zkryptium::bbsplus::keys::BBSplusPublicKey;
-use zkryptium::bbsplus::keys::BBSplusSecretKey;
-use zkryptium::schemes::algorithms::BBS_BLS12381_SHA256;
-use zkryptium::schemes::algorithms::BBS_BLS12381_SHAKE256;
-use zkryptium::schemes::generics::Signature;
-use zkryptium::utils::message::BBSplusMessage;
 
 use super::ed25519::encode_jwk;
 use super::ed25519::expand_secret_jwk;
@@ -38,7 +32,7 @@ use super::KeyStorageError;
 use super::KeyStorageErrorKind;
 use super::KeyStorageResult;
 use super::KeyType;
-use crate::JwkStorageExt;
+
 use crate::key_storage::JwkStorage;
 use crate::JwkStoragePQ;
 

@@ -13,8 +13,6 @@ mod jwt_presentation_options;
 mod jwt_serialization;
 mod presentation;
 mod presentation_builder;
-mod jwp_presentation_builder;
-mod jwp_presentation_options;
 
 #[cfg(feature = "jpt-bbs-plus")]
 pub use self::jwp_presentation_builder::SelectiveDisclosurePresentation;

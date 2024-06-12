@@ -731,55 +731,55 @@ mod tests {
 }
 
 
-//TODO: ZKP - convert to JptClaims structure which basically contains the same claim names
-impl<'credential, T> From<CredentialJwtClaims<'credential, T>> for JptClaims
-where
-    T: ToOwned + Serialize,
-    <T as ToOwned>::Owned: DeserializeOwned,
-{
-    fn from(item: CredentialJwtClaims<'credential, T>) -> Self {
+// //TODO: ZKP - convert to JptClaims structure which basically contains the same claim names
+// impl<'credential, T> From<CredentialJwtClaims<'credential, T>> for JptClaims
+// where
+//     T: ToOwned + Serialize,
+//     <T as ToOwned>::Owned: DeserializeOwned,
+// {
+//     fn from(item: CredentialJwtClaims<'credential, T>) -> Self {
 
-    let CredentialJwtClaims {
-      exp, 
-      iss,
-      issuance_date,
-      jti,
-      sub,
-      vc, 
-      custom
-    } = item;
+//     let CredentialJwtClaims {
+//       exp, 
+//       iss,
+//       issuance_date,
+//       jti,
+//       sub,
+//       vc, 
+//       custom
+//     } = item;
 
     
-    let mut claims = JptClaims::new();
+//     let mut claims = JptClaims::new();
     
-    exp.map(|v| {
-      claims.set_exp(v);
-    });
+//     exp.map(|v| {
+//       claims.set_exp(v);
+//     });
 
-    claims.set_iss(iss.url().to_string());
+//     claims.set_iss(iss.url().to_string());
 
-    issuance_date.iat.map(|v| {
-      claims.set_iat(v);
-    });
+//     issuance_date.iat.map(|v| {
+//       claims.set_iat(v);
+//     });
 
-    issuance_date.nbf.map(|v| {
-      claims.set_nbf(v);
-    });
+//     issuance_date.nbf.map(|v| {
+//       claims.set_nbf(v);
+//     });
 
-    jti.map(|v| {
-      claims.set_jti(v.to_string());
-    });
+//     jti.map(|v| {
+//       claims.set_jti(v.to_string());
+//     });
 
-    sub.map(|v| {
-      claims.set_sub(v.to_string());
-    });
+//     sub.map(|v| {
+//       claims.set_sub(v.to_string());
+//     });
 
-    claims.set_claim(Some("vc"), vc, true);
+//     claims.set_claim(Some("vc"), vc, true);
 
-    custom.map(|v| {
-      claims.set_claim(None, v, true);
-    });
+//     custom.map(|v| {
+//       claims.set_claim(None, v, true);
+//     });
 
-    claims
-  }
-}
+//     claims
+//   }
+// }

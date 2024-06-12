@@ -7,6 +7,7 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.62"
+bls12_381_plus.workspace = true
 identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false }
 identity_iota = { path = "../identity_iota", default-features = false, features = ["iota-client", "client", "memstore", "domain-linkage", "revocation-bitmap", "status-list-2021", "jpt-bbs-plus"] }
 identity_stronghold = { path = "../identity_stronghold", default-features = false, features = ["bbs-plus"] }
@@ -17,7 +18,6 @@ rand = "0.8.5"
 sd-jwt-payload = { version = "0.2.1", default-features = false, features = ["sha"] }
 serde_json = { version = "1.0", default-features = false }
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
-json-proof-token.workspace = true
 identity_pqc_verifier = { path = "../identity_pqc_verifier", default-features = true }
 
 [lib]

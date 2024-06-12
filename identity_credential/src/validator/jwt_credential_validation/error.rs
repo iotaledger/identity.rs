@@ -100,18 +100,7 @@ pub enum JwtValidationError {
   ServiceLookupError,
   /// Indicates that the credential has been revoked.
   #[error("credential has been revoked")]
-  Revoked,
-
-
-  //TODO: ZKP - new errors for jwp
-  /// Indicates that the JWP representation of an issued credential or presentation could not be decoded.
-  #[error("could not decode jwp")]
-  JwpDecodingError(#[source] jsonprooftoken::errors::CustomError),
-  
-  /// Indicates that the verfication of the JWP has failed
-  #[error("could not verify jwp")]
-  JwpProofVerificationError(#[source] jsonprooftoken::errors::CustomError),
-  
+  Revoked,  
   /// Indicates that the credential has been suspended.
   #[error("credential has been suspended")]
   Suspended,

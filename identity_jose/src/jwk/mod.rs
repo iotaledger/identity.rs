@@ -11,7 +11,6 @@ mod key_params;
 mod key_set;
 mod key_type;
 mod key_use;
-mod jwk_ext;
 mod jwk_pq;
 
 pub use self::curve::*;

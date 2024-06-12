@@ -12,7 +12,7 @@ rust-version.workspace = true
 description = "JWS PQC signature verification for IOTA Identity"
 
 [dependencies]
-identity_jose = { version = "=1.1.0-alpha.1", path = "../identity_jose", default-features = false }
+identity_jose = { version = "=1.3.0", path = "../identity_jose", default-features = false }
 oqs = {version = "0.9.0", default-features = false, features = ["sigs", "std", "vendored"] }
 
 [features]
