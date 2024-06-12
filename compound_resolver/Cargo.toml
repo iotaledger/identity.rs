@@ -9,9 +9,10 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+itertools = "0.13.0"
 proc-macro2 = "1.0.85"
 quote = "1.0.36"
-syn = { versin = "2.0.66", features = ["parsing"] }
+syn = { versin = "2.0.66", features = ["full", "extra-traits"] }
 
 [lints]
 workspace = true

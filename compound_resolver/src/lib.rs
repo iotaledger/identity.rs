@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse::Parse, punctuated::Punctuated, Attribute, Data, DeriveInput, Field, Ident, Token};
+use syn::{parse::Parse, punctuated::Punctuated, Attribute, Data, DeriveInput, Expr, Field, Ident, Token, Type};
+use itertools::Itertools;
 
 #[proc_macro_derive(CompoundResolver, attributes(resolver))]
 pub fn derive_macro_compound_resolver(input: TokenStream) -> TokenStream {
@@ -20,19 +21,25 @@ pub fn derive_macro_compound_resolver(input: TokenStream) -> TokenStream {
     .into_iter()
     // parse all the fields that are annoted with #[resolver(..)]
     .filter_map(ResolverField::from_field)
-    // create an iterator over (field_name, Resolver::I, Resolver::T)
+    // create an iterator over (field_name, Resolver::I, Resolver::T, predicate)
     .flat_map(|ResolverField { ident, impls }| {
       impls
         .into_iter()
-        .map(move |(input_ty, target_ty)| (ident.clone(), input_ty, target_ty))
+        .map(move |ResolverImpl { input, target, pred }| ((input, target), (ident.clone(), pred)))
     })
-    // generates code that forward the implementation of Resolver<T, I> to field_name.
-    .map(|(field_name, input_ty, target_ty)| {
+    // Group together all resolvers with the same signature (input_ty, target_ty).
+    .into_group_map()
+    .into_iter()
+    // generates code that forward the implementation of Resolver<T, I> to field_name, if there's multiple fields
+    // implementing that trait, use `pred` to decide which one to call.
+    .map(|((input_ty, target_ty), impls)| {
+      let len = impls.len();
+      let impl_block = gen_impl_block_multiple_resolvers(impls.into_iter(), len);
       quote! {
         impl ::identity_new_resolver::Resolver<#input_ty> for #struct_ident #generics {
           type Target = #target_ty;
           async fn resolve(&self, input: &#input_ty) -> std::result::Result<Self::Target, ::identity_new_resolver::Error> {
-            self.#field_name.resolve(input).await
+            #impl_block
           }
         }
       }
@@ -41,10 +48,38 @@ pub fn derive_macro_compound_resolver(input: TokenStream) -> TokenStream {
     .into()
 }
 
+fn gen_impl_block_single_resolver(field_name: Ident) -> proc_macro2::TokenStream {
+  quote! {
+    self.#field_name.resolve(input).await
+  }
+}
+
+fn gen_impl_block_single_resolver_with_pred(field_name: Ident, pred: Expr) -> proc_macro2::TokenStream {
+  let invocation_block = gen_impl_block_single_resolver(field_name);
+  quote! {
+    if #pred { return #invocation_block }
+  }
+}
+
+fn gen_impl_block_multiple_resolvers(impls: impl Iterator<Item = (Ident, Option<Expr>)>, len: usize) -> proc_macro2::TokenStream {
+  impls 
+    .enumerate()
+    .map(|(i, (field_name, pred))| {
+      if let Some(pred) = pred {
+        gen_impl_block_single_resolver_with_pred(field_name, pred)
+      } else if i == len - 1 {
+        gen_impl_block_single_resolver(field_name)
+      } else {
+        panic!("Multiple resolvers with the same signature. Expected predicate");
+      }
+    })
+    .collect()
+}
+
 /// A field annotated with `#[resolver(Input -> Target, ..)]`
 struct ResolverField {
   ident: Ident,
-  impls: Vec<(Ident, Ident)>,
+  impls: Vec<ResolverImpl>,
 }
 
 impl ResolverField {
@@ -54,10 +89,10 @@ impl ResolverField {
       panic!("Derive macro \"CompoundResolver\" only works on struct with named fields");
     };
 
-    let impls: Vec<(Ident, Ident)> = attrs
+    let impls = attrs
       .into_iter()
       .flat_map(|attr| parse_resolver_attribute(attr).into_iter())
-      .collect();
+      .collect::<Vec<_>>();
 
     if !impls.is_empty() {
       Some(ResolverField { ident, impls })
@@ -67,41 +102,53 @@ impl ResolverField {
   }
 }
 
-fn parse_resolver_attribute(attr: Attribute) -> Vec<(Ident, Ident)> {
+fn parse_resolver_attribute(attr: Attribute) -> Vec<ResolverImpl> {
   if attr.path().is_ident("resolver") {
     attr
-      .parse_args_with(Punctuated::<ResolverTy, Token![,]>::parse_terminated)
+      .parse_args_with(Punctuated::<ResolverImpl, Token![,]>::parse_terminated)
       .expect("invalid resolver annotation")
       .into_iter()
-      .map(Into::into)
       .collect()
   } else {
     vec![]
   }
 }
 
-struct ResolverTy {
-  pub input: Ident,
-  pub target: Ident,
+struct ResolverImpl {
+  pub input: Type,
+  pub target: Type,
+  pub pred: Option<Expr>,
 }
 
-impl From<ResolverTy> for (Ident, Ident) {
-  fn from(value: ResolverTy) -> Self {
-    (value.input, value.target)
-  }
-}
-
-impl Parse for ResolverTy {
+impl Parse for ResolverImpl {
   fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-    let mut tys = Punctuated::<Ident, Token![->]>::parse_separated_nonempty(input)?
-      .into_iter()
-      .take(2);
+    // let mut tys = Punctuated::<TypePath, Token![->]>::parse_separated_nonempty(input)?
+    //   .into_iter()
+    //   .take(2);
+    let input_ty = input.parse::<Type>()?;
+    let _ = input.parse::<Token![->]>()?;
+    let target_ty = input.parse::<Type>()?;
+    let pred = if input.peek(Token![if]) {
+      let _ = input.parse::<Token![if]>()?;
+      Some(input.parse::<Expr>()?)
+    } else {
+      None
+    };
 
     Ok({
-      ResolverTy {
-        input: tys.next().unwrap(),
-        target: tys.next().unwrap(),
+      ResolverImpl {
+        input: input_ty,
+        target: target_ty,
+        pred
       }
     })
   }
+}
+
+#[test]
+fn test_parse_resolver_attribute() {
+  syn::parse_str::<ResolverImpl>("DidKey -> CoreDoc").unwrap();
+  syn::parse_str::<ResolverImpl>("DidKey -> Vec<u8>").unwrap();
+  syn::parse_str::<ResolverImpl>("Vec<u8> -> &str").unwrap();
+  syn::parse_str::<ResolverImpl>("DidIota -> IotaDoc if input.method_id() == \"iota\"").unwrap();
 }
