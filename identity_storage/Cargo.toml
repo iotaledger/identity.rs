@@ -14,6 +14,7 @@ description = "Abstractions over storage for cryptographic keys used in DID Docu
 [dependencies]
 anyhow = "1.0.82"
 async-trait = { version = "0.1.64", default-features = false }
+bls12_381_plus = { workspace = true, optional = true }
 futures = { version = "0.3.27", default-features = false, features = ["async-await"] }
 identity_core = { version = "=1.3.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=1.3.0", path = "../identity_credential", default-features = false, features = ["credential", "presentation", "revocation-bitmap"] }
@@ -46,7 +47,7 @@ send-sync-storage = []
 # Implements the JwkStorageDocumentExt trait for IotaDocument
 iota-document = ["dep:identity_iota_core"]
 # Enables JSON Proof Token & BBS+ related features
-jpt-bbs-plus = ["identity_credential/jpt-bbs-plus", "dep:zkryptium", "dep:json-proof-token"]
+jpt-bbs-plus = ["identity_credential/jpt-bbs-plus", "dep:zkryptium", "dep:bls12_381_plus", "dep:json-proof-token"]
 
 [lints]
 workspace = true
