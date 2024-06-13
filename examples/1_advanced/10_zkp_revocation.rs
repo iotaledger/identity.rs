@@ -413,12 +413,9 @@ async fn main() -> anyhow::Result<()> {
   let presentation_verifier_options: JwsVerificationOptions =
     JwsVerificationOptions::default().nonce(challenge.to_owned());
 
-  let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_iota_handler(client.clone());
-
   // Resolve the holder's document.
   let holder_did: CoreDID = JwtPresentationValidatorUtils::extract_holder(&presentation_jwt)?;
-  let holder: IotaDocument = resolver.resolve(&holder_did).await?;
+  let holder: IotaDocument = client.resolve(&holder_did).await?;
 
   // Validate presentation. Note that this doesn't validate the included credentials.
   let presentation_validation_options =
