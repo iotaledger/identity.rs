@@ -134,10 +134,6 @@ async fn main() -> anyhow::Result<()> {
   // while the second answers "What domain is this DID linked to?".
   // =====================================================
 
-  // Init a resolver for resolving DID Documents.
-  let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_iota_handler(client.clone());
-
   // =====================================================
   // → Case 1: starting from domain
   // =====================================================
@@ -152,7 +148,7 @@ async fn main() -> anyhow::Result<()> {
   assert_eq!(linked_dids.len(), 1);
 
   // Resolve the DID Document of the DID that issued the credential.
-  let issuer_did_document: IotaDocument = resolver.resolve(&did).await?;
+  let issuer_did_document: IotaDocument = client.resolve(&did).await?;
 
   // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
   let validation_result: Result<(), DomainLinkageValidationError> =
@@ -167,7 +163,7 @@ async fn main() -> anyhow::Result<()> {
   // =====================================================
   // → Case 2: starting from a DID
   // =====================================================
-  let did_document: IotaDocument = resolver.resolve(&did).await?;
+  let did_document: IotaDocument = client.resolve(&did).await?;
 
   // Get the Linked Domain Services from the DID Document.
   let linked_domain_services: Vec<LinkedDomainService> = did_document

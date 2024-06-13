@@ -1,7 +1,16 @@
+use itertools::Itertools;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse::Parse, punctuated::Punctuated, Attribute, Data, DeriveInput, Expr, Field, Ident, Token, Type};
-use itertools::Itertools;
+use syn::parse::Parse;
+use syn::punctuated::Punctuated;
+use syn::Attribute;
+use syn::Data;
+use syn::DeriveInput;
+use syn::Expr;
+use syn::Field;
+use syn::Ident;
+use syn::Token;
+use syn::Type;
 
 #[proc_macro_derive(CompoundResolver, attributes(resolver))]
 pub fn derive_macro_compound_resolver(input: TokenStream) -> TokenStream {
@@ -21,13 +30,12 @@ pub fn derive_macro_compound_resolver(input: TokenStream) -> TokenStream {
     .into_iter()
     // parse all the fields that are annoted with #[resolver(..)]
     .filter_map(ResolverField::from_field)
-    // create an iterator over (field_name, Resolver::I, Resolver::T, predicate)
+    // Group together all resolvers with the same signature (input_ty, target_ty).
     .flat_map(|ResolverField { ident, impls }| {
       impls
         .into_iter()
         .map(move |ResolverImpl { input, target, pred }| ((input, target), (ident.clone(), pred)))
     })
-    // Group together all resolvers with the same signature (input_ty, target_ty).
     .into_group_map()
     .into_iter()
     // generates code that forward the implementation of Resolver<T, I> to field_name, if there's multiple fields
@@ -36,9 +44,9 @@ pub fn derive_macro_compound_resolver(input: TokenStream) -> TokenStream {
       let len = impls.len();
       let impl_block = gen_impl_block_multiple_resolvers(impls.into_iter(), len);
       quote! {
-        impl ::identity_new_resolver::Resolver<#input_ty> for #struct_ident #generics {
+        impl ::identity_iota::resolver::Resolver<#input_ty> for #struct_ident #generics {
           type Target = #target_ty;
-          async fn resolve(&self, input: &#input_ty) -> std::result::Result<Self::Target, ::identity_new_resolver::Error> {
+          async fn resolve(&self, input: &#input_ty) -> std::result::Result<Self::Target, ::identity_iota::resolver::Error> {
             #impl_block
           }
         }
@@ -61,8 +69,11 @@ fn gen_impl_block_single_resolver_with_pred(field_name: Ident, pred: Expr) -> pr
   }
 }
 
-fn gen_impl_block_multiple_resolvers(impls: impl Iterator<Item = (Ident, Option<Expr>)>, len: usize) -> proc_macro2::TokenStream {
-  impls 
+fn gen_impl_block_multiple_resolvers(
+  impls: impl Iterator<Item = (Ident, Option<Expr>)>,
+  len: usize,
+) -> proc_macro2::TokenStream {
+  impls
     .enumerate()
     .map(|(i, (field_name, pred))| {
       if let Some(pred) = pred {
@@ -122,9 +133,6 @@ struct ResolverImpl {
 
 impl Parse for ResolverImpl {
   fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-    // let mut tys = Punctuated::<TypePath, Token![->]>::parse_separated_nonempty(input)?
-    //   .into_iter()
-    //   .take(2);
     let input_ty = input.parse::<Type>()?;
     let _ = input.parse::<Token![->]>()?;
     let target_ty = input.parse::<Type>()?;
@@ -139,7 +147,7 @@ impl Parse for ResolverImpl {
       ResolverImpl {
         input: input_ty,
         target: target_ty,
-        pred
+        pred,
       }
     })
   }
