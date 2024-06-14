@@ -18,7 +18,7 @@ identity_core = { version = "=1.2.0", path = "../identity_core", default-feature
 identity_credential = { version = "=1.2.0", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=1.2.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.2.0", path = "../identity_document", default-features = false }
-identity_sui_name_tbd = { path = "../identity_sui_name_tbd" }
+# identity_sui_name_tbd = { path = "../identity_sui_name_tbd" }
 identity_verification = { version = "=1.2.0", path = "../identity_verification", default-features = false }
 iota-sdk = { version = "1.0.2", default-features = false, features = ["serde", "std"], optional = true }
 num-derive = { version = "0.4", default-features = false }
