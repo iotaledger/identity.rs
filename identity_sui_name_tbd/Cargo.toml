@@ -15,6 +15,7 @@ description = "SUI related tooling for identity-rs"
 anyhow = "1.0.75"
 bcs = "0.1.4"
 identity_core = { version = "=1.2.0", path = "../identity_core" }
+identity_iota_core = { version = "=1.2.0", path = "../identity_iota_core" }
 iota-crypto = { version = "0.23" }
 identity_jose = { version = "=1.2.0", path = "../identity_jose" }
 identity_storage = { version = "=1.2.0", path = "../identity_storage" }

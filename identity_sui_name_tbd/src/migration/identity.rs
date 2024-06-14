@@ -1,6 +1,10 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
+use identity_iota_core::NetworkName;
+use identity_iota_core::StateMetadataDocument;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -14,19 +18,40 @@ use sui_sdk::SuiClient;
 use crate::Error;
 
 use super::Multicontroller;
+use super::UnmigratedAlias;
 
 const MODULE: &str = "identity";
 const NAME: &str = "Identity";
 pub enum Identity {
-  RawDid(Vec<u8>),
+  Legacy(UnmigratedAlias),
   FullFledged(OnChainIdentity),
 }
 
 impl Identity {
-  pub fn doc_bytes(&self) -> &[u8] {
+
+  pub fn did_document(&self, _client: &SuiClient) -> Result<IotaDocument, Error> {
+    let network_name = /* TODO: read it from client */ NetworkName::try_from("iota").unwrap();
+    let original_did = IotaDID::from_alias_id(self.id().object_id().to_string().as_str(), &network_name);
+    let doc_bytes = self.doc_bytes().ok_or(Error::DidDocParsingFailed(format!(
+      "legacy alias output does not encode a DID document"
+    )))?;
+
+    StateMetadataDocument::unpack(doc_bytes)
+      .and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(&original_did))
+      .map_err(|e| Error::DidDocParsingFailed(e.to_string()))
+  }
+
+  fn id(&self) -> &UID {
     match self {
-      Self::FullFledged(identity) => identity.did_doc.controlled_value().as_ref(),
-      Self::RawDid(bytes) => &bytes[..],
+      Self::Legacy(alias) => &alias.id,
+      Self::FullFledged(identity) => &identity.id,
+    }
+  }
+
+  fn doc_bytes(&self) -> Option<&[u8]> {
+    match self {
+      Self::FullFledged(identity) => Some(identity.did_doc.controlled_value().as_ref()),
+      Self::Legacy(alias) => alias.state_metadata.as_deref(),
     }
   }
 }
@@ -36,6 +61,8 @@ pub struct OnChainIdentity {
   pub id: UID,
   pub did_doc: Multicontroller<Vec<u8>>,
 }
+
+impl OnChainIdentity {}
 
 pub async fn get_identity(client: &SuiClient, object_id: ObjectID) -> Result<Option<OnChainIdentity>, Error> {
   let options = SuiObjectDataOptions {

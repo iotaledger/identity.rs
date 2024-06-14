@@ -47,4 +47,7 @@ pub enum Error {
   /// Config is invalid.
   #[error("invalid config: {0}")]
   InvalidConfig(String),
+  /// Failed to parse DID document.
+  #[error("Failed to parse DID document; {0}")]
+  DidDocParsingFailed(String),
 }

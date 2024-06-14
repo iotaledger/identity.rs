@@ -43,8 +43,9 @@ use sui_sdk::types::SUI_FRAMEWORK_PACKAGE_ID;
 use sui_sdk::SuiClient;
 
 use crate::migration::get_alias;
-use crate::migration::get_identity_document;
+use crate::migration::get_identity;
 use crate::migration::lookup;
+use crate::migration::Identity;
 use crate::Error;
 
 pub struct IdentityClientBuilder<K, I> {
@@ -399,16 +400,16 @@ where
 }
 
 impl<K, I> IdentityClient<K, I> {
-  pub async fn get_did_document(&self, object_id: ObjectID) -> Result<Vec<u8>, Error> {
+  pub async fn get_did_document(&self, object_id: ObjectID) -> Result<Identity, Error> {
     // spawn all checks
     let mut all_futures =
-      FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Vec<u8>>, Error>> + Send>>>::new();
+      FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
     all_futures.push(Box::pin(resolve_new(&self.sui_client, object_id)));
     all_futures.push(Box::pin(resolve_migrated(&self.sui_client, object_id)));
     all_futures.push(Box::pin(resolve_unmigrated(&self.sui_client, object_id)));
 
     // use first non-None value as result
-    let mut state_metadata_outcome: Option<Vec<u8>> = None;
+    let mut state_metadata_outcome: Option<Identity> = None;
     while let Some(result) = all_futures.try_next().await? {
       if result.is_some() {
         state_metadata_outcome = result;
@@ -452,37 +453,27 @@ fn convert_to_address(sender_public_key: &[u8]) -> Result<SuiAddress, Error> {
     .map_err(|err| Error::InvalidKey(format!("could not convert public key to sender address; {err}")))
 }
 
-async fn resolve_new(client: &SuiClient, object_id: ObjectID) -> Result<Option<Vec<u8>>, Error> {
-  let document = get_identity_document(client, object_id).await.map_err(|err| {
+async fn resolve_new(client: &SuiClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+  let onchain_identity = get_identity(client, object_id).await.map_err(|err| {
     Error::DIDResolutionErrorKinesis(format!(
       "could not get identity document for object id {object_id}; {err}"
     ))
   })?;
-
-  Ok(document.map(|document| document.doc))
+  Ok(onchain_identity.map(Identity::FullFledged))
 }
 
-async fn resolve_migrated(client: &SuiClient, object_id: ObjectID) -> Result<Option<Vec<u8>>, Error> {
-  let document = lookup(client, object_id).await.map_err(|err| {
+async fn resolve_migrated(client: &SuiClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+  let onchain_identity = lookup(client, object_id).await.map_err(|err| {
     Error::DIDResolutionErrorKinesis(format!(
       "failed to look up object_id {object_id} in migration registry; {err}"
     ))
   })?;
-
-  Ok(document.map(|document| document.doc))
+  Ok(onchain_identity.map(Identity::FullFledged))
 }
 
-async fn resolve_unmigrated(client: &SuiClient, object_id: ObjectID) -> Result<Option<Vec<u8>>, Error> {
+async fn resolve_unmigrated(client: &SuiClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
   let unmigrated_alias = get_alias(client, object_id)
     .await
     .map_err(|err| Error::DIDResolutionErrorKinesis(format!("could  no query for object id {object_id}; {err}")))?;
-  unmigrated_alias
-    .map(|v| {
-      v.state_metadata.ok_or_else(|| {
-        Error::DIDResolutionErrorKinesis(format!(
-          "unmigrated alias for object id {object_id} does not contain DID document"
-        ))
-      })
-    })
-    .transpose()
+  Ok(unmigrated_alias.map(Identity::Legacy))
 }

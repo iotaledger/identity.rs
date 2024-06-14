@@ -95,7 +95,7 @@ async fn can_resolve_a_new_did_document() -> anyhow::Result<()> {
   let object_id = identity_client.publish_did(TEST_DOC, TEST_GAS_BUDGET).await?;
 
   let sui_client = get_sui_client(LOCAL_NETWORK).await?;
-  let document = migration::get_identity_document(&sui_client, object_id).await?;
+  let document = migration::get_identity(&sui_client, object_id).await?;
 
   assert!(document.is_some());
 
@@ -158,9 +158,9 @@ mod resolution {
     #[tokio::test]
     async fn new_did_document_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
-      let object_id = test_client.create_did_document().await?;
+      let object_id = test_client.create_identity().await?;
 
-      let document = migration::get_identity_document(&test_client, object_id).await?;
+      let document = migration::get_identity(&test_client, object_id).await?;
 
       assert!(document.is_some());
 
@@ -215,7 +215,7 @@ mod resolution {
     async fn new_did_document_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
       let sui_client = get_sui_client(LOCAL_NETWORK).await?;
-      let object_id = test_client.create_did_document().await?;
+      let object_id = test_client.create_identity().await?;
       let identity_client: IdentityClient<JwkMemStore, KeyIdMemstore> = IdentityClient::builder()
         .identity_iota_package_id(test_client.package_id())
         .sui_client(sui_client)

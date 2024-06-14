@@ -77,6 +77,9 @@ impl<T> Multicontroller<T> {
   pub fn controlled_value(&self) -> &T {
     &self.controlled_value
   }
+  pub fn into_inner(self) -> T {
+    self.controlled_value
+  }
 }
 
 impl<T> TryFrom<SuiMulticontroller<T>> for Multicontroller<T> {
