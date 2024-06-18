@@ -49,12 +49,14 @@ async fn main() -> anyhow::Result<()> {
     .with_primary_node(API_ENDPOINT, None)?
     .finish()
     .await?;
+  let stronghold_path = random_stronghold_path();
 
+  println!("Using stronghold path: {stronghold_path:?}");
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password(Password::from("secure_password".to_owned()))
-      .build(random_stronghold_path())?,
+      .build(stronghold_path)?,
   );
 
   // Create a DID for the entity that will issue the Domain Linkage Credential.
@@ -68,8 +70,8 @@ async fn main() -> anyhow::Result<()> {
   // =====================================================
 
   // The DID should be linked to the following domains.
-  let domain_1: Url = Url::parse("https://foo.example.com")?;
-  let domain_2: Url = Url::parse("https://bar.example.com")?;
+  let domain_1: Url = Url::parse("https://aa26-2c0f-2a80-10ee-3910-b8da-f270-4e07-4665.ngrok-free.app")?;
+  let domain_2: Url = Url::parse("https://foo.example.com")?;
 
   let mut domains: OrderedSet<Url> = OrderedSet::new();
   domains.append(domain_1.clone());
