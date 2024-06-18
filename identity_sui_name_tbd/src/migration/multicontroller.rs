@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use crate::sui_types::Hashable;
-use crate::sui_types::Number;
-use crate::sui_types::VecMap;
-use crate::sui_types::VecSet;
+use crate::sui::types::Hashable;
+use crate::sui::types::Number;
+use crate::sui::types::VecMap;
+use crate::sui::types::VecSet;
 use serde::Deserialize;
 use serde::Serialize;
 use sui_sdk::types::id::ID;

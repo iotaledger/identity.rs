@@ -38,7 +38,7 @@ const TEST_DOC: &[u8] = &[
 const TEST_GAS_BUDGET: u64 = 50_000_000;
 
 #[tokio::test]
-async fn can_publish_a_did_document() -> anyhow::Result<()> {
+async fn can_create_an_identity() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let sui_client = get_sui_client(LOCAL_NETWORK).await?;
   let storage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
@@ -61,7 +61,11 @@ async fn can_publish_a_did_document() -> anyhow::Result<()> {
   // call faucet with out new account
   request_funds(&identity_client.sender_address()?).await?;
 
-  let result = identity_client.publish_did(TEST_DOC, TEST_GAS_BUDGET).await;
+  let result = identity_client
+    .create_identity(TEST_DOC)
+    .gas_budget(TEST_GAS_BUDGET)
+    .finish(&identity_client)
+    .await;
 
   assert!(result.is_ok());
 
@@ -69,7 +73,7 @@ async fn can_publish_a_did_document() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn can_resolve_a_new_did_document() -> anyhow::Result<()> {
+async fn can_resolve_a_new_identity() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let sui_client = get_sui_client(LOCAL_NETWORK).await?;
   let storage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
@@ -92,7 +96,11 @@ async fn can_resolve_a_new_did_document() -> anyhow::Result<()> {
   // call faucet with out new account
   request_funds(&identity_client.sender_address()?).await?;
 
-  let object_id = identity_client.publish_did(TEST_DOC, TEST_GAS_BUDGET).await?;
+  let object_id = identity_client
+    .create_identity(TEST_DOC)
+    .gas_budget(TEST_GAS_BUDGET)
+    .finish(&identity_client)
+    .await?;
 
   let sui_client = get_sui_client(LOCAL_NETWORK).await?;
   let document = migration::get_identity(&sui_client, object_id).await?;
@@ -156,7 +164,7 @@ mod resolution {
 
     #[serial]
     #[tokio::test]
-    async fn new_did_document_resolution_works() -> anyhow::Result<()> {
+    async fn new_identity_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
       let object_id = test_client.create_identity().await?;
 
@@ -184,7 +192,7 @@ mod resolution {
         .sui_client(sui_client)
         .build()?;
 
-      let result = identity_client.get_did_document(alias_id).await;
+      let result = identity_client.get_identity(alias_id).await;
 
       assert!(result.is_ok());
 
@@ -203,7 +211,7 @@ mod resolution {
         .sui_client(sui_client)
         .build()?;
 
-      let result = identity_client.get_did_document(alias_id).await;
+      let result = identity_client.get_identity(alias_id).await;
 
       assert!(result.is_ok());
 
@@ -212,7 +220,7 @@ mod resolution {
 
     #[serial]
     #[tokio::test]
-    async fn new_did_document_resolution_works() -> anyhow::Result<()> {
+    async fn new_identity_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
       let sui_client = get_sui_client(LOCAL_NETWORK).await?;
       let object_id = test_client.create_identity().await?;
@@ -221,7 +229,7 @@ mod resolution {
         .sui_client(sui_client)
         .build()?;
 
-      let result = identity_client.get_did_document(object_id).await;
+      let result = identity_client.get_identity(object_id).await;
 
       assert!(result.is_ok());
 
