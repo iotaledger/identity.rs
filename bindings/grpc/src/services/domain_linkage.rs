@@ -8,8 +8,10 @@ use domain_linkage::domain_linkage_server::DomainLinkage;
 use domain_linkage::domain_linkage_server::DomainLinkageServer;
 use domain_linkage::validate_did_response::Domains;
 
-use crate::services::domain_linkage::domain_linkage::validate_did_response::domains::{InvalidDomain, ValidDomain};
-use crate::services::domain_linkage::domain_linkage::validate_domain_response::linked_dids::{InvalidDid, ValidDid};
+use crate::services::domain_linkage::domain_linkage::validate_did_response::domains::InvalidDomain;
+use crate::services::domain_linkage::domain_linkage::validate_did_response::domains::ValidDomain;
+use crate::services::domain_linkage::domain_linkage::validate_domain_response::linked_dids::InvalidDid;
+use crate::services::domain_linkage::domain_linkage::validate_domain_response::linked_dids::ValidDid;
 use domain_linkage::validate_domain_response::LinkedDids;
 use domain_linkage::ValidateDidAgainstDidConfigurationsRequest;
 use domain_linkage::ValidateDidRequest;

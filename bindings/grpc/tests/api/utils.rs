@@ -6,7 +6,8 @@ use _utils::DataSigningRequest;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_storage::JwkStorage;
 use identity_storage::KeyType;
-use identity_stronghold::{StrongholdKeyType, StrongholdStorage};
+use identity_stronghold::StrongholdKeyType;
+use identity_stronghold::StrongholdStorage;
 
 use crate::helpers::make_stronghold;
 use crate::helpers::TestServer;

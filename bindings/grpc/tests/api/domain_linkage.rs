@@ -4,13 +4,15 @@
 use _credentials::validate_did_response::Domains;
 use _credentials::validate_domain_response::LinkedDids;
 
-use crate::domain_linkage::_credentials::validate_did_response::domains::{InvalidDomain, ValidDomain};
+use crate::domain_linkage::_credentials::validate_did_response::domains::InvalidDomain;
+use crate::domain_linkage::_credentials::validate_did_response::domains::ValidDomain;
 use crate::domain_linkage::_credentials::validate_domain_response::linked_dids::ValidDid;
+use identity_iota::core::Duration;
+use identity_iota::core::FromJson;
 use identity_iota::core::Object;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
 use identity_iota::core::Url;
-use identity_iota::core::{Duration, FromJson};
 use identity_iota::credential::Credential;
 use identity_iota::credential::DomainLinkageConfiguration;
 use identity_iota::credential::DomainLinkageCredentialBuilder;
