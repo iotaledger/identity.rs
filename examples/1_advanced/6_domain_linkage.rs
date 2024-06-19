@@ -70,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
   // =====================================================
 
   // The DID should be linked to the following domains.
-  let domain_1: Url = Url::parse("https://aa26-2c0f-2a80-10ee-3910-b8da-f270-4e07-4665.ngrok-free.app")?;
+  let domain_1: Url = Url::parse("https://foo.example.com")?;
   let domain_2: Url = Url::parse("https://foo.example.com")?;
 
   let mut domains: OrderedSet<Url> = OrderedSet::new();
