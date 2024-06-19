@@ -14,16 +14,15 @@ use domain_linkage::{InvalidDid, ValidateDidAgainstDidConfigurationsRequest};
 use domain_linkage::{InvalidDomain, ValidateDomainAgainstDidConfigurationRequest};
 use domain_linkage::{ValidDid, ValidateDidRequest};
 use domain_linkage::{ValidDomain, ValidateDidResponse};
-use futures::stream::FuturesOrdered;
-use futures::{StreamExt, TryStreamExt};
+
 use identity_eddsa_verifier::EdDSAJwsVerifier;
-use identity_iota::core::FromJson;
 use identity_iota::core::Url;
+use identity_iota::core::{FromJson, ToJson};
 use identity_iota::credential::DomainLinkageConfiguration;
 use identity_iota::credential::JwtCredentialValidationOptions;
 use identity_iota::credential::JwtDomainLinkageValidator;
 use identity_iota::credential::LinkedDomainService;
-use identity_iota::did::CoreDID;
+use identity_iota::did::{CoreDID, DID};
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
@@ -150,7 +149,7 @@ impl DomainLinkageService {
     let mut futures = vec![];
 
     for service in services {
-      let service_id: CoreDID = did.clone().into();
+      let service_id = service.id().to_string();
       let domains: Vec<Url> = service.domains().into();
       for domain in domains {
         let config = config_map.get(&domain.origin()).cloned();
@@ -161,6 +160,7 @@ impl DomainLinkageService {
             let result = self
               .validate_domains_with_optional_configuration(&domain, Some(did.clone().into()), config)
               .await;
+
             (service_id_clone, domain, result)
           }
         });
@@ -201,6 +201,7 @@ impl DomainLinkageService {
         }
       }
     }
+
     Ok(Domains {
       valid: valid_domains,
       invalid: invalid_domains,
@@ -237,7 +238,6 @@ impl DomainLinkageService {
     };
 
     // get issuers of `linked_dids` credentials
-    // get issuers of `linked_dids` credentials
     let linked_dids: Vec<CoreDID> = if let Some(issuer_did) = did {
       vec![issuer_did]
     } else {
@@ -272,6 +272,8 @@ impl DomainLinkageService {
       .iter()
       .zip(resolved.values())
       .for_each(|(credential, issuer_did_doc)| {
+        let id = issuer_did_doc.id().to_string();
+
         if let Err(err) = JwtDomainLinkageValidator::with_signature_verifier(EdDSAJwsVerifier::default())
           .validate_linkage(
             &issuer_did_doc,
@@ -281,14 +283,14 @@ impl DomainLinkageService {
           )
         {
           invalid_dids.push(InvalidDid {
-            service_id: None,
+            service_id: Some(id),
             credential: Some(credential.as_str().to_string()),
             did: Some(issuer_did_doc.to_string()),
             error: err.to_string(),
           });
         } else {
           valid_dids.push(ValidDid {
-            service_id: "None".into(),
+            service_id: id,
             did: issuer_did_doc.to_string(),
             credential: credential.as_str().to_string(),
           });

@@ -4,7 +4,7 @@
 mod credential_revocation_check;
 mod credential_validation;
 mod did_document_creation;
-// mod domain_linkage;
+mod domain_linkage;
 mod health_check;
 mod helpers;
 mod jwt;
