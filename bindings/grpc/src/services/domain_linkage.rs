@@ -7,22 +7,25 @@ use std::error::Error;
 use domain_linkage::domain_linkage_server::DomainLinkage;
 use domain_linkage::domain_linkage_server::DomainLinkageServer;
 use domain_linkage::validate_did_response::Domains;
-use domain_linkage::validate_domain_response::LinkedDid;
+
+use crate::services::domain_linkage::domain_linkage::validate_did_response::domains::{InvalidDomain, ValidDomain};
+use crate::services::domain_linkage::domain_linkage::validate_domain_response::linked_dids::{InvalidDid, ValidDid};
+use domain_linkage::validate_domain_response::LinkedDids;
+use domain_linkage::ValidateDidAgainstDidConfigurationsRequest;
+use domain_linkage::ValidateDidRequest;
+use domain_linkage::ValidateDidResponse;
+use domain_linkage::ValidateDomainAgainstDidConfigurationRequest;
 use domain_linkage::ValidateDomainRequest;
 use domain_linkage::ValidateDomainResponse;
-use domain_linkage::{InvalidDid, ValidateDidAgainstDidConfigurationsRequest};
-use domain_linkage::{InvalidDomain, ValidateDomainAgainstDidConfigurationRequest};
-use domain_linkage::{ValidDid, ValidateDidRequest};
-use domain_linkage::{ValidDomain, ValidateDidResponse};
 
 use identity_eddsa_verifier::EdDSAJwsVerifier;
+use identity_iota::core::FromJson;
 use identity_iota::core::Url;
-use identity_iota::core::{FromJson, ToJson};
 use identity_iota::credential::DomainLinkageConfiguration;
 use identity_iota::credential::JwtCredentialValidationOptions;
 use identity_iota::credential::JwtDomainLinkageValidator;
 use identity_iota::credential::LinkedDomainService;
-use identity_iota::did::{CoreDID, DID};
+use identity_iota::did::CoreDID;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
@@ -89,8 +92,8 @@ impl DomainValidationConfig {
 }
 
 /// Builds a validation status for a failed validation from an `Error`.
-fn get_linked_did_validation_failed_status(message: &str, err: &impl Error) -> LinkedDid {
-  LinkedDid {
+fn get_linked_did_validation_failed_status(message: &str, err: &impl Error) -> LinkedDids {
+  LinkedDids {
     valid: vec![],
     invalid: vec![InvalidDid {
       service_id: None,
@@ -221,7 +224,7 @@ impl DomainLinkageService {
     domain: &Url,
     did: Option<CoreDID>,
     config: Option<DomainLinkageConfiguration>,
-  ) -> Result<LinkedDid, DomainLinkageError> {
+  ) -> Result<LinkedDids, DomainLinkageError> {
     // get domain linkage config
     let domain_linkage_configuration: DomainLinkageConfiguration = if let Some(config_value) = config {
       config_value
@@ -297,7 +300,7 @@ impl DomainLinkageService {
         }
       });
 
-    let status_infos = LinkedDid {
+    let status_infos = LinkedDids {
       valid: valid_dids,
       invalid: invalid_dids,
     };
@@ -356,7 +359,6 @@ impl DomainLinkage for DomainLinkageService {
       DomainLinkageError::DidConfigurationParsing(format!("could not parse given DID configuration; {}", &err))
     })?;
 
-    // get validation status for all issuer dids
     let linked_dids = self
       .validate_domains_with_optional_configuration(&domain, None, Some(config))
       .await?;

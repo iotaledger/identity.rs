@@ -4,48 +4,51 @@
 syntax = "proto3";
 package domain_linkage;
 
-message ValidDomain {
-    string service_id = 1;
-    string url = 2;
-    string credential = 3;
-}
-
-message InvalidDomain {
-    string service_id = 1;
-    optional string credential = 2;
-    string url = 3;
-    string error = 4;
-}
-
 message ValidateDidResponse {
     string did = 1;
     message Domains {
+        message ValidDomain {
+            string url = 1;
+            string credential = 2;
+            string service_id = 3;
+        }
+
         repeated ValidDomain valid = 1;
+
+        message InvalidDomain {
+            string url = 1;
+            optional string credential = 2;
+            string service_id = 3;
+            string error = 4;
+        }
+
         repeated InvalidDomain invalid = 2;
     }
     Domains domains = 2;
 }
 
-message ValidDid {
-    string service_id = 1;
-    string did = 2;
-    string credential = 3;
-}
-
-message InvalidDid {
-    optional string service_id = 1;
-    optional string credential = 2;
-    optional string did = 3;
-    string error = 4;
-}
-
 message ValidateDomainResponse {
     string domain = 1;
-    message LinkedDid {
+    message LinkedDids {
+
+        message ValidDid {
+            string did = 1;
+            string credential = 2;
+            string service_id = 3;
+        }
+
         repeated ValidDid valid = 1;
+
+        message InvalidDid {
+            optional string did = 1;
+            optional string credential = 2;
+            optional string service_id = 3;
+            string error = 4;
+        }
+
         repeated InvalidDid invalid = 2;
     }
-    LinkedDid linked_dids = 2;
+    LinkedDids linked_dids = 2;
 }
 
 message ValidateDomainRequest {
