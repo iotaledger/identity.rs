@@ -38,7 +38,6 @@ use tonic::Response;
 use tonic::Status;
 use url::Origin;
 
-#[allow(clippy::module_inception)]
 mod _domain_linkage {
   tonic::include_proto!("domain_linkage");
 }
