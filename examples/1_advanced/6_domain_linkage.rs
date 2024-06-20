@@ -71,7 +71,7 @@ async fn main() -> anyhow::Result<()> {
 
   // The DID should be linked to the following domains.
   let domain_1: Url = Url::parse("https://foo.example.com")?;
-  let domain_2: Url = Url::parse("https://foo.example.com")?;
+  let domain_2: Url = Url::parse("https://bar.example.com")?;
 
   let mut domains: OrderedSet<Url> = OrderedSet::new();
   domains.append(domain_1.clone());

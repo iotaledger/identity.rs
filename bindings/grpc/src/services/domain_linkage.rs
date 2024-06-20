@@ -4,22 +4,20 @@
 use std::collections::HashMap;
 use std::error::Error;
 
-use domain_linkage::domain_linkage_server::DomainLinkage;
-use domain_linkage::domain_linkage_server::DomainLinkageServer;
-use domain_linkage::validate_did_response::Domains;
-
-use crate::services::domain_linkage::domain_linkage::validate_did_response::domains::InvalidDomain;
-use crate::services::domain_linkage::domain_linkage::validate_did_response::domains::ValidDomain;
-use crate::services::domain_linkage::domain_linkage::validate_domain_response::linked_dids::InvalidDid;
-use crate::services::domain_linkage::domain_linkage::validate_domain_response::linked_dids::ValidDid;
-use domain_linkage::validate_domain_response::LinkedDids;
-use domain_linkage::ValidateDidAgainstDidConfigurationsRequest;
-use domain_linkage::ValidateDidRequest;
-use domain_linkage::ValidateDidResponse;
-use domain_linkage::ValidateDomainAgainstDidConfigurationRequest;
-use domain_linkage::ValidateDomainRequest;
-use domain_linkage::ValidateDomainResponse;
-
+use _domain_linkage::domain_linkage_server::DomainLinkage;
+use _domain_linkage::domain_linkage_server::DomainLinkageServer;
+use _domain_linkage::validate_did_response::domains::InvalidDomain;
+use _domain_linkage::validate_did_response::domains::ValidDomain;
+use _domain_linkage::validate_did_response::Domains;
+use _domain_linkage::validate_domain_response::linked_dids::InvalidDid;
+use _domain_linkage::validate_domain_response::linked_dids::ValidDid;
+use _domain_linkage::validate_domain_response::LinkedDids;
+use _domain_linkage::ValidateDidAgainstDidConfigurationsRequest;
+use _domain_linkage::ValidateDidRequest;
+use _domain_linkage::ValidateDidResponse;
+use _domain_linkage::ValidateDomainAgainstDidConfigurationRequest;
+use _domain_linkage::ValidateDomainRequest;
+use _domain_linkage::ValidateDomainResponse;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::FromJson;
 use identity_iota::core::Url;
@@ -41,7 +39,7 @@ use tonic::Status;
 use url::Origin;
 
 #[allow(clippy::module_inception)]
-mod domain_linkage {
+mod _domain_linkage {
   tonic::include_proto!("domain_linkage");
 }
 

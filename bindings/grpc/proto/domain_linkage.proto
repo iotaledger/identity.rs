@@ -30,7 +30,6 @@ message ValidateDidResponse {
 message ValidateDomainResponse {
     string domain = 1;
     message LinkedDids {
-
         message ValidDid {
             string did = 1;
             string credential = 2;
