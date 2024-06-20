@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
@@ -9,32 +10,37 @@ use identity_iota_core::NetworkName;
 use identity_iota_core::StateMetadataDocument;
 use identity_storage::JwkStorage;
 use identity_storage::KeyIdStorage;
+use move_core_types::language_storage::StructTag;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 use sui_sdk::rpc_types::OwnedObjectRef;
+use sui_sdk::rpc_types::SuiObjectDataFilter;
 use sui_sdk::rpc_types::SuiObjectDataOptions;
+use sui_sdk::rpc_types::SuiObjectResponseQuery;
 use sui_sdk::rpc_types::SuiParsedData;
 use sui_sdk::rpc_types::SuiParsedMoveObject;
 use sui_sdk::rpc_types::SuiTransactionBlockEffects;
-use sui_sdk::rpc_types::SuiTransactionBlockResponseOptions;
 use sui_sdk::types::base_types::ObjectID;
+use sui_sdk::types::base_types::ObjectRef;
 use sui_sdk::types::base_types::SuiAddress;
 use sui_sdk::types::id::UID;
 use sui_sdk::types::object::Owner;
-use sui_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
-use sui_sdk::types::transaction::Transaction;
 use sui_sdk::SuiClient;
 
 use crate::client::IdentityClient;
 use crate::sui::move_calls;
+use crate::sui::move_calls::identity::execute_update;
+use crate::sui::move_calls::identity::propose_update;
 use crate::Error;
 
 use super::Multicontroller;
+use super::Proposal;
 use super::UnmigratedAlias;
 
 const MODULE: &str = "identity";
 const NAME: &str = "Identity";
+
 pub enum Identity {
   Legacy(UnmigratedAlias),
   FullFledged(OnChainIdentity),
@@ -72,6 +78,157 @@ impl Identity {
 pub struct OnChainIdentity {
   pub id: UID,
   pub did_doc: Multicontroller<Vec<u8>>,
+  #[serde(skip)]
+  pub obj_ref: Option<ObjectRef>,
+}
+
+impl OnChainIdentity {
+  /// Returns true if this [`OnChainIdentity`] is shared between multiple controllers.
+  pub fn is_shared(&self) -> bool {
+    self.did_doc.controllers().len() > 1
+  }
+  pub fn proposals(&self) -> &HashMap<String, Proposal> {
+    self.did_doc.proposals()
+  }
+  async fn get_controller_cap<K, I>(&self, client: &IdentityClient<K, I>) -> Result<ObjectRef, Error>
+  where
+    K: JwkStorage,
+    I: KeyIdStorage,
+  {
+    let controller_cap_tag = StructTag::from_str(&format!("{}::multicontroller::ControllerCap", client.package_id()))
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let filter = SuiObjectResponseQuery::new_with_filter(SuiObjectDataFilter::StructType(controller_cap_tag));
+
+    let mut cursor = None;
+    loop {
+      let mut page = client
+        .read_api()
+        .get_owned_objects(client.sender_address()?, Some(filter.clone()), cursor, None)
+        .await?;
+      let cap = std::mem::take(&mut page.data).into_iter().find_map(|res| {
+        res
+          .data
+          .map(|obj| obj.object_ref())
+          .filter(|cap_ref| self.did_doc.has_member(cap_ref.0))
+      });
+      cursor = page.next_cursor;
+      if let Some(cap) = cap {
+        return Ok(cap);
+      }
+      if !page.has_next_page {
+        break;
+      }
+    }
+
+    Err(Error::Identity(
+      "this address has no control over the requested identity".to_string(),
+    ))
+  }
+
+  pub fn update_did_document(&mut self, updated_doc: IotaDocument) -> ProposalBuilder {
+    ProposalBuilder::new(self, ProposalAction::UpdateDocument(updated_doc))
+  }
+}
+
+#[derive(Debug)]
+pub enum ProposalAction {
+  UpdateDocument(IotaDocument),
+}
+
+#[derive(Debug)]
+pub struct ProposalBuilder<'i> {
+  key: Option<String>,
+  identity: &'i mut OnChainIdentity,
+  expiration: Option<u64>,
+  action: ProposalAction,
+  gas_budget: Option<u64>,
+}
+
+impl<'i> ProposalBuilder<'i> {
+  pub fn new(identity: &'i mut OnChainIdentity, action: ProposalAction) -> Self {
+    Self {
+      key: None,
+      identity,
+      expiration: None,
+      action,
+      gas_budget: None,
+    }
+  }
+
+  pub fn expiration_epoch(mut self, exp: u64) -> Self {
+    self.expiration = Some(exp);
+    self
+  }
+
+  pub fn key(mut self, key: String) -> Self {
+    self.key = Some(key);
+    self
+  }
+
+  pub fn gas_budget(mut self, amount: u64) -> Self {
+    self.gas_budget = Some(amount);
+    self
+  }
+
+  pub async fn finish<K, I>(self, client: &IdentityClient<K, I>) -> Result<Option<&'i Proposal>, Error>
+  where
+    K: JwkStorage,
+    I: KeyIdStorage,
+  {
+    let ProposalBuilder {
+      key,
+      identity,
+      expiration,
+      action,
+      gas_budget,
+    } = self;
+    let key = if let Some(key) = key {
+      key
+    } else if !identity.is_shared() {
+      use rand::distributions::DistString;
+      let mut rng = rand::thread_rng();
+
+      rand::distributions::Alphanumeric.sample_string(&mut rng, 5)
+    } else {
+      return Err(Error::TransactionBuildingFailed(
+        "no key specified for proposal".to_string(),
+      ));
+    };
+    let controller_cap = identity.get_controller_cap(client).await?;
+    let tx = match action {
+      ProposalAction::UpdateDocument(did_doc) => propose_update(
+        identity.obj_ref.unwrap(),
+        controller_cap,
+        key.as_str(),
+        did_doc.pack().unwrap(),
+        expiration,
+        client.package_id(),
+      ),
+    }
+    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let gas_budget =
+      gas_budget.ok_or_else(|| Error::GasIssue("missing `gas_budget` in proposal builder".to_string()))?;
+    let _ = client.execute_transaction(tx, gas_budget).await?;
+
+    *identity = get_identity(client, *identity.id.object_id()).await?.unwrap();
+    let can_execute =
+      identity.did_doc.controller_voting_power(controller_cap.0).unwrap() > identity.did_doc.threshold();
+    if identity.is_shared() && !can_execute {
+      return Ok(identity.proposals().get(&key));
+    }
+
+    let tx = execute_update(
+      identity.obj_ref.unwrap(),
+      controller_cap,
+      key.as_str(),
+      client.package_id(),
+    )
+    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let _ = client.execute_transaction(tx, gas_budget).await?;
+    *identity = get_identity(client, *identity.id.object_id()).await?.unwrap();
+
+    Ok(None)
+  }
 }
 
 pub async fn get_identity(client: &SuiClient, object_id: ObjectID) -> Result<Option<OnChainIdentity>, Error> {
@@ -100,6 +257,7 @@ pub async fn get_identity(client: &SuiClient, object_id: ObjectID) -> Result<Opt
     return Ok(None);
   };
 
+  let object_ref = data.object_ref();
   let content = data
     .content
     .ok_or_else(|| Error::ObjectLookup(format!("no content in retrieved object in object id {object_id}")))?;
@@ -114,11 +272,14 @@ pub async fn get_identity(client: &SuiClient, object_id: ObjectID) -> Result<Opt
     return Ok(None);
   }
 
-  serde_json::from_value(value.fields.to_json_value()).map_err(|err| {
+  let mut identity = serde_json::from_value::<OnChainIdentity>(value.fields.to_json_value()).map_err(|err| {
     Error::ObjectLookup(format!(
       "could not parse identity document with object id {object_id}; {err}"
     ))
-  })
+  })?;
+  identity.obj_ref = Some(object_ref);
+
+  Ok(Some(identity))
 }
 
 fn is_identity(value: &SuiParsedMoveObject) -> bool {
@@ -171,7 +332,7 @@ impl<'a> IdentityBuilder<'a> {
       .fold(self, |builder, (addr, vp)| builder.controller(addr, vp))
   }
 
-  pub async fn finish<K, I>(self, client: &IdentityClient<K, I>) -> Result<ObjectID, Error>
+  pub async fn finish<K, I>(self, client: &IdentityClient<K, I>) -> Result<OnChainIdentity, Error>
   where
     K: JwkStorage,
     I: KeyIdStorage,
@@ -200,20 +361,7 @@ impl<'a> IdentityBuilder<'a> {
     };
 
     let gas_budget = gas_budget.ok_or_else(|| Error::GasIssue("Missing gas budget in identity creation".to_owned()))?;
-    let tx_data = client
-      .get_transaction_data(programmable_transaction, gas_budget)
-      .await?;
-    let kinesis_signature = client.sign_transaction_data(&tx_data).await?;
-
-    // execute tx
-    let response = client
-      .quorum_driver_api()
-      .execute_transaction_block(
-        Transaction::from_data(tx_data, vec![kinesis_signature]),
-        SuiTransactionBlockResponseOptions::full_content(),
-        Some(ExecuteTransactionRequestType::WaitForLocalExecution),
-      )
-      .await?;
+    let response = client.execute_transaction(programmable_transaction, gas_budget).await?;
 
     let created = match response.clone().effects {
       Some(SuiTransactionBlockEffects::V1(effects)) => effects.created,
@@ -234,8 +382,8 @@ impl<'a> IdentityBuilder<'a> {
         )
       })
       .collect();
-    let new_identity = match &new_identities[..] {
-      [value] => value,
+    let new_identity_id = match &new_identities[..] {
+      [value] => value.object_id(),
       _ => {
         return Err(Error::TransactionUnexpectedResponse(format!(
           "could not find new identity in response: {response:?}"
@@ -243,6 +391,8 @@ impl<'a> IdentityBuilder<'a> {
       }
     };
 
-    Ok(new_identity.object_id())
+    get_identity(client, new_identity_id)
+      .await
+      .and_then(|identity| identity.ok_or_else(|| Error::ObjectLookup(new_identity_id.to_string())))
   }
 }

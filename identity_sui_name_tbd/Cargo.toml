@@ -33,6 +33,7 @@ sui-config = { git = "https://github.com/iotaledger/kinesis.git", package = "sui
 sui-sdk = { git = "https://github.com/iotaledger/kinesis.git", package = "sui-sdk" }
 thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt", "process"] }
+rand = "0.8.5"
 
 [dev-dependencies]
 bcs = "0.1.4"

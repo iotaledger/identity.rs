@@ -17,12 +17,16 @@ use identity_storage::Storage;
 use identity_verification::jwk::Jwk;
 use shared_crypto::intent::Intent;
 use shared_crypto::intent::IntentMessage;
+use sui_sdk::rpc_types::SuiTransactionBlockResponse;
+use sui_sdk::rpc_types::SuiTransactionBlockResponseOptions;
 use sui_sdk::types::base_types::ObjectID;
 use sui_sdk::types::base_types::SuiAddress;
 use sui_sdk::types::crypto::DefaultHash;
 use sui_sdk::types::crypto::Signature;
 use sui_sdk::types::crypto::SignatureScheme;
+use sui_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
 use sui_sdk::types::transaction::ProgrammableTransaction;
+use sui_sdk::types::transaction::Transaction;
 use sui_sdk::types::transaction::TransactionData;
 use sui_sdk::SuiClient;
 
@@ -125,6 +129,10 @@ where
   K: JwkStorage,
   I: KeyIdStorage,
 {
+  pub(crate) fn package_id(&self) -> ObjectID {
+    self.identity_iota_package_id
+  }
+
   pub fn builder() -> IdentityClientBuilder<K, I> {
     IdentityClientBuilder::<K, I>::default()
   }
@@ -183,7 +191,27 @@ where
     IdentityBuilder::new(iota_document, self.identity_iota_package_id)
   }
 
-  pub(crate) async fn get_coin_for_transaction(&self) -> Result<sui_sdk::rpc_types::Coin, Error> {
+  pub(crate) async fn execute_transaction(
+    &self,
+    tx: ProgrammableTransaction,
+    gas_budget: u64,
+  ) -> Result<SuiTransactionBlockResponse, Error> {
+    let tx_data = self.get_transaction_data(tx, gas_budget).await?;
+    let kinesis_signature = self.sign_transaction_data(&tx_data).await?;
+
+    // execute tx
+    self
+      .quorum_driver_api()
+      .execute_transaction_block(
+        Transaction::from_data(tx_data, vec![kinesis_signature]),
+        SuiTransactionBlockResponseOptions::full_content(),
+        Some(ExecuteTransactionRequestType::WaitForLocalExecution),
+      )
+      .await
+      .map_err(Error::TransactionExecutionFailed)
+  }
+
+  async fn get_coin_for_transaction(&self) -> Result<sui_sdk::rpc_types::Coin, Error> {
     let coins = self
       .sui_client
       .coin_read_api()
@@ -198,7 +226,7 @@ where
       .ok_or_else(|| Error::GasIssue("could not find coins".to_string()))
   }
 
-  pub(crate) async fn get_transaction_data(
+  async fn get_transaction_data(
     &self,
     programmable_transaction: ProgrammableTransaction,
     gas_budget: u64,
@@ -221,7 +249,7 @@ where
     Ok(tx_data)
   }
 
-  pub(crate) async fn sign_transaction_data(&self, tx_data: &TransactionData) -> Result<Signature, Error> {
+  async fn sign_transaction_data(&self, tx_data: &TransactionData) -> Result<Signature, Error> {
     let SigningInfo {
       storage,
       sender_key_id,

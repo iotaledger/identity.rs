@@ -7,6 +7,7 @@ use sui_sdk::types::programmable_transaction_builder::ProgrammableTransactionBui
 use sui_sdk::types::transaction::Argument;
 use sui_sdk::types::transaction::Command;
 use sui_sdk::types::Identifier;
+use sui_sdk::types::MOVE_STDLIB_PACKAGE_ID;
 
 pub fn bytes_to_move_vec<'b, B>(bytes: B, ptb: &mut Ptb) -> Result<Argument, Error>
 where
@@ -31,4 +32,15 @@ pub fn identity_tag(package_id: ObjectID) -> Result<StructTag, Error> {
       .map_err(|err| Error::ParsingFailed(format!("\"Identity\" to identifier; {err}")))?,
     type_params: vec![],
   })
+}
+
+pub fn str_to_move_string(s: impl AsRef<str>, ptb: &mut Ptb) -> Result<Argument, anyhow::Error> {
+  let str_bytes = bytes_to_move_vec(s.as_ref().as_bytes(), ptb)?;
+  Ok(ptb.programmable_move_call(
+    MOVE_STDLIB_PACKAGE_ID,
+    Identifier::from_str("string")?,
+    Identifier::from_str("utf8")?,
+    vec![],
+    vec![str_bytes],
+  ))
 }

@@ -6,12 +6,13 @@ use crate::sui::types::VecMap;
 use crate::sui::types::VecSet;
 use serde::Deserialize;
 use serde::Serialize;
+use sui_sdk::types::base_types::ObjectID;
 use sui_sdk::types::id::ID;
 use sui_sdk::types::id::UID;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(try_from = "SuiProposal", into = "SuiProposal")]
-pub(crate) struct Proposal {
+pub struct Proposal {
   id: UID,
   expiration_epoch: Option<u64>,
   votes: u64,
@@ -77,8 +78,24 @@ impl<T> Multicontroller<T> {
   pub fn controlled_value(&self) -> &T {
     &self.controlled_value
   }
+  pub fn threshold(&self) -> u64 {
+    self.threshold
+  }
+  pub fn controller_voting_power(&self, controller_cap_id: ObjectID) -> Option<u64> {
+    self.controllers.get(&Hashable(ID::new(controller_cap_id))).copied()
+  }
+  pub fn proposals(&self) -> &HashMap<String, Proposal> {
+    &self.proposals
+  }
   pub fn into_inner(self) -> T {
     self.controlled_value
+  }
+  pub(crate) fn controllers(&self) -> &HashMap<Hashable<ID>, u64> {
+    &self.controllers
+  }
+  pub fn has_member(&self, cap_id: ObjectID) -> bool {
+    let cap = Hashable(ID::new(cap_id));
+    self.controllers.contains_key(&cap)
   }
 }
 
