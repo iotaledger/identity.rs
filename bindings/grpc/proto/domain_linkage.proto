@@ -4,6 +4,52 @@
 syntax = "proto3";
 package domain_linkage;
 
+message ValidateDidResponse {
+    string did = 1;
+    message Domains {
+        message ValidDomain {
+            string url = 1;
+            string credential = 2;
+            string service_id = 3;
+        }
+
+        repeated ValidDomain valid = 1;
+
+        message InvalidDomain {
+            string url = 1;
+            optional string credential = 2;
+            string service_id = 3;
+            string error = 4;
+        }
+
+        repeated InvalidDomain invalid = 2;
+    }
+    Domains domains = 2;
+}
+
+message ValidateDomainResponse {
+    string domain = 1;
+    message LinkedDids {
+        message ValidDid {
+            string did = 1;
+            string credential = 2;
+            string service_id = 3;
+        }
+
+        repeated ValidDid valid = 1;
+
+        message InvalidDid {
+            optional string did = 1;
+            optional string credential = 2;
+            optional string service_id = 3;
+            string error = 4;
+        }
+
+        repeated InvalidDid invalid = 2;
+    }
+    LinkedDids linked_dids = 2;
+}
+
 message ValidateDomainRequest {
     // domain to validate
     string domain = 1;
@@ -14,27 +60,6 @@ message ValidateDomainAgainstDidConfigurationRequest {
     string domain = 1;
     // already resolved domain linkage config
     string did_configuration = 2;
-}
-
-message LinkedDidValidationStatus {
-    // validation succeeded or not, `error` property is added for `false` cases
-    bool valid = 1;
-    // credential from `linked_dids` as compact JWT domain linkage credential if it could be retrieved
-    optional string document = 2;
-    // an error message, that occurred when validated, omitted if valid
-    optional string error = 3;
-}
-
-message ValidateDomainResponse {
-    // list of JWT domain linkage credential, uses the same order as the `did-configuration.json` file for domain
-    repeated LinkedDidValidationStatus linked_dids  = 1;
-}
-
-message LinkedDidEndpointValidationStatus {
-    // id of service endpoint entry
-    string id = 1;
-    // list of JWT domain linkage credential, uses the same order as the `did-configuration.json` file for domain
-    repeated LinkedDidValidationStatus service_endpoint  = 2;
 }
 
 message ValidateDidRequest {
@@ -49,15 +74,13 @@ message ValidateDidAgainstDidConfigurationsRequest {
     repeated ValidateDomainAgainstDidConfigurationRequest did_configurations = 2;
 }
 
-message ValidateDidResponse {
-    // mapping of service entries from DID with validation status for endpoint URLs
-    repeated LinkedDidEndpointValidationStatus service = 1;
-}
-
 service DomainLinkage {
     rpc validate_domain(ValidateDomainRequest) returns (ValidateDomainResponse);
-    rpc validate_domain_against_did_configuration(ValidateDomainAgainstDidConfigurationRequest) returns (ValidateDomainResponse);
+    rpc validate_domain_against_did_configuration(
+        ValidateDomainAgainstDidConfigurationRequest)
+        returns (ValidateDomainResponse);
 
     rpc validate_did(ValidateDidRequest) returns (ValidateDidResponse);
-    rpc validate_did_against_did_configurations(ValidateDidAgainstDidConfigurationsRequest) returns (ValidateDidResponse);
+    rpc validate_did_against_did_configurations(
+        ValidateDidAgainstDidConfigurationsRequest) returns (ValidateDidResponse);
 }
