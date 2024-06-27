@@ -1,4 +1,4 @@
-import {encode as base64Encode} from 'base64-arraybuffer';
+import { encode as base64Encode } from 'base64-arraybuffer';
 import type { KeyIdStorage, MethodDigest } from "~identity_wasm";
 
 export class KeyIdMemStore implements KeyIdStorage {
