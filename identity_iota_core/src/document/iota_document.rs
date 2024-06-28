@@ -555,6 +555,12 @@ impl From<IotaDocument> for CoreDocument {
   }
 }
 
+impl From<CoreDocument> for IotaDocument {
+  fn from(value: CoreDocument) -> Self {
+      IotaDocument { document: value, metadata: IotaDocumentMetadata::default() }
+  }
+}
+
 impl TryFrom<(CoreDocument, IotaDocumentMetadata)> for IotaDocument {
   type Error = Error;
   /// Converts the tuple into an [`IotaDocument`] if the given [`CoreDocument`] has an identifier satisfying the

@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use std::borrow::Cow;
 
+use identity_did::DIDKey;
 use identity_jose::jwk::Jwk;
 use serde::de;
 use serde::Deserialize;
@@ -16,6 +17,7 @@ use identity_core::convert::FmtJson;
 
 use crate::error::Error;
 use crate::error::Result;
+use crate::jose::did_key_to_jwk;
 use crate::verification_method::MethodBuilder;
 use crate::verification_method::MethodData;
 use crate::verification_method::MethodRef;
@@ -244,6 +246,27 @@ impl KeyComparable for VerificationMethod {
   #[inline]
   fn key(&self) -> &Self::Key {
     self.id()
+  }
+}
+
+impl TryFrom<DIDKey> for VerificationMethod {
+  type Error = Error;
+  fn try_from(value: DIDKey) -> Result<Self, Self::Error> {
+    let mut id: DIDUrl = value.clone().into();
+    let _ = id.set_fragment(Some(value.method_id()));
+    let controller = value.clone().into();
+    let method_type = MethodType::JSON_WEB_KEY;
+    let data = did_key_to_jwk(&value)
+      .map_err(|_| Error::InvalidKeyDataMultibase)
+      .map(MethodData::PublicKeyJwk)?;
+
+    Ok(VerificationMethod {
+      id,
+      controller,
+      type_: method_type,
+      data,
+      properties: Object::default(),
+    })
   }
 }
 
