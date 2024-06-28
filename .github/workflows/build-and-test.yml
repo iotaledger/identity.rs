@@ -251,6 +251,7 @@ jobs:
           push: false
           labels: cypress-test:latest
           load: true
+          driver: docker
 
       - name: Run cypress
         run: docker run cypress-test --browser firefox
@@ -299,6 +300,7 @@ jobs:
           push: false
           labels: cypress-test:latest
           load: true
+          driver: docker
 
       - name: Run cypress
         run: docker run cypress-test --browser chrome
