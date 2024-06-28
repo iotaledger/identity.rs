@@ -204,8 +204,102 @@ jobs:
         uses: './.github/actions/iota-sandbox/setup'
 
       - name: Run Wasm examples
-        run: npm run test:examples
+        run: npm run test:readme && npm run test:node
         working-directory: bindings/wasm
+
+      - name: Tear down iota sandbox
+        if: always()
+        uses: './.github/actions/iota-sandbox/tear-down'
+
+  test-wasm-firefox:
+    needs: build-wasm
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        include:
+          - os: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - name: Install JS dependencies
+        run: npm ci
+        working-directory: bindings/wasm
+
+      - name: Download bindings/wasm artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: identity-wasm-bindings-build
+          path: bindings/wasm
+
+      - name: Start iota sandbox
+        uses: './.github/actions/iota-sandbox/setup'
+
+      - name: Build Docker image
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: bindings/wasm/
+          file: bindings/wasm/cypress/Dockerfile
+          push: false
+          labels: cypress-test:latest
+
+      - name: Run cypress
+        run: docker run cypress-test --browser firefox
+
+      - name: Tear down iota sandbox
+        if: always()
+        uses: './.github/actions/iota-sandbox/tear-down'
+
+  test-wasm-chrome:
+    needs: build-wasm
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        include:
+          - os: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - name: Install JS dependencies
+        run: npm ci
+        working-directory: bindings/wasm
+
+      - name: Download bindings/wasm artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: identity-wasm-bindings-build
+          path: bindings/wasm
+
+      - name: Start iota sandbox
+        uses: './.github/actions/iota-sandbox/setup'
+
+      - name: Build Docker image
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: bindings/wasm/
+          file: bindings/wasm/cypress/Dockerfile
+          push: false
+          labels: cypress-test:latest
+
+      - name: Run cypress
+        run: docker run cypress-test --browser chrome
 
       - name: Tear down iota sandbox
         if: always()
