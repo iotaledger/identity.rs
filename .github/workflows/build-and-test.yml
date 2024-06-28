@@ -250,6 +250,7 @@ jobs:
           file: bindings/wasm/cypress/Dockerfile
           push: false
           labels: cypress-test:latest
+          load: true
 
       - name: Run cypress
         run: docker run cypress-test --browser firefox
@@ -297,6 +298,7 @@ jobs:
           file: bindings/wasm/cypress/Dockerfile
           push: false
           labels: cypress-test:latest
+          load: true
 
       - name: Run cypress
         run: docker run cypress-test --browser chrome
