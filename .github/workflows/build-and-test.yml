@@ -230,10 +230,10 @@ jobs:
         with:
           node-version: 16.x
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          driver: docker
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v2
+      #   with:
+      #     driver: docker
   
       - name: Install JS dependencies
         run: npm ci
@@ -254,7 +254,7 @@ jobs:
           context: bindings/wasm/
           file: bindings/wasm/cypress/Dockerfile
           push: false
-          labels: cypress-test:latest
+          tags: cypress-test:latest
           load: true
 
       - name: Run cypress
@@ -283,10 +283,10 @@ jobs:
         with:
           node-version: 16.x
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          driver: docker
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v2
+      #   with:
+      #     driver: docker
 
       - name: Install JS dependencies
         run: npm ci
@@ -307,7 +307,7 @@ jobs:
           context: bindings/wasm/
           file: bindings/wasm/cypress/Dockerfile
           push: false
-          labels: cypress-test:latest
+          tags: cypress-test:latest
           load: true
 
       - name: Run cypress
