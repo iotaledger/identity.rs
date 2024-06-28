@@ -258,7 +258,7 @@ jobs:
           load: true
 
       - name: Run cypress
-        run: docker run cypress-test --browser firefox
+        run: docker run cypress-test test:browser:parallel:firefox
 
       - name: Tear down iota sandbox
         if: always()
@@ -311,7 +311,7 @@ jobs:
           load: true
 
       - name: Run cypress
-        run: docker run cypress-test --browser chrome
+        run: docker run test:browser:parallel:chrome
 
       - name: Tear down iota sandbox
         if: always()
