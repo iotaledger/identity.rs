@@ -229,11 +229,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 16.x
-
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v2
-      #   with:
-      #     driver: docker
   
       - name: Install JS dependencies
         run: npm ci
@@ -283,11 +278,6 @@ jobs:
         with:
           node-version: 16.x
 
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v2
-      #   with:
-      #     driver: docker
-
       - name: Install JS dependencies
         run: npm ci
         working-directory: bindings/wasm
@@ -311,7 +301,7 @@ jobs:
           load: true
 
       - name: Run cypress
-        run: docker run test:browser:parallel:chrome
+        run: docker run cypress-test test:browser:parallel:chrome
 
       - name: Tear down iota sandbox
         if: always()
