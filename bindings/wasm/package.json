@@ -60,7 +60,7 @@
     "concurrently": "^7.6.0",
     "copy-webpack-plugin": "^7.0.0",
     "cypress": "^10.11.0",
-    "cypress-parallel": "^0.9.1",
+    "cypress-parallel": "^0.12.0",
     "dprint": "^0.33.0",
     "fs-extra": "^10.1.0",
     "jsdoc-to-markdown": "^7.1.1",
