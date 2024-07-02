@@ -38,4 +38,4 @@ jobs:
         context: .
         file: bindings/grpc/Dockerfile
         push: false
-        labels: iotaledger/identity-grpc:latest
+        tags: iotaledger/identity-grpc:latest
