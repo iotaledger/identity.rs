@@ -17,18 +17,18 @@ bcs = "0.1.4"
 identity_core = { version = "=1.2.0", path = "../identity_core" }
 iota-crypto = { version = "0.23" }
 identity_jose = { version = "=1.2.0", path = "../identity_jose" }
-identity_storage = { version = "=1.2.0", path = "../identity_storage" }
 identity_verification = { version = "=1.2.0", path = "../identity_verification" }
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "d7a33a9f79271bfc19fc4c8816ea5467e4205e17" }
 futures = { version = "0.3", default-features = false }
 iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
-move-core-types= { git = "https://github.com/iotaledger/kinesis.git", package = "move-core-types", version = "0.0.4" }
+move-core-types.workspace = true
+secret-storage.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-shared-crypto = { git = "https://github.com/iotaledger/kinesis.git", package = "shared-crypto" }
+shared-crypto.workspace = true
 strum.workspace = true
-sui-config = { git = "https://github.com/iotaledger/kinesis.git", package = "sui-config" }
-sui-sdk = { git = "https://github.com/iotaledger/kinesis.git", package = "sui-sdk" }
+sui-config.workspace = true
+sui-sdk.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt", "process"] }
 

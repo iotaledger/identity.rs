@@ -28,7 +28,7 @@ prefix-hex = { version = "0.7", default-features = false }
 ref-cast = { version = "1.0.14", default-features = false }
 serde.workspace = true
 serde_json.workspace = true
-sui-sdk = { git = "https://github.com/iotaledger/kinesis.git", package = "sui-sdk" }
+sui-sdk.workspace = true
 strum.workspace = true
 thiserror.workspace = true
 

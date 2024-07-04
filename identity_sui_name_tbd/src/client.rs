@@ -10,13 +10,11 @@ use fastcrypto::traits::ToFromBytes;
 use futures::stream::FuturesUnordered;
 use futures::Future;
 use futures::TryStreamExt;
-use identity_storage::JwkStorage;
-use identity_storage::KeyId;
-use identity_storage::KeyIdStorage;
-use identity_storage::Storage;
 use identity_verification::jwk::Jwk;
 use move_core_types::account_address::AccountAddress;
 use move_core_types::language_storage::StructTag;
+use secret_storage::key_signature_set::KeySignatureTypes;
+use secret_storage::signer::Signer;
 use shared_crypto::intent::Intent;
 use shared_crypto::intent::IntentMessage;
 use sui_sdk::rpc_types::OwnedObjectRef;
@@ -47,19 +45,52 @@ use crate::migration::get_identity_document;
 use crate::migration::lookup;
 use crate::Error;
 
-pub struct IdentityClientBuilder<K, I> {
+pub struct KinesisKeySignature {
+  pub public_key: Vec<u8>,
+  pub signature: Vec<u8>,
+}
+
+impl KeySignatureTypes for KinesisKeySignature {
+  type PublicKey = Vec<u8>;
+  type Signature = Vec<u8>;
+}
+
+/// Mirrored types from identity_storage::KeyId
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub struct KeyId(String);
+
+impl KeyId {
+  /// Creates a new key identifier from a string.
+  pub fn new(id: impl Into<String>) -> Self {
+    Self(id.into())
+  }
+
+  /// Returns string representation of the key id.
+  pub fn as_str(&self) -> &str {
+    &self.0
+  }
+}
+
+impl std::fmt::Display for KeyId {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str(&self.0)
+  }
+}
+
+impl From<KeyId> for String {
+  fn from(value: KeyId) -> Self {
+    value.0
+  }
+}
+
+#[derive(Default)]
+pub struct IdentityClientBuilder {
   pub(crate) identity_iota_package_id: Option<ObjectID>,
-  pub(crate) public_jwk: Option<Jwk>,
-  pub(crate) sender_key_id: Option<KeyId>,
-  pub(crate) storage: Option<Storage<K, I>>,
+  pub(crate) sender_public_key: Option<Vec<u8>>,
   pub(crate) sui_client: Option<SuiClient>,
 }
 
-impl<K, I> IdentityClientBuilder<K, I>
-where
-  K: JwkStorage,
-  I: KeyIdStorage,
-{
+impl IdentityClientBuilder {
   /// Sets the `identity_iota_package_id` value.
   #[must_use]
   pub fn identity_iota_package_id(mut self, value: ObjectID) -> Self {
@@ -67,24 +98,10 @@ where
     self
   }
 
-  /// Sets the `sender_key_id` value.
-  #[must_use]
-  pub fn sender_key_id(mut self, value: KeyId) -> Self {
-    self.sender_key_id = Some(value);
-    self
-  }
-
   /// Sets the `sender_public_key` value.
   #[must_use]
-  pub fn sender_public_jwk(mut self, value: Jwk) -> Self {
-    self.public_jwk = Some(value);
-    self
-  }
-
-  /// Sets the `storage` value.
-  #[must_use]
-  pub fn storage(mut self, value: Storage<K, I>) -> Self {
-    self.storage = Some(value);
+  pub fn sender_public_key(mut self, value: &[u8]) -> Self {
+    self.sender_public_key = Some(value.into());
     self
   }
 
@@ -96,44 +113,26 @@ where
   }
 
   /// Returns a new `IdentityClientBuilder` based on the `IdentityClientBuilder` configuration.
-  pub fn build(self) -> Result<IdentityClient<K, I>, Error> {
+  pub fn build(self) -> Result<IdentityClient, Error> {
     IdentityClient::from_builder(self)
   }
 }
 
-impl<K, I> Default for IdentityClientBuilder<K, I> {
-  fn default() -> Self {
-    Self {
-      identity_iota_package_id: None,
-      public_jwk: None,
-      sender_key_id: None,
-      storage: None,
-      sui_client: None,
-    }
-  }
-}
-
-struct SigningInfo<K, I> {
-  sender_key_id: KeyId,
-  sender_public_jwk: Jwk,
+struct SigningInfo {
+  #[allow(dead_code)]
   sender_public_key: Vec<u8>,
   sender_address: SuiAddress,
-  storage: Storage<K, I>,
 }
 
-pub struct IdentityClient<K, I> {
+pub struct IdentityClient {
   identity_iota_package_id: ObjectID,
   sui_client: SuiClient,
-  signing_info: Option<SigningInfo<K, I>>,
+  signing_info: Option<SigningInfo>,
 }
 
-impl<K, I> IdentityClient<K, I>
-where
-  K: JwkStorage,
-  I: KeyIdStorage,
-{
-  pub fn builder() -> IdentityClientBuilder<K, I> {
-    IdentityClientBuilder::<K, I>::default()
+impl IdentityClient {
+  pub fn builder() -> IdentityClientBuilder {
+    IdentityClientBuilder::default()
   }
 
   pub fn sender_public_key(&self) -> Result<&[u8], Error> {
@@ -153,23 +152,19 @@ where
   }
 
   /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.
-  pub fn from_builder(builder: IdentityClientBuilder<K, I>) -> Result<Self, Error> {
-    let signing_info = match (builder.public_jwk, builder.sender_key_id, builder.storage) {
-      (Some(public_jwk), Some(sender_key_id), Some(storage)) => {
-        let sender_public_key = get_sender_public_key(&public_jwk)?;
+  pub fn from_builder(builder: IdentityClientBuilder) -> Result<Self, Error> {
+    let signing_info = match builder.sender_public_key {
+      Some(sender_public_key) => {
         let sender_address = convert_to_address(&sender_public_key)?;
         Some(SigningInfo {
-          sender_key_id,
-          sender_public_jwk: public_jwk,
           sender_public_key,
           sender_address,
-          storage,
         })
       }
-      (None, None, None) => None,
+      (None) => None,
       _ => {
         return Err(Error::InvalidConfig(
-          r#"properties "public_jwk", "sender_key_id", and "storage" must be set together"#.to_string(),
+          r#"properties "public_jwk" must be set"#.to_string(),
         ));
       }
     };
@@ -186,11 +181,14 @@ where
   }
 
   /// Publishes given IOTA document to new `document` onchain.
-  pub async fn publish_did(&self, iota_document: &[u8], gas_budget: u64) -> Result<ObjectID, Error> {
+  pub async fn publish_did<S>(&self, iota_document: &[u8], gas_budget: u64, signer: &S) -> Result<ObjectID, Error>
+  where
+    S: Signer<KinesisKeySignature>,
+  {
     let programmable_transaction =
       self.get_new_doc_programmable_transaction(iota_document, self.identity_iota_package_id)?;
     let tx_data = self.get_transaction_data(programmable_transaction, gas_budget).await?;
-    let kinesis_signature = self.sign_transaction_data(&tx_data).await?;
+    let kinesis_signature = self.sign_transaction_data(&tx_data, signer).await?;
 
     // execute tx
     let response = self
@@ -272,14 +270,11 @@ where
     Ok(tx_data)
   }
 
-  async fn sign_transaction_data(&self, tx_data: &TransactionData) -> Result<Signature, Error> {
-    let SigningInfo {
-      storage,
-      sender_key_id,
-      sender_public_key,
-      sender_public_jwk,
-      ..
-    } = self
+  async fn sign_transaction_data<S>(&self, tx_data: &TransactionData, signer: &S) -> Result<Signature, Error>
+  where
+    S: Signer<KinesisKeySignature>,
+  {
+    let SigningInfo { sender_public_key, .. } = self
       .signing_info
       .as_ref()
       .ok_or_else(|| Error::InvalidConfig("not properly configured for signing".to_string()))?;
@@ -292,9 +287,8 @@ where
     })?);
     let digest = hasher.finalize().digest;
 
-    let raw_signature = storage
-      .key_storage()
-      .sign(sender_key_id, &digest, sender_public_jwk)
+    let raw_signature = signer
+      .sign(digest)
       .await
       .map_err(|err| Error::TransactionSigningFailed(format!("could not sign transaction message; {err}")))?;
 
@@ -398,7 +392,7 @@ where
   }
 }
 
-impl<K, I> IdentityClient<K, I> {
+impl IdentityClient {
   pub async fn get_did_document(&self, object_id: ObjectID) -> Result<Vec<u8>, Error> {
     // spawn all checks
     let mut all_futures =
@@ -431,7 +425,7 @@ impl<K, I> IdentityClient<K, I> {
   }
 }
 
-fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> {
+pub fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> {
   let public_key_base_64 = &sender_public_jwk
     .try_okp_params()
     .map_err(|err| Error::InvalidKey(format!("key not of type `Okp`; {err}")))?
@@ -441,7 +435,7 @@ fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> {
     .map_err(|err| Error::InvalidKey(format!("could not decode base64 public key; {err}")))
 }
 
-fn convert_to_address(sender_public_key: &[u8]) -> Result<SuiAddress, Error> {
+pub fn convert_to_address(sender_public_key: &[u8]) -> Result<SuiAddress, Error> {
   let to_hash = [[SignatureScheme::ED25519.flag()].as_slice(), sender_public_key].concat();
 
   let mut hasher = Blake2b256::default();

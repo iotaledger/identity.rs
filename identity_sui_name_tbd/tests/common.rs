@@ -105,27 +105,6 @@ async fn publish_package(active_address: SuiAddress) -> anyhow::Result<ObjectID>
   Ok(package_id)
 }
 
-pub async fn request_funds(address: &SuiAddress) -> anyhow::Result<()> {
-  let output = Command::new("sui")
-    .arg("client")
-    .arg("faucet")
-    .arg("--address")
-    .arg(address.to_string())
-    .arg("--json")
-    .output()
-    .await
-    .context("Failed to execute command")?;
-
-  if !output.status.success() {
-    anyhow::bail!(
-      "Failed to request funds from faucet: {}",
-      std::str::from_utf8(&output.stderr).unwrap()
-    );
-  }
-
-  Ok(())
-}
-
 #[derive(Clone)]
 pub struct TestClient {
   client: SuiClient,

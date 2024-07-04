@@ -9,13 +9,15 @@ publish = false
 anyhow = "1.0.62"
 identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false }
 identity_iota = { path = "../identity_iota", default-features = false, features = ["iota-client", "client", "memstore", "domain-linkage", "revocation-bitmap", "status-list-2021"] }
+identity_storage = { path = "../identity_storage" }
 identity_stronghold = { path = "../identity_stronghold", default-features = false }
+identity_sui_name_tbd = { path = "../identity_sui_name_tbd" }
 iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
 primitive-types = "0.12.1"
 rand = "0.8.5"
 sd-jwt-payload = { version = "0.2.1", default-features = false, features = ["sha"] }
 serde_json = { version = "1.0", default-features = false }
-sui-sdk = { git = "https://github.com/iotaledger/kinesis.git", package = "sui-sdk" }
+sui-sdk = { path = "../../kinesis/crates/sui-sdk" }
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
 
 [lib]
@@ -26,6 +28,10 @@ path = "0_basic/0_create_did.rs"
 name = "0_create_did"
 
 [[example]]
+path = "0_basic/0b_create_did.rs"
+name = "0b_create_did"
+
+[[example]]
 path = "0_basic/1_update_did.rs"
 name = "1_update_did"
 
@@ -33,9 +39,9 @@ name = "1_update_did"
 path = "0_basic/2_resolve_did.rs"
 name = "2_resolve_did"
 
-[[example]]
-path = "0_basic/2b_resolve_did_via_kinesis.rs"
-name = "2b_resolve_did_via_kinesis"
+# [[example]]
+# path = "0_basic/2b_resolve_did_via_kinesis.rs"
+# name = "2b_resolve_did_via_kinesis"
 
 [[example]]
 path = "0_basic/3_deactivate_did.rs"

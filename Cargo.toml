@@ -20,10 +20,17 @@ members = [
 exclude = ["bindings/wasm", "bindings/grpc"]
 
 [workspace.dependencies]
+secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", rev = "88cb940bac1e59cc7d1549c54bd0db0a4f59d4d4" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
-thiserror = { version = "1.0", default-features = false }
-strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0", default-features = false }
+strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
+thiserror = { version = "1.0", default-features = false }
+# can be updated to renamed kinesis/iota project after migrating code to it
+# locally checked out project at commit 7899dc9ce682c3d0a97f249ce7eaa27b9473b920
+move-core-types = { path = "../kinesis/external-crates/move/crates/move-core-types" }
+shared-crypto = { path = "../kinesis/crates/shared-crypto" }
+sui-config = { path = "../kinesis/crates/sui-config" }
+sui-sdk = { path = "../kinesis/crates/sui-sdk" }
 
 [workspace.package]
 authors = ["IOTA Stiftung"]
