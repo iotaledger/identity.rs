@@ -45,6 +45,9 @@ use crate::migration::get_identity_document;
 use crate::migration::lookup;
 use crate::Error;
 
+const DEFAULT_NETWORK_NAME: &str = "iota";
+const DEFAULT_IDENTITY_PACKAGE_ID: &str = "0x102acced35e7725d07d496ac4bd7e7babd8f61e90482c66595bf206985024684";
+
 pub struct KinesisKeySignature {
   pub public_key: Vec<u8>,
   pub signature: Vec<u8>,
@@ -88,6 +91,7 @@ pub struct IdentityClientBuilder {
   pub(crate) identity_iota_package_id: Option<ObjectID>,
   pub(crate) sender_public_key: Option<Vec<u8>>,
   pub(crate) sui_client: Option<SuiClient>,
+  pub(crate) network_name: Option<String>,
 }
 
 impl IdentityClientBuilder {
@@ -112,6 +116,13 @@ impl IdentityClientBuilder {
     self
   }
 
+  /// Sets the `network_name` value.
+  #[must_use]
+  pub fn network_name(mut self, value: &str) -> Self {
+    self.network_name = Some(value.to_string());
+    self
+  }
+
   /// Returns a new `IdentityClientBuilder` based on the `IdentityClientBuilder` configuration.
   pub fn build(self) -> Result<IdentityClient, Error> {
     IdentityClient::from_builder(self)
@@ -128,6 +139,7 @@ pub struct IdentityClient {
   identity_iota_package_id: ObjectID,
   sui_client: SuiClient,
   signing_info: Option<SigningInfo>,
+  network_name: String,
 }
 
 impl IdentityClient {
@@ -151,37 +163,42 @@ impl IdentityClient {
       .map(|v| v.sender_address)
   }
 
+  pub fn network_name(&self) -> String {
+    self.network_name.to_string()
+  }
+
   /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.
   pub fn from_builder(builder: IdentityClientBuilder) -> Result<Self, Error> {
-    let signing_info = match builder.sender_public_key {
-      Some(sender_public_key) => {
-        let sender_address = convert_to_address(&sender_public_key)?;
-        Some(SigningInfo {
+    let signing_info = builder
+      .sender_public_key
+      .map(|sender_public_key| {
+        convert_to_address(&sender_public_key).map(|sender_address| SigningInfo {
           sender_public_key,
           sender_address,
         })
-      }
-      (None) => None,
-      _ => {
-        return Err(Error::InvalidConfig(
-          r#"properties "public_jwk" must be set"#.to_string(),
-        ));
-      }
-    };
+      })
+      .transpose()?;
 
     Ok(Self {
       identity_iota_package_id: builder
         .identity_iota_package_id
-        .ok_or_else(|| Error::InvalidConfig("missing `identity_iota_package_id` argument".to_string()))?,
+        .map_or_else(|| ObjectID::from_str(DEFAULT_IDENTITY_PACKAGE_ID), Ok)
+        .map_err(|err| Error::InvalidConfig(format!("could not parse identity package id; {err}")))?,
       sui_client: builder
         .sui_client
         .ok_or_else(|| Error::InvalidConfig("missing `sui_client` argument ".to_string()))?,
       signing_info,
+      network_name: builder.network_name.unwrap_or_else(|| DEFAULT_NETWORK_NAME.to_string()),
     })
   }
 
   /// Publishes given IOTA document to new `document` onchain.
-  pub async fn publish_did<S>(&self, iota_document: &[u8], gas_budget: u64, signer: &S) -> Result<ObjectID, Error>
+  pub async fn publish_raw_did_document<S>(
+    &self,
+    iota_document: &[u8],
+    gas_budget: u64,
+    signer: &S,
+  ) -> Result<ObjectID, Error>
   where
     S: Signer<KinesisKeySignature>,
   {
@@ -393,7 +410,7 @@ impl IdentityClient {
 }
 
 impl IdentityClient {
-  pub async fn get_did_document(&self, object_id: ObjectID) -> Result<Vec<u8>, Error> {
+  pub async fn get_raw_did_document(&self, object_id: ObjectID) -> Result<Vec<u8>, Error> {
     // spawn all checks
     let mut all_futures =
       FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Vec<u8>>, Error>> + Send>>>::new();

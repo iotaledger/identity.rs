@@ -20,7 +20,6 @@ members = [
 exclude = ["bindings/wasm", "bindings/grpc"]
 
 [workspace.dependencies]
-secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", rev = "88cb940bac1e59cc7d1549c54bd0db0a4f59d4d4" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 serde_json = { version = "1.0", default-features = false }
 strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
@@ -31,6 +30,8 @@ move-core-types = { path = "../kinesis/external-crates/move/crates/move-core-typ
 shared-crypto = { path = "../kinesis/crates/shared-crypto" }
 sui-config = { path = "../kinesis/crates/sui-config" }
 sui-sdk = { path = "../kinesis/crates/sui-sdk" }
+# update reference to updated version as soon as available
+secret-storage = { path = "../secret-storage" }
 
 [workspace.package]
 authors = ["IOTA Stiftung"]

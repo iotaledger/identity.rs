@@ -184,7 +184,7 @@ mod resolution {
         .sui_client(sui_client)
         .build()?;
 
-      let result = identity_client.get_did_document(alias_id).await;
+      let result = identity_client.get_raw_did_document(alias_id).await;
 
       assert!(result.is_ok());
 
@@ -203,7 +203,7 @@ mod resolution {
         .sui_client(sui_client)
         .build()?;
 
-      let result = identity_client.get_did_document(alias_id).await;
+      let result = identity_client.get_raw_did_document(alias_id).await;
 
       assert!(result.is_ok());
 
@@ -221,7 +221,7 @@ mod resolution {
         .sui_client(sui_client)
         .build()?;
 
-      let result = identity_client.get_did_document(object_id).await;
+      let result = identity_client.get_raw_did_document(object_id).await;
 
       assert!(result.is_ok());
 

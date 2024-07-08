@@ -6,11 +6,11 @@ pub use identity_client::IotaIdentityClientExt;
 
 #[cfg(feature = "iota-client")]
 pub use self::iota_client::IotaClientExt;
-// #[cfg(feature = "iota-client")]
-// pub use self::kinesis_identity_client::KinesisIotaIdentityClientExt;
+#[cfg(feature = "iota-client")]
+pub use self::kinesis_identity_client::KinesisIotaIdentityClientExt;
 
 mod identity_client;
 #[cfg(feature = "iota-client")]
 mod iota_client;
-// #[cfg(feature = "iota-client")]
-// mod kinesis_identity_client;
+#[cfg(feature = "iota-client")]
+mod kinesis_identity_client;

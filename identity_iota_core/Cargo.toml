@@ -12,13 +12,14 @@ rust-version.workspace = true
 description = "An IOTA Ledger integration for the IOTA DID Method."
 
 [dependencies]
+anyhow = { version = "1.0.57" }
 async-trait = { version = "0.1.56", default-features = false, optional = true }
 futures = { version = "0.3", default-features = false }
 identity_core = { version = "=1.2.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=1.2.0", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=1.2.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.2.0", path = "../identity_document", default-features = false }
-# identity_sui_name_tbd = { path = "../identity_sui_name_tbd" }
+identity_sui_name_tbd = { path = "../identity_sui_name_tbd" }
 identity_verification = { version = "=1.2.0", path = "../identity_verification", default-features = false }
 iota-sdk = { version = "1.0.2", default-features = false, features = ["serde", "std"], optional = true }
 num-derive = { version = "0.4", default-features = false }
@@ -26,6 +27,7 @@ num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
 prefix-hex = { version = "0.7", default-features = false }
 ref-cast = { version = "1.0.14", default-features = false }
+secret-storage.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sui-sdk.workspace = true
@@ -33,7 +35,6 @@ strum.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
-anyhow = { version = "1.0.57" }
 iota-crypto = { version = "0.23", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.29.0", default-features = false, features = ["rt-multi-thread", "macros"] }
