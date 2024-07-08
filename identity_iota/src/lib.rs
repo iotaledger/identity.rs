@@ -73,7 +73,7 @@ pub mod iota {
 pub mod web {
     //! The Web DID method implementation for the IOTA ledger.
     
-    pub use identity_did_methods::WebDID;
+    // pub use identity_did_methods::WebDID;
     pub use identity_did_methods::WebDocument;
     pub use identity_did_methods::WebClient;
     pub use identity_did_methods::WebClientBuilder;

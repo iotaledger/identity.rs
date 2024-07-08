@@ -3,10 +3,10 @@
 use std::{fmt::{Display, Formatter}, str::FromStr};
 
 use identity_core::common::Url;
-use identity_did::{CoreDID, Error, DID};
-use ref_cast::{ref_cast_custom, RefCastCustom};
+use crate::{CoreDID, Error, DID};
+// use ref_cast::{ref_cast_custom, RefCastCustom};
 use ::serde::{Deserialize, Serialize};
-use identity_did::Error as DIDError;
+use crate::Error as DIDError;
 
 /// Alias for a `Result` with the error type [`DIDError`].
 type Result<T> = std::result::Result<T, DIDError>;
@@ -15,7 +15,7 @@ type Result<T> = std::result::Result<T, DIDError>;
 ///
 /// This is a thin wrapper around the [`DID`][`CoreDID`] type from the
 /// [`identity_did`][`identity_did`] crate.
-#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, RefCastCustom)]
+#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize/* , RefCastCustom*/)]
 #[repr(transparent)]
 #[serde(into = "CoreDID", try_from = "CoreDID")]
 pub struct WebDID(CoreDID);
@@ -27,17 +27,17 @@ impl WebDID {
   /// The IOTA DID method name (`"iota"`).
   pub const METHOD: &'static str = "web";
 
-  /// Convert a `CoreDID` reference to an `WebDID` reference without checking the referenced value.
-  ///  
-  /// # Warning
-  /// This method should only be called on [`CoreDIDs`](CoreDID) that
-  /// are known to satisfy the requirements of the Web DID Method specification.  
-  ///
-  /// # Memory safety
-  ///
-  /// The `ref-cast` crate ensures a memory safe implementation.  
-  #[ref_cast_custom]
-  pub(crate) const fn from_inner_ref_unchecked(did: &CoreDID) -> &Self;
+//   /// Convert a `CoreDID` reference to an `WebDID` reference without checking the referenced value.
+//   ///  
+//   /// # Warning
+//   /// This method should only be called on [`CoreDIDs`](CoreDID) that
+//   /// are known to satisfy the requirements of the Web DID Method specification.  
+//   ///
+//   /// # Memory safety
+//   ///
+//   /// The `ref-cast` crate ensures a memory safe implementation.  
+//   #[ref_cast_custom]
+//   pub(crate) const fn from_inner_ref_unchecked(did: &CoreDID) -> &Self;
 
   /// Create a new valid Web DID.
   pub fn new(url: &str) -> Result<Self> {

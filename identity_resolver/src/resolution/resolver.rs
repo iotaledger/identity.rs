@@ -339,33 +339,39 @@ mod iota_handler {
 mod web_handler {
   use crate::ErrorCause;
   use super::Resolver;
-  use identity_did_methods::WebClient;
+  use identity_did::DID;
   use identity_document::document::CoreDocument;
-  use identity_did_methods::WebDID;
-  use identity_did_methods::WebDocument;
+  use identity_did::WebDID;
   use crate::Error;
   use crate::Result;
 
 
   impl<DOC> Resolver<DOC>
   where
-    DOC: From<WebDocument> + AsRef<CoreDocument> + 'static,
+    DOC: From<CoreDocument> + AsRef<CoreDocument> + 'static,
   {
     /// Convenience method for attaching a new handler responsible for resolving Web DIDs.
     ///
     /// See also [`attach_handler`](Self::attach_handler).
-    pub fn attach_web_handler(&mut self, client: WebClient) -> Result<(), Error>
+    pub fn attach_web_handler(&mut self, client: reqwest::Client) -> Result<(), Error>
     {
       let handler = move |did: WebDID| {
         let future_client = client.clone();
         async move {
-          future_client.get(did.to_url())
+          future_client.get(did.to_url().as_ref())
             .send()
             .await
             .map_err(|e| Error::new(ErrorCause::HandlerError { source: Box::new(e) }))?
-            .json::<WebDocument>()
+            .json::<CoreDocument>()
             .await
             .map_err(|e| Error::new(ErrorCause::HandlerError { source: Box::new(e) }))
+            .and_then(|d| 
+              if d.id().as_str() == did.as_str() {
+                Ok(d)
+              } else {
+                Err(Error::new(ErrorCause::DidNotMatching))
+              }
+            )
 
         }
       };

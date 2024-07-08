@@ -22,6 +22,7 @@ identity_document = { version = "=1.2.0", path = "../identity_document", default
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum.workspace = true
 thiserror = { version = "1.0", default-features = false }
+reqwest = { version = "0.12.4", default-features = false, features = ["rustls-tls", "json", "hickory-dns"]}
 
 
 [dependencies.identity_iota_core]
@@ -29,13 +30,6 @@ version = "=1.2.0"
 path = "../identity_iota_core"
 default-features = false
 features = ["send-sync-client-ext", "iota-client"]
-optional = true
-
-[dependencies.identity_did_methods]
-version = "=1.2.0"
-path = "../identity_did_methods"
-default-features = false
-features = ["web"]
 optional = true
 
 [dev-dependencies]
@@ -48,8 +42,7 @@ default = ["revocation-bitmap", "iota", "web"]
 revocation-bitmap = ["identity_credential/revocation-bitmap", "identity_iota_core?/revocation-bitmap"]
 # Enables the IOTA integration for the resolver.
 iota = ["dep:identity_iota_core"]
-# Enables the Web integration for the resolver.
-web = ["dep:identity_did_methods"]
+web = []
 
 [lints]
 workspace = true

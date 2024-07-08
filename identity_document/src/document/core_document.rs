@@ -7,6 +7,7 @@ use core::fmt::Formatter;
 use std::collections::HashMap;
 use std::convert::Infallible;
 
+use identity_did::WebDID;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::DecodedJws;
 use identity_verification::jose::jws::Decoder;
@@ -33,6 +34,7 @@ use identity_verification::MethodRef;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
+
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[rustfmt::skip]
@@ -981,6 +983,20 @@ impl CoreDocument {
     validation_item
       .verify(signature_verifier, public_key)
       .map_err(Error::JwsVerificationError)
+  }
+}
+
+//TODO: Web - impl CoreDocument (WebDID)
+/// DID web
+impl CoreDocument {
+  pub fn new_from_url(url: &str) -> Result<Self, Error>{
+    let id = WebDID::new(url).map_err(|_| Error::InvalidDocument("Invalid DID Web", None))?;
+    let document: CoreDocument = CoreDocument::builder(Object::default())
+      .id(id.into())
+      .build()
+      .map_err(|_| Error::InvalidDocument("empty Document construction failed", None))?;
+
+    Ok(document)
   }
 }
 

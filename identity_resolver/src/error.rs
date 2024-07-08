@@ -71,4 +71,6 @@ pub enum ErrorCause {
   /// No client attached to the specific network.
   #[error("none of the attached clients support the network {0}")]
   UnsupportedNetwork(String),
+  #[error("resolved DID different from the DID Document id")]
+  DidNotMatching
 }

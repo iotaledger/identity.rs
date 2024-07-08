@@ -17,7 +17,6 @@ identity_credential = { version = "=1.2.0", path = "../identity_credential", fea
 identity_did = { version = "=1.2.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.2.0", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=1.2.0", path = "../identity_iota_core", default-features = false }
-identity_did_methods = { version = "=1.2.0", path = "../identity_did_methods", default-features = false }
 identity_resolver = { version = "=1.2.0", path = "../identity_resolver", default-features = false, optional = true }
 identity_storage = { version = "=1.2.0", path = "../identity_storage", default-features = false, features = ["iota-document"] }
 identity_verification = { version = "=1.2.0", path = "../identity_verification", default-features = false }
@@ -36,9 +35,6 @@ client = ["identity_iota_core/client"]
 
 # Enables the iota-client integration, the client trait implementations for it, and the `IotaClientExt` trait.
 iota-client = ["identity_iota_core/iota-client", "identity_resolver?/iota"]
-
-# Enables the DID Web Method integration
-web-method = ["identity_did_methods/web"]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [
