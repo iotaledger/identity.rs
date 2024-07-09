@@ -131,7 +131,9 @@ jobs:
 
       - name: Start iota sandbox
         if: matrix.os == 'ubuntu-latest'
-        uses: './.github/actions/iota-sandbox/setup'
+        uses: 'iotaledger/iota-sandbox/.github/actions/setup@v1.1.0'
+        env:
+          COMPOSE_PROFILES: 'inx-faucet,inx-indexer'
 
       - name: Run tests
         run: cargo test --workspace --all-features --release
@@ -156,7 +158,7 @@ jobs:
 
       - name: Tear down iota sandbox
         if: matrix.os == 'ubuntu-latest' && always()
-        uses: './.github/actions/iota-sandbox/tear-down'
+        uses: 'iotaledger/iota-sandbox/.github/actions/tear-down@v1.1.0'
       
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
@@ -201,7 +203,9 @@ jobs:
           path: bindings/wasm
 
       - name: Start iota sandbox
-        uses: './.github/actions/iota-sandbox/setup'
+        uses: 'iotaledger/iota-sandbox/.github/actions/setup@v1.1.0'
+        env:
+          COMPOSE_PROFILES: 'inx-faucet,inx-indexer'
 
       - name: Run Wasm examples
         run: npm run test:examples
@@ -209,4 +213,4 @@ jobs:
 
       - name: Tear down iota sandbox
         if: always()
-        uses: './.github/actions/iota-sandbox/tear-down'
+        uses: 'iotaledger/iota-sandbox/.github/actions/tear-down@v1.1.0'
