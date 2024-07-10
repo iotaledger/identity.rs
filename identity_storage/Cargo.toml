@@ -25,7 +25,8 @@ identity_verification = { version = "=1.2.0", path = "../identity_verification",
 iota-crypto = { version = "0.23", default-features = false, features = ["ed25519"], optional = true }
 rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"], optional = true }
 seahash = { version = "4.1.0", default_features = false }
-secret-storage.workspace = true
+# update reference to updated version as soon as available
+secret-storage = { path = "../../secret-storage", optional = true }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
@@ -42,9 +43,11 @@ default = ["iota-document", "memstore"]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
 memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto"]
 # Enables `Send` + `Sync` bounds for the storage traits.
-send-sync-storage = []
+send-sync-storage = ["identity_iota_core?/send-sync-client-ext"]
 # Implements the JwkStorageDocumentExt trait for IotaDocument
 iota-document = ["dep:identity_iota_core"]
+# enables support to sign via storage
+storage-signer = ["dep:secret-storage"]
 
 [lints]
 workspace = true

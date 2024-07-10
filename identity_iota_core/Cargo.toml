@@ -19,7 +19,7 @@ identity_core = { version = "=1.2.0", path = "../identity_core", default-feature
 identity_credential = { version = "=1.2.0", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=1.2.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.2.0", path = "../identity_document", default-features = false }
-identity_sui_name_tbd = { path = "../identity_sui_name_tbd" }
+identity_sui_name_tbd = { path = "../identity_sui_name_tbd", optional = true }
 identity_verification = { version = "=1.2.0", path = "../identity_verification", default-features = false }
 iota-sdk = { version = "1.0.2", default-features = false, features = ["serde", "std"], optional = true }
 num-derive = { version = "0.4", default-features = false }
@@ -27,12 +27,16 @@ num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
 prefix-hex = { version = "0.7", default-features = false }
 ref-cast = { version = "1.0.14", default-features = false }
-secret-storage.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-sui-sdk.workspace = true
 strum.workspace = true
 thiserror.workspace = true
+# can be updated to renamed kinesis/iota project after migrating code to it
+# locally checked out project at commit 7899dc9ce682c3d0a97f249ce7eaa27b9473b920
+sui-sdk = { path = "../../kinesis/crates/sui-sdk", optional = true }
+# update reference to updated version as soon as available
+secret-storage = { path = "../../secret-storage", optional = true }
+
 
 [dev-dependencies]
 iota-crypto = { version = "0.23", default-features = false, features = ["bip39", "bip39-en"] }
@@ -51,10 +55,12 @@ default = ["client", "iota-client", "revocation-bitmap", "send-sync-client-ext"]
 client = ["dep:async-trait", "iota-sdk"]
 # Enables the implementation of the extension traits on the iota-sdk's Client.
 iota-client = ["client", "iota-sdk/client", "iota-sdk/tls"]
+# Enables the implementation of the extension traits on the kinesis client
+kinesis-client = ["client", "dep:identity_sui_name_tbd", "sui-sdk", "secret-storage"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_credential/revocation-bitmap"]
 # Adds Send bounds on the futures produces by the client extension traits.
-send-sync-client-ext = []
+send-sync-client-ext = ["secret-storage/send-sync-signer"]
 # Disables the blanket implementation of `IotaIdentityClientExt`.
 test = ["client"]
 

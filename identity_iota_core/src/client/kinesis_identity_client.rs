@@ -18,8 +18,8 @@ use crate::StateMetadataDocument;
 
 /// An extension trait that provides helper functions forasync_trait resolution of DID documents in unmigrated Alias
 /// Outputs and migrated identity document.
-#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
-#[cfg_attr(feature = "send-sync-storage", async_trait)]
+#[cfg_attr(not(feature = "send-sync-client-ext"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-client-ext", async_trait)]
 pub trait KinesisIotaIdentityClientExt {
   /// Resolve a [`IotaDocument`].
   async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument>;
@@ -31,11 +31,11 @@ pub trait KinesisIotaIdentityClientExt {
   /// resolving.
   async fn publish_did_document<S>(&self, document: IotaDocument, gas_budget: u64, signer: &S) -> Result<IotaDocument>
   where
-    S: Signer<KinesisKeySignature>;
+    S: Signer<KinesisKeySignature> + Send + Sync;
 }
 
-#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
-#[cfg_attr(feature = "send-sync-storage", async_trait)]
+#[cfg_attr(not(feature = "send-sync-client-ext"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-client-ext", async_trait)]
 impl KinesisIotaIdentityClientExt for IdentityClient {
   async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument> {
     // get alias id from did (starting with 0x)
@@ -50,7 +50,7 @@ impl KinesisIotaIdentityClientExt for IdentityClient {
 
   async fn publish_did_document<S>(&self, document: IotaDocument, gas_budget: u64, signer: &S) -> Result<IotaDocument>
   where
-    S: Signer<KinesisKeySignature>,
+    S: Signer<KinesisKeySignature> + Send + Sync,
   {
     let packed = document.clone().pack().unwrap();
 

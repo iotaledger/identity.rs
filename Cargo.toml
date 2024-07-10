@@ -24,14 +24,6 @@ serde = { version = "1.0", default-features = false, features = ["alloc", "deriv
 serde_json = { version = "1.0", default-features = false }
 strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
-# can be updated to renamed kinesis/iota project after migrating code to it
-# locally checked out project at commit 7899dc9ce682c3d0a97f249ce7eaa27b9473b920
-move-core-types = { path = "../kinesis/external-crates/move/crates/move-core-types" }
-shared-crypto = { path = "../kinesis/crates/shared-crypto" }
-sui-config = { path = "../kinesis/crates/sui-config" }
-sui-sdk = { path = "../kinesis/crates/sui-sdk" }
-# update reference to updated version as soon as available
-secret-storage = { path = "../secret-storage" }
 
 [workspace.package]
 authors = ["IOTA Stiftung"]

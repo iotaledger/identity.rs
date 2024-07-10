@@ -200,7 +200,7 @@ impl IdentityClient {
     signer: &S,
   ) -> Result<ObjectID, Error>
   where
-    S: Signer<KinesisKeySignature>,
+    S: Signer<KinesisKeySignature> + Send + Sync,
   {
     let programmable_transaction =
       self.get_new_doc_programmable_transaction(iota_document, self.identity_iota_package_id)?;
@@ -289,7 +289,7 @@ impl IdentityClient {
 
   async fn sign_transaction_data<S>(&self, tx_data: &TransactionData, signer: &S) -> Result<Signature, Error>
   where
-    S: Signer<KinesisKeySignature>,
+    S: Signer<KinesisKeySignature> + Send + Sync,
   {
     let SigningInfo { sender_public_key, .. } = self
       .signing_info
