@@ -1,28 +1,13 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::MemStorage;
-use identity_iota::iota::IotaDocument;
+use examples::create_kinesis_did_document;
+use examples::get_client_and_create_account;
+
 use identity_iota::iota::KinesisIotaIdentityClientExt;
-use identity_iota::iota::NetworkName;
-use identity_iota::storage::JwkDocumentExt;
-use identity_iota::storage::JwkMemStore;
-use identity_iota::storage::KeyIdMemstore;
-use identity_iota::verification::jws::JwsAlgorithm;
-use identity_iota::verification::MethodScope;
-use identity_storage::JwkStorage;
-use identity_storage::KeyType;
 use identity_storage::StorageSigner;
-use identity_sui_name_tbd::client::convert_to_address;
-use identity_sui_name_tbd::client::get_sender_public_key;
-use identity_sui_name_tbd::client::IdentityClient;
-use identity_sui_name_tbd::utils::request_funds;
 
-use sui_sdk::SuiClientBuilder;
-
-const TEST_GAS_BUDGET: u64 = 50_000_000;
-
-/// Demonstrates how to create a DID Document and publish it in a new Alias Output.
+/// Demonstrates how to create a DID Document and publish it on chain.
 ///
 /// In this example we connect to a locally running private network, but it can be adapted
 /// to run on any IOTA node by setting the network and faucet endpoints.
@@ -31,53 +16,16 @@ const TEST_GAS_BUDGET: u64 = 50_000_000;
 /// https://github.com/iotaledger/hornet/tree/develop/private_tangle
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  // The API endpoint of an IOTA node
-  let api_endpoint: &str = "http://127.0.0.1:9000";
+  // create new client to interact with chain and get funded account with keys
+  let (identity_client, storage, key_id, public_key_jwk) = get_client_and_create_account().await?;
+  // create new signer that will be used to sign tx with
+  let signer = StorageSigner::new(&storage, key_id, public_key_jwk);
 
-  // Insert a new Ed25519 verification method in the DID document.
-  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
-
-  let sui_client = SuiClientBuilder::default()
-    .build(api_endpoint)
-    .await
-    .map_err(|err| anyhow::anyhow!(format!("failed to connect to network; {}", err)))?;
-
-  // generate new key
-  let generate = storage
-    .key_storage()
-    .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
-    .await?;
-  let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
-  let public_key_bytes = get_sender_public_key(&public_key_jwk)?;
-  let sender_address = convert_to_address(&public_key_bytes)?;
-  request_funds(&sender_address).await?;
-
-  let identity_client: IdentityClient = IdentityClient::builder()
-    .sui_client(sui_client)
-    .sender_public_key(&public_key_bytes)
-    .build()?;
-
-  let signer = StorageSigner::new(&storage, generate.key_id, public_key_jwk);
-
-  // Create a new DID document with a placeholder DID.
-  // The DID will be derived from the Alias Id of the Alias Output after publishing.
-  let mut unpublished: IotaDocument = IotaDocument::new(&NetworkName::try_from(identity_client.network_name())?);
-
-  unpublished
-    .generate_method(
-      &storage,
-      JwkMemStore::ED25519_KEY_TYPE,
-      JwsAlgorithm::EdDSA,
-      None,
-      MethodScope::VerificationMethod,
-    )
-    .await?;
-
-  let document = identity_client
-    .publish_did_document(unpublished, TEST_GAS_BUDGET, &signer)
-    .await?;
+  // create new DID document and publish it
+  let document = create_kinesis_did_document(&identity_client, &storage, &signer).await?;
   println!("Published DID document: {document:#}");
 
+  // check if we can resolve it via client
   let resolved = identity_client.resolve_did(document.id()).await?;
   println!("Resolved DID document: {resolved:#}");
 

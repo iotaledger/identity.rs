@@ -9,14 +9,24 @@ use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::KinesisIotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::KeyIdMemstore;
 use identity_iota::storage::Storage;
+use identity_iota::verification::jwk::Jwk;
+use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 
-use identity_iota::verification::jws::JwsAlgorithm;
+use identity_storage::JwkStorage;
+use identity_storage::KeyId;
+use identity_storage::KeyType;
+use identity_storage::StorageSigner;
+use identity_sui_name_tbd::client::convert_to_address;
+use identity_sui_name_tbd::client::get_sender_public_key;
+use identity_sui_name_tbd::client::IdentityClient;
+use identity_sui_name_tbd::utils::request_funds;
 use iota_sdk::client::api::GetAddressesOptions;
 use iota_sdk::client::node_api::indexer::query_parameters::QueryParameter;
 use iota_sdk::client::secret::SecretManager;
@@ -27,9 +37,11 @@ use iota_sdk::types::block::address::Bech32Address;
 use iota_sdk::types::block::address::Hrp;
 use rand::distributions::DistString;
 use serde_json::Value;
+use sui_sdk::SuiClientBuilder;
 
 pub static API_ENDPOINT: &str = "http://localhost";
 pub static FAUCET_ENDPOINT: &str = "http://localhost/faucet/api/enqueue";
+pub const TEST_GAS_BUDGET: u64 = 50_000_000;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
@@ -55,6 +67,31 @@ pub async fn create_did(
   let document: IotaDocument = client.publish_did_output(secret_manager, alias_output).await?;
 
   Ok((address, document, fragment))
+}
+
+pub async fn create_kinesis_did_document(
+  identity_client: &IdentityClient,
+  storage: &Storage<JwkMemStore, KeyIdMemstore>,
+  signer: &StorageSigner<'_, JwkMemStore, KeyIdMemstore>,
+) -> anyhow::Result<IotaDocument> {
+  // Create a new DID document with a placeholder DID.
+  // The DID will be derived from the Alias Id of the Alias Output after publishing.
+  let mut unpublished: IotaDocument = IotaDocument::new(&NetworkName::try_from(identity_client.network_name())?);
+  unpublished
+    .generate_method(
+      storage,
+      JwkMemStore::ED25519_KEY_TYPE,
+      JwsAlgorithm::EdDSA,
+      None,
+      MethodScope::VerificationMethod,
+    )
+    .await?;
+
+  let document = identity_client
+    .publish_did_document(unpublished, TEST_GAS_BUDGET, signer)
+    .await?;
+
+  Ok(document)
 }
 
 /// Creates an example DID document with the given `network_name`.
@@ -184,4 +221,35 @@ pub fn pretty_print_json(label: &str, value: &str) {
   println!("{}:", label);
   println!("--------------------------------------");
   println!("{} \n", pretty_json);
+}
+
+pub async fn get_client_and_create_account(
+) -> Result<(IdentityClient, Storage<JwkMemStore, KeyIdMemstore>, KeyId, Jwk), anyhow::Error> {
+  // The API endpoint of an IOTA node
+  let api_endpoint: &str = "http://127.0.0.1:9000";
+
+  // Insert a new Ed25519 verification method in the DID document.
+  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+
+  let sui_client = SuiClientBuilder::default()
+    .build(api_endpoint)
+    .await
+    .map_err(|err| anyhow::anyhow!(format!("failed to connect to network; {}", err)))?;
+
+  // generate new key
+  let generate = storage
+    .key_storage()
+    .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
+    .await?;
+  let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
+  let public_key_bytes = get_sender_public_key(&public_key_jwk)?;
+  let sender_address = convert_to_address(&public_key_bytes)?;
+  request_funds(&sender_address).await?;
+
+  let identity_client: IdentityClient = IdentityClient::builder()
+    .sui_client(sui_client)
+    .sender_public_key(&public_key_bytes)
+    .build()?;
+
+  Ok((identity_client, storage, generate.key_id, public_key_jwk))
 }

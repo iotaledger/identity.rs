@@ -129,12 +129,14 @@ impl IdentityClientBuilder {
   }
 }
 
+#[derive(Clone)]
 struct SigningInfo {
   #[allow(dead_code)]
   sender_public_key: Vec<u8>,
   sender_address: SuiAddress,
 }
 
+#[derive(Clone)]
 pub struct IdentityClient {
   identity_iota_package_id: ObjectID,
   sui_client: SuiClient,
