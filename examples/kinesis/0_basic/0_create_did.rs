@@ -1,8 +1,8 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_kinesis_did_document;
-use examples::get_client_and_create_account;
+use examples_kinesis::create_kinesis_did_document;
+use examples_kinesis::get_client_and_create_account;
 
 use identity_iota::iota::KinesisIotaIdentityClientExt;
 use identity_storage::StorageSigner;

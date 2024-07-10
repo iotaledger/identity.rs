@@ -3,10 +3,10 @@
 
 use std::ops::Deref;
 
-use examples::create_did;
-use examples::random_stronghold_path;
-use examples::MemStorage;
-use examples::API_ENDPOINT;
+use examples_iota::create_did;
+use examples_iota::random_stronghold_path;
+use examples_iota::MemStorage;
+use examples_iota::API_ENDPOINT;
 use identity_iota::core::Duration;
 use identity_iota::core::Timestamp;
 use identity_iota::iota::block::output::unlock_condition::AddressUnlockCondition;

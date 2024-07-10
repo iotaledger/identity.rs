@@ -1,10 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_did;
-use examples::random_stronghold_path;
-use examples::MemStorage;
-use examples::API_ENDPOINT;
+use examples_iota::create_did;
+use examples_iota::random_stronghold_path;
+use examples_iota::MemStorage;
+use examples_iota::API_ENDPOINT;
 use identity_iota::iota::block::output::feature::MetadataFeature;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;

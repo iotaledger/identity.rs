@@ -1,12 +1,12 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_did_document;
-use examples::get_address_with_funds;
-use examples::random_stronghold_path;
-use examples::MemStorage;
-use examples::API_ENDPOINT;
-use examples::FAUCET_ENDPOINT;
+use examples_iota::create_did_document;
+use examples_iota::get_address_with_funds;
+use examples_iota::random_stronghold_path;
+use examples_iota::MemStorage;
+use examples_iota::API_ENDPOINT;
+use examples_iota::FAUCET_ENDPOINT;
 use identity_iota::iota::block::address::NftAddress;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::IotaClientExt;

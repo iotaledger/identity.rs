@@ -9,8 +9,8 @@
 
 use std::collections::HashMap;
 
-use examples::create_did;
-use examples::MemStorage;
+use examples_iota::create_did;
+use examples_iota::MemStorage;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::Object;
 use identity_iota::credential::DecodedJwtCredential;
@@ -35,8 +35,8 @@ use iota_sdk::client::Client;
 use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 
-use examples::random_stronghold_path;
-use examples::API_ENDPOINT;
+use examples_iota::random_stronghold_path;
+use examples_iota::API_ENDPOINT;
 use identity_iota::core::json;
 use identity_iota::core::Duration;
 use identity_iota::core::FromJson;

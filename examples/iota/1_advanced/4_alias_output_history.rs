@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Context;
-use examples::create_did;
-use examples::random_stronghold_path;
-use examples::MemStorage;
-use examples::API_ENDPOINT;
+use examples_iota::create_did;
+use examples_iota::random_stronghold_path;
+use examples_iota::MemStorage;
+use examples_iota::API_ENDPOINT;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Timestamp;

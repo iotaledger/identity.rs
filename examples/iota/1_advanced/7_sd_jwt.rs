@@ -6,11 +6,11 @@
 //!
 //! cargo run --release --example 7_sd_jwt
 
-use examples::create_did;
-use examples::pretty_print_json;
-use examples::random_stronghold_path;
-use examples::MemStorage;
-use examples::API_ENDPOINT;
+use examples_iota::create_did;
+use examples_iota::pretty_print_json;
+use examples_iota::random_stronghold_path;
+use examples_iota::MemStorage;
+use examples_iota::API_ENDPOINT;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;

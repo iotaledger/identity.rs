@@ -1,8 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::get_address_with_funds;
-use examples::random_stronghold_path;
+use examples_iota::get_address_with_funds;
+use examples_iota::random_stronghold_path;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::credential::Jws;
 use identity_iota::document::verifiable::JwsVerificationOptions;
