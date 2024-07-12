@@ -6,6 +6,7 @@ use std::str::FromStr;
 use examples_kinesis::create_kinesis_did_document;
 use examples_kinesis::get_client_and_create_account;
 
+use examples_kinesis::get_memstorage;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::KinesisIotaIdentityClientExt;
 use identity_iota::prelude::Resolver;
@@ -17,11 +18,12 @@ use sui_sdk::types::base_types::ObjectID;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // create new client to interact with chain and get funded account with keys
-  let (identity_client, storage, key_id, public_key_jwk) = get_client_and_create_account().await?;
+  let storage = get_memstorage()?;
+  let (identity_client, key_id, public_key_jwk) = get_client_and_create_account(&storage).await?;
   // create new signer that will be used to sign tx with
   let signer = StorageSigner::new(&storage, key_id, public_key_jwk);
   // create new DID document and publish it
-  let document = create_kinesis_did_document(&identity_client, &storage, &signer).await?;
+  let (document, _) = create_kinesis_did_document(&identity_client, &storage, &signer).await?;
 
   let did = document.id().clone();
 

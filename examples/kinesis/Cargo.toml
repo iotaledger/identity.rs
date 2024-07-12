@@ -7,7 +7,7 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.62"
-identity_eddsa_verifier = { path = "../../identity_eddsa_verifier", default-features = false }
+identity_eddsa_verifier = { path = "../../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 identity_storage = { path = "../../identity_storage" }
 identity_stronghold = { path = "../../identity_stronghold", default-features = false, features = ["send-sync-storage"] }
 identity_sui_name_tbd = { path = "../../identity_sui_name_tbd" }
@@ -56,21 +56,21 @@ name = "2_resolve_did"
 # path = "0_basic/4_delete_did.rs"
 # name = "4_delete_did"
 
-# [[example]]
-# path = "0_basic/5_create_vc.rs"
-# name = "5_create_vc"
+[[example]]
+path = "0_basic/5_create_vc.rs"
+name = "5_create_vc"
 
-# [[example]]
-# path = "0_basic/6_create_vp.rs"
-# name = "6_create_vp"
+[[example]]
+path = "0_basic/6_create_vp.rs"
+name = "6_create_vp"
 
 # [[example]]
 # path = "0_basic/7_revoke_vc.rs"
 # name = "7_revoke_vc"
 
-# [[example]]
-# path = "0_basic/8_stronghold.rs"
-# name = "8_stronghold"
+[[example]]
+path = "0_basic/8_stronghold.rs"
+name = "8_stronghold"
 
 # [[example]]
 # path = "1_advanced/0_did_controls_did.rs"
