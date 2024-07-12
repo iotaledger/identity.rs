@@ -26,6 +26,7 @@ use identity_sui_name_tbd::utils::request_funds;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::Password;
 use rand::distributions::DistString;
+use serde_json::Value;
 use sui_sdk::SuiClientBuilder;
 
 pub static API_ENDPOINT: &str = "http://localhost";
@@ -127,4 +128,13 @@ pub fn get_stronghold_storage(
   let stronghold_storage = StrongholdStorage::new(stronghold);
 
   Ok(Storage::new(stronghold_storage.clone(), stronghold_storage.clone()))
+}
+
+pub fn pretty_print_json(label: &str, value: &str) {
+  let data: Value = serde_json::from_str(value).unwrap();
+  let pretty_json = serde_json::to_string_pretty(&data).unwrap();
+  println!("--------------------------------------");
+  println!("{}:", label);
+  println!("--------------------------------------");
+  println!("{} \n", pretty_json);
 }

@@ -30,6 +30,7 @@ features = [
     "domain-linkage",
     "resolver",
     "revocation-bitmap",
+    "sd-jwt",
     "status-list-2021",
 ]
 
@@ -92,18 +93,18 @@ name = "8_stronghold"
 # path = "1_advanced/4_alias_output_history.rs"
 # name = "4_alias_output_history"
 
-# [[example]]
-# path = "1_advanced/5_custom_resolution.rs"
-# name = "5_custom_resolution"
+[[example]]
+path = "1_advanced/5_custom_resolution.rs"
+name = "5_custom_resolution"
 
 # [[example]]
 # path = "1_advanced/6_domain_linkage.rs"
 # name = "6_domain_linkage"
 
-# [[example]]
-# path = "1_advanced/7_sd_jwt.rs"
-# name = "7_sd_jwt"
+[[example]]
+path = "1_advanced/7_sd_jwt.rs"
+name = "7_sd_jwt"
 
-# [[example]]
-# path = "1_advanced/8_status_list_2021.rs"
-# name = "8_status_list_2021"
+[[example]]
+path = "1_advanced/8_status_list_2021.rs"
+name = "8_status_list_2021"
