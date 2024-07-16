@@ -10,23 +10,23 @@ use identity_iota_core::NetworkName;
 use identity_iota_core::StateMetadataDocument;
 use identity_storage::JwkStorage;
 use identity_storage::KeyIdStorage;
+use iota_sdk::rpc_types::IotaObjectDataFilter;
+use iota_sdk::rpc_types::IotaObjectDataOptions;
+use iota_sdk::rpc_types::IotaObjectResponseQuery;
+use iota_sdk::rpc_types::IotaParsedData;
+use iota_sdk::rpc_types::IotaParsedMoveObject;
+use iota_sdk::rpc_types::IotaTransactionBlockEffects;
+use iota_sdk::rpc_types::OwnedObjectRef;
+use iota_sdk::types::base_types::IotaAddress;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::base_types::ObjectRef;
+use iota_sdk::types::id::UID;
+use iota_sdk::types::object::Owner;
+use iota_sdk::IotaClient;
 use move_core_types::language_storage::StructTag;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
-use sui_sdk::rpc_types::OwnedObjectRef;
-use sui_sdk::rpc_types::SuiObjectDataFilter;
-use sui_sdk::rpc_types::SuiObjectDataOptions;
-use sui_sdk::rpc_types::SuiObjectResponseQuery;
-use sui_sdk::rpc_types::SuiParsedData;
-use sui_sdk::rpc_types::SuiParsedMoveObject;
-use sui_sdk::rpc_types::SuiTransactionBlockEffects;
-use sui_sdk::types::base_types::ObjectID;
-use sui_sdk::types::base_types::ObjectRef;
-use sui_sdk::types::base_types::SuiAddress;
-use sui_sdk::types::id::UID;
-use sui_sdk::types::object::Owner;
-use sui_sdk::SuiClient;
 
 use crate::client::IdentityClient;
 use crate::sui::move_calls;
@@ -47,7 +47,7 @@ pub enum Identity {
 }
 
 impl Identity {
-  pub fn did_document(&self, _client: &SuiClient) -> Result<IotaDocument, Error> {
+  pub fn did_document(&self, _client: &IotaClient) -> Result<IotaDocument, Error> {
     let network_name = /* TODO: read it from client */ NetworkName::try_from("iota").unwrap();
     let original_did = IotaDID::from_alias_id(self.id().object_id().to_string().as_str(), &network_name);
     let doc_bytes = self.doc_bytes().ok_or(Error::DidDocParsingFailed(
@@ -97,7 +97,7 @@ impl OnChainIdentity {
   {
     let controller_cap_tag = StructTag::from_str(&format!("{}::multicontroller::ControllerCap", client.package_id()))
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
-    let filter = SuiObjectResponseQuery::new_with_filter(SuiObjectDataFilter::StructType(controller_cap_tag));
+    let filter = IotaObjectResponseQuery::new_with_filter(IotaObjectDataFilter::StructType(controller_cap_tag));
 
     let mut cursor = None;
     loop {
@@ -231,8 +231,8 @@ impl<'i> ProposalBuilder<'i> {
   }
 }
 
-pub async fn get_identity(client: &SuiClient, object_id: ObjectID) -> Result<Option<OnChainIdentity>, Error> {
-  let options = SuiObjectDataOptions {
+pub async fn get_identity(client: &IotaClient, object_id: ObjectID) -> Result<Option<OnChainIdentity>, Error> {
+  let options = IotaObjectDataOptions {
     show_type: true,
     show_owner: true,
     show_previous_transaction: true,
@@ -262,7 +262,7 @@ pub async fn get_identity(client: &SuiClient, object_id: ObjectID) -> Result<Opt
     .content
     .ok_or_else(|| Error::ObjectLookup(format!("no content in retrieved object in object id {object_id}")))?;
 
-  let SuiParsedData::MoveObject(value) = content else {
+  let IotaParsedData::MoveObject(value) = content else {
     return Err(Error::ObjectLookup(format!(
       "found data at object id {object_id} is not an object"
     )));
@@ -282,7 +282,7 @@ pub async fn get_identity(client: &SuiClient, object_id: ObjectID) -> Result<Opt
   Ok(Some(identity))
 }
 
-fn is_identity(value: &SuiParsedMoveObject) -> bool {
+fn is_identity(value: &IotaParsedMoveObject) -> bool {
   // if available we might also check if object stems from expected module
   // but how would this act upon package updates?
   value.type_.module.as_ident_str().as_str() == MODULE && value.type_.name.as_ident_str().as_str() == NAME
@@ -293,7 +293,7 @@ pub struct IdentityBuilder<'a> {
   package_id: ObjectID,
   did_doc: &'a [u8],
   threshold: Option<u64>,
-  controllers: HashMap<SuiAddress, u64>,
+  controllers: HashMap<IotaAddress, u64>,
   gas_budget: Option<u64>,
 }
 
@@ -308,7 +308,7 @@ impl<'a> IdentityBuilder<'a> {
     }
   }
 
-  pub fn controller(mut self, address: SuiAddress, voting_power: u64) -> Self {
+  pub fn controller(mut self, address: IotaAddress, voting_power: u64) -> Self {
     self.controllers.insert(address, voting_power);
     self
   }
@@ -325,7 +325,7 @@ impl<'a> IdentityBuilder<'a> {
 
   pub fn controllers<I>(self, controllers: I) -> Self
   where
-    I: IntoIterator<Item = (SuiAddress, u64)>,
+    I: IntoIterator<Item = (IotaAddress, u64)>,
   {
     controllers
       .into_iter()
@@ -364,7 +364,7 @@ impl<'a> IdentityBuilder<'a> {
     let response = client.execute_transaction(programmable_transaction, gas_budget).await?;
 
     let created = match response.clone().effects {
-      Some(SuiTransactionBlockEffects::V1(effects)) => effects.created,
+      Some(IotaTransactionBlockEffects::V1(effects)) => effects.created,
       _ => {
         return Err(Error::TransactionUnexpectedResponse(format!(
           "could not find effects in transaction response: {response:?}"

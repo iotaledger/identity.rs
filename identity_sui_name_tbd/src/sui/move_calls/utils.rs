@@ -1,13 +1,13 @@
 use crate::Error;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
+use iota_sdk::types::transaction::Argument;
+use iota_sdk::types::transaction::Command;
+use iota_sdk::types::Identifier;
+use iota_sdk::types::MOVE_STDLIB_PACKAGE_ID;
 use move_core_types::account_address::AccountAddress;
 use move_core_types::language_storage::StructTag;
 use std::str::FromStr;
-use sui_sdk::types::base_types::ObjectID;
-use sui_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
-use sui_sdk::types::transaction::Argument;
-use sui_sdk::types::transaction::Command;
-use sui_sdk::types::Identifier;
-use sui_sdk::types::MOVE_STDLIB_PACKAGE_ID;
 
 pub fn bytes_to_move_vec<'b, B>(bytes: B, ptb: &mut Ptb) -> Result<Argument, Error>
 where
@@ -19,7 +19,7 @@ where
     .collect::<Result<Vec<_>, _>>()
     .map_err(|e| Error::InvalidArgument(format!("could not convert given document to move vector; {e}")))?;
 
-  Ok(ptb.command(Command::MakeMoveVec(Some(sui_sdk::types::TypeTag::U8), args)))
+  Ok(ptb.command(Command::MakeMoveVec(Some(iota_sdk::types::TypeTag::U8), args)))
 }
 
 pub fn identity_tag(package_id: ObjectID) -> Result<StructTag, Error> {

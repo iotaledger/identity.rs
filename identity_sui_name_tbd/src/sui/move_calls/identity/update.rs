@@ -1,13 +1,13 @@
 use std::str::FromStr;
 
-use sui_sdk::types::base_types::ObjectID;
-use sui_sdk::types::base_types::ObjectRef;
-use sui_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use sui_sdk::types::transaction::ObjectArg;
-use sui_sdk::types::transaction::ProgrammableTransaction;
-use sui_sdk::types::Identifier;
-use sui_sdk::types::TypeTag;
-use sui_sdk::types::MOVE_STDLIB_PACKAGE_ID;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::base_types::ObjectRef;
+use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use iota_sdk::types::transaction::ObjectArg;
+use iota_sdk::types::transaction::ProgrammableTransaction;
+use iota_sdk::types::Identifier;
+use iota_sdk::types::TypeTag;
+use iota_sdk::types::MOVE_STDLIB_PACKAGE_ID;
 
 use crate::sui::move_calls::utils;
 

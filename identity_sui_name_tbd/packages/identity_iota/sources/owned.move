@@ -1,5 +1,5 @@
 module identity_iota::owned {
-    use sui::{vec_set::VecSet, transfer::Receiving};
+    use iota::{vec_set::VecSet, transfer::Receiving};
 
     const EWrongObject: u64 = 0;
     const EUnretrievedObjects: u64 = 1;

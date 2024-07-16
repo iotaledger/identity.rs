@@ -4,7 +4,7 @@
 use std::ops::Deref;
 use std::pin::Pin;
 
-use fastcrypto::hash::Blake2b256;
+use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::hash::HashFunction;
 use fastcrypto::traits::ToFromBytes;
 use futures::stream::FuturesUnordered;
@@ -15,20 +15,20 @@ use identity_storage::KeyId;
 use identity_storage::KeyIdStorage;
 use identity_storage::Storage;
 use identity_verification::jwk::Jwk;
+use iota_sdk::rpc_types::IotaTransactionBlockResponse;
+use iota_sdk::rpc_types::IotaTransactionBlockResponseOptions;
+use iota_sdk::types::base_types::IotaAddress;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::crypto::DefaultHash;
+use iota_sdk::types::crypto::Signature;
+use iota_sdk::types::crypto::SignatureScheme;
+use iota_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
+use iota_sdk::types::transaction::ProgrammableTransaction;
+use iota_sdk::types::transaction::Transaction;
+use iota_sdk::types::transaction::TransactionData;
+use iota_sdk::IotaClient;
 use shared_crypto::intent::Intent;
 use shared_crypto::intent::IntentMessage;
-use sui_sdk::rpc_types::SuiTransactionBlockResponse;
-use sui_sdk::rpc_types::SuiTransactionBlockResponseOptions;
-use sui_sdk::types::base_types::ObjectID;
-use sui_sdk::types::base_types::SuiAddress;
-use sui_sdk::types::crypto::DefaultHash;
-use sui_sdk::types::crypto::Signature;
-use sui_sdk::types::crypto::SignatureScheme;
-use sui_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
-use sui_sdk::types::transaction::ProgrammableTransaction;
-use sui_sdk::types::transaction::Transaction;
-use sui_sdk::types::transaction::TransactionData;
-use sui_sdk::SuiClient;
 
 use crate::migration::get_alias;
 use crate::migration::get_identity;
@@ -42,7 +42,7 @@ pub struct IdentityClientBuilder<K, I> {
   pub(crate) public_jwk: Option<Jwk>,
   pub(crate) sender_key_id: Option<KeyId>,
   pub(crate) storage: Option<Storage<K, I>>,
-  pub(crate) sui_client: Option<SuiClient>,
+  pub(crate) iota_client: Option<IotaClient>,
 }
 
 impl<K, I> IdentityClientBuilder<K, I>
@@ -78,10 +78,10 @@ where
     self
   }
 
-  /// Sets the `sui_client` value.
+  /// Sets the `iota_client` value.
   #[must_use]
-  pub fn sui_client(mut self, value: SuiClient) -> Self {
-    self.sui_client = Some(value);
+  pub fn iota_client(mut self, value: IotaClient) -> Self {
+    self.iota_client = Some(value);
     self
   }
 
@@ -98,7 +98,7 @@ impl<K, I> Default for IdentityClientBuilder<K, I> {
       public_jwk: None,
       sender_key_id: None,
       storage: None,
-      sui_client: None,
+      iota_client: None,
     }
   }
 }
@@ -107,20 +107,20 @@ struct SigningInfo<K, I> {
   sender_key_id: KeyId,
   sender_public_jwk: Jwk,
   sender_public_key: Vec<u8>,
-  sender_address: SuiAddress,
+  sender_address: IotaAddress,
   storage: Storage<K, I>,
 }
 
 pub struct IdentityClient<K, I> {
   identity_iota_package_id: ObjectID,
-  sui_client: SuiClient,
+  iota_client: IotaClient,
   signing_info: Option<SigningInfo<K, I>>,
 }
 
 impl<K, I> Deref for IdentityClient<K, I> {
-  type Target = SuiClient;
+  type Target = IotaClient;
   fn deref(&self) -> &Self::Target {
-    &self.sui_client
+    &self.iota_client
   }
 }
 
@@ -145,7 +145,7 @@ where
       .map(|v| v.sender_public_key.as_ref())
   }
 
-  pub fn sender_address(&self) -> Result<SuiAddress, Error> {
+  pub fn sender_address(&self) -> Result<IotaAddress, Error> {
     self
       .signing_info
       .as_ref()
@@ -179,9 +179,9 @@ where
       identity_iota_package_id: builder
         .identity_iota_package_id
         .ok_or_else(|| Error::InvalidConfig("missing `identity_iota_package_id` argument".to_string()))?,
-      sui_client: builder
-        .sui_client
-        .ok_or_else(|| Error::InvalidConfig("missing `sui_client` argument ".to_string()))?,
+      iota_client: builder
+        .iota_client
+        .ok_or_else(|| Error::InvalidConfig("missing `iota_client` argument ".to_string()))?,
       signing_info,
     })
   }
@@ -195,7 +195,7 @@ where
     &self,
     tx: ProgrammableTransaction,
     gas_budget: u64,
-  ) -> Result<SuiTransactionBlockResponse, Error> {
+  ) -> Result<IotaTransactionBlockResponse, Error> {
     let tx_data = self.get_transaction_data(tx, gas_budget).await?;
     let kinesis_signature = self.sign_transaction_data(&tx_data).await?;
 
@@ -204,16 +204,16 @@ where
       .quorum_driver_api()
       .execute_transaction_block(
         Transaction::from_data(tx_data, vec![kinesis_signature]),
-        SuiTransactionBlockResponseOptions::full_content(),
+        IotaTransactionBlockResponseOptions::full_content(),
         Some(ExecuteTransactionRequestType::WaitForLocalExecution),
       )
       .await
       .map_err(Error::TransactionExecutionFailed)
   }
 
-  async fn get_coin_for_transaction(&self) -> Result<sui_sdk::rpc_types::Coin, Error> {
+  async fn get_coin_for_transaction(&self) -> Result<iota_sdk::rpc_types::Coin, Error> {
     let coins = self
-      .sui_client
+      .iota_client
       .coin_read_api()
       .get_coins(self.sender_address()?, None, None, None)
       .await
@@ -232,7 +232,7 @@ where
     gas_budget: u64,
   ) -> Result<TransactionData, Error> {
     let gas_price = self
-      .sui_client
+      .iota_client
       .read_api()
       .get_reference_gas_price()
       .await
@@ -261,7 +261,7 @@ where
       .as_ref()
       .ok_or_else(|| Error::InvalidConfig("not properly configured for signing".to_string()))?;
 
-    let intent = Intent::sui_transaction();
+    let intent = Intent::iota_transaction();
     let intent_msg = IntentMessage::new(intent, tx_data);
     let mut hasher = DefaultHash::default();
     hasher.update(bcs::to_bytes(&intent_msg).map_err(|err| {
@@ -293,9 +293,9 @@ impl<K, I> IdentityClient<K, I> {
     // spawn all checks
     let mut all_futures =
       FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
-    all_futures.push(Box::pin(resolve_new(&self.sui_client, object_id)));
-    all_futures.push(Box::pin(resolve_migrated(&self.sui_client, object_id)));
-    all_futures.push(Box::pin(resolve_unmigrated(&self.sui_client, object_id)));
+    all_futures.push(Box::pin(resolve_new(&self.iota_client, object_id)));
+    all_futures.push(Box::pin(resolve_migrated(&self.iota_client, object_id)));
+    all_futures.push(Box::pin(resolve_unmigrated(&self.iota_client, object_id)));
 
     // use first non-None value as result
     let mut identity_outcome: Option<Identity> = None;
@@ -322,18 +322,14 @@ fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> {
     .map_err(|err| Error::InvalidKey(format!("could not decode base64 public key; {err}")))
 }
 
-fn convert_to_address(sender_public_key: &[u8]) -> Result<SuiAddress, Error> {
-  let to_hash = [[SignatureScheme::ED25519.flag()].as_slice(), sender_public_key].concat();
+fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error> {
+  let public_key = Ed25519PublicKey::from_bytes(sender_public_key)
+    .map_err(|err| Error::InvalidKey(format!("could not parse public key to Ed25519 public key; {err}")))?;
 
-  let mut hasher = Blake2b256::default();
-  hasher.update(to_hash.as_slice());
-  let digest = hasher.finalize().digest;
-
-  SuiAddress::from_bytes(digest)
-    .map_err(|err| Error::InvalidKey(format!("could not convert public key to sender address; {err}")))
+  Ok(IotaAddress::from(&public_key))
 }
 
-async fn resolve_new(client: &SuiClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+async fn resolve_new(client: &IotaClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
   let onchain_identity = get_identity(client, object_id).await.map_err(|err| {
     Error::DIDResolutionErrorKinesis(format!(
       "could not get identity document for object id {object_id}; {err}"
@@ -342,7 +338,7 @@ async fn resolve_new(client: &SuiClient, object_id: ObjectID) -> Result<Option<I
   Ok(onchain_identity.map(Identity::FullFledged))
 }
 
-async fn resolve_migrated(client: &SuiClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+async fn resolve_migrated(client: &IotaClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
   let onchain_identity = lookup(client, object_id).await.map_err(|err| {
     Error::DIDResolutionErrorKinesis(format!(
       "failed to look up object_id {object_id} in migration registry; {err}"
@@ -351,7 +347,7 @@ async fn resolve_migrated(client: &SuiClient, object_id: ObjectID) -> Result<Opt
   Ok(onchain_identity.map(Identity::FullFledged))
 }
 
-async fn resolve_unmigrated(client: &SuiClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+async fn resolve_unmigrated(client: &IotaClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
   let unmigrated_alias = get_alias(client, object_id)
     .await
     .map_err(|err| Error::DIDResolutionErrorKinesis(format!("could  no query for object id {object_id}; {err}")))?;

@@ -1,6 +1,6 @@
 module identity_iota::transfer_proposal {
     use identity_iota::{multicontroller::{Multicontroller, Action, ControllerCap}, owned::{Self, Withdraw}};
-    use sui::{transfer::Receiving, vec_set::VecSet};
+    use iota::{transfer::Receiving, vec_set::VecSet};
     use std::string::String;
 
     const EDifferentLength: u64 = 0;

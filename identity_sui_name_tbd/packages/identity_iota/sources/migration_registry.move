@@ -1,5 +1,5 @@
 module identity_iota::migration_registry {
-    use sui::{dynamic_object_field as field, transfer::share_object, event};
+    use iota::{dynamic_object_field as field, transfer::share_object, event};
     use identity_iota::identity::Identity;
 
     /// One time witness needed to construct a singleton migration registry.

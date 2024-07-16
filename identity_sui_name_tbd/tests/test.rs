@@ -6,8 +6,8 @@ use std::path::PathBuf;
 use identity_sui_name_tbd::migration::get_alias;
 use identity_sui_name_tbd::utils::get_client;
 use identity_sui_name_tbd::utils::LOCAL_NETWORK;
-use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
-use iota_sdk::crypto::keys::bip39::Mnemonic;
+use iota_sdk_classic::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk_classic::crypto::keys::bip39::Mnemonic;
 
 mod common;
 
@@ -52,9 +52,9 @@ async fn can_initialize_new_client() -> anyhow::Result<()> {
 async fn can_fetch_alias_output_by_object_id() -> anyhow::Result<()> {
   let test_client = common::get_client().await?;
   let alias_id = test_client.create_legacy_did().await?;
-  let sui_client = get_client(LOCAL_NETWORK).await?;
+  let iota_client = get_client(LOCAL_NETWORK).await?;
 
-  let result = get_alias(&sui_client, alias_id).await;
+  let result = get_alias(&iota_client, alias_id).await;
 
   assert!(result.is_ok());
 

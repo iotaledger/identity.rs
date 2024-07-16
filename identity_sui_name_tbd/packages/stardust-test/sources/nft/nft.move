@@ -5,8 +5,8 @@ module stardust::nft {
 
     use std::string;
 
-    use sui::display;
-    use sui::package;
+    use iota::display;
+    use iota::package;
 
     use stardust::irc27::{Self, Irc27Metadata};
 
@@ -39,7 +39,7 @@ module stardust::nft {
 
         // Build a `Display` object.
         let keys = vector[
-            // The Sui standard fields.
+            // The Iota standard fields.
             string::utf8(b"name"),
             string::utf8(b"image_url"),
             string::utf8(b"description"),
@@ -52,7 +52,7 @@ module stardust::nft {
         ];
 
         let values = vector[
-            // The Sui standard fields.
+            // The Iota standard fields.
             string::utf8(b"{immutable_metadata.name}"),
             string::utf8(b"{immutable_metadata.uri}"),
             string::utf8(b"{immutable_metadata.description}"),
@@ -78,7 +78,7 @@ module stardust::nft {
         package::burn_publisher(publisher);
 
         // Freeze the display object.
-        sui::transfer::public_freeze_object(display);
+        iota::transfer::public_freeze_object(display);
     }
 
     /// Permanently destroy an `Nft` object.

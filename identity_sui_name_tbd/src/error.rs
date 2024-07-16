@@ -8,8 +8,8 @@
 #[non_exhaustive]
 pub enum Error {
   /// failed to connect to network.
-  #[error("failed to connect to sui network node; {0:?}")]
-  Network(String, #[source] sui_sdk::error::Error),
+  #[error("failed to connect to iota network node; {0:?}")]
+  Network(String, #[source] iota_sdk::error::Error),
   /// could not lookup an object ID.
   #[error("failed to lookup an object; {0}")]
   ObjectLookup(String),
@@ -39,7 +39,7 @@ pub enum Error {
   TransactionSigningFailed(String),
   /// Could not execute transaction.
   #[error("data store disconnected")]
-  TransactionExecutionFailed(#[from] sui_sdk::error::Error),
+  TransactionExecutionFailed(#[from] iota_sdk::error::Error),
   /// Transaction yielded invalid response. This usually means that the transaction was executed but did not produce
   /// the expected result.
   #[error("transaction returned an unexpected response; {0}")]

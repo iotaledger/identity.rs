@@ -5,8 +5,8 @@ mod common;
 
 use common::get_client as get_test_client;
 use common::request_funds;
-use common::TEST_GAS_BUDGET;
 use common::TEST_DOC;
+use common::TEST_GAS_BUDGET;
 use identity_storage::JwkMemStore;
 use identity_storage::JwkStorage;
 use identity_storage::KeyIdMemstore;
@@ -14,7 +14,7 @@ use identity_storage::KeyType;
 use identity_storage::Storage;
 use identity_sui_name_tbd::client::IdentityClient;
 use identity_sui_name_tbd::migration;
-use identity_sui_name_tbd::utils::get_client as get_sui_client;
+use identity_sui_name_tbd::utils::get_client as get_iota_client;
 use identity_sui_name_tbd::utils::LOCAL_NETWORK;
 use identity_verification::jws::JwsAlgorithm;
 
@@ -23,7 +23,7 @@ pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 #[tokio::test]
 async fn can_create_an_identity() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
-  let sui_client = get_sui_client(LOCAL_NETWORK).await?;
+  let iota_client = get_iota_client(LOCAL_NETWORK).await?;
   let storage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
   // generate new key
@@ -38,7 +38,7 @@ async fn can_create_an_identity() -> anyhow::Result<()> {
     .sender_key_id(generate.key_id)
     .sender_public_jwk(public_key)
     .storage(storage)
-    .sui_client(sui_client)
+    .iota_client(iota_client)
     .build()?;
 
   // call faucet with out new account
@@ -58,7 +58,7 @@ async fn can_create_an_identity() -> anyhow::Result<()> {
 #[tokio::test]
 async fn can_resolve_a_new_identity() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
-  let sui_client = get_sui_client(LOCAL_NETWORK).await?;
+  let iota_client = get_iota_client(LOCAL_NETWORK).await?;
   let storage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
   // generate new key
@@ -73,7 +73,7 @@ async fn can_resolve_a_new_identity() -> anyhow::Result<()> {
     .sender_key_id(generate.key_id)
     .sender_public_jwk(public_key)
     .storage(storage)
-    .sui_client(sui_client)
+    .iota_client(iota_client)
     .build()?;
 
   // call faucet with out new account
@@ -85,8 +85,8 @@ async fn can_resolve_a_new_identity() -> anyhow::Result<()> {
     .finish(&identity_client)
     .await?;
 
-  let sui_client = get_sui_client(LOCAL_NETWORK).await?;
-  let identity = migration::get_identity(&sui_client, *newly_created_identity.id.object_id()).await?;
+  let iota_client = get_iota_client(LOCAL_NETWORK).await?;
+  let identity = migration::get_identity(&iota_client, *newly_created_identity.id.object_id()).await?;
 
   assert!(identity.is_some());
 
@@ -168,11 +168,11 @@ mod resolution {
     #[tokio::test]
     async fn legacy_did_document_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
-      let sui_client = get_sui_client(LOCAL_NETWORK).await?;
+      let iota_client = get_iota_client(LOCAL_NETWORK).await?;
       let alias_id = test_client.create_legacy_did().await?;
       let identity_client: IdentityClient<JwkMemStore, KeyIdMemstore> = IdentityClient::builder()
         .identity_iota_package_id(test_client.package_id())
-        .sui_client(sui_client)
+        .iota_client(iota_client)
         .build()?;
 
       let result = identity_client.get_identity(alias_id).await;
@@ -186,12 +186,12 @@ mod resolution {
     #[tokio::test]
     async fn migrated_legacy_did_document_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
-      let sui_client = get_sui_client(LOCAL_NETWORK).await?;
+      let iota_client = get_iota_client(LOCAL_NETWORK).await?;
       let alias_id = test_client.create_legacy_did().await?;
       let _ = test_client.migrate_legacy_did(alias_id).await?;
       let identity_client: IdentityClient<JwkMemStore, KeyIdMemstore> = IdentityClient::builder()
         .identity_iota_package_id(test_client.package_id())
-        .sui_client(sui_client)
+        .iota_client(iota_client)
         .build()?;
 
       let result = identity_client.get_identity(alias_id).await;
@@ -205,11 +205,11 @@ mod resolution {
     #[tokio::test]
     async fn new_identity_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
-      let sui_client = get_sui_client(LOCAL_NETWORK).await?;
+      let iota_client = get_iota_client(LOCAL_NETWORK).await?;
       let object_id = test_client.create_identity().await?;
       let identity_client: IdentityClient<JwkMemStore, KeyIdMemstore> = IdentityClient::builder()
         .identity_iota_package_id(test_client.package_id())
-        .sui_client(sui_client)
+        .iota_client(iota_client)
         .build()?;
 
       let result = identity_client.get_identity(object_id).await;

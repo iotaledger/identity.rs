@@ -1,7 +1,7 @@
 module identity_iota::config_proposal {
     use identity_iota::multicontroller::{ControllerCap, Multicontroller};
     use std::string::String;
-    use sui::vec_map::VecMap;
+    use iota::vec_map::VecMap;
 
     const ENotMember: u64 = 0;
     const EInvalidThreshold: u64 = 1;

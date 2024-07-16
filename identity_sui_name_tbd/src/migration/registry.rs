@@ -3,10 +3,10 @@
 
 use serde;
 use serde::Deserialize;
-use sui_sdk::rpc_types::EventFilter;
-use sui_sdk::rpc_types::SuiData;
-use sui_sdk::types::base_types::ObjectID;
-use sui_sdk::SuiClient;
+use iota_sdk::rpc_types::EventFilter;
+use iota_sdk::rpc_types::IotaData;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::IotaClient;
 use tokio::sync::OnceCell;
 
 use super::OnChainIdentity;
@@ -29,17 +29,17 @@ struct MigrationRegistryCreatedEvent {
   id: ObjectID,
 }
 
-pub async fn migration_registry_id(sui_client: &SuiClient) -> Result<ObjectID, Error> {
+pub async fn migration_registry_id(iota_client: &IotaClient) -> Result<ObjectID, Error> {
   MIGRATION_REGISTRY_ID
     .get_or_try_init(|| async {
       let event_tag = {
         let package_id = std::env::var("IDENTITY_IOTA_PKG_ID").expect("set IDENTITY_IOTA_PKG_ID");
         let tag = format!("{package_id}::migration_registry::MigrationRegistryCreated");
-        sui_sdk::types::parse_sui_struct_tag(&tag)
+        iota_sdk::types::parse_iota_struct_tag(&tag)
           .map_err(|e| Error::NotFound(format!("invalid event tag \"{tag}\": {}", e)))?
       };
 
-      let mut returned_events = sui_client
+      let mut returned_events = iota_client
         .event_api()
         .query_events(EventFilter::MoveEventType(event_tag), None, Some(1), false)
         .await
@@ -63,16 +63,16 @@ pub async fn migration_registry_id(sui_client: &SuiClient) -> Result<ObjectID, E
 
 /// Lookup a legacy `alias_id` into the migration registry
 /// to get the UID of the corresponding migrated DID document if any.
-pub async fn lookup(sui_client: &SuiClient, alias_id: ObjectID) -> Result<Option<OnChainIdentity>, Error> {
+pub async fn lookup(iota_client: &IotaClient, alias_id: ObjectID) -> Result<Option<OnChainIdentity>, Error> {
   let dynamic_field_name = serde_json::from_value(serde_json::json!({
     "type": "0x2::object::ID",
     "value": alias_id.to_string()
   }))
   .expect("valid move value");
 
-  sui_client
+  iota_client
     .read_api()
-    .get_dynamic_field_object(migration_registry_id(sui_client).await?, dynamic_field_name)
+    .get_dynamic_field_object(migration_registry_id(iota_client).await?, dynamic_field_name)
     .await
     .map_err(|e| Error::ClientError(e.into()))?
     .data

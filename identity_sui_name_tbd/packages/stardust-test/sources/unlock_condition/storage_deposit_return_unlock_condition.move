@@ -3,10 +3,10 @@
 
 module stardust::storage_deposit_return_unlock_condition {
 
-    use sui::balance::{Balance, split};
-    use sui::coin::from_balance;
-    use sui::sui::SUI;
-    use sui::transfer::public_transfer;
+    use iota::balance::{Balance, split};
+    use iota::coin::from_balance;
+    use iota::iota::IOTA;
+    use iota::transfer::public_transfer;
 
     /// The Stardust storage deposit return unlock condition.
     public struct StorageDepositReturnUnlockCondition has store {
@@ -17,7 +17,7 @@ module stardust::storage_deposit_return_unlock_condition {
     }
 
     /// Check the unlock condition.
-    public fun unlock(condition: StorageDepositReturnUnlockCondition, funding: &mut Balance<SUI>, ctx: &mut TxContext) {
+    public fun unlock(condition: StorageDepositReturnUnlockCondition, funding: &mut Balance<IOTA>, ctx: &mut TxContext) {
         // Aborts if `funding` is not enough.
         let return_balance = funding.split(condition.return_amount());
 

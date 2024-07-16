@@ -1,7 +1,7 @@
 module identity_iota::migration {
     use identity_iota::{migration_registry::MigrationRegistry, identity};
     use stardust::{alias::Alias, alias_output::{AliasOutput, extract_assets}};
-    use sui::coin;
+    use iota::coin;
 
     const ENotADidOutput: u64 = 1;
 
@@ -51,7 +51,7 @@ module identity_iota::migration {
 
 #[test_only]
 module identity_iota::migration_tests {
-    use sui::test_scenario;
+    use iota::test_scenario;
     use stardust::alias_output::{create_empty_for_testing, AliasOutput, attach_alias};
     use identity_iota::identity::{Identity};
     use identity_iota::migration::migrate_alias_output;

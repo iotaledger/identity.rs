@@ -1,5 +1,5 @@
 module identity_iota::multicontroller {
-    use sui::{dynamic_field as df, vec_map::{Self, VecMap}, vec_set::{Self, VecSet}};
+    use iota::{dynamic_field as df, vec_map::{Self, VecMap}, vec_set::{Self, VecSet}};
     use std::string::String;
 
     const EInvalidController: u64 = 0;

@@ -1,7 +1,7 @@
 module stardust::address_unlock_condition {
 
-    use sui::coin::TreasuryCap;
-    use sui::transfer::Receiving;
+    use iota::coin::TreasuryCap;
+    use iota::transfer::Receiving;
 
     use stardust::alias::Alias;
     use stardust::alias_output::{Self, AliasOutput};

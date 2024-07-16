@@ -4,14 +4,14 @@ use crate::sui::types::Hashable;
 use crate::sui::types::Number;
 use crate::sui::types::VecMap;
 use crate::sui::types::VecSet;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::id::ID;
+use iota_sdk::types::id::UID;
 use serde::Deserialize;
 use serde::Serialize;
-use sui_sdk::types::base_types::ObjectID;
-use sui_sdk::types::id::ID;
-use sui_sdk::types::id::UID;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(try_from = "SuiProposal", into = "SuiProposal")]
+#[serde(try_from = "IotaProposal", into = "IotaProposal")]
 pub struct Proposal {
   id: UID,
   expiration_epoch: Option<u64>,
@@ -20,17 +20,17 @@ pub struct Proposal {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct SuiProposal {
+struct IotaProposal {
   id: UID,
   expiration_epoch: Option<Number<u64>>,
   votes: Number<u64>,
   voters: VecSet<Hashable<ID>>,
 }
 
-impl TryFrom<SuiProposal> for Proposal {
+impl TryFrom<IotaProposal> for Proposal {
   type Error = <u64 as TryFrom<Number<u64>>>::Error;
-  fn try_from(proposal: SuiProposal) -> Result<Self, Self::Error> {
-    let SuiProposal {
+  fn try_from(proposal: IotaProposal) -> Result<Self, Self::Error> {
+    let IotaProposal {
       id,
       expiration_epoch,
       votes,
@@ -48,7 +48,7 @@ impl TryFrom<SuiProposal> for Proposal {
   }
 }
 
-impl From<Proposal> for SuiProposal {
+impl From<Proposal> for IotaProposal {
   fn from(value: Proposal) -> Self {
     let Proposal {
       id,
@@ -56,7 +56,7 @@ impl From<Proposal> for SuiProposal {
       votes,
       voters,
     } = value;
-    SuiProposal {
+    IotaProposal {
       id,
       expiration_epoch: expiration_epoch.map(Into::into),
       votes: votes.into(),
@@ -66,7 +66,7 @@ impl From<Proposal> for SuiProposal {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(try_from = "SuiMulticontroller::<T>")]
+#[serde(try_from = "IotaMulticontroller::<T>")]
 pub struct Multicontroller<T> {
   controlled_value: T,
   controllers: HashMap<Hashable<ID>, u64>,
@@ -99,10 +99,10 @@ impl<T> Multicontroller<T> {
   }
 }
 
-impl<T> TryFrom<SuiMulticontroller<T>> for Multicontroller<T> {
+impl<T> TryFrom<IotaMulticontroller<T>> for Multicontroller<T> {
   type Error = <u64 as TryFrom<Number<u64>>>::Error;
-  fn try_from(value: SuiMulticontroller<T>) -> Result<Self, Self::Error> {
-    let SuiMulticontroller {
+  fn try_from(value: IotaMulticontroller<T>) -> Result<Self, Self::Error> {
+    let IotaMulticontroller {
       controlled_value,
       controllers,
       threshold,
@@ -127,9 +127,9 @@ impl<T> TryFrom<SuiMulticontroller<T>> for Multicontroller<T> {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct SuiMulticontroller<T> {
+struct IotaMulticontroller<T> {
   controlled_value: T,
   controllers: VecMap<Hashable<ID>, Number<u64>>,
   threshold: Number<u64>,
-  proposals: VecMap<String, SuiProposal>,
+  proposals: VecMap<String, IotaProposal>,
 }

@@ -8,13 +8,13 @@ use std::ops::Deref;
 use anyhow::anyhow;
 use anyhow::Context;
 use identity_sui_name_tbd::migration;
+use iota_sdk::rpc_types::IotaObjectDataOptions;
+use iota_sdk::types::base_types::IotaAddress;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::IotaClient;
+use iota_sdk::IotaClientBuilder;
 use jsonpath_rust::JsonPathQuery;
 use serde_json::Value;
-use sui_sdk::rpc_types::SuiObjectDataOptions;
-use sui_sdk::types::base_types::ObjectID;
-use sui_sdk::types::base_types::SuiAddress;
-use sui_sdk::SuiClient;
-use sui_sdk::SuiClientBuilder;
 use tokio::process::Command;
 use tokio::sync::OnceCell;
 
@@ -46,7 +46,7 @@ pub async fn get_client() -> anyhow::Result<TestClient> {
 }
 
 async fn init() -> anyhow::Result<TestClient> {
-  let client = SuiClientBuilder::default().build_localnet().await?;
+  let client = IotaClientBuilder::default().build_localnet().await?;
   let address = get_active_address().await?;
 
   request_funds(&address).await?;
@@ -68,7 +68,7 @@ async fn init() -> anyhow::Result<TestClient> {
   })
 }
 
-async fn get_cached_id(active_address: SuiAddress) -> anyhow::Result<String> {
+async fn get_cached_id(active_address: IotaAddress) -> anyhow::Result<String> {
   let cache = tokio::fs::read_to_string(CACHED_PKG_ID).await?;
   let (cached_id, cached_address) = cache.split_once(';').ok_or(anyhow!("Invalid or empty cached data"))?;
 
@@ -79,18 +79,18 @@ async fn get_cached_id(active_address: SuiAddress) -> anyhow::Result<String> {
   }
 }
 
-async fn get_active_address() -> anyhow::Result<SuiAddress> {
-  Command::new("sui")
+async fn get_active_address() -> anyhow::Result<IotaAddress> {
+  Command::new("iota")
     .arg("client")
     .arg("active-address")
     .arg("--json")
     .output()
     .await
     .context("Failed to execute command")
-    .and_then(|output| Ok(serde_json::from_slice::<SuiAddress>(&output.stdout)?))
+    .and_then(|output| Ok(serde_json::from_slice::<IotaAddress>(&output.stdout)?))
 }
 
-async fn publish_package(active_address: SuiAddress) -> anyhow::Result<ObjectID> {
+async fn publish_package(active_address: IotaAddress) -> anyhow::Result<ObjectID> {
   let output = Command::new("sh")
     .current_dir(SCRIPT_DIR)
     .arg("publish_identity_package.sh")
@@ -99,7 +99,8 @@ async fn publish_package(active_address: SuiAddress) -> anyhow::Result<ObjectID>
 
   if !output.status.success() {
     anyhow::bail!(
-      "Failed to publish move package: {}",
+      "Failed to publish move package: \n\n{}\n\n{}",
+      std::str::from_utf8(&output.stdout).unwrap(),
       std::str::from_utf8(&output.stderr).unwrap()
     );
   }
@@ -127,8 +128,8 @@ async fn publish_package(active_address: SuiAddress) -> anyhow::Result<ObjectID>
   Ok(package_id)
 }
 
-pub async fn request_funds(address: &SuiAddress) -> anyhow::Result<()> {
-  let output = Command::new("sui")
+pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
+  let output = Command::new("iota")
     .arg("client")
     .arg("faucet")
     .arg("--address")
@@ -150,14 +151,14 @@ pub async fn request_funds(address: &SuiAddress) -> anyhow::Result<()> {
 
 #[derive(Clone)]
 pub struct TestClient {
-  client: SuiClient,
+  client: IotaClient,
   package_id: ObjectID,
   #[allow(dead_code)]
-  address: SuiAddress,
+  address: IotaAddress,
 }
 
 impl Deref for TestClient {
-  type Target = SuiClient;
+  type Target = IotaClient;
   fn deref(&self) -> &Self::Target {
     &self.client
   }
@@ -234,7 +235,7 @@ impl TestClient {
     let alias_output_id = {
       let dynamic_field_id = self
         .read_api()
-        .get_object_with_options(alias_id, SuiObjectDataOptions::default().with_owner())
+        .get_object_with_options(alias_id, IotaObjectDataOptions::default().with_owner())
         .await?
         .data
         .context("Failed to read object with ID {alias_id}")?
@@ -245,7 +246,7 @@ impl TestClient {
 
       self
         .read_api()
-        .get_object_with_options(dynamic_field_id, SuiObjectDataOptions::default().with_owner())
+        .get_object_with_options(dynamic_field_id, IotaObjectDataOptions::default().with_owner())
         .await?
         .data
         .context("Failed to read object with ID {alias_id}")?

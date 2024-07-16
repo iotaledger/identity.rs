@@ -15,7 +15,7 @@ primitive-types = "0.12.1"
 rand = "0.8.5"
 sd-jwt-payload = { version = "0.2.1", default-features = false, features = ["sha"] }
 serde_json = { version = "1.0", default-features = false }
-sui-sdk = { git = "https://github.com/iotaledger/kinesis.git", package = "sui-sdk" }
+sui-sdk = { git = "https://github.com/iotaledger/kinesis.git", package = "iota-sdk" }
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
 
 [lib]

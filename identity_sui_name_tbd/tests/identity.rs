@@ -12,7 +12,7 @@ use identity_storage::KeyIdMemstore;
 use identity_storage::KeyType;
 use identity_storage::Storage;
 use identity_sui_name_tbd::client::IdentityClient;
-use identity_sui_name_tbd::utils::get_client as get_sui_client;
+use identity_sui_name_tbd::utils::get_client as get_iota_client;
 use identity_sui_name_tbd::utils::LOCAL_NETWORK;
 use identity_verification::jws::JwsAlgorithm;
 use identity_verification::MethodScope;
@@ -23,7 +23,7 @@ pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 #[tokio::test]
 async fn updating_onchain_identity_did_doc_with_single_controller_works() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
-  let sui_client = get_sui_client(LOCAL_NETWORK).await?;
+  let iota_client = get_iota_client(LOCAL_NETWORK).await?;
   let storage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
   // generate new key
@@ -38,7 +38,7 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
     .sender_key_id(generate.key_id.clone())
     .sender_public_jwk(public_key.clone())
     .storage(storage)
-    .sui_client(sui_client)
+    .iota_client(iota_client)
     .build()?;
 
   request_funds(&identity_client.sender_address()?).await?;
@@ -50,13 +50,20 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
     .await?;
 
   let updated_did_doc = {
-    let did = IotaDID::parse(format!("did:iota:{}", newly_created_identity.id.object_id().to_string()))?;
+    let did = IotaDID::parse(format!(
+      "did:iota:{}",
+      newly_created_identity.id.object_id().to_string()
+    ))?;
     let mut doc = IotaDocument::new_with_id(did.clone());
-    doc.insert_method(VerificationMethod::new_from_jwk(did, public_key, Some(generate.key_id.as_str()))?, MethodScope::VerificationMethod)?;
+    doc.insert_method(
+      VerificationMethod::new_from_jwk(did, public_key, Some(generate.key_id.as_str()))?,
+      MethodScope::VerificationMethod,
+    )?;
     doc
   };
 
-  newly_created_identity.update_did_document(updated_did_doc)
+  newly_created_identity
+    .update_did_document(updated_did_doc)
     .gas_budget(TEST_GAS_BUDGET)
     .finish(&identity_client)
     .await?;

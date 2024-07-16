@@ -1,13 +1,13 @@
+use iota_sdk::types::base_types::IotaAddress;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use iota_sdk::types::transaction::Command;
+use iota_sdk::types::transaction::ProgrammableMoveCall;
+use iota_sdk::types::transaction::ProgrammableTransaction;
+use iota_sdk::types::Identifier;
+use iota_sdk::types::TypeTag;
+use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use std::str::FromStr;
-use sui_sdk::types::base_types::ObjectID;
-use sui_sdk::types::base_types::SuiAddress;
-use sui_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use sui_sdk::types::transaction::Command;
-use sui_sdk::types::transaction::ProgrammableMoveCall;
-use sui_sdk::types::transaction::ProgrammableTransaction;
-use sui_sdk::types::Identifier;
-use sui_sdk::types::TypeTag;
-use sui_sdk::types::SUI_FRAMEWORK_PACKAGE_ID;
 
 use crate::sui::move_calls::utils;
 use crate::Error;
@@ -29,7 +29,7 @@ pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransacti
 
   // Share the resulting identity.
   ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-    package: SUI_FRAMEWORK_PACKAGE_ID,
+    package: IOTA_FRAMEWORK_PACKAGE_ID,
     module: Identifier::from_str("transfer")
       .map_err(|err| Error::ParsingFailed(format!("\"transfer\" to identifier; {err}")))?,
     function: Identifier::from_str("public_share_object")
@@ -48,10 +48,10 @@ pub fn new_with_controllers<C>(
   package_id: ObjectID,
 ) -> Result<ProgrammableTransaction, Error>
 where
-  C: IntoIterator<Item = (SuiAddress, u64)>,
+  C: IntoIterator<Item = (IotaAddress, u64)>,
 {
   let mut ptb = ProgrammableTransactionBuilder::new();
-  let (controllers, vps): (Vec<SuiAddress>, Vec<u64>) = controllers.into_iter().unzip();
+  let (controllers, vps): (Vec<IotaAddress>, Vec<u64>) = controllers.into_iter().unzip();
   // Make controllers move vector.
   let controller_args = controllers
     .into_iter()
@@ -70,7 +70,7 @@ where
 
   // Make controllers VecMap
   let controllers_vec_map = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-    package: SUI_FRAMEWORK_PACKAGE_ID,
+    package: IOTA_FRAMEWORK_PACKAGE_ID,
     module: Identifier::from_str("vec_map").map_err(|e| Error::ParsingFailed(e.to_string()))?,
     function: Identifier::from_str("from_keys_values").map_err(|e| Error::ParsingFailed(e.to_string()))?,
     type_arguments: vec![TypeTag::Address, TypeTag::U64],
@@ -93,7 +93,7 @@ where
 
   // Share the resulting identity.
   ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-    package: SUI_FRAMEWORK_PACKAGE_ID,
+    package: IOTA_FRAMEWORK_PACKAGE_ID,
     module: Identifier::from_str("transfer")
       .map_err(|err| Error::ParsingFailed(format!("\"transfer\" to identifier; {err}")))?,
     function: Identifier::from_str("public_share_object")

@@ -2,8 +2,8 @@ use std::hash::Hash;
 
 use serde::Deserialize;
 use serde::Serialize;
-use sui_sdk::types::id::ID;
-use sui_sdk::types::id::UID;
+use iota_sdk::types::id::ID;
+use iota_sdk::types::id::UID;
 
 pub trait IntoHash {
   fn as_hash(&self) -> impl Hash;

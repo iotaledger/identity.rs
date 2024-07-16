@@ -1,5 +1,5 @@
 module identity_iota::identity {
-    use sui::{transfer::Receiving, vec_map::{Self, VecMap}, vec_set::VecSet};
+    use iota::{transfer::Receiving, vec_map::{Self, VecMap}, vec_set::VecSet};
     use std::string::String;
     use identity_iota::{
         multicontroller::{Self, Action, ControllerCap, Multicontroller},
@@ -206,11 +206,11 @@ module identity_iota::identity {
 
 #[test_only]
 module identity_iota::identity_tests {
-    use sui::test_scenario;
+    use iota::test_scenario;
     use std::string;
     use identity_iota::identity::{new, ENotADidDocument, Identity, new_with_controllers};
     use identity_iota::multicontroller::{ControllerCap, EExpiredProposal, EThresholdNotReached};
-    use sui::{vec_map::{Self}};
+    use iota::{vec_map::{Self}};
 
 
     #[test]
