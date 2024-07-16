@@ -79,7 +79,7 @@ pub struct OnChainIdentity {
   pub id: UID,
   pub did_doc: Multicontroller<Vec<u8>>,
   #[serde(skip)]
-  pub obj_ref: Option<ObjectRef>,
+  pub obj_ref: Option<OwnedObjectRef>,
 }
 
 impl OnChainIdentity {
@@ -197,7 +197,7 @@ impl<'i> ProposalBuilder<'i> {
     let controller_cap = identity.get_controller_cap(client).await?;
     let tx = match action {
       ProposalAction::UpdateDocument(did_doc) => propose_update(
-        identity.obj_ref.unwrap(),
+        identity.obj_ref.clone().unwrap(),
         controller_cap,
         key.as_str(),
         did_doc.pack().unwrap(),
@@ -218,7 +218,7 @@ impl<'i> ProposalBuilder<'i> {
     }
 
     let tx = execute_update(
-      identity.obj_ref.unwrap(),
+      identity.obj_ref.clone().unwrap(),
       controller_cap,
       key.as_str(),
       client.package_id(),
@@ -277,7 +277,10 @@ pub async fn get_identity(client: &IotaClient, object_id: ObjectID) -> Result<Op
       "could not parse identity document with object id {object_id}; {err}"
     ))
   })?;
-  identity.obj_ref = Some(object_ref);
+  identity.obj_ref = Some(OwnedObjectRef {
+    owner: data.owner.unwrap(),
+    reference: object_ref.into(),
+  });
 
   Ok(Some(identity))
 }
