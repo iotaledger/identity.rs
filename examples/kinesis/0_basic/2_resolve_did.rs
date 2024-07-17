@@ -1,18 +1,13 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
-
 use examples_kinesis::create_kinesis_did_document;
 use examples_kinesis::get_client_and_create_account;
 
 use examples_kinesis::get_memstorage;
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::KinesisIotaIdentityClientExt;
 use identity_iota::prelude::Resolver;
 use identity_storage::StorageSigner;
-use iota_sdk::types::block::output::AliasId;
-use sui_sdk::types::base_types::ObjectID;
 
 /// Demonstrates how to resolve an existing DID in an Alias Output.
 #[tokio::main]
@@ -42,14 +37,8 @@ async fn main() -> anyhow::Result<()> {
 
   let resolver_document: IotaDocument = resolver.resolve(&did).await.unwrap();
 
-  // Client and Resolver resolve to the same document in this case.
+  // Client and Resolver resolve to the same document.
   assert_eq!(client_document, resolver_document);
-
-  // We can also resolve the raw bytes directly.
-  let object_id = ObjectID::from_str(&AliasId::from(&did).to_string())?;
-  let raw_did_document: Vec<u8> = identity_client.get_raw_did_document(object_id).await?;
-
-  println!("did document as bytes: {raw_did_document:?}");
 
   Ok(())
 }

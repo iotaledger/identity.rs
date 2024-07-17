@@ -38,6 +38,7 @@ iota-client = ["identity_iota_core/iota-client", "identity_resolver?/iota"]
 
 # Enables the kinesis client integration.
 kinesis-client = [
+  "identity_resolver/kinesis",
   "identity_storage/send-sync-storage",
   "identity_storage/storage-signer",
 ]
