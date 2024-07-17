@@ -40,7 +40,7 @@ default = ["revocation-bitmap", "iota"]
 revocation-bitmap = ["identity_credential/revocation-bitmap", "identity_iota_core?/revocation-bitmap"]
 # Enables the IOTA integration for the resolver.
 iota = ["dep:identity_iota_core"]
-kinesis = ["identity_iota_core/kinesis-client", "identity_iota_core/send-sync-client-ext"]
+kinesis = []
 
 [lints]
 workspace = true

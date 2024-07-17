@@ -15,25 +15,26 @@ description = "SUI related tooling for identity-rs"
 anyhow = "1.0.75"
 bcs = "0.1.4"
 identity_core = { version = "=1.2.0", path = "../identity_core" }
+identity_iota_core = { version = "=1.2.0", path = "../identity_iota_core" }
 iota-crypto = { version = "0.23" }
 identity_jose = { version = "=1.2.0", path = "../identity_jose" }
 identity_verification = { version = "=1.2.0", path = "../identity_verification" }
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "d7a33a9f79271bfc19fc4c8816ea5467e4205e17" }
 futures = { version = "0.3", default-features = false }
-iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk" }
+iota-sdk-classic = { package = "iota-sdk", version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
+iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config" }
+move-core-types= { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", version = "0.0.4" }
 serde.workspace = true
+serde-aux = "4.5.0"
 serde_json.workspace = true
 strum.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt", "process"] }
-# can be updated to renamed kinesis/iota project after migrating code to it
-# locally checked out project at commit 7899dc9ce682c3d0a97f249ce7eaa27b9473b920
-move-core-types = { path = "../../kinesis/external-crates/move/crates/move-core-types" }
-shared-crypto = { path = "../../kinesis/crates/shared-crypto" }
-sui-config = { path = "../../kinesis/crates/sui-config" }
-sui-sdk = { path = "../../kinesis/crates/sui-sdk" }
 # update reference to updated version as soon as available
 secret-storage = { path = "../../secret-storage" }
+shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto" }
+rand = "0.8.5"
 
 [dev-dependencies]
 bcs = "0.1.4"

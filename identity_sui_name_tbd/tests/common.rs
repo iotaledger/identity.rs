@@ -1,5 +1,6 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+#![allow(dead_code)]
 
 use std::io::Write;
 use std::ops::Deref;
@@ -7,13 +8,13 @@ use std::ops::Deref;
 use anyhow::anyhow;
 use anyhow::Context;
 use identity_sui_name_tbd::migration;
+use iota_sdk::rpc_types::IotaObjectDataOptions;
+use iota_sdk::types::base_types::IotaAddress;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::IotaClient;
+use iota_sdk::IotaClientBuilder;
 use jsonpath_rust::JsonPathQuery;
 use serde_json::Value;
-use sui_sdk::rpc_types::SuiObjectDataOptions;
-use sui_sdk::types::base_types::ObjectID;
-use sui_sdk::types::base_types::SuiAddress;
-use sui_sdk::SuiClient;
-use sui_sdk::SuiClientBuilder;
 use tokio::process::Command;
 use tokio::sync::OnceCell;
 
@@ -21,13 +22,34 @@ static CLIENT: OnceCell<TestClient> = OnceCell::const_new();
 const SCRIPT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/scripts/");
 const CACHED_PKG_ID: &str = "/tmp/identity_iota_pkg_id.txt";
 
+pub const TEST_GAS_BUDGET: u64 = 50_000_000;
+pub const TEST_DOC: &[u8] = &[
+  68, 73, 68, 1, 0, 131, 1, 123, 34, 100, 111, 99, 34, 58, 123, 34, 105, 100, 34, 58, 34, 100, 105, 100, 58, 48, 58,
+  48, 34, 44, 34, 118, 101, 114, 105, 102, 105, 99, 97, 116, 105, 111, 110, 77, 101, 116, 104, 111, 100, 34, 58, 91,
+  123, 34, 105, 100, 34, 58, 34, 100, 105, 100, 58, 48, 58, 48, 35, 79, 115, 55, 95, 66, 100, 74, 120, 113, 86, 119,
+  101, 76, 107, 56, 73, 87, 45, 76, 71, 83, 111, 52, 95, 65, 115, 52, 106, 70, 70, 86, 113, 100, 108, 74, 73, 99, 48,
+  45, 100, 50, 49, 73, 34, 44, 34, 99, 111, 110, 116, 114, 111, 108, 108, 101, 114, 34, 58, 34, 100, 105, 100, 58, 48,
+  58, 48, 34, 44, 34, 116, 121, 112, 101, 34, 58, 34, 74, 115, 111, 110, 87, 101, 98, 75, 101, 121, 34, 44, 34, 112,
+  117, 98, 108, 105, 99, 75, 101, 121, 74, 119, 107, 34, 58, 123, 34, 107, 116, 121, 34, 58, 34, 79, 75, 80, 34, 44,
+  34, 97, 108, 103, 34, 58, 34, 69, 100, 68, 83, 65, 34, 44, 34, 107, 105, 100, 34, 58, 34, 79, 115, 55, 95, 66, 100,
+  74, 120, 113, 86, 119, 101, 76, 107, 56, 73, 87, 45, 76, 71, 83, 111, 52, 95, 65, 115, 52, 106, 70, 70, 86, 113, 100,
+  108, 74, 73, 99, 48, 45, 100, 50, 49, 73, 34, 44, 34, 99, 114, 118, 34, 58, 34, 69, 100, 50, 53, 53, 49, 57, 34, 44,
+  34, 120, 34, 58, 34, 75, 119, 99, 54, 89, 105, 121, 121, 65, 71, 79, 103, 95, 80, 116, 118, 50, 95, 49, 67, 80, 71,
+  52, 98, 86, 87, 54, 102, 89, 76, 80, 83, 108, 115, 57, 112, 122, 122, 99, 78, 67, 67, 77, 34, 125, 125, 93, 125, 44,
+  34, 109, 101, 116, 97, 34, 58, 123, 34, 99, 114, 101, 97, 116, 101, 100, 34, 58, 34, 50, 48, 50, 52, 45, 48, 53, 45,
+  50, 50, 84, 49, 50, 58, 49, 52, 58, 51, 50, 90, 34, 44, 34, 117, 112, 100, 97, 116, 101, 100, 34, 58, 34, 50, 48, 50,
+  52, 45, 48, 53, 45, 50, 50, 84, 49, 50, 58, 49, 52, 58, 51, 50, 90, 34, 125, 125,
+];
+
 pub async fn get_client() -> anyhow::Result<TestClient> {
   CLIENT.get_or_try_init(init).await.cloned()
 }
 
 async fn init() -> anyhow::Result<TestClient> {
-  let client = SuiClientBuilder::default().build_localnet().await?;
+  let client = IotaClientBuilder::default().build_localnet().await?;
   let address = get_active_address().await?;
+
+  request_funds(&address).await?;
 
   let package_id = if let Some(id) = std::env::var("IDENTITY_IOTA_PKG_ID")
     .or(get_cached_id(address).await)
@@ -46,7 +68,7 @@ async fn init() -> anyhow::Result<TestClient> {
   })
 }
 
-async fn get_cached_id(active_address: SuiAddress) -> anyhow::Result<String> {
+async fn get_cached_id(active_address: IotaAddress) -> anyhow::Result<String> {
   let cache = tokio::fs::read_to_string(CACHED_PKG_ID).await?;
   let (cached_id, cached_address) = cache.split_once(';').ok_or(anyhow!("Invalid or empty cached data"))?;
 
@@ -57,18 +79,18 @@ async fn get_cached_id(active_address: SuiAddress) -> anyhow::Result<String> {
   }
 }
 
-async fn get_active_address() -> anyhow::Result<SuiAddress> {
-  Command::new("sui")
+async fn get_active_address() -> anyhow::Result<IotaAddress> {
+  Command::new("iota")
     .arg("client")
     .arg("active-address")
     .arg("--json")
     .output()
     .await
     .context("Failed to execute command")
-    .and_then(|output| Ok(serde_json::from_slice::<SuiAddress>(&output.stdout)?))
+    .and_then(|output| Ok(serde_json::from_slice::<IotaAddress>(&output.stdout)?))
 }
 
-async fn publish_package(active_address: SuiAddress) -> anyhow::Result<ObjectID> {
+async fn publish_package(active_address: IotaAddress) -> anyhow::Result<ObjectID> {
   let output = Command::new("sh")
     .current_dir(SCRIPT_DIR)
     .arg("publish_identity_package.sh")
@@ -77,7 +99,8 @@ async fn publish_package(active_address: SuiAddress) -> anyhow::Result<ObjectID>
 
   if !output.status.success() {
     anyhow::bail!(
-      "Failed to publish move package: {}",
+      "Failed to publish move package: \n\n{}\n\n{}",
+      std::str::from_utf8(&output.stdout).unwrap(),
       std::str::from_utf8(&output.stderr).unwrap()
     );
   }
@@ -105,16 +128,37 @@ async fn publish_package(active_address: SuiAddress) -> anyhow::Result<ObjectID>
   Ok(package_id)
 }
 
+pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
+  let output = Command::new("iota")
+    .arg("client")
+    .arg("faucet")
+    .arg("--address")
+    .arg(address.to_string())
+    .arg("--json")
+    .output()
+    .await
+    .context("Failed to execute command")?;
+
+  if !output.status.success() {
+    anyhow::bail!(
+      "Failed to request funds from faucet: {}",
+      std::str::from_utf8(&output.stderr).unwrap()
+    );
+  }
+
+  Ok(())
+}
+
 #[derive(Clone)]
 pub struct TestClient {
-  client: SuiClient,
+  client: IotaClient,
   package_id: ObjectID,
   #[allow(dead_code)]
-  address: SuiAddress,
+  address: IotaAddress,
 }
 
 impl Deref for TestClient {
-  type Target = SuiClient;
+  type Target = IotaClient;
   fn deref(&self) -> &Self::Target {
     &self.client
   }
@@ -153,10 +197,10 @@ impl TestClient {
       .ok_or_else(|| anyhow!("No `AliasOutput` object was created"))
   }
 
-  pub async fn create_did_document(&self) -> anyhow::Result<ObjectID> {
+  pub async fn create_identity(&self) -> anyhow::Result<ObjectID> {
     let output = Command::new("sh")
       .current_dir(SCRIPT_DIR)
-      .arg("create_test_document.sh")
+      .arg("create_test_identity.sh")
       .arg(self.package_id.to_string())
       .output()
       .await?;
@@ -175,7 +219,7 @@ impl TestClient {
     };
 
     result
-      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*Document$')].objectId")
+      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*Identity$')].objectId")
       .map_err(|e| anyhow!("Failed to parse JSONPath: {e}"))
       .and_then(|value| Ok(serde_json::from_value::<Vec<ObjectID>>(value)?))?
       .first()
@@ -191,7 +235,7 @@ impl TestClient {
     let alias_output_id = {
       let dynamic_field_id = self
         .read_api()
-        .get_object_with_options(alias_id, SuiObjectDataOptions::default().with_owner())
+        .get_object_with_options(alias_id, IotaObjectDataOptions::default().with_owner())
         .await?
         .data
         .context("Failed to read object with ID {alias_id}")?
@@ -202,7 +246,7 @@ impl TestClient {
 
       self
         .read_api()
-        .get_object_with_options(dynamic_field_id, SuiObjectDataOptions::default().with_owner())
+        .get_object_with_options(dynamic_field_id, IotaObjectDataOptions::default().with_owner())
         .await?
         .data
         .context("Failed to read object with ID {alias_id}")?
@@ -230,7 +274,7 @@ impl TestClient {
 
     let document_id = result
       .clone()
-      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*Document$')].objectId")
+      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*Identity$')].objectId")
       .map_err(|e| anyhow!("Failed to parse JSONPath: {e}"))
       .and_then(|value| Ok(serde_json::from_value::<Vec<ObjectID>>(value)?))?
       .first()

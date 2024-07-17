@@ -6,9 +6,9 @@ module stardust::irc27 {
     use std::fixed_point32::FixedPoint32;
     use std::string::String;
 
-    use sui::table::Table;
-    use sui::url::Url;
-    use sui::vec_set::VecSet;
+    use iota::table::Table;
+    use iota::url::Url;
+    use iota::vec_set::VecSet;
 
     /// The IRC27 NFT metadata standard schema.
     public struct Irc27Metadata has store {

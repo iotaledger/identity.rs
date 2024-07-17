@@ -3,8 +3,8 @@
 
 module stardust::capped_coin_tests {
 
-    use sui::coin::{Self, Coin};
-    use sui::test_scenario;
+    use iota::coin::{Self, Coin};
+    use iota::test_scenario;
 
     use stardust::capped_coin;
 

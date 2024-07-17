@@ -1,12 +1,12 @@
 module stardust::alias_output {
 
-    use sui::bag;
-    use sui::bag::Bag;
-    use sui::balance;
-    use sui::balance::Balance;
-    use sui::dynamic_object_field;
-    use sui::sui::SUI;
-    use sui::transfer::Receiving;
+    use iota::bag;
+    use iota::bag::Bag;
+    use iota::balance;
+    use iota::balance::Balance;
+    use iota::dynamic_object_field;
+    use iota::iota::IOTA;
+    use iota::transfer::Receiving;
 
     use stardust::alias::Alias;
 
@@ -19,7 +19,7 @@ module stardust::alias_output {
         id: UID,
 
         /// The amount of IOTA coins held by the output.
-        iota: Balance<SUI>,
+        iota: Balance<IOTA>,
 
         /// The `Bag` holds native tokens, key-ed by the stringified type of the asset.
         /// Example: key: "0xabcded::soon::SOON", value: Balance<0xabcded::soon::SOON>.
@@ -27,12 +27,11 @@ module stardust::alias_output {
     }
 
     // === Public-Mutative Functions ===
-    
     /// The function extracts assets from a legacy `AliasOutput`.
     ///    - returns the IOTA Balance,
     ///    - the native tokens Bag,
     ///    - and the `Alias` object that persists the AliasID=ObjectID from Stardust.
-    public fun extract_assets(mut output: AliasOutput): (Balance<SUI>, Bag, Alias) {
+    public fun extract_assets(mut output: AliasOutput): (Balance<IOTA>, Bag, Alias) {
         // Load the related alias object.
         let alias = load_alias(&mut output);
 
@@ -68,7 +67,7 @@ module stardust::alias_output {
 
     // #[test_only]
     public fun create_for_testing(
-        iota: Balance<SUI>,
+        iota: Balance<IOTA>,
         native_tokens: Bag,
         ctx: &mut TxContext
     ): AliasOutput  {
@@ -83,7 +82,7 @@ module stardust::alias_output {
     public fun create_empty_for_testing(ctx: &mut TxContext): AliasOutput {
         AliasOutput {
             id: object::new(ctx),
-            iota: balance::zero<SUI>(),
+            iota: balance::zero<IOTA>(),
             native_tokens: bag::new(ctx),
         }
     }

@@ -1,52 +1,48 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
 use std::pin::Pin;
 use std::str::FromStr;
 
-use fastcrypto::hash::Blake2b256;
+use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::hash::HashFunction;
 use fastcrypto::traits::ToFromBytes;
 use futures::stream::FuturesUnordered;
 use futures::Future;
 use futures::TryStreamExt;
+use identity_iota_core::block::output::AliasId;
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
+use identity_iota_core::Result;
+use identity_iota_core::StateMetadataDocument;
 use identity_verification::jwk::Jwk;
-use move_core_types::account_address::AccountAddress;
-use move_core_types::language_storage::StructTag;
+use iota_sdk::rpc_types::IotaTransactionBlockResponse;
+use iota_sdk::rpc_types::IotaTransactionBlockResponseOptions;
+use iota_sdk::types::base_types::IotaAddress;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::crypto::DefaultHash;
+use iota_sdk::types::crypto::Signature;
+use iota_sdk::types::crypto::SignatureScheme;
+use iota_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
+use iota_sdk::types::transaction::ProgrammableTransaction;
+use iota_sdk::types::transaction::Transaction;
+use iota_sdk::types::transaction::TransactionData;
+use iota_sdk::IotaClient;
 use secret_storage::key_signature_set::KeySignatureTypes;
 use secret_storage::signer::Signer;
 use shared_crypto::intent::Intent;
 use shared_crypto::intent::IntentMessage;
-use sui_sdk::rpc_types::OwnedObjectRef;
-use sui_sdk::rpc_types::SuiTransactionBlockEffects;
-use sui_sdk::rpc_types::SuiTransactionBlockResponseOptions;
-use sui_sdk::types::base_types::ObjectID;
-use sui_sdk::types::base_types::SuiAddress;
-use sui_sdk::types::crypto::DefaultHash;
-use sui_sdk::types::crypto::Signature;
-use sui_sdk::types::crypto::SignatureScheme;
-use sui_sdk::types::object::Owner;
-use sui_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use sui_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
-use sui_sdk::types::transaction::Argument;
-use sui_sdk::types::transaction::Command;
-use sui_sdk::types::transaction::ProgrammableMoveCall;
-use sui_sdk::types::transaction::ProgrammableTransaction;
-use sui_sdk::types::transaction::Transaction;
-use sui_sdk::types::transaction::TransactionData;
-use sui_sdk::types::Identifier;
-use sui_sdk::types::TypeTag;
-use sui_sdk::types::SUI_FRAMEWORK_ADDRESS;
-use sui_sdk::types::SUI_FRAMEWORK_PACKAGE_ID;
-use sui_sdk::SuiClient;
 
 use crate::migration::get_alias;
-use crate::migration::get_identity_document;
+use crate::migration::get_identity;
 use crate::migration::lookup;
+use crate::migration::Identity;
+use crate::migration::IdentityBuilder;
 use crate::Error;
 
 const DEFAULT_NETWORK_NAME: &str = "iota";
-const DEFAULT_IDENTITY_PACKAGE_ID: &str = "0x102acced35e7725d07d496ac4bd7e7babd8f61e90482c66595bf206985024684";
+const DEFAULT_IDENTITY_PACKAGE_ID: &str = "0x4342dbbd222a5b1a369afaa19defd5a121252bb89bccb611c72d9127a90cfaca";
 
 pub struct KinesisKeySignature {
   pub public_key: Vec<u8>,
@@ -90,7 +86,7 @@ impl From<KeyId> for String {
 pub struct IdentityClientBuilder {
   pub(crate) identity_iota_package_id: Option<ObjectID>,
   pub(crate) sender_public_key: Option<Vec<u8>>,
-  pub(crate) sui_client: Option<SuiClient>,
+  pub(crate) iota_client: Option<IotaClient>,
   pub(crate) network_name: Option<String>,
 }
 
@@ -109,10 +105,10 @@ impl IdentityClientBuilder {
     self
   }
 
-  /// Sets the `sui_client` value.
+  /// Sets the `iota_client` value.
   #[must_use]
-  pub fn sui_client(mut self, value: SuiClient) -> Self {
-    self.sui_client = Some(value);
+  pub fn iota_client(mut self, value: IotaClient) -> Self {
+    self.iota_client = Some(value);
     self
   }
 
@@ -133,18 +129,29 @@ impl IdentityClientBuilder {
 struct SigningInfo {
   #[allow(dead_code)]
   sender_public_key: Vec<u8>,
-  sender_address: SuiAddress,
+  sender_address: IotaAddress,
 }
 
 #[derive(Clone)]
 pub struct IdentityClient {
   identity_iota_package_id: ObjectID,
-  sui_client: SuiClient,
+  iota_client: IotaClient,
   signing_info: Option<SigningInfo>,
   network_name: String,
 }
 
+impl Deref for IdentityClient {
+  type Target = IotaClient;
+  fn deref(&self) -> &Self::Target {
+    &self.iota_client
+  }
+}
+
 impl IdentityClient {
+  pub(crate) fn package_id(&self) -> ObjectID {
+    self.identity_iota_package_id
+  }
+
   pub fn builder() -> IdentityClientBuilder {
     IdentityClientBuilder::default()
   }
@@ -157,7 +164,7 @@ impl IdentityClient {
       .map(|v| v.sender_public_key.as_ref())
   }
 
-  pub fn sender_address(&self) -> Result<SuiAddress, Error> {
+  pub fn sender_address(&self) -> Result<IotaAddress, Error> {
     self
       .signing_info
       .as_ref()
@@ -186,74 +193,46 @@ impl IdentityClient {
         .identity_iota_package_id
         .map_or_else(|| ObjectID::from_str(DEFAULT_IDENTITY_PACKAGE_ID), Ok)
         .map_err(|err| Error::InvalidConfig(format!("could not parse identity package id; {err}")))?,
-      sui_client: builder
-        .sui_client
-        .ok_or_else(|| Error::InvalidConfig("missing `sui_client` argument ".to_string()))?,
+      iota_client: builder
+        .iota_client
+        .ok_or_else(|| Error::InvalidConfig("missing `iota_client` argument ".to_string()))?,
       signing_info,
       network_name: builder.network_name.unwrap_or_else(|| DEFAULT_NETWORK_NAME.to_string()),
     })
   }
 
-  /// Publishes given IOTA document to new `document` onchain.
-  pub async fn publish_raw_did_document<S>(
+  /// Creates a new onchain Identity.
+  pub fn create_identity<'a>(&self, iota_document: &'a [u8]) -> IdentityBuilder<'a> {
+    IdentityBuilder::new(iota_document, self.identity_iota_package_id)
+  }
+
+  pub(crate) async fn execute_transaction<S>(
     &self,
-    iota_document: &[u8],
+    tx: ProgrammableTransaction,
     gas_budget: u64,
     signer: &S,
-  ) -> Result<ObjectID, Error>
+  ) -> Result<IotaTransactionBlockResponse, Error>
   where
     S: Signer<KinesisKeySignature> + Send + Sync,
   {
-    let programmable_transaction =
-      self.get_new_doc_programmable_transaction(iota_document, self.identity_iota_package_id)?;
-    let tx_data = self.get_transaction_data(programmable_transaction, gas_budget).await?;
+    let tx_data = self.get_transaction_data(tx, gas_budget).await?;
     let kinesis_signature = self.sign_transaction_data(&tx_data, signer).await?;
 
     // execute tx
-    let response = self
-      .sui_client
+    self
       .quorum_driver_api()
       .execute_transaction_block(
         Transaction::from_data(tx_data, vec![kinesis_signature]),
-        SuiTransactionBlockResponseOptions::full_content(),
+        IotaTransactionBlockResponseOptions::full_content(),
         Some(ExecuteTransactionRequestType::WaitForLocalExecution),
       )
-      .await?;
-
-    let created = match response.clone().effects {
-      Some(SuiTransactionBlockEffects::V1(effects)) => effects.created,
-      _ => {
-        return Err(Error::TransactionUnexpectedResponse(format!(
-          "could not find effects in transaction response: {response:?}"
-        )));
-      }
-    };
-    let new_documents: Vec<OwnedObjectRef> = created
-      .into_iter()
-      .filter(|elem| {
-        matches!(
-          elem.owner,
-          Owner::Shared {
-            initial_shared_version: _,
-          }
-        )
-      })
-      .collect();
-    let new_document = match &new_documents[..] {
-      [value] => value,
-      _ => {
-        return Err(Error::TransactionUnexpectedResponse(format!(
-          "could not find new document in response: {response:?}"
-        )));
-      }
-    };
-
-    Ok(new_document.object_id())
+      .await
+      .map_err(Error::TransactionExecutionFailed)
   }
 
-  async fn get_coin_for_transaction(&self) -> Result<sui_sdk::rpc_types::Coin, Error> {
+  async fn get_coin_for_transaction(&self) -> Result<iota_sdk::rpc_types::Coin, Error> {
     let coins = self
-      .sui_client
+      .iota_client
       .coin_read_api()
       .get_coins(self.sender_address()?, None, None, None)
       .await
@@ -272,7 +251,7 @@ impl IdentityClient {
     gas_budget: u64,
   ) -> Result<TransactionData, Error> {
     let gas_price = self
-      .sui_client
+      .iota_client
       .read_api()
       .get_reference_gas_price()
       .await
@@ -298,7 +277,7 @@ impl IdentityClient {
       .as_ref()
       .ok_or_else(|| Error::InvalidConfig("not properly configured for signing".to_string()))?;
 
-    let intent = Intent::sui_transaction();
+    let intent = Intent::iota_transaction();
     let intent_msg = IntentMessage::new(intent, tx_data);
     let mut hasher = DefaultHash::default();
     hasher.update(bcs::to_bytes(&intent_msg).map_err(|err| {
@@ -322,125 +301,70 @@ impl IdentityClient {
     Signature::from_bytes(signature_bytes)
       .map_err(|err| Error::TransactionSigningFailed(format!("could not parse signature to IOTA signature; {err}")))
   }
-
-  fn get_new_doc_programmable_transaction(
-    &self,
-    iota_document: &[u8],
-    package_id: ObjectID,
-  ) -> Result<sui_sdk::types::transaction::ProgrammableTransaction, Error> {
-    let mut ptb = ProgrammableTransactionBuilder::new();
-
-    let pure_vec: Vec<Argument> = iota_document
-      .iter()
-      .map(|elem| ptb.pure(*elem))
-      .collect::<Result<Vec<_>, _>>()
-      .map_err(|err| Error::InvalidArgument(format!("could not convert given document to move vector; {err}")))?;
-    let iota_document_move_vec = ptb.command(Command::MakeMoveVec(Some(sui_sdk::types::TypeTag::U8), pure_vec));
-
-    let sui_struct_tag: StructTag = StructTag {
-      address: SUI_FRAMEWORK_ADDRESS,
-      module: Identifier::from_str("sui")
-        .map_err(|err| Error::ParsingFailed(format!("\"sui\" to identifier; {err}")))?,
-      name: Identifier::from_str("SUI").map_err(|err| Error::ParsingFailed(format!("\"SUI\" to identifier; {err}")))?,
-      type_params: vec![],
-    };
-    let balance = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-      package: SUI_FRAMEWORK_PACKAGE_ID,
-      module: Identifier::from_str("balance")
-        .map_err(|err| Error::ParsingFailed(format!("\"balance\" to identifier; {err}")))?,
-      function: Identifier::from_str("zero")
-        .map_err(|err| Error::ParsingFailed(format!("\"zero\" to identifier; {err}")))?,
-      type_arguments: vec![TypeTag::Struct(Box::new(sui_struct_tag))],
-      arguments: vec![],
-    })));
-
-    let bag = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-      package: SUI_FRAMEWORK_PACKAGE_ID,
-      module: Identifier::from_str("bag")
-        .map_err(|err| Error::ParsingFailed(format!("\"bag\" to identifier; {err}")))?,
-      function: Identifier::from_str("new")
-        .map_err(|err| Error::ParsingFailed(format!("\"new\" to identifier; {err}")))?,
-      type_arguments: vec![],
-      arguments: vec![],
-    })));
-
-    let new_document_result = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-      package: package_id,
-      module: Identifier::from_str("document")
-        .map_err(|err| Error::ParsingFailed(format!("\"document\" to identifier; {err}")))?,
-      function: Identifier::from_str("new")
-        .map_err(|err| Error::ParsingFailed(format!("\"new\" to identifier; {err}")))?,
-      type_arguments: vec![],
-      arguments: vec![iota_document_move_vec, balance, bag],
-    })));
-
-    let new_document_result_index = if let Argument::Result(index) = new_document_result {
-      index
-    } else {
-      return Err(Error::TransactionBuildingFailed(
-        "could not get result index from document::new call".to_string(),
-      ));
-    };
-
-    ptb.transfer_arg(
-      self.sender_address()?,
-      Argument::NestedResult(new_document_result_index, 1),
-    );
-
-    let document_struct_tag: StructTag = StructTag {
-      address: AccountAddress::from_str(&package_id.to_string())
-        .map_err(|err| Error::ParsingFailed(format!("package id\"{package_id}\" to account address; {err}")))?,
-      module: Identifier::from_str("document")
-        .map_err(|err| Error::ParsingFailed(format!("\"document\" to identifier; {err}")))?,
-      name: Identifier::from_str("Document")
-        .map_err(|err| Error::ParsingFailed(format!("\"Document\" to identifier; {err}")))?,
-      type_params: vec![],
-    };
-
-    ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-      package: SUI_FRAMEWORK_PACKAGE_ID,
-      module: Identifier::from_str("transfer")
-        .map_err(|err| Error::ParsingFailed(format!("\"transfer\" to identifier; {err}")))?,
-      function: Identifier::from_str("public_share_object")
-        .map_err(|err| Error::ParsingFailed(format!("\"public_share_object\" to identifier; {err}")))?,
-      type_arguments: vec![TypeTag::Struct(Box::new(document_struct_tag))],
-      arguments: vec![Argument::NestedResult(new_document_result_index, 0)],
-    })));
-
-    Ok(ptb.finish())
-  }
 }
 
 impl IdentityClient {
-  pub async fn get_raw_did_document(&self, object_id: ObjectID) -> Result<Vec<u8>, Error> {
+  pub async fn get_identity(&self, object_id: ObjectID) -> Result<Identity, Error> {
     // spawn all checks
     let mut all_futures =
-      FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Vec<u8>>, Error>> + Send>>>::new();
-    all_futures.push(Box::pin(resolve_new(&self.sui_client, object_id)));
-    all_futures.push(Box::pin(resolve_migrated(&self.sui_client, object_id)));
-    all_futures.push(Box::pin(resolve_unmigrated(&self.sui_client, object_id)));
+      FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
+    all_futures.push(Box::pin(resolve_new(&self.iota_client, object_id)));
+    all_futures.push(Box::pin(resolve_migrated(&self.iota_client, object_id)));
+    all_futures.push(Box::pin(resolve_unmigrated(&self.iota_client, object_id)));
 
     // use first non-None value as result
-    let mut state_metadata_outcome: Option<Vec<u8>> = None;
+    let mut identity_outcome: Option<Identity> = None;
     while let Some(result) = all_futures.try_next().await? {
       if result.is_some() {
-        state_metadata_outcome = result;
+        identity_outcome = result;
         all_futures.clear();
         break;
       }
     }
 
-    // check if we found state metadata
-    let state_metadata = if let Some(value) = state_metadata_outcome {
-      value
-    } else {
-      return Err(Error::DIDResolutionErrorKinesis(format!(
-        "could not find DID document for {object_id}"
-      )));
-    };
+    identity_outcome
+      .ok_or_else(|| Error::DIDResolutionErrorKinesis(format!("could not find DID document for {object_id}")))
+  }
+}
 
-    // unpack and return document
-    Ok(state_metadata)
+// former extension trait, keep separate until properly re-integrated
+impl IdentityClient {
+  pub async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument> {
+    // get alias id from did (starting with 0x)
+    let object_id = ObjectID::from_str(&AliasId::from(did).to_string())
+      .map_err(|_| Error::DIDResolutionErrorKinesis(format!("could not parse object id from did {did}")))
+      .unwrap();
+
+    let identity = get_identity(self, object_id).await.unwrap().unwrap();
+    let state_metadata = identity.did_doc.controlled_value();
+
+    // unpack, replace placeholders and return document
+    return StateMetadataDocument::unpack(&state_metadata).and_then(|doc| doc.into_iota_document(did));
+  }
+
+  pub async fn publish_did_document<S>(
+    &self,
+    document: IotaDocument,
+    gas_budget: u64,
+    signer: &S,
+  ) -> Result<IotaDocument, anyhow::Error>
+  where
+    S: Signer<KinesisKeySignature> + Send + Sync,
+  {
+    let packed = document.clone().pack().unwrap();
+
+    let oci = self
+      .create_identity(&packed)
+      .gas_budget(gas_budget)
+      .finish(&self, signer)
+      .await?;
+
+    // replace placeholders in document
+    let did: IotaDID = IotaDID::new(&oci.id.id.bytes, &self.network_name().try_into().unwrap());
+    let metadata_document: StateMetadataDocument = document.into();
+    let document_without_placeholders = metadata_document.into_iota_document(&did).unwrap();
+
+    Ok(document_without_placeholders)
   }
 }
 
@@ -454,48 +378,34 @@ pub fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> 
     .map_err(|err| Error::InvalidKey(format!("could not decode base64 public key; {err}")))
 }
 
-pub fn convert_to_address(sender_public_key: &[u8]) -> Result<SuiAddress, Error> {
-  let to_hash = [[SignatureScheme::ED25519.flag()].as_slice(), sender_public_key].concat();
+pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error> {
+  let public_key = Ed25519PublicKey::from_bytes(sender_public_key)
+    .map_err(|err| Error::InvalidKey(format!("could not parse public key to Ed25519 public key; {err}")))?;
 
-  let mut hasher = Blake2b256::default();
-  hasher.update(to_hash.as_slice());
-  let digest = hasher.finalize().digest;
-
-  SuiAddress::from_bytes(digest)
-    .map_err(|err| Error::InvalidKey(format!("could not convert public key to sender address; {err}")))
+  Ok(IotaAddress::from(&public_key))
 }
 
-async fn resolve_new(client: &SuiClient, object_id: ObjectID) -> Result<Option<Vec<u8>>, Error> {
-  let document = get_identity_document(client, object_id).await.map_err(|err| {
+async fn resolve_new(client: &IotaClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+  let onchain_identity = get_identity(client, object_id).await.map_err(|err| {
     Error::DIDResolutionErrorKinesis(format!(
       "could not get identity document for object id {object_id}; {err}"
     ))
   })?;
-
-  Ok(document.map(|document| document.doc))
+  Ok(onchain_identity.map(Identity::FullFledged))
 }
 
-async fn resolve_migrated(client: &SuiClient, object_id: ObjectID) -> Result<Option<Vec<u8>>, Error> {
-  let document = lookup(client, object_id).await.map_err(|err| {
+async fn resolve_migrated(client: &IotaClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+  let onchain_identity = lookup(client, object_id).await.map_err(|err| {
     Error::DIDResolutionErrorKinesis(format!(
       "failed to look up object_id {object_id} in migration registry; {err}"
     ))
   })?;
-
-  Ok(document.map(|document| document.doc))
+  Ok(onchain_identity.map(Identity::FullFledged))
 }
 
-async fn resolve_unmigrated(client: &SuiClient, object_id: ObjectID) -> Result<Option<Vec<u8>>, Error> {
+async fn resolve_unmigrated(client: &IotaClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
   let unmigrated_alias = get_alias(client, object_id)
     .await
     .map_err(|err| Error::DIDResolutionErrorKinesis(format!("could  no query for object id {object_id}; {err}")))?;
-  unmigrated_alias
-    .map(|v| {
-      v.state_metadata.ok_or_else(|| {
-        Error::DIDResolutionErrorKinesis(format!(
-          "unmigrated alias for object id {object_id} does not contain DID document"
-        ))
-      })
-    })
-    .transpose()
+  Ok(unmigrated_alias.map(Identity::Legacy))
 }

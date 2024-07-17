@@ -1,6 +1,6 @@
 module identity_iota::migration_registry {
-    use sui::{dynamic_object_field as field, transfer::share_object, event};
-    use identity_iota::document::Document;
+    use iota::{dynamic_object_field as field, transfer::share_object, event};
+    use identity_iota::identity::Identity;
 
     /// One time witness needed to construct a singleton migration registry.
     public struct MIGRATION_REGISTRY has drop {}
@@ -28,24 +28,30 @@ module identity_iota::migration_registry {
         event::emit(MigrationRegistryCreated { id: registry_id });
     }
 
-    /// Checks whether the given alias ID exists in the migration registry.    
+    /// Checks whether the given alias ID exists in the migration registry.
     public fun exists(self: &MigrationRegistry, alias_id: ID): bool {
         field::exists_(&self.id, alias_id)
     }
 
     /// Lookup an alias ID into the migration registry.
-    public fun borrow(self: &MigrationRegistry, alias_id: ID): &Document {
-        field::borrow<ID, Document>(&self.id, alias_id)
+    public fun borrow(self: &MigrationRegistry, alias_id: ID): &Identity {
+        field::borrow<ID, Identity>(&self.id, alias_id)
     }
 
     /// Mutably borrow the migrated document `Document` corresponding
     /// to the provided `alias_id`, if any.
-    public fun borrow_mut(self: &mut MigrationRegistry, alias_id: ID): &mut Document {
+    public fun borrow_mut(self: &mut MigrationRegistry, alias_id: ID): &mut Identity {
         field::borrow_mut(&mut self.id, alias_id)
     }
 
     /// Adds a new Alias ID -> Object ID binding to the regitry.
-    public(package) fun add(self: &mut MigrationRegistry, alias_id: ID, doc: Document) {
+    public(package) fun add(self: &mut MigrationRegistry, alias_id: ID, doc: Identity) {
         field::add(&mut self.id, alias_id, doc);
+    }
+
+    //= Test Functions
+    #[test_only]
+    public fun init_testing(ctx: &mut TxContext) {
+        init(MIGRATION_REGISTRY {}, ctx);
     }
 }

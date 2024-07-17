@@ -4,7 +4,6 @@
 use std::path::PathBuf;
 
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::KinesisIotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
@@ -23,11 +22,11 @@ use identity_sui_name_tbd::client::convert_to_address;
 use identity_sui_name_tbd::client::get_sender_public_key;
 use identity_sui_name_tbd::client::IdentityClient;
 use identity_sui_name_tbd::utils::request_funds;
-use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
-use iota_sdk::client::Password;
+use iota_sdk::IotaClientBuilder;
+use iota_sdk_classic::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk_classic::client::Password;
 use rand::distributions::DistString;
 use serde_json::Value;
-use sui_sdk::SuiClientBuilder;
 
 pub static API_ENDPOINT: &str = "http://localhost";
 pub static FAUCET_ENDPOINT: &str = "http://localhost/faucet/api/enqueue";
@@ -82,7 +81,7 @@ where
   // The API endpoint of an IOTA node
   let api_endpoint: &str = "http://127.0.0.1:9000";
 
-  let sui_client = SuiClientBuilder::default()
+  let iota_client = IotaClientBuilder::default()
     .build(api_endpoint)
     .await
     .map_err(|err| anyhow::anyhow!(format!("failed to connect to network; {}", err)))?;
@@ -98,7 +97,7 @@ where
   request_funds(&sender_address).await?;
 
   let identity_client: IdentityClient = IdentityClient::builder()
-    .sui_client(sui_client)
+    .iota_client(iota_client)
     .sender_public_key(&public_key_bytes)
     .build()?;
 

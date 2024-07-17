@@ -6,6 +6,6 @@
 script_dir=$(dirname $0)
 package_dir=$script_dir/../packages/identity_iota
 
-echo "publishing package from $package_dir"
+# echo "publishing package from $package_dir"
 cd $package_dir
 sui client publish --with-unpublished-dependencies --json --gas-budget 500000000 .

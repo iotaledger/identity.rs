@@ -8,14 +8,14 @@ module stardust::nft_tests {
     use std::string;
     use std::type_name;
 
-    use sui::bag;
-    use sui::balance::{Self, Balance};
-    use sui::coin::{Self, Coin};
-    use sui::sui::SUI;
-    use sui::table;
-    use sui::test_scenario;
-    use sui::url;
-    use sui::vec_set;
+    use iota::bag;
+    use iota::balance::{Self, Balance};
+    use iota::coin::{Self, Coin};
+    use iota::iota::IOTA;
+    use iota::table;
+    use iota::test_scenario;
+    use iota::url;
+    use iota::vec_set;
 
     use stardust::irc27;
     use stardust::nft_output;
@@ -123,7 +123,7 @@ module stardust::nft_tests {
         // Check the storage deposit return.
         scenario.next_tx(sender);
     
-        let returned_storage_deposit = scenario.take_from_address<Coin<SUI>>(@0xB);
+        let returned_storage_deposit = scenario.take_from_address<Coin<IOTA>>(@0xB);
 
         assert!(returned_storage_deposit.value() == 1000, 18);
 
