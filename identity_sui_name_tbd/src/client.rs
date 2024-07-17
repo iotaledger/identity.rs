@@ -339,7 +339,7 @@ impl IdentityClient {
     let state_metadata = identity.did_doc.controlled_value();
 
     // unpack, replace placeholders and return document
-    return StateMetadataDocument::unpack(&state_metadata).and_then(|doc| doc.into_iota_document(did));
+    StateMetadataDocument::unpack(state_metadata).and_then(|doc| doc.into_iota_document(did))
   }
 
   pub async fn publish_did_document<S>(
@@ -356,7 +356,7 @@ impl IdentityClient {
     let oci = self
       .create_identity(&packed)
       .gas_budget(gas_budget)
-      .finish(&self, signer)
+      .finish(self, signer)
       .await?;
 
     // replace placeholders in document

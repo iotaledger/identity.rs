@@ -51,9 +51,8 @@ async fn init() -> anyhow::Result<TestClient> {
 
   request_funds(&address).await?;
 
-  let package_id = if let Some(id) = std::env::var("IDENTITY_IOTA_PKG_ID")
+  let package_id = if let Ok(id) = std::env::var("IDENTITY_IOTA_PKG_ID")
     .or(get_cached_id(address).await)
-    .ok()
   {
     std::env::set_var("IDENTITY_IOTA_PKG_ID", id.clone());
     id.parse()?
@@ -123,7 +122,7 @@ async fn publish_package(active_address: IotaAddress) -> anyhow::Result<ObjectID
   let package_id_str = package_id.to_string();
   std::env::set_var("IDENTITY_IOTA_PKG_ID", package_id_str.as_str());
   let mut file = std::fs::File::create(CACHED_PKG_ID)?;
-  write!(&mut file, "{};{}", package_id_str, active_address.to_string())?;
+  write!(&mut file, "{};{}", package_id_str, active_address)?;
 
   Ok(package_id)
 }
@@ -262,7 +261,7 @@ impl TestClient {
       .arg("migrate_alias_output.sh")
       .arg(self.package_id.to_string())
       .arg(alias_output_id.to_string())
-      .arg(migration::migration_registry_id(&self).await?.to_string())
+      .arg(migration::migration_registry_id(self).await?.to_string())
       .output()
       .await?;
 
