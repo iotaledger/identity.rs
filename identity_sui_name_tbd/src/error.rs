@@ -50,6 +50,9 @@ pub enum Error {
   /// Failed to parse DID document.
   #[error("failed to parse DID document; {0}")]
   DidDocParsingFailed(String),
+  /// Failed to serialize DID document.
+  #[error("failed to serialize DID document; {0}")]
+  DidDocSerialization(String),
   /// Identity related error.
   #[error("identity error; {0}")]
   Identity(String),

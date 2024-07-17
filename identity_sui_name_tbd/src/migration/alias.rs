@@ -56,7 +56,7 @@ pub async fn get_alias(client: &IotaClient, object_id: ObjectID) -> Result<Optio
     .await
     .map_err(|err| {
       Error::ObjectLookup(format!(
-        "Could not get object with options for this object_id {object_id}; {err}"
+        "could not get object with options for this object_id {object_id}; {err}"
       ))
     })?;
 
@@ -80,7 +80,11 @@ pub async fn get_alias(client: &IotaClient, object_id: ObjectID) -> Result<Optio
     return Ok(None);
   }
 
-  let alias: UnmigratedAlias = serde_json::from_value(value.fields.to_json_value()).unwrap();
+  let alias: UnmigratedAlias = serde_json::from_value(value.fields.to_json_value()).map_err(|err| {
+    Error::ParsingFailed(format!(
+      "could not parse result for object id {object_id} to `UnmigratedAlias`; {err}"
+    ))
+  })?;
 
   Ok(Some(alias))
 }

@@ -14,7 +14,7 @@ use futures::TryStreamExt;
 use identity_iota_core::block::output::AliasId;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
-use identity_iota_core::Result;
+use identity_iota_core::NetworkName;
 use identity_iota_core::StateMetadataDocument;
 use identity_verification::jwk::Jwk;
 use iota_sdk::rpc_types::IotaTransactionBlockResponse;
@@ -137,7 +137,7 @@ pub struct IdentityClient {
   identity_iota_package_id: ObjectID,
   iota_client: IotaClient,
   signing_info: Option<SigningInfo>,
-  network_name: String,
+  network_name: NetworkName,
 }
 
 impl Deref for IdentityClient {
@@ -172,8 +172,8 @@ impl IdentityClient {
       .map(|v| v.sender_address)
   }
 
-  pub fn network_name(&self) -> String {
-    self.network_name.to_string()
+  pub fn network_name(&self) -> &NetworkName {
+    &self.network_name
   }
 
   /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.
@@ -187,6 +187,11 @@ impl IdentityClient {
         })
       })
       .transpose()?;
+    let network_name = builder.network_name.unwrap_or_else(|| DEFAULT_NETWORK_NAME.to_string());
+    let network_name = network_name
+      .clone()
+      .try_into()
+      .map_err(|err| Error::InvalidConfig(format!(r#"could not convert "{network_name}" to a NetworkName; {err}"#)))?;
 
     Ok(Self {
       identity_iota_package_id: builder
@@ -197,7 +202,7 @@ impl IdentityClient {
         .iota_client
         .ok_or_else(|| Error::InvalidConfig("missing `iota_client` argument ".to_string()))?,
       signing_info,
-      network_name: builder.network_name.unwrap_or_else(|| DEFAULT_NETWORK_NAME.to_string()),
+      network_name,
     })
   }
 
@@ -329,17 +334,24 @@ impl IdentityClient {
 
 // former extension trait, keep separate until properly re-integrated
 impl IdentityClient {
-  pub async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument> {
+  pub async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument, Error> {
     // get alias id from did (starting with 0x)
     let object_id = ObjectID::from_str(&AliasId::from(did).to_string())
-      .map_err(|_| Error::DIDResolutionErrorKinesis(format!("could not parse object id from did {did}")))
-      .unwrap();
+      .map_err(|err| Error::DIDResolutionErrorKinesis(format!("could not parse object id from did {did}; {err}")))?;
 
-    let identity = get_identity(self, object_id).await.unwrap().unwrap();
+    let identity = get_identity(self, object_id).await?.ok_or_else(|| {
+      Error::DIDResolutionErrorKinesis(format!("call succeeded but could not resolve {did} to object"))
+    })?;
     let state_metadata = identity.did_doc.controlled_value();
 
     // unpack, replace placeholders and return document
-    StateMetadataDocument::unpack(state_metadata).and_then(|doc| doc.into_iota_document(did))
+    StateMetadataDocument::unpack(state_metadata)
+      .and_then(|doc| doc.into_iota_document(did))
+      .map_err(|err| {
+        Error::DidDocParsingFailed(format!(
+          "could not transform DID document to IotaDocument for DID {did}; {err}"
+        ))
+      })
   }
 
   pub async fn publish_did_document<S>(
@@ -347,11 +359,14 @@ impl IdentityClient {
     document: IotaDocument,
     gas_budget: u64,
     signer: &S,
-  ) -> Result<IotaDocument, anyhow::Error>
+  ) -> Result<IotaDocument, Error>
   where
     S: Signer<KinesisKeySignature> + Send + Sync,
   {
-    let packed = document.clone().pack().unwrap();
+    let packed = document
+      .clone()
+      .pack()
+      .map_err(|err| Error::DidDocSerialization(format!("could not pack DID document: {err}")))?;
 
     let oci = self
       .create_identity(&packed)
@@ -360,9 +375,13 @@ impl IdentityClient {
       .await?;
 
     // replace placeholders in document
-    let did: IotaDID = IotaDID::new(&oci.id.id.bytes, &self.network_name().try_into().unwrap());
+    let did: IotaDID = IotaDID::new(&oci.id.id.bytes, self.network_name());
     let metadata_document: StateMetadataDocument = document.into();
-    let document_without_placeholders = metadata_document.into_iota_document(&did).unwrap();
+    let document_without_placeholders = metadata_document.into_iota_document(&did).map_err(|err| {
+      Error::DidDocParsingFailed(format!(
+        "could not replace placeholders in published DID document {did}; {err}"
+      ))
+    })?;
 
     Ok(document_without_placeholders)
   }
