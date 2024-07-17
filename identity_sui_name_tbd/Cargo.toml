@@ -31,8 +31,7 @@ serde_json.workspace = true
 strum.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt", "process"] }
-# update reference to updated version as soon as available
-secret-storage = { path = "../../secret-storage" }
+secret-storage= { git = "https://github.com/iotaledger/secret-storage.git", branch = "feat/add-feedback-from-integration" }
 shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto" }
 rand = "0.8.5"
 
