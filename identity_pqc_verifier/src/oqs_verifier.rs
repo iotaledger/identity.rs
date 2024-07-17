@@ -17,7 +17,6 @@ impl OQSVerifier {
 
   /// Verify a JWS signature secured with the on the [`Algorithm`] defined in liboqs.
   pub fn verify(input: VerificationInput, public_key: &Jwk, alg: Algorithm) -> Result<(), SignatureVerificationError> {
-
     // Obtain an ML-DSA-44 public key.
     let params: &JwkParamsPQ = public_key
       .try_pq_params()

@@ -1,11 +1,14 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::convert::ToJson;
+use identity_verification::CustomMethodData;
 use identity_verification::MethodData;
 use identity_verification::VerificationMethod;
 use seahash::SeaHasher;
 use std::fmt::Display;
 use std::hash::Hasher;
+
 
 use super::KeyIdStorageError;
 
@@ -22,6 +25,7 @@ pub enum MethodDigestConstructionErrorKind {
   MissingIdFragment,
   /// Caused by a failure to decode a method's [key material](identity_verification::MethodData).
   DataDecodingFailure,
+
 }
 
 impl Display for MethodDigestConstructionErrorKind {
@@ -56,6 +60,13 @@ impl MethodDigest {
 
     match method_data {
       MethodData::PublicKeyJwk(jwk) => hasher.write(jwk.thumbprint_sha256().as_ref()),
+      // MethodData::Custom(e) => hasher.write(&e.to_json_vec().unwrap()), //TODO: Hybrid - to be changed
+      MethodData::CompositePublicKey(composite) => {
+        let algid = composite.alg_id().to_json_vec().map_err(|err| MethodDigestConstructionError::new(DataDecodingFailure).with_source(err))?;
+        hasher.write(&algid);
+        hasher.write(composite.traditional_public_key().thumbprint_sha256().as_ref());
+        hasher.write(composite.pq_public_key().thumbprint_sha256().as_ref());
+      }
       _ => hasher.write(
         &method_data
           .try_decode()

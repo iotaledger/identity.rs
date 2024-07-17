@@ -19,6 +19,7 @@ sd-jwt-payload = { version = "0.2.1", default-features = false, features = ["sha
 serde_json = { version = "1.0", default-features = false }
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
 identity_pqc_verifier = { path = "../identity_pqc_verifier", default-features = true }
+serde.workspace = true
 
 [lib]
 path = "utils/utils.rs"
@@ -106,3 +107,7 @@ name = "10_zkp_revocation"
 [[example]]
 path = "1_advanced/11_pqc.rs"
 name = "11_pqc"
+
+[[example]]
+path = "1_advanced/12_hybrid.rs"
+name = "12_hybrid"

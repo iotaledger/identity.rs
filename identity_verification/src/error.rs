@@ -39,4 +39,8 @@ pub enum Error {
   /// Caused by key material that is not a JSON Web Key.
   #[error("verification material format is not publicKeyJwk")]
   NotPublicKeyJwk,
+  //TODO: hybrid - new error
+  /// Caused by key material that is not a Composite Public Key.
+  #[error("verification material format is not compositePublicKey")]
+  NotCompositePublicKey
 }

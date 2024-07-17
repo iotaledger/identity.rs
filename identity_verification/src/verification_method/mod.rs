@@ -13,6 +13,7 @@ mod method_ref;
 mod method_relationship;
 mod method_scope;
 mod method_type;
+mod composite_public_key;
 
 pub use self::builder::MethodBuilder;
 pub use self::material::CustomMethodData;
@@ -22,3 +23,4 @@ pub use self::method_ref::MethodRef;
 pub use self::method_relationship::MethodRelationship;
 pub use self::method_scope::MethodScope;
 pub use self::method_type::MethodType;
+pub use composite_public_key::*;

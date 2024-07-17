@@ -4,24 +4,19 @@
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
 use examples::MemStorage;
-use identity_iota::did::DIDUrl;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
-use identity_iota::storage::JwkStorage;
 use identity_iota::storage::KeyIdMemstore;
-use identity_iota::storage::KeyIdStorage;
-use identity_iota::storage::Storage;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
 use iota_sdk::client::Password;
-use iota_sdk::types::api::core::response::WhiteFlagResponse;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
 

@@ -276,6 +276,7 @@ impl From<_VerificationMethod> for VerificationMethod {
       MethodData::PublicKeyBase58(_) => "publicKeyBase58",
       MethodData::PublicKeyJwk(_) => "publicKeyJwk",
       MethodData::PublicKeyMultibase(_) => "publicKeyMultibase",
+      MethodData::CompositePublicKey(_) => "compositePublicKey",
       MethodData::Custom(CustomMethodData { name, .. }) => name.as_str(),
     };
     properties.remove(key);

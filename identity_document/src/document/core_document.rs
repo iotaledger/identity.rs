@@ -11,6 +11,7 @@ use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::DecodedJws;
 use identity_verification::jose::jws::Decoder;
 use identity_verification::jose::jws::JwsVerifier;
+use identity_verification::CompositePublicKey;
 use serde::Serialize;
 
 use identity_core::common::Object;
@@ -982,6 +983,50 @@ impl CoreDocument {
       .verify(signature_verifier, public_key)
       .map_err(Error::JwsVerificationError)
   }
+
+  pub fn verify_jws_hybrid<'jws, TRV: JwsVerifier, PQV: JwsVerifier>(
+    &self,
+    jws: &'jws str,
+    detached_payload: Option<&'jws [u8]>,
+    traditional_verifier: &TRV, 
+    pq_verifier: &PQV,
+    options: &JwsVerificationOptions,
+  ) -> Result<DecodedJws<'jws>> {
+    let validation_item = Decoder::new()
+      .decode_compact_serialization(jws.as_bytes(), detached_payload)
+      .map_err(Error::JwsVerificationError)?;
+
+    let nonce: Option<&str> = options.nonce.as_deref();
+    // Validate the nonce
+    if validation_item.nonce() != nonce {
+      return Err(Error::JwsVerificationError(
+        identity_verification::jose::error::Error::InvalidParam("invalid nonce value"),
+      ));
+    }
+
+    let method_url_query: DIDUrlQuery<'_> = match &options.method_id {
+      Some(method_id) => method_id.into(),
+      None => validation_item
+        .kid()
+        .ok_or(Error::JwsVerificationError(
+          identity_verification::jose::error::Error::InvalidParam("missing kid value"),
+        ))?
+        .into(),
+    };
+
+    let composite_public_key = self
+          .resolve_method(method_url_query, options.method_scope)
+          .ok_or(Error::MethodNotFound)?
+          .data()
+          .try_composite_public_key()
+          .map_err(Error::InvalidKeyMaterial)?;
+
+    validation_item
+      .verify_hybrid(traditional_verifier, pq_verifier, composite_public_key.traditional_public_key(), composite_public_key.pq_public_key())
+      .map_err(Error::JwsVerificationError)
+  }
+
+
 }
 
 #[cfg(test)]
