@@ -4,19 +4,18 @@
 mod common;
 
 use common::get_client as get_test_client;
+use common::get_key_data;
 use common::request_funds;
 use common::TEST_DOC;
 use common::TEST_GAS_BUDGET;
 use identity_storage::JwkMemStore;
-use identity_storage::JwkStorage;
 use identity_storage::KeyIdMemstore;
-use identity_storage::KeyType;
 use identity_storage::Storage;
+use identity_storage::StorageSigner;
 use identity_sui_name_tbd::client::IdentityClient;
 use identity_sui_name_tbd::migration;
 use identity_sui_name_tbd::utils::get_client as get_iota_client;
 use identity_sui_name_tbd::utils::LOCAL_NETWORK;
-use identity_verification::jws::JwsAlgorithm;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
@@ -24,20 +23,13 @@ pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 async fn can_create_an_identity() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let iota_client = get_iota_client(LOCAL_NETWORK).await?;
-  let storage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-  // generate new key
-  let generate = storage
-    .key_storage()
-    .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
-    .await?;
-  let public_key = generate.jwk.to_public().expect("public components should be derivable");
+  let (storage, key_id, public_key_jwk, public_key_bytes) = get_key_data().await?;
+  let signer = StorageSigner::new(&storage, key_id, public_key_jwk);
 
   let identity_client = IdentityClient::builder()
     .identity_iota_package_id(test_client.package_id())
-    .sender_key_id(generate.key_id)
-    .sender_public_jwk(public_key)
-    .storage(storage)
+    .sender_public_key(&public_key_bytes)
     .iota_client(iota_client)
     .build()?;
 
@@ -47,7 +39,7 @@ async fn can_create_an_identity() -> anyhow::Result<()> {
   let result = identity_client
     .create_identity(TEST_DOC)
     .gas_budget(TEST_GAS_BUDGET)
-    .finish(&identity_client)
+    .finish(&identity_client, &signer)
     .await;
 
   assert!(result.is_ok());
@@ -59,34 +51,27 @@ async fn can_create_an_identity() -> anyhow::Result<()> {
 async fn can_resolve_a_new_identity() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let iota_client = get_iota_client(LOCAL_NETWORK).await?;
-  let storage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-  // generate new key
-  let generate = storage
-    .key_storage()
-    .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
-    .await?;
-  let public_key = generate.jwk.to_public().expect("public components should be derivable");
+  let (storage, key_id, public_key_jwk, public_key_bytes) = get_key_data().await?;
+  let signer = StorageSigner::new(&storage, key_id, public_key_jwk);
 
   let identity_client = IdentityClient::builder()
     .identity_iota_package_id(test_client.package_id())
-    .sender_key_id(generate.key_id)
-    .sender_public_jwk(public_key)
-    .storage(storage)
+    .sender_public_key(&public_key_bytes)
     .iota_client(iota_client)
     .build()?;
 
   // call faucet with out new account
   request_funds(&identity_client.sender_address()?).await?;
 
-  let newly_created_identity = identity_client
+  let new_identity = identity_client
     .create_identity(TEST_DOC)
     .gas_budget(TEST_GAS_BUDGET)
-    .finish(&identity_client)
+    .finish(&identity_client, &signer)
     .await?;
 
   let iota_client = get_iota_client(LOCAL_NETWORK).await?;
-  let identity = migration::get_identity(&iota_client, *newly_created_identity.id.object_id()).await?;
+  let identity = migration::get_identity(&iota_client, *new_identity.id.object_id()).await?;
 
   assert!(identity.is_some());
 
@@ -170,7 +155,7 @@ mod resolution {
       let test_client = get_test_client().await?;
       let iota_client = get_iota_client(LOCAL_NETWORK).await?;
       let alias_id = test_client.create_legacy_did().await?;
-      let identity_client: IdentityClient<JwkMemStore, KeyIdMemstore> = IdentityClient::builder()
+      let identity_client = IdentityClient::builder()
         .identity_iota_package_id(test_client.package_id())
         .iota_client(iota_client)
         .build()?;
@@ -189,7 +174,7 @@ mod resolution {
       let iota_client = get_iota_client(LOCAL_NETWORK).await?;
       let alias_id = test_client.create_legacy_did().await?;
       let _ = test_client.migrate_legacy_did(alias_id).await?;
-      let identity_client: IdentityClient<JwkMemStore, KeyIdMemstore> = IdentityClient::builder()
+      let identity_client = IdentityClient::builder()
         .identity_iota_package_id(test_client.package_id())
         .iota_client(iota_client)
         .build()?;
@@ -207,7 +192,7 @@ mod resolution {
       let test_client = get_test_client().await?;
       let iota_client = get_iota_client(LOCAL_NETWORK).await?;
       let object_id = test_client.create_identity().await?;
-      let identity_client: IdentityClient<JwkMemStore, KeyIdMemstore> = IdentityClient::builder()
+      let identity_client = IdentityClient::builder()
         .identity_iota_package_id(test_client.package_id())
         .iota_client(iota_client)
         .build()?;

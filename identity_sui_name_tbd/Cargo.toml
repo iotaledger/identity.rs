@@ -37,6 +37,7 @@ rand = "0.8.5"
 
 [dev-dependencies]
 bcs = "0.1.4"
+identity_storage = { path = "../identity_storage", features = ["send-sync-storage", "storage-signer"] }
 jsonpath-rust = "0.5.1"
 serial_test = "3.1.1"
 

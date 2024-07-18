@@ -7,6 +7,14 @@ use std::ops::Deref;
 
 use anyhow::anyhow;
 use anyhow::Context;
+use identity_jose::jwk::Jwk;
+use identity_jose::jws::JwsAlgorithm;
+use identity_storage::JwkMemStore;
+use identity_storage::JwkStorage;
+use identity_storage::KeyId;
+use identity_storage::KeyIdMemstore;
+use identity_storage::KeyType;
+use identity_storage::Storage;
 use identity_sui_name_tbd::migration;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
 use iota_sdk::types::base_types::IotaAddress;
@@ -51,9 +59,7 @@ async fn init() -> anyhow::Result<TestClient> {
 
   request_funds(&address).await?;
 
-  let package_id = if let Ok(id) = std::env::var("IDENTITY_IOTA_PKG_ID")
-    .or(get_cached_id(address).await)
-  {
+  let package_id = if let Ok(id) = std::env::var("IDENTITY_IOTA_PKG_ID").or(get_cached_id(address).await) {
     std::env::set_var("IDENTITY_IOTA_PKG_ID", id.clone());
     id.parse()?
   } else {
@@ -146,6 +152,28 @@ pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
   }
 
   Ok(())
+}
+
+pub async fn get_key_data() -> Result<(Storage<JwkMemStore, KeyIdMemstore>, KeyId, Jwk, Vec<u8>), anyhow::Error> {
+  let storage = Storage::<JwkMemStore, KeyIdMemstore>::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let generate = storage
+    .key_storage()
+    .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
+    .await?;
+  let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
+  let public_key_bytes = get_public_key_bytes(&public_key_jwk)?;
+  // let sender_address = convert_to_address(&public_key_bytes)?;
+
+  Ok((storage, generate.key_id, public_key_jwk, public_key_bytes))
+}
+
+fn get_public_key_bytes(sender_public_jwk: &Jwk) -> Result<Vec<u8>, anyhow::Error> {
+  let public_key_base_64 = &sender_public_jwk
+    .try_okp_params()
+    .map_err(|err| anyhow!("key not of type `Okp`; {err}"))?
+    .x;
+
+  identity_jose::jwu::decode_b64(public_key_base_64).map_err(|err| anyhow!("could not decode base64 public key; {err}"))
 }
 
 #[derive(Clone)]
