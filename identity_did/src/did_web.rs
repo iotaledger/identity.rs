@@ -27,18 +27,6 @@ impl WebDID {
   /// The IOTA DID method name (`"iota"`).
   pub const METHOD: &'static str = "web";
 
-//   /// Convert a `CoreDID` reference to an `WebDID` reference without checking the referenced value.
-//   ///  
-//   /// # Warning
-//   /// This method should only be called on [`CoreDIDs`](CoreDID) that
-//   /// are known to satisfy the requirements of the Web DID Method specification.  
-//   ///
-//   /// # Memory safety
-//   ///
-//   /// The `ref-cast` crate ensures a memory safe implementation.  
-//   #[ref_cast_custom]
-//   pub(crate) const fn from_inner_ref_unchecked(did: &CoreDID) -> &Self;
-
   /// Create a new valid Web DID.
   pub fn new(url: &str) -> Result<Self> {
     let parsed_url: Url = Url::parse(url).map_err(|_| Error::Other("Not a valid Url"))?;
@@ -47,7 +35,6 @@ impl WebDID {
     if let Some(domain) = parsed_url.domain() {
 
       let port = parsed_url.port().map_or(String::new(), |p| format!("%3a{}", p));
-
 
       let path = parsed_url.path_segments().map_or(String::new(), |p| {
         format!("{}{}", ":", p.into_iter().collect::<Vec<&str>>().join(":"))
@@ -140,14 +127,14 @@ impl WebDID {
     .map_or(Ok(None), |r| r.map(Some)
     .map_err(|_| Error::InvalidMethodId))?;
 
-    let mut url = Url::parse(&format!("https://{}", domain))//TODO: change to HTTPS
+    let mut url = Url::parse(&format!("https://{}", domain))
     .map_err(|_| Error::InvalidMethodId)?;
 
     url.set_port(port).map_err(|_| Error::InvalidMethodId)?;
 
     path.and_then(|p| Some(url.set_path(&p)));
 
-    // url.domain().ok_or(Error::InvalidMethodId)?; //TODO: Web DID - Disabled just for testing with 127.0.0.1
+    url.domain().ok_or(Error::InvalidMethodId)?;
 
     Ok(url)
   }
@@ -169,17 +156,17 @@ impl WebDID {
           None => (domain.to_owned(), Some(tail[3..].to_owned()), None),
         }
       
-    },
-    None => {
-      match input.find(":") {
-        Some(i) => {
-          let (domain, path) = input.split_at(i);
-          (domain.to_owned(), None, Some(path.replace(":", "/")))
-        },
-        None => (input.to_owned(), None, None),
+      },
+      None => {
+        match input.find(":") {
+          Some(i) => {
+            let (domain, path) = input.split_at(i);
+            (domain.to_owned(), None, Some(path.replace(":", "/")))
+          },
+          None => (input.to_owned(), None, None),
+        }
       }
     }
-  }
       
   }
 

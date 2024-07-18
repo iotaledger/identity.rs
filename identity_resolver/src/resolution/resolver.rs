@@ -334,8 +334,7 @@ mod iota_handler {
   }
 }
 
-//TODO: Web - resolver handler
-#[cfg(feature = "web")]
+
 mod web_handler {
   use crate::ErrorCause;
   use super::Resolver;

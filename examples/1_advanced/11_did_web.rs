@@ -5,7 +5,7 @@ use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::{core::{Duration, FromJson, Object, Timestamp, Url}, credential::{Credential, CredentialBuilder, DecodedJwtCredential, DecodedJwtPresentation, FailFast, Jwt, JwtCredentialValidationOptions, JwtCredentialValidator, JwtCredentialValidatorUtils, JwtPresentationOptions, JwtPresentationValidationOptions, JwtPresentationValidator, JwtPresentationValidatorUtils, Presentation, PresentationBuilder, Subject, SubjectHolderRelationship}, did::{CoreDID, DID}, document::{verifiable::JwsVerificationOptions, CoreDocument}, iota::IotaDocument, resolver::Resolver, storage::{JwkMemStore, JwsSignatureOptions, KeyIdMemstore}, verification::{jws::JwsAlgorithm, MethodScope}};
 use identity_iota::storage::JwkDocumentExt;
 use iota_sdk::{client::{secret::{stronghold::StrongholdSecretManager, SecretManager}, Client, Password}, types::block::address::Address};
-use reqwest::{Certificate, ClientBuilder};
+use reqwest::ClientBuilder;
 use serde_json::json;
 
 pub fn write_to_file(doc: &CoreDocument, path: Option<&str>) -> anyhow::Result<()> {
@@ -22,15 +22,12 @@ async fn main() -> anyhow::Result<()> {
   let path_did_file: &str = "C:/Projects/did-web-server/.well-known/did.json";
 
   // Create a new client to make HTTPS requests.
-  // let client = WebClient::default()?;
   let client= ClientBuilder::new()
-  .danger_accept_invalid_certs(true) //TODO: fix problem cannot build WebClient after calling function of inner structure
+  .danger_accept_invalid_certs(true)
   .build()?;
 
   // Create a new Web DID document.
   let mut issuer_document: CoreDocument = CoreDocument::new_from_url(did_url)?;
-  // let doc: WebDocument = client.get(Url::parse(did_url)?).send().await?.json().await?;
-  // println!("PPPPP: {}", doc);
 
   // Insert a new Ed25519 verification method in the DID document.
   let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
@@ -46,7 +43,6 @@ async fn main() -> anyhow::Result<()> {
 
   write_to_file(&issuer_document, Some(path_did_file))?;
   println!("Web DID Document: {:#}", issuer_document);
-
 
   // Create a new client to interact with the IOTA ledger.
   let iota_client: Client = Client::builder()
@@ -190,7 +186,7 @@ async fn main() -> anyhow::Result<()> {
   let jwt_credentials: &Vec<Jwt> = &presentation.presentation.verifiable_credential;
 
   let mut resolver_web: Resolver<CoreDocument> = Resolver::new();
-  resolver_web.attach_web_handler(client);
+  let _ = resolver_web.attach_web_handler(client)?;
 
   let issuers: Vec<CoreDID> = jwt_credentials
     .iter()
