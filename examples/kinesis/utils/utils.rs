@@ -4,7 +4,6 @@
 use std::path::PathBuf;
 
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::NetworkName;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::KeyIdMemstore;
@@ -45,7 +44,7 @@ where
 {
   // Create a new DID document with a placeholder DID.
   // The DID will be derived from the Alias Id of the Alias Output after publishing.
-  let mut unpublished: IotaDocument = IotaDocument::new(&NetworkName::try_from(identity_client.network_name())?);
+  let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network_name());
   let verification_method_fragment = unpublished
     .generate_method(
       storage,
