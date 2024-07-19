@@ -22,8 +22,8 @@ use identity_sui_name_tbd::client::get_sender_public_key;
 use identity_sui_name_tbd::client::IdentityClient;
 use identity_sui_name_tbd::utils::request_funds;
 use iota_sdk::IotaClientBuilder;
-use iota_sdk_classic::client::secret::stronghold::StrongholdSecretManager;
-use iota_sdk_classic::client::Password;
+use iota_sdk_legacy::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk_legacy::client::Password;
 use rand::distributions::DistString;
 use serde_json::Value;
 

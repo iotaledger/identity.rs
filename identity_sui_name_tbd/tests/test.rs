@@ -6,8 +6,8 @@ use std::path::PathBuf;
 use identity_sui_name_tbd::migration::get_alias;
 use identity_sui_name_tbd::utils::get_client;
 use identity_sui_name_tbd::utils::LOCAL_NETWORK;
-use iota_sdk_classic::client::secret::stronghold::StrongholdSecretManager;
-use iota_sdk_classic::crypto::keys::bip39::Mnemonic;
+use iota_sdk_legacy::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk_legacy::crypto::keys::bip39::Mnemonic;
 
 mod common;
 
