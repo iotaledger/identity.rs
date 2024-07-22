@@ -1,26 +1,11 @@
-use crate::Error;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
-use iota_sdk::types::transaction::Argument;
-use iota_sdk::types::transaction::Command;
-use iota_sdk::types::Identifier;
-use iota_sdk::types::MOVE_STDLIB_PACKAGE_ID;
-use move_core_types::account_address::AccountAddress;
-use move_core_types::language_storage::StructTag;
 use std::str::FromStr;
 
-pub fn bytes_to_move_vec<'b, B>(bytes: B, ptb: &mut Ptb) -> Result<Argument, Error>
-where
-  B: IntoIterator<Item = &'b u8>,
-{
-  let args = bytes
-    .into_iter()
-    .map(|b| ptb.pure(b))
-    .collect::<Result<Vec<_>, _>>()
-    .map_err(|e| Error::InvalidArgument(format!("could not convert given document to move vector; {e}")))?;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::Identifier;
+use move_core_types::account_address::AccountAddress;
+use move_core_types::language_storage::StructTag;
 
-  Ok(ptb.command(Command::MakeMoveVec(Some(iota_sdk::types::TypeTag::U8), args)))
-}
+use crate::Error;
 
 pub fn identity_tag(package_id: ObjectID) -> Result<StructTag, Error> {
   Ok(StructTag {
@@ -32,15 +17,4 @@ pub fn identity_tag(package_id: ObjectID) -> Result<StructTag, Error> {
       .map_err(|err| Error::ParsingFailed(format!("\"Identity\" to identifier; {err}")))?,
     type_params: vec![],
   })
-}
-
-pub fn str_to_move_string(s: impl AsRef<str>, ptb: &mut Ptb) -> Result<Argument, anyhow::Error> {
-  let str_bytes = bytes_to_move_vec(s.as_ref().as_bytes(), ptb)?;
-  Ok(ptb.programmable_move_call(
-    MOVE_STDLIB_PACKAGE_ID,
-    Identifier::from_str("string")?,
-    Identifier::from_str("utf8")?,
-    vec![],
-    vec![str_bytes],
-  ))
 }

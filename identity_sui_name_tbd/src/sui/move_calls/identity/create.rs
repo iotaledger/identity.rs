@@ -14,7 +14,7 @@ use crate::Error;
 
 pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransaction, Error> {
   let mut ptb = ProgrammableTransactionBuilder::new();
-  let doc_arg = utils::bytes_to_move_vec(did_doc, &mut ptb)?;
+  let doc_arg = ptb.pure(did_doc).map_err(|e| Error::InvalidArgument(e.to_string()))?;
 
   // Create a new identity, sending its capability to the tx's sender.
   let identity_res = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
@@ -77,7 +77,7 @@ where
     arguments: vec![controllers_move_vec, vps_move_vec],
   })));
 
-  let doc_arg = utils::bytes_to_move_vec(did_doc, &mut ptb)?;
+  let doc_arg = ptb.pure(did_doc).map_err(|e| Error::InvalidArgument(e.to_string()))?;
   let threshold_arg = ptb.pure(threshold).map_err(|e| Error::InvalidArgument(e.to_string()))?;
 
   // Create a new identity, sending its capabilities to the specified controllers.

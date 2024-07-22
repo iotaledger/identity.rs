@@ -44,6 +44,11 @@ use crate::Error;
 const DEFAULT_NETWORK_NAME: &str = "iota";
 const DEFAULT_IDENTITY_PACKAGE_ID: &str = "0x4342dbbd222a5b1a369afaa19defd5a121252bb89bccb611c72d9127a90cfaca";
 
+fn get_object_id_from_did(did: &IotaDID) -> Result<ObjectID, Error> {
+  ObjectID::from_str(&AliasId::from(did).to_string())
+    .map_err(|err| Error::DIDResolutionErrorKinesis(format!("could not parse object id from did {did}; {err}")))
+}
+
 pub struct KinesisKeySignature {
   pub public_key: Vec<u8>,
   pub signature: Vec<u8>,
@@ -335,11 +340,7 @@ impl IdentityClient {
 // former extension trait, keep separate until properly re-integrated
 impl IdentityClient {
   pub async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument, Error> {
-    // get alias id from did (starting with 0x)
-    let object_id = ObjectID::from_str(&AliasId::from(did).to_string())
-      .map_err(|err| Error::DIDResolutionErrorKinesis(format!("could not parse object id from did {did}; {err}")))?;
-
-    let identity = get_identity(self, object_id).await?.ok_or_else(|| {
+    let identity = get_identity(self, get_object_id_from_did(did)?).await?.ok_or_else(|| {
       Error::DIDResolutionErrorKinesis(format!("call succeeded but could not resolve {did} to object"))
     })?;
     let state_metadata = identity.did_doc.controlled_value();
@@ -384,6 +385,32 @@ impl IdentityClient {
     })?;
 
     Ok(document_without_placeholders)
+  }
+
+  // TODO: define what happens for (legacy|migrated|new) documents
+  pub async fn publish_did_document_update<S>(
+    &self,
+    document: IotaDocument,
+    gas_budget: u64,
+    signer: &S,
+  ) -> Result<IotaDocument, Error>
+  where
+    S: Signer<KinesisKeySignature> + Send + Sync,
+  {
+    let mut oci =
+      if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(document.id())?).await? {
+        value
+      } else {
+        return Err(Error::Identity("only new identities can be updated".to_string()));
+      };
+
+    oci
+      .update_did_document(document.clone())
+      .gas_budget(gas_budget)
+      .finish(self, signer)
+      .await?;
+
+    Ok(document)
   }
 }
 
