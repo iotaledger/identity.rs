@@ -65,9 +65,9 @@ name = "5_create_vc"
 path = "0_basic/6_create_vp.rs"
 name = "6_create_vp"
 
-# [[example]]
-# path = "0_basic/7_revoke_vc.rs"
-# name = "7_revoke_vc"
+[[example]]
+path = "0_basic/7_revoke_vc.rs"
+name = "7_revoke_vc"
 
 [[example]]
 path = "0_basic/8_stronghold.rs"

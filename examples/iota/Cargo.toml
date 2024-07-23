@@ -7,7 +7,7 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.62"
-identity_eddsa_verifier = { path = "../../identity_eddsa_verifier", default-features = false }
+identity_eddsa_verifier = { path = "../../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 identity_stronghold = { path = "../../identity_stronghold", default-features = false, features = ["send-sync-storage"] }
 iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
 primitive-types = "0.12.1"
@@ -26,6 +26,7 @@ features = [
     "domain-linkage",
     "revocation-bitmap",
     "status-list-2021",
+    "resolver",
 ]
 
 [lib]
