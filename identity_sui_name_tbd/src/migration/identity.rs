@@ -124,11 +124,16 @@ impl OnChainIdentity {
   pub fn update_did_document(&mut self, updated_doc: IotaDocument) -> ProposalBuilder {
     ProposalBuilder::new(self, ProposalAction::UpdateDocument(updated_doc))
   }
+
+  pub fn deactivate_did(&mut self) -> ProposalBuilder {
+    ProposalBuilder::new(self, ProposalAction::Deactivate)
+  }
 }
 
 #[derive(Debug)]
 pub enum ProposalAction {
   UpdateDocument(IotaDocument),
+  Deactivate,
 }
 
 #[derive(Debug)]
@@ -196,6 +201,14 @@ impl<'i> ProposalBuilder<'i> {
         controller_cap,
         key.as_str(),
         did_doc.pack().unwrap(),
+        expiration,
+        client.package_id(),
+      ),
+      ProposalAction::Deactivate => propose_update(
+        identity.obj_ref.clone().unwrap(),
+        controller_cap,
+        key.as_str(),
+        vec![],
         expiration,
         client.package_id(),
       ),

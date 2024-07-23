@@ -188,9 +188,11 @@ module identity_iota::identity {
     /// Checks if `data` is a state matadata representing a DID.
     /// i.e. starts with the bytes b"DID".
     public(package) fun is_did_output(data: &vector<u8>): bool {
+        data.length() == 0 || (
         data[0] == 0x44 &&      // b'D'
             data[1] == 0x49 &&  // b'I'
             data[2] == 0x44     // b'D'
+        )
     }
 
     public(package) fun did_doc(self: &Identity): &Multicontroller<vector<u8>> {

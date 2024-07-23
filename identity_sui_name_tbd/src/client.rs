@@ -17,6 +17,9 @@ use identity_iota_core::IotaDocument;
 use identity_iota_core::NetworkName;
 use identity_iota_core::StateMetadataDocument;
 use identity_verification::jwk::Jwk;
+use iota_sdk::rpc_types::IotaExecutionStatus;
+use iota_sdk::rpc_types::IotaTransactionBlockEffects;
+use iota_sdk::rpc_types::IotaTransactionBlockEffectsV1;
 use iota_sdk::rpc_types::IotaTransactionBlockResponse;
 use iota_sdk::rpc_types::IotaTransactionBlockResponseOptions;
 use iota_sdk::types::base_types::IotaAddress;
@@ -42,7 +45,7 @@ use crate::migration::IdentityBuilder;
 use crate::Error;
 
 const DEFAULT_NETWORK_NAME: &str = "iota";
-const DEFAULT_IDENTITY_PACKAGE_ID: &str = "0x4342dbbd222a5b1a369afaa19defd5a121252bb89bccb611c72d9127a90cfaca";
+const DEFAULT_IDENTITY_PACKAGE_ID: &str = "0x5d83be2fabff68f15dd635d4a32531bbb2eec0dafc03e1e7361aec47dcc74917";
 
 fn get_object_id_from_did(did: &IotaDID) -> Result<ObjectID, Error> {
   ObjectID::from_str(&AliasId::from(did).to_string())
@@ -229,7 +232,7 @@ impl IdentityClient {
     let kinesis_signature = self.sign_transaction_data(&tx_data, signer).await?;
 
     // execute tx
-    self
+    let response = self
       .quorum_driver_api()
       .execute_transaction_block(
         Transaction::from_data(tx_data, vec![kinesis_signature]),
@@ -237,7 +240,17 @@ impl IdentityClient {
         Some(ExecuteTransactionRequestType::WaitForLocalExecution),
       )
       .await
-      .map_err(Error::TransactionExecutionFailed)
+      .map_err(Error::TransactionExecutionFailed)?;
+
+    if let Some(IotaTransactionBlockEffects::V1(IotaTransactionBlockEffectsV1 {
+      status: IotaExecutionStatus::Failure { error },
+      ..
+    })) = &response.effects
+    {
+      Err(Error::TransactionUnexpectedResponse(error.to_string()))
+    } else {
+      Ok(response)
+    }
   }
 
   async fn get_coin_for_transaction(&self) -> Result<iota_sdk::rpc_types::Coin, Error> {
@@ -345,6 +358,16 @@ impl IdentityClient {
     })?;
     let state_metadata = identity.did_doc.controlled_value();
 
+    // return empty document if disabled
+    if state_metadata.is_empty() {
+      let mut empty_document = IotaDocument::new_with_id(did.clone());
+      empty_document.metadata.created = None;
+      empty_document.metadata.updated = None;
+      empty_document.metadata.deactivated = Some(true);
+
+      return Ok(empty_document);
+    }
+
     // unpack, replace placeholders and return document
     StateMetadataDocument::unpack(state_metadata)
       .and_then(|doc| doc.into_iota_document(did))
@@ -411,6 +434,21 @@ impl IdentityClient {
       .await?;
 
     Ok(document)
+  }
+
+  pub async fn deactivate_did_output<S>(&self, did: &IotaDID, gas_budget: u64, signer: &S) -> Result<(), Error>
+  where
+    S: Signer<KinesisKeySignature> + Send + Sync,
+  {
+    let mut oci = if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(did)?).await? {
+      value
+    } else {
+      return Err(Error::Identity("only new identities can be deactivated".to_string()));
+    };
+
+    oci.deactivate_did().gas_budget(gas_budget).finish(self, signer).await?;
+
+    Ok(())
   }
 }
 

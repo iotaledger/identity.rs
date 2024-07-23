@@ -49,9 +49,9 @@ name = "1_update_did"
 path = "0_basic/2_resolve_did.rs"
 name = "2_resolve_did"
 
-# [[example]]
-# path = "0_basic/3_deactivate_did.rs"
-# name = "3_deactivate_did"
+[[example]]
+path = "0_basic/3_deactivate_did.rs"
+name = "3_deactivate_did"
 
 # [[example]]
 # path = "0_basic/4_delete_did.rs"
