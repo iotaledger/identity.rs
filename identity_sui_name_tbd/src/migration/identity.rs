@@ -205,12 +205,14 @@ impl<'i> ProposalBuilder<'i> {
       gas_budget.ok_or_else(|| Error::GasIssue("missing `gas_budget` in proposal builder".to_string()))?;
     let _ = client.execute_transaction(tx, gas_budget, signer).await?;
 
+    // refresh object references to get latest sequence numbers for them
     *identity = get_identity(client, *identity.id.object_id()).await?.unwrap();
     let can_execute =
       identity.did_doc.controller_voting_power(controller_cap.0).unwrap() > identity.did_doc.threshold();
     if identity.is_shared() && !can_execute {
       return Ok(identity.proposals().get(&key));
     }
+    let controller_cap = identity.get_controller_cap(client).await?;
 
     let tx = execute_update(
       identity.obj_ref.clone().unwrap(),

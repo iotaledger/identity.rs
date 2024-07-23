@@ -68,8 +68,10 @@ async fn main() -> anyhow::Result<()> {
   let updated = identity_client
     .publish_did_document_update(document.clone(), TEST_GAS_BUDGET, &signer)
     .await?;
+  println!("Updated DID document result: {updated:#}");
 
-  println!("Updated DID document: {updated:#}");
+  let resolved: IotaDocument = identity_client.resolve_did(&did).await?;
+  println!("Updated DID document resolved from chain: {resolved:#}");
 
   Ok(())
 }
