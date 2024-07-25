@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use std::borrow::Cow;
 
+use identity_did::DIDJwk;
 use identity_did::DIDKey;
 use identity_jose::jwk::Jwk;
 use serde::de;
@@ -255,7 +256,7 @@ impl TryFrom<DIDKey> for VerificationMethod {
     let mut id: DIDUrl = value.clone().into();
     let _ = id.set_fragment(Some(value.method_id()));
     let controller = value.clone().into();
-    let method_type = MethodType::JSON_WEB_KEY;
+    let method_type = MethodType::JSON_WEB_KEY_2020;
     let data = did_key_to_jwk(&value)
       .map_err(|_| Error::InvalidKeyDataMultibase)
       .map(MethodData::PublicKeyJwk)?;
@@ -267,6 +268,14 @@ impl TryFrom<DIDKey> for VerificationMethod {
       data,
       properties: Object::default(),
     })
+  }
+}
+
+impl TryFrom<DIDJwk> for VerificationMethod {
+  type Error = Error;
+  fn try_from(did: DIDJwk) -> Result<Self, Self::Error> {
+    let jwk = did.jwk();
+    Self::new_from_jwk(did, jwk, Some("0"))
   }
 }
 

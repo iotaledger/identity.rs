@@ -557,7 +557,10 @@ impl From<IotaDocument> for CoreDocument {
 
 impl From<CoreDocument> for IotaDocument {
   fn from(value: CoreDocument) -> Self {
-      IotaDocument { document: value, metadata: IotaDocumentMetadata::default() }
+    IotaDocument {
+      document: value,
+      metadata: IotaDocumentMetadata::default(),
+    }
   }
 }
 

@@ -67,6 +67,7 @@ pub struct PresentationSvc {
 impl PresentationSvc {
   pub fn new(client: Client) -> Self {
     let mut resolver = Resolver::<IotaDocument>::new_with_did_key_handler();
+    resolver.attach_did_jwk_handler();
     resolver.attach_iota_handler(client);
 
     Self { resolver }

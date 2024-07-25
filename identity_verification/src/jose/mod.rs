@@ -30,11 +30,11 @@ pub mod error {
 
 use error::Error;
 use identity_core::convert::BaseEncoding;
-use identity_did::{DIDKey, DID as _};
-use identity_jose::{
-  jwk::{EdCurve, JwkParamsOkp},
-  jwu::encode_b64,
-};
+use identity_did::DIDKey;
+use identity_did::DID as _;
+use identity_jose::jwk::EdCurve;
+use identity_jose::jwk::JwkParamsOkp;
+use identity_jose::jwu::encode_b64;
 use jwk::Jwk;
 
 /// Transcode the public key in `did_key` to `JWK`.
@@ -44,7 +44,7 @@ pub fn did_key_to_jwk(did_key: &DIDKey) -> Result<Jwk, Error> {
   let (key_type, pk_bytes) = decoded.split_at(2);
 
   // Make sure `did_key` encodes an ED25519 public key.
-  if key_type != &[0xed, 0x01] || pk_bytes.len() != 32 {
+  if key_type != [0xed, 0x01] || pk_bytes.len() != 32 {
     return Err(Error::KeyError("invalid ED25519 key"));
   }
 
