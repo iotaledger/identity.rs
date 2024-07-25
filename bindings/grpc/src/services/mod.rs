@@ -23,7 +23,7 @@ pub fn routes(client: &Client, stronghold: &StrongholdStorage) -> Routes {
   routes.add_service(domain_linkage::service(client));
   routes.add_service(document::service(client, stronghold));
   routes.add_service(status_list_2021::service());
-  routes.add_service(utils::service(stronghold));
+  utils::init_services(&mut routes, stronghold);
   routes.add_service(presentation::service(client));
 
   routes.routes()
