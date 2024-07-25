@@ -5,6 +5,7 @@ pub mod credential;
 pub mod document;
 pub mod domain_linkage;
 pub mod health_check;
+pub mod presentation;
 pub mod sd_jwt;
 pub mod status_list_2021;
 pub mod utils;
@@ -22,7 +23,8 @@ pub fn routes(client: &Client, stronghold: &StrongholdStorage) -> Routes {
   routes.add_service(domain_linkage::service(client));
   routes.add_service(document::service(client, stronghold));
   routes.add_service(status_list_2021::service());
-  routes.add_service(utils::service(stronghold));
+  utils::init_services(&mut routes, stronghold);
+  routes.add_service(presentation::service(client));
 
   routes.routes()
 }

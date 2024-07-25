@@ -4,6 +4,8 @@
 use core::future::Future;
 use futures::stream::FuturesUnordered;
 use futures::TryStreamExt;
+use identity_did::DIDJwk;
+use identity_did::DIDKey;
 use identity_did::DID;
 use std::collections::HashSet;
 
@@ -247,6 +249,82 @@ impl<DOC: 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
   }
 }
 
+impl<DOC: From<CoreDocument> + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
+  /// Creates a new [`Resolver`] with a default handler for `did:key` DIDs.
+  pub fn new_with_did_key_handler() -> Self {
+    let mut command_map = HashMap::new();
+    let handler = |did_key: DIDKey| async move { CoreDocument::expand_did_key(did_key) };
+
+    command_map.insert(DIDKey::METHOD.to_string(), SingleThreadedCommand::new(handler));
+    Self {
+      command_map,
+      _required: PhantomData::<DOC>,
+    }
+  }
+
+  /// Attaches a handler capable of resolving `did:key` DIDs.
+  pub fn attach_did_key_handler(&mut self) {
+    let handler = |did_key: DIDKey| async move { CoreDocument::expand_did_key(did_key) };
+    self.attach_handler(DIDKey::METHOD.to_string(), handler)
+  }
+
+  /// Creates a new [`Resolver`] with a default handler for `did:jwk` DIDs.
+  pub fn new_with_did_jwk_handler() -> Self {
+    let mut command_map = HashMap::new();
+    let handler = |did_jwk: DIDJwk| async move { CoreDocument::expand_did_jwk(did_jwk) };
+
+    command_map.insert(DIDJwk::METHOD.to_string(), SingleThreadedCommand::new(handler));
+    Self {
+      command_map,
+      _required: PhantomData::<DOC>,
+    }
+  }
+
+  /// Attaches a handler capable of resolving `did:jwk` DIDs.
+  pub fn attach_did_jwk_handler(&mut self) {
+    let handler = |did_jwk: DIDJwk| async move { CoreDocument::expand_did_jwk(did_jwk) };
+    self.attach_handler(DIDJwk::METHOD.to_string(), handler)
+  }
+}
+
+impl<DOC: From<CoreDocument> + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
+  /// Creates a new [`Resolver`] with a default handler for `did:jwk` DIDs.
+  pub fn new_with_did_key_handler() -> Self {
+    let mut command_map = HashMap::new();
+    let handler = |did_key: DIDKey| async move { CoreDocument::expand_did_key(did_key) };
+
+    command_map.insert(DIDKey::METHOD.to_string(), SendSyncCommand::new(handler));
+    Self {
+      command_map,
+      _required: PhantomData::<DOC>,
+    }
+  }
+
+  /// Attaches a handler capable of resolving `did:key` DIDs.
+  pub fn attach_did_key_handler(&mut self) {
+    let handler = |did_key: DIDKey| async move { CoreDocument::expand_did_key(did_key) };
+    self.attach_handler(DIDKey::METHOD.to_string(), handler)
+  }
+
+  /// Creates a new [`Resolver`] with a default handler for `did:jwk` DIDs.
+  pub fn new_with_did_jwk_handler() -> Self {
+    let mut command_map = HashMap::new();
+    let handler = |did_jwk: DIDJwk| async move { CoreDocument::expand_did_jwk(did_jwk) };
+
+    command_map.insert(DIDJwk::METHOD.to_string(), SendSyncCommand::new(handler));
+    Self {
+      command_map,
+      _required: PhantomData::<DOC>,
+    }
+  }
+
+  /// Attaches a handler capable of resolving `did:jwk` DIDs.
+  pub fn attach_did_jwk_handler(&mut self) {
+    let handler = |did_jwk: DIDJwk| async move { CoreDocument::expand_did_jwk(did_jwk) };
+    self.attach_handler(DIDJwk::METHOD.to_string(), handler)
+  }
+}
+
 #[cfg(feature = "iota")]
 mod iota_handler {
   use crate::ErrorCause;
@@ -413,5 +491,25 @@ mod tests {
 
     let doc = resolver.resolve(&did2).await.unwrap();
     assert_eq!(doc.id(), &did2);
+  }
+
+  #[tokio::test]
+  async fn test_did_key_resolution() {
+    let resolver = Resolver::<CoreDocument>::new_with_did_key_handler();
+    let did_key = "did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp"
+      .parse::<DIDKey>()
+      .unwrap();
+
+    let doc = resolver.resolve(&did_key).await.unwrap();
+    assert_eq!(doc.id(), did_key.as_ref());
+  }
+
+  #[tokio::test]
+  async fn test_did_jwk_resolution() {
+    let resolver = Resolver::<CoreDocument>::new_with_did_jwk_handler();
+    let did_jwk = "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZYdDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9".parse::<DIDJwk>().unwrap();
+
+    let doc = resolver.resolve(&did_jwk).await.unwrap();
+    assert_eq!(doc.id(), did_jwk.as_ref());
   }
 }

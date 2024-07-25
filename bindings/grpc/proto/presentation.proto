@@ -1,0 +1,25 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+package presentation;
+
+message JwtPresentationRequest {
+    // Presentation's compact JWT serialization.
+    string jwt = 1;
+}
+
+message CredentialValidationResult {
+    oneof result {
+        string credential = 1;
+        string error = 2;
+    }
+}
+
+message JwtPresentationResponse {
+    repeated CredentialValidationResult credentials = 1;
+}
+
+service CredentialPresentation {
+    rpc validate(JwtPresentationRequest) returns (JwtPresentationResponse);
+}
