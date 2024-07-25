@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use identity_sui_name_tbd::client::KinesisKeySignature;
+use identity_sui_name_tbd::client::IotaKeySignature;
 use identity_verification::jwk::Jwk;
 use secret_storage::key_signature_set::KeySignatureTypes;
 use secret_storage::signer::Signer;
@@ -30,11 +30,11 @@ impl<'a, K, I> StorageSigner<'a, K, I> {
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-impl<'a, K: JwkStorage + Sync, I: KeyIdStorage + Sync> Signer<KinesisKeySignature> for StorageSigner<'a, K, I> {
+impl<'a, K: JwkStorage + Sync, I: KeyIdStorage + Sync> Signer<IotaKeySignature> for StorageSigner<'a, K, I> {
   async fn sign(
     &self,
     hash: impl AsRef<[u8]> + Send,
-  ) -> Result<<KinesisKeySignature as KeySignatureTypes>::Signature, anyhow::Error> {
+  ) -> Result<<IotaKeySignature as KeySignatureTypes>::Signature, anyhow::Error> {
     Ok(
       self
         .storage

@@ -49,15 +49,15 @@ const DEFAULT_IDENTITY_PACKAGE_ID: &str = "0x5d83be2fabff68f15dd635d4a32531bbb2e
 
 pub fn get_object_id_from_did(did: &IotaDID) -> Result<ObjectID, Error> {
   ObjectID::from_str(&AliasId::from(did).to_string())
-    .map_err(|err| Error::DIDResolutionErrorKinesis(format!("could not parse object id from did {did}; {err}")))
+    .map_err(|err| Error::DIDResolutionError(format!("could not parse object id from did {did}; {err}")))
 }
 
-pub struct KinesisKeySignature {
+pub struct IotaKeySignature {
   pub public_key: Vec<u8>,
   pub signature: Vec<u8>,
 }
 
-impl KeySignatureTypes for KinesisKeySignature {
+impl KeySignatureTypes for IotaKeySignature {
   type PublicKey = Vec<u8>;
   type Signature = Vec<u8>;
 }
@@ -230,16 +230,16 @@ impl IdentityClient {
     signer: &S,
   ) -> Result<IotaTransactionBlockResponse, Error>
   where
-    S: Signer<KinesisKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature> + Send + Sync,
   {
     let tx_data = self.get_transaction_data(tx, gas_budget).await?;
-    let kinesis_signature = self.sign_transaction_data(&tx_data, signer).await?;
+    let signature = self.sign_transaction_data(&tx_data, signer).await?;
 
     // execute tx
     let response = self
       .quorum_driver_api()
       .execute_transaction_block(
-        Transaction::from_data(tx_data, vec![kinesis_signature]),
+        Transaction::from_data(tx_data, vec![signature]),
         IotaTransactionBlockResponseOptions::full_content(),
         Some(ExecuteTransactionRequestType::WaitForLocalExecution),
       )
@@ -297,7 +297,7 @@ impl IdentityClient {
 
   async fn sign_transaction_data<S>(&self, tx_data: &TransactionData, signer: &S) -> Result<Signature, Error>
   where
-    S: Signer<KinesisKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature> + Send + Sync,
   {
     let SigningInfo { sender_public_key, .. } = self
       .signing_info
@@ -349,17 +349,16 @@ impl IdentityClient {
       }
     }
 
-    identity_outcome
-      .ok_or_else(|| Error::DIDResolutionErrorKinesis(format!("could not find DID document for {object_id}")))
+    identity_outcome.ok_or_else(|| Error::DIDResolutionError(format!("could not find DID document for {object_id}")))
   }
 }
 
 // former extension trait, keep separate until properly re-integrated
 impl IdentityClient {
   pub async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument, Error> {
-    let identity = get_identity(self, get_object_id_from_did(did)?).await?.ok_or_else(|| {
-      Error::DIDResolutionErrorKinesis(format!("call succeeded but could not resolve {did} to object"))
-    })?;
+    let identity = get_identity(self, get_object_id_from_did(did)?)
+      .await?
+      .ok_or_else(|| Error::DIDResolutionError(format!("call succeeded but could not resolve {did} to object")))?;
     let state_metadata = identity.did_doc.controlled_value();
 
     // return empty document if disabled
@@ -389,7 +388,7 @@ impl IdentityClient {
     signer: &S,
   ) -> Result<IotaDocument, Error>
   where
-    S: Signer<KinesisKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature> + Send + Sync,
   {
     let packed = document
       .clone()
@@ -422,7 +421,7 @@ impl IdentityClient {
     signer: &S,
   ) -> Result<IotaDocument, Error>
   where
-    S: Signer<KinesisKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature> + Send + Sync,
   {
     let mut oci =
       if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(document.id())?).await? {
@@ -442,7 +441,7 @@ impl IdentityClient {
 
   pub async fn deactivate_did_output<S>(&self, did: &IotaDID, gas_budget: u64, signer: &S) -> Result<(), Error>
   where
-    S: Signer<KinesisKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature> + Send + Sync,
   {
     let mut oci = if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(did)?).await? {
       value
@@ -475,7 +474,7 @@ pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error
 
 async fn resolve_new(client: &IotaClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
   let onchain_identity = get_identity(client, object_id).await.map_err(|err| {
-    Error::DIDResolutionErrorKinesis(format!(
+    Error::DIDResolutionError(format!(
       "could not get identity document for object id {object_id}; {err}"
     ))
   })?;
@@ -484,7 +483,7 @@ async fn resolve_new(client: &IotaClient, object_id: ObjectID) -> Result<Option<
 
 async fn resolve_migrated(client: &IotaClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
   let onchain_identity = lookup(client, object_id).await.map_err(|err| {
-    Error::DIDResolutionErrorKinesis(format!(
+    Error::DIDResolutionError(format!(
       "failed to look up object_id {object_id} in migration registry; {err}"
     ))
   })?;
@@ -494,6 +493,6 @@ async fn resolve_migrated(client: &IotaClient, object_id: ObjectID) -> Result<Op
 async fn resolve_unmigrated(client: &IotaClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
   let unmigrated_alias = get_alias(client, object_id)
     .await
-    .map_err(|err| Error::DIDResolutionErrorKinesis(format!("could  no query for object id {object_id}; {err}")))?;
+    .map_err(|err| Error::DIDResolutionError(format!("could  no query for object id {object_id}; {err}")))?;
   Ok(unmigrated_alias.map(Identity::Legacy))
 }
