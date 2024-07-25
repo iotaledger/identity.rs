@@ -28,7 +28,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::client::IdentityClient;
-use crate::client::KinesisKeySignature;
+use crate::client::IotaKeySignature;
 use crate::sui::move_calls;
 use crate::sui::move_calls::identity::execute_update;
 use crate::sui::move_calls::identity::propose_update;
@@ -173,7 +173,7 @@ impl<'i> ProposalBuilder<'i> {
 
   pub async fn finish<S>(self, client: &IdentityClient, signer: &S) -> Result<Option<&'i Proposal>, Error>
   where
-    S: Signer<KinesisKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature> + Send + Sync,
   {
     let ProposalBuilder {
       key,
@@ -347,7 +347,7 @@ impl<'a> IdentityBuilder<'a> {
 
   pub async fn finish<S>(self, client: &IdentityClient, signer: &S) -> Result<OnChainIdentity, Error>
   where
-    S: Signer<KinesisKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature> + Send + Sync,
   {
     let IdentityBuilder {
       package_id,

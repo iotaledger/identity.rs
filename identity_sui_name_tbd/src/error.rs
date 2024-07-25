@@ -18,7 +18,7 @@ pub enum Error {
   MigrationRegistryNotFound(crate::migration::Error),
   /// Caused by a look failures during resolution.
   #[error("DID resolution failed: {0}")]
-  DIDResolutionErrorKinesis(String),
+  DIDResolutionError(String),
   /// Caused by invalid or missing arguments.
   #[error("invalid or missing argument: {0}")]
   InvalidArgument(String),
