@@ -41,7 +41,7 @@ pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
   if !output.status.success() {
     anyhow::bail!(
       "Failed to request funds from faucet: {}",
-      std::str::from_utf8(&output.stderr).unwrap()
+      std::str::from_utf8(&output.stderr)?
     );
   }
 

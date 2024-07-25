@@ -54,7 +54,9 @@ pub enum Identity {
 
 impl Identity {
   pub fn did_document(&self, _client: &IotaClient) -> Result<IotaDocument, Error> {
-    let network_name = /* TODO: read it from client */ NetworkName::try_from("iota").unwrap();
+    // TODO: read it from client
+    let network_name = NetworkName::try_from("iota")
+      .map_err(|err| Error::InvalidConfig(format!("could not parse network name; {err}")))?;
     let original_did = IotaDID::from_alias_id(self.id().object_id().to_string().as_str(), &network_name);
     let doc_bytes = self.doc_bytes().ok_or(Error::DidDocParsingFailed(
       "legacy alias output does not encode a DID document".to_owned(),
@@ -225,7 +227,9 @@ async fn get_previous_version(client: &IdentityClient, iod: IotaObjectData) -> R
       IotaTransactionBlockResponseOptions::new().with_object_changes(),
     )
     .await
-    .unwrap();
+    .map_err(|err| {
+      Error::InvalidIdentityHistory(format!("could not get previous transaction {prev_tx_digest}; {err}"))
+    })?;
 
   // check for updated/created changes
   let (created, other_changes): (Vec<ObjectChange>, _) = prev_tx_response
@@ -336,17 +340,23 @@ impl<'i> ProposalBuilder<'i> {
       ));
     };
     let controller_cap = identity.get_controller_cap(client).await?;
+    let identity_ref = identity
+      .obj_ref
+      .clone()
+      .ok_or_else(|| Error::InvalidArgument("given identity does not have an object reference".to_string()))?;
     let tx = match action {
       ProposalAction::UpdateDocument(did_doc) => propose_update(
-        identity.obj_ref.clone().unwrap(),
+        identity_ref,
         controller_cap,
         key.as_str(),
-        did_doc.pack().unwrap(),
+        did_doc
+          .pack()
+          .map_err(|err| Error::InvalidArgument(format!("could not pack given doc document; {err}")))?,
         expiration,
         client.package_id(),
       ),
       ProposalAction::Deactivate => propose_update(
-        identity.obj_ref.clone().unwrap(),
+        identity_ref,
         controller_cap,
         key.as_str(),
         vec![],
@@ -360,23 +370,34 @@ impl<'i> ProposalBuilder<'i> {
     let _ = client.execute_transaction(tx, gas_budget, signer).await?;
 
     // refresh object references to get latest sequence numbers for them
-    *identity = get_identity(client, *identity.id.object_id()).await?.unwrap();
-    let can_execute =
-      identity.did_doc.controller_voting_power(controller_cap.0).unwrap() > identity.did_doc.threshold();
+    let identity_object_id = *identity.id.object_id();
+    *identity = get_identity(client, identity_object_id)
+      .await?
+      .ok_or_else(|| Error::Identity(format!("could not get identity with object id {identity_object_id}")))?;
+    let can_execute = identity
+      .did_doc
+      .controller_voting_power(controller_cap.0)
+      .ok_or_else(|| Error::Identity(format!("could not get voting power for identity {identity_object_id}")))?
+      > identity.did_doc.threshold();
     if identity.is_shared() && !can_execute {
       return Ok(identity.proposals().get(&key));
     }
     let controller_cap = identity.get_controller_cap(client).await?;
 
     let tx = execute_update(
-      identity.obj_ref.clone().unwrap(),
+      identity
+        .obj_ref
+        .clone()
+        .ok_or_else(|| Error::InvalidArgument("given identity does not have an object reference".to_string()))?,
       controller_cap,
       key.as_str(),
       client.package_id(),
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
     let _ = client.execute_transaction(tx, gas_budget, signer).await?;
-    *identity = get_identity(client, *identity.id.object_id()).await?.unwrap();
+    *identity = get_identity(client, identity_object_id)
+      .await?
+      .ok_or_else(|| Error::Identity(format!("could not get identity with object id {identity_object_id}")))?;
 
     Ok(None)
   }
@@ -429,7 +450,9 @@ pub async fn get_identity(client: &IotaClient, object_id: ObjectID) -> Result<Op
     ))
   })?;
   identity.obj_ref = Some(OwnedObjectRef {
-    owner: data.owner.unwrap(),
+    owner: data
+      .owner
+      .ok_or_else(|| Error::Identity(format!("could not get owner for identity {object_id}")))?,
     reference: object_ref.into(),
   });
 
@@ -503,7 +526,10 @@ impl<'a> IdentityBuilder<'a> {
     } else {
       let threshold = match threshold {
         Some(t) => t,
-        None if controllers.len() == 1 => *controllers.values().next().unwrap(),
+        None if controllers.len() == 1 => *controllers
+          .values()
+          .next()
+          .ok_or_else(|| Error::Identity("could not get controller".to_string()))?,
         None => {
           return Err(Error::TransactionBuildingFailed(
             "Missing field `threshold` in identity creation".to_owned(),
