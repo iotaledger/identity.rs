@@ -47,7 +47,7 @@ use crate::Error;
 const DEFAULT_NETWORK_NAME: &str = "iota";
 const DEFAULT_IDENTITY_PACKAGE_ID: &str = "0x5d83be2fabff68f15dd635d4a32531bbb2eec0dafc03e1e7361aec47dcc74917";
 
-fn get_object_id_from_did(did: &IotaDID) -> Result<ObjectID, Error> {
+pub fn get_object_id_from_did(did: &IotaDID) -> Result<ObjectID, Error> {
   ObjectID::from_str(&AliasId::from(did).to_string())
     .map_err(|err| Error::DIDResolutionErrorKinesis(format!("could not parse object id from did {did}; {err}")))
 }
@@ -182,6 +182,10 @@ impl IdentityClient {
 
   pub fn network_name(&self) -> &NetworkName {
     &self.network_name
+  }
+
+  pub(crate) fn iota_client(&self) -> &IotaClient {
+    &self.iota_client
   }
 
   /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.

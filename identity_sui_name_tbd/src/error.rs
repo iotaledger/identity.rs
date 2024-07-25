@@ -56,4 +56,6 @@ pub enum Error {
   /// Identity related error.
   #[error("identity error; {0}")]
   Identity(String),
+  #[error("unexpected state when looking up identity history; {0}")]
+  InvalidIdentityHistory(String),
 }

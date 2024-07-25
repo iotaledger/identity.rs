@@ -89,9 +89,9 @@ name = "8_stronghold"
 # path = "1_advanced/3_did_issues_tokens.rs"
 # name = "3_did_issues_tokens"
 
-# [[example]]
-# path = "1_advanced/4_alias_output_history.rs"
-# name = "4_alias_output_history"
+[[example]]
+path = "1_advanced/4_alias_output_history.rs"
+name = "4_alias_output_history"
 
 [[example]]
 path = "1_advanced/5_custom_resolution.rs"

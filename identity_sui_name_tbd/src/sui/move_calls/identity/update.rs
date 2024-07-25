@@ -11,8 +11,6 @@ use iota_sdk::types::Identifier;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::MOVE_STDLIB_PACKAGE_ID;
 
-use crate::sui::move_calls::utils;
-
 pub fn propose_update(
   identity: OwnedObjectRef,
   capability: ObjectRef,

@@ -8,16 +8,21 @@ use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use identity_iota_core::NetworkName;
 use identity_iota_core::StateMetadataDocument;
+use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaObjectDataFilter;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
 use iota_sdk::rpc_types::IotaObjectResponseQuery;
 use iota_sdk::rpc_types::IotaParsedData;
 use iota_sdk::rpc_types::IotaParsedMoveObject;
+use iota_sdk::rpc_types::IotaPastObjectResponse;
 use iota_sdk::rpc_types::IotaTransactionBlockEffects;
+use iota_sdk::rpc_types::IotaTransactionBlockResponseOptions;
+use iota_sdk::rpc_types::ObjectChange;
 use iota_sdk::rpc_types::OwnedObjectRef;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::ObjectRef;
+use iota_sdk::types::base_types::SequenceNumber;
 use iota_sdk::types::id::UID;
 use iota_sdk::types::object::Owner;
 use iota_sdk::IotaClient;
@@ -40,6 +45,7 @@ use super::UnmigratedAlias;
 
 const MODULE: &str = "identity";
 const NAME: &str = "Identity";
+const HISTORY_DEFAULT_PAGE_SIZE: usize = 10;
 
 pub enum Identity {
   Legacy(UnmigratedAlias),
@@ -127,6 +133,141 @@ impl OnChainIdentity {
 
   pub fn deactivate_did(&mut self) -> ProposalBuilder {
     ProposalBuilder::new(self, ProposalAction::Deactivate)
+  }
+
+  pub async fn get_history(
+    &self,
+    client: &IdentityClient,
+    last_version: Option<&IotaObjectData>,
+    page_size: Option<usize>,
+  ) -> Result<Vec<IotaObjectData>, Error> {
+    let identity_ref = self
+      .obj_ref
+      .as_ref()
+      .ok_or_else(|| Error::InvalidIdentityHistory("no reference to identity loaded".to_string()))?;
+    let object_id = identity_ref.object_id();
+
+    let mut history: Vec<IotaObjectData> = vec![];
+    let mut current_version = if let Some(last_version_value) = last_version {
+      // starting version given, this will be skipped in paging
+      last_version_value.clone()
+    } else {
+      // no version given, this version will be included in history
+      let version = identity_ref.version();
+      let response = get_past_object(client, object_id, version).await?;
+      let latest_version = if let IotaPastObjectResponse::VersionFound(response_value) = response {
+        response_value
+      } else {
+        return Err(Error::InvalidIdentityHistory(format!(
+          "could not find current version {version} of object {object_id}, response {response:?}"
+        )));
+      };
+      history.push(latest_version.clone()); // include current version in history if we start from now
+      latest_version
+    };
+
+    // limit lookup count to prevent locking on large histories
+    let page_size = page_size.unwrap_or(HISTORY_DEFAULT_PAGE_SIZE);
+    while history.len() < page_size {
+      let lookup = get_previous_version(client, current_version).await?;
+      if let Some(value) = lookup {
+        current_version = value;
+        history.push(current_version.clone());
+      } else {
+        break;
+      }
+    }
+
+    Ok(history)
+  }
+}
+
+pub fn has_previous_version(history_item: &IotaObjectData) -> Result<bool, Error> {
+  if let Some(Owner::Shared { initial_shared_version }) = history_item.owner {
+    Ok(history_item.version != initial_shared_version)
+  } else {
+    Err(Error::InvalidIdentityHistory(format!(
+      "provided history item does not seem to be a valid identity; {history_item}"
+    )))
+  }
+}
+
+async fn get_past_object(
+  client: &IdentityClient,
+  object_id: ObjectID,
+  version: SequenceNumber,
+) -> Result<IotaPastObjectResponse, Error> {
+  client
+    .iota_client()
+    .read_api()
+    .try_get_parsed_past_object(object_id, version, IotaObjectDataOptions::full_content())
+    .await
+    .map_err(|err| {
+      Error::InvalidIdentityHistory(format!("could not look up object {object_id} version {version}; {err}"))
+    })
+}
+
+async fn get_previous_version(client: &IdentityClient, iod: IotaObjectData) -> Result<Option<IotaObjectData>, Error> {
+  // try to get digest of previous tx
+  // if we requested the prev tx and it isn't returned, this should be the oldest state
+  let prev_tx_digest = if let Some(value) = iod.previous_transaction {
+    value
+  } else {
+    return Ok(None);
+  };
+
+  // resolve previous tx
+  let prev_tx_response = client
+    .iota_client()
+    .read_api()
+    .get_transaction_with_options(
+      prev_tx_digest,
+      IotaTransactionBlockResponseOptions::new().with_object_changes(),
+    )
+    .await
+    .unwrap();
+
+  // check for updated/created changes
+  let (created, other_changes): (Vec<ObjectChange>, _) = prev_tx_response
+    .clone()
+    .object_changes
+    .ok_or_else(|| {
+      Error::InvalidIdentityHistory(format!(
+        "could not find object changes for object {} in transaction {prev_tx_digest}",
+        iod.object_id
+      ))
+    })?
+    .into_iter()
+    .filter(|elem| iod.object_id.eq(&elem.object_id()))
+    .partition(|elem| matches!(elem, ObjectChange::Created { .. }));
+
+  // previous tx contain create tx, so there is no previous version
+  if created.len() == 1 {
+    return Ok(None);
+  }
+
+  let mut previous_versions: Vec<SequenceNumber> = other_changes
+    .iter()
+    .filter_map(|elem| match elem {
+      ObjectChange::Mutated { previous_version, .. } => Some(*previous_version),
+      _ => None,
+    })
+    .collect();
+
+  previous_versions.sort();
+
+  let earliest_previous = if let Some(value) = previous_versions.first() {
+    value
+  } else {
+    return Ok(None); // no mutations in prev tx, so no more versions can be found
+  };
+
+  let past_obj_response = get_past_object(client, iod.object_id, *earliest_previous).await?;
+  match past_obj_response {
+    IotaPastObjectResponse::VersionFound(value) => Ok(Some(value)),
+    _ => Err(Error::InvalidIdentityHistory(format!(
+      "could not find previous version, past object response: {past_obj_response:?}"
+    ))),
   }
 }
 
