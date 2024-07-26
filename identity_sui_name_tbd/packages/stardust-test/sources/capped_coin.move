@@ -6,8 +6,8 @@ module stardust::capped_coin {
     use std::ascii;
     use std::string;
 
-    use sui::balance::{Supply, Balance};
-    use sui::coin::{Self, Coin, TreasuryCap, CoinMetadata};
+    use iota::balance::{Supply, Balance};
+    use iota::coin::{Self, Coin, TreasuryCap, CoinMetadata};
 
     /// The error returned when the maximum supply reached.
     const EMaximumSupplyReached: u64 = 0;

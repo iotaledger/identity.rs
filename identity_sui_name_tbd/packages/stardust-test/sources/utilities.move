@@ -2,9 +2,9 @@ module stardust::utilities {
     // === Imports ===
     use std::type_name;
 
-    use sui::bag::Bag;
-    use sui::balance::Balance;
-    use sui::coin;
+    use iota::bag::Bag;
+    use iota::balance::Balance;
+    use iota::coin;
 
     // === Errors ===
 

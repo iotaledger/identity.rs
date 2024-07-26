@@ -14,16 +14,17 @@ members = [
   "identity_jose",
   "identity_eddsa_verifier",
   "identity_sui_name_tbd",
-  "examples",
+  "examples/iota",
+  "examples/kinesis",
 ]
 
 exclude = ["bindings/wasm", "bindings/grpc"]
 
 [workspace.dependencies]
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
-thiserror = { version = "1.0", default-features = false }
-strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0", default-features = false }
+strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
+thiserror = { version = "1.0", default-features = false }
 
 [workspace.package]
 authors = ["IOTA Stiftung"]

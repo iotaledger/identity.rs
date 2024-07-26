@@ -3,11 +3,11 @@
 
 module stardust::nft_output {
 
-    use sui::bag::Bag;
-    use sui::balance::Balance;
-    use sui::dynamic_object_field;
-    use sui::sui::SUI;
-    use sui::transfer::Receiving;
+    use iota::bag::Bag;
+    use iota::balance::Balance;
+    use iota::dynamic_object_field;
+    use iota::iota::IOTA;
+    use iota::transfer::Receiving;
 
     use stardust::nft::Nft;
 
@@ -24,7 +24,7 @@ module stardust::nft_output {
         id: UID,
 
         /// The amount of IOTA tokens held by the output.
-        iota: Balance<SUI>,
+        iota: Balance<IOTA>,
 
         /// The `Bag` holds native tokens, key-ed by the stringified type of the asset.
         /// Example: key: "0xabcded::soon::SOON", value: Balance<0xabcded::soon::SOON>.
@@ -39,7 +39,7 @@ module stardust::nft_output {
     }
 
     /// The function extracts assets from a legacy NFT output.
-    public fun extract_assets(mut output: NftOutput, ctx: &mut TxContext): (Balance<SUI>, Bag, Nft) {
+    public fun extract_assets(mut output: NftOutput, ctx: &mut TxContext): (Balance<IOTA>, Bag, Nft) {
         // Load the related Nft object.
         let nft = load_nft(&mut output);
 
@@ -100,7 +100,7 @@ module stardust::nft_output {
 
     #[test_only]
     public fun create_for_testing(
-        iota: Balance<SUI>,
+        iota: Balance<IOTA>,
         native_tokens: Bag,
         storage_deposit_return: Option<StorageDepositReturnUnlockCondition>,
         timelock: Option<TimelockUnlockCondition>,

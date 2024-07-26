@@ -3,8 +3,8 @@ name = "IdentityIota"
 edition = "2024.beta"
 
 [dependencies]
-MoveStdlib = { git = "https://github.com/iotaledger/kinesis.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "7899dc9ce682c3d0a97f249ce7eaa27b9473b920" }
-Sui = { git = "https://github.com/iotaledger/kinesis.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "7899dc9ce682c3d0a97f249ce7eaa27b9473b920" }
+MoveStdlib = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/move-stdlib", rev = "ead968e573d8feaa1aa78dddadb8b18a8a99870d" }
+Iota = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/iota-framework", rev = "ead968e573d8feaa1aa78dddadb8b18a8a99870d" }
 StardustTest = { local = "../stardust-test" }
 
 [addresses]

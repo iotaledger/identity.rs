@@ -1,11 +1,11 @@
 module stardust::basic_output {
     // === Imports ===
 
-    // Sui imports.
-    use sui::bag::Bag;
-    use sui::balance::Balance;
-    use sui::sui::SUI;
-    use sui::transfer::Receiving;
+    // Iota imports.
+    use iota::bag::Bag;
+    use iota::balance::Balance;
+    use iota::iota::IOTA;
+    use iota::transfer::Receiving;
 
     // Package imports.
     use stardust::expiration_unlock_condition::ExpirationUnlockCondition;
@@ -25,7 +25,7 @@ module stardust::basic_output {
         id: UID,
 
         /// The amount of IOTA coins held by the output.
-        iota: Balance<SUI>,
+        iota: Balance<IOTA>,
 
         /// The `Bag` holds native tokens, key-ed by the stringified type of the asset.
         /// Example: key: "0xabcded::soon::SOON", value: Balance<0xabcded::soon::SOON>.
@@ -54,7 +54,7 @@ module stardust::basic_output {
     ///  - The object will be deleted.
     ///  - The `StorageDepositReturnUnlockCondition` will return the deposit.
     ///  - Remaining assets (IOTA coins and native tokens) will be returned.
-    public fun extract_assets(output: BasicOutput, ctx: &mut TxContext) : (Balance<SUI>, Bag) {
+    public fun extract_assets(output: BasicOutput, ctx: &mut TxContext) : (Balance<IOTA>, Bag) {
         // Unpack the output into its basic part.
         let BasicOutput {
             id,
@@ -109,7 +109,7 @@ module stardust::basic_output {
     // test only function to create a basic output
     #[test_only]
     public fun create_for_testing(
-        iota: Balance<SUI>,
+        iota: Balance<IOTA>,
         native_tokens: Bag,
         storage_deposit_return: Option<StorageDepositReturnUnlockCondition>,
         timelock: Option<TimelockUnlockCondition>,

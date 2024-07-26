@@ -2,37 +2,37 @@
 
 [move]
 version = 0
-manifest_digest = "4360C6033588DBF610D05F126EBDF48DB22E614ED3875E24DFF9A7F01EA8261A"
+manifest_digest = "DB1956C7338F8050349161F9AAC9DCEE1F06B7E0ACF8C628F1D86B17E0AD6FDD"
 deps_digest = "060AD7E57DFB13104F21BE5F5C3759D03F0553FC3229247D9A7A6B45F50D03A3"
 
 dependencies = [
+  { name = "Iota" },
   { name = "MoveStdlib" },
   { name = "StardustTest" },
-  { name = "Sui" },
+]
+
+[[move.package]]
+name = "Iota"
+source = { git = "https://github.com/iotaledger/iota.git", rev = "ead968e573d8feaa1aa78dddadb8b18a8a99870d", subdir = "crates/iota-framework/packages/iota-framework" }
+
+dependencies = [
+  { name = "MoveStdlib" },
 ]
 
 [[move.package]]
 name = "MoveStdlib"
-source = { git = "https://github.com/iotaledger/kinesis.git", rev = "7899dc9ce682c3d0a97f249ce7eaa27b9473b920", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/iotaledger/iota.git", rev = "ead968e573d8feaa1aa78dddadb8b18a8a99870d", subdir = "crates/iota-framework/packages/move-stdlib" }
 
 [[move.package]]
 name = "StardustTest"
 source = { local = "../stardust-test" }
 
 dependencies = [
-  { name = "MoveStdlib" },
-  { name = "Sui" },
-]
-
-[[move.package]]
-name = "Sui"
-source = { git = "https://github.com/iotaledger/kinesis.git", rev = "7899dc9ce682c3d0a97f249ce7eaa27b9473b920", subdir = "crates/sui-framework/packages/sui-framework" }
-
-dependencies = [
+  { name = "Iota" },
   { name = "MoveStdlib" },
 ]
 
 [move.toolchain-version]
 compiler-version = "1.22.0"
 edition = "legacy"
-flavor = "sui"
+flavor = "iota"

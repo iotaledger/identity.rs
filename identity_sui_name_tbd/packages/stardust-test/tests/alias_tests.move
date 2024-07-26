@@ -2,10 +2,10 @@ module stardust::alias_tests {
 
     use std::type_name;
 
-    use sui::bag;
-    use sui::balance;
-    use sui::coin;
-    use sui::sui::SUI;
+    use iota::bag;
+    use iota::balance;
+    use iota::coin;
+    use iota::iota::IOTA;
 
     use stardust::alias;
     use stardust::alias_output;
@@ -42,7 +42,7 @@ module stardust::alias_tests {
         );
 
         // Mint some tokens.
-        let iota = balance::create_for_testing<SUI>(initial_iota_in_output);
+        let iota = balance::create_for_testing<IOTA>(initial_iota_in_output);
 
         let test_a_balance = balance::create_for_testing<TEST_A>(initial_testA_in_output);
         let test_b_balance = balance::create_for_testing<TEST_B>(initial_testB_in_output);
