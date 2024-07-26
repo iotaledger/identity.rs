@@ -15,7 +15,9 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::verification::MethodRelationship;
 use identity_storage::StorageSigner;
 use identity_sui_name_tbd::client::get_object_id_from_did;
+use identity_sui_name_tbd::migration::has_previous_version;
 use identity_sui_name_tbd::migration::Identity;
+use iota_sdk::rpc_types::IotaObjectData;
 
 /// Demonstrates how to obtain the alias output history.
 #[tokio::main]
@@ -68,6 +70,37 @@ async fn main() -> anyhow::Result<()> {
   // Step 2 - Get history
   let history = onchain_identity.get_history(&identity_client, None, None).await?;
   println!("Alias History: {history:?}");
+
+  // Depending on your use case, you can also page through the results
+  // Alternative Step 2 - Page by looping until no result is returned (here with page size 1)
+  let mut current_item: Option<&IotaObjectData> = None;
+  let mut history: Vec<IotaObjectData>;
+  loop {
+    history = onchain_identity
+      .get_history(&identity_client, current_item, Some(1))
+      .await?;
+    if history.is_empty() {
+      break;
+    }
+    current_item = history.first();
+    println!("Alias History entry: {current_item:?}");
+  }
+
+  // Alternative Step 2 - Page by looping with pre-fetch next page check (again with page size 1)
+  let mut current_item: Option<&IotaObjectData> = None;
+  let mut history: Vec<IotaObjectData>;
+  loop {
+    history = onchain_identity
+      .get_history(&identity_client, current_item, Some(1))
+      .await?;
+
+    current_item = history.first();
+    println!("Alias History entry: {current_item:?}");
+
+    if !has_previous_version(current_item.unwrap())? {
+      break;
+    }
+  }
 
   Ok(())
 }
