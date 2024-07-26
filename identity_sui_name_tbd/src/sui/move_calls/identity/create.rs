@@ -10,6 +10,7 @@ use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use crate::sui::move_calls::utils;
 use crate::utils::parse_identifier;
 use crate::utils::ptb_pure;
+
 use crate::Error;
 
 pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransaction, Error> {
