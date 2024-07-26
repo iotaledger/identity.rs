@@ -28,13 +28,20 @@ rand = "0.8.5"
 tokio = { version = "1.29.0", features = ["full"] }
 
 [features]
-default = ["revocation-bitmap", "client", "iota-client", "resolver"]
+default = ["revocation-bitmap", "client", "iota-client", "kinesis-client", "resolver"]
 
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["identity_iota_core/client"]
 
 # Enables the iota-client integration, the client trait implementations for it, and the `IotaClientExt` trait.
 iota-client = ["identity_iota_core/iota-client", "identity_resolver?/iota"]
+
+# Enables the kinesis client integration.
+kinesis-client = [
+  "identity_resolver/kinesis",
+  "identity_storage/send-sync-storage",
+  "identity_storage/storage-signer",
+]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [

@@ -15,25 +15,28 @@ description = "SUI related tooling for identity-rs"
 anyhow = "1.0.75"
 bcs = "0.1.4"
 identity_core = { version = "=1.2.0", path = "../identity_core" }
+identity_iota_core = { version = "=1.2.0", path = "../identity_iota_core" }
 iota-crypto = { version = "0.23" }
 identity_jose = { version = "=1.2.0", path = "../identity_jose" }
-identity_storage = { version = "=1.2.0", path = "../identity_storage" }
 identity_verification = { version = "=1.2.0", path = "../identity_verification" }
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "d7a33a9f79271bfc19fc4c8816ea5467e4205e17" }
 futures = { version = "0.3", default-features = false }
-iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
-move-core-types= { git = "https://github.com/iotaledger/kinesis.git", package = "move-core-types", version = "0.0.4" }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk" }
+iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config" }
+move-core-types= { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", version = "0.0.4" }
 serde.workspace = true
+serde-aux = "4.5.0"
 serde_json.workspace = true
-shared-crypto = { git = "https://github.com/iotaledger/kinesis.git", package = "shared-crypto" }
 strum.workspace = true
-sui-config = { git = "https://github.com/iotaledger/kinesis.git", package = "sui-config" }
-sui-sdk = { git = "https://github.com/iotaledger/kinesis.git", package = "sui-sdk" }
 thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt", "process"] }
+secret-storage= { git = "https://github.com/iotaledger/secret-storage.git", branch = "feat/add-feedback-from-integration" }
+shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto" }
+rand = "0.8.5"
 
 [dev-dependencies]
 bcs = "0.1.4"
+identity_storage = { path = "../identity_storage", features = ["send-sync-storage", "storage-signer"] }
 jsonpath-rust = "0.5.1"
 serial_test = "3.1.1"
 

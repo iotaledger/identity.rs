@@ -1,65 +1,104 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
 use std::pin::Pin;
 use std::str::FromStr;
 
-use fastcrypto::hash::Blake2b256;
+use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::hash::HashFunction;
 use fastcrypto::traits::ToFromBytes;
 use futures::stream::FuturesUnordered;
 use futures::Future;
 use futures::TryStreamExt;
-use identity_storage::JwkStorage;
-use identity_storage::KeyId;
-use identity_storage::KeyIdStorage;
-use identity_storage::Storage;
+use identity_iota_core::block::output::AliasId;
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
+use identity_iota_core::NetworkName;
+use identity_iota_core::StateMetadataDocument;
 use identity_verification::jwk::Jwk;
-use move_core_types::account_address::AccountAddress;
-use move_core_types::language_storage::StructTag;
+use iota_sdk::rpc_types::IotaExecutionStatus;
+use iota_sdk::rpc_types::IotaTransactionBlockEffects;
+use iota_sdk::rpc_types::IotaTransactionBlockEffectsV1;
+use iota_sdk::rpc_types::IotaTransactionBlockResponse;
+use iota_sdk::rpc_types::IotaTransactionBlockResponseOptions;
+use iota_sdk::types::base_types::IotaAddress;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::crypto::DefaultHash;
+use iota_sdk::types::crypto::Signature;
+use iota_sdk::types::crypto::SignatureScheme;
+use iota_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
+use iota_sdk::types::transaction::ProgrammableTransaction;
+use iota_sdk::types::transaction::Transaction;
+use iota_sdk::types::transaction::TransactionData;
+use iota_sdk::IotaClient;
+use secret_storage::key_signature_set::KeySignatureTypes;
+use secret_storage::signer::Signer;
 use shared_crypto::intent::Intent;
 use shared_crypto::intent::IntentMessage;
-use sui_sdk::rpc_types::OwnedObjectRef;
-use sui_sdk::rpc_types::SuiTransactionBlockEffects;
-use sui_sdk::rpc_types::SuiTransactionBlockResponseOptions;
-use sui_sdk::types::base_types::ObjectID;
-use sui_sdk::types::base_types::SuiAddress;
-use sui_sdk::types::crypto::DefaultHash;
-use sui_sdk::types::crypto::Signature;
-use sui_sdk::types::crypto::SignatureScheme;
-use sui_sdk::types::object::Owner;
-use sui_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use sui_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
-use sui_sdk::types::transaction::Argument;
-use sui_sdk::types::transaction::Command;
-use sui_sdk::types::transaction::ProgrammableMoveCall;
-use sui_sdk::types::transaction::ProgrammableTransaction;
-use sui_sdk::types::transaction::Transaction;
-use sui_sdk::types::transaction::TransactionData;
-use sui_sdk::types::Identifier;
-use sui_sdk::types::TypeTag;
-use sui_sdk::types::SUI_FRAMEWORK_ADDRESS;
-use sui_sdk::types::SUI_FRAMEWORK_PACKAGE_ID;
-use sui_sdk::SuiClient;
 
 use crate::migration::get_alias;
-use crate::migration::get_identity_document;
+use crate::migration::get_identity;
 use crate::migration::lookup;
+use crate::migration::Identity;
+use crate::migration::IdentityBuilder;
 use crate::Error;
 
-pub struct IdentityClientBuilder<K, I> {
-  pub(crate) identity_iota_package_id: Option<ObjectID>,
-  pub(crate) public_jwk: Option<Jwk>,
-  pub(crate) sender_key_id: Option<KeyId>,
-  pub(crate) storage: Option<Storage<K, I>>,
-  pub(crate) sui_client: Option<SuiClient>,
+const DEFAULT_NETWORK_NAME: &str = "iota";
+const DEFAULT_IDENTITY_PACKAGE_ID: &str = "0x5d83be2fabff68f15dd635d4a32531bbb2eec0dafc03e1e7361aec47dcc74917";
+
+fn get_object_id_from_did(did: &IotaDID) -> Result<ObjectID, Error> {
+  ObjectID::from_str(&AliasId::from(did).to_string())
+    .map_err(|err| Error::DIDResolutionError(format!("could not parse object id from did {did}; {err}")))
 }
 
-impl<K, I> IdentityClientBuilder<K, I>
-where
-  K: JwkStorage,
-  I: KeyIdStorage,
-{
+pub struct IotaKeySignature {
+  pub public_key: Vec<u8>,
+  pub signature: Vec<u8>,
+}
+
+impl KeySignatureTypes for IotaKeySignature {
+  type PublicKey = Vec<u8>;
+  type Signature = Vec<u8>;
+}
+
+/// Mirrored types from identity_storage::KeyId
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub struct KeyId(String);
+
+impl KeyId {
+  /// Creates a new key identifier from a string.
+  pub fn new(id: impl Into<String>) -> Self {
+    Self(id.into())
+  }
+
+  /// Returns string representation of the key id.
+  pub fn as_str(&self) -> &str {
+    &self.0
+  }
+}
+
+impl std::fmt::Display for KeyId {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str(&self.0)
+  }
+}
+
+impl From<KeyId> for String {
+  fn from(value: KeyId) -> Self {
+    value.0
+  }
+}
+
+#[derive(Default)]
+pub struct IdentityClientBuilder {
+  pub(crate) identity_iota_package_id: Option<ObjectID>,
+  pub(crate) sender_public_key: Option<Vec<u8>>,
+  pub(crate) iota_client: Option<IotaClient>,
+  pub(crate) network_name: Option<String>,
+}
+
+impl IdentityClientBuilder {
   /// Sets the `identity_iota_package_id` value.
   #[must_use]
   pub fn identity_iota_package_id(mut self, value: ObjectID) -> Self {
@@ -67,73 +106,62 @@ where
     self
   }
 
-  /// Sets the `sender_key_id` value.
-  #[must_use]
-  pub fn sender_key_id(mut self, value: KeyId) -> Self {
-    self.sender_key_id = Some(value);
-    self
-  }
-
   /// Sets the `sender_public_key` value.
   #[must_use]
-  pub fn sender_public_jwk(mut self, value: Jwk) -> Self {
-    self.public_jwk = Some(value);
+  pub fn sender_public_key(mut self, value: &[u8]) -> Self {
+    self.sender_public_key = Some(value.into());
     self
   }
 
-  /// Sets the `storage` value.
+  /// Sets the `iota_client` value.
   #[must_use]
-  pub fn storage(mut self, value: Storage<K, I>) -> Self {
-    self.storage = Some(value);
+  pub fn iota_client(mut self, value: IotaClient) -> Self {
+    self.iota_client = Some(value);
     self
   }
 
-  /// Sets the `sui_client` value.
+  /// Sets the `network_name` value.
   #[must_use]
-  pub fn sui_client(mut self, value: SuiClient) -> Self {
-    self.sui_client = Some(value);
+  pub fn network_name(mut self, value: &str) -> Self {
+    self.network_name = Some(value.to_string());
     self
   }
 
   /// Returns a new `IdentityClientBuilder` based on the `IdentityClientBuilder` configuration.
-  pub fn build(self) -> Result<IdentityClient<K, I>, Error> {
+  pub fn build(self) -> Result<IdentityClient, Error> {
     IdentityClient::from_builder(self)
   }
 }
 
-impl<K, I> Default for IdentityClientBuilder<K, I> {
-  fn default() -> Self {
-    Self {
-      identity_iota_package_id: None,
-      public_jwk: None,
-      sender_key_id: None,
-      storage: None,
-      sui_client: None,
-    }
+#[derive(Clone)]
+struct SigningInfo {
+  #[allow(dead_code)]
+  sender_public_key: Vec<u8>,
+  sender_address: IotaAddress,
+}
+
+#[derive(Clone)]
+pub struct IdentityClient {
+  identity_iota_package_id: ObjectID,
+  iota_client: IotaClient,
+  signing_info: Option<SigningInfo>,
+  network_name: NetworkName,
+}
+
+impl Deref for IdentityClient {
+  type Target = IotaClient;
+  fn deref(&self) -> &Self::Target {
+    &self.iota_client
   }
 }
 
-struct SigningInfo<K, I> {
-  sender_key_id: KeyId,
-  sender_public_jwk: Jwk,
-  sender_public_key: Vec<u8>,
-  sender_address: SuiAddress,
-  storage: Storage<K, I>,
-}
+impl IdentityClient {
+  pub(crate) fn package_id(&self) -> ObjectID {
+    self.identity_iota_package_id
+  }
 
-pub struct IdentityClient<K, I> {
-  identity_iota_package_id: ObjectID,
-  sui_client: SuiClient,
-  signing_info: Option<SigningInfo<K, I>>,
-}
-
-impl<K, I> IdentityClient<K, I>
-where
-  K: JwkStorage,
-  I: KeyIdStorage,
-{
-  pub fn builder() -> IdentityClientBuilder<K, I> {
-    IdentityClientBuilder::<K, I>::default()
+  pub fn builder() -> IdentityClientBuilder {
+    IdentityClientBuilder::default()
   }
 
   pub fn sender_public_key(&self) -> Result<&[u8], Error> {
@@ -144,7 +172,7 @@ where
       .map(|v| v.sender_public_key.as_ref())
   }
 
-  pub fn sender_address(&self) -> Result<SuiAddress, Error> {
+  pub fn sender_address(&self) -> Result<IotaAddress, Error> {
     self
       .signing_info
       .as_ref()
@@ -152,91 +180,82 @@ where
       .map(|v| v.sender_address)
   }
 
+  pub fn network_name(&self) -> &NetworkName {
+    &self.network_name
+  }
+
   /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.
-  pub fn from_builder(builder: IdentityClientBuilder<K, I>) -> Result<Self, Error> {
-    let signing_info = match (builder.public_jwk, builder.sender_key_id, builder.storage) {
-      (Some(public_jwk), Some(sender_key_id), Some(storage)) => {
-        let sender_public_key = get_sender_public_key(&public_jwk)?;
-        let sender_address = convert_to_address(&sender_public_key)?;
-        Some(SigningInfo {
-          sender_key_id,
-          sender_public_jwk: public_jwk,
+  pub fn from_builder(builder: IdentityClientBuilder) -> Result<Self, Error> {
+    let signing_info = builder
+      .sender_public_key
+      .map(|sender_public_key| {
+        convert_to_address(&sender_public_key).map(|sender_address| SigningInfo {
           sender_public_key,
           sender_address,
-          storage,
         })
-      }
-      (None, None, None) => None,
-      _ => {
-        return Err(Error::InvalidConfig(
-          r#"properties "public_jwk", "sender_key_id", and "storage" must be set together"#.to_string(),
-        ));
-      }
-    };
+      })
+      .transpose()?;
+    let network_name = builder.network_name.unwrap_or_else(|| DEFAULT_NETWORK_NAME.to_string());
+    let network_name = network_name
+      .clone()
+      .try_into()
+      .map_err(|err| Error::InvalidConfig(format!(r#"could not convert "{network_name}" to a NetworkName; {err}"#)))?;
 
     Ok(Self {
       identity_iota_package_id: builder
         .identity_iota_package_id
-        .ok_or_else(|| Error::InvalidConfig("missing `identity_iota_package_id` argument".to_string()))?,
-      sui_client: builder
-        .sui_client
-        .ok_or_else(|| Error::InvalidConfig("missing `sui_client` argument ".to_string()))?,
+        .map_or_else(|| ObjectID::from_str(DEFAULT_IDENTITY_PACKAGE_ID), Ok)
+        .map_err(|err| Error::InvalidConfig(format!("could not parse identity package id; {err}")))?,
+      iota_client: builder
+        .iota_client
+        .ok_or_else(|| Error::InvalidConfig("missing `iota_client` argument ".to_string()))?,
       signing_info,
+      network_name,
     })
   }
 
-  /// Publishes given IOTA document to new `document` onchain.
-  pub async fn publish_did(&self, iota_document: &[u8], gas_budget: u64) -> Result<ObjectID, Error> {
-    let programmable_transaction =
-      self.get_new_doc_programmable_transaction(iota_document, self.identity_iota_package_id)?;
-    let tx_data = self.get_transaction_data(programmable_transaction, gas_budget).await?;
-    let kinesis_signature = self.sign_transaction_data(&tx_data).await?;
+  /// Creates a new onchain Identity.
+  pub fn create_identity<'a>(&self, iota_document: &'a [u8]) -> IdentityBuilder<'a> {
+    IdentityBuilder::new(iota_document, self.identity_iota_package_id)
+  }
+
+  pub(crate) async fn execute_transaction<S>(
+    &self,
+    tx: ProgrammableTransaction,
+    gas_budget: u64,
+    signer: &S,
+  ) -> Result<IotaTransactionBlockResponse, Error>
+  where
+    S: Signer<IotaKeySignature> + Send + Sync,
+  {
+    let tx_data = self.get_transaction_data(tx, gas_budget).await?;
+    let signature = self.sign_transaction_data(&tx_data, signer).await?;
 
     // execute tx
     let response = self
-      .sui_client
       .quorum_driver_api()
       .execute_transaction_block(
-        Transaction::from_data(tx_data, vec![kinesis_signature]),
-        SuiTransactionBlockResponseOptions::full_content(),
+        Transaction::from_data(tx_data, vec![signature]),
+        IotaTransactionBlockResponseOptions::full_content(),
         Some(ExecuteTransactionRequestType::WaitForLocalExecution),
       )
-      .await?;
+      .await
+      .map_err(Error::TransactionExecutionFailed)?;
 
-    let created = match response.clone().effects {
-      Some(SuiTransactionBlockEffects::V1(effects)) => effects.created,
-      _ => {
-        return Err(Error::TransactionUnexpectedResponse(format!(
-          "could not find effects in transaction response: {response:?}"
-        )));
-      }
-    };
-    let new_documents: Vec<OwnedObjectRef> = created
-      .into_iter()
-      .filter(|elem| {
-        matches!(
-          elem.owner,
-          Owner::Shared {
-            initial_shared_version: _,
-          }
-        )
-      })
-      .collect();
-    let new_document = match &new_documents[..] {
-      [value] => value,
-      _ => {
-        return Err(Error::TransactionUnexpectedResponse(format!(
-          "could not find new document in response: {response:?}"
-        )));
-      }
-    };
-
-    Ok(new_document.object_id())
+    if let Some(IotaTransactionBlockEffects::V1(IotaTransactionBlockEffectsV1 {
+      status: IotaExecutionStatus::Failure { error },
+      ..
+    })) = &response.effects
+    {
+      Err(Error::TransactionUnexpectedResponse(error.to_string()))
+    } else {
+      Ok(response)
+    }
   }
 
-  async fn get_coin_for_transaction(&self) -> Result<sui_sdk::rpc_types::Coin, Error> {
+  async fn get_coin_for_transaction(&self) -> Result<iota_sdk::rpc_types::Coin, Error> {
     let coins = self
-      .sui_client
+      .iota_client
       .coin_read_api()
       .get_coins(self.sender_address()?, None, None, None)
       .await
@@ -255,7 +274,7 @@ where
     gas_budget: u64,
   ) -> Result<TransactionData, Error> {
     let gas_price = self
-      .sui_client
+      .iota_client
       .read_api()
       .get_reference_gas_price()
       .await
@@ -272,19 +291,16 @@ where
     Ok(tx_data)
   }
 
-  async fn sign_transaction_data(&self, tx_data: &TransactionData) -> Result<Signature, Error> {
-    let SigningInfo {
-      storage,
-      sender_key_id,
-      sender_public_key,
-      sender_public_jwk,
-      ..
-    } = self
+  async fn sign_transaction_data<S>(&self, tx_data: &TransactionData, signer: &S) -> Result<Signature, Error>
+  where
+    S: Signer<IotaKeySignature> + Send + Sync,
+  {
+    let SigningInfo { sender_public_key, .. } = self
       .signing_info
       .as_ref()
       .ok_or_else(|| Error::InvalidConfig("not properly configured for signing".to_string()))?;
 
-    let intent = Intent::sui_transaction();
+    let intent = Intent::iota_transaction();
     let intent_msg = IntentMessage::new(intent, tx_data);
     let mut hasher = DefaultHash::default();
     hasher.update(bcs::to_bytes(&intent_msg).map_err(|err| {
@@ -292,9 +308,8 @@ where
     })?);
     let digest = hasher.finalize().digest;
 
-    let raw_signature = storage
-      .key_storage()
-      .sign(sender_key_id, &digest, sender_public_jwk)
+    let raw_signature = signer
+      .sign(digest)
       .await
       .map_err(|err| Error::TransactionSigningFailed(format!("could not sign transaction message; {err}")))?;
 
@@ -309,129 +324,134 @@ where
     Signature::from_bytes(signature_bytes)
       .map_err(|err| Error::TransactionSigningFailed(format!("could not parse signature to IOTA signature; {err}")))
   }
-
-  fn get_new_doc_programmable_transaction(
-    &self,
-    iota_document: &[u8],
-    package_id: ObjectID,
-  ) -> Result<sui_sdk::types::transaction::ProgrammableTransaction, Error> {
-    let mut ptb = ProgrammableTransactionBuilder::new();
-
-    let pure_vec: Vec<Argument> = iota_document
-      .iter()
-      .map(|elem| ptb.pure(*elem))
-      .collect::<Result<Vec<_>, _>>()
-      .map_err(|err| Error::InvalidArgument(format!("could not convert given document to move vector; {err}")))?;
-    let iota_document_move_vec = ptb.command(Command::MakeMoveVec(Some(sui_sdk::types::TypeTag::U8), pure_vec));
-
-    let sui_struct_tag: StructTag = StructTag {
-      address: SUI_FRAMEWORK_ADDRESS,
-      module: Identifier::from_str("sui")
-        .map_err(|err| Error::ParsingFailed(format!("\"sui\" to identifier; {err}")))?,
-      name: Identifier::from_str("SUI").map_err(|err| Error::ParsingFailed(format!("\"SUI\" to identifier; {err}")))?,
-      type_params: vec![],
-    };
-    let balance = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-      package: SUI_FRAMEWORK_PACKAGE_ID,
-      module: Identifier::from_str("balance")
-        .map_err(|err| Error::ParsingFailed(format!("\"balance\" to identifier; {err}")))?,
-      function: Identifier::from_str("zero")
-        .map_err(|err| Error::ParsingFailed(format!("\"zero\" to identifier; {err}")))?,
-      type_arguments: vec![TypeTag::Struct(Box::new(sui_struct_tag))],
-      arguments: vec![],
-    })));
-
-    let bag = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-      package: SUI_FRAMEWORK_PACKAGE_ID,
-      module: Identifier::from_str("bag")
-        .map_err(|err| Error::ParsingFailed(format!("\"bag\" to identifier; {err}")))?,
-      function: Identifier::from_str("new")
-        .map_err(|err| Error::ParsingFailed(format!("\"new\" to identifier; {err}")))?,
-      type_arguments: vec![],
-      arguments: vec![],
-    })));
-
-    let new_document_result = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-      package: package_id,
-      module: Identifier::from_str("document")
-        .map_err(|err| Error::ParsingFailed(format!("\"document\" to identifier; {err}")))?,
-      function: Identifier::from_str("new")
-        .map_err(|err| Error::ParsingFailed(format!("\"new\" to identifier; {err}")))?,
-      type_arguments: vec![],
-      arguments: vec![iota_document_move_vec, balance, bag],
-    })));
-
-    let new_document_result_index = if let Argument::Result(index) = new_document_result {
-      index
-    } else {
-      return Err(Error::TransactionBuildingFailed(
-        "could not get result index from document::new call".to_string(),
-      ));
-    };
-
-    ptb.transfer_arg(
-      self.sender_address()?,
-      Argument::NestedResult(new_document_result_index, 1),
-    );
-
-    let document_struct_tag: StructTag = StructTag {
-      address: AccountAddress::from_str(&package_id.to_string())
-        .map_err(|err| Error::ParsingFailed(format!("package id\"{package_id}\" to account address; {err}")))?,
-      module: Identifier::from_str("document")
-        .map_err(|err| Error::ParsingFailed(format!("\"document\" to identifier; {err}")))?,
-      name: Identifier::from_str("Document")
-        .map_err(|err| Error::ParsingFailed(format!("\"Document\" to identifier; {err}")))?,
-      type_params: vec![],
-    };
-
-    ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-      package: SUI_FRAMEWORK_PACKAGE_ID,
-      module: Identifier::from_str("transfer")
-        .map_err(|err| Error::ParsingFailed(format!("\"transfer\" to identifier; {err}")))?,
-      function: Identifier::from_str("public_share_object")
-        .map_err(|err| Error::ParsingFailed(format!("\"public_share_object\" to identifier; {err}")))?,
-      type_arguments: vec![TypeTag::Struct(Box::new(document_struct_tag))],
-      arguments: vec![Argument::NestedResult(new_document_result_index, 0)],
-    })));
-
-    Ok(ptb.finish())
-  }
 }
 
-impl<K, I> IdentityClient<K, I> {
-  pub async fn get_did_document(&self, object_id: ObjectID) -> Result<Vec<u8>, Error> {
+impl IdentityClient {
+  pub async fn get_identity(&self, object_id: ObjectID) -> Result<Identity, Error> {
     // spawn all checks
     let mut all_futures =
-      FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Vec<u8>>, Error>> + Send>>>::new();
-    all_futures.push(Box::pin(resolve_new(&self.sui_client, object_id)));
-    all_futures.push(Box::pin(resolve_migrated(&self.sui_client, object_id)));
-    all_futures.push(Box::pin(resolve_unmigrated(&self.sui_client, object_id)));
+      FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
+    all_futures.push(Box::pin(resolve_new(&self.iota_client, object_id)));
+    all_futures.push(Box::pin(resolve_migrated(&self.iota_client, object_id)));
+    all_futures.push(Box::pin(resolve_unmigrated(&self.iota_client, object_id)));
 
     // use first non-None value as result
-    let mut state_metadata_outcome: Option<Vec<u8>> = None;
+    let mut identity_outcome: Option<Identity> = None;
     while let Some(result) = all_futures.try_next().await? {
       if result.is_some() {
-        state_metadata_outcome = result;
+        identity_outcome = result;
         all_futures.clear();
         break;
       }
     }
 
-    // check if we found state metadata
-    let state_metadata = if let Some(value) = state_metadata_outcome {
-      value
-    } else {
-      return Err(Error::DIDResolutionErrorKinesis(format!(
-        "could not find DID document for {object_id}"
-      )));
-    };
-
-    // unpack and return document
-    Ok(state_metadata)
+    identity_outcome.ok_or_else(|| Error::DIDResolutionError(format!("could not find DID document for {object_id}")))
   }
 }
 
-fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> {
+// former extension trait, keep separate until properly re-integrated
+impl IdentityClient {
+  pub async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument, Error> {
+    let identity = get_identity(self, get_object_id_from_did(did)?)
+      .await?
+      .ok_or_else(|| Error::DIDResolutionError(format!("call succeeded but could not resolve {did} to object")))?;
+    let state_metadata = identity.did_doc.controlled_value();
+
+    // return empty document if disabled
+    if state_metadata.is_empty() {
+      let mut empty_document = IotaDocument::new_with_id(did.clone());
+      empty_document.metadata.created = None;
+      empty_document.metadata.updated = None;
+      empty_document.metadata.deactivated = Some(true);
+
+      return Ok(empty_document);
+    }
+
+    // unpack, replace placeholders and return document
+    StateMetadataDocument::unpack(state_metadata)
+      .and_then(|doc| doc.into_iota_document(did))
+      .map_err(|err| {
+        Error::DidDocParsingFailed(format!(
+          "could not transform DID document to IotaDocument for DID {did}; {err}"
+        ))
+      })
+  }
+
+  pub async fn publish_did_document<S>(
+    &self,
+    document: IotaDocument,
+    gas_budget: u64,
+    signer: &S,
+  ) -> Result<IotaDocument, Error>
+  where
+    S: Signer<IotaKeySignature> + Send + Sync,
+  {
+    let packed = document
+      .clone()
+      .pack()
+      .map_err(|err| Error::DidDocSerialization(format!("could not pack DID document: {err}")))?;
+
+    let oci = self
+      .create_identity(&packed)
+      .gas_budget(gas_budget)
+      .finish(self, signer)
+      .await?;
+
+    // replace placeholders in document
+    let did: IotaDID = IotaDID::new(&oci.id.id.bytes, self.network_name());
+    let metadata_document: StateMetadataDocument = document.into();
+    let document_without_placeholders = metadata_document.into_iota_document(&did).map_err(|err| {
+      Error::DidDocParsingFailed(format!(
+        "could not replace placeholders in published DID document {did}; {err}"
+      ))
+    })?;
+
+    Ok(document_without_placeholders)
+  }
+
+  // TODO: define what happens for (legacy|migrated|new) documents
+  pub async fn publish_did_document_update<S>(
+    &self,
+    document: IotaDocument,
+    gas_budget: u64,
+    signer: &S,
+  ) -> Result<IotaDocument, Error>
+  where
+    S: Signer<IotaKeySignature> + Send + Sync,
+  {
+    let mut oci =
+      if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(document.id())?).await? {
+        value
+      } else {
+        return Err(Error::Identity("only new identities can be updated".to_string()));
+      };
+
+    oci
+      .update_did_document(document.clone())
+      .gas_budget(gas_budget)
+      .finish(self, signer)
+      .await?;
+
+    Ok(document)
+  }
+
+  pub async fn deactivate_did_output<S>(&self, did: &IotaDID, gas_budget: u64, signer: &S) -> Result<(), Error>
+  where
+    S: Signer<IotaKeySignature> + Send + Sync,
+  {
+    let mut oci = if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(did)?).await? {
+      value
+    } else {
+      return Err(Error::Identity("only new identities can be deactivated".to_string()));
+    };
+
+    oci.deactivate_did().gas_budget(gas_budget).finish(self, signer).await?;
+
+    Ok(())
+  }
+}
+
+pub fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> {
   let public_key_base_64 = &sender_public_jwk
     .try_okp_params()
     .map_err(|err| Error::InvalidKey(format!("key not of type `Okp`; {err}")))?
@@ -441,48 +461,34 @@ fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> {
     .map_err(|err| Error::InvalidKey(format!("could not decode base64 public key; {err}")))
 }
 
-fn convert_to_address(sender_public_key: &[u8]) -> Result<SuiAddress, Error> {
-  let to_hash = [[SignatureScheme::ED25519.flag()].as_slice(), sender_public_key].concat();
+pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error> {
+  let public_key = Ed25519PublicKey::from_bytes(sender_public_key)
+    .map_err(|err| Error::InvalidKey(format!("could not parse public key to Ed25519 public key; {err}")))?;
 
-  let mut hasher = Blake2b256::default();
-  hasher.update(to_hash.as_slice());
-  let digest = hasher.finalize().digest;
-
-  SuiAddress::from_bytes(digest)
-    .map_err(|err| Error::InvalidKey(format!("could not convert public key to sender address; {err}")))
+  Ok(IotaAddress::from(&public_key))
 }
 
-async fn resolve_new(client: &SuiClient, object_id: ObjectID) -> Result<Option<Vec<u8>>, Error> {
-  let document = get_identity_document(client, object_id).await.map_err(|err| {
-    Error::DIDResolutionErrorKinesis(format!(
+async fn resolve_new(client: &IotaClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+  let onchain_identity = get_identity(client, object_id).await.map_err(|err| {
+    Error::DIDResolutionError(format!(
       "could not get identity document for object id {object_id}; {err}"
     ))
   })?;
-
-  Ok(document.map(|document| document.doc))
+  Ok(onchain_identity.map(Identity::FullFledged))
 }
 
-async fn resolve_migrated(client: &SuiClient, object_id: ObjectID) -> Result<Option<Vec<u8>>, Error> {
-  let document = lookup(client, object_id).await.map_err(|err| {
-    Error::DIDResolutionErrorKinesis(format!(
+async fn resolve_migrated(client: &IotaClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+  let onchain_identity = lookup(client, object_id).await.map_err(|err| {
+    Error::DIDResolutionError(format!(
       "failed to look up object_id {object_id} in migration registry; {err}"
     ))
   })?;
-
-  Ok(document.map(|document| document.doc))
+  Ok(onchain_identity.map(Identity::FullFledged))
 }
 
-async fn resolve_unmigrated(client: &SuiClient, object_id: ObjectID) -> Result<Option<Vec<u8>>, Error> {
+async fn resolve_unmigrated(client: &IotaClient, object_id: ObjectID) -> Result<Option<Identity>, Error> {
   let unmigrated_alias = get_alias(client, object_id)
     .await
-    .map_err(|err| Error::DIDResolutionErrorKinesis(format!("could  no query for object id {object_id}; {err}")))?;
-  unmigrated_alias
-    .map(|v| {
-      v.state_metadata.ok_or_else(|| {
-        Error::DIDResolutionErrorKinesis(format!(
-          "unmigrated alias for object id {object_id} does not contain DID document"
-        ))
-      })
-    })
-    .transpose()
+    .map_err(|err| Error::DIDResolutionError(format!("could  no query for object id {object_id}; {err}")))?;
+  Ok(unmigrated_alias.map(Identity::Legacy))
 }

@@ -1,9 +1,9 @@
 module stardust::address_unlock_condition_tests {
 
-    use sui::bag;
-    use sui::balance;
-    use sui::coin;
-    use sui::sui::SUI;
+    use iota::bag;
+    use iota::balance;
+    use iota::coin;
+    use iota::iota::IOTA;
 
     use stardust::alias;
     use stardust::alias_output;
@@ -43,7 +43,7 @@ module stardust::address_unlock_condition_tests {
 
         let mut alias_output = alias_output::create_for_testing(
             // iota
-            balance::create_for_testing<SUI>(initial_iota_in_output),
+            balance::create_for_testing<IOTA>(initial_iota_in_output),
             // tokens
             bag::new(&mut ctx),
             &mut ctx,
@@ -70,7 +70,7 @@ module stardust::address_unlock_condition_tests {
         alias_output.attach_alias(alias);
 
         // `BasicOutput` owned by the alias.
-        let basic_sui_balance = balance::create_for_testing<SUI>(initial_iota_in_output);
+        let basic_iota_balance = balance::create_for_testing<IOTA>(initial_iota_in_output);
         let timelocked_until = 5;
         let expiration_after = 20;
         let sdruc_return_address = @0xB;
@@ -78,7 +78,7 @@ module stardust::address_unlock_condition_tests {
         let expiration_return_address = @0xC;
 
         let basic_output = basic_output::create_for_testing(
-            basic_sui_balance,
+            basic_iota_balance,
             bag::new(&mut ctx),
             option::some(storage_deposit_return_unlock_condition::create_for_testing(sdruc_return_address, sdruc_return_amount)),
             option::some(timelock_unlock_condition::create_for_testing(timelocked_until)),

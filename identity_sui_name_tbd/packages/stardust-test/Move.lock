@@ -7,16 +7,16 @@ deps_digest = "3C4103934B1E040BB6B23F1D610B4EF9F2F1166A50A104EADCF77467C004C600"
 
 dependencies = [
   { name = "MoveStdlib" },
-  { name = "Sui" },
+  { name = "Iota" },
 ]
 
 [[move.package]]
 name = "MoveStdlib"
-source = { git = "https://github.com/iotaledger/kinesis.git", rev = "7899dc9ce682c3d0a97f249ce7eaa27b9473b920", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/iotaledger/iota.git", rev = "7899dc9ce682c3d0a97f249ce7eaa27b9473b920", subdir = "crates/iota-framework/packages/move-stdlib" }
 
 [[move.package]]
-name = "Sui"
-source = { git = "https://github.com/iotaledger/kinesis.git", rev = "7899dc9ce682c3d0a97f249ce7eaa27b9473b920", subdir = "crates/sui-framework/packages/sui-framework" }
+name = "Iota"
+source = { git = "https://github.com/iotaledger/iota.git", rev = "7899dc9ce682c3d0a97f249ce7eaa27b9473b920", subdir = "crates/iota-framework/packages/iota-framework" }
 
 dependencies = [
   { name = "MoveStdlib" },
@@ -25,4 +25,4 @@ dependencies = [
 [move.toolchain-version]
 compiler-version = "1.22.0"
 edition = "legacy"
-flavor = "sui"
+flavor = "iota"

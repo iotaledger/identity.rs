@@ -1,15 +1,15 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use iota_sdk::rpc_types::IotaObjectDataOptions;
+use iota_sdk::rpc_types::IotaParsedData;
+use iota_sdk::rpc_types::IotaParsedMoveObject;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::id::UID;
+use iota_sdk::IotaClient;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
-use sui_sdk::rpc_types::SuiObjectDataOptions;
-use sui_sdk::rpc_types::SuiParsedData;
-use sui_sdk::rpc_types::SuiParsedMoveObject;
-use sui_sdk::types::base_types::ObjectID;
-use sui_sdk::types::id::UID;
-use sui_sdk::SuiClient;
 
 use crate::Error;
 
@@ -40,8 +40,8 @@ pub struct UnmigratedAlias {
   pub immutable_metadata: Option<Vec<u8>>,
 }
 
-pub async fn get_alias(client: &SuiClient, object_id: ObjectID) -> Result<Option<UnmigratedAlias>, Error> {
-  let options = SuiObjectDataOptions {
+pub async fn get_alias(client: &IotaClient, object_id: ObjectID) -> Result<Option<UnmigratedAlias>, Error> {
+  let options = IotaObjectDataOptions {
     show_type: true,
     show_owner: true,
     show_previous_transaction: true,
@@ -56,7 +56,7 @@ pub async fn get_alias(client: &SuiClient, object_id: ObjectID) -> Result<Option
     .await
     .map_err(|err| {
       Error::ObjectLookup(format!(
-        "Could not get object with options for this object_id {object_id}; {err}"
+        "could not get object with options for this object_id {object_id}; {err}"
       ))
     })?;
 
@@ -70,7 +70,7 @@ pub async fn get_alias(client: &SuiClient, object_id: ObjectID) -> Result<Option
     .content
     .ok_or_else(|| Error::ObjectLookup(format!("no content in retrieved object in object id {object_id}")))?;
 
-  let SuiParsedData::MoveObject(value) = content else {
+  let IotaParsedData::MoveObject(value) = content else {
     return Err(Error::ObjectLookup(format!(
       "found data at object id {object_id} is not an object"
     )));
@@ -80,12 +80,16 @@ pub async fn get_alias(client: &SuiClient, object_id: ObjectID) -> Result<Option
     return Ok(None);
   }
 
-  let alias: UnmigratedAlias = serde_json::from_value(value.fields.to_json_value()).unwrap();
+  let alias: UnmigratedAlias = serde_json::from_value(value.fields.to_json_value()).map_err(|err| {
+    Error::ParsingFailed(format!(
+      "could not parse result for object id {object_id} to `UnmigratedAlias`; {err}"
+    ))
+  })?;
 
   Ok(Some(alias))
 }
 
-fn is_alias(value: &SuiParsedMoveObject) -> bool {
+fn is_alias(value: &IotaParsedMoveObject) -> bool {
   // if available we might also check if object stems from expected module
   // but how would this act upon package updates?
   value.type_.module.as_ident_str().as_str() == MODULE && value.type_.name.as_ident_str().as_str() == NAME

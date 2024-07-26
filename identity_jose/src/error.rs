@@ -41,7 +41,7 @@ pub enum Error {
   #[error("attempt to parse an unregistered jws algorithm")]
   JwsAlgorithmParsingError,
   /// Caused by an error during signature verification.
-  #[error("signature verification error")]
+  #[error("signature verification error; {0}")]
   SignatureVerificationError(#[source] crate::jws::SignatureVerificationError),
   /// Caused by a mising header.
   #[error("missing header")]
