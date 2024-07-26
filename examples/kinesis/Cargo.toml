@@ -97,9 +97,9 @@ name = "4_alias_output_history"
 path = "1_advanced/5_custom_resolution.rs"
 name = "5_custom_resolution"
 
-# [[example]]
-# path = "1_advanced/6_domain_linkage.rs"
-# name = "6_domain_linkage"
+[[example]]
+path = "1_advanced/6_domain_linkage.rs"
+name = "6_domain_linkage"
 
 [[example]]
 path = "1_advanced/7_sd_jwt.rs"
