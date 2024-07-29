@@ -20,7 +20,6 @@ use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
 
-
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 ///
 /// In this example we connect to a locally running private network, but it can be adapted

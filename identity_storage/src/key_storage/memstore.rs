@@ -8,17 +8,15 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 use crypto::signatures::ed25519::SecretKey;
-use identity_core::common::Timestamp;
 use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkType;
 use identity_verification::jose::jws::JwsAlgorithm;
+use identity_verification::jwk::BlsCurve;
 use identity_verification::jwk::JwkParams;
-use identity_verification::jwk::JwkParamsPQ;
 use identity_verification::jwu;
 use oqs::sig::Algorithm;
 use oqs::sig::Sig;
-use identity_verification::jwk::BlsCurve;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
@@ -218,6 +216,9 @@ impl JwkMemStore {
   /// SLH-DSA algorithms key types;
   pub const SLH_DSA_KEY_TYPE: KeyType = KeyType::from_static_str(Self::SLH_DSA);
 
+  const FALCON: &'static str = "FALCON";
+  /// FALCON algorithms key types;
+  pub const FALCON_KEY_TYPE: KeyType = KeyType::from_static_str(Self::FALCON);
 }
 
 impl MemStoreKeyType {
@@ -318,7 +319,6 @@ fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: JwsAlgorithm) -> 
   }
 }
 
-
 //TODO: PQ
 
 fn check_pq_alg_compatibility(alg: JwsAlgorithm) -> KeyStorageResult<Algorithm> {
@@ -329,7 +329,6 @@ fn check_pq_alg_compatibility(alg: JwsAlgorithm) -> KeyStorageResult<Algorithm> 
     JwsAlgorithm::SLH_DSA_SHA2_128s => Ok(Algorithm::SphincsSha2128sSimple),
     JwsAlgorithm::SLH_DSA_SHAKE_128s => Ok(Algorithm::SphincsShake128sSimple),
     JwsAlgorithm::SLH_DSA_SHA2_128f => Ok(Algorithm::SphincsSha2128fSimple),
-
 
     JwsAlgorithm::SLH_DSA_SHAKE_128f => Ok(Algorithm::SphincsShake128fSimple),
     JwsAlgorithm::SLH_DSA_SHA2_192s => Ok(Algorithm::SphincsSha2192sSimple),
@@ -348,7 +347,7 @@ fn check_pq_alg_compatibility(alg: JwsAlgorithm) -> KeyStorageResult<Algorithm> 
         KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
           .with_custom_message(format!("{other} is not supported")),
       );
-    } 
+    }
   }
 }
 
@@ -358,8 +357,16 @@ fn check_pq_alg_compatibility(alg: JwsAlgorithm) -> KeyStorageResult<Algorithm> 
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl JwkStoragePQ for JwkMemStore {
   async fn generate_pq_key(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
+    if key_type != JwkMemStore::ML_DSA_KEY_TYPE
+      && key_type != JwkMemStore::SLH_DSA_KEY_TYPE
+      && key_type != JwkMemStore::FALCON_KEY_TYPE
+    {
+      return Err(
+        KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+          .with_custom_message(format!("unsupported key type {key_type}")),
+      );
+    }
 
-    //TODO: maybe handle key_type
     let oqs_alg = check_pq_alg_compatibility(alg)?;
     oqs::init(); //TODO: check what this function does
 
@@ -379,7 +386,6 @@ impl JwkStoragePQ for JwkMemStore {
     let public = jwu::encode_b64(pk.into_vec());
     let private = jwu::encode_b64(sk.into_vec());
 
-      
     let mut jwk_params = match alg {
       JwsAlgorithm::ML_DSA_44 => JwkParams::new(JwkType::MLDSA),
       JwsAlgorithm::ML_DSA_65 => JwkParams::new(JwkType::MLDSA),
@@ -415,13 +421,13 @@ impl JwkStoragePQ for JwkMemStore {
         params.public = public;
         params.private = Some(private);
       }
-      ,
-      _ => return Err(
-        KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
-          .with_custom_message("Should NOT happen!"),
-      ),
+      _ => {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType).with_custom_message("Should NOT happen!"),
+        )
+      }
     }
-        
+
     let mut jwk = Jwk::from_params(jwk_params);
 
     jwk.set_alg(alg.name());
@@ -433,7 +439,6 @@ impl JwkStoragePQ for JwkMemStore {
 
     Ok(JwkGenOutput::new(kid, public_jwk))
   }
-
 
   async fn pq_sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>> {
     let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
@@ -450,18 +455,27 @@ impl JwkStoragePQ for JwkMemStore {
 
     // Check that `kty` is `ML-DSA`or `SLH-DSA` or `FALCON`.
     match alg {
-      JwsAlgorithm::ML_DSA_44 | JwsAlgorithm::ML_DSA_65 | JwsAlgorithm::ML_DSA_87 
-      | JwsAlgorithm::SLH_DSA_SHA2_128s | JwsAlgorithm::SLH_DSA_SHAKE_128s | JwsAlgorithm::SLH_DSA_SHA2_128f 
-      | JwsAlgorithm::SLH_DSA_SHAKE_128f | JwsAlgorithm::SLH_DSA_SHA2_192s | JwsAlgorithm::SLH_DSA_SHAKE_192s 
-      | JwsAlgorithm::SLH_DSA_SHA2_192f | JwsAlgorithm::SLH_DSA_SHAKE_192f | JwsAlgorithm::SLH_DSA_SHA2_256s 
-      | JwsAlgorithm::SLH_DSA_SHAKE_256s | JwsAlgorithm::SLH_DSA_SHA2_256f | JwsAlgorithm::SLH_DSA_SHAKE_256f  
-      | JwsAlgorithm::FALCON512 | JwsAlgorithm::FALCON1024 => {
-        public_key.try_pq_params().map_err(|err| {
-          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-            .with_custom_message(format!("expected a Jwk with ML-DSA params in order to sign with {alg}"))
-            .with_source(err)
-        })?
-      },
+      JwsAlgorithm::ML_DSA_44
+      | JwsAlgorithm::ML_DSA_65
+      | JwsAlgorithm::ML_DSA_87
+      | JwsAlgorithm::SLH_DSA_SHA2_128s
+      | JwsAlgorithm::SLH_DSA_SHAKE_128s
+      | JwsAlgorithm::SLH_DSA_SHA2_128f
+      | JwsAlgorithm::SLH_DSA_SHAKE_128f
+      | JwsAlgorithm::SLH_DSA_SHA2_192s
+      | JwsAlgorithm::SLH_DSA_SHAKE_192s
+      | JwsAlgorithm::SLH_DSA_SHA2_192f
+      | JwsAlgorithm::SLH_DSA_SHAKE_192f
+      | JwsAlgorithm::SLH_DSA_SHA2_256s
+      | JwsAlgorithm::SLH_DSA_SHAKE_256s
+      | JwsAlgorithm::SLH_DSA_SHA2_256f
+      | JwsAlgorithm::SLH_DSA_SHAKE_256f
+      | JwsAlgorithm::FALCON512
+      | JwsAlgorithm::FALCON1024 => public_key.try_pq_params().map_err(|err| {
+        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+          .with_custom_message(format!("expected a Jwk with ML-DSA params in order to sign with {alg}"))
+          .with_source(err)
+      })?,
       other => {
         return Err(
           KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
@@ -478,17 +492,18 @@ impl JwkStoragePQ for JwkMemStore {
     let params = jwk.try_pq_params().unwrap();
 
     let sk = params
-    .private
-    .as_deref()
-    .map(jwu::decode_b64)
-    .ok_or_else(|| {
-      KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("expected Jwk `pub` param to be present")
-    })?
-    .map_err(|err| {
-      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-        .with_custom_message("unable to decode `d` param")
-        .with_source(err)
-    })?;
+      .private
+      .as_deref()
+      .map(jwu::decode_b64)
+      .ok_or_else(|| {
+        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+          .with_custom_message("expected Jwk `pub` param to be present")
+      })?
+      .map_err(|err| {
+        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+          .with_custom_message("unable to decode `d` param")
+          .with_source(err)
+      })?;
 
     oqs::init(); //TODO: check what this function does
 
@@ -500,7 +515,7 @@ impl JwkStoragePQ for JwkMemStore {
 
     let secret_key = scheme.secret_key_from_bytes(&sk).ok_or(
       KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("expected key of length {}", SecretKey::LENGTH))
+        .with_custom_message(format!("expected key of length {}", SecretKey::LENGTH)),
     )?;
 
     let signature = scheme.sign(&data, secret_key).map_err(|err| {

@@ -42,5 +42,5 @@ pub enum Error {
   //TODO: hybrid - new error
   /// Caused by key material that is not a Composite Public Key.
   #[error("verification material format is not compositePublicKey")]
-  NotCompositePublicKey
+  NotCompositePublicKey,
 }

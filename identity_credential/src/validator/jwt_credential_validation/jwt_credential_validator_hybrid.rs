@@ -1,4 +1,3 @@
-
 use identity_core::convert::FromJson;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
@@ -181,7 +180,6 @@ impl<TRV: JwsVerifier, PQV: JwsVerifier> JwtCredentialValidatorHybrid<TRV, PQV> 
     }
   }
 
-
   pub(crate) fn parse_composite_pk<'a, 'i, DOC>(
     jws: &JwsValidationItem<'a>,
     trusted_issuers: &'i [DOC],
@@ -260,11 +258,16 @@ impl<TRV: JwsVerifier, PQV: JwsVerifier> JwtCredentialValidatorHybrid<TRV, PQV> 
 
     // Start decoding the credential
     let decoded: JwsValidationItem<'_> = Self::decode(credential.as_str())?;
-    
+
     let (composite, method_id) = Self::parse_composite_pk(&decoded, trusted_issuers, options)?;
-    
-    
-    let credential_token = Self::verify_decoded_signature(decoded, composite.traditional_public_key(), composite.pq_public_key(), traditional_signature_verifier, pq_signature_verifier)?;
+
+    let credential_token = Self::verify_decoded_signature(
+      decoded,
+      composite.traditional_public_key(),
+      composite.pq_public_key(),
+      traditional_signature_verifier,
+      pq_signature_verifier,
+    )?;
 
     // Check that the DID component of the parsed `kid` does indeed correspond to the issuer in the credential before
     // returning.
@@ -293,7 +296,6 @@ impl<TRV: JwsVerifier, PQV: JwsVerifier> JwtCredentialValidatorHybrid<TRV, PQV> 
     traditional_verifier: &TRV,
     pq_verifier: &PQV,
   ) -> Result<DecodedJws<'a>, JwtValidationError> {
-
     decoded
       .verify_hybrid(traditional_verifier, pq_verifier, traditional_pk, pq_pk)
       .map_err(|err| JwtValidationError::Signature {
@@ -314,7 +316,8 @@ impl<TRV: JwsVerifier, PQV: JwsVerifier> JwtCredentialValidatorHybrid<TRV, PQV> 
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
   {
     // Verify the JWS signature and obtain the decoded token containing the protected header and raw claims
-    let DecodedJws { protected, claims, .. } = Self::verify_signature_raw(decoded, traditional_pk, pq_pk, traditional_verifier, pq_verifier)?;
+    let DecodedJws { protected, claims, .. } =
+      Self::verify_signature_raw(decoded, traditional_pk, pq_pk, traditional_verifier, pq_verifier)?;
 
     let credential_claims: CredentialJwtClaims<'_, T> =
       CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {

@@ -7,13 +7,13 @@
 //! `identity_iota_core_legacy` crate.
 
 mod builder;
+mod composite_public_key;
 mod material;
 mod method;
 mod method_ref;
 mod method_relationship;
 mod method_scope;
 mod method_type;
-mod composite_public_key;
 
 pub use self::builder::MethodBuilder;
 pub use self::material::CustomMethodData;

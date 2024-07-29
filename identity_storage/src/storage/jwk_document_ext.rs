@@ -329,7 +329,6 @@ impl JwkDocumentExt for CoreDocument {
     I: KeyIdStorage,
   {
     generate_method_core_document(self, storage, key_type, alg, fragment, scope).await
-    
   }
 
   async fn purge_method<K, I>(&mut self, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>
@@ -528,8 +527,6 @@ where
     source_error
   }
 }
-
-
 
 // ====================================================================================================================
 // IotaDocument

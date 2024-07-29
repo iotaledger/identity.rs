@@ -3,14 +3,14 @@
 
 use zeroize::Zeroize;
 
+use super::BlsCurve;
+use super::JwkParamsPQ;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::EcCurve;
 use crate::jwk::EcxCurve;
 use crate::jwk::EdCurve;
 use crate::jwk::JwkType;
-use super::JwkParamsPQ;
-use super::BlsCurve;
 
 /// Algorithm-specific parameters for JSON Web Keys.
 ///

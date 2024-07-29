@@ -1,4 +1,3 @@
-
 use identity_jose::jwk::Jwk;
 use identity_jose::jws::JwsAlgorithm;
 use identity_jose::jws::JwsVerifier;
@@ -10,8 +9,8 @@ use oqs::sig::Algorithm;
 use crate::OQSVerifier;
 
 /// An implementor of [`JwsVerifier`] that can handle the
-/// [`JwsAlgorithm::ML_DSA_44`](identity_jose::jws::JwsAlgorithm::ML_DSA_44) 
-/// | [`JwsAlgorithm::ML_DSA_65`](identity_jose::jws::JwsAlgorithm::ML_DSA_65) 
+/// [`JwsAlgorithm::ML_DSA_44`](identity_jose::jws::JwsAlgorithm::ML_DSA_44)
+/// | [`JwsAlgorithm::ML_DSA_65`](identity_jose::jws::JwsAlgorithm::ML_DSA_65)
 /// | [`JwsAlgorithm::ML_DSA_87`](identity_jose::jws::JwsAlgorithm::ML_DSA_87) algorithms.
 #[derive(Debug)]
 #[non_exhaustive]
@@ -26,11 +25,11 @@ impl Default for PQCJwsVerifier {
 
 impl JwsVerifier for PQCJwsVerifier {
   /// This implements verification of JWS signatures signed with the
-  /// [`JwsAlgorithm::ML_DSA_44`](identity_jose::jws::JwsAlgorithm::ML_DSA_44) 
-  /// | [`JwsAlgorithm::ML_DSA_65`](identity_jose::jws::JwsAlgorithm::ML_DSA_65) 
-  /// | [`JwsAlgorithm::ML_DSA_87`](identity_jose::jws::JwsAlgorithm::ML_DSA_87) 
-  /// | [`JwsAlgorithm::SLH_DSA_SHA2_128s`](identity_jose::jws::JwsAlgorithm::SLH_DSA_SHA2_128s) 
-  /// | [`JwsAlgorithm::SLH_DSA_SHA2_128f`](identity_jose::jws::JwsAlgorithm::SLH_DSA_SHA2_128f) 
+  /// [`JwsAlgorithm::ML_DSA_44`](identity_jose::jws::JwsAlgorithm::ML_DSA_44)
+  /// | [`JwsAlgorithm::ML_DSA_65`](identity_jose::jws::JwsAlgorithm::ML_DSA_65)
+  /// | [`JwsAlgorithm::ML_DSA_87`](identity_jose::jws::JwsAlgorithm::ML_DSA_87)
+  /// | [`JwsAlgorithm::SLH_DSA_SHA2_128s`](identity_jose::jws::JwsAlgorithm::SLH_DSA_SHA2_128s)
+  /// | [`JwsAlgorithm::SLH_DSA_SHA2_128f`](identity_jose::jws::JwsAlgorithm::SLH_DSA_SHA2_128f)
   /// | [`JwsAlgorithm::SLH_DSA_SHAKE_128s`](identity_jose::jws::JwsAlgorithm::SLH_DSA_SHAKE_128s) algorithms.
   // Allow unused variables in case of no-default-features.
   #[allow(unused_variables)]

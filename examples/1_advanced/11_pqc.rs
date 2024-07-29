@@ -1,4 +1,3 @@
-
 use std::collections::HashMap;
 
 use examples::get_address_with_funds;
@@ -55,27 +54,27 @@ const API_ENDPOINT: &str = "http://localhost";
 // The faucet endpoint allows requesting funds for testing purposes.
 const FAUCET_ENDPOINT: &str = "http://localhost/faucet/api/enqueue";
 
-
-async fn create_did(client: &Client, secret_manager: &SecretManager, storage: &MemStorage, key_type: KeyType, alg: JwsAlgorithm) -> anyhow::Result<(Address, IotaDocument, String)> {
-
+async fn create_did(
+  client: &Client,
+  secret_manager: &SecretManager,
+  storage: &MemStorage,
+  key_type: KeyType,
+  alg: JwsAlgorithm,
+) -> anyhow::Result<(Address, IotaDocument, String)> {
   // Get an address with funds for testing.
   let address: Address = get_address_with_funds(&client, &secret_manager, FAUCET_ENDPOINT).await?;
 
   // Get the Bech32 human-readable part (HRP) of the network.
   let network_name: NetworkName = client.network_name().await?;
-  
+
   // Create a new DID document with a placeholder DID.
   // The DID will be derived from the Alias Id of the Alias Output after publishing.
   let mut document: IotaDocument = IotaDocument::new(&network_name);
 
   // New Verification Method containing a PQC key
-  let fragment = document.generate_method_pqc(
-    &storage, 
-    key_type, 
-    alg, 
-    None, 
-    MethodScope::VerificationMethod
-  ).await?;
+  let fragment = document
+    .generate_method_pqc(&storage, key_type, alg, None, MethodScope::VerificationMethod)
+    .await?;
 
   // Construct an Alias Output containing the DID document, with the wallet address
   // set as both the state controller and governor.
@@ -87,7 +86,6 @@ async fn create_did(client: &Client, secret_manager: &SecretManager, storage: &M
 
   Ok((address, document, fragment))
 }
-
 
 /// Demonstrates how to create a Post-Quantum Verifiable Credential.
 #[tokio::main]
@@ -102,27 +100,39 @@ async fn main() -> anyhow::Result<()> {
     .finish()
     .await?;
 
-
-  let mut secret_manager_issuer = SecretManager::Stronghold(StrongholdSecretManager::builder()
-  .password(Password::from("secure_password_1".to_owned()))
-  .build(random_stronghold_path())?);
+  let mut secret_manager_issuer = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password(Password::from("secure_password_1".to_owned()))
+      .build(random_stronghold_path())?,
+  );
 
   let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-  let (_, issuer_document, fragment_issuer): (Address, IotaDocument, String) = 
-  create_did(&client, &mut secret_manager_issuer, &storage_issuer, JwkMemStore::ML_DSA_KEY_TYPE, JwsAlgorithm::ML_DSA_87).await?;
+  let (_, issuer_document, fragment_issuer): (Address, IotaDocument, String) = create_did(
+    &client,
+    &mut secret_manager_issuer,
+    &storage_issuer,
+    JwkMemStore::ML_DSA_KEY_TYPE,
+    JwsAlgorithm::ML_DSA_87,
+  )
+  .await?;
 
+  let mut secret_manager_holder = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password(Password::from("secure_password_2".to_owned()))
+      .build(random_stronghold_path())?,
+  );
 
-  let mut secret_manager_holder = SecretManager::Stronghold(StrongholdSecretManager::builder()
-  .password(Password::from("secure_password_2".to_owned()))
-  .build(random_stronghold_path())?);
-
-  
   let storage_holder: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-  let (_, holder_document, fragment_holder): (Address, IotaDocument, String) = 
-  create_did(&client, &mut secret_manager_holder, &storage_holder, JwkMemStore::SLH_DSA_KEY_TYPE, JwsAlgorithm::SLH_DSA_SHA2_128s).await?;
-
+  let (_, holder_document, fragment_holder): (Address, IotaDocument, String) = create_did(
+    &client,
+    &mut secret_manager_holder,
+    &storage_holder,
+    JwkMemStore::SLH_DSA_KEY_TYPE,
+    JwsAlgorithm::SLH_DSA_SHA2_128s,
+  )
+  .await?;
 
   // ======================================================================================
   // Step 2: Issuer creates and signs a Verifiable Credential with a Post-Quantum algorithm.
@@ -157,25 +167,27 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-
   // Before sending this credential to the holder the issuer wants to validate that some properties
   // of the credential satisfy their expectations.
 
   JwtCredentialValidator::with_signature_verifier(PQCJwsVerifier::default())
-  .validate::<_, Object>(
-    &credential_jwt,
-    &issuer_document,
-    &JwtCredentialValidationOptions::default(),
-    FailFast::FirstError,
-  )
-  .unwrap();
+    .validate::<_, Object>(
+      &credential_jwt,
+      &issuer_document,
+      &JwtCredentialValidationOptions::default(),
+      FailFast::FirstError,
+    )
+    .unwrap();
 
   println!("VC successfully validated");
 
   // ===========================================================================
   // Step 3: Issuer sends the Verifiable Credential to the holder.
   // ===========================================================================
-  println!("Sending credential (as JWT) to the holder: {}\n", credential_jwt.as_str());
+  println!(
+    "Sending credential (as JWT) to the holder: {}\n",
+    credential_jwt.as_str()
+  );
 
   // ===========================================================================
   // Step 4: Verifier sends the holder a challenge and requests a signed Verifiable Presentation.
@@ -213,8 +225,10 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================================================
   // Step 6: Holder sends a verifiable presentation to the verifier.
   // ===========================================================================
-  println!("Sending presentation (as JWT) to the verifier: {}\n", presentation_jwt.as_str());
-
+  println!(
+    "Sending presentation (as JWT) to the verifier: {}\n",
+    presentation_jwt.as_str()
+  );
 
   // ===========================================================================
   // Step 7: Verifier receives the Verifiable Presentation and verifies it.

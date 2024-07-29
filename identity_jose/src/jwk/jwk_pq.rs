@@ -4,7 +4,8 @@
 
 use zeroize::Zeroize;
 
-use super::{JwkParams, JwkType};
+use super::JwkParams;
+use super::JwkType;
 
 // TODO: PQ - parameter for PQ keys
 
@@ -14,7 +15,6 @@ use super::{JwkParams, JwkType};
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize, Zeroize)]
 #[zeroize(drop)]
 pub struct JwkParamsPQ {
-
   /// The public key as a base64url-encoded value.
   #[serde(rename = "pub")]
   pub public: String, // Public Key
@@ -49,5 +49,4 @@ impl JwkParamsPQ {
   pub fn is_private(&self) -> bool {
     self.private.is_some()
   }
-
 }

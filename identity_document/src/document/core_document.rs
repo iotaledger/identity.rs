@@ -11,7 +11,6 @@ use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::DecodedJws;
 use identity_verification::jose::jws::Decoder;
 use identity_verification::jose::jws::JwsVerifier;
-use identity_verification::CompositePublicKey;
 use serde::Serialize;
 
 use identity_core::common::Object;
@@ -988,7 +987,7 @@ impl CoreDocument {
     &self,
     jws: &'jws str,
     detached_payload: Option<&'jws [u8]>,
-    traditional_verifier: &TRV, 
+    traditional_verifier: &TRV,
     pq_verifier: &PQV,
     options: &JwsVerificationOptions,
   ) -> Result<DecodedJws<'jws>> {
@@ -1015,18 +1014,21 @@ impl CoreDocument {
     };
 
     let composite_public_key = self
-          .resolve_method(method_url_query, options.method_scope)
-          .ok_or(Error::MethodNotFound)?
-          .data()
-          .try_composite_public_key()
-          .map_err(Error::InvalidKeyMaterial)?;
+      .resolve_method(method_url_query, options.method_scope)
+      .ok_or(Error::MethodNotFound)?
+      .data()
+      .try_composite_public_key()
+      .map_err(Error::InvalidKeyMaterial)?;
 
     validation_item
-      .verify_hybrid(traditional_verifier, pq_verifier, composite_public_key.traditional_public_key(), composite_public_key.pq_public_key())
+      .verify_hybrid(
+        traditional_verifier,
+        pq_verifier,
+        composite_public_key.traditional_public_key(),
+        composite_public_key.pq_public_key(),
+      )
       .map_err(Error::JwsVerificationError)
   }
-
-
 }
 
 #[cfg(test)]

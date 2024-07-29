@@ -5,9 +5,6 @@ use core::str;
 use std::borrow::Cow;
 use std::ops::Deref;
 
-use crypto::signatures::ed25519::Signature;
-use identity_core::common::SingleStructError;
-use crypto::hashes::Digest;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::Jwk;
@@ -19,6 +16,9 @@ use crate::jwu::decode_b64_json;
 use crate::jwu::filter_non_empty_bytes;
 use crate::jwu::parse_utf8;
 use crate::jwu::validate_jws_headers;
+use crypto::hashes::Digest;
+use crypto::signatures::ed25519::Signature;
+use identity_core::common::SingleStructError;
 
 use super::JwsVerifier;
 use super::VerificationInput;
@@ -180,12 +180,17 @@ impl<'a> JwsValidationItem<'a> {
     })
   }
 
-
   //TODO: hybrid - verify_hybrid
-  pub fn verify_hybrid<TRV, PQV>(self, traditional_verifier: &TRV, pq_verifier: &PQV, traditional_pk: &Jwk, pq_pk: &Jwk) -> Result<DecodedJws<'a>>
+  pub fn verify_hybrid<TRV, PQV>(
+    self,
+    traditional_verifier: &TRV,
+    pq_verifier: &PQV,
+    traditional_pk: &Jwk,
+    pq_pk: &Jwk,
+  ) -> Result<DecodedJws<'a>>
   where
     TRV: JwsVerifier,
-    PQV: JwsVerifier
+    PQV: JwsVerifier,
   {
     // Destructure data
     let JwsValidationItem {
@@ -204,23 +209,37 @@ impl<'a> JwsValidationItem<'a> {
     // Extract and validate alg from the protected header.
     let alg: JwsAlgorithm = protected.alg().ok_or(Error::ProtectedHeaderWithoutAlg)?;
     let (t_alg, pq_alg, signing_input, traditional_signature_len) = match alg {
-        JwsAlgorithm::IdMldsa44Ed25519Sha512 => {
-          //TODO: hybrid - DER OID
-          let mut input = vec![0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x03];
-          input.extend(crypto::hashes::sha::Sha512::digest(signing_input).deref().to_vec());
-          (JwsAlgorithm::EdDSA, JwsAlgorithm::ML_DSA_44, input, crypto::signatures::ed25519::Signature::LENGTH)
-        },
-        JwsAlgorithm::IdMldsa65Ed25519Sha512 => {
-          let mut input = vec![0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x0A];
-          input.extend(crypto::hashes::sha::Sha512::digest(signing_input).deref().to_vec());
-          (JwsAlgorithm::EdDSA, JwsAlgorithm::ML_DSA_65, input, crypto::signatures::ed25519::Signature::LENGTH)
-        },
-        _ => return Err(Error::JwsAlgorithmParsingError)
+      JwsAlgorithm::IdMldsa44Ed25519Sha512 => {
+        //TODO: hybrid - DER OID
+        let mut input = vec![
+          0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x03,
+        ];
+        input.extend(crypto::hashes::sha::Sha512::digest(signing_input).deref().to_vec());
+        (
+          JwsAlgorithm::EdDSA,
+          JwsAlgorithm::ML_DSA_44,
+          input,
+          crypto::signatures::ed25519::Signature::LENGTH,
+        )
+      }
+      JwsAlgorithm::IdMldsa65Ed25519Sha512 => {
+        let mut input = vec![
+          0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x0A,
+        ];
+        input.extend(crypto::hashes::sha::Sha512::digest(signing_input).deref().to_vec());
+        (
+          JwsAlgorithm::EdDSA,
+          JwsAlgorithm::ML_DSA_65,
+          input,
+          crypto::signatures::ed25519::Signature::LENGTH,
+        )
+      }
+      _ => return Err(Error::JwsAlgorithmParsingError),
     };
-    
+
     traditional_pk.check_alg(t_alg.name())?;
     pq_pk.check_alg(pq_alg.name())?;
-   
+
     let extracted_signature_t = &decoded_signature[..traditional_signature_len];
     let extracted_signature_pq = &decoded_signature[traditional_signature_len..];
 
@@ -236,7 +255,7 @@ impl<'a> JwsValidationItem<'a> {
     traditional_verifier
       .verify(input1, traditional_pk)
       .map_err(Error::SignatureVerificationError)?;
-    
+
     let input2 = VerificationInput {
       alg: pq_alg,
       signing_input: signing_input.into(),

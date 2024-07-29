@@ -1,13 +1,10 @@
-
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FromJson;
 use identity_did::CoreDID;
 use identity_document::document::CoreDocument;
-use identity_document::utils::DIDUrlQuery;
 use identity_verification::jws::DecodedJws;
-use identity_verification::jws::Decoder;
 use identity_verification::jws::JwsVerifier;
 use std::str::FromStr;
 
@@ -28,14 +25,14 @@ pub struct JwtPresentationValidatorHybrid<TRV: JwsVerifier, PQV: JwsVerifier>(TR
 
 impl<TRV, PQV> JwtPresentationValidatorHybrid<TRV, PQV>
 where
-    TRV: JwsVerifier,
-    PQV: JwsVerifier
+  TRV: JwsVerifier,
+  PQV: JwsVerifier,
 {
   /// Creates a new [`JwtPresentationValidator`] using a specific [`JwsVerifier`].
   pub fn with_signature_verifiers(traditional_signature_verifier: TRV, pq_signature_verifier: PQV) -> Self {
     Self(traditional_signature_verifier, pq_signature_verifier)
   }
-  
+
   /// Validates a [`Presentation`].
   ///
   /// The following properties are validated according to `options`:

@@ -1,25 +1,37 @@
-use identity_core::common::Object;
-use identity_credential::credential::{Credential, Jws, Jwt};
-use identity_credential::presentation::{JwtPresentationOptions, Presentation};
-use identity_document::document::CoreDocument;
-use identity_verification::jws::{CharSet, CompactJwsEncoder, CompactJwsEncodingOptions, JwsHeader};
-use identity_verification::{jws::JwsAlgorithm, MethodScope};
+use super::JwkStorageDocumentError as Error;
+use crate::key_id_storage::MethodDigest;
+use crate::try_undo_key_generation;
+use crate::JwkGenOutput;
+use crate::JwkStoragePQ;
+use crate::JwsSignatureOptions;
+use crate::KeyIdStorage;
+use crate::KeyType;
+use crate::Storage;
+use crate::StorageResult;
 use async_trait::async_trait;
+use identity_core::common::Object;
+use identity_credential::credential::Credential;
+use identity_credential::credential::Jws;
+use identity_credential::credential::Jwt;
+use identity_credential::presentation::JwtPresentationOptions;
+use identity_credential::presentation::Presentation;
+use identity_did::DIDUrl;
+use identity_document::document::CoreDocument;
+use identity_verification::jws::CharSet;
+use identity_verification::jws::CompactJwsEncoder;
+use identity_verification::jws::CompactJwsEncodingOptions;
+use identity_verification::jws::JwsAlgorithm;
+use identity_verification::jws::JwsHeader;
+use identity_verification::MethodData;
+use identity_verification::MethodScope;
+use identity_verification::VerificationMethod;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use crate::{JwkStoragePQ, JwsSignatureOptions, KeyIdStorage, KeyType, Storage, StorageResult};
-use crate::JwkGenOutput;
-use crate::key_id_storage::MethodDigest;
-use super::JwkStorageDocumentError as Error;
-use identity_did::DIDUrl;
-use identity_verification::{MethodData, VerificationMethod};
-use crate::try_undo_key_generation;
 
 ///New trait to handle JWP-based operations on DID Documents
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait JwsDocumentExtPQC {
-
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
   /// public key material into the DID document. This support BBS+ keys.
   async fn generate_method_pqc<K, I>(
@@ -33,7 +45,6 @@ pub trait JwsDocumentExtPQC {
   where
     K: JwkStoragePQ,
     I: KeyIdStorage;
-
 
   /// Create a JWS using a PQC
   async fn create_jws_pqc<K, I>(
@@ -68,7 +79,6 @@ pub trait JwsDocumentExtPQC {
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync;
 
-
   /// Produces a JWT using PQC algorithms where the payload is produced from the given `presentation`
   /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
   ///
@@ -88,19 +98,19 @@ pub trait JwsDocumentExtPQC {
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
     CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync;
-
 }
-
-
-
 
 // ====================================================================================================================
 // CoreDocument
 // ====================================================================================================================
 
-
-generate_method_for_document_type!(CoreDocument, JwsAlgorithm, JwkStoragePQ, JwkStoragePQ::generate_pq_key, generate_method_core_document);
-
+generate_method_for_document_type!(
+  CoreDocument,
+  JwsAlgorithm,
+  JwkStoragePQ,
+  JwkStoragePQ::generate_pq_key,
+  generate_method_core_document
+);
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
@@ -254,7 +264,6 @@ impl JwsDocumentExtPQC for CoreDocument {
       .map(|jws| Jwt::new(jws.into()))
   }
 
-
   async fn create_presentation_jwt_pqc<K, I, CRED, T>(
     &self,
     presentation: &Presentation<CRED, T>,
@@ -289,11 +298,7 @@ impl JwsDocumentExtPQC for CoreDocument {
       .await
       .map(|jws| Jwt::new(jws.into()))
   }
-
 }
-
-
-
 
 // ====================================================================================================================
 // IotaDocument
@@ -301,10 +306,16 @@ impl JwsDocumentExtPQC for CoreDocument {
 #[cfg(feature = "iota-document")]
 mod iota_document {
 
-use super::*;
+  use super::*;
   use identity_iota_core::IotaDocument;
 
-  generate_method_for_document_type!(IotaDocument, JwsAlgorithm, JwkStoragePQ, JwkStoragePQ::generate_pq_key, generate_method_iota_document);
+  generate_method_for_document_type!(
+    IotaDocument,
+    JwsAlgorithm,
+    JwkStoragePQ,
+    JwkStoragePQ::generate_pq_key,
+    generate_method_iota_document
+  );
 
   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
   #[cfg_attr(feature = "send-sync-storage", async_trait)]
@@ -360,7 +371,6 @@ use super::*;
         .await
     }
 
-
     async fn create_presentation_jwt_pqc<K, I, CRED, T>(
       &self,
       presentation: &Presentation<CRED, T>,
@@ -379,7 +389,6 @@ use super::*;
         .core_document()
         .create_presentation_jwt_pqc(presentation, storage, fragment, jws_options, jwt_options)
         .await
-
     }
   }
 }

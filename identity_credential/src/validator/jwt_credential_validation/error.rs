@@ -100,7 +100,7 @@ pub enum JwtValidationError {
   ServiceLookupError,
   /// Indicates that the credential has been revoked.
   #[error("credential has been revoked")]
-  Revoked,  
+  Revoked,
   /// Indicates that the credential has been suspended.
   #[error("credential has been suspended")]
   Suspended,

@@ -28,7 +28,8 @@ pub enum MethodData {
   PublicKeyBase58(String),
   /// Verification Material in the JSON Web Key format.
   PublicKeyJwk(Jwk),
-  /// Verification Material containing two keys in JSON Web Key format, one traditional and one PQ //TODO: Hybrid - new MethodData
+  /// Verification Material containing two keys in JSON Web Key format, one traditional and one PQ //TODO: Hybrid - new
+  /// MethodData
   CompositePublicKey(CompositePublicKey),
   /// Arbitrary verification material.
   #[serde(untagged)]
@@ -62,16 +63,15 @@ impl MethodData {
   /// represented as a vector of bytes.
   pub fn try_decode(&self) -> Result<Vec<u8>> {
     match self {
-      Self::PublicKeyJwk(_) | Self::Custom(_) | Self::CompositePublicKey(_)=> Err(Error::InvalidMethodDataTransformation(
-        "method data is not base encoded",
-      )),
+      Self::PublicKeyJwk(_) | Self::Custom(_) | Self::CompositePublicKey(_) => Err(
+        Error::InvalidMethodDataTransformation("method data is not base encoded"),
+      ),
       Self::PublicKeyMultibase(input) => {
         BaseEncoding::decode_multibase(input).map_err(|_| Error::InvalidKeyDataMultibase)
       }
       Self::PublicKeyBase58(input) => BaseEncoding::decode_base58(input).map_err(|_| Error::InvalidKeyDataBase58),
     }
   }
-
 
   //TODO: hybrid - return CompositePublicKey
   /// Returns the wrapped `CompositePublicKey` if the format is [`MethodData::CompositePublicKey`].
