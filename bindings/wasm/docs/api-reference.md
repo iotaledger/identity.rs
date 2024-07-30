@@ -252,31 +252,20 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
-<dt><a href="#PresentationProofAlgorithm">PresentationProofAlgorithm</a></dt>
-<dd></dd>
-<dt><a href="#ProofAlgorithm">ProofAlgorithm</a></dt>
-<dd></dd>
-<dt><a href="#StatusCheck">StatusCheck</a></dt>
-<dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
-<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
+<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
+<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
 </dd>
-<dt><a href="#Strict">Strict</a></dt>
-<dd><p>Validate the status if supported, reject any unsupported
-<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
-<p>Only <code>RevocationBitmap2022</code> is currently supported.</p>
-<p>This is the default.</p>
-</dd>
-<dt><a href="#SkipUnsupported">SkipUnsupported</a></dt>
-<dd><p>Validate the status if supported, skip any unsupported
-<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
-</dd>
-<dt><a href="#SkipAll">SkipAll</a></dt>
-<dd><p>Skip all status checks.</p>
-</dd>
-<dt><a href="#SerializationType">SerializationType</a></dt>
+<dt><a href="#PayloadType">PayloadType</a></dt>
 <dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
+<dt><a href="#FailFast">FailFast</a></dt>
+<dd><p>Declares when validation should return if an error occurs.</p>
+</dd>
+<dt><a href="#AllErrors">AllErrors</a></dt>
+<dd><p>Return all errors that occur during validation.</p>
+</dd>
+<dt><a href="#FirstError">FirstError</a></dt>
+<dd><p>Return after the first error occurs.</p>
+</dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder.</p>
 <p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
@@ -291,27 +280,13 @@ This variant is the default.</p>
 <dt><a href="#Any">Any</a></dt>
 <dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
 </dd>
-<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
-<dd></dd>
-<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
-<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
-</dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#FailFast">FailFast</a></dt>
-<dd><p>Declares when validation should return if an error occurs.</p>
-</dd>
-<dt><a href="#AllErrors">AllErrors</a></dt>
-<dd><p>Return all errors that occur during validation.</p>
-</dd>
-<dt><a href="#FirstError">FirstError</a></dt>
-<dd><p>Return after the first error occurs.</p>
-</dd>
-<dt><a href="#PayloadType">PayloadType</a></dt>
+<dt><a href="#SerializationType">SerializationType</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#CredentialStatus">CredentialStatus</a></dt>
+<dd></dd>
+<dt><a href="#PresentationProofAlgorithm">PresentationProofAlgorithm</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
@@ -330,6 +305,10 @@ This variant is the default.</p>
 <dt><a href="#SkipAll">SkipAll</a></dt>
 <dd><p>Skip all status checks.</p>
 </dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#ProofAlgorithm">ProofAlgorithm</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
@@ -342,9 +321,6 @@ This variant is the default.</p>
 <h1 id="warning">Warning</h1>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
 prior to calling the function.</p>
-</dd>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 <dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
 <dd><p>Encode the given bytes in url-safe base64.</p>
@@ -3224,7 +3200,7 @@ Utility functions for validating JPT credentials.
 <a name="JptCredentialValidatorUtils.extractIssuer"></a>
 
 ### JptCredentialValidatorUtils.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
-Utility for extracting the issuer field of a [`Credential`](`Credential`) as a DID.
+Utility for extracting the issuer field of a [Credential](#Credential) as a DID.
 # Errors
 Fails if the issuer field is not a valid DID.
 
@@ -5450,7 +5426,8 @@ Supported verification method types.
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
         * [.X25519KeyAgreementKey2019()](#MethodType.X25519KeyAgreementKey2019) ⇒ [<code>MethodType</code>](#MethodType)
-        * [.JsonWebKey()](#MethodType.JsonWebKey) ⇒ [<code>MethodType</code>](#MethodType)
+        * ~~[.JsonWebKey()](#MethodType.JsonWebKey)~~
+        * [.JsonWebKey2020()](#MethodType.JsonWebKey2020) ⇒ [<code>MethodType</code>](#MethodType)
         * [.custom(type_)](#MethodType.custom) ⇒ [<code>MethodType</code>](#MethodType)
         * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
 
@@ -5482,7 +5459,13 @@ Deep clones the object.
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType.JsonWebKey"></a>
 
-### MethodType.JsonWebKey() ⇒ [<code>MethodType</code>](#MethodType)
+### ~~MethodType.JsonWebKey()~~
+***Deprecated***
+
+**Kind**: static method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType.JsonWebKey2020"></a>
+
+### MethodType.JsonWebKey2020() ⇒ [<code>MethodType</code>](#MethodType)
 A verification method for use with JWT verification as prescribed by the [Jwk](#Jwk)
 in the `publicKeyJwk` entry.
 
@@ -7529,7 +7512,76 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="StatusPurpose"></a>
 
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
+
+**Kind**: global variable  
+<a name="PayloadType"></a>
+
+## PayloadType
+**Kind**: global variable  
+<a name="FailFast"></a>
+
+## FailFast
+Declares when validation should return if an error occurs.
+
+**Kind**: global variable  
+<a name="AllErrors"></a>
+
+## AllErrors
+Return all errors that occur during validation.
+
+**Kind**: global variable  
+<a name="FirstError"></a>
+
+## FirstError
+Return after the first error occurs.
+
+**Kind**: global variable  
+<a name="SubjectHolderRelationship"></a>
+
+## SubjectHolderRelationship
+Declares how credential subjects must relate to the presentation holder.
+
+See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
+
+**Kind**: global variable  
+<a name="AlwaysSubject"></a>
+
+## AlwaysSubject
+The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
+This variant is the default.
+
+**Kind**: global variable  
+<a name="SubjectOnNonTransferable"></a>
+
+## SubjectOnNonTransferable
+The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
+
+**Kind**: global variable  
+<a name="Any"></a>
+
+## Any
+The holder is not required to have any kind of relationship to any credential subject.
+
+**Kind**: global variable  
+<a name="SerializationType"></a>
+
+## SerializationType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
+<a name="CredentialStatus"></a>
+
+## CredentialStatus
+**Kind**: global variable  
+<a name="PresentationProofAlgorithm"></a>
+
+## PresentationProofAlgorithm
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
@@ -7562,65 +7614,13 @@ Validate the status if supported, skip any unsupported
 Skip all status checks.
 
 **Kind**: global variable  
-<a name="SerializationType"></a>
-
-## SerializationType
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
-<a name="SubjectHolderRelationship"></a>
-
-## SubjectHolderRelationship
-Declares how credential subjects must relate to the presentation holder.
-
-See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
-
-**Kind**: global variable  
-<a name="AlwaysSubject"></a>
-
-## AlwaysSubject
-The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
-This variant is the default.
-
-**Kind**: global variable  
-<a name="SubjectOnNonTransferable"></a>
-
-## SubjectOnNonTransferable
-The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
-
-**Kind**: global variable  
-<a name="Any"></a>
-
-## Any
-The holder is not required to have any kind of relationship to any credential subject.
-
-## StateMetadataEncoding
-**Kind**: global variable  
 <a name="StateMetadataEncoding"></a>
 
 ## StateMetadataEncoding
 **Kind**: global variable  
-<a name="FailFast"></a>
+<a name="ProofAlgorithm"></a>
 
-## FailFast
-Declares when validation should return if an error occurs.
-
-**Kind**: global variable  
-<a name="AllErrors"></a>
-
-## AllErrors
-Return all errors that occur during validation.
-
-**Kind**: global variable  
-<a name="FirstError"></a>
-
-## FirstError
-Return after the first error occurs.
-
-**Kind**: global variable  
-
+## ProofAlgorithm
 **Kind**: global variable  
 <a name="verifyEd25519"></a>
 
@@ -7644,12 +7644,6 @@ prior to calling the function.
 | decodedSignature | <code>Uint8Array</code> | 
 | publicKey | [<code>Jwk</code>](#Jwk) | 
 
-<a name="start"></a>
-
-## start()
-Initializes the console error panic hook for better error messages
-
-**Kind**: global function  
 <a name="encodeB64"></a>
 
 ## encodeB64(data) ⇒ <code>string</code>

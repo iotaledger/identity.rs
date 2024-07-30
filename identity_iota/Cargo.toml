@@ -67,6 +67,12 @@ sd-jwt = ["identity_credential/sd-jwt"]
 # Enables zero knowledge selective disclosurable VCs
 jpt-bbs-plus = ["identity_storage/jpt-bbs-plus", "identity_credential/jpt-bbs-plus"]
 
+# Enables PQC
+pqc = ["identity_storage/pqc"]
+
+# Enables liboqs
+pqc-liboqs = ["identity_storage/pqc-liboqs"]
+
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open

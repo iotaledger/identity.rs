@@ -1,0 +1,21 @@
+
+use crate::key_storage::KeyId;
+use crate::key_storage::KeyType;
+use async_trait::async_trait;
+use identity_verification::jose::jwk::Jwk;
+use identity_verification::jose::jws::JwsAlgorithm;
+
+use super::jwk_gen_output::JwkGenOutput;
+use super::JwkStorage;
+use super::KeyStorageResult;
+
+/// Extension to the JwkStorage to handle post-quantum keys
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
+pub trait JwkStoragePQ: JwkStorage {
+  /// Generates a JWK representing a PQ key
+  async fn generate_pq_key(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput>;
+
+  /// Sign the provided `data` using a PQ algorithm
+  async fn pq_sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>>;
+}

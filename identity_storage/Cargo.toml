@@ -31,7 +31,8 @@ serde_json.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync"], optional = true }
 zkryptium = { workspace = true, optional = true }
-oqs.workspace = true
+oqs = { workspace = true, optional = true }
+
 
 
 
@@ -42,7 +43,7 @@ once_cell = { version = "1.18", default-features = false }
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
 
 [features]
-default = ["iota-document", "memstore"]
+default = ["iota-document", "memstore", "pqc-liboqs"]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
 memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto"]
 # Enables `Send` + `Sync` bounds for the storage traits.
@@ -51,6 +52,10 @@ send-sync-storage = []
 iota-document = ["dep:identity_iota_core"]
 # Enables JSON Proof Token & BBS+ related features
 jpt-bbs-plus = ["identity_credential/jpt-bbs-plus", "dep:zkryptium", "dep:bls12_381_plus", "dep:json-proof-token"]
+# Enables PQC (JwkStoragePQ implementation needed)
+pqc = []
+# Enables liboqs
+pqc-liboqs = ["pqc", "dep:oqs"]
 
 [lints]
 workspace = true
