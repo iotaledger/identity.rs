@@ -4,25 +4,24 @@ use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBu
 use iota_sdk::types::transaction::Command;
 use iota_sdk::types::transaction::ProgrammableMoveCall;
 use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::Identifier;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
-use std::str::FromStr;
 
 use crate::sui::move_calls::utils;
+use crate::utils::parse_identifier;
+use crate::utils::ptb_pure;
+
 use crate::Error;
 
 pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransaction, Error> {
   let mut ptb = ProgrammableTransactionBuilder::new();
-  let doc_arg = ptb.pure(did_doc).map_err(|e| Error::InvalidArgument(e.to_string()))?;
+  let doc_arg = ptb_pure(&mut ptb, "did_doc", did_doc)?;
 
   // Create a new identity, sending its capability to the tx's sender.
   let identity_res = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
     package: package_id,
-    module: Identifier::from_str("identity")
-      .map_err(|err| Error::ParsingFailed(format!("\"document\" to identifier; {err}")))?,
-    function: Identifier::from_str("new")
-      .map_err(|err| Error::ParsingFailed(format!("\"new\" to identifier; {err}")))?,
+    module: parse_identifier("identity")?,
+    function: parse_identifier("new")?,
     type_arguments: vec![],
     arguments: vec![doc_arg],
   })));
@@ -30,10 +29,8 @@ pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransacti
   // Share the resulting identity.
   ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
     package: IOTA_FRAMEWORK_PACKAGE_ID,
-    module: Identifier::from_str("transfer")
-      .map_err(|err| Error::ParsingFailed(format!("\"transfer\" to identifier; {err}")))?,
-    function: Identifier::from_str("public_share_object")
-      .map_err(|err| Error::ParsingFailed(format!("\"public_share_object\" to identifier; {err}")))?,
+    module: parse_identifier("transfer")?,
+    function: parse_identifier("public_share_object")?,
     type_arguments: vec![TypeTag::Struct(Box::new(utils::identity_tag(package_id)?))],
     arguments: vec![identity_res],
   })));
@@ -55,38 +52,34 @@ where
   // Make controllers move vector.
   let controller_args = controllers
     .into_iter()
-    .map(|controller_addr| ptb.pure(controller_addr))
-    .collect::<Result<Vec<_>, _>>()
-    .map_err(|e| Error::InvalidArgument(e.to_string()))?;
+    .map(|controller_addr| ptb_pure(&mut ptb, "controller entry", controller_addr))
+    .collect::<Result<Vec<_>, _>>()?;
   let controllers_move_vec = ptb.command(Command::MakeMoveVec(Some(TypeTag::Address), controller_args));
 
   // Make voting powers move vector.
   let vp_args = vps
     .into_iter()
-    .map(|vp| ptb.pure(vp))
-    .collect::<Result<Vec<_>, _>>()
-    .map_err(|e| Error::InvalidArgument(e.to_string()))?;
+    .map(|vp| ptb_pure(&mut ptb, "voting power entry", vp))
+    .collect::<Result<Vec<_>, _>>()?;
   let vps_move_vec = ptb.command(Command::MakeMoveVec(Some(TypeTag::U64), vp_args));
 
   // Make controllers VecMap
   let controllers_vec_map = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
     package: IOTA_FRAMEWORK_PACKAGE_ID,
-    module: Identifier::from_str("vec_map").map_err(|e| Error::ParsingFailed(e.to_string()))?,
-    function: Identifier::from_str("from_keys_values").map_err(|e| Error::ParsingFailed(e.to_string()))?,
+    module: parse_identifier("vec_map")?,
+    function: parse_identifier("from_keys_values")?,
     type_arguments: vec![TypeTag::Address, TypeTag::U64],
     arguments: vec![controllers_move_vec, vps_move_vec],
   })));
 
-  let doc_arg = ptb.pure(did_doc).map_err(|e| Error::InvalidArgument(e.to_string()))?;
-  let threshold_arg = ptb.pure(threshold).map_err(|e| Error::InvalidArgument(e.to_string()))?;
+  let doc_arg = ptb_pure(&mut ptb, "did_doc", did_doc)?;
+  let threshold_arg = ptb_pure(&mut ptb, "threshold", threshold)?;
 
   // Create a new identity, sending its capabilities to the specified controllers.
   let identity_res = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
     package: package_id,
-    module: Identifier::from_str("identity")
-      .map_err(|err| Error::ParsingFailed(format!("\"identity\" to identifier; {err}")))?,
-    function: Identifier::from_str("new_with_controllers")
-      .map_err(|err| Error::ParsingFailed(format!("\"new_with_controllers\" to identifier; {err}")))?,
+    module: parse_identifier("identity")?,
+    function: parse_identifier("new_with_controllers")?,
     type_arguments: vec![],
     arguments: vec![doc_arg, controllers_vec_map, threshold_arg],
   })));
@@ -94,10 +87,8 @@ where
   // Share the resulting identity.
   ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
     package: IOTA_FRAMEWORK_PACKAGE_ID,
-    module: Identifier::from_str("transfer")
-      .map_err(|err| Error::ParsingFailed(format!("\"transfer\" to identifier; {err}")))?,
-    function: Identifier::from_str("public_share_object")
-      .map_err(|err| Error::ParsingFailed(format!("\"public_share_object\" to identifier; {err}")))?,
+    module: parse_identifier("transfer")?,
+    function: parse_identifier("public_share_object")?,
     type_arguments: vec![TypeTag::Struct(Box::new(utils::identity_tag(package_id)?))],
     arguments: vec![identity_res],
   })));
