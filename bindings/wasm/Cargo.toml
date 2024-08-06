@@ -16,6 +16,7 @@ description = "Web Assembly bindings for the identity-rs crate."
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+anyhow = "1.0.75"
 async-trait = { version = "0.1", default-features = false }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }

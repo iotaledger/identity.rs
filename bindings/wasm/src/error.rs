@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::credential::CompoundJwtPresentationValidationError;
+use identity_iota::iota::KinesisClientTrait;
 use identity_iota::resolver;
 use identity_iota::storage::key_id_storage::KeyIdStorageError;
 use identity_iota::storage::key_id_storage::KeyIdStorageErrorKind;
@@ -15,6 +16,8 @@ use std::fmt::Display;
 use std::result::Result as StdResult;
 use tokio::sync::TryLockError;
 use wasm_bindgen::JsValue;
+
+use crate::kinesis::WasmKinesisClient;
 
 /// Convenience wrapper for `Result<T, JsValue>`.
 ///
@@ -289,6 +292,10 @@ impl JsValueResult {
   pub fn to_iota_core_error(self) -> StdResult<JsValue, identity_iota::iota::Error> {
     self.stringify_error().map_err(identity_iota::iota::Error::JsError)
   }
+
+  pub fn to_kinesis_client_error(self) -> StdResult<JsValue, <WasmKinesisClient as KinesisClientTrait>::Error> {
+    self.stringify_error().map_err(|e| anyhow::anyhow!(e.to_string()))
+  }
 }
 
 /// Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
@@ -327,5 +334,15 @@ impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for KeyIdStorageResu
         .into_serde()
         .map_err(|e| KeyIdStorageError::new(KeyIdStorageErrorKind::SerializationError).with_source(e))
     })
+  }
+}
+
+impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult>
+  for StdResult<T, <WasmKinesisClient as KinesisClientTrait>::Error>
+{
+  fn from(result: JsValueResult) -> Self {
+    result
+      .to_kinesis_client_error()
+      .and_then(|js_value| js_value.into_serde().map_err(|e| anyhow::anyhow!(e.to_string())))
   }
 }
