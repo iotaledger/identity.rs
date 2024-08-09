@@ -5,7 +5,6 @@ mod common;
 
 use common::get_client as get_test_client;
 use common::get_key_data;
-use common::request_funds;
 use common::TEST_DOC;
 use common::TEST_GAS_BUDGET;
 use identity_storage::JwkMemStore;
@@ -16,6 +15,7 @@ use identity_sui_name_tbd::client::IdentityClient;
 use identity_sui_name_tbd::migration;
 use identity_sui_name_tbd::utils::get_client as get_iota_client;
 use identity_sui_name_tbd::utils::LOCAL_NETWORK;
+use identity_sui_name_tbd::utils::request_funds;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 

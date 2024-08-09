@@ -3,8 +3,9 @@
 
 use std::ops::Deref;
 use std::pin::Pin;
-use std::str::FromStr;
+use std::str::FromStr as _;
 
+use anyhow::Context;
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::hash::HashFunction;
 use fastcrypto::traits::ToFromBytes;
@@ -17,13 +18,20 @@ use identity_iota_core::IotaDocument;
 use identity_iota_core::NetworkName;
 use identity_iota_core::StateMetadataDocument;
 use identity_verification::jwk::Jwk;
+use iota_sdk::rpc_types::IotaData;
 use iota_sdk::rpc_types::IotaExecutionStatus;
+use iota_sdk::rpc_types::IotaObjectData;
+use iota_sdk::rpc_types::IotaObjectDataFilter;
+use iota_sdk::rpc_types::IotaObjectDataOptions;
+use iota_sdk::rpc_types::IotaObjectResponseQuery;
 use iota_sdk::rpc_types::IotaTransactionBlockEffects;
 use iota_sdk::rpc_types::IotaTransactionBlockEffectsV1;
 use iota_sdk::rpc_types::IotaTransactionBlockResponse;
 use iota_sdk::rpc_types::IotaTransactionBlockResponseOptions;
+use iota_sdk::rpc_types::OwnedObjectRef;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::base_types::ObjectRef;
 use iota_sdk::types::crypto::DefaultHash;
 use iota_sdk::types::crypto::Signature;
 use iota_sdk::types::crypto::SignatureScheme;
@@ -32,16 +40,21 @@ use iota_sdk::types::transaction::ProgrammableTransaction;
 use iota_sdk::types::transaction::Transaction;
 use iota_sdk::types::transaction::TransactionData;
 use iota_sdk::IotaClient;
+use move_core_types::language_storage::StructTag;
 use secret_storage::key_signature_set::KeySignatureTypes;
 use secret_storage::signer::Signer;
+use serde::Deserialize;
+use serde::Serialize;
 use shared_crypto::intent::Intent;
 use shared_crypto::intent::IntentMessage;
 
+use crate::asset::AuthenticatedAssetBuilder;
 use crate::migration::get_alias;
 use crate::migration::get_identity;
 use crate::migration::lookup;
 use crate::migration::Identity;
 use crate::migration::IdentityBuilder;
+use crate::utils::MoveType;
 use crate::Error;
 
 const DEFAULT_NETWORK_NAME: &str = "iota";
@@ -221,6 +234,76 @@ impl IdentityClient {
   /// Creates a new onchain Identity.
   pub fn create_identity<'a>(&self, iota_document: &'a [u8]) -> IdentityBuilder<'a> {
     IdentityBuilder::new(iota_document, self.identity_iota_package_id)
+  }
+
+  pub fn create_authenticated_asset<T>(&self, content: T) -> AuthenticatedAssetBuilder<T>
+  where
+    T: MoveType + Serialize + for<'de> Deserialize<'de>,
+  {
+    AuthenticatedAssetBuilder::new(content)
+  }
+
+  pub async fn get_object_by_id<T>(&self, id: ObjectID) -> Result<T, Error>
+  where
+    T: for<'de> Deserialize<'de>,
+  {
+    self
+      .read_api()
+      .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
+      .await
+      .context("lookup request failed")
+      .and_then(|res| res.data.context("missing data in response"))
+      .and_then(|data| data.content.context("missing object content in data"))
+      .and_then(|content| content.try_into_move().context("not a move object"))
+      .and_then(|obj| serde_json::from_value(obj.fields.to_json_value()).context("failed to deserialize move object"))
+      .map_err(|e| Error::ObjectLookup(e.to_string()))
+  }
+
+  #[allow(dead_code)]
+  pub(crate) async fn get_object_ref_by_id(&self, obj: ObjectID) -> Result<Option<OwnedObjectRef>, Error> {
+    self
+      .read_api()
+      .get_object_with_options(obj, IotaObjectDataOptions::default().with_owner())
+      .await
+      .map(|response| {
+        response.data.map(|obj_data| OwnedObjectRef {
+          owner: obj_data.owner.expect("requested data"),
+          reference: obj_data.object_ref().into(),
+        })
+      })
+      .map_err(Error::from)
+  }
+
+  /// Queries the object owned by this sender address and returns the first one
+  /// that matches `tag` and for which `predicate` returns `true`.
+  pub async fn find_owned_ref<P>(&self, tag: StructTag, predicate: P) -> Result<Option<ObjectRef>, Error>
+  where
+    P: Fn(&IotaObjectData) -> bool,
+  {
+    let filter = IotaObjectResponseQuery::new_with_filter(IotaObjectDataFilter::StructType(tag));
+
+    let mut cursor = None;
+    loop {
+      let mut page = self
+        .read_api()
+        .get_owned_objects(self.sender_address()?, Some(filter.clone()), cursor, None)
+        .await?;
+      let obj_ref = std::mem::take(&mut page.data)
+        .into_iter()
+        .filter_map(|res| res.data)
+        .find(|obj| predicate(obj))
+        .map(|obj_data| obj_data.object_ref());
+      cursor = page.next_cursor;
+
+      if obj_ref.is_some() {
+        return Ok(obj_ref);
+      }
+      if !page.has_next_page {
+        break;
+      }
+    }
+
+    Ok(None)
   }
 
   pub(crate) async fn execute_transaction<S>(

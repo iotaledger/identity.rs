@@ -21,7 +21,7 @@ if [ -z "$3" ]
     exit 1
 fi
 
-sui client ptb \
+iota client ptb \
   --gas-budget 50000000 \
   --move-call iota::tx_context::sender \
   --move-call $1::migration::migrate_alias_output @$2 @$3 \

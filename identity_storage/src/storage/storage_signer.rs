@@ -26,6 +26,16 @@ impl<'a, K, I> StorageSigner<'a, K, I> {
       storage,
     }
   }
+
+  /// Returns a reference to the [`KeyId`] of the key used by this [`Signer`].
+  pub fn key_id(&self) -> &KeyId {
+    &self.key_id
+  }
+
+  /// Returns this [`Signer`]'s public key as [`Jwk`].
+  pub fn public_key(&self) -> &Jwk {
+    &self.public_key
+  }
 }
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]

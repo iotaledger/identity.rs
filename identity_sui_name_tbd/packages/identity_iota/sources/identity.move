@@ -1,11 +1,11 @@
 module identity_iota::identity {
     use iota::{transfer::Receiving, vec_map::{Self, VecMap}, vec_set::VecSet};
-    use std::string::String;
     use identity_iota::{
         multicontroller::{Self, Action, ControllerCap, Multicontroller},
         update_value_proposal,
         config_proposal,
         transfer_proposal::{Self, Send},
+        did_deactivation_proposal::{Self, DidDeactivation},
     };
 
     const ENotADidDocument: u64 = 0;
@@ -65,27 +65,53 @@ module identity_iota::identity {
         self.did_doc.threshold()
     }
 
-    public fun approve_proposal(
+    public fun approve_proposal<T: store>(
         self: &mut Identity,
         cap: &ControllerCap,
-        name: String
+        proposal_id: ID,
     ) {
-        self.did_doc.approve_proposal(cap, name);
+        self.did_doc.approve_proposal<vector<u8>, T>(cap, proposal_id);
+    }
+
+    public fun propose_deactivation(
+        self: &mut Identity,
+        cap: &ControllerCap,
+        expiration: Option<u64>,
+        ctx: &mut TxContext,
+    ): ID {
+        self.did_doc.create_proposal(
+            cap,
+            did_deactivation_proposal::new(),
+            expiration,
+            ctx,
+        )
+    }
+
+    public fun execute_deactivation(
+        self: &mut Identity,
+        cap: &ControllerCap,
+        proposal_id: ID,
+        ctx: &mut TxContext,
+    ) {
+        let _ = self.did_doc.execute_proposal<vector<u8>, DidDeactivation>(
+            cap,
+            proposal_id,
+            ctx,
+        ).unwrap();
+        self.did_doc.set_controlled_value(vector[]);
     }
 
     public fun propose_update(
         self: &mut Identity,
         cap: &ControllerCap,
-        name: String,
         updated_doc: vector<u8>,
         expiration: Option<u64>,
         ctx: &mut TxContext,
-    ) {
+    ): ID {
         assert!(is_did_output(&updated_doc), ENotADidDocument);
         update_value_proposal::propose_update(
             &mut self.did_doc,
             cap,
-            name,
             updated_doc,
             expiration,
             ctx,
@@ -95,13 +121,13 @@ module identity_iota::identity {
     public fun execute_update(
         self: &mut Identity,
         cap: &ControllerCap,
-        name: String,
+        proposal_id: ID,
         ctx: &mut TxContext,
     ) {
         update_value_proposal::execute_update(
             &mut self.did_doc,
             cap,
-            name,
+            proposal_id,
             ctx,
         );
     }
@@ -109,21 +135,21 @@ module identity_iota::identity {
     public fun propose_config_change(
         self: &mut Identity,
         cap: &ControllerCap,
-        name: String,
         expiration: Option<u64>,
         threshold: Option<u64>,
         controllers_to_add: VecMap<address, u64>,
         controllers_to_remove: vector<ID>,
+        controllers_to_update: VecMap<ID, u64>,
         ctx: &mut TxContext,
-    ) {
+    ): ID {
         config_proposal::propose_modify(
             &mut self.did_doc,
             cap,
-            name,
             expiration,
             threshold,
             controllers_to_add,
             controllers_to_remove,
+            controllers_to_update,
             ctx
         )
     }
@@ -131,13 +157,13 @@ module identity_iota::identity {
     public fun execute_config_change(
         self: &mut Identity,
         cap: &ControllerCap,
-        name: String,
+        proposal_id: ID,
         ctx: &mut TxContext
     ) {
         config_proposal::execute_modify(
             &mut self.did_doc,
             cap,
-            name,
+            proposal_id,
             ctx,
         )
     }
@@ -145,7 +171,6 @@ module identity_iota::identity {
     public fun propose_send(
         self: &mut Identity,
         cap: &ControllerCap,
-        name: String,
         expiration: Option<u64>,
         objects: VecSet<ID>,
         recipients: vector<address>,
@@ -154,7 +179,6 @@ module identity_iota::identity {
         transfer_proposal::propose_send(
             &mut self.did_doc,
             cap,
-            name,
             expiration,
             objects,
             recipients,
@@ -173,26 +197,23 @@ module identity_iota::identity {
     public fun propose_new_controller(
         self: &mut Identity,
         cap: &ControllerCap,
-        name: String,
         expiration: Option<u64>,
         new_controller_addr: address,
         voting_power: u64,
         ctx: &mut TxContext, 
-    ) {
+    ): ID {
         let mut new_controllers = vec_map::empty();
         new_controllers.insert(new_controller_addr, voting_power);
 
-        self.propose_config_change(cap, name, expiration, option::none(), new_controllers, vector[], ctx);
+        self.propose_config_change(cap, expiration, option::none(), new_controllers, vector[], vec_map::empty(), ctx)
     }
 
     /// Checks if `data` is a state matadata representing a DID.
     /// i.e. starts with the bytes b"DID".
     public(package) fun is_did_output(data: &vector<u8>): bool {
-        data.length() == 0 || (
         data[0] == 0x44 &&      // b'D'
             data[1] == 0x49 &&  // b'I'
             data[2] == 0x44     // b'D'
-        )
     }
 
     public(package) fun did_doc(self: &Identity): &Multicontroller<vector<u8>> {
@@ -209,17 +230,15 @@ module identity_iota::identity {
 #[test_only]
 module identity_iota::identity_tests {
     use iota::test_scenario;
-    use std::string;
     use identity_iota::identity::{new, ENotADidDocument, Identity, new_with_controllers};
+    use identity_iota::config_proposal::Modify;
     use identity_iota::multicontroller::{ControllerCap, EExpiredProposal, EThresholdNotReached};
-    use iota::{vec_map::{Self}};
-
+    use iota::vec_map;
 
     #[test]
     fun adding_a_controller_works() {
         let controller1 = @0x1;
         let controller2 = @0x2;
-        let proposal_name = string::utf8(b"add controller2");
         let mut scenario = test_scenario::begin(controller1);
 
         // Create a DID document with no funds and 1 controller with a weight of 1 and a threshold of 1.
@@ -232,12 +251,12 @@ module identity_iota::identity_tests {
         // Create a request to add a second controller.
         let mut identity = scenario.take_shared<Identity>();
         let controller1_cap = scenario.take_from_address<ControllerCap>(controller1);
-        identity.propose_new_controller(&controller1_cap, proposal_name, option::none(), controller2, 1, scenario.ctx());
+        let proposal_id = identity.propose_new_controller(&controller1_cap, option::none(), controller2, 1, scenario.ctx());
 
         // Request is fullfilled, add a second controller and send the capability to `controller2`.
         scenario.next_tx(controller1);
 
-        identity.execute_config_change(&controller1_cap, proposal_name, scenario.ctx());
+        identity.execute_config_change(&controller1_cap, proposal_id, scenario.ctx());
 
         scenario.next_tx(controller2);
 
@@ -258,7 +277,6 @@ module identity_iota::identity_tests {
         let controller1 = @0x1;
         let controller2 = @0x2;
         let controller3 = @0x3;
-        let proposal_name = string::utf8(b"remove controller3");
         let mut scenario = test_scenario::begin(controller1);
 
         let mut controllers = vec_map::empty();
@@ -282,13 +300,13 @@ module identity_iota::identity_tests {
         let controller1_cap = scenario.take_from_address<ControllerCap>(controller1);
         let controller3_cap = scenario.take_from_address<ControllerCap>(controller3);
 
-        identity.propose_config_change(
+        let proposal_id = identity.propose_config_change(
             &controller1_cap,
-            proposal_name,
             option::none(),
             option::none(),
             vec_map::empty(),
             vector[controller3_cap.id().to_inner()],
+            vec_map::empty(),
             scenario.ctx()
         );
 
@@ -296,12 +314,12 @@ module identity_iota::identity_tests {
 
         // `controller2` also approves the removal of `controller3`.
         let controller2_cap = scenario.take_from_address<ControllerCap>(controller2);
-        identity.approve_proposal(&controller2_cap, proposal_name);
+        identity.approve_proposal<Modify>(&controller2_cap, proposal_id);
 
         scenario.next_tx(controller2);
 
         // `controller3` is removed.
-        identity.execute_config_change(&controller2_cap, proposal_name, scenario.ctx());
+        identity.execute_config_change(&controller2_cap, proposal_id, scenario.ctx());
         assert!(!identity.did_doc().controllers().contains(&controller3_cap.id().to_inner()), 0);
 
         // cleanup.
@@ -345,13 +363,11 @@ module identity_iota::identity_tests {
             let mut identity = scenario.take_shared<Identity>();
             let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
 
-            let proposal_name = string::utf8(b"add controller_d");
-
             // Create a request to add a new controller.
-            identity.propose_new_controller(&controller_a_cap, proposal_name,  option::none(), controller_d, 1, scenario.ctx());
+            let proposal_id = identity.propose_new_controller(&controller_a_cap, option::none(), controller_d, 1, scenario.ctx());
 
             scenario.next_tx(controller_a);
-            identity.execute_config_change(&controller_a_cap, proposal_name, scenario.ctx());
+            identity.execute_config_change(&controller_a_cap, proposal_id, scenario.ctx());
 
             scenario.next_tx(controller_d);
 
@@ -378,12 +394,11 @@ module identity_iota::identity_tests {
 
             let mut identity = scenario.take_shared<Identity>();
             let controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
-            let proposal_name = string::utf8(b"add controller_d");
 
-            identity.propose_new_controller(&controller_b_cap, proposal_name,option::none(), controller_d, 1, scenario.ctx());
+            let proposal_id = identity.propose_new_controller(&controller_b_cap, option::none(), controller_d, 1, scenario.ctx());
 
             scenario.next_tx(controller_b);
-            identity.execute_config_change(&controller_b_cap, proposal_name, scenario.ctx());
+            identity.execute_config_change(&controller_b_cap, proposal_id, scenario.ctx());
             scenario.next_tx(controller_d);
 
             let controller_d_cap = scenario.take_from_address<ControllerCap>(controller_d);
@@ -426,17 +441,15 @@ module identity_iota::identity_tests {
         let mut identity = scenario.take_shared<Identity>();
         let controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
 
-        let proposal_name = string::utf8(b"add controller_d");
-
         // Create a request to add a new controller.
-        identity.propose_new_controller(&controller_b_cap, proposal_name, option::none(), controller_d, 10, scenario.ctx());
+        let proposal_id = identity.propose_new_controller(&controller_b_cap, option::none(), controller_d, 10, scenario.ctx());
 
         scenario.next_tx(controller_b);
         let controller_c_cap = scenario.take_from_address<ControllerCap>(controller_c);
-        identity.approve_proposal(&controller_c_cap, proposal_name);
+        identity.approve_proposal<Modify>(&controller_c_cap, proposal_id);
 
         scenario.next_tx(controller_a);
-        identity.execute_config_change(&controller_c_cap, proposal_name, scenario.ctx());
+        identity.execute_config_change(&controller_c_cap, proposal_id, scenario.ctx());
 
         scenario.next_tx(controller_d);
 
@@ -469,37 +482,35 @@ module identity_iota::identity_tests {
 
         // Create a second identity.
         let second_identity = new_with_controllers(
-                b"DID",
-                controllers,
-                10,
-                scenario.ctx(),
-            );
+            b"DID",
+            controllers,
+            10,
+            scenario.ctx(),
+        );
 
-            transfer::public_share_object(second_identity);
+        transfer::public_share_object(second_identity);
 
-            scenario.next_tx(first_identity.to_address());
-            let first_identity_cap = scenario.take_from_address<ControllerCap>(first_identity.to_address());
+        scenario.next_tx(first_identity.to_address());
+        let first_identity_cap = scenario.take_from_address<ControllerCap>(first_identity.to_address());
 
-            let mut second_identity = scenario.take_shared<Identity>();
+        let mut second_identity = scenario.take_shared<Identity>();
 
-            assert!(second_identity.did_doc().controllers().contains(&first_identity_cap.id().to_inner()), 0);
+        assert!(second_identity.did_doc().controllers().contains(&first_identity_cap.id().to_inner()), 0);
 
-            let proposal_name = string::utf8(b"add controller_a");
+        let proposal_id = second_identity.propose_new_controller(&first_identity_cap, option::none(), controller_a, 10, scenario.ctx());
 
-            second_identity.propose_new_controller(&first_identity_cap, proposal_name, option::none(), controller_a, 10, scenario.ctx());
+        second_identity.execute_config_change(&first_identity_cap, proposal_id, scenario.ctx());
+        scenario.next_tx(controller_a);
+        let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
 
-            second_identity.execute_config_change(&first_identity_cap, proposal_name, scenario.ctx());
-            scenario.next_tx(controller_a);
-            let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
+        second_identity.did_doc().assert_is_member(&controller_a_cap);
 
-            second_identity.did_doc().assert_is_member(&controller_a_cap);
+        test_scenario::return_shared(second_identity);
+        test_scenario::return_to_address(controller_a, controller_a_cap);
+        test_scenario::return_to_address(first_identity.to_address(), first_identity_cap);
+        test_scenario::return_shared(first_identity);
 
-            test_scenario::return_shared(second_identity);
-            test_scenario::return_to_address(controller_a, controller_a_cap);
-            test_scenario::return_to_address(first_identity.to_address(), first_identity_cap);
-            test_scenario::return_shared(first_identity);
-
-            let _ = scenario.end();
+        let _ = scenario.end();
     }
 
     #[test, expected_failure(abort_code = ENotADidDocument)]
@@ -515,9 +526,8 @@ module identity_iota::identity_tests {
         // Propose a change for updating the did document
         let mut identity = scenario.take_shared<Identity>();
         let cap = scenario.take_from_address<ControllerCap>(controller);
-        let proposal_name = string::utf8(b"update did to invalid");
 
-        identity.propose_update(&cap, proposal_name, b"NOT DID", option::none(), scenario.ctx());
+        let _proposal_id = identity.propose_update(&cap, b"NOT DID", option::none(), scenario.ctx());
 
         test_scenario::return_to_address(controller, cap);
         test_scenario::return_shared(identity);
@@ -531,7 +541,6 @@ module identity_iota::identity_tests {
         let new_controller = @0x2;
         let mut scenario = test_scenario::begin(controller);
         let expiration_epoch = scenario.ctx().epoch();
-        let proposal_name = string::utf8(b":)");
 
         let identity = new(b"DID", scenario.ctx());
         transfer::public_share_object(identity);
@@ -540,11 +549,11 @@ module identity_iota::identity_tests {
 
         let mut identity = scenario.take_shared<Identity>();
         let cap = scenario.take_from_address<ControllerCap>(controller);
-        identity.propose_new_controller(&cap, proposal_name, option::some(expiration_epoch), new_controller, 1, scenario.ctx());
+        let proposal_id = identity.propose_new_controller(&cap, option::some(expiration_epoch), new_controller, 1, scenario.ctx());
 
         scenario.later_epoch(100, controller);
         // this should fail!
-        identity.execute_config_change(&cap, proposal_name, scenario.ctx());
+        identity.execute_config_change(&cap, proposal_id, scenario.ctx());
 
         test_scenario::return_to_address(controller, cap);
         test_scenario::return_shared(identity);

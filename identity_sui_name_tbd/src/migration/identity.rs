@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::str::FromStr;
 
 use identity_iota_core::IotaDID;
@@ -9,9 +10,7 @@ use identity_iota_core::IotaDocument;
 use identity_iota_core::NetworkName;
 use identity_iota_core::StateMetadataDocument;
 use iota_sdk::rpc_types::IotaObjectData;
-use iota_sdk::rpc_types::IotaObjectDataFilter;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
-use iota_sdk::rpc_types::IotaObjectResponseQuery;
 use iota_sdk::rpc_types::IotaParsedData;
 use iota_sdk::rpc_types::IotaParsedMoveObject;
 use iota_sdk::rpc_types::IotaPastObjectResponse;
@@ -25,6 +24,8 @@ use iota_sdk::types::base_types::ObjectRef;
 use iota_sdk::types::base_types::SequenceNumber;
 use iota_sdk::types::id::UID;
 use iota_sdk::types::object::Owner;
+use iota_sdk::types::Identifier;
+use iota_sdk::types::TypeTag;
 use iota_sdk::IotaClient;
 use move_core_types::language_storage::StructTag;
 use secret_storage::signer::Signer;
@@ -34,13 +35,15 @@ use serde::Serialize;
 
 use crate::client::IdentityClient;
 use crate::client::IotaKeySignature;
+use crate::proposals::ConfigChange;
+use crate::proposals::DeactiveDid;
+use crate::proposals::ProposalBuilder;
+use crate::proposals::UpdateDidDocument;
 use crate::sui::move_calls;
-use crate::sui::move_calls::identity::execute_update;
-use crate::sui::move_calls::identity::propose_update;
+use crate::utils::MoveType;
 use crate::Error;
 
 use super::Multicontroller;
-use super::Proposal;
 use super::UnmigratedAlias;
 
 const MODULE: &str = "identity";
@@ -91,50 +94,37 @@ pub struct OnChainIdentity {
 }
 
 impl OnChainIdentity {
+  pub fn id(&self) -> ObjectID {
+    *self.id.object_id()
+  }
   /// Returns true if this [`OnChainIdentity`] is shared between multiple controllers.
   pub fn is_shared(&self) -> bool {
     self.did_doc.controllers().len() > 1
   }
-  pub fn proposals(&self) -> &HashMap<String, Proposal> {
+  pub fn proposals(&self) -> &HashSet<ObjectID> {
     self.did_doc.proposals()
   }
-  async fn get_controller_cap(&self, client: &IdentityClient) -> Result<ObjectRef, Error> {
+  pub(crate) async fn get_controller_cap(&self, client: &IdentityClient) -> Result<ObjectRef, Error> {
     let controller_cap_tag = StructTag::from_str(&format!("{}::multicontroller::ControllerCap", client.package_id()))
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
-    let filter = IotaObjectResponseQuery::new_with_filter(IotaObjectDataFilter::StructType(controller_cap_tag));
-
-    let mut cursor = None;
-    loop {
-      let mut page = client
-        .read_api()
-        .get_owned_objects(client.sender_address()?, Some(filter.clone()), cursor, None)
-        .await?;
-      let cap = std::mem::take(&mut page.data).into_iter().find_map(|res| {
-        res
-          .data
-          .map(|obj| obj.object_ref())
-          .filter(|cap_ref| self.did_doc.has_member(cap_ref.0))
-      });
-      cursor = page.next_cursor;
-      if let Some(cap) = cap {
-        return Ok(cap);
-      }
-      if !page.has_next_page {
-        break;
-      }
-    }
-
-    Err(Error::Identity(
-      "this address has no control over the requested identity".to_string(),
-    ))
+    client
+      .find_owned_ref(controller_cap_tag, |obj_data| {
+        self.did_doc.has_member(obj_data.object_id)
+      })
+      .await?
+      .ok_or_else(|| Error::Identity("this address has no control over the requested identity".to_string()))
   }
 
-  pub fn update_did_document(&mut self, updated_doc: IotaDocument) -> ProposalBuilder {
-    ProposalBuilder::new(self, ProposalAction::UpdateDocument(updated_doc))
+  pub fn update_did_document(&mut self, updated_doc: IotaDocument) -> ProposalBuilder<'_, UpdateDidDocument> {
+    ProposalBuilder::new(self, UpdateDidDocument::new(updated_doc))
   }
 
-  pub fn deactivate_did(&mut self) -> ProposalBuilder {
-    ProposalBuilder::new(self, ProposalAction::Deactivate)
+  pub fn update_config(&mut self) -> ProposalBuilder<'_, ConfigChange> {
+    ProposalBuilder::new(self, ConfigChange::default())
+  }
+
+  pub fn deactivate_did(&mut self) -> ProposalBuilder<'_, DeactiveDid> {
+    ProposalBuilder::new(self, DeactiveDid::new())
   }
 
   pub async fn get_history(
@@ -272,134 +262,6 @@ async fn get_previous_version(client: &IdentityClient, iod: IotaObjectData) -> R
     _ => Err(Error::InvalidIdentityHistory(format!(
       "could not find previous version, past object response: {past_obj_response:?}"
     ))),
-  }
-}
-
-#[derive(Debug)]
-pub enum ProposalAction {
-  UpdateDocument(IotaDocument),
-  Deactivate,
-}
-
-#[derive(Debug)]
-pub struct ProposalBuilder<'i> {
-  key: Option<String>,
-  identity: &'i mut OnChainIdentity,
-  expiration: Option<u64>,
-  action: ProposalAction,
-  gas_budget: Option<u64>,
-}
-
-impl<'i> ProposalBuilder<'i> {
-  pub fn new(identity: &'i mut OnChainIdentity, action: ProposalAction) -> Self {
-    Self {
-      key: None,
-      identity,
-      expiration: None,
-      action,
-      gas_budget: None,
-    }
-  }
-
-  pub fn expiration_epoch(mut self, exp: u64) -> Self {
-    self.expiration = Some(exp);
-    self
-  }
-
-  pub fn key(mut self, key: String) -> Self {
-    self.key = Some(key);
-    self
-  }
-
-  pub fn gas_budget(mut self, amount: u64) -> Self {
-    self.gas_budget = Some(amount);
-    self
-  }
-
-  pub async fn finish<S>(self, client: &IdentityClient, signer: &S) -> Result<Option<&'i Proposal>, Error>
-  where
-    S: Signer<IotaKeySignature> + Send + Sync,
-  {
-    let ProposalBuilder {
-      key,
-      identity,
-      expiration,
-      action,
-      gas_budget,
-    } = self;
-    let key = if let Some(key) = key {
-      key
-    } else if !identity.is_shared() {
-      use rand::distributions::DistString;
-      let mut rng = rand::thread_rng();
-
-      rand::distributions::Alphanumeric.sample_string(&mut rng, 5)
-    } else {
-      return Err(Error::TransactionBuildingFailed(
-        "no key specified for proposal".to_string(),
-      ));
-    };
-    let controller_cap = identity.get_controller_cap(client).await?;
-    let identity_ref = identity
-      .obj_ref
-      .clone()
-      .ok_or_else(|| Error::InvalidArgument("given identity does not have an object reference".to_string()))?;
-    let tx = match action {
-      ProposalAction::UpdateDocument(did_doc) => propose_update(
-        identity_ref,
-        controller_cap,
-        key.as_str(),
-        did_doc
-          .pack()
-          .map_err(|err| Error::InvalidArgument(format!("could not pack given doc document; {err}")))?,
-        expiration,
-        client.package_id(),
-      ),
-      ProposalAction::Deactivate => propose_update(
-        identity_ref,
-        controller_cap,
-        key.as_str(),
-        vec![],
-        expiration,
-        client.package_id(),
-      ),
-    }
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
-    let gas_budget =
-      gas_budget.ok_or_else(|| Error::GasIssue("missing `gas_budget` in proposal builder".to_string()))?;
-    let _ = client.execute_transaction(tx, gas_budget, signer).await?;
-
-    // refresh object references to get latest sequence numbers for them
-    let identity_object_id = *identity.id.object_id();
-    *identity = get_identity(client, identity_object_id)
-      .await?
-      .ok_or_else(|| Error::Identity(format!("could not get identity with object id {identity_object_id}")))?;
-    let can_execute = identity
-      .did_doc
-      .controller_voting_power(controller_cap.0)
-      .ok_or_else(|| Error::Identity(format!("could not get voting power for identity {identity_object_id}")))?
-      > identity.did_doc.threshold();
-    if identity.is_shared() && !can_execute {
-      return Ok(identity.proposals().get(&key));
-    }
-    let controller_cap = identity.get_controller_cap(client).await?;
-
-    let tx = execute_update(
-      identity
-        .obj_ref
-        .clone()
-        .ok_or_else(|| Error::InvalidArgument("given identity does not have an object reference".to_string()))?,
-      controller_cap,
-      key.as_str(),
-      client.package_id(),
-    )
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
-    let _ = client.execute_transaction(tx, gas_budget, signer).await?;
-    *identity = get_identity(client, identity_object_id)
-      .await?
-      .ok_or_else(|| Error::Identity(format!("could not get identity with object id {identity_object_id}")))?;
-
-    Ok(None)
   }
 }
 
@@ -575,5 +437,16 @@ impl<'a> IdentityBuilder<'a> {
     get_identity(client, new_identity_id)
       .await
       .and_then(|identity| identity.ok_or_else(|| Error::ObjectLookup(new_identity_id.to_string())))
+  }
+}
+
+impl MoveType for OnChainIdentity {
+  fn move_type(package: ObjectID) -> TypeTag {
+    TypeTag::Struct(Box::new(StructTag {
+      address: package.into(),
+      module: Identifier::new("identity").expect("valid utf8"),
+      name: Identifier::new("Identity").expect("valid utf8"),
+      type_params: vec![],
+    }))
   }
 }

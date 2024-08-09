@@ -1,6 +1,5 @@
 module identity_iota::multicontroller {
-    use iota::{dynamic_field as df, vec_map::{Self, VecMap}, vec_set::{Self, VecSet}};
-    use std::string::String;
+    use iota::{object_bag::{Self, ObjectBag}, vec_map::{Self, VecMap}, vec_set::{Self, VecSet}};
 
     const EInvalidController: u64 = 0;
     const EControllerAlreadyVoted: u64 = 1;    
@@ -20,8 +19,9 @@ module identity_iota::multicontroller {
     public struct Multicontroller<V> has store {
         threshold: u64,
         controllers: VecMap<ID, u64>,
-        proposals: VecMap<String, Proposal>,
         controlled_value: V,
+        active_proposals: vector<ID>,
+        proposals: ObjectBag,
     }
 
     public fun new<V>(controlled_value: V, ctx: &mut TxContext): Multicontroller<V> {
@@ -61,21 +61,23 @@ module identity_iota::multicontroller {
             controlled_value,
             controllers,
             threshold,
-            proposals: vec_map::empty(),
+            active_proposals: vector[],
+            proposals: object_bag::new(ctx),
         };
         multi.set_threshold(threshold);
 
         multi
     }
 
-    public struct Proposal has key, store {
+    public struct Proposal<T: store> has key, store {
         id: UID,
         votes: u64,
         voters: VecSet<ID>,
         expiration_epoch: Option<u64>,
+        action: T,
     }
 
-    public fun is_expired(self: &Proposal, ctx: &mut TxContext): bool {
+    public fun is_expired<T: store>(self: &Proposal<T>, ctx: &mut TxContext): bool {
         if (self.expiration_epoch.is_some()) {
             let expiration = *self.expiration_epoch.borrow();
             expiration < ctx.epoch()
@@ -88,7 +90,12 @@ module identity_iota::multicontroller {
         inner: T,
     }
 
-    public(package) fun action_mut<T: store>(action: &mut Action<T>): &mut T {
+    public fun unwrap<T: store>(action: Action<T>): T {
+        let Action { inner } = action;
+        inner
+    }
+
+    public fun borrow_mut<T: store>(action: &mut Action<T>): &mut T {
         &mut action.inner
     }
 
@@ -102,36 +109,37 @@ module identity_iota::multicontroller {
         multi: &mut Multicontroller<V>,
         cap: &ControllerCap,
         action: T,
-        key: String,
         expiration_epoch: Option<u64>,
         ctx: &mut TxContext,
-    ) {
+    ): ID {
         multi.assert_is_member(cap);
         let cap_id = cap.id.to_inner();
         let voting_power = multi.voting_power(cap_id);
 
-        let mut proposal = Proposal {
+        let proposal = Proposal {
             id: object::new(ctx),
             votes: voting_power,
             voters: vec_set::singleton(cap.id.to_inner()),
-            expiration_epoch
+            expiration_epoch,
+            action,
         };
 
-        df::add(&mut proposal.id, ActionKey {}, action);
-
-        multi.proposals.insert(key, proposal);
+        let proposal_id = object::id(&proposal);
+        multi.proposals.add(proposal_id, proposal);
+        multi.active_proposals.push_back(proposal_id);
+        proposal_id
     }
 
-    public fun approve_proposal<V>(
+    public fun approve_proposal<V, T: store>(
         multi: &mut Multicontroller<V>,
         cap: &ControllerCap,
-        key: String,
+        proposal_id: ID,
     ) {
         multi.assert_is_member(cap);
         let cap_id = cap.id.to_inner();
         let voting_power = multi.voting_power(cap_id);
 
-        let proposal = multi.proposals.get_mut(&key); 
+        let proposal = multi.proposals.borrow_mut<ID, Proposal<T>>(proposal_id); 
         assert!(!proposal.voters.contains(&cap_id), EControllerAlreadyVoted);
 
         proposal.votes = proposal.votes + voting_power;
@@ -141,37 +149,37 @@ module identity_iota::multicontroller {
     public fun execute_proposal<V, T: store>(
         multi: &mut Multicontroller<V>,
         cap: &ControllerCap,
-        key: String,
+        proposal_id: ID,
         ctx: &mut TxContext,
     ): Action<T> {
         multi.assert_is_member(cap);
 
-        let (_, proposal) = multi.proposals.remove(&key);
+        let proposal = multi.proposals.remove<ID, Proposal<T>>(proposal_id);
         assert!(proposal.votes >= multi.threshold, EThresholdNotReached);
         assert!(!proposal.is_expired(ctx), EExpiredProposal);
 
         let Proposal {
-            mut id,
+            id,
             votes: _,
             voters: _,
             expiration_epoch: _,
+            action: inner,
         } = proposal;
 
-        let inner = df::remove(&mut id, ActionKey {});
         id.delete();
 
         Action { inner }
     }
 
-    public fun remove_approval<V>(
+    public fun remove_approval<V, T: store>(
         multi: &mut Multicontroller<V>,
         cap: &ControllerCap,
-        key: String,
+        proposal_id: ID,
     ) {
         let cap_id = cap.id.to_inner();
         let vp = multi.voting_power(cap_id);
 
-        let proposal = multi.proposals.get_mut(&key);
+        let proposal = multi.proposals.borrow_mut<ID, Proposal<T>>(proposal_id);
         assert!(proposal.voters.contains(&cap_id), ENotVotedYet);
 
         proposal.voters.remove(&cap_id);
@@ -188,6 +196,11 @@ module identity_iota::multicontroller {
 
     public fun voting_power<V>(multi: &Multicontroller<V>, controller_id: ID): u64 {
         *multi.controllers.get(&controller_id)
+    }
+
+    public(package) fun set_voting_power<V>(multi: &mut Multicontroller<V>, controller_id: ID, vp: u64) {
+        assert!(multi.controllers().contains(&controller_id), EInvalidController);
+        *multi.controllers.get_mut(&controller_id) = vp;
     }
 
     public fun max_votes<V>(multi: &Multicontroller<V>): u64 {
@@ -220,6 +233,14 @@ module identity_iota::multicontroller {
         while (!to_remove.is_empty()) {
             let id = to_remove.pop_back();
             multi.controllers.remove(&id);
+        }
+    }
+
+    public(package) fun update_members<V>(multi: &mut Multicontroller<V>, mut to_update: VecMap<ID, u64>) {
+        while (!to_update.is_empty()) {
+            let (controller, vp) = to_update.pop();
+
+            multi.set_voting_power(controller, vp);
         }
     }
 

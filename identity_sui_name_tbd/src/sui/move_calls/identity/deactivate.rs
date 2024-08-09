@@ -11,10 +11,9 @@ use iota_sdk::types::Identifier;
 
 use crate::sui::move_calls::utils;
 
-pub fn propose_update(
+pub fn propose_deactivation(
   identity: OwnedObjectRef,
   capability: ObjectRef,
-  did_doc: impl AsRef<[u8]>,
   expiration: Option<u64>,
   package_id: ObjectID,
 ) -> Result<(ProgrammableTransactionBuilder, Argument), anyhow::Error> {
@@ -22,20 +21,19 @@ pub fn propose_update(
   let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
   let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
   let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id)?;
-  let doc_arg = ptb.pure(did_doc.as_ref())?;
 
   let proposal_id = ptb.programmable_move_call(
     package_id,
     Identifier::from_str("identity")?,
-    Identifier::from_str("propose_update")?,
+    Identifier::from_str("propose_deactivation")?,
     vec![],
-    vec![identity_arg, cap_arg, doc_arg, exp_arg],
+    vec![identity_arg, cap_arg, exp_arg],
   );
 
   Ok((ptb, proposal_id))
 }
 
-pub fn execute_update(
+pub fn execute_deactivation(
   ptb: Option<ProgrammableTransactionBuilder>,
   proposal_arg: Option<Argument>,
   identity: OwnedObjectRef,
@@ -55,7 +53,7 @@ pub fn execute_update(
   let _ = ptb.programmable_move_call(
     package_id,
     Identifier::from_str("identity")?,
-    Identifier::from_str("execute_update")?,
+    Identifier::from_str("execute_deactivation")?,
     vec![],
     vec![identity_arg, cap_arg, proposal_id],
   );

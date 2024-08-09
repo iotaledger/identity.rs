@@ -9,7 +9,7 @@ if [ -z "$1" ]
     exit 1
 fi
 
-sui client ptb \
+iota client ptb \
   --gas-budget 50000000 \
   --move-call iota::tx_context::sender \
   --assign sender \

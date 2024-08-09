@@ -4,6 +4,7 @@
 
 use std::io::Write;
 use std::ops::Deref;
+use std::sync::Arc;
 
 use anyhow::anyhow;
 use anyhow::Context;
@@ -15,7 +16,11 @@ use identity_storage::KeyId;
 use identity_storage::KeyIdMemstore;
 use identity_storage::KeyType;
 use identity_storage::Storage;
+use identity_storage::StorageSigner;
+use identity_sui_name_tbd::client::IdentityClient;
+use identity_sui_name_tbd::client::IdentityClientBuilder;
 use identity_sui_name_tbd::migration;
+use identity_sui_name_tbd::utils::request_funds;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
@@ -25,6 +30,9 @@ use jsonpath_rust::JsonPathQuery;
 use serde_json::Value;
 use tokio::process::Command;
 use tokio::sync::OnceCell;
+
+pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
+pub type MemSigner<'s> = StorageSigner<'s, JwkMemStore, KeyIdMemstore>;
 
 static CLIENT: OnceCell<TestClient> = OnceCell::const_new();
 const SCRIPT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/scripts/");
@@ -66,10 +74,13 @@ async fn init() -> anyhow::Result<TestClient> {
     publish_package(address).await?
   };
 
+  let storage = Arc::new(Storage::new(JwkMemStore::new(), KeyIdMemstore::new()));
+
   Ok(TestClient {
     client,
     package_id,
     address,
+    storage,
   })
 }
 
@@ -133,27 +144,6 @@ async fn publish_package(active_address: IotaAddress) -> anyhow::Result<ObjectID
   Ok(package_id)
 }
 
-pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
-  let output = Command::new("iota")
-    .arg("client")
-    .arg("faucet")
-    .arg("--address")
-    .arg(address.to_string())
-    .arg("--json")
-    .output()
-    .await
-    .context("Failed to execute command")?;
-
-  if !output.status.success() {
-    anyhow::bail!(
-      "Failed to request funds from faucet: {}",
-      std::str::from_utf8(&output.stderr).unwrap()
-    );
-  }
-
-  Ok(())
-}
-
 pub async fn get_key_data() -> Result<(Storage<JwkMemStore, KeyIdMemstore>, KeyId, Jwk, Vec<u8>), anyhow::Error> {
   let storage = Storage::<JwkMemStore, KeyIdMemstore>::new(JwkMemStore::new(), KeyIdMemstore::new());
   let generate = storage
@@ -182,6 +172,7 @@ pub struct TestClient {
   package_id: ObjectID,
   #[allow(dead_code)]
   address: IotaAddress,
+  storage: Arc<MemStorage>,
 }
 
 impl Deref for TestClient {
@@ -195,6 +186,7 @@ impl TestClient {
   /// Creates a new DID document inside a stardust alias output.
   /// Returns alias's ID.
   pub async fn create_legacy_did(&self) -> anyhow::Result<ObjectID> {
+    self.switch_address().await?;
     let output = Command::new("sh")
       .current_dir(SCRIPT_DIR)
       .arg("create_test_alias_output.sh")
@@ -224,7 +216,28 @@ impl TestClient {
       .ok_or_else(|| anyhow!("No `AliasOutput` object was created"))
   }
 
+  // Sets the current address to the address controller by this client.
+  async fn switch_address(&self) -> anyhow::Result<()> {
+    let output = Command::new("iota")
+      .arg("client")
+      .arg("switch")
+      .arg("--address")
+      .arg(self.address.to_string())
+      .output()
+      .await?;
+
+    if !output.status.success() {
+      anyhow::bail!(
+        "Failed to switch address: {}",
+        std::str::from_utf8(&output.stderr).unwrap()
+      );
+    }
+
+    Ok(())
+  }
+
   pub async fn create_identity(&self) -> anyhow::Result<ObjectID> {
+    self.switch_address().await?;
     let output = Command::new("sh")
       .current_dir(SCRIPT_DIR)
       .arg("create_test_identity.sh")
@@ -258,6 +271,7 @@ impl TestClient {
   /// `alias_id` is the ID of the Alias move object - i.e. the same as stardust's AliasID.
   /// Returns the tuple `(document's ID, ControllerCapability's ID)`.
   pub async fn migrate_legacy_did(&self, alias_id: ObjectID) -> anyhow::Result<(ObjectID, ObjectID)> {
+    self.switch_address().await?;
     // Find the ID of the AliasOutput that owns `alias_id`.
     let alias_output_id = {
       let dynamic_field_id = self
@@ -320,5 +334,52 @@ impl TestClient {
 
   pub fn package_id(&self) -> ObjectID {
     self.package_id
+  }
+
+  pub async fn new_address(&self) -> anyhow::Result<Self> {
+    let output = Command::new("iota")
+      .arg("client")
+      .arg("new-address")
+      .arg("ed25519")
+      .arg("--json")
+      .output()
+      .await?;
+    let new_address = {
+      let output_str = std::str::from_utf8(&output.stdout).unwrap();
+      let start_of_json = output_str.find('{').ok_or(anyhow!("No json in output"))?;
+      let json_result = serde_json::from_str::<Value>(output_str[start_of_json..].trim())?;
+      let address_json = json_result
+        .path("$.address")
+        .map_err(|e| anyhow!("failed to parse json output: {e}"))?;
+      serde_json::from_value::<IotaAddress>(address_json)?
+    };
+
+    request_funds(&new_address).await?;
+
+    let mut new_client = self.clone();
+    new_client.address = new_address;
+    Ok(new_client)
+  }
+
+  pub async fn new_user_client(&self) -> anyhow::Result<(IdentityClient, MemSigner)> {
+    let generate = self
+      .storage
+      .key_storage()
+      .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
+      .await?;
+    let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
+    let public_key_bytes = get_public_key_bytes(&public_key_jwk)?;
+    // generate new key
+    let user_client = IdentityClientBuilder::default()
+      .identity_iota_package_id(self.package_id())
+      .sender_public_key(&public_key_bytes)
+      .iota_client(self.client.clone())
+      .network_name("iota")
+      .build()?;
+    let signer = StorageSigner::new(&self.storage, generate.key_id, public_key_jwk);
+
+    request_funds(&user_client.sender_address()?).await?;
+
+    Ok((user_client, signer))
   }
 }
