@@ -1,12 +1,12 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use serde;
-use serde::Deserialize;
 use iota_sdk::rpc_types::EventFilter;
 use iota_sdk::rpc_types::IotaData;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::IotaClient;
+use serde;
+use serde::Deserialize;
 use tokio::sync::OnceCell;
 
 use super::OnChainIdentity;
