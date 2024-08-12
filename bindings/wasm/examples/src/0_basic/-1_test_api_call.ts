@@ -18,4 +18,17 @@ export async function testApiCall(): Promise<void> {
     // should also fail
     const balance = await identity_client.getBalance();
     console.dir(balance);
+
+    // test builder
+    let clientFromBuilder = KinesisIdentityClient
+      .builder()
+      .identity_iota_package_id('foo')
+      .network_name('bar')
+      .sender_public_key(new Uint8Array())
+      .iota_client(kinesis_client)
+      .build()
+      ;
+
+    const balance2 = await clientFromBuilder.getBalance();
+    console.dir(balance2);
 }

@@ -3,7 +3,8 @@
 
 use crate::common::PromiseString;
 use crate::error::JsValueResult;
-use identity_iota::iota::KinesisClientTrait;
+use identity_iota::iota::client_dummy::Error;
+use identity_iota::iota::client_dummy::IotaClientTrait;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
@@ -30,8 +31,8 @@ extern "C" {
 
 // convert TYPESCRIPT types to RUST types
 #[async_trait::async_trait(?Send)]
-impl KinesisClientTrait for WasmKinesisClient {
-  type Error = anyhow::Error;
+impl IotaClientTrait for WasmKinesisClient {
+  type Error = Error;
 
   async fn get_chain_identifier(&self) -> Result<String, Self::Error> {
     let promise: Promise = Promise::resolve(&WasmKinesisClient::get_chain_identifier(self));

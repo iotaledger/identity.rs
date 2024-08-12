@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::credential::CompoundJwtPresentationValidationError;
-use identity_iota::iota::KinesisClientTrait;
 use identity_iota::resolver;
 use identity_iota::storage::key_id_storage::KeyIdStorageError;
 use identity_iota::storage::key_id_storage::KeyIdStorageErrorKind;
@@ -16,8 +15,6 @@ use std::fmt::Display;
 use std::result::Result as StdResult;
 use tokio::sync::TryLockError;
 use wasm_bindgen::JsValue;
-
-use crate::kinesis::WasmKinesisClient;
 
 /// Convenience wrapper for `Result<T, JsValue>`.
 ///
@@ -111,7 +108,8 @@ impl_wasm_error_from!(
   identity_iota::sd_jwt_payload::Error,
   identity_iota::credential::KeyBindingJwtError,
   identity_iota::credential::status_list_2021::StatusListError,
-  identity_iota::credential::status_list_2021::StatusList2021CredentialError
+  identity_iota::credential::status_list_2021::StatusList2021CredentialError,
+  identity_iota::iota::client_dummy::Error
 );
 
 // Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
@@ -293,8 +291,10 @@ impl JsValueResult {
     self.stringify_error().map_err(identity_iota::iota::Error::JsError)
   }
 
-  pub fn to_kinesis_client_error(self) -> StdResult<JsValue, <WasmKinesisClient as KinesisClientTrait>::Error> {
-    self.stringify_error().map_err(|e| anyhow::anyhow!(e.to_string()))
+  pub fn to_kinesis_client_error(self) -> StdResult<JsValue, identity_iota::iota::client_dummy::Error> {
+    self
+      .stringify_error()
+      .map_err(|e| identity_iota::iota::client_dummy::Error::Dummy(e.to_string()))
   }
 }
 
@@ -337,12 +337,12 @@ impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for KeyIdStorageResu
   }
 }
 
-impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult>
-  for StdResult<T, <WasmKinesisClient as KinesisClientTrait>::Error>
-{
+impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for StdResult<T, identity_iota::iota::client_dummy::Error> {
   fn from(result: JsValueResult) -> Self {
-    result
-      .to_kinesis_client_error()
-      .and_then(|js_value| js_value.into_serde().map_err(|e| anyhow::anyhow!(e.to_string())))
+    result.to_kinesis_client_error().and_then(|js_value| {
+      js_value
+        .into_serde()
+        .map_err(|e| identity_iota::iota::client_dummy::Error::Dummy(e.to_string()))
+    })
   }
 }
