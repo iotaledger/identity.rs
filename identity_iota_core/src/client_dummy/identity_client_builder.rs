@@ -1,9 +1,7 @@
 use super::Error;
 use super::IdentityClient;
 use super::IotaClientTrait;
-
-// dummy types, have to be replaced with actual types later on
-pub type ObjectID = String;
+use super::ObjectID;
 
 pub struct IdentityClientBuilder<T: IotaClientTrait> {
   pub(crate) identity_iota_package_id: Option<ObjectID>,
