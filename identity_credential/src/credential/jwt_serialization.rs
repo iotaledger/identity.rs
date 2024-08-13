@@ -32,7 +32,7 @@ use crate::Result;
 /// This type is opinionated in the following ways:
 /// 1. Serialization tries to duplicate as little as possible between the required registered claims and the `vc` entry.
 /// 2. Only allows serializing/deserializing claims "exp, iss, nbf &/or iat, jti, sub and vc". Other custom properties
-/// must be set in the `vc` entry.
+///    must be set in the `vc` entry.
 #[derive(Serialize, Deserialize)]
 pub(crate) struct CredentialJwtClaims<'credential, T = Object>
 where
