@@ -24,6 +24,8 @@ rand = { version = "0.8.5", default-features = false, features = ["std", "std_rn
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync"] }
 zeroize = { version = "1.6.0", default_features = false }
 zkryptium = { workspace = true, optional = true }
+stronghold_ext = { git = "https://github.com/impierce/stronghold_ext", features = ["crypto"] }
+anyhow = "1.0.82"
 
 [dev-dependencies]
 anyhow = "1.0.82"

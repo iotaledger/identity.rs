@@ -3,16 +3,21 @@
 
 use _utils::did_jwk_server::DidJwk as DidJwkSvc;
 use _utils::did_jwk_server::DidJwkServer;
+use _utils::iota_utils_server::IotaUtils as IotaUtilsSvc;
+use _utils::iota_utils_server::IotaUtilsServer;
 use _utils::signing_server::Signing as SigningSvc;
 use _utils::signing_server::SigningServer;
 use _utils::DataSigningRequest;
 use _utils::DataSigningResponse;
 use _utils::DidJwkResolutionRequest;
 use _utils::DidJwkResolutionResponse;
+use _utils::IotaDidToAliasAddressRequest;
+use _utils::IotaDidToAliasAddressResponse;
 use anyhow::Context;
 use identity_iota::core::ToJson;
 use identity_iota::did::CoreDID;
 use identity_iota::document::DocumentBuilder;
+use identity_iota::iota::IotaDID;
 use identity_iota::storage::JwkStorage;
 use identity_iota::storage::KeyId;
 use identity_iota::storage::KeyStorageError;
@@ -20,6 +25,11 @@ use identity_iota::verification::jwk::Jwk;
 use identity_iota::verification::jwu::decode_b64_json;
 use identity_iota::verification::VerificationMethod;
 use identity_stronghold::StrongholdStorage;
+use iota_sdk::types::block::address::AliasAddress;
+use iota_sdk::types::block::address::Hrp;
+use iota_sdk::types::block::address::ToBech32Ext as _;
+use iota_sdk::types::block::output::AliasId;
+use tonic::async_trait;
 use tonic::transport::server::RoutesBuilder;
 use tonic::Request;
 use tonic::Response;
@@ -77,6 +87,7 @@ impl SigningSvc for SigningService {
 pub fn init_services(routes: &mut RoutesBuilder, stronghold: &StrongholdStorage) {
   routes.add_service(SigningServer::new(SigningService::new(stronghold)));
   routes.add_service(DidJwkServer::new(DidJwkService {}));
+  routes.add_service(IotaUtilsServer::new(IotaUtils {}));
 }
 
 #[derive(Debug)]
@@ -125,5 +136,35 @@ fn parse_did_jwk(did: &str) -> anyhow::Result<Jwk> {
   match did_parts {
     ["did", "jwk", data] => decode_b64_json(data).context("failed to deserialize JWK"),
     _ => anyhow::bail!("invalid did:jwk string \"{did}\""),
+  }
+}
+
+#[derive(Debug)]
+struct IotaUtils;
+
+#[async_trait]
+impl IotaUtilsSvc for IotaUtils {
+  #[tracing::instrument(
+    name = "utils/iota_did_to_alias_address",
+    skip_all,
+    fields(request = ?req.get_ref())
+    ret,
+    err,
+  )]
+  async fn did_iota_to_alias_address(
+    &self,
+    req: Request<IotaDidToAliasAddressRequest>,
+  ) -> Result<Response<IotaDidToAliasAddressResponse>, Status> {
+    let IotaDidToAliasAddressRequest { did } = req.into_inner();
+    let iota_did = IotaDID::try_from(did)
+      .map_err(|e| Status::invalid_argument(format!("invalid iota did: {e}")))?;
+    let network = iota_did.network_str().to_string();
+    let alias_address = AliasAddress::new(AliasId::from(&iota_did));
+    let alias_bech32 = alias_address.to_bech32_unchecked(Hrp::from_str_unchecked(&network));
+
+    Ok(Response::new(IotaDidToAliasAddressResponse {
+      alias_address: alias_bech32.to_string(),
+      network
+    }))
   }
 }

@@ -34,3 +34,16 @@ message DidJwkResolutionResponse {
 service DidJwk {
     rpc resolve(DidJwkResolutionRequest) returns (DidJwkResolutionResponse);
 }
+
+message IotaDidToAliasAddressRequest {
+    string did = 1;
+}
+
+message IotaDidToAliasAddressResponse {
+    string alias_address = 1;
+    string network = 2;
+}
+
+service IotaUtils {
+    rpc did_iota_to_alias_address(IotaDidToAliasAddressRequest) returns (IotaDidToAliasAddressResponse);
+}

@@ -27,6 +27,8 @@ pub fn random_key_id() -> KeyId {
 pub fn check_key_alg_compatibility(key_type: StrongholdKeyType, alg: JwsAlgorithm) -> KeyStorageResult<()> {
   match (key_type, alg) {
     (StrongholdKeyType::Ed25519, JwsAlgorithm::EdDSA) => Ok(()),
+    (_, JwsAlgorithm::ES256) => Ok(()),
+    (_, JwsAlgorithm::ES256K) => Ok(()),
     (key_type, alg) => Err(
       KeyStorageError::new(identity_storage::KeyStorageErrorKind::KeyAlgorithmMismatch)
         .with_custom_message(format!("cannot use key type `{key_type}` with algorithm `{alg}`")),

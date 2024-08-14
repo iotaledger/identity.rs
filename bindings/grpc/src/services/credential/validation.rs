@@ -27,6 +27,8 @@ use tonic::Request;
 use tonic::Response;
 use tonic::Status;
 
+use crate::verifier::Verifier;
+
 mod _credentials {
   tonic::include_proto!("credentials");
 }
@@ -98,7 +100,7 @@ impl VcValidation for VcValidator {
       validation_option = validation_option.status_check(StatusCheck::SkipAll);
     }
 
-    let validator = JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
+    let validator = JwtCredentialValidator::with_signature_verifier(Verifier::default());
     let decoded_credential = validator
       .validate::<_, Object>(&jwt, &issuer_doc, &validation_option, FailFast::FirstError)
       .map_err(|mut e| match e.validation_errors.swap_remove(0) {
