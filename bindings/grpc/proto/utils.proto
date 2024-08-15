@@ -9,6 +9,8 @@ message DataSigningRequest {
     bytes data = 1;
     // Signing key's ID.
     string key_id = 2;
+    // Key type of the key with id `key_id`. Valid values are: Ed25519, ES256, ES256K.
+    string key_type = 3;
 }
 
 message DataSigningResponse {

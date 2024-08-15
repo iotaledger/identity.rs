@@ -40,6 +40,7 @@ async fn raw_data_signing_works() -> anyhow::Result<()> {
     .sign(DataSigningRequest {
       data: SAMPLE_SIGNING_DATA.to_owned(),
       key_id: key_id.to_string(),
+      key_type: "Ed25519".to_string(),
     })
     .await?
     .into_inner()

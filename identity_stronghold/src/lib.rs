@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub(crate) mod ed25519;
+pub(crate) mod ecdsa;
 mod storage;
 pub(crate) mod stronghold_key_type;
 #[cfg(test)]

@@ -21,9 +21,11 @@ use identity_iota::iota::IotaDID;
 use identity_iota::storage::JwkStorage;
 use identity_iota::storage::KeyId;
 use identity_iota::storage::KeyStorageError;
+use identity_iota::storage::KeyType;
 use identity_iota::verification::jwk::Jwk;
 use identity_iota::verification::jwu::decode_b64_json;
 use identity_iota::verification::VerificationMethod;
+use identity_stronghold::StrongholdKeyType;
 use identity_stronghold::StrongholdStorage;
 use iota_sdk::types::block::address::AliasAddress;
 use iota_sdk::types::block::address::Hrp;
@@ -71,9 +73,17 @@ impl SigningSvc for SigningService {
     err,
   )]
   async fn sign(&self, req: Request<DataSigningRequest>) -> Result<Response<DataSigningResponse>, Status> {
-    let DataSigningRequest { data, key_id } = req.into_inner();
+    let DataSigningRequest { data, key_id, key_type } = req.into_inner();
     let key_id = KeyId::new(key_id);
-    let public_key_jwk = self.storage.get_public_key(&key_id).await.map_err(Error)?;
+    let key_type = {
+      let key_type = KeyType::new(key_type);
+      StrongholdKeyType::try_from(&key_type).map_err(|e| Status::invalid_argument(e.to_string()))?
+    };
+    let public_key_jwk = self
+      .storage
+      .get_public_key_with_type(&key_id, key_type)
+      .await
+      .map_err(Error)?;
     let signature = self
       .storage
       .sign(&key_id, &data, &public_key_jwk)
@@ -156,15 +166,14 @@ impl IotaUtilsSvc for IotaUtils {
     req: Request<IotaDidToAliasAddressRequest>,
   ) -> Result<Response<IotaDidToAliasAddressResponse>, Status> {
     let IotaDidToAliasAddressRequest { did } = req.into_inner();
-    let iota_did = IotaDID::try_from(did)
-      .map_err(|e| Status::invalid_argument(format!("invalid iota did: {e}")))?;
+    let iota_did = IotaDID::try_from(did).map_err(|e| Status::invalid_argument(format!("invalid iota did: {e}")))?;
     let network = iota_did.network_str().to_string();
     let alias_address = AliasAddress::new(AliasId::from(&iota_did));
     let alias_bech32 = alias_address.to_bech32_unchecked(Hrp::from_str_unchecked(&network));
 
     Ok(Response::new(IotaDidToAliasAddressResponse {
       alias_address: alias_bech32.to_string(),
-      network
+      network,
     }))
   }
 }
