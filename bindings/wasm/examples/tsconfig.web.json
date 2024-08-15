@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "es2020",
     "outDir": "./dist/web",
     "baseUrl": "./",
     "lib": ["ES6", "dom"],
