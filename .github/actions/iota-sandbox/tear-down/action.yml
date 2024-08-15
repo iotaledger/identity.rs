@@ -7,6 +7,6 @@ runs:
       shell: bash
       run: |
         cd iota-sandbox/sandbox
-        docker-compose down
+        docker compose down
         cd ../..
         sudo rm -rf iota-sandbox
