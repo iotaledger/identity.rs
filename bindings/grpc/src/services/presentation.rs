@@ -7,7 +7,7 @@ use _presentation::credential_validation_result::Result as ValidationResult;
 use _presentation::CredentialValidationResult;
 use _presentation::JwtPresentationRequest;
 use _presentation::JwtPresentationResponse;
-use identity_eddsa_verifier::EdDSAJwsVerifier;
+use crate::verifier::Verifier;
 use identity_iota::core::Object;
 use identity_iota::core::ToJson;
 use identity_iota::credential::CompoundJwtPresentationValidationError;
@@ -90,7 +90,7 @@ impl PresentationService for PresentationSvc {
       .await
       .map_err(Error::ResolutionError)?;
 
-    let presentation_validator = JwtPresentationValidator::with_signature_verifier(EdDSAJwsVerifier::default());
+    let presentation_validator = JwtPresentationValidator::with_signature_verifier(Verifier::default());
     let mut decoded_presentation = presentation_validator
       .validate::<IotaDocument, Jwt, Object>(
         &jwt_presentation,
@@ -101,7 +101,7 @@ impl PresentationService for PresentationSvc {
 
     let credentials = std::mem::take(&mut decoded_presentation.presentation.verifiable_credential);
     let mut decoded_credentials = Vec::with_capacity(credentials.len());
-    let credential_validator = JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
+    let credential_validator = JwtCredentialValidator::with_signature_verifier(Verifier::default());
     for credential_jwt in credentials {
       let issuer_did = JwtCredentialValidatorUtils::extract_issuer_from_jwt::<CoreDID>(&credential_jwt)
         .map_err(|e| Error::CredentialValidationError(e.into()));

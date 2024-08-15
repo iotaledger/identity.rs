@@ -18,7 +18,6 @@ use _domain_linkage::ValidateDidResponse;
 use _domain_linkage::ValidateDomainAgainstDidConfigurationRequest;
 use _domain_linkage::ValidateDomainRequest;
 use _domain_linkage::ValidateDomainResponse;
-use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::FromJson;
 use identity_iota::core::Url;
 use identity_iota::credential::DomainLinkageConfiguration;
@@ -37,6 +36,8 @@ use tonic::Request;
 use tonic::Response;
 use tonic::Status;
 use url::Origin;
+
+use crate::verifier::Verifier;
 
 mod _domain_linkage {
   tonic::include_proto!("domain_linkage");
@@ -276,7 +277,7 @@ impl DomainLinkageService {
       .for_each(|(credential, issuer_did_doc)| {
         let id = issuer_did_doc.id().to_string();
 
-        if let Err(err) = JwtDomainLinkageValidator::with_signature_verifier(EdDSAJwsVerifier::default())
+        if let Err(err) = JwtDomainLinkageValidator::with_signature_verifier(Verifier::default())
           .validate_linkage(
             &issuer_did_doc,
             &domain_linkage_configuration,
