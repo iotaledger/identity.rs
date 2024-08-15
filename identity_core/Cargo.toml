@@ -12,7 +12,7 @@ rust-version.workspace = true
 description = "The core traits and types for the identity-rs library."
 
 [dependencies]
-iota-crypto = { version = "0.23", default-features = false, features = ["ed25519", "random", "sha", "x25519", "std"] }
+iota-crypto = { version = "0.23.2", default-features = false, features = ["ed25519", "random", "sha", "x25519", "std"] }
 multibase = { version = "0.9", default-features = false, features = ["std"] }
 serde = { workspace = true, features = ["std"] }
 serde_json = { workspace = true, features = ["std"] }
