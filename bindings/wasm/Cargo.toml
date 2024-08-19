@@ -21,6 +21,7 @@ bls12_381_plus = "=0.8.15"
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
 identity_eddsa_verifier = { path = "../../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
+identity_ecdsa_verifier = { path = "../../identity_ecdsa_verifier", default-features = false, features = ["es256", "es256k"] }
 js-sys = { version = "0.3.61" }
 json-proof-token = "0.3.4"
 proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
