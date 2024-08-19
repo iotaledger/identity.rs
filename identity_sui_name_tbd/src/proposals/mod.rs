@@ -18,7 +18,7 @@ use iota_sdk::types::object::Owner;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use iota_sdk::types::transaction::Argument;
 use iota_sdk::types::transaction::ProgrammableTransaction;
-use secret_storage::signer::Signer;
+use secret_storage::Signer;
 use serde::Deserialize;
 pub use update_did_doc::*;
 
@@ -68,11 +68,10 @@ where
     gas_budget: u64,
     allow_chained_execution: bool,
     identity: &mut OnChainIdentity,
-    client: &IdentityClient,
-    signer: &S,
+    client: &IdentityClient<S>,
   ) -> Result<ProposalResult<Self>, Error>
   where
-    S: Signer<IotaKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature>,
   {
     let identity_ref = identity.obj_ref.as_ref().cloned().unwrap();
     let controller_cap = identity.get_controller_cap(client).await?;
@@ -94,12 +93,12 @@ where
       ptb.finish()
     };
     let tx_effects = client
-      .execute_transaction(tx, gas_budget, signer)
+      .execute_transaction(tx, gas_budget)
       .await?
       .effects
       .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
     if let IotaExecutionStatus::Failure { error } = tx_effects.status() {
-      return Err(IotaSdkError::DataError(error.clone()).into());
+      return Err(IotaSdkError::Data(error.clone()).into());
     }
 
     if chain_execute {
@@ -125,23 +124,22 @@ where
     self,
     gas_budget: u64,
     identity: &mut OnChainIdentity,
-    client: &IdentityClient,
-    signer: &S,
+    client: &IdentityClient<S>,
   ) -> Result<<Self as ProposalT>::Output, Error>
   where
-    S: Signer<IotaKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature>,
   {
     let identity_ref = identity.obj_ref.as_ref().unwrap().clone();
     let controller_cap = identity.get_controller_cap(client).await?;
 
     let tx = Self::make_execute_tx(&self, identity_ref, controller_cap, client.package_id())?;
     let tx_effects = client
-      .execute_transaction(tx, gas_budget, signer)
+      .execute_transaction(tx, gas_budget)
       .await?
       .effects
       .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
     if let IotaExecutionStatus::Failure { error } = tx_effects.status() {
-      Err(IotaSdkError::DataError(error.clone()).into())
+      Err(IotaSdkError::Data(error.clone()).into())
     } else {
       Self::parse_tx_effects(tx_effects)
     }
@@ -157,11 +155,10 @@ where
     &mut self,
     gas_budget: u64,
     identity: &mut OnChainIdentity,
-    client: &IdentityClient,
-    signer: &S,
+    client: &IdentityClient<S>,
   ) -> Result<(), Error>
   where
-    S: Signer<IotaKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature>,
   {
     let identity_ref = identity.obj_ref.as_ref().unwrap();
     let controller_cap = identity.get_controller_cap(client).await?;
@@ -172,7 +169,7 @@ where
       client.package_id(),
     )?;
 
-    let response = client.execute_transaction(tx, gas_budget, signer).await?;
+    let response = client.execute_transaction(tx, gas_budget).await?;
     if let IotaExecutionStatus::Failure { error } = response.effects.expect("had effects").into_status() {
       return Err(Error::TransactionUnexpectedResponse(error));
     }
@@ -253,10 +250,10 @@ pub enum ProposalResult<P: ProposalT> {
 impl<'i, A> ProposalBuilder<'i, A> {
   /// Creates a [`Proposal`] with the provided arguments. If `forbid_chained_execution` is set to `true`,
   /// the [`Proposal`] won't be executed even if creator alone has enough voting power.
-  pub async fn finish<S>(self, client: &IdentityClient, signer: &S) -> Result<ProposalResult<Proposal<A>>, Error>
+  pub async fn finish<S>(self, client: &IdentityClient<S>) -> Result<ProposalResult<Proposal<A>>, Error>
   where
     Proposal<A>: ProposalT<Action = A> + for<'de> Deserialize<'de>,
-    S: Signer<IotaKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature>,
   {
     let ProposalBuilder {
       identity,
@@ -274,7 +271,6 @@ impl<'i, A> ProposalBuilder<'i, A> {
       !forbid_chained_execution,
       identity,
       client,
-      signer,
     )
     .await
   }

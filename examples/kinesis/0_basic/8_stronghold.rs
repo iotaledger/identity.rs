@@ -14,8 +14,6 @@ use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwsSignatureOptions;
 use identity_iota::verification::jws::DecodedJws;
 
-use identity_storage::StorageSigner;
-
 /// Demonstrates how to use stronghold for secure storage.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -27,15 +25,13 @@ async fn main() -> anyhow::Result<()> {
   let storage = get_stronghold_storage(Some(path.clone()))?;
 
   // use stronghold storage to create new client to interact with chain and get funded account with keys
-  let (identity_client, key_id, public_key_jwk) = get_client_and_create_account(&storage).await?;
-  // create new signer with stronghold storage, that will be used to sign tx with
-  let signer = StorageSigner::new(&storage, key_id, public_key_jwk);
+  let identity_client = get_client_and_create_account(&storage).await?;
   // create and publish document with stronghold storage
-  let (document, vm_fragment) = create_kinesis_did_document(&identity_client, &storage, &signer).await?;
+  let (document, vm_fragment) = create_kinesis_did_document(&identity_client, &storage).await?;
 
   // Resolve the published DID Document.
   let mut resolver = Resolver::<IotaDocument>::new();
-  resolver.attach_kinesis_iota_handler(identity_client.clone());
+  resolver.attach_kinesis_iota_handler((*identity_client).clone());
   let resolved_document: IotaDocument = resolver.resolve(document.id()).await.unwrap();
 
   drop(storage);

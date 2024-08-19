@@ -4,8 +4,8 @@
 use anyhow::Context as _;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::TypeTag;
-use tokio::process::Command;
 use std::str::FromStr;
+use tokio::process::Command;
 
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::Identifier;

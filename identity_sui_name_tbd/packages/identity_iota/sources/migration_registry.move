@@ -2,13 +2,16 @@ module identity_iota::migration_registry {
     use iota::{dynamic_object_field as field, transfer::share_object, event};
     use identity_iota::identity::Identity;
 
+    const BEACON_BYTES: vector<u8> = b"identity.rs_pkg";
+
     /// One time witness needed to construct a singleton migration registry.
     public struct MIGRATION_REGISTRY has drop {}
 
 
     /// Event type that is fired upon creation of a `MigrationRegistry`.
     public struct MigrationRegistryCreated has copy, drop {
-        id: ID
+        id: ID,
+        beacon: vector<u8>,
     }
 
     /// Object that tracks migrated alias outputs to their corresponding object IDs.
@@ -21,11 +24,11 @@ module identity_iota::migration_registry {
         let id = object::new(ctx);
         let registry_id = id.to_inner();
         let registry = MigrationRegistry {
-            id
+            id,
         };
         share_object(registry);
         // Signal the creation of a migration registry.
-        event::emit(MigrationRegistryCreated { id: registry_id });
+        event::emit(MigrationRegistryCreated { id: registry_id, beacon: BEACON_BYTES });
     }
 
     /// Checks whether the given alias ID exists in the migration registry.
