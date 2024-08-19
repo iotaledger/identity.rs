@@ -41,7 +41,7 @@ impl WasmJwtCredentialValidator {
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
-  pub fn new(signatureVerifier: IJwsVerifier) -> WasmJwtCredentialValidator {
+  pub fn new(signatureVerifier: Option<IJwsVerifier>) -> WasmJwtCredentialValidator {
     let signature_verifier = WasmJwsVerifier::new(signatureVerifier);
     WasmJwtCredentialValidator(JwtCredentialValidator::with_signature_verifier(signature_verifier))
   }

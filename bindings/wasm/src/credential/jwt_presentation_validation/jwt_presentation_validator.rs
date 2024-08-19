@@ -27,7 +27,7 @@ impl WasmJwtPresentationValidator {
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
-  pub fn new(signatureVerifier: IJwsVerifier) -> WasmJwtPresentationValidator {
+  pub fn new(signatureVerifier: Option<IJwsVerifier>) -> WasmJwtPresentationValidator {
     let signature_verifier = WasmJwsVerifier::new(signatureVerifier);
     WasmJwtPresentationValidator(JwtPresentationValidator::with_signature_verifier(signature_verifier))
   }
