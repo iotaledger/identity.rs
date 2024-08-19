@@ -9,7 +9,7 @@ use anyhow::anyhow;
 use anyhow::Context;
 use iota_sdk::rpc_types::IotaData as _;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
-use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
+use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI as _;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::ObjectRef;
@@ -20,7 +20,7 @@ use iota_sdk::types::Identifier;
 use iota_sdk::types::TypeTag;
 use iota_sdk::IotaClient;
 use move_core_types::language_storage::StructTag;
-use secret_storage::signer::Signer;
+use secret_storage::Signer;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
@@ -102,11 +102,10 @@ impl<T: MoveType> AuthenticatedAsset<T> {
     self,
     recipient: IotaAddress,
     gas_budget: u64,
-    client: &IdentityClient,
-    signer: &S,
+    client: &IdentityClient<S>,
   ) -> Result<TransferProposal, Error>
   where
-    S: Signer<IotaKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature>,
   {
     if !self.transferable {
       return Err(Error::InvalidConfig(format!(
@@ -116,7 +115,7 @@ impl<T: MoveType> AuthenticatedAsset<T> {
     }
     let tx = move_calls::asset::transfer::<T>(self.object_ref(client).await?, recipient, client.package_id())?;
     for id in client
-      .execute_transaction(tx, gas_budget, signer)
+      .execute_transaction(tx, gas_budget)
       .await?
       .effects
       .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?
@@ -143,9 +142,9 @@ impl<T: MoveType> AuthenticatedAsset<T> {
     ))
   }
 
-  pub async fn delete<S>(self, gas_budget: u64, client: &IdentityClient, signer: &S) -> Result<(), Error>
+  pub async fn delete<S>(self, gas_budget: u64, client: &IdentityClient<S>) -> Result<(), Error>
   where
-    S: Signer<IotaKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature>,
   {
     if !self.deletable {
       return Err(Error::InvalidConfig(format!(
@@ -155,7 +154,7 @@ impl<T: MoveType> AuthenticatedAsset<T> {
     }
 
     let tx = move_calls::asset::delete::<T>(self.object_ref(client).await?, client.package_id())?;
-    let response = client.execute_transaction(tx, gas_budget, signer).await?;
+    let response = client.execute_transaction(tx, gas_budget).await?;
 
     if response.errors.is_empty() {
       Ok(())
@@ -171,11 +170,10 @@ impl<T: MoveType + Serialize + Clone> AuthenticatedAsset<T> {
     &mut self,
     new_content: T,
     gas_budget: u64,
-    client: &IdentityClient,
-    signer: &S,
+    client: &IdentityClient<S>,
   ) -> Result<(), Error>
   where
-    S: Signer<IotaKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature>,
   {
     if !self.mutable {
       return Err(Error::InvalidConfig(format!(
@@ -185,7 +183,7 @@ impl<T: MoveType + Serialize + Clone> AuthenticatedAsset<T> {
     }
 
     let tx = move_calls::asset::update(self.object_ref(client).await?, new_content.clone(), client.package_id())?;
-    let response = client.execute_transaction(tx, gas_budget, signer).await?;
+    let response = client.execute_transaction(tx, gas_budget).await?;
 
     if response.errors.is_empty() {
       self.inner = new_content;
@@ -253,9 +251,9 @@ impl<T> AuthenticatedAssetBuilder<T>
 where
   T: MoveType + Serialize + for<'de> Deserialize<'de>,
 {
-  pub async fn finish<S>(self, client: &IdentityClient, signer: &S) -> Result<AuthenticatedAsset<T>, Error>
+  pub async fn finish<S>(self, client: &IdentityClient<S>) -> Result<AuthenticatedAsset<T>, Error>
   where
-    S: Signer<IotaKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature>,
   {
     let AuthenticatedAssetBuilder {
       inner,
@@ -268,7 +266,7 @@ where
 
     let gas_budget = gas_budget.ok_or_else(|| Error::GasIssue("missing gas budget".to_owned()))?;
     let created_asset_id = client
-      .execute_transaction(tx, gas_budget, signer)
+      .execute_transaction(tx, gas_budget)
       .await?
       .effects
       .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?
@@ -322,7 +320,7 @@ impl TransferProposal {
       .map_err(|e| Error::ObjectLookup(e.to_string()))
   }
 
-  async fn get_cap(&self, cap_type: &str, client: &IdentityClient) -> Result<ObjectRef, Error> {
+  async fn get_cap<S>(&self, cap_type: &str, client: &IdentityClient<S>) -> Result<ObjectRef, Error> {
     let cap_tag = StructTag::from_str(&format!("{}::asset::{cap_type}", client.package_id()))
       .map_err(|e| Error::ParsingFailed(e.to_string()))?;
     client
@@ -376,9 +374,9 @@ impl TransferProposal {
     }
   }
 
-  pub async fn accept<S>(&mut self, gas_budget: u64, client: &IdentityClient, signer: &S) -> Result<(), Error>
+  pub async fn accept<S>(&mut self, gas_budget: u64, client: &IdentityClient<S>) -> Result<(), Error>
   where
-    S: Signer<IotaKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature>,
   {
     if self.done {
       return Err(Error::TransactionBuildingFailed(
@@ -402,7 +400,7 @@ impl TransferProposal {
       param_type,
       client.package_id(),
     )?;
-    let response = client.execute_transaction(tx, gas_budget, signer).await?;
+    let response = client.execute_transaction(tx, gas_budget).await?;
 
     if response.errors.is_empty() {
       self.done = true;
@@ -413,9 +411,9 @@ impl TransferProposal {
     }
   }
 
-  pub async fn conclude_or_cancel<S>(self, gas_budget: u64, client: &IdentityClient, signer: &S) -> Result<(), Error>
+  pub async fn conclude_or_cancel<S>(self, gas_budget: u64, client: &IdentityClient<S>) -> Result<(), Error>
   where
-    S: Signer<IotaKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature>,
   {
     let cap = self.get_cap("SenderCap", client).await?;
     let (asset_ref, param_type) = self
@@ -434,7 +432,7 @@ impl TransferProposal {
       param_type,
       client.package_id(),
     )?;
-    let response = client.execute_transaction(tx, gas_budget, signer).await?;
+    let response = client.execute_transaction(tx, gas_budget).await?;
 
     if response.errors.is_empty() {
       Ok(())

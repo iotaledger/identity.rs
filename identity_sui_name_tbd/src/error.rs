@@ -61,4 +61,7 @@ pub enum Error {
   /// An operation cannot be carried on for a lack of permissions - e.g. missing capability.
   #[error("the requested operation cannot be performed for a lack of permissions; {0}")]
   MissingPermission(String),
+  /// An error caused by either a connection issue or an invalid RPC call.
+  #[error("RPC error: {0}")]
+  RpcError(String),
 }

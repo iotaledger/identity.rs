@@ -11,7 +11,6 @@ use identity_iota::did::DID;
 use identity_iota::document::CoreDocument;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
-use identity_storage::StorageSigner;
 
 /// Demonstrates how to set up a resolver using custom handlers.
 ///
@@ -21,18 +20,16 @@ use identity_storage::StorageSigner;
 async fn main() -> anyhow::Result<()> {
   // create new client to interact with chain and get funded account with keys
   let storage = get_memstorage()?;
-  let (identity_client, key_id, public_key_jwk) = get_client_and_create_account(&storage).await?;
-  // create new signer that will be used to sign tx with
-  let signer = StorageSigner::new(&storage, key_id, public_key_jwk);
+  let identity_client = get_client_and_create_account(&storage).await?;
   // create new DID document and publish it
-  let (document, _) = create_kinesis_did_document(&identity_client, &storage, &signer).await?;
+  let (document, _) = create_kinesis_did_document(&identity_client, &storage).await?;
 
   // Create a resolver returning an enum of the documents we are interested in and attach handlers for the "foo" and
   // "iota" methods.
   let mut resolver: Resolver<Document> = Resolver::new();
 
   // This is a convenience method for attaching a handler for the "iota" method by providing just a client.
-  resolver.attach_kinesis_iota_handler(identity_client.clone());
+  resolver.attach_kinesis_iota_handler((*identity_client).clone());
   resolver.attach_handler("foo".to_owned(), resolve_did_foo);
 
   // A fake did:foo DID for demonstration purposes.

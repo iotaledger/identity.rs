@@ -29,17 +29,14 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwsSignatureOptions;
-use identity_storage::StorageSigner;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create new client to interact with chain and get funded account with keys.
   let storage = get_memstorage()?;
-  let (identity_client, key_id, public_key_jwk) = get_client_and_create_account(&storage).await?;
-  // Create new signer that will be used to sign tx with.
-  let signer = StorageSigner::new(&storage, key_id, public_key_jwk);
+  let identity_client = get_client_and_create_account(&storage).await?;
   // Create a DID for the entity that will issue the Domain Linkage Credential.
-  let (mut document, vm_fragment_1) = create_kinesis_did_document(&identity_client, &storage, &signer).await?;
+  let (mut document, vm_fragment_1) = create_kinesis_did_document(&identity_client, &storage).await?;
   let did: IotaDID = document.id().clone();
 
   // =====================================================
@@ -60,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
   let linked_domain_service: LinkedDomainService = LinkedDomainService::new(service_url, domains, Object::new())?;
   document.insert_service(linked_domain_service.into())?;
   let updated_did_document: IotaDocument = identity_client
-    .publish_did_document_update(document.clone(), TEST_GAS_BUDGET, &signer)
+    .publish_did_document_update(document.clone(), TEST_GAS_BUDGET)
     .await?;
 
   println!("DID document with linked domain service: {updated_did_document:#}");
@@ -117,7 +114,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Init a resolver for resolving DID Documents.
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_kinesis_iota_handler(identity_client.clone());
+  resolver.attach_kinesis_iota_handler((*identity_client).clone());
 
   // =====================================================
   // → Case 1: starting from domain

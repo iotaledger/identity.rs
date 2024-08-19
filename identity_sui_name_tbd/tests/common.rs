@@ -18,13 +18,11 @@ use identity_storage::KeyType;
 use identity_storage::Storage;
 use identity_storage::StorageSigner;
 use identity_sui_name_tbd::client::IdentityClient;
-use identity_sui_name_tbd::client::IdentityClientBuilder;
-use identity_sui_name_tbd::migration;
+use identity_sui_name_tbd::client::IdentityClientReadOnly;
 use identity_sui_name_tbd::utils::request_funds;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::IotaClient;
 use iota_sdk::IotaClientBuilder;
 use jsonpath_rust::JsonPathQuery;
 use serde_json::Value;
@@ -75,9 +73,10 @@ async fn init() -> anyhow::Result<TestClient> {
   };
 
   let storage = Arc::new(Storage::new(JwkMemStore::new(), KeyIdMemstore::new()));
+  let identity_client = IdentityClientReadOnly::new(client, package_id).await?;
 
   Ok(TestClient {
-    client,
+    client: identity_client,
     package_id,
     address,
     storage,
@@ -168,7 +167,7 @@ fn get_public_key_bytes(sender_public_jwk: &Jwk) -> Result<Vec<u8>, anyhow::Erro
 
 #[derive(Clone)]
 pub struct TestClient {
-  client: IotaClient,
+  client: IdentityClientReadOnly,
   package_id: ObjectID,
   #[allow(dead_code)]
   address: IotaAddress,
@@ -176,7 +175,7 @@ pub struct TestClient {
 }
 
 impl Deref for TestClient {
-  type Target = IotaClient;
+  type Target = IdentityClientReadOnly;
   fn deref(&self) -> &Self::Target {
     &self.client
   }
@@ -296,14 +295,14 @@ impl TestClient {
         .get_owner_address()
         .map(ObjectID::from)?
     };
-
+    let migration_registry_id = self.client.migration_registry_id();
     // Call migration script.
     let output = Command::new("sh")
       .current_dir(SCRIPT_DIR)
       .arg("migrate_alias_output.sh")
       .arg(self.package_id.to_string())
       .arg(alias_output_id.to_string())
-      .arg(migration::migration_registry_id(self).await?.to_string())
+      .arg(migration_registry_id.to_string())
       .output()
       .await?;
 
@@ -361,25 +360,19 @@ impl TestClient {
     Ok(new_client)
   }
 
-  pub async fn new_user_client(&self) -> anyhow::Result<(IdentityClient, MemSigner)> {
+  pub async fn new_user_client(&self) -> anyhow::Result<IdentityClient<MemSigner>> {
     let generate = self
       .storage
       .key_storage()
       .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
       .await?;
     let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
-    let public_key_bytes = get_public_key_bytes(&public_key_jwk)?;
-    // generate new key
-    let user_client = IdentityClientBuilder::default()
-      .identity_iota_package_id(self.package_id())
-      .sender_public_key(&public_key_bytes)
-      .iota_client(self.client.clone())
-      .network_name("iota")
-      .build()?;
     let signer = StorageSigner::new(&self.storage, generate.key_id, public_key_jwk);
 
-    request_funds(&user_client.sender_address()?).await?;
+    let user_client = IdentityClient::new(self.client.clone(), signer).await?;
 
-    Ok((user_client, signer))
+    request_funds(&user_client.sender_address()).await?;
+
+    Ok(user_client)
   }
 }

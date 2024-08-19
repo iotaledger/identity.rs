@@ -28,12 +28,13 @@ use iota_sdk::types::Identifier;
 use iota_sdk::types::TypeTag;
 use iota_sdk::IotaClient;
 use move_core_types::language_storage::StructTag;
-use secret_storage::signer::Signer;
+use secret_storage::Signer;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::client::IdentityClient;
+use crate::client::IdentityClientReadOnly;
 use crate::client::IotaKeySignature;
 use crate::proposals::ConfigChange;
 use crate::proposals::DeactiveDid;
@@ -104,7 +105,7 @@ impl OnChainIdentity {
   pub fn proposals(&self) -> &HashSet<ObjectID> {
     self.did_doc.proposals()
   }
-  pub(crate) async fn get_controller_cap(&self, client: &IdentityClient) -> Result<ObjectRef, Error> {
+  pub(crate) async fn get_controller_cap<S>(&self, client: &IdentityClient<S>) -> Result<ObjectRef, Error> {
     let controller_cap_tag = StructTag::from_str(&format!("{}::multicontroller::ControllerCap", client.package_id()))
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
     client
@@ -129,7 +130,7 @@ impl OnChainIdentity {
 
   pub async fn get_history(
     &self,
-    client: &IdentityClient,
+    client: &IdentityClientReadOnly,
     last_version: Option<&IotaObjectData>,
     page_size: Option<usize>,
   ) -> Result<Vec<IotaObjectData>, Error> {
@@ -185,12 +186,11 @@ pub fn has_previous_version(history_item: &IotaObjectData) -> Result<bool, Error
 }
 
 async fn get_past_object(
-  client: &IdentityClient,
+  client: &IdentityClientReadOnly,
   object_id: ObjectID,
   version: SequenceNumber,
 ) -> Result<IotaPastObjectResponse, Error> {
   client
-    .iota_client()
     .read_api()
     .try_get_parsed_past_object(object_id, version, IotaObjectDataOptions::full_content())
     .await
@@ -199,7 +199,10 @@ async fn get_past_object(
     })
 }
 
-async fn get_previous_version(client: &IdentityClient, iod: IotaObjectData) -> Result<Option<IotaObjectData>, Error> {
+async fn get_previous_version(
+  client: &IdentityClientReadOnly,
+  iod: IotaObjectData,
+) -> Result<Option<IotaObjectData>, Error> {
   // try to get digest of previous tx
   // if we requested the prev tx and it isn't returned, this should be the oldest state
   let prev_tx_digest = if let Some(value) = iod.previous_transaction {
@@ -210,7 +213,6 @@ async fn get_previous_version(client: &IdentityClient, iod: IotaObjectData) -> R
 
   // resolve previous tx
   let prev_tx_response = client
-    .iota_client()
     .read_api()
     .get_transaction_with_options(
       prev_tx_digest,
@@ -371,9 +373,9 @@ impl<'a> IdentityBuilder<'a> {
       .fold(self, |builder, (addr, vp)| builder.controller(addr, vp))
   }
 
-  pub async fn finish<S>(self, client: &IdentityClient, signer: &S) -> Result<OnChainIdentity, Error>
+  pub async fn finish<S>(self, client: &IdentityClient<S>) -> Result<OnChainIdentity, Error>
   where
-    S: Signer<IotaKeySignature> + Send + Sync,
+    S: Signer<IotaKeySignature>,
   {
     let IdentityBuilder {
       package_id,
@@ -402,9 +404,7 @@ impl<'a> IdentityBuilder<'a> {
     };
 
     let gas_budget = gas_budget.ok_or_else(|| Error::GasIssue("Missing gas budget in identity creation".to_owned()))?;
-    let response = client
-      .execute_transaction(programmable_transaction, gas_budget, signer)
-      .await?;
+    let response = client.execute_transaction(programmable_transaction, gas_budget).await?;
 
     let created = match response.clone().effects {
       Some(IotaTransactionBlockEffects::V1(effects)) => effects.created,

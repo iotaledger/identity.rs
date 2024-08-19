@@ -341,7 +341,7 @@ mod iota_handler {
 
   #[cfg(feature = "kinesis")]
   mod kinesis_specific {
-    use identity_sui_name_tbd::client::IdentityClient;
+    use identity_sui_name_tbd::client::IdentityClientReadOnly;
 
     use super::*;
 
@@ -352,8 +352,8 @@ mod iota_handler {
       /// Convenience method for attaching a new handler responsible for resolving IOTA DIDs via kinesis.
       ///
       /// See also [`attach_handler`](Self::attach_handler)
-      pub fn attach_kinesis_iota_handler(&mut self, client: IdentityClient) {
-        let arc_client: Arc<IdentityClient> = Arc::new(client);
+      pub fn attach_kinesis_iota_handler(&mut self, client: IdentityClientReadOnly) {
+        let arc_client = Arc::new(client);
 
         let handler = move |did: IotaDID| {
           let future_client = arc_client.clone();

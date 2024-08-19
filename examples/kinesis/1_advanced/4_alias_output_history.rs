@@ -13,7 +13,6 @@ use identity_iota::document::Service;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::verification::MethodRelationship;
-use identity_storage::StorageSigner;
 use identity_sui_name_tbd::client::get_object_id_from_did;
 use identity_sui_name_tbd::migration::has_previous_version;
 use identity_sui_name_tbd::migration::Identity;
@@ -25,11 +24,9 @@ async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
   // NOTE: a permanode is required to fetch older output histories.
   let storage = get_memstorage()?;
-  let (identity_client, key_id, public_key_jwk) = get_client_and_create_account(&storage).await?;
-  // create new signer that will be used to sign tx with
-  let signer = StorageSigner::new(&storage, key_id, public_key_jwk);
+  let identity_client = get_client_and_create_account(&storage).await?;
   // create new DID document and publish it
-  let (document, vm_fragment_1) = create_kinesis_did_document(&identity_client, &storage, &signer).await?;
+  let (document, vm_fragment_1) = create_kinesis_did_document(&identity_client, &storage).await?;
   let did: IotaDID = document.id().clone();
 
   // Resolve the latest state of the document.
@@ -51,7 +48,7 @@ async fn main() -> anyhow::Result<()> {
     document.metadata.updated = Some(Timestamp::now_utc());
 
     identity_client
-      .publish_did_document_update(document.clone(), TEST_GAS_BUDGET, &signer)
+      .publish_did_document_update(document.clone(), TEST_GAS_BUDGET)
       .await?;
   }
 

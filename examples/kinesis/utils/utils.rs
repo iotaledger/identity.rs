@@ -3,28 +3,31 @@
 
 use std::path::PathBuf;
 
+use anyhow::Context;
 use identity_iota::iota::IotaDocument;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::KeyIdMemstore;
 use identity_iota::storage::Storage;
-use identity_iota::verification::jwk::Jwk;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 
 use identity_storage::JwkStorage;
-use identity_storage::KeyId;
+use identity_storage::KeyIdStorage;
 use identity_storage::KeyType;
 use identity_storage::StorageSigner;
 use identity_stronghold::StrongholdStorage;
 use identity_sui_name_tbd::client::convert_to_address;
 use identity_sui_name_tbd::client::get_sender_public_key;
 use identity_sui_name_tbd::client::IdentityClient;
+use identity_sui_name_tbd::client::IdentityClientReadOnly;
+use identity_sui_name_tbd::client::IotaKeySignature;
 use identity_sui_name_tbd::utils::request_funds;
 use iota_sdk::IotaClientBuilder;
 use iota_sdk_legacy::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk_legacy::client::Password;
 use rand::distributions::DistString;
+use secret_storage::Signer;
 use serde_json::Value;
 
 pub static API_ENDPOINT: &str = "http://localhost";
@@ -33,18 +36,18 @@ pub const TEST_GAS_BUDGET: u64 = 50_000_000;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
-pub async fn create_kinesis_did_document<K, I>(
-  identity_client: &IdentityClient,
+pub async fn create_kinesis_did_document<K, I, S>(
+  identity_client: &IdentityClient<S>,
   storage: &Storage<K, I>,
-  signer: &StorageSigner<'_, K, I>,
 ) -> anyhow::Result<(IotaDocument, String)>
 where
   K: identity_storage::JwkStorage,
   I: identity_storage::KeyIdStorage,
+  S: Signer<IotaKeySignature>,
 {
   // Create a new DID document with a placeholder DID.
   // The DID will be derived from the Alias Id of the Alias Output after publishing.
-  let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network_name());
+  let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network());
   let verification_method_fragment = unpublished
     .generate_method(
       storage,
@@ -56,7 +59,7 @@ where
     .await?;
 
   let document = identity_client
-    .publish_did_document(unpublished, TEST_GAS_BUDGET, signer)
+    .publish_did_document(unpublished, TEST_GAS_BUDGET)
     .await?;
 
   Ok((document, verification_method_fragment))
@@ -73,9 +76,10 @@ pub fn random_stronghold_path() -> PathBuf {
 
 pub async fn get_client_and_create_account<K, I>(
   storage: &Storage<K, I>,
-) -> Result<(IdentityClient, KeyId, Jwk), anyhow::Error>
+) -> Result<IdentityClient<StorageSigner<K, I>>, anyhow::Error>
 where
   K: JwkStorage,
+  I: KeyIdStorage,
 {
   // The API endpoint of an IOTA node
   let api_endpoint: &str = "http://127.0.0.1:9000";
@@ -94,13 +98,17 @@ where
   let public_key_bytes = get_sender_public_key(&public_key_jwk)?;
   let sender_address = convert_to_address(&public_key_bytes)?;
   request_funds(&sender_address).await?;
+  let package_id = std::env::var("IDENTITY_IOTA_PKG_ID")
+    .map_err(|e| {
+      anyhow::anyhow!("env variable IDENTITY_IOTA_PKG_ID must be set in order to run the examples").context(e)
+    })
+    .and_then(|pkg_str| pkg_str.parse().context("invalid package id"))?;
 
-  let identity_client: IdentityClient = IdentityClient::builder()
-    .iota_client(iota_client)
-    .sender_public_key(&public_key_bytes)
-    .build()?;
+  let read_only_client = IdentityClientReadOnly::new(iota_client, package_id).await?;
+  let signer = StorageSigner::new(storage, generate.key_id, public_key_jwk);
+  let identity_client = IdentityClient::new(read_only_client, signer).await?;
 
-  Ok((identity_client, generate.key_id, public_key_jwk))
+  Ok(identity_client)
 }
 
 pub fn get_memstorage() -> Result<MemStorage, anyhow::Error> {
