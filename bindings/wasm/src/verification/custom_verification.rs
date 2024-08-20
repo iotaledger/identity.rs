@@ -13,8 +13,8 @@ use wasm_bindgen::prelude::*;
 use crate::jose::WasmJwk;
 
 /// Wrapper that enables custom TS JWS signature verification plugins to be used where the
-/// JwsVerifier trait is required. Falls back to the default implementation if a custom
-/// implementation was not passed.
+/// JwsVerifier trait is required. Falls back to the default implementation capable of handling
+/// EdDSA (ED25519), ES256, ES256K if a custom implementation is not passed.
 pub(crate) struct WasmJwsVerifier(Option<IJwsVerifier>);
 
 impl WasmJwsVerifier {

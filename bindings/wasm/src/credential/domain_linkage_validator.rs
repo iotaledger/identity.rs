@@ -24,7 +24,7 @@ pub struct WasmJwtDomainLinkageValidator {
 #[wasm_bindgen(js_class = JwtDomainLinkageValidator)]
 impl WasmJwtDomainLinkageValidator {
   /// Creates a new {@link JwtDomainLinkageValidator}. If a `signatureVerifier` is provided it will be used when
-  /// verifying decoded JWS signatures, otherwise the default which is capable of handling the `EdDSA`, `ES256`, `ES256K`
+  /// verifying decoded JWS signatures, otherwise a default verifier capable of handling the `EdDSA`, `ES256`, `ES256K`
   /// algorithms will be used.
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
