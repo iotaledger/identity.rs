@@ -17,6 +17,9 @@ bcs = "0.1.4"
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "fastcrypto-zkp-v0.1.3", package = "fastcrypto" }
 futures = { version = "0.3", default-features = false }
 identity_core = { version = "=1.2.0", path = "../identity_core" }
+identity_credential = { version = "=1.2.0", path = "../identity_credential" }
+identity_document = { version = "=1.2.0", path = "../identity_document" }
+identity_eddsa_verifier = { version = "=1.2.0", path = "../identity_eddsa_verifier" }
 identity_iota_core = { version = "=1.2.0", path = "../identity_iota_core" }
 identity_jose = { version = "=1.2.0", path = "../identity_jose" }
 identity_verification = { version = "=1.2.0", path = "../identity_verification" }
@@ -37,6 +40,7 @@ tokio = { version = "1.29.0", default-features = false, features = ["macros", "s
 
 [dev-dependencies]
 bcs = "0.1.4"
+identity_credential = { version = "=1.2.0", path = "../identity_credential", features = ["validator"] }
 identity_storage = { path = "../identity_storage", features = ["send-sync-storage", "storage-signer"] }
 jsonpath-rust = "0.5.1"
 serial_test = "3.1.1"

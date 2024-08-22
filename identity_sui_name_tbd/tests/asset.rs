@@ -4,8 +4,23 @@ use std::str::FromStr;
 
 use common::get_client as get_test_client;
 use common::TEST_GAS_BUDGET;
+use identity_core::common::Object;
+use identity_core::common::Timestamp;
+use identity_core::common::Url;
+use identity_credential::credential::CredentialBuilder;
+use identity_credential::validator::FailFast;
+use identity_credential::validator::JwtCredentialValidationOptions;
+use identity_credential::validator::JwtCredentialValidator;
+use identity_document::document::CoreDocument;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
+use identity_iota_core::IotaDID;
+use identity_storage::JwkDocumentExt;
+use identity_storage::JwsSignatureOptions;
 use identity_sui_name_tbd::utils::MoveType as _;
 use identity_sui_name_tbd::AuthenticatedAsset;
+use identity_sui_name_tbd::PublicAvailableVC;
+use identity_verification::VerificationMethod;
+use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::TypeTag;
 use itertools::Itertools as _;
 use move_core_types::language_storage::StructTag;
@@ -148,6 +163,57 @@ async fn deleting_asset_works() -> anyhow::Result<()> {
     .map(|obj| obj.object_id().unwrap())
     .contains(&asset_id);
   assert!(!alice_owns_asset);
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn hosting_vc_works() -> anyhow::Result<()> {
+  let test_client = get_test_client().await?;
+  let identity_client = test_client.new_user_client().await?;
+
+  let did = {
+    let object_id = ObjectID::random();
+    IotaDID::parse(&format!("did:iota:{object_id}"))?
+  };
+  let did_doc = CoreDocument::builder(Object::default())
+    .id(did.clone().into())
+    .verification_method(VerificationMethod::new_from_jwk(
+      did.clone(),
+      identity_client.signer().public_key().clone(),
+      Some(identity_client.signer().key_id().as_str()),
+    )?)
+    .build()?;
+  let credential = CredentialBuilder::new(Object::default())
+    .id(Url::parse("http://example.com/credentials/42")?)
+    .issuance_date(Timestamp::now_utc())
+    .issuer(Url::parse(did.to_string())?)
+    .subject(serde_json::from_value(serde_json::json!({
+      "id": did,
+      "type": ["VerifiableCredential", "ExampleCredential"],
+      "value": 3
+    }))?)
+    .build()?;
+  let credential_jwt = did_doc
+    .create_credential_jwt(
+      &credential,
+      identity_client.signer().storage(),
+      identity_client.signer().key_id().as_str(),
+      &JwsSignatureOptions::default(),
+      None,
+    )
+    .await?;
+
+  let vc = PublicAvailableVC::new(credential_jwt.clone(), TEST_GAS_BUDGET, &identity_client).await?;
+  assert_eq!(credential_jwt, vc.jwt());
+
+  let validator = JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
+  validator.validate::<_, Object>(
+    &credential_jwt,
+    &did_doc,
+    &JwtCredentialValidationOptions::default(),
+    FailFast::FirstError,
+  )?;
 
   Ok(())
 }

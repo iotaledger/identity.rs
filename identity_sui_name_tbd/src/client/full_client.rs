@@ -34,7 +34,7 @@ use serde::Serialize;
 use shared_crypto::intent::Intent;
 use shared_crypto::intent::IntentMessage;
 
-use crate::asset::AuthenticatedAssetBuilder;
+use crate::assets::AuthenticatedAssetBuilder;
 use crate::migration::Identity;
 use crate::migration::IdentityBuilder;
 use crate::utils::MoveType;
