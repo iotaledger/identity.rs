@@ -42,7 +42,10 @@ impl Timestamp {
   /// fractional seconds truncated.
   ///
   /// See the [`datetime` DID-core specification](https://www.w3.org/TR/did-core/#production).
-  #[cfg(all(not(all(target_arch = "wasm32", not(target_os = "wasi"))), not(feature = "custom_time")))]
+  #[cfg(all(
+    not(all(target_arch = "wasm32", not(target_os = "wasi"))),
+    not(feature = "custom_time")
+  ))]
   pub fn now_utc() -> Self {
     Self(truncate_fractional_seconds(OffsetDateTime::now_utc()))
   }
