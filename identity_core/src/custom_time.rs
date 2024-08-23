@@ -68,7 +68,7 @@ macro_rules! register_custom_now_utc {
       // We use Rust ABI to be safe against potential panics in the passed function.
       #[no_mangle]
       unsafe fn __now_utc_custom() -> Timestamp {
-        // Make sure the passed function has the type of getrandom::getrandom
+        // Make sure the passed function has the type of `now_utc_custom`
         type F = fn() -> Timestamp;
         let f: F = $path;
         f()
