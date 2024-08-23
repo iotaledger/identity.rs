@@ -63,23 +63,23 @@ use crate::common::Timestamp;
 /// registered function.
 #[macro_export]
 macro_rules! register_custom_now_utc {
-    ($path:path) => {
-        const __GET_TIME_INTERNAL: () = {
-            // We use Rust ABI to be safe against potential panics in the passed function.
-            #[no_mangle]
-            unsafe fn __now_utc_custom() -> Timestamp {
-                // Make sure the passed function has the type of getrandom::getrandom
-                type F = fn() -> Timestamp;
-                let f: F = $path;
-                f()
-            }
-        };
+  ($path:path) => {
+    const __GET_TIME_INTERNAL: () = {
+      // We use Rust ABI to be safe against potential panics in the passed function.
+      #[no_mangle]
+      unsafe fn __now_utc_custom() -> Timestamp {
+        // Make sure the passed function has the type of getrandom::getrandom
+        type F = fn() -> Timestamp;
+        let f: F = $path;
+        f()
+      }
     };
+  };
 }
 
 pub(crate) fn now_utc_custom() -> Timestamp {
-    extern "Rust" {
-        fn __now_utc_custom() -> Timestamp;
-    }
-    unsafe { __now_utc_custom() }
+  extern "Rust" {
+    fn __now_utc_custom() -> Timestamp;
+  }
+  unsafe { __now_utc_custom() }
 }
