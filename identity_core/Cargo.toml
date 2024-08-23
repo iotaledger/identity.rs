@@ -38,3 +38,12 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [lints]
 workspace = true
+
+[features]
+# Enables a macro to provide a custom time (Timestamp::now_utc) implementation, see src/custom_time.rs
+custom_time = []
+
+
+[[test]]
+name = "custom_time"
+required-features = ["custom_time"]
