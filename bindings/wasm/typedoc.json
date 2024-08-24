@@ -1,0 +1,13 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "disableSources": true,
+    "excludePrivate": true,
+    "excludeInternal": true,
+    "excludeNotDocumented": true,
+    "excludeExternals": true,
+    "out": "./docs/api",
+    "externalPattern": ["lib/*.ts"],
+    "compilerOptions": {
+        "skipLibCheck": true,
+    }
+}

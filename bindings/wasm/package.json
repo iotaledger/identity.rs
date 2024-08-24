@@ -32,7 +32,8 @@
     "test:unit:node": "ts-mocha -p tsconfig.node.json ./tests/*.ts --parallel --exit",
     "cypress": "cypress open",
     "fmt": "dprint fmt",
-    "fix_js_doc": "sed -Ei 's/\\((.*)\\)\\[\\]/\\1\\[\\]/' ./node/identity_wasm.js"
+    "fix_js_doc": "sed -Ei 's/\\((.*)\\)\\[\\]/\\1\\[\\]/' ./node/identity_wasm.js",
+    "create-api-docs": "typedoc ./node/identity_wasm.d.ts"
   },
   "config": {
     "CYPRESS_VERIFY_TIMEOUT": 100000
@@ -71,6 +72,8 @@
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.1.0",
     "txm": "^8.1.0",
+    "typedoc": "^0.26.6",
+    "typedoc-plugin-markdown": "^4.2.5",
     "typescript": "^4.7.2",
     "wasm-opt": "^1.3.0"
   },
