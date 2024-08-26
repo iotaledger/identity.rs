@@ -488,7 +488,7 @@ mod tests {
   /// Produces a strategy for generating an ordered set together with two values according to the following algorithm:
   /// 1. Call `f` to get a pair of sets (x,y).
   /// 2. Toss a coin to decide whether to pick an element from x at random, or from y (if the chosen set is empty
-  /// Default is called). 3. Repeat step 2 and let the two outcomes be denoted a and b.
+  ///   Default is called). 3. Repeat step 2 and let the two outcomes be denoted a and b.
   /// 4. Toss a coin to decide whether to swap the keys of a and b.
   /// 5. return (x,a,b)
   fn set_with_values<F, T, U>(f: F) -> impl Strategy<Value = (OrderedSet<T>, T, T)>
