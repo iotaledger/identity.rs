@@ -27,7 +27,7 @@ use crate::common::Timestamp;
 /// // Some fixed timestamp
 /// const MY_FIXED_TIMESTAMP: i64 = 1724402964;
 /// pub fn static_now_utc() -> Timestamp {
-///     Timestamp::from_unix(MY_FIXED_TIMESTAMP).unwrap()
+///   Timestamp::from_unix(MY_FIXED_TIMESTAMP).unwrap()
 /// }
 /// ```
 ///
@@ -53,8 +53,8 @@ use crate::common::Timestamp;
 /// ```rust
 /// # mod static_now_utc { pub fn static_now_utc() -> Timestamp { unimplemented!() } }
 ///
-/// use static_now_utc::static_now_utc;
 /// use identity_core::register_custom_now_utc;
+/// use static_now_utc::static_now_utc;
 ///
 /// register_custom_now_utc!(static_now_utc);
 /// ```
