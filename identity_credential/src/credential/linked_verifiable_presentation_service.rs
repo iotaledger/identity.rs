@@ -106,7 +106,7 @@ impl LinkedVerifiablePresentationService {
   }
 
   /// Returns the Verifiable Presentations contained in the Linked Verifiable Presentation Service.
-  pub fn verifiable_presentations(&self) -> &[Url] {
+  pub fn verifiable_presentation_urls(&self) -> &[Url] {
     match self.service.service_endpoint() {
       ServiceEndpoint::One(endpoint) => std::slice::from_ref(endpoint),
       ServiceEndpoint::Set(endpoints) => endpoints.as_slice(),
@@ -188,7 +188,7 @@ mod tests {
     .unwrap();
     let service: LinkedVerifiablePresentationService = LinkedVerifiablePresentationService::try_from(service).unwrap();
     let linked_vps: Vec<Url> = vec![Url::parse("https://foo.example-1.com").unwrap()];
-    assert_eq!(service.verifiable_presentations(), linked_vps);
+    assert_eq!(service.verifiable_presentation_urls(), linked_vps);
   }
 
   #[test]
@@ -204,6 +204,6 @@ mod tests {
       Url::parse("https://foo.example-1.com").unwrap(),
       Url::parse("https://foo.example-2.com").unwrap(),
     ];
-    assert_eq!(service.verifiable_presentations(), linked_vps);
+    assert_eq!(service.verifiable_presentation_urls(), linked_vps);
   }
 }
