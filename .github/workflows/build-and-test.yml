@@ -5,7 +5,7 @@ on:
     branches:
       - main
   pull_request:
-    types: [ opened, synchronize, reopened, ready_for_review ]
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - main
       - 'epic/**'
@@ -62,12 +62,12 @@ jobs:
 
   build-and-test:
     runs-on: ${{ matrix.os }}
-    needs: [ check-for-run-condition, check-for-modification ]
+    needs: [check-for-run-condition, check-for-modification]
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' && needs.check-for-modification.outputs.core-modified == 'true' }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - os: ubuntu-latest
             sccache-path: /home/runner/.cache/sccache
@@ -133,8 +133,11 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: './.github/actions/iota-sandbox/setup'
 
-      - name: Run tests
-        run: cargo test --workspace --all-features --release
+      - name: Run tests excluding `custom_time` feature
+        run: cargo test --workspace --features "send-sync-storage bbs-plus test memstore domain-linkage domain-linkage-fetch jpt-bbs-plus sd-jwt" --release
+
+      - name: Run tests with `custom_time` feature
+        run: cargo test --test custom_time --features="custom_time"
 
       - name: Run Rust examples
         # run examples only on ubuntu for now
@@ -157,7 +160,7 @@ jobs:
       - name: Tear down iota sandbox
         if: matrix.os == 'ubuntu-latest' && always()
         uses: './.github/actions/iota-sandbox/tear-down'
-      
+
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:
@@ -178,7 +181,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ubuntu-latest]
         include:
           - os: ubuntu-latest
 
@@ -218,7 +221,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ubuntu-latest]
         include:
           - os: ubuntu-latest
 
@@ -229,7 +232,7 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 16.x
-  
+
       - name: Install JS dependencies
         run: npm ci
         working-directory: bindings/wasm
@@ -266,7 +269,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ubuntu-latest]
         include:
           - os: ubuntu-latest
 
