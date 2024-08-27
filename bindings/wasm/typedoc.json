@@ -5,8 +5,12 @@
     "excludeInternal": true,
     "excludeNotDocumented": true,
     "excludeExternals": true,
+    "entryPoints": ["./lib/"],
+    "exclude": ["./lib/jose"],
+    "entryPointStrategy": "expand",
+    "tsconfig": "./lib/tsconfig.json",
     "out": "./docs/api",
-    "externalPattern": ["lib/*.ts"],
+    // "externalPattern": ["lib/*.ts"],
     "compilerOptions": {
         "skipLibCheck": true,
     }
