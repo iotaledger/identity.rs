@@ -33,7 +33,7 @@
     "cypress": "cypress open",
     "fmt": "dprint fmt",
     "fix_js_doc": "sed -Ei 's/\\((.*)\\)\\[\\]/\\1\\[\\]/' ./node/identity_wasm.js",
-    "create-api-docs": "typedoc ./node/identity_wasm.d.ts"
+    "create-api-docs": "typedoc"
   },
   "config": {
     "CYPRESS_VERIFY_TIMEOUT": 100000
