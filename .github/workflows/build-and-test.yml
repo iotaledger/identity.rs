@@ -134,7 +134,7 @@ jobs:
         uses: './.github/actions/iota-sandbox/setup'
 
       - name: Run tests excluding `custom_time` feature
-        run: cargo test --workspace --features "send-sync-storage bbs-plus test memstore domain-linkage domain-linkage-fetch jpt-bbs-plus sd-jwt" --release
+        run: cargo test --workspace --release
 
       - name: Run tests with `custom_time` feature
         run: cargo test --test custom_time --features="custom_time"
