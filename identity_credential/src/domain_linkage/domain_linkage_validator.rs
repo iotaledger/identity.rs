@@ -38,8 +38,8 @@ impl<V: JwsVerifier> JwtDomainLinkageValidator<V> {
   /// Validates the linkage between a domain and a DID.
   /// [`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
   ///
-  /// * `issuer`: DID Document of the linked DID. Issuer of the Domain Linkage Credential included
-  ///   in the Domain Linkage Configuration.
+  /// * `issuer`: DID Document of the linked DID. Issuer of the Domain Linkage Credential included in the Domain Linkage
+  ///   Configuration.
   /// * `configuration`: Domain Linkage Configuration fetched from the domain at "/.well-known/did-configuration.json".
   /// * `domain`: domain from which the Domain Linkage Configuration has been fetched.
   /// * `validation_options`: Further validation options to be applied on the Domain Linkage Credential.
