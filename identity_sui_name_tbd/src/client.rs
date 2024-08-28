@@ -423,12 +423,11 @@ impl IdentityClient {
   where
     S: Signer<IotaKeySignature> + Send + Sync,
   {
-    let mut oci =
-      if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(document.id())?).await? {
-        value
-      } else {
-        return Err(Error::Identity("only new identities can be updated".to_string()));
-      };
+    let oci = if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(document.id())?).await? {
+      value
+    } else {
+      return Err(Error::Identity("only new identities can be updated".to_string()));
+    };
 
     oci
       .update_did_document(document.clone())
@@ -443,7 +442,7 @@ impl IdentityClient {
   where
     S: Signer<IotaKeySignature> + Send + Sync,
   {
-    let mut oci = if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(did)?).await? {
+    let oci = if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(did)?).await? {
       value
     } else {
       return Err(Error::Identity("only new identities can be deactivated".to_string()));
