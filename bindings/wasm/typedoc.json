@@ -5,9 +5,9 @@
     "excludeInternal": true,
     "excludeNotDocumented": true,
     "excludeExternals": true,
-    "entryPoints": ["./lib/"],
+    "entryPoints": ["./node/"],
     "entryPointStrategy": "expand",
-    "tsconfig": "./lib/tsconfig.json",
+    "tsconfig": "./tsconfig.typedoc.json",
     "out": "./docs/api",
     // "externalPattern": ["lib/*.ts"],
     "compilerOptions": {

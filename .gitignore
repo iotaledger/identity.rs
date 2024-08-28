@@ -28,3 +28,5 @@ index.html
 *.hodl.*
 
 !/bindings/wasm/static/index.html
+
+docs
