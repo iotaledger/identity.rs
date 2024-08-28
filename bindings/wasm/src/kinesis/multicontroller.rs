@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use identity_iota::core::Object;
 use identity_iota::iota::client_dummy::Multicontroller;
 use identity_iota::iota::client_dummy::ObjectID;
@@ -28,7 +26,6 @@ impl WasmMulticontroller {
     self.0.controlled_value().clone()
   }
 
-  #[wasm_bindgen(js_name = threshold)]
   pub fn threshold(&self) -> u64 {
     self.0.threshold()
   }
@@ -38,7 +35,6 @@ impl WasmMulticontroller {
     self.0.controller_voting_power(controller_cap_id)
   }
 
-  #[wasm_bindgen(js_name = proposals)]
   pub fn proposals(&self) -> Result<MapStringAny, JsValue> {
     let object_result: Result<Object, JsValue> = self
       .0

@@ -1,7 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IotaDID, IotaDocument, KinesisIdentityClient, Multicontroller } from "@iota/identity-wasm/node";
+import { ProposalAction, IotaDID, IotaDocument, KinesisIdentityClient, Multicontroller, ProposalBuilder, ControllerAndVotingPower } from "@iota/identity-wasm/node";
 
 import { IotaClient as KinesisClient } from "@iota/iota.js/client";
 
@@ -62,6 +62,60 @@ function testMultiController(): void {
     console.dir(multiController.threshold());
 }
 
+async function testProposals(identityClient: KinesisIdentityClient): Promise<void> {
+    let action: ProposalAction = "Deactivate";
+    console.dir(action);
+
+    action = { UpdateDocument: new IotaDocument("foobar") };
+    console.dir(action);
+    console.dir(action.UpdateDocument);
+    console.dir(action.UpdateDocument.id());
+    console.dir(action.UpdateDocument.toJSON());
+
+    let identity = await identityClient
+        .createIdentity(Uint8Array.from([1, 2, 3]))
+        .threshold(BigInt(1))
+        .gasBudget(BigInt(1))
+        .controllers([
+            new ControllerAndVotingPower("one", BigInt(1)),
+            new ControllerAndVotingPower("two", BigInt(2)),
+        ])
+        .finish(identityClient, "dummySigner")
+        ;
+    console.dir(identity);
+    console.dir(identity.isShared());
+    console.dir(identity.proposals());
+    const deactivateProposal = await identity
+        .deactivateDid()
+        .expirationEpoch(BigInt(1))
+        .gasBudget(BigInt(1))
+        .key("key")
+        .finish(identityClient, "dummySigner")
+        ;
+    console.dir(deactivateProposal);
+
+    // proposals consume the identity instance, so we need a new one
+    identity = await identityClient
+        .createIdentity(Uint8Array.from([1, 2, 3]))
+        .threshold(BigInt(1))
+        .gasBudget(BigInt(1))
+        .controllers([
+            new ControllerAndVotingPower("one", BigInt(1)),
+            new ControllerAndVotingPower("two", BigInt(2)),
+        ])
+        .finish(identityClient, "dummySigner")
+        ;
+
+    const updateProposal = await identity
+        .updateDidDocument(new IotaDocument("foobar"))
+        .expirationEpoch(BigInt(1))
+        .gasBudget(BigInt(1))
+        .key("key")
+        .finish(identityClient, "dummySigner")
+        ;
+    console.dir(updateProposal);
+}
+
 /** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
 export async function testApiCall(): Promise<void> {
     const kinesis_client = new KinesisClient({ url: 'http://127.0.0.1:9000' });
@@ -71,16 +125,18 @@ export async function testApiCall(): Promise<void> {
     // test builder
     let identityClient = KinesisIdentityClient
       .builder()
-      .identity_iota_package_id('foo')
-      .network_name('bar')
-      .sender_public_key(new Uint8Array([1, 2, 3, 4]))
-      .iota_client(kinesis_client)
+      .identityIotaPackageId('foo')
+      .networkName('bar')
+      .senderPublicKey(new Uint8Array([1, 2, 3, 4]))
+      .iotaClient(kinesis_client)
       .build()
       ;
 
     await testIdentityClient(identityClient);
 
     testMultiController();
+
+    await testProposals(identityClient);
 
     console.log("done");
 }

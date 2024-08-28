@@ -16,6 +16,7 @@ use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
 
 use super::kinesis_identity_client_builder::WasmKinesisIdentityClientBuilder;
+use super::WasmIdentityBuilder;
 use super::WasmKinesisClient;
 
 #[wasm_bindgen(js_name = KinesisIdentityClient)]
@@ -45,6 +46,11 @@ impl WasmKinesisIdentityClient {
   #[wasm_bindgen(js_name = networkName)]
   pub fn network_name(&self) -> String {
     self.0.network_name().to_string()
+  }
+
+  #[wasm_bindgen(js_name = createIdentity)]
+  pub fn create_identity(&self, iota_document: &[u8]) -> WasmIdentityBuilder {
+    WasmIdentityBuilder(self.0.create_identity(iota_document))
   }
 
   #[wasm_bindgen(js_name = getIdentity)]

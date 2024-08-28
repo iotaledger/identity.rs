@@ -264,6 +264,15 @@ impl From<TryLockError> for WasmError<'_> {
   }
 }
 
+impl From<serde_wasm_bindgen::Error> for WasmError<'_> {
+  fn from(error: serde_wasm_bindgen::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("serde_wasm_bindgen::Error"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
 /// Convenience struct to convert Result<JsValue, JsValue> to errors in the Rust library.
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 

@@ -4,6 +4,7 @@ use crate::NetworkName;
 
 use super::DummySigner;
 use super::Identity;
+use super::IdentityBuilder;
 use super::IdentityClientBuilder;
 use super::IotaAddress;
 use super::IotaClientTrait;
@@ -59,6 +60,10 @@ where
 
   pub fn network_name(&self) -> &NetworkName {
     &self.network_name
+  }
+
+  pub fn create_identity(&self, _iota_document: &[u8]) -> IdentityBuilder {
+    IdentityBuilder::new(&[], "foobar".to_string())
   }
 
   pub async fn get_identity(&self, _object_id: ObjectID) -> Result<Identity, Error> {

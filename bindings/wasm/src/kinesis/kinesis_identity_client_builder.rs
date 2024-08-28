@@ -16,18 +16,22 @@ pub struct WasmKinesisIdentityClientBuilder(pub(crate) IdentityClientBuilder<Was
 
 #[wasm_bindgen(js_class = KinesisIdentityClientBuilder)]
 impl WasmKinesisIdentityClientBuilder {
+  #[wasm_bindgen(js_name = identityIotaPackageId)]
   pub fn identity_iota_package_id(self, value: ObjectID) -> Self {
     Self(self.0.identity_iota_package_id(value))
   }
 
+  #[wasm_bindgen(js_name = senderPublicKey)]
   pub fn sender_public_key(self, value: &[u8]) -> Self {
     Self(self.0.sender_public_key(value))
   }
 
+  #[wasm_bindgen(js_name = iotaClient)]
   pub fn iota_client(self, value: WasmKinesisClient) -> Self {
     Self(self.0.iota_client(value))
   }
 
+  #[wasm_bindgen(js_name = networkName)]
   pub fn network_name(self, value: &str) -> Self {
     Self(self.0.network_name(value))
   }
