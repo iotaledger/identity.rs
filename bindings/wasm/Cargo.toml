@@ -36,7 +36,15 @@ wasm-bindgen-futures = { version = "0.4", default-features = false }
 [dependencies.identity_iota]
 path = "../../identity_iota"
 default-features = false
-features = ["client", "revocation-bitmap", "resolver", "domain-linkage", "sd-jwt", "status-list-2021"]
+features = [
+    "client",
+    "dummy-client",
+    "revocation-bitmap",
+    "resolver",
+    "domain-linkage",
+    "sd-jwt",
+    "status-list-2021",
+]
 
 [dev-dependencies]
 rand = "0.8.5"

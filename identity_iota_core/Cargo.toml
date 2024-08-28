@@ -46,6 +46,9 @@ rustdoc-args = ["--cfg", "docsrs"]
 default = ["client", "iota-client", "revocation-bitmap", "send-sync-client-ext"]
 # Exposes the IotaIdentityClient and IotaIdentityClientExt traits.
 client = ["dep:async-trait", "iota-sdk"]
+# TODO: remove this feature as soon as we can build the new identity client in against wasm
+# temporary dummy client to build wasm bindings against
+dummy-client = []
 # Enables the implementation of the extension traits on the iota-sdk's Client.
 iota-client = ["client", "iota-sdk/client", "iota-sdk/tls"]
 # Enables revocation with `RevocationBitmap2022`.

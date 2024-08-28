@@ -35,7 +35,7 @@ pub use self::error::Result;
 
 #[cfg(feature = "client")]
 mod client;
-#[cfg(feature = "client")]
+#[cfg(feature = "dummy-client")]
 pub mod client_dummy;
 mod did;
 mod document;
