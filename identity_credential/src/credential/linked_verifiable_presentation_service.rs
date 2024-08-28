@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_core::common::Object;
 use identity_core::common::OrderedSet;
 use identity_core::common::Url;
@@ -36,7 +39,8 @@ impl LinkedVerifiablePresentationService {
     "LinkedVerifiablePresentation"
   }
 
-  /// Constructs a new `LinkedVerifiablePresentationService` that wraps a spec compliant [Linked Verifiable Presentation Service Endpoint](https://identity.foundation/linked-vp/#linked-verifiable-presentation-service-endpoint)
+  /// Constructs a new `LinkedVerifiablePresentationService` that wraps a spec compliant
+  /// [Linked Verifiable Presentation Service Endpoint](https://identity.foundation/linked-vp/#linked-verifiable-presentation-service-endpoint).
   pub fn new(
     did_url: DIDUrl,
     verifiable_presentation_urls: impl Into<OrderedSet<Url>>,
@@ -47,17 +51,15 @@ impl LinkedVerifiablePresentationService {
       .id(did_url)
       .type_(Self::linked_verifiable_presentation_service_type());
     if verifiable_presentation_urls.len() == 1 {
-      Ok(Self {
-        service: builder
-          .service_endpoint(ServiceEndpoint::One(
-            verifiable_presentation_urls
-              .into_iter()
-              .next()
-              .expect("the len should be 1"),
-          ))
-          .build()
-          .map_err(|err| LinkedVerifiablePresentationError(Box::new(err)))?,
-      })
+      let vp_url = verifiable_presentation_urls
+        .into_iter()
+        .next()
+        .expect("element 0 exists");
+      let service = builder
+        .service_endpoint(vp_url)
+        .build()
+        .map_err(|err| LinkedVerifiablePresentationError(Box::new(err)))?;
+      Ok(Self { service })
     } else {
       let service = builder
         .service_endpoint(ServiceEndpoint::Set(verifiable_presentation_urls))
@@ -69,8 +71,8 @@ impl LinkedVerifiablePresentationService {
 
   /// Checks the semantic structure of a Linked Verifiable Presentation Service.
   ///
-  /// Note: `{"type": ["LinkedVerifiablePresentation"]}` might be serialized the same way as `{"type": "LinkedVerifiablePresentation"}`
-  /// which passes the semantic check.
+  /// Note: `{"type": ["LinkedVerifiablePresentation"]}` might be serialized the same way as `{"type":
+  /// "LinkedVerifiablePresentation"}` which passes the semantic check.
   pub fn check_structure(service: &Service) -> Result<()> {
     if service.type_().len() != 1 {
       return Err(LinkedVerifiablePresentationError("invalid service type".into()));
@@ -92,12 +94,7 @@ impl LinkedVerifiablePresentationService {
     }
 
     match service.service_endpoint() {
-      ServiceEndpoint::One(endpoint) => {
-        // if endpoint.scheme() != "https" {
-        //   Err(LinkedVerifiablePresentationError("domain does not include `https` scheme".into()))?;
-        // }
-        Ok(())
-      }
+      ServiceEndpoint::One(_) => Ok(()),
       ServiceEndpoint::Set(_) => Ok(()),
       ServiceEndpoint::Map(_) => Err(LinkedVerifiablePresentationError(
         "service endpoints must be either a string or a set".into(),
