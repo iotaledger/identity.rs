@@ -219,7 +219,7 @@ impl IdentityClient {
   }
 
   /// Creates a new onchain Identity.
-  pub fn create_identity<'a>(&self, iota_document: &'a [u8]) -> IdentityBuilder<'a> {
+  pub fn create_identity(&self, iota_document: &[u8]) -> IdentityBuilder {
     IdentityBuilder::new(iota_document, self.identity_iota_package_id)
   }
 

@@ -129,11 +129,11 @@ impl OnChainIdentity {
     ))
   }
 
-  pub fn update_did_document(&mut self, updated_doc: IotaDocument) -> ProposalBuilder {
+  pub fn update_did_document(self, updated_doc: IotaDocument) -> ProposalBuilder {
     ProposalBuilder::new(self, ProposalAction::UpdateDocument(updated_doc))
   }
 
-  pub fn deactivate_did(&mut self) -> ProposalBuilder {
+  pub fn deactivate_did(self) -> ProposalBuilder {
     ProposalBuilder::new(self, ProposalAction::Deactivate)
   }
 
@@ -282,16 +282,16 @@ pub enum ProposalAction {
 }
 
 #[derive(Debug)]
-pub struct ProposalBuilder<'i> {
+pub struct ProposalBuilder {
   key: Option<String>,
-  identity: &'i mut OnChainIdentity,
+  identity: OnChainIdentity,
   expiration: Option<u64>,
   action: ProposalAction,
   gas_budget: Option<u64>,
 }
 
-impl<'i> ProposalBuilder<'i> {
-  pub fn new(identity: &'i mut OnChainIdentity, action: ProposalAction) -> Self {
+impl ProposalBuilder {
+  pub fn new(identity: OnChainIdentity, action: ProposalAction) -> Self {
     Self {
       key: None,
       identity,
@@ -316,13 +316,13 @@ impl<'i> ProposalBuilder<'i> {
     self
   }
 
-  pub async fn finish<S>(self, client: &IdentityClient, signer: &S) -> Result<Option<&'i Proposal>, Error>
+  pub async fn finish<S>(self, client: &IdentityClient, signer: &S) -> Result<Option<Proposal>, Error>
   where
     S: Signer<IotaKeySignature> + Send + Sync,
   {
     let ProposalBuilder {
       key,
-      identity,
+      mut identity,
       expiration,
       action,
       gas_budget,
@@ -371,7 +371,7 @@ impl<'i> ProposalBuilder<'i> {
 
     // refresh object references to get latest sequence numbers for them
     let identity_object_id = *identity.id.object_id();
-    *identity = get_identity(client, identity_object_id)
+    identity = get_identity(client, identity_object_id)
       .await?
       .ok_or_else(|| Error::Identity(format!("could not get identity with object id {identity_object_id}")))?;
     let can_execute = identity
@@ -380,7 +380,7 @@ impl<'i> ProposalBuilder<'i> {
       .ok_or_else(|| Error::Identity(format!("could not get voting power for identity {identity_object_id}")))?
       > identity.did_doc.threshold();
     if identity.is_shared() && !can_execute {
-      return Ok(identity.proposals().get(&key));
+      return Ok(identity.proposals().get(&key).cloned());
     }
     let controller_cap = identity.get_controller_cap(client).await?;
 
@@ -395,9 +395,6 @@ impl<'i> ProposalBuilder<'i> {
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
     let _ = client.execute_transaction(tx, gas_budget, signer).await?;
-    *identity = get_identity(client, identity_object_id)
-      .await?
-      .ok_or_else(|| Error::Identity(format!("could not get identity with object id {identity_object_id}")))?;
 
     Ok(None)
   }
@@ -466,18 +463,18 @@ fn is_identity(value: &IotaParsedMoveObject) -> bool {
 }
 
 #[derive(Debug)]
-pub struct IdentityBuilder<'a> {
+pub struct IdentityBuilder {
   package_id: ObjectID,
-  did_doc: &'a [u8],
+  did_doc: Vec<u8>,
   threshold: Option<u64>,
   controllers: HashMap<IotaAddress, u64>,
   gas_budget: Option<u64>,
 }
 
-impl<'a> IdentityBuilder<'a> {
-  pub fn new(did_doc: &'a [u8], package_id: ObjectID) -> Self {
+impl IdentityBuilder {
+  pub fn new(did_doc: &[u8], package_id: ObjectID) -> Self {
     Self {
-      did_doc,
+      did_doc: did_doc.to_vec(),
       package_id,
       threshold: None,
       controllers: HashMap::new(),
@@ -522,7 +519,7 @@ impl<'a> IdentityBuilder<'a> {
     } = self;
 
     let programmable_transaction = if controllers.is_empty() {
-      move_calls::identity::new(did_doc, package_id)?
+      move_calls::identity::new(&did_doc, package_id)?
     } else {
       let threshold = match threshold {
         Some(t) => t,
@@ -536,7 +533,7 @@ impl<'a> IdentityBuilder<'a> {
           ))
         }
       };
-      move_calls::identity::new_with_controllers(did_doc, controllers, threshold, package_id)?
+      move_calls::identity::new_with_controllers(&did_doc, controllers, threshold, package_id)?
     };
 
     let gas_budget = gas_budget.ok_or_else(|| Error::GasIssue("Missing gas budget in identity creation".to_owned()))?;

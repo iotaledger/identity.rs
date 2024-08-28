@@ -11,8 +11,10 @@ use identity_storage::JwkMemStore;
 use identity_storage::KeyIdMemstore;
 use identity_storage::Storage;
 use identity_storage::StorageSigner;
+use identity_sui_name_tbd::client::get_object_id_from_did;
 use identity_sui_name_tbd::client::IdentityClient;
 use identity_sui_name_tbd::migration::has_previous_version;
+use identity_sui_name_tbd::migration::Identity;
 use identity_sui_name_tbd::utils::get_client as get_iota_client;
 use identity_sui_name_tbd::utils::LOCAL_NETWORK;
 use identity_sui_name_tbd::Error;
@@ -39,7 +41,7 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
 
   request_funds(&identity_client.sender_address()?).await?;
 
-  let mut newly_created_identity = identity_client
+  let newly_created_identity = identity_client
     .create_identity(TEST_DOC)
     .gas_budget(TEST_GAS_BUDGET)
     .finish(&identity_client, &signer)
@@ -80,17 +82,17 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
 
   request_funds(&identity_client.sender_address()?).await?;
 
-  let mut newly_created_identity = identity_client
+  let newly_created_identity = identity_client
     .create_identity(TEST_DOC)
     .gas_budget(TEST_GAS_BUDGET)
     .finish(&identity_client, &signer)
     .await?;
 
+  let did = IotaDID::parse(format!("did:iota:{}", newly_created_identity.id.object_id()))?;
   let updated_did_doc = {
-    let did = IotaDID::parse(format!("did:iota:{}", newly_created_identity.id.object_id()))?;
     let mut doc = IotaDocument::new_with_id(did.clone());
     doc.insert_method(
-      VerificationMethod::new_from_jwk(did, public_key_jwk, Some(key_id.as_str()))?,
+      VerificationMethod::new_from_jwk(did.clone(), public_key_jwk, Some(key_id.as_str()))?,
       MethodScope::VerificationMethod,
     )?;
     doc
@@ -102,7 +104,12 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
     .finish(&identity_client, &signer)
     .await?;
 
-  let history = newly_created_identity.get_history(&identity_client, None, None).await?;
+  let Identity::FullFledged(updated_identity) = identity_client.get_identity(get_object_id_from_did(&did)?).await?
+  else {
+    anyhow::bail!("resolved identity should be an onchain identity");
+  };
+
+  let history = updated_identity.get_history(&identity_client, None, None).await?;
 
   // test check for previous version
   let has_previous_version_responses: Vec<bool> = history
@@ -127,7 +134,7 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
   let mut current_item: Option<&IotaObjectData> = None;
   let mut history: Vec<IotaObjectData>;
   loop {
-    history = newly_created_identity
+    history = updated_identity
       .get_history(&identity_client, current_item, Some(1))
       .await?;
     if history.is_empty() {
@@ -146,7 +153,7 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
   let mut current_item: Option<&IotaObjectData> = None;
   let mut history: Vec<IotaObjectData>;
   loop {
-    history = newly_created_identity
+    history = updated_identity
       .get_history(&identity_client, current_item, Some(1))
       .await?;
 
