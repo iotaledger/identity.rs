@@ -5,8 +5,8 @@ edition = "2024.beta"
 
 [dependencies]
 # as we don't have the tag, reference to the respective commit hash
-MoveStdlib = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/move-stdlib", rev = "ead968e573d8feaa1aa78dddadb8b18a8a99870d" }
-Iota = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/iota-framework", rev = "ead968e573d8feaa1aa78dddadb8b18a8a99870d" }
+MoveStdlib = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/move-stdlib", rev = "develop" }
+Iota = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/iota-framework", rev = "develop" }
 
 [addresses]
 stardust = "0x0"

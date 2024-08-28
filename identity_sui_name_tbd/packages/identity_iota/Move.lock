@@ -2,7 +2,7 @@
 
 [move]
 version = 0
-manifest_digest = "DB1956C7338F8050349161F9AAC9DCEE1F06B7E0ACF8C628F1D86B17E0AD6FDD"
+manifest_digest = "7A4FCB2006C93E4FFBF6C12DB34333F21CFB5BB39A0EE5CC98F023F102512131"
 deps_digest = "060AD7E57DFB13104F21BE5F5C3759D03F0553FC3229247D9A7A6B45F50D03A3"
 
 dependencies = [
@@ -13,7 +13,7 @@ dependencies = [
 
 [[move.package]]
 name = "Iota"
-source = { git = "https://github.com/iotaledger/iota.git", rev = "ead968e573d8feaa1aa78dddadb8b18a8a99870d", subdir = "crates/iota-framework/packages/iota-framework" }
+source = { git = "https://github.com/iotaledger/iota.git", rev = "develop", subdir = "crates/iota-framework/packages/iota-framework" }
 
 dependencies = [
   { name = "MoveStdlib" },
@@ -21,7 +21,7 @@ dependencies = [
 
 [[move.package]]
 name = "MoveStdlib"
-source = { git = "https://github.com/iotaledger/iota.git", rev = "ead968e573d8feaa1aa78dddadb8b18a8a99870d", subdir = "crates/iota-framework/packages/move-stdlib" }
+source = { git = "https://github.com/iotaledger/iota.git", rev = "develop", subdir = "crates/iota-framework/packages/move-stdlib" }
 
 [[move.package]]
 name = "StardustTest"
