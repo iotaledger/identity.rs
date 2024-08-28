@@ -15,7 +15,7 @@
     "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target web --out-dir web && node ./build/web && tsc --project ./lib/tsconfig.web.json && node ./build/replace_paths ./lib/tsconfig.web.json web",
     "build:nodejs": "npm run build:src && npm run bundle:nodejs && wasm-opt -O node/identity_wasm_bg.wasm -o node/identity_wasm_bg.wasm",
     "build:web": "npm run build:src && npm run bundle:web && wasm-opt -O web/identity_wasm_bg.wasm -o web/identity_wasm_bg.wasm",
-    "build:docs": "npm run fix_js_doc && node ./build/docs",
+    "build:docs": "typedoc",
     "build:examples:web": "tsc --project ./examples/tsconfig.web.json && node ./build/replace_paths ./examples/tsconfig.web.json ./examples/dist resolve",
     "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
     "example:node": "ts-node --project tsconfig.node.json -r tsconfig-paths/register ./examples/src/main.ts",
@@ -32,8 +32,7 @@
     "test:unit:node": "ts-mocha -p tsconfig.node.json ./tests/*.ts --parallel --exit",
     "cypress": "cypress open",
     "fmt": "dprint fmt",
-    "fix_js_doc": "sed -Ei 's/\\((.*)\\)\\[\\]/\\1\\[\\]/' ./node/identity_wasm.js",
-    "create-api-docs": "typedoc"
+    "fix_js_doc": "sed -Ei 's/\\((.*)\\)\\[\\]/\\1\\[\\]/' ./node/identity_wasm.js"
   },
   "config": {
     "CYPRESS_VERIFY_TIMEOUT": 100000
