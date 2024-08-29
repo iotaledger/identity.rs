@@ -18,6 +18,9 @@ export default defineConfig({
                     launchOptions.preferences[
                         "network.proxy.testing_localhost_is_secure_when_hijacked"
                     ] = true;
+                    launchOptions.preferences[
+                        "remote.active-protocols"
+                    ] = 3;
                 }
                 return launchOptions;
             });
