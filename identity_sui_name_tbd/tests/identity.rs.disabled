@@ -1,8 +1,9 @@
 mod common;
 
+use std::str::FromStr;
+
 use common::get_client as get_test_client;
 use common::get_key_data;
-use common::request_funds;
 use common::TEST_DOC;
 use common::TEST_GAS_BUDGET;
 use identity_iota_core::IotaDID;
@@ -10,48 +11,39 @@ use identity_iota_core::IotaDocument;
 use identity_storage::JwkMemStore;
 use identity_storage::KeyIdMemstore;
 use identity_storage::Storage;
-use identity_storage::StorageSigner;
 use identity_sui_name_tbd::client::get_object_id_from_did;
-use identity_sui_name_tbd::client::IdentityClient;
 use identity_sui_name_tbd::migration::has_previous_version;
 use identity_sui_name_tbd::migration::Identity;
-use identity_sui_name_tbd::utils::get_client as get_iota_client;
-use identity_sui_name_tbd::utils::LOCAL_NETWORK;
+use identity_sui_name_tbd::proposals::ProposalResult;
 use identity_sui_name_tbd::Error;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::types::base_types::SequenceNumber;
+use move_core_types::language_storage::StructTag;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
 #[tokio::test]
 async fn updating_onchain_identity_did_doc_with_single_controller_works() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
-  let iota_client = get_iota_client(LOCAL_NETWORK).await?;
-
-  let (storage, key_id, public_key_jwk, public_key_bytes) = get_key_data().await?;
-  let signer = StorageSigner::new(&storage, key_id.clone(), public_key_jwk.clone());
-
-  let identity_client = IdentityClient::builder()
-    .identity_iota_package_id(test_client.package_id())
-    .sender_public_key(&public_key_bytes)
-    .iota_client(iota_client)
-    .build()?;
-
-  request_funds(&identity_client.sender_address()?).await?;
+  let identity_client = test_client.new_user_client().await?;
 
   let newly_created_identity = identity_client
     .create_identity(TEST_DOC)
     .gas_budget(TEST_GAS_BUDGET)
-    .finish(&identity_client, &signer)
+    .finish(&identity_client)
     .await?;
 
   let updated_did_doc = {
     let did = IotaDID::parse(format!("did:iota:{}", newly_created_identity.id.object_id()))?;
     let mut doc = IotaDocument::new_with_id(did.clone());
     doc.insert_method(
-      VerificationMethod::new_from_jwk(did, public_key_jwk, Some(key_id.as_str()))?,
+      VerificationMethod::new_from_jwk(
+        did,
+        identity_client.signer().public_key().clone(),
+        Some(identity_client.signer().key_id().as_str()),
+      )?,
       MethodScope::VerificationMethod,
     )?;
     doc
@@ -60,8 +52,89 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
   newly_created_identity
     .update_did_document(updated_did_doc)
     .gas_budget(TEST_GAS_BUDGET)
-    .finish(&identity_client, &signer)
+    .finish(&identity_client)
     .await?;
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn approving_proposal_works() -> anyhow::Result<()> {
+  let test_client = get_test_client().await?;
+  let alice_client = test_client.new_user_client().await?;
+  let bob_client = test_client.new_user_client().await?;
+
+  let identity = alice_client
+    .create_identity(TEST_DOC)
+    .controller(alice_client.sender_address(), 1)
+    .controller(bob_client.sender_address(), 1)
+    .threshold(2)
+    .gas_budget(TEST_GAS_BUDGET)
+    .finish(&alice_client)
+    .await?;
+
+  let did = IotaDID::parse(format!("did:iota:{}", identity.id.object_id().to_string()))?;
+  let did_doc = {
+    let mut doc = IotaDocument::new_with_id(did.clone());
+    doc.insert_method(
+      VerificationMethod::new_from_jwk(
+        did.clone(),
+        alice_client.signer().public_key().clone(),
+        Some(alice_client.signer().key_id().as_str()),
+      )?,
+      MethodScope::VerificationMethod,
+    )?;
+    doc
+  };
+  let ProposalResult::Pending(mut proposal) = identity
+    .update_did_document(did_doc)
+    .gas_budget(TEST_GAS_BUDGET)
+    .finish(&alice_client)
+    .await?
+  else {
+    anyhow::bail!("the proposal is executed");
+  };
+
+  let Identity::FullFledged(mut identity) = alice_client.get_identity(get_object_id_from_did(&did)?).await? else {
+    anyhow::bail!("resolved identity should be an onchain identity");
+  };
+
+  proposal.approve(TEST_GAS_BUDGET, &mut identity, &bob_client).await?;
+
+  assert_eq!(proposal.votes(), 2);
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn adding_controller_works() -> anyhow::Result<()> {
+  let test_client = get_test_client().await?;
+  let alice_client = test_client.new_user_client().await?;
+  let bob_client = test_client.new_user_client().await?;
+
+  let identity = alice_client
+    .create_identity(TEST_DOC)
+    .gas_budget(TEST_GAS_BUDGET)
+    .finish(&alice_client)
+    .await?;
+
+  // Alice proposes to add Bob as a controller. Since Alice has enough voting power the proposal
+  // is executed directly after creation.
+  identity
+    .update_config()
+    .add_controller(bob_client.sender_address(), 1)
+    .gas_budget(TEST_GAS_BUDGET)
+    .finish(&alice_client)
+    .await?;
+
+  let cap = bob_client
+    .find_owned_ref(
+      StructTag::from_str(&format!("{}::multicontroller::ControllerCap", test_client.package_id())).unwrap(),
+      |_| true,
+    )
+    .await?;
+
+  assert!(cap.is_some());
 
   Ok(())
 }
@@ -69,28 +142,18 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
 #[tokio::test]
 async fn can_get_historical_identity_data() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
-  let iota_client = get_iota_client(LOCAL_NETWORK).await?;
-
-  let (storage, key_id, public_key_jwk, public_key_bytes) = get_key_data().await?;
-  let signer = StorageSigner::new(&storage, key_id.clone(), public_key_jwk.clone());
-
-  let identity_client = IdentityClient::builder()
-    .identity_iota_package_id(test_client.package_id())
-    .sender_public_key(&public_key_bytes)
-    .iota_client(iota_client)
-    .build()?;
-
-  request_funds(&identity_client.sender_address()?).await?;
+  let identity_client = test_client.new_user_client().await?;
 
   let newly_created_identity = identity_client
     .create_identity(TEST_DOC)
     .gas_budget(TEST_GAS_BUDGET)
-    .finish(&identity_client, &signer)
+    .finish(&identity_client)
     .await?;
 
   let did = IotaDID::parse(format!("did:iota:{}", newly_created_identity.id.object_id()))?;
   let updated_did_doc = {
     let mut doc = IotaDocument::new_with_id(did.clone());
+    let (_, key_id, public_key_jwk, _) = get_key_data().await?;
     doc.insert_method(
       VerificationMethod::new_from_jwk(did.clone(), public_key_jwk, Some(key_id.as_str()))?,
       MethodScope::VerificationMethod,
@@ -101,7 +164,7 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
   newly_created_identity
     .update_did_document(updated_did_doc)
     .gas_budget(TEST_GAS_BUDGET)
-    .finish(&identity_client, &signer)
+    .finish(&identity_client)
     .await?;
 
   let Identity::FullFledged(updated_identity) = identity_client.get_identity(get_object_id_from_did(&did)?).await?

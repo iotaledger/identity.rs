@@ -29,7 +29,6 @@ use identity_iota::credential::Subject;
 use identity_iota::did::DID;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwsSignatureOptions;
-use identity_storage::StorageSigner;
 
 use serde_json::json;
 
@@ -41,19 +40,14 @@ async fn main() -> anyhow::Result<()> {
 
   // create new issuer account with did document
   let issuer_storage = get_memstorage()?;
-  let (issuer_identity_client, issuer_key_id, issuer_public_key_jwk) =
-    get_client_and_create_account(&issuer_storage).await?;
-  let issuer_signer = StorageSigner::new(&issuer_storage, issuer_key_id, issuer_public_key_jwk);
+  let issuer_identity_client = get_client_and_create_account(&issuer_storage).await?;
   let (issuer_document, issuer_vm_fragment) =
-    create_kinesis_did_document(&issuer_identity_client, &issuer_storage, &issuer_signer).await?;
+    create_kinesis_did_document(&issuer_identity_client, &issuer_storage).await?;
 
   // create new holder account with did document
   let holder_storage = get_memstorage()?;
-  let (holder_identity_client, holder_key_id, holder_public_key_jwk) =
-    get_client_and_create_account(&holder_storage).await?;
-  let holder_signer = StorageSigner::new(&holder_storage, holder_key_id, holder_public_key_jwk);
-  let (holder_document, _) =
-    create_kinesis_did_document(&holder_identity_client, &holder_storage, &holder_signer).await?;
+  let holder_identity_client = get_client_and_create_account(&holder_storage).await?;
+  let (holder_document, _) = create_kinesis_did_document(&holder_identity_client, &holder_storage).await?;
 
   // Create a new empty status list. No credentials have been revoked yet.
   let status_list: StatusList2021 = StatusList2021::default();

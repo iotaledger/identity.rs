@@ -7,18 +7,15 @@ use examples_kinesis::get_client_and_create_account;
 use examples_kinesis::get_memstorage;
 use identity_iota::iota::IotaDocument;
 use identity_iota::prelude::Resolver;
-use identity_storage::StorageSigner;
 
 /// Demonstrates how to resolve an existing DID in an Alias Output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // create new client to interact with chain and get funded account with keys
   let storage = get_memstorage()?;
-  let (identity_client, key_id, public_key_jwk) = get_client_and_create_account(&storage).await?;
-  // create new signer that will be used to sign tx with
-  let signer = StorageSigner::new(&storage, key_id, public_key_jwk);
+  let identity_client = get_client_and_create_account(&storage).await?;
   // create new DID document and publish it
-  let (document, _) = create_kinesis_did_document(&identity_client, &storage, &signer).await?;
+  let (document, _) = create_kinesis_did_document(&identity_client, &storage).await?;
 
   let did = document.id().clone();
 
@@ -33,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
 
   // We need to register a handler that can resolve IOTA DIDs.
   // This convenience method only requires us to provide a client.
-  resolver.attach_kinesis_iota_handler(identity_client.clone());
+  resolver.attach_kinesis_iota_handler((*identity_client).clone());
 
   let resolver_document: IotaDocument = resolver.resolve(&did).await.unwrap();
 

@@ -28,6 +28,7 @@ pub use self::evidence::Evidence;
 pub use self::issuer::Issuer;
 pub use self::jws::Jws;
 pub use self::jwt::Jwt;
+pub use self::jwt_serialization::JwtCredential;
 pub use self::linked_domain_service::LinkedDomainService;
 pub use self::policy::Policy;
 pub use self::proof::Proof;

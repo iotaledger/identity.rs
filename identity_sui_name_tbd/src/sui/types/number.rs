@@ -33,8 +33,12 @@ impl_conversions!(u8);
 impl_conversions!(u16);
 impl_conversions!(u32);
 impl_conversions!(u64);
+impl_conversions!(u128);
+impl_conversions!(usize);
 
 impl_conversions!(i8);
 impl_conversions!(i16);
 impl_conversions!(i32);
 impl_conversions!(i64);
+impl_conversions!(i128);
+impl_conversions!(isize);

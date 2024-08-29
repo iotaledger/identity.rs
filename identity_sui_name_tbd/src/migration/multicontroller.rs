@@ -1,66 +1,94 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 
-use crate::sui::types::Hashable;
+use crate::sui::types::Bag;
 use crate::sui::types::Number;
-use crate::sui::types::VecMap;
-use crate::sui::types::VecSet;
 use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::id::ID;
+use iota_sdk::types::collection_types::Entry;
+use iota_sdk::types::collection_types::VecMap;
+use iota_sdk::types::collection_types::VecSet;
 use iota_sdk::types::id::UID;
 use serde::Deserialize;
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(try_from = "IotaProposal", into = "IotaProposal")]
-pub struct Proposal {
+#[serde(
+  try_from = "IotaProposal::<T>",
+  into = "IotaProposal::<T>",
+  bound(serialize = "T: Serialize + Clone")
+)]
+pub struct Proposal<T> {
   id: UID,
   expiration_epoch: Option<u64>,
   votes: u64,
-  voters: VecSet<Hashable<ID>>,
+  voters: HashSet<ObjectID>,
+  action: T,
+}
+
+impl<T> Proposal<T> {
+  pub fn id(&self) -> ObjectID {
+    *self.id.object_id()
+  }
+  pub fn votes(&self) -> u64 {
+    self.votes
+  }
+  pub(crate) fn votes_mut(&mut self) -> &mut u64 {
+    &mut self.votes
+  }
+  pub fn action(&self) -> &T {
+    &self.action
+  }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct IotaProposal {
+struct IotaProposal<T> {
   id: UID,
   expiration_epoch: Option<Number<u64>>,
   votes: Number<u64>,
-  voters: VecSet<Hashable<ID>>,
+  voters: VecSet<ObjectID>,
+  action: T,
 }
 
-impl TryFrom<IotaProposal> for Proposal {
+impl<T> TryFrom<IotaProposal<T>> for Proposal<T> {
   type Error = <u64 as TryFrom<Number<u64>>>::Error;
-  fn try_from(proposal: IotaProposal) -> Result<Self, Self::Error> {
+  fn try_from(proposal: IotaProposal<T>) -> Result<Self, Self::Error> {
     let IotaProposal {
       id,
       expiration_epoch,
       votes,
       voters,
+      action,
     } = proposal;
     let expiration_epoch = expiration_epoch.map(TryInto::try_into).transpose()?;
     let votes = votes.try_into()?;
+    let voters = voters.contents.into_iter().collect();
 
     Ok(Self {
       id,
       expiration_epoch,
       votes,
       voters,
+      action,
     })
   }
 }
 
-impl From<Proposal> for IotaProposal {
-  fn from(value: Proposal) -> Self {
+impl<T> From<Proposal<T>> for IotaProposal<T> {
+  fn from(value: Proposal<T>) -> Self {
     let Proposal {
       id,
       expiration_epoch,
       votes,
       voters,
+      action,
     } = value;
+    let contents = voters.into_iter().collect();
     IotaProposal {
       id,
       expiration_epoch: expiration_epoch.map(Into::into),
       votes: votes.into(),
-      voters,
+      voters: VecSet { contents },
+      action,
     }
   }
 }
@@ -69,9 +97,10 @@ impl From<Proposal> for IotaProposal {
 #[serde(try_from = "IotaMulticontroller::<T>")]
 pub struct Multicontroller<T> {
   controlled_value: T,
-  controllers: HashMap<Hashable<ID>, u64>,
+  controllers: HashMap<ObjectID, u64>,
   threshold: u64,
-  proposals: HashMap<String, Proposal>,
+  active_proposals: HashSet<ObjectID>,
+  proposals: Bag,
 }
 
 impl<T> Multicontroller<T> {
@@ -81,21 +110,23 @@ impl<T> Multicontroller<T> {
   pub fn threshold(&self) -> u64 {
     self.threshold
   }
-  pub fn controller_voting_power(&self, controller_cap_id: ObjectID) -> Option<u64> {
-    self.controllers.get(&Hashable(ID::new(controller_cap_id))).copied()
+  pub fn proposals(&self) -> &HashSet<ObjectID> {
+    &self.active_proposals
   }
-  pub fn proposals(&self) -> &HashMap<String, Proposal> {
-    &self.proposals
+  pub fn proposals_bag_id(&self) -> ObjectID {
+    *self.proposals.id.object_id()
+  }
+  pub fn controller_voting_power(&self, controller_cap_id: ObjectID) -> Option<u64> {
+    self.controllers.get(&controller_cap_id).copied()
   }
   pub fn into_inner(self) -> T {
     self.controlled_value
   }
-  pub(crate) fn controllers(&self) -> &HashMap<Hashable<ID>, u64> {
+  pub(crate) fn controllers(&self) -> &HashMap<ObjectID, u64> {
     &self.controllers
   }
   pub fn has_member(&self, cap_id: ObjectID) -> bool {
-    let cap = Hashable(ID::new(cap_id));
-    self.controllers.contains_key(&cap)
+    self.controllers.contains_key(&cap_id)
   }
 }
 
@@ -106,21 +137,20 @@ impl<T> TryFrom<IotaMulticontroller<T>> for Multicontroller<T> {
       controlled_value,
       controllers,
       threshold,
+      active_proposals,
       proposals,
     } = value;
     let controllers = controllers
-      .into_inner_iter()
-      .map(|(id, vp)| (u64::try_from(vp).map(|vp| (id, vp))))
-      .collect::<Result<_, _>>()?;
-    let proposals = proposals
-      .into_inner_iter()
-      .map(|(name, p)| Proposal::try_from(p).map(|p| (name, p)))
+      .contents
+      .into_iter()
+      .map(|Entry { key: id, value: vp }| (u64::try_from(vp).map(|vp| (id, vp))))
       .collect::<Result<_, _>>()?;
 
     Ok(Multicontroller {
       controlled_value,
       controllers,
       threshold: threshold.try_into()?,
+      active_proposals,
       proposals,
     })
   }
@@ -129,7 +159,8 @@ impl<T> TryFrom<IotaMulticontroller<T>> for Multicontroller<T> {
 #[derive(Debug, Serialize, Deserialize)]
 struct IotaMulticontroller<T> {
   controlled_value: T,
-  controllers: VecMap<Hashable<ID>, Number<u64>>,
+  controllers: VecMap<ObjectID, Number<u64>>,
   threshold: Number<u64>,
-  proposals: VecMap<String, IotaProposal>,
+  active_proposals: HashSet<ObjectID>,
+  proposals: Bag,
 }

@@ -1,18 +1,16 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::Context as _;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::TypeTag;
 use std::str::FromStr;
+use tokio::process::Command;
 
-use anyhow::Context;
 use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::Argument;
-use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::Identifier;
 use iota_sdk::IotaClient;
 use iota_sdk::IotaClientBuilder;
-use serde::Serialize;
-use tokio::process::Command;
 
 use crate::Error;
 
@@ -27,12 +25,18 @@ pub async fn get_client(network: &str) -> Result<IotaClient, Error> {
   Ok(client)
 }
 
+pub(crate) fn parse_identifier(name: &str) -> Result<Identifier, Error> {
+  Identifier::from_str(name).map_err(|err| Error::ParsingFailed(format!(r#""{name}" to identifier; {err}"#)))
+}
+
 pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
   let output = Command::new("iota")
     .arg("client")
     .arg("faucet")
     .arg("--address")
     .arg(address.to_string())
+    .arg("--url")
+    .arg("http://127.0.0.1:9123/gas")
     .arg("--json")
     .output()
     .await
@@ -48,27 +52,54 @@ pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
   Ok(())
 }
 
-pub(crate) fn parse_identifier(name: &str) -> Result<Identifier, Error> {
-  Identifier::from_str(name).map_err(|err| Error::ParsingFailed(format!(r#""{name}" to identifier; {err}"#)))
+pub trait MoveType {
+  fn move_type(package: ObjectID) -> TypeTag;
 }
 
-pub(crate) fn ptb_pure<T>(ptb: &mut ProgrammableTransactionBuilder, name: &str, value: T) -> Result<Argument, Error>
-where
-  T: Serialize + core::fmt::Debug,
-{
-  ptb.pure(&value).map_err(|err| {
-    Error::InvalidArgument(format!(
-      r"could not serialize pure value {name} with value {value:?}; {err}"
-    ))
-  })
+impl MoveType for u8 {
+  fn move_type(_package: ObjectID) -> TypeTag {
+    TypeTag::U8
+  }
 }
 
-pub(crate) fn ptb_obj(
-  ptb: &mut ProgrammableTransactionBuilder,
-  name: &str,
-  value: ObjectArg,
-) -> Result<Argument, Error> {
-  ptb
-    .obj(value)
-    .map_err(|err| Error::InvalidArgument(format!("could not serialize object {name} {value:?}; {err}")))
+impl MoveType for u16 {
+  fn move_type(_package: ObjectID) -> TypeTag {
+    TypeTag::U16
+  }
+}
+
+impl MoveType for u32 {
+  fn move_type(_package: ObjectID) -> TypeTag {
+    TypeTag::U32
+  }
+}
+
+impl MoveType for u64 {
+  fn move_type(_package: ObjectID) -> TypeTag {
+    TypeTag::U64
+  }
+}
+
+impl MoveType for u128 {
+  fn move_type(_package: ObjectID) -> TypeTag {
+    TypeTag::U128
+  }
+}
+
+impl MoveType for bool {
+  fn move_type(_package: ObjectID) -> TypeTag {
+    TypeTag::Bool
+  }
+}
+
+impl MoveType for IotaAddress {
+  fn move_type(_package: ObjectID) -> TypeTag {
+    TypeTag::Address
+  }
+}
+
+impl<T: MoveType> MoveType for Vec<T> {
+  fn move_type(package: ObjectID) -> TypeTag {
+    TypeTag::Vector(Box::new(T::move_type(package)))
+  }
 }

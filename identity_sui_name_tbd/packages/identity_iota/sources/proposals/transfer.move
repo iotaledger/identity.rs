@@ -1,7 +1,6 @@
 module identity_iota::transfer_proposal {
     use identity_iota::{multicontroller::{Multicontroller, Action, ControllerCap}, owned::{Self, Withdraw}};
     use iota::{transfer::Receiving, vec_set::VecSet};
-    use std::string::String;
 
     const EDifferentLength: u64 = 0;
     const EUnsentAssets: u64 = 0;
@@ -14,7 +13,6 @@ module identity_iota::transfer_proposal {
     public fun propose_send<V>(
         multi: &mut Multicontroller<V>,
         cap: &ControllerCap,
-        key: String,
         expiration: Option<u64>,
         objects: VecSet<ID>,
         recipients: vector<address>,
@@ -24,7 +22,7 @@ module identity_iota::transfer_proposal {
         let withdraw = owned::new_withdraw(objects);
         let action = Send { withdraw, recipients };
 
-        multi.create_proposal(cap, action, key, expiration, ctx);
+        multi.create_proposal(cap, action,expiration, ctx);
     }
 
     public fun send<T: key + store>(
@@ -32,7 +30,7 @@ module identity_iota::transfer_proposal {
         controllee: &mut UID,
         received: Receiving<T>,
     ) {
-        let send_action = action.action_mut();
+        let send_action = action.borrow_mut();
         let object = send_action.withdraw.withdraw(controllee, received);
         transfer::public_transfer(object, send_action.recipients.pop_back());
     }
