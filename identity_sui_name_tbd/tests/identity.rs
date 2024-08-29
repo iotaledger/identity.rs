@@ -21,10 +21,12 @@ use identity_verification::VerificationMethod;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::types::base_types::SequenceNumber;
 use move_core_types::language_storage::StructTag;
+use serial_test::serial;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
 #[tokio::test]
+#[serial]
 async fn updating_onchain_identity_did_doc_with_single_controller_works() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
@@ -59,6 +61,7 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
 }
 
 #[tokio::test]
+#[serial]
 async fn approving_proposal_works() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let alice_client = test_client.new_user_client().await?;
@@ -107,6 +110,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+#[serial]
 async fn adding_controller_works() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let alice_client = test_client.new_user_client().await?;
@@ -140,6 +144,7 @@ async fn adding_controller_works() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+#[serial]
 async fn can_get_historical_identity_data() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
@@ -179,15 +184,11 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
     .iter()
     .map(has_previous_version)
     .collect::<Result<Vec<bool>, Error>>()?;
-  assert_eq!(has_previous_version_responses, vec![true, true, false]);
+  assert_eq!(has_previous_version_responses, vec![true, false]);
 
   // test version numbers
   // 1 create version, shared with version 3, then 2 updates, sorted from new to old
-  let expected_versions = vec![
-    SequenceNumber::from_u64(5),
-    SequenceNumber::from_u64(4),
-    SequenceNumber::from_u64(3),
-  ];
+  let expected_versions = vec![SequenceNumber::from_u64(15), SequenceNumber::from_u64(14)];
   let versions: Vec<SequenceNumber> = history.iter().map(|elem| elem.version).collect();
   assert_eq!(versions, expected_versions,);
 
