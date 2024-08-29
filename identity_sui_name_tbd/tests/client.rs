@@ -15,7 +15,6 @@ use identity_sui_name_tbd::utils::LOCAL_NETWORK;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
-#[ignore]
 #[tokio::test]
 async fn can_create_an_identity() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
