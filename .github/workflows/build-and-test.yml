@@ -127,7 +127,7 @@ jobs:
 
         # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
       - name: Build with all features
-        run: cargo build --workspace --tests --examples --all-features --release
+        run: cargo build --workspace --tests --examples  --release
 
       - name: Start iota sandbox
         if: matrix.os == 'ubuntu-latest'
