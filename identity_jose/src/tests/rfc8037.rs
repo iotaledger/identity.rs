@@ -49,21 +49,18 @@ fn test_rfc8037_ed25519() {
       .decode_compact_serialization(jws.as_bytes(), None)
       .and_then(|decoded| decoded.verify(&jws_verifier, &public))
       .unwrap();
+    let jws_signature_verifier = JwsVerifierFn::from(|input: VerificationInput, key: &Jwk| match input.alg {
+      JwsAlgorithm::EdDSA => ed25519::verify(input, key),
+      other => unimplemented!("{other}"),
+    });
 
-    #[cfg(feature = "eddsa")]
-    {
-      let jws_signature_verifier = JwsVerifierFn::from(|input: VerificationInput, key: &Jwk| match input.alg {
-        JwsAlgorithm::EdDSA => ed25519::verify(input, key),
-        other => unimplemented!("{other}"),
-      });
+    let decoder = Decoder::new();
+    let token_with_default = decoder
+      .decode_compact_serialization(jws.as_bytes(), None)
+      .and_then(|decoded| decoded.verify(&jws_signature_verifier, &public))
+      .unwrap();
 
-      let decoder = Decoder::new();
-      let token_with_default = decoder
-        .decode_compact_serialization(jws.as_bytes(), None)
-        .and_then(|decoded| decoded.verify(&jws_signature_verifier, &public))
-        .unwrap();
-      assert_eq!(token, token_with_default);
-    }
+    assert_eq!(token, token_with_default);
     assert_eq!(token.protected, header);
     assert_eq!(token.claims, tv.payload.as_bytes());
   }
