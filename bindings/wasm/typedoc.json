@@ -9,7 +9,8 @@
     "entryPointStrategy": "expand",
     "tsconfig": "./tsconfig.typedoc.json",
     "out": "./docs/api",
-    // "externalPattern": ["lib/*.ts"],
+    "plugin": ["typedoc-plugin-markdown"],
+    "readme": "none",
     "compilerOptions": {
         "skipLibCheck": true,
     }
