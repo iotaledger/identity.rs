@@ -1,21 +1,27 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::Context;
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::MemStorage;
 use examples::API_ENDPOINT;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
+use identity_iota::core::FromJson;
 use identity_iota::core::Object;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Url;
 use identity_iota::credential::CompoundJwtPresentationValidationError;
+use identity_iota::credential::CredentialBuilder;
 use identity_iota::credential::DecodedJwtPresentation;
 use identity_iota::credential::Jwt;
+use identity_iota::credential::JwtPresentationOptions;
 use identity_iota::credential::JwtPresentationValidationOptions;
 use identity_iota::credential::JwtPresentationValidator;
 use identity_iota::credential::JwtPresentationValidatorUtils;
 use identity_iota::credential::LinkedVerifiablePresentationService;
+use identity_iota::credential::PresentationBuilder;
+use identity_iota::credential::Subject;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DIDUrl;
 use identity_iota::did::DID;
@@ -25,7 +31,9 @@ use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::resolver::Resolver;
+use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::JwsSignatureOptions;
 use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
@@ -35,8 +43,6 @@ use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
 use iota_sdk::types::block::output::AliasOutputBuilder;
 use iota_sdk::types::block::output::RentStructure;
-
-const VP_JWT: &str = "eyJraWQiOiJkaWQ6aW90YTpybXM6MHg2Y2I5MWUyMGMxMzhhMTQ1MTUzMDY4ZTEwODNhMGEyYTUwYjU2ZDI1MGI3YjUzYzYwYmEzOTI4NGJkMWRjNzQxI1k5TUppd1k4U0s0NjlNcW0weXBZYzRYSUl5TnVpMzZIejdreVdkUEkyejQiLCJ0eXAiOiJKV1QiLCJhbGciOiJFZERTQSJ9.eyJpc3MiOiJkaWQ6aW90YTpybXM6MHg2Y2I5MWUyMGMxMzhhMTQ1MTUzMDY4ZTEwODNhMGEyYTUwYjU2ZDI1MGI3YjUzYzYwYmEzOTI4NGJkMWRjNzQxIiwibmJmIjoxNzI0Njg0NTEzLCJ2cCI6eyJAY29udGV4dCI6Imh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIiwidHlwZSI6IlZlcmlmaWFibGVQcmVzZW50YXRpb24iLCJ2ZXJpZmlhYmxlQ3JlZGVudGlhbCI6WyJleUpyYVdRaU9pSmthV1E2YVc5MFlUcHliWE02TUhnek5ERTVNek5qWW1ReU1USm1NalkzT1dOaE5tSTFZbU00WXpGbE5EazROREV4WlRWaFpHUXdZMk0zWkRnNU1qZzVZV1ppTmpaaVpEZGtNMk5tTWpObEkyRlZkMTgyZGw5bGRUQlJlVFJQWWtOTFIwUlJNWFJEUW00elJGcGxVVzUxYmtkNlRWWlJlRWxrYjJNaUxDSjBlWEFpT2lKS1YxUWlMQ0poYkdjaU9pSkZaRVJUUVNKOS5leUpwYzNNaU9pSmthV1E2YVc5MFlUcHliWE02TUhnek5ERTVNek5qWW1ReU1USm1NalkzT1dOaE5tSTFZbU00WXpGbE5EazROREV4WlRWaFpHUXdZMk0zWkRnNU1qZzVZV1ppTmpaaVpEZGtNMk5tTWpObElpd2libUptSWpveE56STBOamcwTlRFekxDSnFkR2tpT2lKb2RIUndjem92TDJWNFlXMXdiR1V1WldSMUwyTnlaV1JsYm5ScFlXeHpMek0zTXpJaUxDSnpkV0lpT2lKa2FXUTZhVzkwWVRweWJYTTZNSGcyWTJJNU1XVXlNR014TXpoaE1UUTFNVFV6TURZNFpURXdPRE5oTUdFeVlUVXdZalUyWkRJMU1HSTNZalV6WXpZd1ltRXpPVEk0TkdKa01XUmpOelF4SWl3aWRtTWlPbnNpUUdOdmJuUmxlSFFpT2lKb2RIUndjem92TDNkM2R5NTNNeTV2Y21jdk1qQXhPQzlqY21Wa1pXNTBhV0ZzY3k5Mk1TSXNJblI1Y0dVaU9sc2lWbVZ5YVdacFlXSnNaVU55WldSbGJuUnBZV3dpTENKVmJtbDJaWEp6YVhSNVJHVm5jbVZsUTNKbFpHVnVkR2xoYkNKZExDSmpjbVZrWlc1MGFXRnNVM1ZpYW1WamRDSTZleUpqWlhKMGFXWnBZMkYwWlNJNmV5SjBlWEJsSWpvaVFXTmpjbVZrYVhSaGRHbHZiaUlzSW14bGRtVnNJam96ZlgxOWZRLm5ldEpyMkZEaWlPYmRFVWVaaTkwcW90dG9BcFlYLVhacmxMQ0ZwOTA2RHZCMlJUbEw2WDVWb3JhYy1reFpNUThwMkpIUEZMbUk5ZzM5c3NuSG1MWkNnIl19fQ.vcpp_imMMv6inSOy9L-IsvF_WPfEYsuTpcPfEAHQfrBJ_O_zhZxZ0pzcbbvwJqh-wcmMgas0DuR_0NGcZK8CAw";
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -57,7 +63,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a DID for the entity that will be the holder of the Verifiable Presentation.
   let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
-  let (_, mut did_document, _): (Address, IotaDocument, String) =
+  let (_, mut did_document, fragment): (Address, IotaDocument, String) =
     create_did(&client, &mut secret_manager, &storage).await?;
   let did: IotaDID = did_document.id().clone();
 
@@ -110,8 +116,8 @@ async fn main() -> anyhow::Result<()> {
     .verifiable_presentation_urls();
 
   // Fetch the verifiable presentation from the URL (for example using `reqwest`).
-  // But since the URLs are not actually online in this example, we will simply create an example JWT.
-  let presentation_jwt: Jwt = example_vp();
+  // But since the URLs do not point to actual online resource, we will simply create an example JWT.
+  let presentation_jwt: Jwt = make_vp_jwt(&did_document, &storage, &fragment).await?;
 
   // Resolve the holder's document.
   let holder_did: CoreDID = JwtPresentationValidatorUtils::extract_holder(&presentation_jwt)?;
@@ -152,7 +158,38 @@ async fn publish_document(
   Ok(client.publish_did_output(&secret_manager, alias_output).await?)
 }
 
-/// A static VP, without nonce and expiry (created using basic example `6_create_vp.rs`).
-fn example_vp() -> Jwt {
-  Jwt::from(VP_JWT.to_string())
+async fn make_vp_jwt(did_doc: &IotaDocument, storage: &MemStorage, fragment: &str) -> anyhow::Result<Jwt> {
+  // first we create a credential encoding it as jwt
+  let credential = CredentialBuilder::new(Object::default())
+    .id(Url::parse("https://example.edu/credentials/3732")?)
+    .issuer(Url::parse(did_doc.id().as_str())?)
+    .type_("UniversityDegreeCredential")
+    .subject(Subject::from_json_value(serde_json::json!({
+      "id": did_doc.id().as_str(),
+      "name": "Alice",
+      "degree": {
+        "type": "BachelorDegree",
+        "name": "Bachelor of Science and Arts",
+      },
+      "GPA": "4.0",
+    }))?)
+    .build()?;
+  let credential = did_doc
+    .create_credential_jwt(&credential, storage, fragment, &JwsSignatureOptions::default(), None)
+    .await?;
+  // then we create a presentation including the just created JWT encoded credential.
+  let presentation = PresentationBuilder::new(Url::parse(did_doc.id().as_str())?, Object::default())
+    .credential(credential)
+    .build()?;
+  // we encode the presentation as JWT
+  did_doc
+    .create_presentation_jwt(
+      &presentation,
+      storage,
+      fragment,
+      &JwsSignatureOptions::default(),
+      &JwtPresentationOptions::default(),
+    )
+    .await
+    .context("jwt presentation failed")
 }
