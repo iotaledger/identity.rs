@@ -14,6 +14,9 @@ if the object is being concurrently modified.</p>
 <dt><a href="#CustomMethodData">CustomMethodData</a></dt>
 <dd><p>A custom verification method data format.</p>
 </dd>
+<dt><a href="#DIDJwk">DIDJwk</a></dt>
+<dd><p><code>did:jwk</code> DID.</p>
+</dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd><p>A method agnostic DID Url.</p>
 </dd>
@@ -254,8 +257,33 @@ working with storage backed DID documents.</p>
 <dl>
 <dt><a href="#PresentationProofAlgorithm">PresentationProofAlgorithm</a></dt>
 <dd></dd>
+<dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
+<dd><p>Declares how credential subjects must relate to the presentation holder.</p>
+<p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
+</dd>
+<dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
+<dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
+This variant is the default.</p>
+</dd>
+<dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
+<dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
+</dd>
+<dt><a href="#Any">Any</a></dt>
+<dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
+</dd>
 <dt><a href="#ProofAlgorithm">ProofAlgorithm</a></dt>
 <dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#FailFast">FailFast</a></dt>
+<dd><p>Declares when validation should return if an error occurs.</p>
+</dd>
+<dt><a href="#AllErrors">AllErrors</a></dt>
+<dd><p>Return all errors that occur during validation.</p>
+</dd>
+<dt><a href="#FirstError">FirstError</a></dt>
+<dd><p>Return after the first error occurs.</p>
+</dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -275,66 +303,26 @@ working with storage backed DID documents.</p>
 </dd>
 <dt><a href="#SerializationType">SerializationType</a></dt>
 <dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
-<dd><p>Declares how credential subjects must relate to the presentation holder.</p>
-<p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
-</dd>
-<dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
-<dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
-This variant is the default.</p>
-</dd>
-<dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
-<dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
-</dd>
-<dt><a href="#Any">Any</a></dt>
-<dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
-</dd>
-<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
+<dt><a href="#PayloadType">PayloadType</a></dt>
 <dd></dd>
 <dt><a href="#StatusPurpose">StatusPurpose</a></dt>
 <dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
 </dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#FailFast">FailFast</a></dt>
-<dd><p>Declares when validation should return if an error occurs.</p>
-</dd>
-<dt><a href="#AllErrors">AllErrors</a></dt>
-<dd><p>Return all errors that occur during validation.</p>
-</dd>
-<dt><a href="#FirstError">FirstError</a></dt>
-<dd><p>Return after the first error occurs.</p>
-</dd>
-<dt><a href="#PayloadType">PayloadType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#CredentialStatus">CredentialStatus</a></dt>
 <dd></dd>
-<dt><a href="#StatusCheck">StatusCheck</a></dt>
-<dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
-<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
-</dd>
-<dt><a href="#Strict">Strict</a></dt>
-<dd><p>Validate the status if supported, reject any unsupported
-<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
-<p>Only <code>RevocationBitmap2022</code> is currently supported.</p>
-<p>This is the default.</p>
-</dd>
-<dt><a href="#SkipUnsupported">SkipUnsupported</a></dt>
-<dd><p>Validate the status if supported, skip any unsupported
-<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
-</dd>
-<dt><a href="#SkipAll">SkipAll</a></dt>
-<dd><p>Skip all status checks.</p>
-</dd>
 </dl>
 
 ## Functions
 
 <dl>
+<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
+<dd><p>Encode the given bytes in url-safe base64.</p>
+</dd>
+<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
+<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
+</dd>
 <dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
 <p>This function is useful when one is composing a <code>IJwsVerifier</code> that delegates
@@ -342,15 +330,6 @@ This variant is the default.</p>
 <h1 id="warning">Warning</h1>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
 prior to calling the function.</p>
-</dd>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
-</dd>
-<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
-<dd><p>Encode the given bytes in url-safe base64.</p>
-</dd>
-<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
-<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
 <dt><a href="#start">start()</a></dt>
 <dd><p>Initializes the console error panic hook for better error messages</p>
@@ -592,6 +571,7 @@ if the object is being concurrently modified.
         * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#CoreDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+        * [.expandDIDJwk(did)](#CoreDocument.expandDIDJwk) ⇒ [<code>CoreDocument</code>](#CoreDocument)
 
 <a name="new_CoreDocument_new"></a>
 
@@ -1030,6 +1010,17 @@ Deserializes an instance from a plain JS representation.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="CoreDocument.expandDIDJwk"></a>
+
+### CoreDocument.expandDIDJwk(did) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+Creates a [CoreDocument](#CoreDocument) from the given [DIDJwk](#DIDJwk).
+
+**Kind**: static method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DIDJwk</code>](#DIDJwk) | 
+
 <a name="Credential"></a>
 
 ## Credential
@@ -1277,6 +1268,136 @@ Serializes this to a JSON object.
 Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>CustomMethodData</code>](#CustomMethodData)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="DIDJwk"></a>
+
+## DIDJwk
+`did:jwk` DID.
+
+**Kind**: global class  
+
+* [DIDJwk](#DIDJwk)
+    * [new DIDJwk(did)](#new_DIDJwk_new)
+    * _instance_
+        * [.jwk()](#DIDJwk+jwk) ⇒ [<code>Jwk</code>](#Jwk)
+        * [.scheme()](#DIDJwk+scheme) ⇒ <code>string</code>
+        * [.authority()](#DIDJwk+authority) ⇒ <code>string</code>
+        * [.method()](#DIDJwk+method) ⇒ <code>string</code>
+        * [.methodId()](#DIDJwk+methodId) ⇒ <code>string</code>
+        * [.toString()](#DIDJwk+toString) ⇒ <code>string</code>
+        * [.toCoreDid()](#DIDJwk+toCoreDid) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.toJSON()](#DIDJwk+toJSON) ⇒ <code>any</code>
+        * [.clone()](#DIDJwk+clone) ⇒ [<code>DIDJwk</code>](#DIDJwk)
+    * _static_
+        * [.parse(input)](#DIDJwk.parse) ⇒ [<code>DIDJwk</code>](#DIDJwk)
+        * [.fromJSON(json)](#DIDJwk.fromJSON) ⇒ [<code>DIDJwk</code>](#DIDJwk)
+
+<a name="new_DIDJwk_new"></a>
+
+### new DIDJwk(did)
+Creates a new [DIDJwk](#DIDJwk) from a [CoreDID](#CoreDID).
+
+### Errors
+Throws an error if the given did is not a valid `did:jwk` DID.
+
+
+| Param | Type |
+| --- | --- |
+| did | [<code>CoreDID</code>](#CoreDID) \| <code>IToCoreDID</code> | 
+
+<a name="DIDJwk+jwk"></a>
+
+### didJwk.jwk() ⇒ [<code>Jwk</code>](#Jwk)
+Returns the JSON WEB KEY (JWK) encoded inside this `did:jwk`.
+
+**Kind**: instance method of [<code>DIDJwk</code>](#DIDJwk)  
+<a name="DIDJwk+scheme"></a>
+
+### didJwk.scheme() ⇒ <code>string</code>
+Returns the [CoreDID](#CoreDID) scheme.
+
+E.g.
+- `"did:example:12345678" -> "did"`
+- `"did:iota:smr:12345678" -> "did"`
+
+**Kind**: instance method of [<code>DIDJwk</code>](#DIDJwk)  
+<a name="DIDJwk+authority"></a>
+
+### didJwk.authority() ⇒ <code>string</code>
+Returns the [CoreDID](#CoreDID) authority: the method name and method-id.
+
+E.g.
+- `"did:example:12345678" -> "example:12345678"`
+- `"did:iota:smr:12345678" -> "iota:smr:12345678"`
+
+**Kind**: instance method of [<code>DIDJwk</code>](#DIDJwk)  
+<a name="DIDJwk+method"></a>
+
+### didJwk.method() ⇒ <code>string</code>
+Returns the [CoreDID](#CoreDID) method name.
+
+E.g.
+- `"did:example:12345678" -> "example"`
+- `"did:iota:smr:12345678" -> "iota"`
+
+**Kind**: instance method of [<code>DIDJwk</code>](#DIDJwk)  
+<a name="DIDJwk+methodId"></a>
+
+### didJwk.methodId() ⇒ <code>string</code>
+Returns the [CoreDID](#CoreDID) method-specific ID.
+
+E.g.
+- `"did:example:12345678" -> "12345678"`
+- `"did:iota:smr:12345678" -> "smr:12345678"`
+
+**Kind**: instance method of [<code>DIDJwk</code>](#DIDJwk)  
+<a name="DIDJwk+toString"></a>
+
+### didJwk.toString() ⇒ <code>string</code>
+Returns the [CoreDID](#CoreDID) as a string.
+
+**Kind**: instance method of [<code>DIDJwk</code>](#DIDJwk)  
+<a name="DIDJwk+toCoreDid"></a>
+
+### didJwk.toCoreDid() ⇒ [<code>CoreDID</code>](#CoreDID)
+**Kind**: instance method of [<code>DIDJwk</code>](#DIDJwk)  
+<a name="DIDJwk+toJSON"></a>
+
+### didJwk.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>DIDJwk</code>](#DIDJwk)  
+<a name="DIDJwk+clone"></a>
+
+### didJwk.clone() ⇒ [<code>DIDJwk</code>](#DIDJwk)
+Deep clones the object.
+
+**Kind**: instance method of [<code>DIDJwk</code>](#DIDJwk)  
+<a name="DIDJwk.parse"></a>
+
+### DIDJwk.parse(input) ⇒ [<code>DIDJwk</code>](#DIDJwk)
+Parses a [DIDJwk](#DIDJwk) from the given `input`.
+
+### Errors
+
+Throws an error if the input is not a valid [DIDJwk](#DIDJwk).
+
+**Kind**: static method of [<code>DIDJwk</code>](#DIDJwk)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="DIDJwk.fromJSON"></a>
+
+### DIDJwk.fromJSON(json) ⇒ [<code>DIDJwk</code>](#DIDJwk)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>DIDJwk</code>](#DIDJwk)  
 
 | Param | Type |
 | --- | --- |
@@ -3224,7 +3345,7 @@ Utility functions for validating JPT credentials.
 <a name="JptCredentialValidatorUtils.extractIssuer"></a>
 
 ### JptCredentialValidatorUtils.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
-Utility for extracting the issuer field of a [`Credential`](`Credential`) as a DID.
+Utility for extracting the issuer field of a [Credential](#Credential) as a DID.
 # Errors
 Fails if the issuer field is not a valid DID.
 
@@ -5450,7 +5571,8 @@ Supported verification method types.
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
         * [.X25519KeyAgreementKey2019()](#MethodType.X25519KeyAgreementKey2019) ⇒ [<code>MethodType</code>](#MethodType)
-        * [.JsonWebKey()](#MethodType.JsonWebKey) ⇒ [<code>MethodType</code>](#MethodType)
+        * ~~[.JsonWebKey()](#MethodType.JsonWebKey)~~
+        * [.JsonWebKey2020()](#MethodType.JsonWebKey2020) ⇒ [<code>MethodType</code>](#MethodType)
         * [.custom(type_)](#MethodType.custom) ⇒ [<code>MethodType</code>](#MethodType)
         * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
 
@@ -5482,7 +5604,13 @@ Deep clones the object.
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType.JsonWebKey"></a>
 
-### MethodType.JsonWebKey() ⇒ [<code>MethodType</code>](#MethodType)
+### ~~MethodType.JsonWebKey()~~
+***Deprecated***
+
+**Kind**: static method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType.JsonWebKey2020"></a>
+
+### MethodType.JsonWebKey2020() ⇒ [<code>MethodType</code>](#MethodType)
 A verification method for use with JWT verification as prescribed by the [Jwk](#Jwk)
 in the `publicKeyJwk` entry.
 
@@ -7529,6 +7657,61 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="PresentationProofAlgorithm"></a>
+
+## PresentationProofAlgorithm
+**Kind**: global variable  
+<a name="SubjectHolderRelationship"></a>
+
+## SubjectHolderRelationship
+Declares how credential subjects must relate to the presentation holder.
+
+See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
+
+**Kind**: global variable  
+<a name="AlwaysSubject"></a>
+
+## AlwaysSubject
+The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
+This variant is the default.
+
+**Kind**: global variable  
+<a name="SubjectOnNonTransferable"></a>
+
+## SubjectOnNonTransferable
+The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
+
+**Kind**: global variable  
+<a name="Any"></a>
+
+## Any
+The holder is not required to have any kind of relationship to any credential subject.
+
+**Kind**: global variable  
+<a name="ProofAlgorithm"></a>
+
+## ProofAlgorithm
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="FailFast"></a>
+
+## FailFast
+Declares when validation should return if an error occurs.
+
+**Kind**: global variable  
+<a name="AllErrors"></a>
+
+## AllErrors
+Return all errors that occur during validation.
+
+**Kind**: global variable  
+<a name="FirstError"></a>
+
+## FirstError
+Return after the first error occurs.
 
 **Kind**: global variable  
 <a name="StatusCheck"></a>
@@ -7566,90 +7749,24 @@ Skip all status checks.
 
 ## SerializationType
 **Kind**: global variable  
+<a name="PayloadType"></a>
+
+## PayloadType
+**Kind**: global variable  
+<a name="StatusPurpose"></a>
+
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
+
+**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
 **Kind**: global variable  
-<a name="SubjectHolderRelationship"></a>
+<a name="CredentialStatus"></a>
 
-## SubjectHolderRelationship
-Declares how credential subjects must relate to the presentation holder.
-
-See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
-
+## CredentialStatus
 **Kind**: global variable  
-<a name="AlwaysSubject"></a>
-
-## AlwaysSubject
-The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
-This variant is the default.
-
-**Kind**: global variable  
-<a name="SubjectOnNonTransferable"></a>
-
-## SubjectOnNonTransferable
-The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
-
-**Kind**: global variable  
-<a name="Any"></a>
-
-## Any
-The holder is not required to have any kind of relationship to any credential subject.
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="FailFast"></a>
-
-## FailFast
-Declares when validation should return if an error occurs.
-
-**Kind**: global variable  
-<a name="AllErrors"></a>
-
-## AllErrors
-Return all errors that occur during validation.
-
-**Kind**: global variable  
-<a name="FirstError"></a>
-
-## FirstError
-Return after the first error occurs.
-
-**Kind**: global variable  
-
-**Kind**: global variable  
-<a name="verifyEd25519"></a>
-
-## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
-Verify a JWS signature secured with the `EdDSA` algorithm and curve `Ed25519`.
-
-This function is useful when one is composing a `IJwsVerifier` that delegates
-`EdDSA` verification with curve `Ed25519` to this function.
-
-# Warning
-
-This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
-prior to calling the function.
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| alg | <code>JwsAlgorithm</code> | 
-| signingInput | <code>Uint8Array</code> | 
-| decodedSignature | <code>Uint8Array</code> | 
-| publicKey | [<code>Jwk</code>](#Jwk) | 
-
-<a name="start"></a>
-
-## start()
-Initializes the console error panic hook for better error messages
-
-**Kind**: global function  
 <a name="encodeB64"></a>
 
 ## encodeB64(data) ⇒ <code>string</code>
@@ -7671,6 +7788,28 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | Param | Type |
 | --- | --- |
 | data | <code>Uint8Array</code> | 
+
+<a name="verifyEd25519"></a>
+
+## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
+Verify a JWS signature secured with the `EdDSA` algorithm and curve `Ed25519`.
+
+This function is useful when one is composing a `IJwsVerifier` that delegates
+`EdDSA` verification with curve `Ed25519` to this function.
+
+# Warning
+
+This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
+prior to calling the function.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| alg | <code>JwsAlgorithm</code> | 
+| signingInput | <code>Uint8Array</code> | 
+| decodedSignature | <code>Uint8Array</code> | 
+| publicKey | [<code>Jwk</code>](#Jwk) | 
 
 <a name="start"></a>
 
