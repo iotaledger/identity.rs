@@ -13,7 +13,7 @@ pub enum JwkStorageDocumentError {
   #[error("storage operation failed: key storage error")]
   KeyStorageError(KeyStorageError),
   /// Caused by a failure in the key id storage.
-  #[error("storage operation failed: key id storage error")]
+  #[error("storage operation failed: key id storage error: {0}")]
   KeyIdStorageError(KeyIdStorageError),
   /// Caused by an attempt to add a method with a fragment that already exists.
   #[error("could not add method: the fragment already exists")]
