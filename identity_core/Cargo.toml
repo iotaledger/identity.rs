@@ -22,7 +22,7 @@ url = { version = "2.4", default-features = false, features = ["serde"] }
 zeroize = { version = "1.6", default-features = false }
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi"), not(feature = "custom_time")))'.dependencies]
-js-sys = { version = "0.3.55", default-features = false, optional = true }
+js-sys = { version = "0.3.55", default-features = false }
 
 [dev-dependencies]
 proptest = { version = "1.0.0" }
@@ -41,7 +41,6 @@ workspace = true
 [features]
 # Enables a macro to provide a custom time (Timestamp::now_utc) implementation, see src/custom_time.rs
 custom_time = []
-
 
 [[test]]
 name = "custom_time"
