@@ -32,10 +32,6 @@ thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync"], optional = true }
 zkryptium = { workspace = true, optional = true }
 oqs = { workspace = true, optional = true }
-
-
-
-
 [dev-dependencies]
 identity_credential = { version = "=1.3.1", path = "../identity_credential", features = ["revocation-bitmap"] }
 identity_eddsa_verifier = { version = "=1.3.1", path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
@@ -43,7 +39,7 @@ once_cell = { version = "1.18", default-features = false }
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
 
 [features]
-default = ["iota-document", "memstore", "pqc-liboqs"]
+default = ["iota-document", "memstore", "hybrid-liboqs"]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
 memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto"]
 # Enables `Send` + `Sync` bounds for the storage traits.
@@ -54,8 +50,9 @@ iota-document = ["dep:identity_iota_core"]
 jpt-bbs-plus = ["identity_credential/jpt-bbs-plus", "dep:zkryptium", "dep:bls12_381_plus", "dep:json-proof-token"]
 # Enables PQC (JwkStoragePQ implementation needed)
 pqc = []
-# Enables liboqs
-pqc-liboqs = ["pqc", "dep:oqs"]
+pqc-liboqs = ["pqc", "memstore", "dep:oqs"]
+hybrid = ["pqc", "dep:iota-crypto"]
+hybrid-liboqs = ["hybrid", "pqc-liboqs"]
 
 [lints]
 workspace = true

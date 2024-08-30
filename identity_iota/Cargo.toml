@@ -69,9 +69,11 @@ jpt-bbs-plus = ["identity_storage/jpt-bbs-plus", "identity_credential/jpt-bbs-pl
 
 # Enables PQC
 pqc = ["identity_storage/pqc"]
-
-# Enables liboqs
 pqc-liboqs = ["identity_storage/pqc-liboqs"]
+
+# Enables PQ/T Hybrid
+hybrid = ["identity_storage/hybrid", "identity_credential/hybrid"]
+hybrid-liboqs = ["identity_storage/hybrid-liboqs", "identity_credential/hybrid"]
 
 [package.metadata.docs.rs]
 # To build locally:

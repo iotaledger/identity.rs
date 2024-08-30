@@ -4,7 +4,7 @@ use std::ops::Deref;
 use super::JwkStorageDocumentError as Error;
 use crate::try_undo_key_generation;
 use crate::JwkGenOutput;
-use crate::JwkMemStore;
+use crate::KeyType;
 use crate::JwkStorage;
 use crate::JwkStoragePQ;
 use crate::JwsSignatureOptions;
@@ -55,15 +55,15 @@ macro_rules! generate_method_hybrid_for_document_type {
     {
       let (pq_key_type, pq_alg, trad_key_type, trad_alg) = match alg_id {
         CompositeAlgId::IdMldsa44Ed25519Sha512 => (
-          JwkMemStore::ML_DSA_KEY_TYPE,
+          KeyType::from_static_str("ML-DSA"),
           JwsAlgorithm::ML_DSA_44,
-          JwkMemStore::ED25519_KEY_TYPE,
+          KeyType::from_static_str("Ed25519"),
           JwsAlgorithm::EdDSA,
         ),
         CompositeAlgId::IdMldsa65Ed25519Sha512 => (
-          JwkMemStore::ML_DSA_KEY_TYPE,
+          KeyType::from_static_str("ML-DSA"),
           JwsAlgorithm::ML_DSA_65,
-          JwkMemStore::ED25519_KEY_TYPE,
+          KeyType::from_static_str("Ed25519"),
           JwsAlgorithm::EdDSA,
         ),
       };
