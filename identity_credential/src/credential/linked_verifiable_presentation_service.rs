@@ -8,29 +8,30 @@ use identity_did::DIDUrl;
 use identity_document::service::Service;
 use identity_document::service::ServiceBuilder;
 use identity_document::service::ServiceEndpoint;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::error::Result;
 use crate::Error;
 use crate::Error::LinkedVerifiablePresentationError;
 
 /// A service wrapper for a [Linked Verifiable Presentation Service Endpoint](https://identity.foundation/linked-vp/#linked-verifiable-presentation-service-endpoint).
-#[derive(Debug, Clone)]
-pub struct LinkedVerifiablePresentationService {
-  service: Service,
-}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(try_from = "Service", into = "Service")]
+pub struct LinkedVerifiablePresentationService(Service);
 
 impl TryFrom<Service> for LinkedVerifiablePresentationService {
   type Error = Error;
 
   fn try_from(service: Service) -> std::result::Result<Self, Self::Error> {
     LinkedVerifiablePresentationService::check_structure(&service)?;
-    Ok(LinkedVerifiablePresentationService { service })
+    Ok(LinkedVerifiablePresentationService(service))
   }
 }
 
 impl From<LinkedVerifiablePresentationService> for Service {
   fn from(service: LinkedVerifiablePresentationService) -> Self {
-    service.service
+    service.0
   }
 }
 
@@ -59,13 +60,13 @@ impl LinkedVerifiablePresentationService {
         .service_endpoint(vp_url)
         .build()
         .map_err(|err| LinkedVerifiablePresentationError(Box::new(err)))?;
-      Ok(Self { service })
+      Ok(Self(service))
     } else {
       let service = builder
         .service_endpoint(ServiceEndpoint::Set(verifiable_presentation_urls))
         .build()
         .map_err(|err| LinkedVerifiablePresentationError(Box::new(err)))?;
-      Ok(Self { service })
+      Ok(Self(service))
     }
   }
 
@@ -104,7 +105,7 @@ impl LinkedVerifiablePresentationService {
 
   /// Returns the Verifiable Presentations contained in the Linked Verifiable Presentation Service.
   pub fn verifiable_presentation_urls(&self) -> &[Url] {
-    match self.service.service_endpoint() {
+    match self.0.service_endpoint() {
       ServiceEndpoint::One(endpoint) => std::slice::from_ref(endpoint),
       ServiceEndpoint::Set(endpoints) => endpoints.as_slice(),
       ServiceEndpoint::Map(_) => {
@@ -115,7 +116,7 @@ impl LinkedVerifiablePresentationService {
 
   /// Returns a reference to the `Service` id.
   pub fn id(&self) -> &DIDUrl {
-    self.service.id()
+    self.0.id()
   }
 }
 
