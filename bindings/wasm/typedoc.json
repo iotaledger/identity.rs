@@ -11,6 +11,12 @@
     "out": "./docs/api",
     "plugin": ["typedoc-plugin-markdown"],
     "readme": "none",
+    "githubPages": false,
+    "theme": "markdown",
+    "entryDocument": "api_ref.md",
+    "hideBreadcrumbs": true,
+    "hideGenerator": true,
+    "sort": ["source-order"],
     "compilerOptions": {
         "skipLibCheck": true,
     }
