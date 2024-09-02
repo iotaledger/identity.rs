@@ -126,7 +126,7 @@ jobs:
         run: cargo clean
 
         # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
-      - name: Build with all features
+      - name: Build with default features
         run: cargo build --workspace --tests --examples --release
 
       - name: Start iota sandbox
