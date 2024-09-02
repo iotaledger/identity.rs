@@ -5,7 +5,6 @@ use _sd_jwt::verification_server::Verification;
 use _sd_jwt::verification_server::VerificationServer;
 use _sd_jwt::VerificationRequest;
 use _sd_jwt::VerificationResponse;
-use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::Object;
 use identity_iota::core::Timestamp;
 use identity_iota::core::ToJson;
@@ -24,6 +23,8 @@ use iota_sdk::client::Client;
 use serde::Deserialize;
 use serde::Serialize;
 use thiserror::Error;
+
+use crate::verifier::Verifier;
 
 use self::_sd_jwt::KeyBindingOptions;
 
@@ -125,7 +126,7 @@ impl Verification for SdJwtService {
     sd_jwt.jwt = jwt.into();
 
     let decoder = SdObjectDecoder::new_with_sha256();
-    let validator = SdJwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default(), decoder);
+    let validator = SdJwtCredentialValidator::with_signature_verifier(Verifier::default(), decoder);
     let credential = validator
       .validate_credential::<_, Object>(
         &sd_jwt,
