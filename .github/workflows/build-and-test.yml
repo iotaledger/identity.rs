@@ -127,14 +127,17 @@ jobs:
 
         # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
       - name: Build with all features
-        run: cargo build --workspace --tests --examples --all-features --release
+        run: cargo build --workspace --tests --examples --release
 
       - name: Start iota sandbox
         if: matrix.os == 'ubuntu-latest'
         uses: './.github/actions/iota-sandbox/setup'
 
-      - name: Run tests
-        run: cargo test --workspace --all-features --release
+      - name: Run tests excluding `custom_time` feature
+        run: cargo test --workspace --release
+
+      - name: Run tests with `custom_time` feature
+        run: cargo test --test custom_time --features="custom_time"
 
       - name: Run Rust examples
         # run examples only on ubuntu for now
@@ -157,7 +160,7 @@ jobs:
       - name: Tear down iota sandbox
         if: matrix.os == 'ubuntu-latest' && always()
         uses: './.github/actions/iota-sandbox/tear-down'
-      
+
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:
