@@ -50,7 +50,7 @@ impl JwsVerifier for WasmJwsVerifier {
       match input.alg {
         JwsAlgorithm::EdDSA => EdDSAJwsVerifier::default().verify(input, public_key),
         JwsAlgorithm::ES256 | JwsAlgorithm::ES256K => EcDSAJwsVerifier::default().verify(input, public_key),
-        _ => Err(identity_iota::verification::jws::SignatureVerificationErrorKind::UnsupportedAlg.into())
+        _ => Err(identity_iota::verification::jws::SignatureVerificationErrorKind::UnsupportedAlg.into()),
       }
     }
   }

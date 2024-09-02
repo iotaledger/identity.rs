@@ -1,9 +1,9 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_ecdsa_verifier::EcDSAJwsVerifier;
 use identity_eddsa_verifier::Ed25519Verifier;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
-use identity_ecdsa_verifier::EcDSAJwsVerifier;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::jws::JwsVerifier;
 use identity_iota::verification::jws::VerificationInput;
@@ -121,4 +121,3 @@ impl WasmEcDSAJwsVerifier {
     EcDSAJwsVerifier::default().verify(input, &publicKey.0).wasm_result()
   }
 }
-
