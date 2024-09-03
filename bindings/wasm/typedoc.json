@@ -8,7 +8,7 @@
     "entryPoints": ["./node/"],
     "entryPointStrategy": "expand",
     "tsconfig": "./tsconfig.typedoc.json",
-    "out": "./docs",
+    "out": "./docs/wasm",
     "plugin": ["typedoc-plugin-markdown"],
     "readme": "none",
     "githubPages": false,
