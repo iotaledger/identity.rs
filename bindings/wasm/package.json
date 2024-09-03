@@ -32,7 +32,7 @@
     "test:unit:node": "ts-mocha -p tsconfig.node.json ./tests/*.ts --parallel --exit",
     "cypress": "cypress open",
     "fmt": "dprint fmt",
-    "fix_docs": "sed -Ei 's/(\\.md?#([^#]*)?)#/\\1/' ./docs/api/**/*.md"
+    "fix_docs": "sed -Ei 's/(\\.md?#([^#]*)?)#/\\1/' ./docs/**/*.md"
   },
   "config": {
     "CYPRESS_VERIFY_TIMEOUT": 100000
