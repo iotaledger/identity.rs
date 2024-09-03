@@ -89,5 +89,6 @@ jobs:
             bindings/wasm/node
             bindings/wasm/web
             bindings/wasm/examples/dist
+            bindings/wasm/docs
           if-no-files-found: error
           retention-days: 1
