@@ -43,7 +43,7 @@ jobs:
           echo VERSION=$VERSION >> $GITHUB_OUTPUT
       - name: Compress generated docs
         run: |
-          tar czvf identity.tar.gz docs/*
+          tar czvf wasm.tar.gz docs/*
 
       - name: Upload docs to AWS S3
         env:
@@ -51,4 +51,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_IOTA_WIKI }}
           AWS_DEFAULT_REGION: "eu-central-1"
         run: |
-          aws s3 cp identity.tar.gz s3://files.iota.org/iota-wiki/iota-identity/${{ steps.get_release_version.outputs.VERSION }}/ --acl public-read
+          aws s3 cp wasm.tar.gz s3://files.iota.org/iota-wiki/iota-identity/${{ steps.get_release_version.outputs.VERSION }}/ --acl public-read
