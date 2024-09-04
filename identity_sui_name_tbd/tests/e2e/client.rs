@@ -1,19 +1,12 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod common;
-
-use common::get_client as get_test_client;
-use common::TEST_DOC;
-use common::TEST_GAS_BUDGET;
-use identity_storage::JwkMemStore;
-use identity_storage::KeyIdMemstore;
-use identity_storage::Storage;
+use crate::common::get_client as get_test_client;
+use crate::common::TEST_DOC;
+use crate::common::TEST_GAS_BUDGET;
 use identity_sui_name_tbd::migration;
 use identity_sui_name_tbd::utils::get_client as get_iota_client;
 use identity_sui_name_tbd::utils::LOCAL_NETWORK;
-
-pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
 #[tokio::test]
 async fn can_create_an_identity() -> anyhow::Result<()> {

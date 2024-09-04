@@ -1,21 +1,14 @@
-mod common;
-
 use std::str::FromStr;
 
-use common::get_client as get_test_client;
-use common::TEST_DOC;
-use common::TEST_GAS_BUDGET;
+use crate::common::get_client as get_test_client;
+use crate::common::TEST_DOC;
+use crate::common::TEST_GAS_BUDGET;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
-use identity_storage::JwkMemStore;
-use identity_storage::KeyIdMemstore;
-use identity_storage::Storage;
 use identity_sui_name_tbd::proposals::ProposalResult;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use move_core_types::language_storage::StructTag;
-
-pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
 #[tokio::test]
 async fn updating_onchain_identity_did_doc_with_single_controller_works() -> anyhow::Result<()> {

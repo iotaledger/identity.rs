@@ -1,9 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod common;
-
-use common::get_client;
+use crate::common::get_client;
 use identity_sui_name_tbd::migration;
 use iota_sdk::types::base_types::ObjectID;
 

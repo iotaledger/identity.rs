@@ -1,9 +1,7 @@
-mod common;
-
 use std::str::FromStr;
 
-use common::get_client as get_test_client;
-use common::TEST_GAS_BUDGET;
+use crate::common::get_client as get_test_client;
+use crate::common::TEST_GAS_BUDGET;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
