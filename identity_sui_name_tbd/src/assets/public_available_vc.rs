@@ -17,6 +17,7 @@ use serde::Serialize;
 use crate::client::IdentityClient;
 use crate::client::IdentityClientReadOnly;
 use crate::client::IotaKeySignature;
+use crate::transaction::Transaction;
 use crate::utils::MoveType;
 
 use super::AuthenticatedAsset;
@@ -57,18 +58,18 @@ impl PublicAvailableVC {
       .expect("JWT is valid UTF8")
   }
 
-  pub async fn new<S>(jwt: Jwt, gas_budget: u64, client: &IdentityClient<S>) -> Result<Self, anyhow::Error>
+  pub async fn new<S>(jwt: Jwt, gas_budget: Option<u64>, client: &IdentityClient<S>) -> Result<Self, anyhow::Error>
   where
-    S: Signer<IotaKeySignature>,
+    S: Signer<IotaKeySignature> + Sync,
   {
     let jwt_bytes = String::from(jwt).into_bytes();
     let credential = parse_jwt_credential(&jwt_bytes)?;
     let asset = AuthenticatedAssetBuilder::new(IotaVerifiableCredential { data: jwt_bytes })
-      .gas_budget(gas_budget)
       .transferable(false)
       .mutable(true)
       .deletable(true)
-      .finish(client)
+      .finish()
+      .execute_with_opt_gas(gas_budget, client)
       .await?;
 
     Ok(Self { credential, asset })

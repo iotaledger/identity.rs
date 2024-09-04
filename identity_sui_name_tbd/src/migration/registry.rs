@@ -3,9 +3,11 @@
 
 use iota_sdk::rpc_types::IotaData;
 use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::id::ID;
 
 use crate::client::IdentityClientReadOnly;
 
+use super::get_identity;
 use super::OnChainIdentity;
 
 #[derive(thiserror::Error, Debug)]
@@ -30,7 +32,7 @@ pub async fn lookup(
   }))
   .expect("valid move value");
 
-  iota_client
+  let identity_id = iota_client
     .read_api()
     .get_dynamic_field_object(iota_client.migration_registry_id(), dynamic_field_name)
     .await
@@ -40,10 +42,19 @@ pub async fn lookup(
       data
         .content
         .and_then(|content| content.try_into_move())
-        .and_then(|move_object| serde_json::from_value(move_object.fields.to_json_value()).ok())
+        .and_then(|move_object| move_object.fields.to_json_value().get_mut("value").map(std::mem::take))
+        .and_then(|value| serde_json::from_value::<ID>(value).map(|id| id.bytes).ok())
         .ok_or(Error::Malformed(
           "invalid MigrationRegistry's Entry encoding".to_string(),
         ))
     })
-    .transpose()
+    .transpose()?;
+
+  if let Some(id) = identity_id {
+    get_identity(iota_client, id)
+      .await
+      .map_err(|e| Error::ClientError(e.into()))
+  } else {
+    Ok(None)
+  }
 }

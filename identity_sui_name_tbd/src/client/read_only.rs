@@ -170,7 +170,7 @@ impl IdentityClientReadOnly {
     let identity = get_identity(self, get_object_id_from_did(did)?)
       .await?
       .ok_or_else(|| Error::DIDResolutionError(format!("call succeeded but could not resolve {did} to object")))?;
-    let state_metadata = identity.did_doc.controlled_value();
+    let state_metadata = identity.multicontroller().controlled_value();
 
     // return empty document if disabled
     if state_metadata.is_empty() {

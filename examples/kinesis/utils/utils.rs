@@ -22,6 +22,7 @@ use identity_sui_name_tbd::client::get_sender_public_key;
 use identity_sui_name_tbd::client::IdentityClient;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
 use identity_sui_name_tbd::client::IotaKeySignature;
+use identity_sui_name_tbd::transaction::Transaction;
 use identity_sui_name_tbd::utils::request_funds;
 use iota_sdk::IotaClientBuilder;
 use iota_sdk_legacy::client::secret::stronghold::StrongholdSecretManager;
@@ -43,7 +44,7 @@ pub async fn create_kinesis_did_document<K, I, S>(
 where
   K: identity_storage::JwkStorage,
   I: identity_storage::KeyIdStorage,
-  S: Signer<IotaKeySignature>,
+  S: Signer<IotaKeySignature> + Sync,
 {
   // Create a new DID document with a placeholder DID.
   // The DID will be derived from the Alias Id of the Alias Output after publishing.
@@ -59,7 +60,8 @@ where
     .await?;
 
   let document = identity_client
-    .publish_did_document(unpublished, TEST_GAS_BUDGET)
+    .publish_did_document(unpublished)
+    .execute_with_gas(TEST_GAS_BUDGET, identity_client)
     .await?;
 
   Ok((document, verification_method_fragment))

@@ -3,10 +3,8 @@
 
 use crate::common::get_client as get_test_client;
 use crate::common::TEST_DOC;
-use crate::common::TEST_GAS_BUDGET;
 use identity_sui_name_tbd::migration;
-use identity_sui_name_tbd::utils::get_client as get_iota_client;
-use identity_sui_name_tbd::utils::LOCAL_NETWORK;
+use identity_sui_name_tbd::transaction::Transaction;
 
 #[tokio::test]
 async fn can_create_an_identity() -> anyhow::Result<()> {
@@ -15,8 +13,8 @@ async fn can_create_an_identity() -> anyhow::Result<()> {
 
   let result = identity_client
     .create_identity(TEST_DOC)
-    .gas_budget(TEST_GAS_BUDGET)
-    .finish(&identity_client)
+    .finish()
+    .execute(&identity_client)
     .await;
 
   assert!(result.is_ok());
@@ -31,12 +29,11 @@ async fn can_resolve_a_new_identity() -> anyhow::Result<()> {
 
   let new_identity = identity_client
     .create_identity(TEST_DOC)
-    .gas_budget(TEST_GAS_BUDGET)
-    .finish(&identity_client)
+    .finish()
+    .execute(&identity_client)
     .await?;
 
-  let iota_client = get_iota_client(LOCAL_NETWORK).await?;
-  let identity = migration::get_identity(&iota_client, *new_identity.id.object_id()).await?;
+  let identity = migration::get_identity(&identity_client, new_identity.id()).await?;
 
   assert!(identity.is_some());
 
@@ -75,7 +72,7 @@ mod resolution {
 
       let resolved_id = migration::lookup(&test_client, alias_id)
         .await?
-        .map(|doc| *doc.id.object_id())
+        .map(|identity| identity.id())
         .unwrap();
 
       assert_eq!(resolved_id, doc_id);

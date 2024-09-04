@@ -26,13 +26,14 @@ module identity_iota::migration {
         // Destroy alias.
         object::delete(alias_id);
 
-        let document = identity::new(state_metadata.extract(), ctx);
-        let document_addr = document.id().to_address();
+        let identity = identity::new(state_metadata.extract(), ctx);
+        let identity_addr = identity.id().to_address();
 
         // Add a migration record.
-        migration_registry.add(legacy_id, document);
+        migration_registry.add(legacy_id, identity.id().to_inner());
+        transfer::public_share_object(identity);
 
-        document_addr
+        identity_addr
     }
 
     /// Creates a new `Document` from an Iota 1.0 legacy `AliasOutput`.
@@ -93,10 +94,12 @@ module identity_iota::migration_tests {
 
         migrate_alias_output(alias_output, &mut registry, scenario.ctx());
 
-        let identity: &Identity = registry.borrow(alias_id);
-
         scenario.next_tx(controller_a);
+        let identity = scenario.take_shared<Identity>();
         let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
+
+        // Assert correct binding in migration regitry
+        assert!(registry.lookup(alias_id) == identity.id().to_inner(), 0);
 
         // Assert the sender is controller
         identity.did_doc().assert_is_member(&controller_a_cap);
@@ -107,6 +110,7 @@ module identity_iota::migration_tests {
 
         test_scenario::return_to_address(controller_a, controller_a_cap);
         test_scenario::return_shared(registry);
+        test_scenario::return_shared(identity);
         let _ = scenario.end();
     }
 }

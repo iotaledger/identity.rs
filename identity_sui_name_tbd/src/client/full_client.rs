@@ -3,6 +3,7 @@
 
 use std::ops::Deref;
 
+use async_trait::async_trait;
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::ToFromBytes;
 use identity_iota_core::IotaDID;
@@ -14,6 +15,7 @@ use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaObjectDataFilter;
 use iota_sdk::rpc_types::IotaObjectResponseQuery;
 use iota_sdk::rpc_types::IotaTransactionBlockEffects;
+use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
 use iota_sdk::rpc_types::IotaTransactionBlockEffectsV1;
 use iota_sdk::rpc_types::IotaTransactionBlockResponse;
 use iota_sdk::rpc_types::IotaTransactionBlockResponseOptions;
@@ -29,7 +31,7 @@ use iota_sdk::types::transaction::TransactionData;
 use move_core_types::language_storage::StructTag;
 use secret_storage::SignatureScheme as SignatureSchemeT;
 use secret_storage::Signer;
-use serde::Deserialize;
+use serde::de::DeserializeOwned;
 use serde::Serialize;
 use shared_crypto::intent::Intent;
 use shared_crypto::intent::IntentMessage;
@@ -37,6 +39,7 @@ use shared_crypto::intent::IntentMessage;
 use crate::assets::AuthenticatedAssetBuilder;
 use crate::migration::Identity;
 use crate::migration::IdentityBuilder;
+use crate::transaction::Transaction as TransactionT;
 use crate::utils::MoveType;
 use crate::Error;
 
@@ -149,8 +152,12 @@ where
   pub(crate) async fn execute_transaction(
     &self,
     tx: ProgrammableTransaction,
-    gas_budget: u64,
+    gas_budget: Option<u64>,
   ) -> Result<IotaTransactionBlockResponse, Error> {
+    let gas_budget = match gas_budget {
+      Some(gas) => gas,
+      None => self.default_gas_budget(&tx).await?,
+    };
     let tx_data = self.get_transaction_data(tx, gas_budget).await?;
     let signature = self.sign_transaction_data(&tx_data).await?;
 
@@ -192,14 +199,44 @@ impl<S> IdentityClient<S> {
 
   /// Creates a new onchain Identity.
   pub fn create_identity<'a>(&self, iota_document: &'a [u8]) -> IdentityBuilder<'a> {
-    IdentityBuilder::new(iota_document, self.package_id())
+    IdentityBuilder::new(iota_document)
   }
 
   pub fn create_authenticated_asset<T>(&self, content: T) -> AuthenticatedAssetBuilder<T>
   where
-    T: MoveType + Serialize + for<'de> Deserialize<'de>,
+    T: MoveType + Serialize + DeserializeOwned,
   {
     AuthenticatedAssetBuilder::new(content)
+  }
+
+  pub(crate) async fn default_gas_budget(&self, tx: &ProgrammableTransaction) -> Result<u64, Error> {
+    let gas_price = self
+      .read_api()
+      .get_reference_gas_price()
+      .await
+      .map_err(|e| Error::RpcError(e.to_string()))?;
+    let gas_coin = self.get_coin_for_transaction().await?;
+    let tx_data = TransactionData::new_programmable(
+      self.sender_address(),
+      vec![gas_coin.object_ref()],
+      tx.clone(),
+      50_000_000_000,
+      gas_price,
+    );
+    let dry_run_gas_result = self.read_api().dry_run_transaction_block(tx_data).await?.effects;
+    if dry_run_gas_result.status().is_err() {
+      let IotaExecutionStatus::Failure { error } = dry_run_gas_result.into_status() else {
+        unreachable!();
+      };
+      return Err(Error::TransactionUnexpectedResponse(error));
+    }
+    let gas_summary = dry_run_gas_result.gas_cost_summary();
+    let overhead = gas_price * 1000;
+    let net_used = gas_summary.net_gas_usage();
+    let computation = gas_summary.computation_cost;
+
+    let budget = overhead + (net_used.max(0) as u64).max(computation);
+    Ok(budget)
   }
 
   async fn get_coin_for_transaction(&self) -> Result<iota_sdk::rpc_types::Coin, Error> {
@@ -271,30 +308,10 @@ impl<S> IdentityClient<S> {
 
 impl<S> IdentityClient<S>
 where
-  S: Signer<IotaKeySignature>,
+  S: Signer<IotaKeySignature> + Sync,
 {
-  pub async fn publish_did_document(&self, document: IotaDocument, gas_budget: u64) -> Result<IotaDocument, Error> {
-    let packed = document
-      .clone()
-      .pack()
-      .map_err(|err| Error::DidDocSerialization(format!("could not pack DID document: {err}")))?;
-
-    let oci = self
-      .create_identity(&packed)
-      .gas_budget(gas_budget)
-      .finish(self)
-      .await?;
-
-    // replace placeholders in document
-    let did: IotaDID = IotaDID::new(&oci.id.id.bytes, self.network());
-    let metadata_document: StateMetadataDocument = document.into();
-    let document_without_placeholders = metadata_document.into_iota_document(&did).map_err(|err| {
-      Error::DidDocParsingFailed(format!(
-        "could not replace placeholders in published DID document {did}; {err}"
-      ))
-    })?;
-
-    Ok(document_without_placeholders)
+  pub fn publish_did_document(&self, document: IotaDocument) -> PublishDidTx {
+    PublishDidTx(document)
   }
 
   // TODO: define what happens for (legacy|migrated|new) documents
@@ -312,8 +329,8 @@ where
 
     oci
       .update_did_document(document.clone())
-      .gas_budget(gas_budget)
-      .finish(self)
+      .finish()
+      .execute_with_gas(gas_budget, self)
       .await?;
 
     Ok(document)
@@ -326,7 +343,7 @@ where
       return Err(Error::Identity("only new identities can be deactivated".to_string()));
     };
 
-    oci.deactivate_did().gas_budget(gas_budget).finish(self).await?;
+    oci.deactivate_did().finish().execute_with_gas(gas_budget, self).await?;
 
     Ok(())
   }
@@ -347,4 +364,43 @@ pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error
     .map_err(|err| Error::InvalidKey(format!("could not parse public key to Ed25519 public key; {err}")))?;
 
   Ok(IotaAddress::from(&public_key))
+}
+
+#[derive(Debug)]
+pub struct PublishDidTx(IotaDocument);
+
+#[async_trait]
+impl TransactionT for PublishDidTx {
+  type Output = IotaDocument;
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<Self::Output, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let packed = self
+      .0
+      .clone()
+      .pack()
+      .map_err(|err| Error::DidDocSerialization(format!("could not pack DID document: {err}")))?;
+
+    let oci = client
+      .create_identity(&packed)
+      .finish()
+      .execute_with_opt_gas(gas_budget, client)
+      .await?;
+
+    // replace placeholders in document
+    let did: IotaDID = IotaDID::new(&oci.id(), client.network());
+    let metadata_document: StateMetadataDocument = self.0.into();
+    let document_without_placeholders = metadata_document.into_iota_document(&did).map_err(|err| {
+      Error::DidDocParsingFailed(format!(
+        "could not replace placeholders in published DID document {did}; {err}"
+      ))
+    })?;
+
+    Ok(document_without_placeholders)
+  }
 }
