@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::ObjectRef;
@@ -8,8 +6,8 @@ use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBu
 use iota_sdk::types::transaction::Command;
 use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::Identifier;
 use iota_sdk::types::TypeTag;
+use move_core_types::ident_str;
 
 use crate::utils::MoveType;
 use crate::Error;
@@ -27,8 +25,8 @@ pub fn transfer<T: MoveType>(
 
   ptb.command(Command::move_call(
     package,
-    Identifier::from_str("asset").map_err(|e| Error::ParsingFailed(e.to_string()))?,
-    Identifier::from_str("transfer").map_err(|e| Error::ParsingFailed(e.to_string()))?,
+    ident_str!("asset").into(),
+    ident_str!("transfer").into(),
     vec![T::move_type(package)],
     vec![asset, recipient],
   ));
@@ -42,7 +40,7 @@ fn make_tx(
   asset: ObjectRef,
   asset_type_param: TypeTag,
   package: ObjectID,
-  function_name: &str,
+  function_name: &'static str,
 ) -> Result<ProgrammableTransaction, Error> {
   let mut ptb = ProgrammableTransactionBuilder::new();
   let proposal = ptb
@@ -61,8 +59,8 @@ fn make_tx(
 
   ptb.command(Command::move_call(
     package,
-    Identifier::from_str("asset").map_err(|e| Error::ParsingFailed(e.to_string()))?,
-    Identifier::from_str(function_name).map_err(|e| Error::ParsingFailed(e.to_string()))?,
+    ident_str!("asset").into(),
+    ident_str!(function_name).into(),
     vec![asset_type_param],
     vec![proposal, cap, asset],
   ));

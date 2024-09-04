@@ -7,7 +7,7 @@ use iota_sdk::types::object::Owner;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::Identifier;
+use move_core_types::ident_str;
 
 pub fn approve<T: MoveType>(
   identity: OwnedObjectRef,
@@ -38,8 +38,8 @@ pub fn approve<T: MoveType>(
 
   ptb.programmable_move_call(
     package,
-    Identifier::new("identity").expect("valid utf8"),
-    Identifier::new("approve_proposal").expect("valid utf8"),
+    ident_str!("identity").into(),
+    ident_str!("approve_proposal").into(),
     vec![T::move_type(package)],
     vec![identity, controller_cap, proposal_id],
   );
