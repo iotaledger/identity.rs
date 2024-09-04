@@ -22,7 +22,7 @@ impl DIDJwk {
   /// [`DIDKey`]'s method.
   pub const METHOD: &'static str = "jwk";
 
-  /// Tries to parse a [`DIDKey`] from a string.
+  /// Tries to parse a [`DIDJwk`] from a string.
   pub fn parse(s: &str) -> Result<Self, Error> {
     s.parse()
   }
