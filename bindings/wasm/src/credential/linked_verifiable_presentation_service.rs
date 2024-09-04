@@ -76,7 +76,7 @@ extern "C" {
   pub type ILinkedVerifiablePresentationService;
 }
 
-/// Fields for constructing a new {@link LinkedDomainService}.
+/// Fields for constructing a new {@link LinkedVerifiablePresentationService}.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[typescript(name = "ILinkedVerifiablePresentationService", readonly, optional)]
