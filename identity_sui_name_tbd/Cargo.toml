@@ -13,6 +13,7 @@ description = "SUI related tooling for identity-rs"
 
 [dependencies]
 anyhow = "1.0.75"
+async-trait = "0.1.81"
 bcs = "0.1.4"
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "fastcrypto-zkp-v0.1.3", package = "fastcrypto" }
 futures = { version = "0.3", default-features = false }

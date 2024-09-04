@@ -3,11 +3,12 @@
 
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::ops::Deref;
 use std::str::FromStr;
 
+use async_trait::async_trait;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
-use identity_iota_core::NetworkName;
 use identity_iota_core::StateMetadataDocument;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
@@ -26,12 +27,10 @@ use iota_sdk::types::id::UID;
 use iota_sdk::types::object::Owner;
 use iota_sdk::types::Identifier;
 use iota_sdk::types::TypeTag;
-use iota_sdk::IotaClient;
 use move_core_types::language_storage::StructTag;
 use secret_storage::Signer;
 use serde;
 use serde::Deserialize;
-use serde::Serialize;
 
 use crate::client::IdentityClient;
 use crate::client::IdentityClientReadOnly;
@@ -41,6 +40,7 @@ use crate::proposals::DeactiveDid;
 use crate::proposals::ProposalBuilder;
 use crate::proposals::UpdateDidDocument;
 use crate::sui::move_calls;
+use crate::transaction::Transaction;
 use crate::utils::MoveType;
 use crate::Error;
 
@@ -57,11 +57,8 @@ pub enum Identity {
 }
 
 impl Identity {
-  pub fn did_document(&self, _client: &IotaClient) -> Result<IotaDocument, Error> {
-    // TODO: read it from client
-    let network_name = NetworkName::try_from("iota")
-      .map_err(|err| Error::InvalidConfig(format!("could not parse network name; {err}")))?;
-    let original_did = IotaDID::from_alias_id(self.id().object_id().to_string().as_str(), &network_name);
+  pub fn did_document(&self, client: &IdentityClientReadOnly) -> Result<IotaDocument, Error> {
+    let original_did = IotaDID::from_alias_id(self.id().to_string().as_str(), client.network());
     let doc_bytes = self.doc_bytes().ok_or(Error::DidDocParsingFailed(
       "legacy alias output does not encode a DID document".to_owned(),
     ))?;
@@ -71,27 +68,33 @@ impl Identity {
       .map_err(|e| Error::DidDocParsingFailed(e.to_string()))
   }
 
-  fn id(&self) -> &UID {
+  fn id(&self) -> ObjectID {
     match self {
-      Self::Legacy(alias) => &alias.id,
-      Self::FullFledged(identity) => &identity.id,
+      Self::Legacy(alias) => *alias.id.object_id(),
+      Self::FullFledged(identity) => identity.id(),
     }
   }
 
   fn doc_bytes(&self) -> Option<&[u8]> {
     match self {
-      Self::FullFledged(identity) => Some(identity.did_doc.controlled_value().as_ref()),
+      Self::FullFledged(identity) => Some(identity.multi_controller.controlled_value().as_ref()),
       Self::Legacy(alias) => alias.state_metadata.as_deref(),
     }
   }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug)]
 pub struct OnChainIdentity {
-  pub id: UID,
-  pub did_doc: Multicontroller<Vec<u8>>,
-  #[serde(skip)]
-  pub obj_ref: Option<OwnedObjectRef>,
+  id: UID,
+  multi_controller: Multicontroller<Vec<u8>>,
+  did_doc: IotaDocument,
+}
+
+impl Deref for OnChainIdentity {
+  type Target = IotaDocument;
+  fn deref(&self) -> &Self::Target {
+    &self.did_doc
+  }
 }
 
 impl OnChainIdentity {
@@ -100,17 +103,29 @@ impl OnChainIdentity {
   }
   /// Returns true if this [`OnChainIdentity`] is shared between multiple controllers.
   pub fn is_shared(&self) -> bool {
-    self.did_doc.controllers().len() > 1
+    self.multi_controller.controllers().len() > 1
   }
   pub fn proposals(&self) -> &HashSet<ObjectID> {
-    self.did_doc.proposals()
+    self.multi_controller.proposals()
+  }
+  pub fn controllers(&self) -> &HashMap<ObjectID, u64> {
+    self.multi_controller.controllers()
+  }
+  pub fn threshold(&self) -> u64 {
+    self.multi_controller.threshold()
+  }
+  pub fn controller_voting_power(&self, controller_id: ObjectID) -> Option<u64> {
+    self.multi_controller.controller_voting_power(controller_id)
+  }
+  pub(crate) fn multicontroller(&self) -> &Multicontroller<Vec<u8>> {
+    &self.multi_controller
   }
   pub(crate) async fn get_controller_cap<S>(&self, client: &IdentityClient<S>) -> Result<ObjectRef, Error> {
     let controller_cap_tag = StructTag::from_str(&format!("{}::multicontroller::ControllerCap", client.package_id()))
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
     client
       .find_owned_ref(controller_cap_tag, |obj_data| {
-        self.did_doc.has_member(obj_data.object_id)
+        self.multi_controller.has_member(obj_data.object_id)
       })
       .await?
       .ok_or_else(|| Error::Identity("this address has no control over the requested identity".to_string()))
@@ -134,9 +149,9 @@ impl OnChainIdentity {
     last_version: Option<&IotaObjectData>,
     page_size: Option<usize>,
   ) -> Result<Vec<IotaObjectData>, Error> {
-    let identity_ref = self
-      .obj_ref
-      .as_ref()
+    let identity_ref = client
+      .get_object_ref_by_id(self.id())
+      .await?
       .ok_or_else(|| Error::InvalidIdentityHistory("no reference to identity loaded".to_string()))?;
     let object_id = identity_ref.object_id();
 
@@ -267,19 +282,13 @@ async fn get_previous_version(
   }
 }
 
-pub async fn get_identity(client: &IotaClient, object_id: ObjectID) -> Result<Option<OnChainIdentity>, Error> {
-  let options = IotaObjectDataOptions {
-    show_type: true,
-    show_owner: true,
-    show_previous_transaction: true,
-    show_display: true,
-    show_content: true,
-    show_bcs: true,
-    show_storage_rebate: true,
-  };
+pub async fn get_identity(
+  client: &IdentityClientReadOnly,
+  object_id: ObjectID,
+) -> Result<Option<OnChainIdentity>, Error> {
   let response = client
     .read_api()
-    .get_object_with_options(object_id, options)
+    .get_object_with_options(object_id, IotaObjectDataOptions::new().with_content())
     .await
     .map_err(|err| {
       Error::ObjectLookup(format!(
@@ -293,7 +302,6 @@ pub async fn get_identity(client: &IotaClient, object_id: ObjectID) -> Result<Op
     return Ok(None);
   };
 
-  let object_ref = data.object_ref();
   let content = data
     .content
     .ok_or_else(|| Error::ObjectLookup(format!("no content in retrieved object in object id {object_id}")))?;
@@ -308,19 +316,30 @@ pub async fn get_identity(client: &IotaClient, object_id: ObjectID) -> Result<Op
     return Ok(None);
   }
 
-  let mut identity = serde_json::from_value::<OnChainIdentity>(value.fields.to_json_value()).map_err(|err| {
+  #[derive(Deserialize)]
+  struct TempOnChainIdentity {
+    id: UID,
+    did_doc: Multicontroller<Vec<u8>>,
+  }
+
+  let TempOnChainIdentity {
+    id,
+    did_doc: multi_controller,
+  } = serde_json::from_value::<TempOnChainIdentity>(value.fields.to_json_value()).map_err(|err| {
     Error::ObjectLookup(format!(
       "could not parse identity document with object id {object_id}; {err}"
     ))
   })?;
-  identity.obj_ref = Some(OwnedObjectRef {
-    owner: data
-      .owner
-      .ok_or_else(|| Error::Identity(format!("could not get owner for identity {object_id}")))?,
-    reference: object_ref.into(),
-  });
+  let original_did = IotaDID::from_alias_id(id.object_id().to_string().as_str(), client.network());
+  let did_doc = StateMetadataDocument::unpack(multi_controller.controlled_value())
+    .and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(&original_did))
+    .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?;
 
-  Ok(Some(identity))
+  Ok(Some(OnChainIdentity {
+    id,
+    multi_controller,
+    did_doc,
+  }))
 }
 
 fn is_identity(value: &IotaParsedMoveObject) -> bool {
@@ -331,21 +350,17 @@ fn is_identity(value: &IotaParsedMoveObject) -> bool {
 
 #[derive(Debug)]
 pub struct IdentityBuilder<'a> {
-  package_id: ObjectID,
   did_doc: &'a [u8],
   threshold: Option<u64>,
   controllers: HashMap<IotaAddress, u64>,
-  gas_budget: Option<u64>,
 }
 
 impl<'a> IdentityBuilder<'a> {
-  pub fn new(did_doc: &'a [u8], package_id: ObjectID) -> Self {
+  pub fn new(did_doc: &'a [u8]) -> Self {
     Self {
       did_doc,
-      package_id,
       threshold: None,
       controllers: HashMap::new(),
-      gas_budget: None,
     }
   }
 
@@ -359,11 +374,6 @@ impl<'a> IdentityBuilder<'a> {
     self
   }
 
-  pub fn gas_budget(mut self, gas_budget: u64) -> Self {
-    self.gas_budget = Some(gas_budget);
-    self
-  }
-
   pub fn controllers<I>(self, controllers: I) -> Self
   where
     I: IntoIterator<Item = (IotaAddress, u64)>,
@@ -373,20 +383,43 @@ impl<'a> IdentityBuilder<'a> {
       .fold(self, |builder, (addr, vp)| builder.controller(addr, vp))
   }
 
-  pub async fn finish<S>(self, client: &IdentityClient<S>) -> Result<OnChainIdentity, Error>
+  pub fn finish(self) -> CreateIdentityTx<'a> {
+    CreateIdentityTx(self)
+  }
+}
+
+impl MoveType for OnChainIdentity {
+  fn move_type(package: ObjectID) -> TypeTag {
+    TypeTag::Struct(Box::new(StructTag {
+      address: package.into(),
+      module: Identifier::new("identity").expect("valid utf8"),
+      name: Identifier::new("Identity").expect("valid utf8"),
+      type_params: vec![],
+    }))
+  }
+}
+
+#[derive(Debug)]
+pub struct CreateIdentityTx<'a>(IdentityBuilder<'a>);
+
+#[async_trait]
+impl<'a> Transaction for CreateIdentityTx<'a> {
+  type Output = OnChainIdentity;
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<Self::Output, Error>
   where
-    S: Signer<IotaKeySignature>,
+    S: Signer<IotaKeySignature> + Sync,
   {
     let IdentityBuilder {
-      package_id,
       did_doc,
       threshold,
       controllers,
-      gas_budget,
-    } = self;
-
+    } = self.0;
     let programmable_transaction = if controllers.is_empty() {
-      move_calls::identity::new(did_doc, package_id)?
+      move_calls::identity::new(did_doc, client.package_id())?
     } else {
       let threshold = match threshold {
         Some(t) => t,
@@ -400,10 +433,9 @@ impl<'a> IdentityBuilder<'a> {
           ))
         }
       };
-      move_calls::identity::new_with_controllers(did_doc, controllers, threshold, package_id)?
+      move_calls::identity::new_with_controllers(did_doc, controllers, threshold, client.package_id())?
     };
 
-    let gas_budget = gas_budget.ok_or_else(|| Error::GasIssue("Missing gas budget in identity creation".to_owned()))?;
     let response = client.execute_transaction(programmable_transaction, gas_budget).await?;
 
     let created = match response.clone().effects {
@@ -437,16 +469,5 @@ impl<'a> IdentityBuilder<'a> {
     get_identity(client, new_identity_id)
       .await
       .and_then(|identity| identity.ok_or_else(|| Error::ObjectLookup(new_identity_id.to_string())))
-  }
-}
-
-impl MoveType for OnChainIdentity {
-  fn move_type(package: ObjectID) -> TypeTag {
-    TypeTag::Struct(Box::new(StructTag {
-      address: package.into(),
-      module: Identifier::new("identity").expect("valid utf8"),
-      name: Identifier::new("Identity").expect("valid utf8"),
-      type_params: vec![],
-    }))
   }
 }
