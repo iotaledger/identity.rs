@@ -25,8 +25,8 @@ use iota_sdk::types::base_types::ObjectRef;
 use iota_sdk::types::base_types::SequenceNumber;
 use iota_sdk::types::id::UID;
 use iota_sdk::types::object::Owner;
-use iota_sdk::types::Identifier;
 use iota_sdk::types::TypeTag;
+use move_core_types::ident_str;
 use move_core_types::language_storage::StructTag;
 use secret_storage::Signer;
 use serde;
@@ -392,8 +392,8 @@ impl MoveType for OnChainIdentity {
   fn move_type(package: ObjectID) -> TypeTag {
     TypeTag::Struct(Box::new(StructTag {
       address: package.into(),
-      module: Identifier::new("identity").expect("valid utf8"),
-      name: Identifier::new("Identity").expect("valid utf8"),
+      module: ident_str!("identity").into(),
+      name: ident_str!("Identity").into(),
       type_params: vec![],
     }))
   }

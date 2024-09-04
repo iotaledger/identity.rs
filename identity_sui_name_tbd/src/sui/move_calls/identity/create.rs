@@ -4,13 +4,14 @@ use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBu
 use iota_sdk::types::transaction::Command;
 use iota_sdk::types::transaction::ProgrammableMoveCall;
 use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::Identifier;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
+use move_core_types::ident_str;
 
+use crate::migration::OnChainIdentity;
 use crate::sui::move_calls::utils;
-use crate::utils::parse_identifier;
 
+use crate::utils::MoveType;
 use crate::Error;
 
 pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransaction, Error> {
@@ -20,8 +21,8 @@ pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransacti
   // Create a new identity, sending its capability to the tx's sender.
   let identity_res = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
     package: package_id,
-    module: parse_identifier("identity")?,
-    function: parse_identifier("new")?,
+    module: ident_str!("identity").into(),
+    function: ident_str!("new").into(),
     type_arguments: vec![],
     arguments: vec![doc_arg],
   })));
@@ -29,9 +30,9 @@ pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransacti
   // Share the resulting identity.
   ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
     package: IOTA_FRAMEWORK_PACKAGE_ID,
-    module: parse_identifier("transfer")?,
-    function: parse_identifier("public_share_object")?,
-    type_arguments: vec![TypeTag::Struct(Box::new(utils::identity_tag(package_id)?))],
+    module: ident_str!("transfer").into(),
+    function: ident_str!("public_share_object").into(),
+    type_arguments: vec![OnChainIdentity::move_type(package_id)],
     arguments: vec![identity_res],
   })));
 
@@ -55,8 +56,8 @@ where
     let vps = ptb.pure(vps).map_err(|e| Error::InvalidArgument(e.to_string()))?;
     ptb.programmable_move_call(
       package_id,
-      Identifier::new("utils").expect("valid utf8"),
-      Identifier::new("vec_map_from_keys_values").expect("valid utf8"),
+      ident_str!("utils").into(),
+      ident_str!("vec_map_from_keys_values").into(),
       vec![TypeTag::Address, TypeTag::U64],
       vec![ids, vps],
     )
@@ -67,8 +68,8 @@ where
   // Create a new identity, sending its capabilities to the specified controllers.
   let identity_res = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
     package: package_id,
-    module: parse_identifier("identity")?,
-    function: parse_identifier("new_with_controllers")?,
+    module: ident_str!("identity").into(),
+    function: ident_str!("new_with_controllers").into(),
     type_arguments: vec![],
     arguments: vec![doc_arg, controllers, threshold_arg],
   })));
@@ -76,9 +77,9 @@ where
   // Share the resulting identity.
   ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
     package: IOTA_FRAMEWORK_PACKAGE_ID,
-    module: parse_identifier("transfer")?,
-    function: parse_identifier("public_share_object")?,
-    type_arguments: vec![TypeTag::Struct(Box::new(utils::identity_tag(package_id)?))],
+    module: ident_str!("transfer").into(),
+    function: ident_str!("public_share_object").into(),
+    type_arguments: vec![OnChainIdentity::move_type(package_id)],
     arguments: vec![identity_res],
   })));
 

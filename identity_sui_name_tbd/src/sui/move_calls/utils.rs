@@ -7,24 +7,9 @@ use iota_sdk::types::object::Owner;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
 use iota_sdk::types::transaction::Argument;
 use iota_sdk::types::transaction::ObjectArg;
-use iota_sdk::types::Identifier;
 use iota_sdk::types::MOVE_STDLIB_PACKAGE_ID;
-use move_core_types::account_address::AccountAddress;
-use move_core_types::language_storage::StructTag;
+use move_core_types::ident_str;
 use serde::Serialize;
-use std::str::FromStr;
-
-pub fn identity_tag(package_id: ObjectID) -> Result<StructTag, Error> {
-  Ok(StructTag {
-    address: AccountAddress::from_str(&package_id.to_string())
-      .map_err(|err| Error::ParsingFailed(format!("package id\"{package_id}\" to account address; {err}")))?,
-    module: Identifier::from_str("identity")
-      .map_err(|err| Error::ParsingFailed(format!("\"identity\" to identifier; {err}")))?,
-    name: Identifier::from_str("Identity")
-      .map_err(|err| Error::ParsingFailed(format!("\"Identity\" to identifier; {err}")))?,
-    type_params: vec![],
-  })
-}
 
 pub fn owned_ref_to_shared_object_arg(
   owned_ref: OwnedObjectRef,
@@ -51,7 +36,7 @@ pub fn option_to_move<T: MoveType + Serialize>(
     ptb.programmable_move_call(
       MOVE_STDLIB_PACKAGE_ID,
       STD_OPTION_MODULE_NAME.into(),
-      Identifier::new("some").expect("valid utf8"),
+      ident_str!("some").into(),
       vec![T::move_type(package)],
       vec![t],
     )
@@ -59,7 +44,7 @@ pub fn option_to_move<T: MoveType + Serialize>(
     ptb.programmable_move_call(
       MOVE_STDLIB_PACKAGE_ID,
       STD_OPTION_MODULE_NAME.into(),
-      Identifier::new("none").expect("valid utf8"),
+      ident_str!("none").into(),
       vec![T::move_type(package)],
       vec![],
     )

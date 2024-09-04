@@ -19,9 +19,9 @@ use iota_sdk::types::base_types::ObjectRef;
 use iota_sdk::types::base_types::SequenceNumber;
 use iota_sdk::types::id::UID;
 use iota_sdk::types::object::Owner;
-use iota_sdk::types::Identifier;
 use iota_sdk::types::TypeTag;
 use iota_sdk::IotaClient;
+use move_core_types::ident_str;
 use move_core_types::language_storage::StructTag;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
@@ -147,8 +147,8 @@ impl<T: MoveType> MoveType for AuthenticatedAsset<T> {
   fn move_type(package: ObjectID) -> TypeTag {
     TypeTag::Struct(Box::new(StructTag {
       address: package.into(),
-      module: Identifier::new("asset").expect("valid utf8"),
-      name: Identifier::new("AuthenticatedAsset").expect("valid utf8"),
+      module: ident_str!("asset").into(),
+      name: ident_str!("AuthenticatedAsset").into(),
       type_params: vec![T::move_type(package)],
     }))
   }
@@ -199,8 +199,8 @@ impl MoveType for TransferProposal {
   fn move_type(package: ObjectID) -> TypeTag {
     TypeTag::Struct(Box::new(StructTag {
       address: package.into(),
-      module: Identifier::new("asset").expect("valid identifier"),
-      name: Identifier::new("TransferProposal").expect("valid identifier"),
+      module: ident_str!("asset").into(),
+      name: ident_str!("TransferProposal").into(),
       type_params: vec![],
     }))
   }

@@ -3,12 +3,11 @@ use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBu
 use iota_sdk::types::transaction::Command;
 use iota_sdk::types::transaction::ProgrammableMoveCall;
 use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::Identifier;
+use move_core_types::ident_str;
 use serde::Serialize;
 
 use crate::utils::MoveType;
 use crate::Error;
-use std::str::FromStr;
 
 pub fn new<T: Serialize + MoveType>(
   inner: T,
@@ -27,8 +26,8 @@ pub fn new<T: Serialize + MoveType>(
 
   ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
     package,
-    module: Identifier::from_str("asset").map_err(|e| Error::ParsingFailed(e.to_string()))?,
-    function: Identifier::from_str("new_with_config").map_err(|e| Error::ParsingFailed(e.to_string()))?,
+    module: ident_str!("asset").into(),
+    function: ident_str!("new_with_config").into(),
     type_arguments: vec![T::move_type(package)],
     arguments: vec![inner, mutable, transferable, deletable],
   })));
