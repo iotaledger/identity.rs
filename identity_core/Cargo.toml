@@ -39,7 +39,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 workspace = true
 
 [features]
-default = ["js-sys"]
+default = ["dep:js-sys"]
 # Enables a macro to provide a custom time (Timestamp::now_utc) implementation, see src/custom_time.rs
 custom_time = []
 
