@@ -19,7 +19,7 @@ use crate::DID;
 pub struct DIDJwk(CoreDID);
 
 impl DIDJwk {
-  /// [`DIDKey`]'s method.
+  /// [`DIDJwk`]'s method.
   pub const METHOD: &'static str = "jwk";
 
   /// Tries to parse a [`DIDJwk`] from a string.
