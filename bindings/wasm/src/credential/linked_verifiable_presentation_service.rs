@@ -29,8 +29,12 @@ impl WasmLinkedVerifiablePresentationService {
       id,
       linked_vp,
       properties,
-    } = options.into_serde::<ILinkedVerifiablePresentationServiceHelper>().wasm_result()?;
-    Ok(Self(LinkedVerifiablePresentationService::new(id, linked_vp, properties).wasm_result()?))
+    } = options
+      .into_serde::<ILinkedVerifiablePresentationServiceHelper>()
+      .wasm_result()?;
+    Ok(Self(
+      LinkedVerifiablePresentationService::new(id, linked_vp, properties).wasm_result()?,
+    ))
   }
 
   /// Returns the domains contained in the Linked Verifiable Presentation Service.
@@ -60,7 +64,9 @@ impl WasmLinkedVerifiablePresentationService {
   /// Errors if `service` is not a valid Linked Verifiable Presentation Service.
   #[wasm_bindgen(js_name = fromService)]
   pub fn from_service(service: &WasmService) -> Result<WasmLinkedVerifiablePresentationService> {
-    Ok(Self(LinkedVerifiablePresentationService::try_from(service.0.clone()).wasm_result()?))
+    Ok(Self(
+      LinkedVerifiablePresentationService::try_from(service.0.clone()).wasm_result()?,
+    ))
   }
 
   /// Returns `true` if a {@link Service} is a valid Linked Verifiable Presentation Service.
@@ -93,5 +99,11 @@ struct ILinkedVerifiablePresentationServiceHelper {
   properties: Object,
 }
 
-impl_wasm_clone!(WasmLinkedVerifiablePresentationService, LinkedVerifiablePresentationService);
-impl_wasm_json!(WasmLinkedVerifiablePresentationService, LinkedVerifiablePresentationService);
+impl_wasm_clone!(
+  WasmLinkedVerifiablePresentationService,
+  LinkedVerifiablePresentationService
+);
+impl_wasm_json!(
+  WasmLinkedVerifiablePresentationService,
+  LinkedVerifiablePresentationService
+);
