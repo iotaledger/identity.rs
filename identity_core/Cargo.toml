@@ -12,7 +12,6 @@ rust-version.workspace = true
 description = "The core traits and types for the identity-rs library."
 
 [dependencies]
-iota-crypto = { version = "0.23", default-features = false, features = ["ed25519", "random", "sha", "x25519", "std"] }
 multibase = { version = "0.9", default-features = false, features = ["std"] }
 serde = { workspace = true, features = ["std"] }
 serde_json = { workspace = true, features = ["std"] }
@@ -22,7 +21,7 @@ time = { version = "0.3.23", default-features = false, features = ["std", "serde
 url = { version = "2.4", default-features = false, features = ["serde"] }
 zeroize = { version = "1.6", default-features = false }
 
-[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
+[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi"), not(feature = "custom_time")))'.dependencies]
 js-sys = { version = "0.3.55", default-features = false }
 
 [dev-dependencies]
@@ -38,3 +37,11 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [lints]
 workspace = true
+
+[features]
+# Enables a macro to provide a custom time (Timestamp::now_utc) implementation, see src/custom_time.rs
+custom_time = []
+
+[[test]]
+name = "custom_time"
+required-features = ["custom_time"]

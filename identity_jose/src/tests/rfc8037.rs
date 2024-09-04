@@ -50,6 +50,9 @@ fn test_rfc8037_ed25519() {
       .and_then(|decoded| decoded.verify(&jws_verifier, &public))
       .unwrap();
 
+    assert_eq!(token.protected, header);
+    assert_eq!(token.claims, tv.payload.as_bytes());
+
     let jws_signature_verifier = JwsVerifierFn::from(|input: VerificationInput, key: &Jwk| match input.alg {
       JwsAlgorithm::EdDSA => ed25519::verify(input, key),
       other => unimplemented!("{other}"),
@@ -62,7 +65,5 @@ fn test_rfc8037_ed25519() {
       .unwrap();
 
     assert_eq!(token, token_with_default);
-    assert_eq!(token.protected, header);
-    assert_eq!(token.claims, tv.payload.as_bytes());
   }
 }
