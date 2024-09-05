@@ -1,6 +1,9 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_ecdsa_verifier::EcDSAJwsVerifier;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
+use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::jws::JwsVerifier;
 use identity_iota::verification::jws::SignatureVerificationError;
 use identity_iota::verification::jws::SignatureVerificationErrorKind;
@@ -10,12 +13,12 @@ use wasm_bindgen::prelude::*;
 use crate::jose::WasmJwk;
 
 /// Wrapper that enables custom TS JWS signature verification plugins to be used where the
-/// JwsVerifier trait is required. Falls back to the default implementation if a custom
-/// implementation was not passed.
-pub(crate) struct WasmJwsVerifier(IJwsVerifier);
+/// JwsVerifier trait is required. Falls back to the default implementation capable of handling
+/// EdDSA (ED25519), ES256, ES256K if a custom implementation is not passed.
+pub(crate) struct WasmJwsVerifier(Option<IJwsVerifier>);
 
 impl WasmJwsVerifier {
-  pub(crate) fn new(verifier: IJwsVerifier) -> Self {
+  pub(crate) fn new(verifier: Option<IJwsVerifier>) -> Self {
     Self(verifier)
   }
 }
@@ -26,22 +29,30 @@ impl JwsVerifier for WasmJwsVerifier {
     input: identity_iota::verification::jws::VerificationInput,
     public_key: &identity_iota::verification::jwk::Jwk,
   ) -> Result<(), identity_iota::verification::jws::SignatureVerificationError> {
-    let VerificationInput {
-      alg,
-      signing_input,
-      decoded_signature,
-    } = input;
-    let verification_result = IJwsVerifier::verify(
-      &self.0,
-      alg.name().to_owned(),
-      signing_input.into(),
-      decoded_signature.into(),
-      WasmJwk(public_key.to_owned()),
-    );
-    // Convert error
-    crate::error::stringify_js_error(verification_result).map_err(|error_string| {
-      SignatureVerificationError::new(SignatureVerificationErrorKind::Unspecified).with_custom_message(error_string)
-    })
+    if let Some(verifier) = &self.0 {
+      let VerificationInput {
+        alg,
+        signing_input,
+        decoded_signature,
+      } = input;
+      let verification_result = IJwsVerifier::verify(
+        verifier,
+        alg.name().to_owned(),
+        signing_input.into(),
+        decoded_signature.into(),
+        WasmJwk(public_key.to_owned()),
+      );
+      // Convert error
+      crate::error::stringify_js_error(verification_result).map_err(|error_string| {
+        SignatureVerificationError::new(SignatureVerificationErrorKind::Unspecified).with_custom_message(error_string)
+      })
+    } else {
+      match input.alg {
+        JwsAlgorithm::EdDSA => EdDSAJwsVerifier::default().verify(input, public_key),
+        JwsAlgorithm::ES256 | JwsAlgorithm::ES256K => EcDSAJwsVerifier::default().verify(input, public_key),
+        _ => Err(identity_iota::verification::jws::SignatureVerificationErrorKind::UnsupportedAlg.into()),
+      }
+    }
   }
 }
 #[wasm_bindgen(typescript_custom_section)]

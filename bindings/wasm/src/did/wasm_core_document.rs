@@ -495,8 +495,9 @@ impl WasmCoreDocument {
   // ===========================================================================
 
   /// Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
-  ///  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
-  /// verifying EdDSA signatures.
+  /// If a `signatureVerifier` is provided it will be used when
+  /// verifying decoded JWS signatures, otherwise a default verifier capable of handling the `EdDSA`, `ES256`, `ES256K`
+  /// algorithms will be used.
   ///
   /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
   /// take place.
@@ -509,7 +510,7 @@ impl WasmCoreDocument {
     &self,
     jws: &WasmJws,
     options: &WasmJwsVerificationOptions,
-    signatureVerifier: IJwsVerifier,
+    signatureVerifier: Option<IJwsVerifier>,
     detachedPayload: Option<String>,
   ) -> Result<WasmDecodedJws> {
     let jws_verifier = WasmJwsVerifier::new(signatureVerifier);

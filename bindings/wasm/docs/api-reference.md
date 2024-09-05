@@ -55,6 +55,10 @@ See: <a href="https://identity.foundation/.well-known/resources/did-configuratio
 <dt><a href="#Duration">Duration</a></dt>
 <dd><p>A span of time.</p>
 </dd>
+<dt><a href="#EcDSAJwsVerifier">EcDSAJwsVerifier</a></dt>
+<dd><p>An implementor of <code>IJwsVerifier</code> that can handle the
+<code>EcDSA</code> algorithm.</p>
+</dd>
 <dt><a href="#EdDSAJwsVerifier">EdDSAJwsVerifier</a></dt>
 <dd><p>An implementor of <code>IJwsVerifier</code> that can handle the
 <code>EdDSA</code> algorithm.</p>
@@ -255,35 +259,6 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
-<dt><a href="#PresentationProofAlgorithm">PresentationProofAlgorithm</a></dt>
-<dd></dd>
-<dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
-<dd><p>Declares how credential subjects must relate to the presentation holder.</p>
-<p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
-</dd>
-<dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
-<dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
-This variant is the default.</p>
-</dd>
-<dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
-<dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
-</dd>
-<dt><a href="#Any">Any</a></dt>
-<dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
-</dd>
-<dt><a href="#ProofAlgorithm">ProofAlgorithm</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#FailFast">FailFast</a></dt>
-<dd><p>Declares when validation should return if an error occurs.</p>
-</dd>
-<dt><a href="#AllErrors">AllErrors</a></dt>
-<dd><p>Return all errors that occur during validation.</p>
-</dd>
-<dt><a href="#FirstError">FirstError</a></dt>
-<dd><p>Return after the first error occurs.</p>
-</dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -301,16 +276,45 @@ This variant is the default.</p>
 <dt><a href="#SkipAll">SkipAll</a></dt>
 <dd><p>Skip all status checks.</p>
 </dd>
-<dt><a href="#SerializationType">SerializationType</a></dt>
-<dd></dd>
-<dt><a href="#PayloadType">PayloadType</a></dt>
+<dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
+<dd><p>Declares how credential subjects must relate to the presentation holder.</p>
+<p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
+</dd>
+<dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
+<dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
+This variant is the default.</p>
+</dd>
+<dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
+<dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
+</dd>
+<dt><a href="#Any">Any</a></dt>
+<dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
+</dd>
+<dt><a href="#PresentationProofAlgorithm">PresentationProofAlgorithm</a></dt>
 <dd></dd>
 <dt><a href="#StatusPurpose">StatusPurpose</a></dt>
 <dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dt><a href="#ProofAlgorithm">ProofAlgorithm</a></dt>
 <dd></dd>
 <dt><a href="#CredentialStatus">CredentialStatus</a></dt>
+<dd></dd>
+<dt><a href="#FailFast">FailFast</a></dt>
+<dd><p>Declares when validation should return if an error occurs.</p>
+</dd>
+<dt><a href="#AllErrors">AllErrors</a></dt>
+<dd><p>Return all errors that occur during validation.</p>
+</dd>
+<dt><a href="#FirstError">FirstError</a></dt>
+<dd><p>Return after the first error occurs.</p>
+</dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#SerializationType">SerializationType</a></dt>
+<dd></dd>
+<dt><a href="#PayloadType">PayloadType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
 
@@ -333,6 +337,12 @@ prior to calling the function.</p>
 </dd>
 <dt><a href="#start">start()</a></dt>
 <dd><p>Initializes the console error panic hook for better error messages</p>
+</dd>
+<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
+<dd><p>Encode the given bytes in url-safe base64.</p>
+</dd>
+<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
+<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
 </dl>
 
@@ -557,7 +567,7 @@ if the object is being concurrently modified.
         * [.resolveMethod(query, [scope])](#CoreDocument+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
         * [.attachMethodRelationship(didUrl, relationship)](#CoreDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#CoreDocument+detachMethodRelationship) ⇒ <code>boolean</code>
-        * [.verifyJws(jws, options, signatureVerifier, [detachedPayload])](#CoreDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
+        * [.verifyJws(jws, options, [signatureVerifier], [detachedPayload])](#CoreDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
         * [.revokeCredentials(serviceQuery, indices)](#CoreDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
         * [.clone()](#CoreDocument+clone) ⇒ [<code>CoreDocument</code>](#CoreDocument)
@@ -832,7 +842,7 @@ Detaches the given relationship from the given method, if the method exists.
 
 <a name="CoreDocument+verifyJws"></a>
 
-### coreDocument.verifyJws(jws, options, signatureVerifier, [detachedPayload]) ⇒ [<code>DecodedJws</code>](#DecodedJws)
+### coreDocument.verifyJws(jws, options, [signatureVerifier], [detachedPayload]) ⇒ [<code>DecodedJws</code>](#DecodedJws)
 Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
 verifying EdDSA signatures.
@@ -849,7 +859,7 @@ or set explicitly in the `options`.
 | --- | --- |
 | jws | [<code>Jws</code>](#Jws) | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
-| signatureVerifier | <code>IJwsVerifier</code> | 
+| [signatureVerifier] | <code>IJwsVerifier</code> \| <code>undefined</code> | 
 | [detachedPayload] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="CoreDocument+revokeCredentials"></a>
@@ -2034,6 +2044,43 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="EcDSAJwsVerifier"></a>
+
+## EcDSAJwsVerifier
+An implementor of `IJwsVerifier` that can handle the
+`EcDSA` algorithm.
+
+**Kind**: global class  
+
+* [EcDSAJwsVerifier](#EcDSAJwsVerifier)
+    * [new EcDSAJwsVerifier()](#new_EcDSAJwsVerifier_new)
+    * [.verify(alg, signingInput, decodedSignature, publicKey)](#EcDSAJwsVerifier+verify)
+
+<a name="new_EcDSAJwsVerifier_new"></a>
+
+### new EcDSAJwsVerifier()
+Constructs an EcDSAJwsVerifier.
+
+<a name="EcDSAJwsVerifier+verify"></a>
+
+### ecDSAJwsVerifier.verify(alg, signingInput, decodedSignature, publicKey)
+Verify a JWS signature secured with the `EcDSA` algorithm.
+Only the `ES256` and `ES256K` curves are supported for now.
+
+# Warning
+
+This function does not check the `alg` property in the protected header. Callers are expected to assert this
+prior to calling the function.
+
+**Kind**: instance method of [<code>EcDSAJwsVerifier</code>](#EcDSAJwsVerifier)  
+
+| Param | Type |
+| --- | --- |
+| alg | <code>JwsAlgorithm</code> | 
+| signingInput | <code>Uint8Array</code> | 
+| decodedSignature | <code>Uint8Array</code> | 
+| publicKey | [<code>Jwk</code>](#Jwk) | 
+
 <a name="EdDSAJwsVerifier"></a>
 
 ## EdDSAJwsVerifier
@@ -2315,7 +2362,7 @@ if the object is being concurrently modified.
         * [.resolveMethod(query, [scope])](#IotaDocument+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
         * [.attachMethodRelationship(didUrl, relationship)](#IotaDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#IotaDocument+detachMethodRelationship) ⇒ <code>boolean</code>
-        * [.verifyJws(jws, options, signatureVerifier, [detachedPayload])](#IotaDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
+        * [.verifyJws(jws, options, [signatureVerifier], [detachedPayload])](#IotaDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
         * [.pack()](#IotaDocument+pack) ⇒ <code>Uint8Array</code>
         * [.packWithEncoding(encoding)](#IotaDocument+packWithEncoding) ⇒ <code>Uint8Array</code>
         * [.metadata()](#IotaDocument+metadata) ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
@@ -2556,7 +2603,7 @@ Detaches the given relationship from the given method, if the method exists.
 
 <a name="IotaDocument+verifyJws"></a>
 
-### iotaDocument.verifyJws(jws, options, signatureVerifier, [detachedPayload]) ⇒ [<code>DecodedJws</code>](#DecodedJws)
+### iotaDocument.verifyJws(jws, options, [signatureVerifier], [detachedPayload]) ⇒ [<code>DecodedJws</code>](#DecodedJws)
 Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
 verifying EdDSA signatures.
@@ -2572,7 +2619,7 @@ take place.
 | --- | --- |
 | jws | [<code>Jws</code>](#Jws) | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
-| signatureVerifier | <code>IJwsVerifier</code> | 
+| [signatureVerifier] | <code>IJwsVerifier</code> \| <code>undefined</code> | 
 | [detachedPayload] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="IotaDocument+pack"></a>
@@ -4653,7 +4700,7 @@ A type for decoding and validating [Credential](#Credential).
 **Kind**: global class  
 
 * [JwtCredentialValidator](#JwtCredentialValidator)
-    * [new JwtCredentialValidator(signatureVerifier)](#new_JwtCredentialValidator_new)
+    * [new JwtCredentialValidator([signatureVerifier])](#new_JwtCredentialValidator_new)
     * _instance_
         * [.validate(credential_jwt, issuer, options, fail_fast)](#JwtCredentialValidator+validate) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
         * [.verifySignature(credential, trustedIssuers, options)](#JwtCredentialValidator+verifySignature) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
@@ -4668,7 +4715,7 @@ A type for decoding and validating [Credential](#Credential).
 
 <a name="new_JwtCredentialValidator_new"></a>
 
-### new JwtCredentialValidator(signatureVerifier)
+### new JwtCredentialValidator([signatureVerifier])
 Creates a new [JwtCredentialValidator](#JwtCredentialValidator). If a `signatureVerifier` is provided it will be used when
 verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
 algorithm will be used.
@@ -4676,7 +4723,7 @@ algorithm will be used.
 
 | Param | Type |
 | --- | --- |
-| signatureVerifier | <code>IJwsVerifier</code> | 
+| [signatureVerifier] | <code>IJwsVerifier</code> \| <code>undefined</code> | 
 
 <a name="JwtCredentialValidator+validate"></a>
 
@@ -4847,21 +4894,21 @@ A validator for a Domain Linkage Configuration and Credentials.
 **Kind**: global class  
 
 * [JwtDomainLinkageValidator](#JwtDomainLinkageValidator)
-    * [new JwtDomainLinkageValidator(signatureVerifier)](#new_JwtDomainLinkageValidator_new)
+    * [new JwtDomainLinkageValidator([signatureVerifier])](#new_JwtDomainLinkageValidator_new)
     * [.validateLinkage(issuer, configuration, domain, options)](#JwtDomainLinkageValidator+validateLinkage)
     * [.validateCredential(issuer, credentialJwt, domain, options)](#JwtDomainLinkageValidator+validateCredential)
 
 <a name="new_JwtDomainLinkageValidator_new"></a>
 
-### new JwtDomainLinkageValidator(signatureVerifier)
+### new JwtDomainLinkageValidator([signatureVerifier])
 Creates a new [JwtDomainLinkageValidator](#JwtDomainLinkageValidator). If a `signatureVerifier` is provided it will be used when
-verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
-algorithm will be used.
+verifying decoded JWS signatures, otherwise the default which is capable of handling the `EdDSA`, `ES256`, `ES256K`
+algorithms will be used.
 
 
 | Param | Type |
 | --- | --- |
-| signatureVerifier | <code>IJwsVerifier</code> | 
+| [signatureVerifier] | <code>IJwsVerifier</code> \| <code>undefined</code> | 
 
 <a name="JwtDomainLinkageValidator+validateLinkage"></a>
 
@@ -5011,7 +5058,7 @@ Deserializes an instance from a JSON object.
 **Kind**: global class  
 
 * [JwtPresentationValidator](#JwtPresentationValidator)
-    * [new JwtPresentationValidator(signatureVerifier)](#new_JwtPresentationValidator_new)
+    * [new JwtPresentationValidator([signatureVerifier])](#new_JwtPresentationValidator_new)
     * _instance_
         * [.validate(presentationJwt, holder, validation_options)](#JwtPresentationValidator+validate) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
     * _static_
@@ -5020,7 +5067,7 @@ Deserializes an instance from a JSON object.
 
 <a name="new_JwtPresentationValidator_new"></a>
 
-### new JwtPresentationValidator(signatureVerifier)
+### new JwtPresentationValidator([signatureVerifier])
 Creates a new [JwtPresentationValidator](#JwtPresentationValidator). If a `signatureVerifier` is provided it will be used when
 verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
 algorithm will be used.
@@ -5028,7 +5075,7 @@ algorithm will be used.
 
 | Param | Type |
 | --- | --- |
-| signatureVerifier | <code>IJwsVerifier</code> | 
+| [signatureVerifier] | <code>IJwsVerifier</code> \| <code>undefined</code> | 
 
 <a name="JwtPresentationValidator+validate"></a>
 
@@ -6536,14 +6583,14 @@ A type for decoding and validating [Credential](#Credential).
 **Kind**: global class  
 
 * [SdJwtCredentialValidator](#SdJwtCredentialValidator)
-    * [new SdJwtCredentialValidator(signatureVerifier)](#new_SdJwtCredentialValidator_new)
+    * [new SdJwtCredentialValidator([signatureVerifier])](#new_SdJwtCredentialValidator_new)
     * [.validateCredential(sd_jwt, issuer, options, fail_fast)](#SdJwtCredentialValidator+validateCredential) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
     * [.verifySignature(credential, trustedIssuers, options)](#SdJwtCredentialValidator+verifySignature) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
     * [.validateKeyBindingJwt(sdJwt, holder, options)](#SdJwtCredentialValidator+validateKeyBindingJwt) ⇒ [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)
 
 <a name="new_SdJwtCredentialValidator_new"></a>
 
-### new SdJwtCredentialValidator(signatureVerifier)
+### new SdJwtCredentialValidator([signatureVerifier])
 Creates a new `SdJwtCredentialValidator`. If a `signatureVerifier` is provided it will be used when
 verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
 algorithm will be used.
@@ -6551,7 +6598,7 @@ algorithm will be used.
 
 | Param | Type |
 | --- | --- |
-| signatureVerifier | <code>IJwsVerifier</code> | 
+| [signatureVerifier] | <code>IJwsVerifier</code> \| <code>undefined</code> | 
 
 <a name="SdJwtCredentialValidator+validateCredential"></a>
 
@@ -7657,63 +7704,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="PresentationProofAlgorithm"></a>
-
-## PresentationProofAlgorithm
-**Kind**: global variable  
-<a name="SubjectHolderRelationship"></a>
-
-## SubjectHolderRelationship
-Declares how credential subjects must relate to the presentation holder.
-
-See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
-
-**Kind**: global variable  
-<a name="AlwaysSubject"></a>
-
-## AlwaysSubject
-The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
-This variant is the default.
-
-**Kind**: global variable  
-<a name="SubjectOnNonTransferable"></a>
-
-## SubjectOnNonTransferable
-The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
-
-**Kind**: global variable  
-<a name="Any"></a>
-
-## Any
-The holder is not required to have any kind of relationship to any credential subject.
-
-**Kind**: global variable  
-<a name="ProofAlgorithm"></a>
-
-## ProofAlgorithm
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="FailFast"></a>
-
-## FailFast
-Declares when validation should return if an error occurs.
-
-**Kind**: global variable  
-<a name="AllErrors"></a>
-
-## AllErrors
-Return all errors that occur during validation.
-
-**Kind**: global variable  
-<a name="FirstError"></a>
-
-## FirstError
-Return after the first error occurs.
-
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -7745,25 +7735,12 @@ Validate the status if supported, skip any unsupported
 Skip all status checks.
 
 **Kind**: global variable  
-<a name="SerializationType"></a>
+<a name="SubjectHolderRelationship"></a>
 
-## SerializationType
-**Kind**: global variable  
-<a name="PayloadType"></a>
+## SubjectHolderRelationship
+Declares how credential subjects must relate to the presentation holder.
 
-## PayloadType
-**Kind**: global variable  
-<a name="StatusPurpose"></a>
-
-## StatusPurpose
-Purpose of a [StatusList2021](#StatusList2021).
-
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
-<a name="CredentialStatus"></a>
+See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
 
 ## CredentialStatus
 **Kind**: global variable  
@@ -7783,12 +7760,59 @@ Encode the given bytes in url-safe base64.
 ## decodeB64(data) ⇒ <code>Uint8Array</code>
 Decode the given url-safe base64-encoded slice into its raw bytes.
 
-**Kind**: global function  
+**Kind**: global variable  
+<a name="PresentationProofAlgorithm"></a>
 
-| Param | Type |
-| --- | --- |
-| data | <code>Uint8Array</code> | 
+## PresentationProofAlgorithm
+**Kind**: global variable  
+<a name="StatusPurpose"></a>
 
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
+
+**Kind**: global variable  
+<a name="ProofAlgorithm"></a>
+
+## ProofAlgorithm
+**Kind**: global variable  
+<a name="CredentialStatus"></a>
+
+## CredentialStatus
+**Kind**: global variable  
+<a name="FailFast"></a>
+
+## FailFast
+Declares when validation should return if an error occurs.
+
+**Kind**: global variable  
+<a name="AllErrors"></a>
+
+## AllErrors
+Return all errors that occur during validation.
+
+**Kind**: global variable  
+<a name="FirstError"></a>
+
+## FirstError
+Return after the first error occurs.
+
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="SerializationType"></a>
+
+## SerializationType
+**Kind**: global variable  
+<a name="PayloadType"></a>
+
+## PayloadType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="verifyEd25519"></a>
 
 ## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
@@ -7817,3 +7841,25 @@ prior to calling the function.
 Initializes the console error panic hook for better error messages
 
 **Kind**: global function  
+<a name="encodeB64"></a>
+
+## encodeB64(data) ⇒ <code>string</code>
+Encode the given bytes in url-safe base64.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
+<a name="decodeB64"></a>
+
+## decodeB64(data) ⇒ <code>Uint8Array</code>
+Decode the given url-safe base64-encoded slice into its raw bytes.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
