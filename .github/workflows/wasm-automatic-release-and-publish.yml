@@ -26,7 +26,7 @@ jobs:
     needs: call-create-release-workflow
     if: ${{ needs.call-create-release-workflow.outputs.is-release }}
     # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@main
+    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@typedoc
     with:
       output-artifact-name: identity-wasm-bindings-build
 

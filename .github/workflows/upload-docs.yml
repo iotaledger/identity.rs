@@ -18,7 +18,7 @@ permissions:
 jobs:
   build-wasm: 
     # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@main
+    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@typedoc
     with:
       run-unit-tests: false
       ref: ${{ inputs.ref }}

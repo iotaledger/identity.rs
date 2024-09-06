@@ -19,7 +19,7 @@ jobs:
 
   build-wasm: 
     # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@main
+    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@typedoc
     with:
       ref: ${{ github.event.inputs.branch }}
       output-artifact-name: identity-wasm-bindings-build
