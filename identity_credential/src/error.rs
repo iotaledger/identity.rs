@@ -37,6 +37,9 @@ pub enum Error {
   /// Caused when constructing an invalid `LinkedDomainService` or `DomainLinkageConfiguration`.
   #[error("domain linkage error: {0}")]
   DomainLinkageError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+  /// Caused when constructing an invalid `LinkedVerifiablePresentationService`.
+  #[error("linked verifiable presentation error: {0}")]
+  LinkedVerifiablePresentationError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
   /// Caused when attempting to encode a `Credential` containing multiple subjects as a JWT.  
   #[error("could not create JWT claim set from verifiable credential: more than one subject")]
   MoreThanOneSubjectInJwt,

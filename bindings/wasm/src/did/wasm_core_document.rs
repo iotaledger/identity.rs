@@ -24,6 +24,7 @@ use crate::credential::WasmJwt;
 use crate::credential::WasmPresentation;
 use crate::did::service::WasmService;
 use crate::did::wasm_did_url::WasmDIDUrl;
+use crate::did::WasmDIDJwk;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::jose::WasmDecodedJws;
@@ -494,8 +495,9 @@ impl WasmCoreDocument {
   // ===========================================================================
 
   /// Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
-  ///  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
-  /// verifying EdDSA signatures.
+  /// If a `signatureVerifier` is provided it will be used when
+  /// verifying decoded JWS signatures, otherwise a default verifier capable of handling the `EdDSA`, `ES256`, `ES256K`
+  /// algorithms will be used.
   ///
   /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
   /// take place.
@@ -508,7 +510,7 @@ impl WasmCoreDocument {
     &self,
     jws: &WasmJws,
     options: &WasmJwsVerificationOptions,
-    signatureVerifier: IJwsVerifier,
+    signatureVerifier: Option<IJwsVerifier>,
     detachedPayload: Option<String>,
   ) -> Result<WasmDecodedJws> {
     let jws_verifier = WasmJwsVerifier::new(signatureVerifier);
@@ -764,6 +766,12 @@ impl WasmCoreDocument {
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())
+  }
+
+  /// Creates a {@link CoreDocument} from the given {@link DIDJwk}.
+  #[wasm_bindgen(js_name = expandDIDJwk)]
+  pub fn expand_did_jwk(did: WasmDIDJwk) -> Result<WasmCoreDocument> {
+    CoreDocument::expand_did_jwk(did.0).wasm_result().map(Self::from)
   }
 }
 
