@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_ecdsa_verifier::EcDSAJwsVerifier;
 use identity_eddsa_verifier::Ed25519Verifier;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::verification::jws::JwsAlgorithm;
@@ -78,5 +79,45 @@ impl WasmEdDSAJwsVerifier {
       decoded_signature: decodedSignature.into(),
     };
     EdDSAJwsVerifier::default().verify(input, &publicKey.0).wasm_result()
+  }
+}
+
+/// An implementor of `IJwsVerifier` that can handle the
+/// `EcDSA` algorithm.
+#[wasm_bindgen(js_name = EcDSAJwsVerifier)]
+pub struct WasmEcDSAJwsVerifier();
+
+#[wasm_bindgen(js_class = EcDSAJwsVerifier)]
+#[allow(clippy::new_without_default)]
+impl WasmEcDSAJwsVerifier {
+  /// Constructs an EcDSAJwsVerifier.
+  #[wasm_bindgen(constructor)]
+  pub fn new() -> Self {
+    Self()
+  }
+
+  /// Verify a JWS signature secured with the `EcDSA` algorithm.
+  /// Only the `ES256` and `ES256K` curves are supported for now.
+  ///
+  /// # Warning
+  ///
+  /// This function does not check the `alg` property in the protected header. Callers are expected to assert this
+  /// prior to calling the function.
+  #[wasm_bindgen]
+  #[allow(non_snake_case)]
+  pub fn verify(
+    &self,
+    alg: WasmJwsAlgorithm,
+    signingInput: &[u8],
+    decodedSignature: &[u8],
+    publicKey: &WasmJwk,
+  ) -> Result<(), JsValue> {
+    let alg: JwsAlgorithm = JwsAlgorithm::try_from(alg)?;
+    let input: VerificationInput = VerificationInput {
+      alg,
+      signing_input: signingInput.into(),
+      decoded_signature: decodedSignature.into(),
+    };
+    EcDSAJwsVerifier::default().verify(input, &publicKey.0).wasm_result()
   }
 }
