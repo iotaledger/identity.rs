@@ -52,6 +52,10 @@ pub enum JwsAlgorithm {
 
 impl JwsAlgorithm {
   /// A slice of all supported [`JwsAlgorithm`]s.
+  ///
+  /// Not available when feature `custom_alg` is enabled
+  /// as it is not possible to enumerate all variants when
+  /// supporting arbitrary `alg` values.
   #[cfg(not(feature = "custom_alg"))]
   pub const ALL: &'static [Self] = &[
     Self::HS256,
