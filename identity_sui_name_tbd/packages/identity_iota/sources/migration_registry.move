@@ -1,6 +1,5 @@
 module identity_iota::migration_registry {
-    use iota::{dynamic_object_field as field, transfer::share_object, event};
-    use identity_iota::identity::Identity;
+    use iota::{dynamic_field as field, transfer::share_object, event};
 
     const BEACON_BYTES: vector<u8> = b"identity.rs_pkg";
 
@@ -37,19 +36,13 @@ module identity_iota::migration_registry {
     }
 
     /// Lookup an alias ID into the migration registry.
-    public fun borrow(self: &MigrationRegistry, alias_id: ID): &Identity {
-        field::borrow<ID, Identity>(&self.id, alias_id)
-    }
-
-    /// Mutably borrow the migrated document `Document` corresponding
-    /// to the provided `alias_id`, if any.
-    public fun borrow_mut(self: &mut MigrationRegistry, alias_id: ID): &mut Identity {
-        field::borrow_mut(&mut self.id, alias_id)
+    public fun lookup(self: &MigrationRegistry, alias_id: ID): ID {
+        *field::borrow<ID, ID>(&self.id, alias_id)
     }
 
     /// Adds a new Alias ID -> Object ID binding to the regitry.
-    public(package) fun add(self: &mut MigrationRegistry, alias_id: ID, doc: Identity) {
-        field::add(&mut self.id, alias_id, doc);
+    public(package) fun add(self: &mut MigrationRegistry, alias_id: ID, identity_id: ID) {
+        field::add(&mut self.id, alias_id, identity_id);
     }
 
     //= Test Functions

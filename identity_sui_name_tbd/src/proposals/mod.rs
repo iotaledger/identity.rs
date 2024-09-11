@@ -5,6 +5,7 @@ mod update_did_doc;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
+use async_trait::async_trait;
 pub use config_change::*;
 pub use deactive_did::*;
 use iota_sdk::error::Error as IotaSdkError;
@@ -19,15 +20,15 @@ use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBu
 use iota_sdk::types::transaction::Argument;
 use iota_sdk::types::transaction::ProgrammableTransaction;
 use secret_storage::Signer;
-use serde::Deserialize;
+use serde::de::DeserializeOwned;
 pub use update_did_doc::*;
 
 use crate::client::IdentityClient;
 use crate::client::IotaKeySignature;
-use crate::migration::get_identity;
 use crate::migration::OnChainIdentity;
 use crate::migration::Proposal;
 use crate::sui::move_calls;
+use crate::transaction::Transaction;
 use crate::utils::MoveType;
 use crate::Error;
 
@@ -39,7 +40,7 @@ pub trait ProposalT {
     expiration: Option<u64>,
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
-    identity_ref: &OnChainIdentity,
+    identity_ref: OnChainIdentity,
     package: ObjectID,
   ) -> Result<(ProgrammableTransactionBuilder, Argument), Error>;
   fn make_chained_execution_tx(
@@ -58,128 +59,19 @@ pub trait ProposalT {
   fn parse_tx_effects(tx_effects: IotaTransactionBlockEffects) -> Result<Self::Output, Error>;
 }
 
-impl<A> Proposal<A>
-where
-  Self: ProposalT<Action = A> + for<'de> Deserialize<'de>,
-{
-  pub async fn create<S>(
-    action: A,
-    expiration: Option<u64>,
-    gas_budget: u64,
-    allow_chained_execution: bool,
-    identity: OnChainIdentity,
-    client: &IdentityClient<S>,
-  ) -> Result<ProposalResult<Self>, Error>
-  where
-    S: Signer<IotaKeySignature>,
-  {
-    let identity_ref = identity.obj_ref.as_ref().cloned().unwrap();
-    let controller_cap = identity.get_controller_cap(client).await?;
-
-    let (ptb, proposal_arg) = Self::make_create_tx(
-      action,
-      expiration,
-      identity_ref.clone(),
-      controller_cap,
-      &identity,
-      client.package_id(),
-    )?;
-    let is_threshold_reached =
-      identity.did_doc.controller_voting_power(controller_cap.0).unwrap() >= identity.did_doc.threshold();
-    let chain_execute = allow_chained_execution && is_threshold_reached;
-    let tx = if chain_execute {
-      Self::make_chained_execution_tx(ptb, proposal_arg, identity_ref, controller_cap, client.package_id())?
-    } else {
-      ptb.finish()
-    };
-    let tx_effects = client
-      .execute_transaction(tx, gas_budget)
-      .await?
-      .effects
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
-    if let IotaExecutionStatus::Failure { error } = tx_effects.status() {
-      return Err(IotaSdkError::Data(error.clone()).into());
-    }
-
-    if chain_execute {
-      Self::parse_tx_effects(tx_effects).map(ProposalResult::Executed)
-    } else {
-      // 2 objects are created, one is the Bag's Field and the other is our Proposal. Proposal is not owned by the bag,
-      // but the field is.
-      let proposal_id = tx_effects
-        .created()
-        .iter()
-        .find(|obj_ref| obj_ref.owner != Owner::ObjectOwner(identity.did_doc.proposals_bag_id().into()))
-        .expect("tx was successful")
-        .object_id();
-
-      client.get_object_by_id(proposal_id).await.map(ProposalResult::Pending)
+impl<A> Proposal<A> {
+  pub fn approve<'i>(&mut self, identity: &'i OnChainIdentity) -> ApproveProposalTx<'_, 'i, A> {
+    ApproveProposalTx {
+      proposal: self,
+      identity,
     }
   }
-  pub async fn execute<S>(
-    self,
-    gas_budget: u64,
-    identity: &mut OnChainIdentity,
-    client: &IdentityClient<S>,
-  ) -> Result<<Self as ProposalT>::Output, Error>
-  where
-    S: Signer<IotaKeySignature>,
-  {
-    let identity_ref = identity.obj_ref.as_ref().unwrap().clone();
-    let controller_cap = identity.get_controller_cap(client).await?;
 
-    let tx = Self::make_execute_tx(&self, identity_ref, controller_cap, client.package_id())?;
-    let tx_effects = client
-      .execute_transaction(tx, gas_budget)
-      .await?
-      .effects
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
-    if let IotaExecutionStatus::Failure { error } = tx_effects.status() {
-      Err(IotaSdkError::Data(error.clone()).into())
-    } else {
-      Self::parse_tx_effects(tx_effects)
+  pub fn execute(self, identity: &mut OnChainIdentity) -> ExecuteProposalTx<'_, A> {
+    ExecuteProposalTx {
+      proposal: self,
+      identity,
     }
-  }
-}
-
-impl<A> Proposal<A>
-where
-  Proposal<A>: ProposalT,
-  A: MoveType,
-{
-  pub async fn approve<S>(
-    &mut self,
-    gas_budget: u64,
-    identity: &mut OnChainIdentity,
-    client: &IdentityClient<S>,
-  ) -> Result<(), Error>
-  where
-    S: Signer<IotaKeySignature>,
-  {
-    let identity_ref = identity.obj_ref.as_ref().unwrap();
-    let controller_cap = identity.get_controller_cap(client).await?;
-    let tx = move_calls::identity::proposal::approve::<A>(
-      identity_ref.clone(),
-      controller_cap,
-      self.id(),
-      client.package_id(),
-    )?;
-
-    let response = client.execute_transaction(tx, gas_budget).await?;
-    if let IotaExecutionStatus::Failure { error } = response.effects.expect("had effects").into_status() {
-      return Err(Error::TransactionUnexpectedResponse(error));
-    }
-
-    *identity = get_identity(client, identity.id())
-      .await?
-      .expect("self exists on-chain");
-    let vp = identity
-      .did_doc
-      .controller_voting_power(controller_cap.0)
-      .expect("is identity's controller");
-    *self.votes_mut() = self.votes() + vp;
-
-    Ok(())
   }
 }
 
@@ -188,7 +80,6 @@ pub struct ProposalBuilder<A> {
   identity: OnChainIdentity,
   expiration: Option<u64>,
   action: A,
-  gas_budget: Option<u64>,
   forbid_chained_execution: bool,
 }
 
@@ -211,7 +102,6 @@ impl<A> ProposalBuilder<A> {
       identity,
       expiration: None,
       action,
-      gas_budget: None,
       forbid_chained_execution: false,
     }
   }
@@ -221,14 +111,15 @@ impl<A> ProposalBuilder<A> {
     self
   }
 
-  pub fn gas_budget(mut self, amount: u64) -> Self {
-    self.gas_budget = Some(amount);
-    self
-  }
-
   pub fn forbid_chained_execution(mut self) -> Self {
     self.forbid_chained_execution = true;
     self
+  }
+
+  /// Creates a [`Proposal`] with the provided arguments. If `forbid_chained_execution` is set to `true`,
+  /// the [`Proposal`] won't be executed even if creator alone has enough voting power.
+  pub fn finish(self) -> CreateProposalTx<A> {
+    CreateProposalTx(self)
   }
 }
 
@@ -243,31 +134,159 @@ pub enum ProposalResult<P: ProposalT> {
   Executed(P::Output),
 }
 
-impl<A> ProposalBuilder<A> {
-  /// Creates a [`Proposal`] with the provided arguments. If `forbid_chained_execution` is set to `true`,
-  /// the [`Proposal`] won't be executed even if creator alone has enough voting power.
-  pub async fn finish<S>(self, client: &IdentityClient<S>) -> Result<ProposalResult<Proposal<A>>, Error>
+#[derive(Debug)]
+pub struct CreateProposalTx<A>(ProposalBuilder<A>);
+
+#[async_trait]
+impl<A> Transaction for CreateProposalTx<A>
+where
+  Proposal<A>: ProposalT<Action = A> + DeserializeOwned,
+  A: Send,
+{
+  type Output = ProposalResult<Proposal<A>>;
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<ProposalResult<Proposal<A>>, Error>
   where
-    Proposal<A>: ProposalT<Action = A> + for<'de> Deserialize<'de>,
-    S: Signer<IotaKeySignature>,
+    S: Signer<IotaKeySignature> + Sync,
   {
     let ProposalBuilder {
       identity,
       expiration,
       action,
-      gas_budget,
       forbid_chained_execution,
-    } = self;
-    let gas_budget = gas_budget.ok_or_else(|| Error::GasIssue("missing `gas_budget`".to_string()))?;
+    } = self.0;
+    let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
+    let controller_cap = identity.get_controller_cap(client).await?;
 
-    Proposal::<A>::create(
+    let is_threshold_reached = identity.controller_voting_power(controller_cap.0).unwrap() >= identity.threshold();
+    let multicontroller_proposals_bag_id = Owner::ObjectOwner(identity.multicontroller().proposals_bag_id().into());
+    let (ptb, proposal_arg) = Proposal::<A>::make_create_tx(
       action,
       expiration,
-      gas_budget,
-      !forbid_chained_execution,
+      identity_ref.clone(),
+      controller_cap,
       identity,
-      client,
-    )
-    .await
+      client.package_id(),
+    )?;
+    let chain_execute = !forbid_chained_execution && is_threshold_reached;
+    let tx = if chain_execute {
+      Proposal::<A>::make_chained_execution_tx(ptb, proposal_arg, identity_ref, controller_cap, client.package_id())?
+    } else {
+      ptb.finish()
+    };
+    let tx_effects = client
+      .execute_transaction(tx, gas_budget)
+      .await?
+      .effects
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
+    if let IotaExecutionStatus::Failure { error } = tx_effects.status() {
+      return Err(IotaSdkError::Data(error.clone()).into());
+    }
+
+    if chain_execute {
+      Proposal::<A>::parse_tx_effects(tx_effects).map(ProposalResult::Executed)
+    } else {
+      // 2 objects are created, one is the Bag's Field and the other is our Proposal. Proposal is not owned by the bag,
+      // but the field is.
+      let proposal_id = tx_effects
+        .created()
+        .iter()
+        .find(|obj_ref| obj_ref.owner != multicontroller_proposals_bag_id)
+        .expect("tx was successful")
+        .object_id();
+
+      // *identity = get_identity(client, identity.id())
+      //   .await?
+      //   .expect("identity exists on-chain");
+
+      client.get_object_by_id(proposal_id).await.map(ProposalResult::Pending)
+    }
+  }
+}
+
+#[derive(Debug)]
+pub struct ExecuteProposalTx<'i, A> {
+  proposal: Proposal<A>,
+  identity: &'i mut OnChainIdentity,
+}
+
+#[async_trait]
+impl<'i, A> Transaction for ExecuteProposalTx<'i, A>
+where
+  Proposal<A>: ProposalT<Action = A>,
+  A: Send,
+{
+  type Output = <Proposal<A> as ProposalT>::Output;
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<Self::Output, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let Self { proposal, identity } = self;
+    let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
+    let controller_cap = identity.get_controller_cap(client).await?;
+
+    let tx = proposal.make_execute_tx(identity_ref, controller_cap, client.package_id())?;
+    let tx_effects = client
+      .execute_transaction(tx, gas_budget)
+      .await?
+      .effects
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
+    if let IotaExecutionStatus::Failure { error } = tx_effects.status() {
+      Err(IotaSdkError::Data(error.clone()).into())
+    } else {
+      Proposal::<A>::parse_tx_effects(tx_effects)
+    }
+  }
+}
+
+#[derive(Debug)]
+pub struct ApproveProposalTx<'p, 'i, A> {
+  proposal: &'p mut Proposal<A>,
+  identity: &'i OnChainIdentity,
+}
+
+#[async_trait]
+impl<'p, 'i, A> Transaction for ApproveProposalTx<'p, 'i, A>
+where
+  Proposal<A>: ProposalT<Action = A>,
+  A: MoveType + Send,
+{
+  type Output = ();
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<Self::Output, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let Self { proposal, identity } = self;
+    let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
+    let controller_cap = identity.get_controller_cap(client).await?;
+    let tx = move_calls::identity::proposal::approve::<A>(
+      identity_ref.clone(),
+      controller_cap,
+      proposal.id(),
+      client.package_id(),
+    )?;
+
+    let response = client.execute_transaction(tx, gas_budget).await?;
+    if let IotaExecutionStatus::Failure { error } = response.effects.expect("had effects").into_status() {
+      return Err(Error::TransactionUnexpectedResponse(error));
+    }
+
+    let vp = identity
+      .controller_voting_power(controller_cap.0)
+      .expect("is identity's controller");
+    *proposal.votes_mut() = proposal.votes() + vp;
+
+    Ok(())
   }
 }

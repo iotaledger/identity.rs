@@ -4,11 +4,9 @@
 use anyhow::Context as _;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::TypeTag;
-use std::str::FromStr;
 use tokio::process::Command;
 
 use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::Identifier;
 use iota_sdk::IotaClient;
 use iota_sdk::IotaClientBuilder;
 
@@ -23,10 +21,6 @@ pub async fn get_client(network: &str) -> Result<IotaClient, Error> {
     .map_err(|err| Error::Network(format!("failed to connect to {network}"), err))?;
 
   Ok(client)
-}
-
-pub(crate) fn parse_identifier(name: &str) -> Result<Identifier, Error> {
-  Identifier::from_str(name).map_err(|err| Error::ParsingFailed(format!(r#""{name}" to identifier; {err}"#)))
 }
 
 pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {

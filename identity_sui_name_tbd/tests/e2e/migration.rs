@@ -1,9 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod common;
-
-use common::get_client;
+use crate::common::get_client;
 use identity_sui_name_tbd::migration;
 use iota_sdk::types::base_types::ObjectID;
 
@@ -26,7 +24,7 @@ async fn migration_of_legacy_did_works() -> anyhow::Result<()> {
   let (doc_id, _) = client.migrate_legacy_did(alias_id).await?;
   let resolved_id = migration::lookup(&client, alias_id)
     .await?
-    .map(|doc| *doc.id.object_id())
+    .map(|identity| identity.id())
     .unwrap();
 
   assert_eq!(resolved_id, doc_id);

@@ -1,20 +1,9 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-mod common;
 
-use std::path::PathBuf;
-
-use common::get_client;
+use crate::common::get_client;
+use crate::common::{self};
 use identity_sui_name_tbd::migration::get_alias;
-
-/// Creates a stronghold path in the temporary directory, whose exact location is OS-dependent.
-pub fn stronghold_path() -> PathBuf {
-  let mut file = std::env::temp_dir();
-  file.push("test_strongholds");
-  file.push("001");
-  file.set_extension("stronghold");
-  file.to_owned()
-}
 
 #[tokio::test]
 async fn can_initialize_new_client() -> anyhow::Result<()> {

@@ -42,7 +42,7 @@ impl ProposalT for Proposal<DeactiveDid> {
     expiration: Option<u64>,
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
-    _identity_ref: &OnChainIdentity,
+    _identity_ref: OnChainIdentity,
     package: ObjectID,
   ) -> Result<(ProgrammableTransactionBuilder, Argument), Error> {
     move_calls::identity::propose_deactivation(identity, controller_cap, expiration, package)

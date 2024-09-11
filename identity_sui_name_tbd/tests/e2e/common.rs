@@ -23,6 +23,7 @@ use identity_sui_name_tbd::utils::request_funds;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::IotaClient;
 use iota_sdk::IotaClientBuilder;
 use jsonpath_rust::JsonPathQuery;
 use serde_json::Value;
@@ -32,6 +33,7 @@ use tokio::sync::OnceCell;
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 pub type MemSigner<'s> = StorageSigner<'s, JwkMemStore, KeyIdMemstore>;
 
+static PACKAGE_ID: OnceCell<ObjectID> = OnceCell::const_new();
 static CLIENT: OnceCell<TestClient> = OnceCell::const_new();
 const SCRIPT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/scripts/");
 const CACHED_PKG_ID: &str = "/tmp/identity_iota_pkg_id.txt";
@@ -56,21 +58,11 @@ pub const TEST_DOC: &[u8] = &[
 ];
 
 pub async fn get_client() -> anyhow::Result<TestClient> {
-  CLIENT.get_or_try_init(init).await.cloned()
-}
-
-async fn init() -> anyhow::Result<TestClient> {
   let client = IotaClientBuilder::default().build_localnet().await?;
+  let package_id = PACKAGE_ID.get_or_try_init(|| init(&client)).await.copied()?;
   let address = get_active_address().await?;
 
   request_funds(&address).await?;
-
-  let package_id = if let Ok(id) = std::env::var("IDENTITY_IOTA_PKG_ID").or(get_cached_id(address).await) {
-    std::env::set_var("IDENTITY_IOTA_PKG_ID", id.clone());
-    id.parse()?
-  } else {
-    publish_package(address).await?
-  };
 
   let storage = Arc::new(Storage::new(JwkMemStore::new(), KeyIdMemstore::new()));
   let identity_client = IdentityClientReadOnly::new(client, package_id).await?;
@@ -83,11 +75,23 @@ async fn init() -> anyhow::Result<TestClient> {
   })
 }
 
-async fn get_cached_id(active_address: IotaAddress) -> anyhow::Result<String> {
-  let cache = tokio::fs::read_to_string(CACHED_PKG_ID).await?;
-  let (cached_id, cached_address) = cache.split_once(';').ok_or(anyhow!("Invalid or empty cached data"))?;
+async fn init(iota_client: &IotaClient) -> anyhow::Result<ObjectID> {
+  let network_id = iota_client.read_api().get_chain_identifier().await?;
+  let address = get_active_address().await?;
 
-  if cached_address == active_address.to_string().as_str() {
+  if let Ok(id) = std::env::var("IDENTITY_IOTA_PKG_ID").or(get_cached_id(&network_id).await) {
+    std::env::set_var("IDENTITY_IOTA_PKG_ID", id.clone());
+    id.parse().context("failed to parse object id from str")
+  } else {
+    publish_package(address).await
+  }
+}
+
+async fn get_cached_id(network_id: &str) -> anyhow::Result<String> {
+  let cache = tokio::fs::read_to_string(CACHED_PKG_ID).await?;
+  let (cached_id, cached_network_id) = cache.split_once(';').ok_or(anyhow!("Invalid or empty cached data"))?;
+
+  if cached_network_id == network_id {
     Ok(cached_id.to_owned())
   } else {
     Err(anyhow!("A network change has invalidated the cached data"))

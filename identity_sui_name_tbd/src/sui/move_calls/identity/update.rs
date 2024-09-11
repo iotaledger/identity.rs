@@ -5,9 +5,9 @@ use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBu
 use iota_sdk::types::transaction::Argument;
 use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::transaction::ProgrammableTransaction;
+use move_core_types::ident_str;
 
 use crate::sui::move_calls::utils;
-use crate::utils::parse_identifier;
 
 pub fn propose_update(
   identity: OwnedObjectRef,
@@ -24,8 +24,8 @@ pub fn propose_update(
 
   let proposal_id = ptb.programmable_move_call(
     package_id,
-    parse_identifier("identity")?,
-    parse_identifier("propose_update")?,
+    ident_str!("identity").into(),
+    ident_str!("propose_update").into(),
     vec![],
     vec![identity_arg, cap_arg, doc_arg, exp_arg],
   );
@@ -52,8 +52,8 @@ pub fn execute_update(
 
   let _ = ptb.programmable_move_call(
     package_id,
-    parse_identifier("identity")?,
-    parse_identifier("execute_update")?,
+    ident_str!("identity").into(),
+    ident_str!("execute_update").into(),
     vec![],
     vec![identity_arg, cap_arg, proposal_id],
   );

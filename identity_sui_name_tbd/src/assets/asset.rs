@@ -3,11 +3,14 @@ use std::str::FromStr as _;
 use crate::client::IdentityClient;
 use crate::client::IotaKeySignature;
 use crate::sui::move_calls;
+use crate::transaction::Transaction;
 use crate::utils::MoveType;
 use crate::Error;
 use anyhow::anyhow;
 use anyhow::Context;
+use async_trait::async_trait;
 use iota_sdk::rpc_types::IotaData as _;
+use iota_sdk::rpc_types::IotaExecutionStatus;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
 use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI as _;
 use iota_sdk::types::base_types::IotaAddress;
@@ -16,11 +19,12 @@ use iota_sdk::types::base_types::ObjectRef;
 use iota_sdk::types::base_types::SequenceNumber;
 use iota_sdk::types::id::UID;
 use iota_sdk::types::object::Owner;
-use iota_sdk::types::Identifier;
 use iota_sdk::types::TypeTag;
 use iota_sdk::IotaClient;
+use move_core_types::ident_str;
 use move_core_types::language_storage::StructTag;
 use secret_storage::Signer;
+use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
@@ -95,86 +99,28 @@ impl<T> AuthenticatedAsset<T> {
   pub fn content(&self) -> &T {
     &self.inner
   }
-}
 
-impl<T: MoveType> AuthenticatedAsset<T> {
-  pub async fn transfer<S>(
-    self,
-    recipient: IotaAddress,
-    gas_budget: u64,
-    client: &IdentityClient<S>,
-  ) -> Result<TransferProposal, Error>
-  where
-    S: Signer<IotaKeySignature>,
-  {
+  pub fn transfer(self, recipient: IotaAddress) -> Result<TransferAssetTx<T>, Error> {
     if !self.transferable {
       return Err(Error::InvalidConfig(format!(
         "`AuthenticatedAsset` {} is not transferable",
         self.id()
       )));
     }
-    let tx = move_calls::asset::transfer::<T>(self.object_ref(client).await?, recipient, client.package_id())?;
-    for id in client
-      .execute_transaction(tx, gas_budget)
-      .await?
-      .effects
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?
-      .created()
-      .iter()
-      .map(|obj| obj.reference.object_id)
-    {
-      let object_type = client
-        .read_api()
-        .get_object_with_options(id, IotaObjectDataOptions::new().with_type())
-        .await?
-        .data
-        .context("no data in response")
-        .and_then(|data| Ok(data.object_type()?.to_string()))
-        .map_err(|e| Error::ObjectLookup(e.to_string()))?;
-
-      if object_type == TransferProposal::move_type(client.package_id()).to_string() {
-        return TransferProposal::get_by_id(id, client).await;
-      }
-    }
-
-    Err(Error::TransactionUnexpectedResponse(
-      "no proposal was created in this transaction".to_owned(),
-    ))
+    Ok(TransferAssetTx { asset: self, recipient })
   }
 
-  pub async fn delete<S>(self, gas_budget: u64, client: &IdentityClient<S>) -> Result<(), Error>
-  where
-    S: Signer<IotaKeySignature>,
-  {
+  pub fn delete(self) -> Result<DeleteAssetTx<T>, Error> {
     if !self.deletable {
       return Err(Error::InvalidConfig(format!(
-        "`AuthenticatedAsset` {} is cannot be deleted",
+        "`AuthenticatedAsset` {} cannot be deleted",
         self.id()
       )));
     }
 
-    let tx = move_calls::asset::delete::<T>(self.object_ref(client).await?, client.package_id())?;
-    let response = client.execute_transaction(tx, gas_budget).await?;
-
-    if response.errors.is_empty() {
-      Ok(())
-    } else {
-      let err_str = response.errors.join("; ");
-      Err(Error::TransactionUnexpectedResponse(err_str))
-    }
+    Ok(DeleteAssetTx(self))
   }
-}
-
-impl<T: MoveType + Serialize + Clone> AuthenticatedAsset<T> {
-  pub async fn set_content<S>(
-    &mut self,
-    new_content: T,
-    gas_budget: u64,
-    client: &IdentityClient<S>,
-  ) -> Result<(), Error>
-  where
-    S: Signer<IotaKeySignature>,
-  {
+  pub fn set_content(&mut self, new_content: T) -> Result<UpdateContentTx<'_, T>, Error> {
     if !self.mutable {
       return Err(Error::InvalidConfig(format!(
         "`AuthenticatedAsset` {} is immutable",
@@ -182,16 +128,10 @@ impl<T: MoveType + Serialize + Clone> AuthenticatedAsset<T> {
       )));
     }
 
-    let tx = move_calls::asset::update(self.object_ref(client).await?, new_content.clone(), client.package_id())?;
-    let response = client.execute_transaction(tx, gas_budget).await?;
-
-    if response.errors.is_empty() {
-      self.inner = new_content;
-      Ok(())
-    } else {
-      let err_str = response.errors.join("; ");
-      Err(Error::TransactionUnexpectedResponse(err_str))
-    }
+    Ok(UpdateContentTx {
+      asset: self,
+      new_content,
+    })
   }
 }
 
@@ -201,15 +141,14 @@ pub struct AuthenticatedAssetBuilder<T> {
   mutable: bool,
   transferable: bool,
   deletable: bool,
-  gas_budget: Option<u64>,
 }
 
 impl<T: MoveType> MoveType for AuthenticatedAsset<T> {
   fn move_type(package: ObjectID) -> TypeTag {
     TypeTag::Struct(Box::new(StructTag {
       address: package.into(),
-      module: Identifier::new("asset").expect("valid utf8"),
-      name: Identifier::new("AuthenticatedAsset").expect("valid utf8"),
+      module: ident_str!("asset").into(),
+      name: ident_str!("AuthenticatedAsset").into(),
       type_params: vec![T::move_type(package)],
     }))
   }
@@ -222,7 +161,6 @@ impl<T> AuthenticatedAssetBuilder<T> {
       mutable: false,
       transferable: false,
       deletable: false,
-      gas_budget: None,
     }
   }
 
@@ -241,41 +179,8 @@ impl<T> AuthenticatedAssetBuilder<T> {
     self
   }
 
-  pub fn gas_budget(mut self, budget: u64) -> Self {
-    self.gas_budget = Some(budget);
-    self
-  }
-}
-
-impl<T> AuthenticatedAssetBuilder<T>
-where
-  T: MoveType + Serialize + for<'de> Deserialize<'de>,
-{
-  pub async fn finish<S>(self, client: &IdentityClient<S>) -> Result<AuthenticatedAsset<T>, Error>
-  where
-    S: Signer<IotaKeySignature>,
-  {
-    let AuthenticatedAssetBuilder {
-      inner,
-      mutable,
-      transferable,
-      deletable,
-      gas_budget,
-    } = self;
-    let tx = move_calls::asset::new(inner, mutable, transferable, deletable, client.package_id())?;
-
-    let gas_budget = gas_budget.ok_or_else(|| Error::GasIssue("missing gas budget".to_owned()))?;
-    let created_asset_id = client
-      .execute_transaction(tx, gas_budget)
-      .await?
-      .effects
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?
-      .created()
-      .first()
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("no object was created in this transaction".to_owned()))?
-      .object_id();
-
-    AuthenticatedAsset::get_by_id(created_asset_id, client).await
+  pub fn finish(self) -> CreateAssetTx<T> {
+    CreateAssetTx(self)
   }
 }
 
@@ -294,8 +199,8 @@ impl MoveType for TransferProposal {
   fn move_type(package: ObjectID) -> TypeTag {
     TypeTag::Struct(Box::new(StructTag {
       address: package.into(),
-      module: Identifier::new("asset").expect("valid identifier"),
-      name: Identifier::new("TransferProposal").expect("valid identifier"),
+      module: ident_str!("asset").into(),
+      name: ident_str!("TransferProposal").into(),
       type_params: vec![],
     }))
   }
@@ -374,72 +279,12 @@ impl TransferProposal {
     }
   }
 
-  pub async fn accept<S>(&mut self, gas_budget: u64, client: &IdentityClient<S>) -> Result<(), Error>
-  where
-    S: Signer<IotaKeySignature>,
-  {
-    if self.done {
-      return Err(Error::TransactionBuildingFailed(
-        "the transfer has already been concluded".to_owned(),
-      ));
-    }
-
-    let cap = self.get_cap("RecipientCap", client).await?;
-    let (asset_ref, param_type) = self
-      .asset_metadata(client)
-      .await
-      .map_err(|e| Error::ObjectLookup(e.to_string()))?;
-    let initial_shared_version = self
-      .initial_shared_version(client)
-      .await
-      .map_err(|e| Error::ObjectLookup(e.to_string()))?;
-    let tx = move_calls::asset::accept_proposal(
-      (self.id(), initial_shared_version),
-      cap,
-      asset_ref,
-      param_type,
-      client.package_id(),
-    )?;
-    let response = client.execute_transaction(tx, gas_budget).await?;
-
-    if response.errors.is_empty() {
-      self.done = true;
-      Ok(())
-    } else {
-      let err_str = response.errors.join("; ");
-      Err(Error::TransactionUnexpectedResponse(err_str))
-    }
+  pub fn accept(self) -> AcceptTransferTx {
+    AcceptTransferTx(self)
   }
 
-  pub async fn conclude_or_cancel<S>(self, gas_budget: u64, client: &IdentityClient<S>) -> Result<(), Error>
-  where
-    S: Signer<IotaKeySignature>,
-  {
-    let cap = self.get_cap("SenderCap", client).await?;
-    let (asset_ref, param_type) = self
-      .asset_metadata(client)
-      .await
-      .map_err(|e| Error::ObjectLookup(e.to_string()))?;
-    let initial_shared_version = self
-      .initial_shared_version(client)
-      .await
-      .map_err(|e| Error::ObjectLookup(e.to_string()))?;
-
-    let tx = move_calls::asset::conclude_or_cancel(
-      (self.id(), initial_shared_version),
-      cap,
-      asset_ref,
-      param_type,
-      client.package_id(),
-    )?;
-    let response = client.execute_transaction(tx, gas_budget).await?;
-
-    if response.errors.is_empty() {
-      Ok(())
-    } else {
-      let err_str = response.errors.join("; ");
-      Err(Error::TransactionUnexpectedResponse(err_str))
-    }
+  pub fn conclude_or_cancel(self) -> ConcludeTransferTx {
+    ConcludeTransferTx(self)
   }
 
   pub fn id(&self) -> ObjectID {
@@ -456,5 +301,249 @@ impl TransferProposal {
 
   pub fn is_concluded(&self) -> bool {
     self.done
+  }
+}
+
+#[derive(Debug)]
+pub struct UpdateContentTx<'a, T> {
+  asset: &'a mut AuthenticatedAsset<T>,
+  new_content: T,
+}
+
+#[async_trait]
+impl<'a, T> Transaction for UpdateContentTx<'a, T>
+where
+  T: MoveType + Serialize + Clone + Send + Sync,
+{
+  type Output = ();
+
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<Self::Output, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let tx = move_calls::asset::update(
+      self.asset.object_ref(client).await?,
+      self.new_content.clone(),
+      client.package_id(),
+    )?;
+    let tx_status = client
+      .execute_transaction(tx, gas_budget)
+      .await?
+      .effects
+      .context("transaction had no effects")
+      .map(|effects| effects.into_status())
+      .map_err(|e| Error::TransactionUnexpectedResponse(e.to_string()))?;
+    if let IotaExecutionStatus::Failure { error } = tx_status {
+      return Err(Error::TransactionUnexpectedResponse(error));
+    }
+    self.asset.inner = self.new_content;
+    Ok(())
+  }
+}
+
+#[derive(Debug)]
+pub struct DeleteAssetTx<T>(AuthenticatedAsset<T>);
+
+#[async_trait]
+impl<T> Transaction for DeleteAssetTx<T>
+where
+  T: MoveType + Send + Sync,
+{
+  type Output = ();
+
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<Self::Output, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let asset_ref = self.0.object_ref(client).await?;
+    let tx = move_calls::asset::delete::<T>(asset_ref, client.package_id())?;
+
+    client.execute_transaction(tx, gas_budget).await?;
+    Ok(())
+  }
+}
+#[derive(Debug)]
+pub struct CreateAssetTx<T>(AuthenticatedAssetBuilder<T>);
+
+#[async_trait]
+impl<T> Transaction for CreateAssetTx<T>
+where
+  T: MoveType + Serialize + DeserializeOwned + Send,
+{
+  type Output = AuthenticatedAsset<T>;
+
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<Self::Output, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let AuthenticatedAssetBuilder {
+      inner,
+      mutable,
+      transferable,
+      deletable,
+    } = self.0;
+    let tx = move_calls::asset::new(inner, mutable, transferable, deletable, client.package_id())?;
+
+    let created_asset_id = client
+      .execute_transaction(tx, gas_budget)
+      .await?
+      .effects
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?
+      .created()
+      .first()
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("no object was created in this transaction".to_owned()))?
+      .object_id();
+
+    AuthenticatedAsset::get_by_id(created_asset_id, client).await
+  }
+}
+
+#[derive(Debug)]
+pub struct TransferAssetTx<T> {
+  asset: AuthenticatedAsset<T>,
+  recipient: IotaAddress,
+}
+
+#[async_trait]
+impl<T> Transaction for TransferAssetTx<T>
+where
+  T: MoveType + Send + Sync,
+{
+  type Output = TransferProposal;
+
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<Self::Output, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let tx = move_calls::asset::transfer::<T>(
+      self.asset.object_ref(client).await?,
+      self.recipient,
+      client.package_id(),
+    )?;
+    for id in client
+      .execute_transaction(tx, gas_budget)
+      .await?
+      .effects
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?
+      .created()
+      .iter()
+      .map(|obj| obj.reference.object_id)
+    {
+      let object_type = client
+        .read_api()
+        .get_object_with_options(id, IotaObjectDataOptions::new().with_type())
+        .await?
+        .data
+        .context("no data in response")
+        .and_then(|data| Ok(data.object_type()?.to_string()))
+        .map_err(|e| Error::ObjectLookup(e.to_string()))?;
+
+      if object_type == TransferProposal::move_type(client.package_id()).to_string() {
+        return TransferProposal::get_by_id(id, client).await;
+      }
+    }
+
+    Err(Error::TransactionUnexpectedResponse(
+      "no proposal was created in this transaction".to_owned(),
+    ))
+  }
+}
+
+#[derive(Debug)]
+pub struct AcceptTransferTx(TransferProposal);
+
+#[async_trait]
+impl Transaction for AcceptTransferTx {
+  type Output = ();
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<Self::Output, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    if self.0.done {
+      return Err(Error::TransactionBuildingFailed(
+        "the transfer has already been concluded".to_owned(),
+      ));
+    }
+
+    let cap = self.0.get_cap("RecipientCap", client).await?;
+    let (asset_ref, param_type) = self
+      .0
+      .asset_metadata(client)
+      .await
+      .map_err(|e| Error::ObjectLookup(e.to_string()))?;
+    let initial_shared_version = self
+      .0
+      .initial_shared_version(client)
+      .await
+      .map_err(|e| Error::ObjectLookup(e.to_string()))?;
+    let tx = move_calls::asset::accept_proposal(
+      (self.0.id(), initial_shared_version),
+      cap,
+      asset_ref,
+      param_type,
+      client.package_id(),
+    )?;
+
+    client.execute_transaction(tx, gas_budget).await?;
+    Ok(())
+  }
+}
+
+#[derive(Debug)]
+pub struct ConcludeTransferTx(TransferProposal);
+
+#[async_trait]
+impl Transaction for ConcludeTransferTx {
+  type Output = ();
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<Self::Output, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let cap = self.0.get_cap("SenderCap", client).await?;
+    let (asset_ref, param_type) = self
+      .0
+      .asset_metadata(client)
+      .await
+      .map_err(|e| Error::ObjectLookup(e.to_string()))?;
+    let initial_shared_version = self
+      .0
+      .initial_shared_version(client)
+      .await
+      .map_err(|e| Error::ObjectLookup(e.to_string()))?;
+
+    let tx = move_calls::asset::conclude_or_cancel(
+      (self.0.id(), initial_shared_version),
+      cap,
+      asset_ref,
+      param_type,
+      client.package_id(),
+    )?;
+
+    client.execute_transaction(tx, gas_budget).await?;
+    Ok(())
   }
 }

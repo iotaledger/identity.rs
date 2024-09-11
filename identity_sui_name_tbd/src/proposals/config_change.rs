@@ -51,10 +51,10 @@ impl ProposalT for Proposal<ConfigChange> {
     expiration: Option<u64>,
     identity_ref: OwnedObjectRef,
     controller_cap: ObjectRef,
-    identity: &OnChainIdentity,
+    identity: OnChainIdentity,
     package: ObjectID,
   ) -> Result<(ProgrammableTransactionBuilder, Argument), Error> {
-    action.validate(identity)?;
+    action.validate(&identity)?;
     move_calls::identity::propose_config_change(
       identity_ref,
       controller_cap,
@@ -170,8 +170,8 @@ impl ConfigChange {
   }
 
   fn validate(&self, identity: &OnChainIdentity) -> Result<(), Error> {
-    let new_threshold = self.threshold.unwrap_or(identity.did_doc.threshold());
-    let mut controllers = identity.did_doc.controllers().clone();
+    let new_threshold = self.threshold.unwrap_or(identity.threshold());
+    let mut controllers = identity.controllers().clone();
     // check if update voting powers is valid
     for (controller, new_vp) in &self.controllers_voting_power {
       match controllers.get_mut(controller) {

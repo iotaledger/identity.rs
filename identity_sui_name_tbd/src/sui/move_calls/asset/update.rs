@@ -1,12 +1,10 @@
-use std::str::FromStr;
-
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::ObjectRef;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use iota_sdk::types::transaction::Command;
 use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::Identifier;
+use move_core_types::ident_str;
 use serde::Serialize;
 
 use crate::utils::MoveType;
@@ -27,8 +25,8 @@ where
 
   ptb.command(Command::move_call(
     package,
-    Identifier::from_str("asset").map_err(|e| Error::ParsingFailed(e.to_string()))?,
-    Identifier::from_str("set_content").map_err(|e| Error::ParsingFailed(e.to_string()))?,
+    ident_str!("asset").into(),
+    ident_str!("set_content").into(),
     vec![T::move_type(package)],
     vec![asset, new_content],
   ));

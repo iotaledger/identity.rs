@@ -45,7 +45,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
     expiration: Option<u64>,
     identity_ref: OwnedObjectRef,
     controller_cap: ObjectRef,
-    _identity: &OnChainIdentity,
+    _identity: OnChainIdentity,
     package: ObjectID,
   ) -> Result<(ProgrammableTransactionBuilder, Argument), Error> {
     move_calls::identity::propose_update(identity_ref, controller_cap, &action.0, expiration, package)

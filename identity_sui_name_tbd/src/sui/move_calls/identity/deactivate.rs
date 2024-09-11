@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use iota_sdk::rpc_types::OwnedObjectRef;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::ObjectRef;
@@ -7,7 +5,7 @@ use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBu
 use iota_sdk::types::transaction::Argument;
 use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::Identifier;
+use move_core_types::ident_str;
 
 use crate::sui::move_calls::utils;
 
@@ -24,8 +22,8 @@ pub fn propose_deactivation(
 
   let proposal_id = ptb.programmable_move_call(
     package_id,
-    Identifier::from_str("identity")?,
-    Identifier::from_str("propose_deactivation")?,
+    ident_str!("identity").into(),
+    ident_str!("propose_deactivation").into(),
     vec![],
     vec![identity_arg, cap_arg, exp_arg],
   );
@@ -52,8 +50,8 @@ pub fn execute_deactivation(
 
   let _ = ptb.programmable_move_call(
     package_id,
-    Identifier::from_str("identity")?,
-    Identifier::from_str("execute_deactivation")?,
+    ident_str!("identity").into(),
+    ident_str!("execute_deactivation").into(),
     vec![],
     vec![identity_arg, cap_arg, proposal_id],
   );

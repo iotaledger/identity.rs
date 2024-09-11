@@ -10,8 +10,8 @@ use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBu
 use iota_sdk::types::transaction::Argument;
 use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::Identifier;
 use iota_sdk::types::TypeTag;
+use move_core_types::ident_str;
 
 use super::super::utils;
 
@@ -39,8 +39,8 @@ where
 
     ptb.programmable_move_call(
       package,
-      Identifier::new("utils")?,
-      Identifier::new("vec_map_from_keys_values")?,
+      ident_str!("utils").into(),
+      ident_str!("vec_map_from_keys_values").into(),
       vec![TypeTag::Address, TypeTag::U64],
       vec![addresses, vps],
     )
@@ -52,8 +52,8 @@ where
 
     ptb.programmable_move_call(
       package,
-      Identifier::new("utils")?,
-      Identifier::new("vec_map_from_keys_values")?,
+      ident_str!("utils").into(),
+      ident_str!("vec_map_from_keys_values").into(),
       vec![TypeTag::from_str("0x2::object::ID").expect("valid utf8"), TypeTag::U64],
       vec![ids, vps],
     )
@@ -66,8 +66,8 @@ where
 
   let proposal_id = ptb.programmable_move_call(
     package,
-    Identifier::new("identity").expect("valid utf8"),
-    Identifier::new("propose_config_change").expect("valid utf8"),
+    ident_str!("identity").into(),
+    ident_str!("propose_config_change").into(),
     vec![],
     vec![
       identity,
@@ -109,8 +109,8 @@ pub fn execute_config_change(
   };
   ptb.programmable_move_call(
     package,
-    Identifier::new("identity").expect("valid utf8"),
-    Identifier::new("execute_config_change").expect("valid_utf8"),
+    ident_str!("identity").into(),
+    ident_str!("execute_config_change").into(),
     vec![],
     vec![identity, controller_cap, proposal_id],
   );
