@@ -6,12 +6,11 @@ use core::fmt::Formatter;
 use core::fmt::Result;
 use std::str::FromStr;
 
-use crate::error::Error;
-
 /// Supported algorithms for the JSON Web Signatures `alg` claim.
 ///
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-signature-encryption-algorithms)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(not(feature = "custom_alg"), derive(Copy))]
 #[allow(non_camel_case_types)]
 pub enum JwsAlgorithm {
   /// HMAC using SHA-256
@@ -45,10 +44,15 @@ pub enum JwsAlgorithm {
   NONE,
   /// EdDSA signature algorithms
   EdDSA,
+  /// Custom algorithm
+  #[cfg(feature = "custom_alg")]
+  #[serde(untagged)]
+  Custom(String)
 }
 
 impl JwsAlgorithm {
   /// A slice of all supported [`JwsAlgorithm`]s.
+  #[cfg(not(feature = "custom_alg"))]
   pub const ALL: &'static [Self] = &[
     Self::HS256,
     Self::HS384,
@@ -68,6 +72,7 @@ impl JwsAlgorithm {
   ];
 
   /// Returns the JWS algorithm as a `str` slice.
+  #[cfg(not(feature = "custom_alg"))]
   pub const fn name(self) -> &'static str {
     match self {
       Self::HS256 => "HS256",
@@ -85,6 +90,29 @@ impl JwsAlgorithm {
       Self::ES256K => "ES256K",
       Self::NONE => "none",
       Self::EdDSA => "EdDSA",
+    }
+  }
+
+  /// Returns the JWS algorithm as a `str` slice.
+  #[cfg(feature = "custom_alg")]
+  pub fn name(&self) -> String {
+    match self {
+      Self::HS256 => "HS256".to_string(),
+      Self::HS384 => "HS384".to_string(),
+      Self::HS512 => "HS512".to_string(),
+      Self::RS256 => "RS256".to_string(),
+      Self::RS384 => "RS384".to_string(),
+      Self::RS512 => "RS512".to_string(),
+      Self::PS256 => "PS256".to_string(),
+      Self::PS384 => "PS384".to_string(),
+      Self::PS512 => "PS512".to_string(),
+      Self::ES256 => "ES256".to_string(),
+      Self::ES384 => "ES384".to_string(),
+      Self::ES512 => "ES512".to_string(),
+      Self::ES256K => "ES256K".to_string(),
+      Self::NONE => "none".to_string(),
+      Self::EdDSA => "EdDSA".to_string(),
+      Self::Custom(name) => name.clone()
     }
   }
 }
@@ -109,13 +137,16 @@ impl FromStr for JwsAlgorithm {
       "ES256K" => Ok(Self::ES256K),
       "none" => Ok(Self::NONE),
       "EdDSA" => Ok(Self::EdDSA),
-      _ => Err(Error::JwsAlgorithmParsingError),
+      #[cfg(feature = "custom_alg")]
+      value => Ok(Self::Custom(value.to_string())),
+      #[cfg(not(feature = "custom_alg"))]
+      _ => Err(crate::error::Error::JwsAlgorithmParsingError),
     }
   }
 }
 
 impl Display for JwsAlgorithm {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_str(self.name())
+    f.write_str(&self.clone().name())
   }
 }
