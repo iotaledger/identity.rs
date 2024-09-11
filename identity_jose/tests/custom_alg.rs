@@ -1,16 +1,21 @@
 use std::ops::Deref;
 use std::time::SystemTime;
 
-use crypto::signatures::ed25519::{PublicKey, SecretKey, Signature};
+use crypto::signatures::ed25519::PublicKey;
+use crypto::signatures::ed25519::SecretKey;
+use crypto::signatures::ed25519::Signature;
+use identity_jose::jwk::EdCurve;
+use identity_jose::jwk::Jwk;
 use identity_jose::jwk::JwkParamsOkp;
 use identity_jose::jwk::JwkType;
-use identity_jose::jwk::{EdCurve, Jwk};
 use identity_jose::jws::CompactJwsEncoder;
 use identity_jose::jws::Decoder;
 use identity_jose::jws::JwsAlgorithm;
+use identity_jose::jws::JwsHeader;
 use identity_jose::jws::JwsVerifierFn;
+use identity_jose::jws::SignatureVerificationError;
+use identity_jose::jws::SignatureVerificationErrorKind;
 use identity_jose::jws::VerificationInput;
-use identity_jose::jws::{JwsHeader, SignatureVerificationError, SignatureVerificationErrorKind};
 use identity_jose::jwt::JwtClaims;
 use identity_jose::jwu;
 use jsonprooftoken::encoding::base64url_decode;
