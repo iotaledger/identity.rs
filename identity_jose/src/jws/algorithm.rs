@@ -47,7 +47,7 @@ pub enum JwsAlgorithm {
   /// Custom algorithm
   #[cfg(feature = "custom_alg")]
   #[serde(untagged)]
-  Custom(String)
+  Custom(String),
 }
 
 impl JwsAlgorithm {
@@ -112,7 +112,7 @@ impl JwsAlgorithm {
       Self::ES256K => "ES256K".to_string(),
       Self::NONE => "none".to_string(),
       Self::EdDSA => "EdDSA".to_string(),
-      Self::Custom(name) => name.clone()
+      Self::Custom(name) => name.clone(),
     }
   }
 }
