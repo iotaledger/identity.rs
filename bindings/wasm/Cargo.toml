@@ -31,12 +31,13 @@ serde_repr = { version = "0.1", default-features = false }
 tokio = { version = "1.29", default-features = false, features = ["sync"] }
 wasm-bindgen = { version = "0.2.85", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
+web-sys = { version = "0.3", features = ["console"]}
 zkryptium = "0.2.2"
 
 [dependencies.identity_iota]
 path = "../../identity_iota"
 default-features = false
-features = ["client", "revocation-bitmap", "resolver", "domain-linkage", "sd-jwt", "status-list-2021", "jpt-bbs-plus"]
+features = ["client", "revocation-bitmap", "resolver", "domain-linkage", "sd-jwt", "status-list-2021", "jpt-bbs-plus", "pqc"]
 
 [dev-dependencies]
 rand = "0.8.5"

@@ -82,6 +82,7 @@ use crate::verification::WasmMethodRelationship;
 use crate::verification::WasmMethodScope;
 use crate::verification::WasmVerificationMethod;
 use identity_iota::storage::JwpDocumentExt;
+use identity_iota::storage::JwsDocumentExtPQC;
 
 pub(crate) struct IotaDocumentLock(tokio::sync::RwLock<IotaDocument>);
 
@@ -991,6 +992,34 @@ impl WasmIotaDocument {
       Ok(JsValue::from(jpt))
     });
 
+    Ok(promise.unchecked_into())
+  }
+
+  #[wasm_bindgen(js_name = generateMethodPQC)]
+  #[allow(non_snake_case)]
+  pub fn generate_method_pqc(
+    &self,
+    storage: &WasmStorage,
+    keyType: String,
+    alg: WasmJwsAlgorithm,
+    fragment: Option<String>,
+    scope: WasmMethodScope,
+  ) -> Result<PromiseString> {
+    let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let scope: MethodScope = scope.0;
+    web_sys::console::log_1(&"PPPPPPPPPPPPPPP".into());
+    let promise: Promise = future_to_promise(async move {
+      let method_fragment: String = document_lock_clone
+        .write()
+        .await
+        .generate_method_pqc(&storage_clone, KeyType::from(keyType), alg, fragment.as_deref(), scope)
+        .await
+        .wasm_result()?;
+      web_sys::console::log_1(&method_fragment.clone().into());
+      Ok(JsValue::from(method_fragment))
+    });
     Ok(promise.unchecked_into())
   }
 }

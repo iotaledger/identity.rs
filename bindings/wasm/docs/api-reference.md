@@ -252,20 +252,12 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
-<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
-<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
-</dd>
-<dt><a href="#PayloadType">PayloadType</a></dt>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
-<dt><a href="#FailFast">FailFast</a></dt>
-<dd><p>Declares when validation should return if an error occurs.</p>
-</dd>
-<dt><a href="#AllErrors">AllErrors</a></dt>
-<dd><p>Return all errors that occur during validation.</p>
-</dd>
-<dt><a href="#FirstError">FirstError</a></dt>
-<dd><p>Return after the first error occurs.</p>
-</dd>
+<dt><a href="#SerializationType">SerializationType</a></dt>
+<dd></dd>
+<dt><a href="#PresentationProofAlgorithm">PresentationProofAlgorithm</a></dt>
+<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder.</p>
 <p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
@@ -280,14 +272,26 @@ This variant is the default.</p>
 <dt><a href="#Any">Any</a></dt>
 <dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
 </dd>
-<dt><a href="#SerializationType">SerializationType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#PayloadType">PayloadType</a></dt>
+<dd></dd>
+<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
+<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
+</dd>
+<dt><a href="#ProofAlgorithm">ProofAlgorithm</a></dt>
 <dd></dd>
 <dt><a href="#CredentialStatus">CredentialStatus</a></dt>
 <dd></dd>
-<dt><a href="#PresentationProofAlgorithm">PresentationProofAlgorithm</a></dt>
-<dd></dd>
+<dt><a href="#FailFast">FailFast</a></dt>
+<dd><p>Declares when validation should return if an error occurs.</p>
+</dd>
+<dt><a href="#AllErrors">AllErrors</a></dt>
+<dd><p>Return all errors that occur during validation.</p>
+</dd>
+<dt><a href="#FirstError">FirstError</a></dt>
+<dd><p>Return after the first error occurs.</p>
+</dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -305,22 +309,13 @@ This variant is the default.</p>
 <dt><a href="#SkipAll">SkipAll</a></dt>
 <dd><p>Skip all status checks.</p>
 </dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#ProofAlgorithm">ProofAlgorithm</a></dt>
-<dd></dd>
 </dl>
 
 ## Functions
 
 <dl>
-<dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
-<dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
-<p>This function is useful when one is composing a <code>IJwsVerifier</code> that delegates
-<code>EdDSA</code> verification with curve <code>Ed25519</code> to this function.</p>
-<h1 id="warning">Warning</h1>
-<p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
-prior to calling the function.</p>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 <dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
 <dd><p>Encode the given bytes in url-safe base64.</p>
@@ -328,8 +323,13 @@ prior to calling the function.</p>
 <dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
 <dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
+<dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
+<dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
+<p>This function is useful when one is composing a <code>IJwsVerifier</code> that delegates
+<code>EdDSA</code> verification with curve <code>Ed25519</code> to this function.</p>
+<h1 id="warning">Warning</h1>
+<p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
+prior to calling the function.</p>
 </dd>
 </dl>
 
@@ -2201,6 +2201,7 @@ if the object is being concurrently modified.
         * [.createPresentedJwp(presentation, method_id, options)](#IotaDocument+createPresentedJwp) ⇒ <code>Promise.&lt;string&gt;</code>
         * [.createCredentialJpt(credential, storage, fragment, options, [custom_claims])](#IotaDocument+createCredentialJpt) ⇒ [<code>Promise.&lt;Jpt&gt;</code>](#Jpt)
         * [.createPresentationJpt(presentation, method_id, options)](#IotaDocument+createPresentationJpt) ⇒ [<code>Promise.&lt;Jpt&gt;</code>](#Jpt)
+        * [.generateMethodPQC(storage, keyType, alg, fragment, scope)](#IotaDocument+generateMethodPQC) ⇒ <code>Promise.&lt;string&gt;</code>
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2764,6 +2765,19 @@ private key backed by the `storage` in accordance with the passed `options`.
 | presentation | [<code>SelectiveDisclosurePresentation</code>](#SelectiveDisclosurePresentation) | 
 | method_id | <code>string</code> | 
 | options | [<code>JwpPresentationOptions</code>](#JwpPresentationOptions) | 
+
+<a name="IotaDocument+generateMethodPQC"></a>
+
+### iotaDocument.generateMethodPQC(storage, keyType, alg, fragment, scope) ⇒ <code>Promise.&lt;string&gt;</code>
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| keyType | <code>string</code> | 
+| alg | <code>JwsAlgorithm</code> | 
+| fragment | <code>string</code> \| <code>undefined</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) | 
 
 <a name="IotaDocument.newWithId"></a>
 
@@ -3394,6 +3408,7 @@ Check timeframe interval in credentialStatus with `RevocationTimeframeStatus`.
         * [.paramsOkp()](#Jwk+paramsOkp) ⇒ <code>JwkParamsOkp</code> \| <code>undefined</code>
         * [.paramsOct()](#Jwk+paramsOct) ⇒ <code>JwkParamsOct</code> \| <code>undefined</code>
         * [.paramsRsa()](#Jwk+paramsRsa) ⇒ <code>JwkParamsRsa</code> \| <code>undefined</code>
+        * [.paramsMldsa()](#Jwk+paramsMldsa) ⇒ <code>JwkParamsPQ</code> \| <code>undefined</code>
         * [.toPublic()](#Jwk+toPublic) ⇒ [<code>Jwk</code>](#Jwk) \| <code>undefined</code>
         * [.isPublic()](#Jwk+isPublic) ⇒ <code>boolean</code>
         * [.isPrivate()](#Jwk+isPrivate) ⇒ <code>boolean</code>
@@ -3485,6 +3500,10 @@ If this JWK is of kty OCT, returns those parameters.
 ### jwk.paramsRsa() ⇒ <code>JwkParamsRsa</code> \| <code>undefined</code>
 If this JWK is of kty RSA, returns those parameters.
 
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+paramsMldsa"></a>
+
+### jwk.paramsMldsa() ⇒ <code>JwkParamsPQ</code> \| <code>undefined</code>
 **Kind**: instance method of [<code>Jwk</code>](#Jwk)  
 <a name="Jwk+toPublic"></a>
 
@@ -7512,33 +7531,17 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="StatusPurpose"></a>
+<a name="StateMetadataEncoding"></a>
 
-## StatusPurpose
-Purpose of a [StatusList2021](#StatusList2021).
-
+## StateMetadataEncoding
 **Kind**: global variable  
-<a name="PayloadType"></a>
+<a name="SerializationType"></a>
 
-## PayloadType
+## SerializationType
 **Kind**: global variable  
-<a name="FailFast"></a>
+<a name="PresentationProofAlgorithm"></a>
 
-## FailFast
-Declares when validation should return if an error occurs.
-
-**Kind**: global variable  
-<a name="AllErrors"></a>
-
-## AllErrors
-Return all errors that occur during validation.
-
-**Kind**: global variable  
-<a name="FirstError"></a>
-
-## FirstError
-Return after the first error occurs.
-
+## PresentationProofAlgorithm
 **Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
@@ -7567,21 +7570,45 @@ The holder must match the subject only for credentials where the [`nonTransferab
 The holder is not required to have any kind of relationship to any credential subject.
 
 **Kind**: global variable  
-<a name="SerializationType"></a>
-
-## SerializationType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="PayloadType"></a>
+
+## PayloadType
+**Kind**: global variable  
+<a name="StatusPurpose"></a>
+
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
+
+**Kind**: global variable  
+<a name="ProofAlgorithm"></a>
+
+## ProofAlgorithm
 **Kind**: global variable  
 <a name="CredentialStatus"></a>
 
 ## CredentialStatus
 **Kind**: global variable  
-<a name="PresentationProofAlgorithm"></a>
+<a name="FailFast"></a>
 
-## PresentationProofAlgorithm
+## FailFast
+Declares when validation should return if an error occurs.
+
+**Kind**: global variable  
+<a name="AllErrors"></a>
+
+## AllErrors
+Return all errors that occur during validation.
+
+**Kind**: global variable  
+<a name="FirstError"></a>
+
+## FirstError
+Return after the first error occurs.
+
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
@@ -7614,36 +7641,12 @@ Validate the status if supported, skip any unsupported
 Skip all status checks.
 
 **Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
+<a name="start"></a>
 
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="ProofAlgorithm"></a>
-
-## ProofAlgorithm
-**Kind**: global variable  
-<a name="verifyEd25519"></a>
-
-## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
-Verify a JWS signature secured with the `EdDSA` algorithm and curve `Ed25519`.
-
-This function is useful when one is composing a `IJwsVerifier` that delegates
-`EdDSA` verification with curve `Ed25519` to this function.
-
-# Warning
-
-This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
-prior to calling the function.
+## start()
+Initializes the console error panic hook for better error messages
 
 **Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| alg | <code>JwsAlgorithm</code> | 
-| signingInput | <code>Uint8Array</code> | 
-| decodedSignature | <code>Uint8Array</code> | 
-| publicKey | [<code>Jwk</code>](#Jwk) | 
-
 <a name="encodeB64"></a>
 
 ## encodeB64(data) ⇒ <code>string</code>
@@ -7666,9 +7669,25 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | --- | --- |
 | data | <code>Uint8Array</code> | 
 
-<a name="start"></a>
+<a name="verifyEd25519"></a>
 
-## start()
-Initializes the console error panic hook for better error messages
+## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
+Verify a JWS signature secured with the `EdDSA` algorithm and curve `Ed25519`.
+
+This function is useful when one is composing a `IJwsVerifier` that delegates
+`EdDSA` verification with curve `Ed25519` to this function.
+
+# Warning
+
+This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
+prior to calling the function.
 
 **Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| alg | <code>JwsAlgorithm</code> | 
+| signingInput | <code>Uint8Array</code> | 
+| decodedSignature | <code>Uint8Array</code> | 
+| publicKey | [<code>Jwk</code>](#Jwk) | 
+
