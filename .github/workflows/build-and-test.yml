@@ -126,15 +126,18 @@ jobs:
         run: cargo clean
 
         # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
-      - name: Build with all features
-        run: cargo build --workspace --tests --examples --all-features --release
+      - name: Build with default features
+        run: cargo build --workspace --tests --examples --release
 
       - name: Start iota sandbox
         if: matrix.os == 'ubuntu-latest'
         uses: './.github/actions/iota-sandbox/setup'
 
-      - name: Run tests
-        run: cargo test --workspace --all-features --release
+      - name: Run tests excluding `custom_time` feature
+        run: cargo test --workspace --release
+
+      - name: Run tests with `custom_time` feature
+        run: cargo test --test custom_time --features="custom_time"
 
       - name: Run Rust examples
         # run examples only on ubuntu for now
@@ -157,7 +160,7 @@ jobs:
       - name: Tear down iota sandbox
         if: matrix.os == 'ubuntu-latest' && always()
         uses: './.github/actions/iota-sandbox/tear-down'
-      
+
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:
@@ -195,7 +198,7 @@ jobs:
         working-directory: bindings/wasm
 
       - name: Download bindings/wasm artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: identity-wasm-bindings-build
           path: bindings/wasm
@@ -204,8 +207,104 @@ jobs:
         uses: './.github/actions/iota-sandbox/setup'
 
       - name: Run Wasm examples
-        run: npm run test:examples
+        run: npm run test:readme && npm run test:node
         working-directory: bindings/wasm
+
+      - name: Tear down iota sandbox
+        if: always()
+        uses: './.github/actions/iota-sandbox/tear-down'
+
+  test-wasm-firefox:
+    needs: build-wasm
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        include:
+          - os: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+  
+      - name: Install JS dependencies
+        run: npm ci
+        working-directory: bindings/wasm
+
+      - name: Download bindings/wasm artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: identity-wasm-bindings-build
+          path: bindings/wasm
+
+      - name: Start iota sandbox
+        uses: './.github/actions/iota-sandbox/setup'
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6.2.0
+        with:
+          context: bindings/wasm/
+          file: bindings/wasm/cypress/Dockerfile
+          push: false
+          tags: cypress-test:latest
+          load: true
+
+      - name: Run cypress
+        run: docker run --network host cypress-test test:browser:parallel:firefox
+
+      - name: Tear down iota sandbox
+        if: always()
+        uses: './.github/actions/iota-sandbox/tear-down'
+
+  test-wasm-chrome:
+    needs: build-wasm
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        include:
+          - os: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - name: Install JS dependencies
+        run: npm ci
+        working-directory: bindings/wasm
+
+      - name: Download bindings/wasm artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: identity-wasm-bindings-build
+          path: bindings/wasm
+
+      - name: Start iota sandbox
+        uses: './.github/actions/iota-sandbox/setup'
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6.2.0
+        with:
+          context: bindings/wasm/
+          file: bindings/wasm/cypress/Dockerfile
+          push: false
+          tags: cypress-test:latest
+          load: true
+
+      - name: Run cypress
+        run: docker run --network host cypress-test test:browser:parallel:chrome
 
       - name: Tear down iota sandbox
         if: always()

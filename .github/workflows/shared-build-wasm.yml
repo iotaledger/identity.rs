@@ -82,12 +82,13 @@ jobs:
           os: ${{matrix.os}}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.output-artifact-name }}
           path: |
             bindings/wasm/node
             bindings/wasm/web
             bindings/wasm/examples/dist
+            bindings/wasm/docs
           if-no-files-found: error
           retention-days: 1
