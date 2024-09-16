@@ -93,12 +93,8 @@ async fn main() -> anyhow::Result<()> {
   // Verification
   // =====================================================
 
-  // Init a resolver for resolving DID Documents.
-  let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_iota_handler(client.clone());
-
   // Resolve the DID Document of the DID that issued the credential.
-  let did_document: IotaDocument = resolver.resolve(&did).await?;
+  let did_document: IotaDocument = client.resolve(&did).await?;
 
   // Get the Linked Verifiable Presentation Services from the DID Document.
   let linked_verifiable_presentation_services: Vec<LinkedVerifiablePresentationService> = did_document
@@ -121,7 +117,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Resolve the holder's document.
   let holder_did: CoreDID = JwtPresentationValidatorUtils::extract_holder(&presentation_jwt)?;
-  let holder: IotaDocument = resolver.resolve(&holder_did).await?;
+  let holder: IotaDocument = client.resolve(&holder_did).await?;
 
   // Validate linked presentation. Note that this doesn't validate the included credentials.
   let presentation_verifier_options: JwsVerificationOptions = JwsVerificationOptions::default();

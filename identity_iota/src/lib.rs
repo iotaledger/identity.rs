@@ -95,6 +95,7 @@ pub mod prelude {
 pub mod resolver {
   //! DID resolution utilities
 
+  #[cfg(feature = "resolver-v2")]
   pub use compound_resolver::CompoundResolver;
   pub use identity_resolver::*;
 }

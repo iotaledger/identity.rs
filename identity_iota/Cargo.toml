@@ -12,6 +12,7 @@ rust-version.workspace = true
 description = "Framework for Self-Sovereign Identity with IOTA DID."
 
 [dependencies]
+compound_resolver = { path = "../compound_resolver", optional = true }
 identity_core = { version = "=1.3.1", path = "../identity_core", default-features = false }
 identity_credential = { version = "=1.3.1", path = "../identity_credential", features = ["validator"], default-features = false }
 identity_did = { version = "=1.3.1", path = "../identity_did", default-features = false }
@@ -47,6 +48,9 @@ status-list-2021 = ["revocation-bitmap", "identity_credential/status-list-2021"]
 
 # Enables support for the `Resolver`.
 resolver = []
+
+# Enable support for the new resolver interface.
+resolver-v2 = ["dep:compound_resolver", "identity_resolver/v2", "resolver"]
 
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = ["identity_storage/send-sync-storage"]

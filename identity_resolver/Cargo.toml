@@ -11,6 +11,7 @@ rust-version.workspace = true
 [dependencies]
 anyhow = "1.0.86"
 thiserror.workspace = true
+iota-sdk = { version = "1.1.5" }
 # This is currently necessary for the ResolutionHandler trait. This can be made an optional dependency if alternative ways of attaching handlers are introduced.
 async-trait = { version = "0.1", default-features = false }
 futures = { version = "0.3" }
@@ -30,11 +31,12 @@ optional = true
 
 [dev-dependencies]
 identity_iota_core = { path = "../identity_iota_core", features = ["test"] }
-iota-sdk = { version = "1.1.5" }
 tokio = { version = "1.29.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [features]
 default = ["revocation-bitmap", "iota"]
+# Enables the new Resolver interface.
+v2 = []
 revocation-bitmap = ["identity_credential/revocation-bitmap", "identity_iota_core?/revocation-bitmap"]
 # Enables the IOTA integration for the resolver.
 iota = ["dep:identity_iota_core"]
