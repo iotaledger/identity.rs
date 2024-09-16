@@ -1,9 +1,22 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IotaDocument, IotaIdentityClient, JwkMemStore, KeyIdMemStore, Storage } from "@iota/identity-wasm/node";
+import {
+    CoreDocument,
+    DIDJwk,
+    IotaDocument,
+    IotaIdentityClient,
+    IToCoreDocument,
+    JwkMemStore,
+    KeyIdMemStore,
+    Resolver,
+    Storage,
+} from "@iota/identity-wasm/node";
 import { AliasOutput, Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
+
+const DID_JWK: string =
+    "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9";
 
 /** Demonstrates how to resolve an existing DID in an Alias Output. */
 export async function resolveIdentity() {
@@ -34,4 +47,16 @@ export async function resolveIdentity() {
     // We can also resolve the Alias Output directly.
     const aliasOutput: AliasOutput = await didClient.resolveDidOutput(did);
     console.log("The Alias Output holds " + aliasOutput.getAmount() + " tokens");
+
+    // did:jwk can be resolved as well.
+    const handlers = new Map<string, (did: string) => Promise<CoreDocument | IToCoreDocument>>();
+    handlers.set("jwk", didJwkHandler);
+    const resolver = new Resolver({ handlers });
+    const did_jwk_resolved_doc = await resolver.resolve(DID_JWK);
+    console.log(`DID ${DID_JWK} resolves to:\n ${JSON.stringify(did_jwk_resolved_doc, null, 2)}`);
 }
+
+const didJwkHandler = async (did: string) => {
+    let did_jwk = DIDJwk.parse(did);
+    return CoreDocument.expandDIDJwk(did_jwk);
+};

@@ -12,6 +12,8 @@ use identity_iota::did::DID;
 use identity_iota::document::CoreDocument;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
+use identity_iota::resolver::CompoundResolver;
+use identity_iota::resolver::Error as ResolverError;
 use identity_iota::resolver::Resolver;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::KeyIdMemstore;
@@ -25,21 +27,38 @@ use iota_sdk::types::block::address::Address;
 ///
 /// NOTE: Since both `IotaDocument` and `FooDocument` implement `Into<CoreDocument>` we could have used
 /// Resolver<CoreDocument> in this example and just worked with `CoreDocument` representations throughout.
+
+// Create a resolver capable of resolving FooDocument.
+struct FooResolver;
+impl Resolver<CoreDID> for FooResolver {
+  type Target = FooDocument;
+  async fn resolve(&self, input: &CoreDID) -> Result<Self::Target, ResolverError> {
+    Ok(resolve_did_foo(input.clone()).await?)
+  }
+}
+
+// Combine it with a resolver of IotaDocuments, creating a new resolver capable of resolving both.
+#[derive(CompoundResolver)]
+struct FooAndIotaResolver {
+  #[resolver(CoreDID -> FooDocument)]
+  foo: FooResolver,
+  #[resolver(IotaDID -> IotaDocument)]
+  iota: Client,
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  // Create a resolver returning an enum of the documents we are interested in and attach handlers for the "foo" and
-  // "iota" methods.
-  let mut resolver: Resolver<Document> = Resolver::new();
-
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder()
     .with_primary_node(API_ENDPOINT, None)?
     .finish()
     .await?;
 
-  // This is a convenience method for attaching a handler for the "iota" method by providing just a client.
-  resolver.attach_iota_handler(client.clone());
-  resolver.attach_handler("foo".to_owned(), resolve_did_foo);
+  // Create a resolver capable of resolving both IotaDocument and FooDocument.
+  let resolver = FooAndIotaResolver {
+    iota: client.clone(),
+    foo: FooResolver {},
+  };
 
   // A fake did:foo DID for demonstration purposes.
   let did_foo: CoreDID = "did:foo:0e9c8294eeafee326a4e96d65dbeaca0".parse()?;
@@ -58,28 +77,14 @@ async fn main() -> anyhow::Result<()> {
   let iota_did: IotaDID = iota_document.id().clone();
 
   // Resolve did_foo to get an abstract document.
-  let did_foo_doc: Document = resolver.resolve(&did_foo).await?;
+  let did_foo_doc: FooDocument = resolver.resolve(&did_foo).await?;
 
   // Resolve iota_did to get an abstract document.
-  let iota_doc: Document = resolver.resolve(&iota_did).await?;
+  let iota_doc: IotaDocument = resolver.resolve(&iota_did).await?;
 
-  // The Resolver is mainly meant for validating presentations, but here we will just
-  // check that the resolved documents match our expectations.
+  println!("Resolved DID foo document: {}", did_foo_doc.as_ref().to_json_pretty()?);
 
-  let Document::Foo(did_foo_document) = did_foo_doc else {
-    anyhow::bail!("expected a foo DID document when resolving a foo DID");
-  };
-
-  println!(
-    "Resolved DID foo document: {}",
-    did_foo_document.as_ref().to_json_pretty()?
-  );
-
-  let Document::Iota(iota_document) = iota_doc else {
-    anyhow::bail!("expected an IOTA DID document when resolving an IOTA DID")
-  };
-
-  println!("Resolved IOTA DID document: {}", iota_document.to_json_pretty()?);
+  println!("Resolved IOTA DID document: {}", iota_doc.to_json_pretty()?);
 
   Ok(())
 }
@@ -105,33 +110,6 @@ impl AsRef<CoreDocument> for FooDocument {
 impl From<FooDocument> for CoreDocument {
   fn from(value: FooDocument) -> Self {
     value.0
-  }
-}
-
-// Enum of the document types we want to handle.
-enum Document {
-  Foo(FooDocument),
-  Iota(IotaDocument),
-}
-
-impl From<FooDocument> for Document {
-  fn from(value: FooDocument) -> Self {
-    Self::Foo(value)
-  }
-}
-
-impl From<IotaDocument> for Document {
-  fn from(value: IotaDocument) -> Self {
-    Self::Iota(value)
-  }
-}
-
-impl AsRef<CoreDocument> for Document {
-  fn as_ref(&self) -> &CoreDocument {
-    match self {
-      Self::Foo(doc) => doc.as_ref(),
-      Self::Iota(doc) => doc.as_ref(),
-    }
   }
 }
 

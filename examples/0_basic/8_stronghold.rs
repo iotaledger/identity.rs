@@ -89,9 +89,7 @@ async fn main() -> anyhow::Result<()> {
     .await?;
 
   // Resolve the published DID Document.
-  let mut resolver = Resolver::<IotaDocument>::new();
-  resolver.attach_iota_handler(client.clone());
-  let resolved_document: IotaDocument = resolver.resolve(document.id()).await.unwrap();
+  let resolved_document: IotaDocument = client.resolve(document.id()).await.unwrap();
 
   drop(stronghold_storage);
 

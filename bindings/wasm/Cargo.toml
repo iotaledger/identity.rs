@@ -1,6 +1,6 @@
 [package]
 name = "identity_wasm"
-version = "1.3.0"
+version = "1.3.1"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -17,8 +17,10 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
+bls12_381_plus = "0.8.17"
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
+identity_ecdsa_verifier = { path = "../../identity_ecdsa_verifier", default-features = false, features = ["es256", "es256k"] }
 identity_eddsa_verifier = { path = "../../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 js-sys = { version = "0.3.61" }
 json-proof-token = "0.3.4"

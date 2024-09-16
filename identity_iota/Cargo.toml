@@ -1,6 +1,6 @@
 [package]
 name = "identity_iota"
-version = "1.3.0"
+version = "1.3.1"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -12,14 +12,14 @@ rust-version.workspace = true
 description = "Framework for Self-Sovereign Identity with IOTA DID."
 
 [dependencies]
-identity_core = { version = "=1.3.0", path = "../identity_core", default-features = false }
-identity_credential = { version = "=1.3.0", path = "../identity_credential", features = ["validator"], default-features = false }
-identity_did = { version = "=1.3.0", path = "../identity_did", default-features = false }
-identity_document = { version = "=1.3.0", path = "../identity_document", default-features = false }
-identity_iota_core = { version = "=1.3.0", path = "../identity_iota_core", default-features = false }
-identity_resolver = { version = "=1.3.0", path = "../identity_resolver", default-features = false, optional = true }
-identity_storage = { version = "=1.3.0", path = "../identity_storage", default-features = false, features = ["iota-document"] }
-identity_verification = { version = "=1.3.0", path = "../identity_verification", default-features = false }
+identity_core = { version = "=1.3.1", path = "../identity_core", default-features = false }
+identity_credential = { version = "=1.3.1", path = "../identity_credential", features = ["validator"], default-features = false }
+identity_did = { version = "=1.3.1", path = "../identity_did", default-features = false }
+identity_document = { version = "=1.3.1", path = "../identity_document", default-features = false }
+identity_iota_core = { version = "=1.3.1", path = "../identity_iota_core", default-features = false }
+identity_resolver = { version = "=1.3.1", path = "../identity_resolver", default-features = false, optional = true }
+identity_storage = { version = "=1.3.1", path = "../identity_storage", default-features = false, features = ["iota-document"] }
+identity_verification = { version = "=1.3.1", path = "../identity_verification", default-features = false }
 
 [dev-dependencies]
 anyhow = "1.0.64"
@@ -34,20 +34,19 @@ default = ["revocation-bitmap", "client", "iota-client", "resolver"]
 client = ["identity_iota_core/client"]
 
 # Enables the iota-client integration, the client trait implementations for it, and the `IotaClientExt` trait.
-iota-client = ["identity_iota_core/iota-client", "identity_resolver?/iota"]
+iota-client = ["identity_iota_core/iota-client", "identity_resolver/iota"]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [
   "identity_credential/revocation-bitmap",
   "identity_iota_core/revocation-bitmap",
-  "identity_resolver?/revocation-bitmap",
 ]
 
 # Enables revocation with `StatusList2021`.
 status-list-2021 = ["revocation-bitmap", "identity_credential/status-list-2021"]
 
 # Enables support for the `Resolver`.
-resolver = ["dep:identity_resolver"]
+resolver = []
 
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = ["identity_storage/send-sync-storage"]

@@ -1,14 +1,15 @@
 [package]
 name = "examples"
-version = "1.3.0"
+version = "1.3.1"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 publish = false
 
 [dependencies]
 anyhow = "1.0.62"
+bls12_381_plus.workspace = true
 identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false }
-identity_iota = { path = "../identity_iota", default-features = false, features = ["iota-client", "client", "memstore", "domain-linkage", "revocation-bitmap", "status-list-2021", "jpt-bbs-plus"] }
+identity_iota = { path = "../identity_iota", default-features = false, features = ["iota-client", "client", "memstore", "domain-linkage", "revocation-bitmap", "status-list-2021", "jpt-bbs-plus", "resolver"] }
 identity_stronghold = { path = "../identity_stronghold", default-features = false, features = ["bbs-plus"] }
 iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
 json-proof-token.workspace = true
@@ -100,3 +101,7 @@ name = "9_zkp"
 [[example]]
 path = "1_advanced/10_zkp_revocation.rs"
 name = "10_zkp_revocation"
+
+[[example]]
+path = "1_advanced/11_linked_verifiable_presentation.rs"
+name = "11_linked_verifiable_presentation"

@@ -7,8 +7,6 @@
 //!
 //! cargo run --release --example 6_create_vp
 
-use std::collections::HashMap;
-
 use examples::create_did;
 use examples::MemStorage;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
@@ -190,12 +188,9 @@ async fn main() -> anyhow::Result<()> {
   let presentation_verifier_options: JwsVerificationOptions =
     JwsVerificationOptions::default().nonce(challenge.to_owned());
 
-  let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_iota_handler(client);
-
   // Resolve the holder's document.
   let holder_did: CoreDID = JwtPresentationValidatorUtils::extract_holder(&presentation_jwt)?;
-  let holder: IotaDocument = resolver.resolve(&holder_did).await?;
+  let holder: IotaDocument = client.resolve(&holder_did).await?;
 
   // Validate presentation. Note that this doesn't validate the included credentials.
   let presentation_validation_options =
@@ -211,7 +206,7 @@ async fn main() -> anyhow::Result<()> {
     .iter()
     .map(JwtCredentialValidatorUtils::extract_issuer_from_jwt)
     .collect::<Result<Vec<CoreDID>, _>>()?;
-  let issuers_documents: HashMap<CoreDID, IotaDocument> = resolver.resolve_multiple(&issuers).await?;
+  let issuers_documents: Vec<IotaDocument> = client.resolve_multiple(&issuers).await?;
 
   // Validate the credentials in the presentation.
   let credential_validator: JwtCredentialValidator<EdDSAJwsVerifier> =
@@ -221,7 +216,7 @@ async fn main() -> anyhow::Result<()> {
 
   for (index, jwt_vc) in jwt_credentials.iter().enumerate() {
     // SAFETY: Indexing should be fine since we extracted the DID from each credential and resolved it.
-    let issuer_document: &IotaDocument = &issuers_documents[&issuers[index]];
+    let issuer_document: &IotaDocument = &issuers_documents[index];
 
     let _decoded_credential: DecodedJwtCredential<Object> = credential_validator
       .validate::<_, Object>(jwt_vc, issuer_document, &validation_options, FailFast::FirstError)

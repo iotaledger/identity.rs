@@ -49,12 +49,14 @@ async fn main() -> anyhow::Result<()> {
     .with_primary_node(API_ENDPOINT, None)?
     .finish()
     .await?;
+  let stronghold_path = random_stronghold_path();
 
+  println!("Using stronghold path: {stronghold_path:?}");
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password(Password::from("secure_password".to_owned()))
-      .build(random_stronghold_path())?,
+      .build(stronghold_path)?,
   );
 
   // Create a DID for the entity that will issue the Domain Linkage Credential.
@@ -134,10 +136,6 @@ async fn main() -> anyhow::Result<()> {
   // while the second answers "What domain is this DID linked to?".
   // =====================================================
 
-  // Init a resolver for resolving DID Documents.
-  let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_iota_handler(client.clone());
-
   // =====================================================
   // → Case 1: starting from domain
   // =====================================================
@@ -152,7 +150,7 @@ async fn main() -> anyhow::Result<()> {
   assert_eq!(linked_dids.len(), 1);
 
   // Resolve the DID Document of the DID that issued the credential.
-  let issuer_did_document: IotaDocument = resolver.resolve(&did).await?;
+  let issuer_did_document: IotaDocument = client.resolve(&did).await?;
 
   // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
   let validation_result: Result<(), DomainLinkageValidationError> =
@@ -167,7 +165,7 @@ async fn main() -> anyhow::Result<()> {
   // =====================================================
   // → Case 2: starting from a DID
   // =====================================================
-  let did_document: IotaDocument = resolver.resolve(&did).await?;
+  let did_document: IotaDocument = client.resolve(&did).await?;
 
   // Get the Linked Domain Services from the DID Document.
   let linked_domain_services: Vec<LinkedDomainService> = did_document

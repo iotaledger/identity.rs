@@ -9,7 +9,6 @@ use identity_iota::iota::block::address::Address;
 
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::prelude::Resolver;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
@@ -44,19 +43,6 @@ async fn main() -> anyhow::Result<()> {
   // Resolve the associated Alias Output and extract the DID document from it.
   let client_document: IotaDocument = client.resolve_did(&did).await?;
   println!("Client resolved DID Document: {client_document:#}");
-
-  // We can also create a `Resolver` that has additional convenience methods,
-  // for example to resolve presentation issuers or to verify presentations.
-  let mut resolver = Resolver::<IotaDocument>::new();
-
-  // We need to register a handler that can resolve IOTA DIDs.
-  // This convenience method only requires us to provide a client.
-  resolver.attach_iota_handler(client.clone());
-
-  let resolver_document: IotaDocument = resolver.resolve(&did).await.unwrap();
-
-  // Client and Resolver resolve to the same document in this case.
-  assert_eq!(client_document, resolver_document);
 
   // We can also resolve the Alias Output directly.
   let alias_output: AliasOutput = client.resolve_did_output(&did).await?;
