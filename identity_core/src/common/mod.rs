@@ -14,6 +14,7 @@ pub use self::single_struct_error::*;
 pub use self::timestamp::Duration;
 pub use self::timestamp::Timestamp;
 pub use self::url::Url;
+pub use string_or_url::StringOrUrl;
 
 mod context;
 mod key_comparable;
@@ -24,3 +25,4 @@ mod ordered_set;
 mod single_struct_error;
 mod timestamp;
 mod url;
+mod string_or_url;

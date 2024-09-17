@@ -27,6 +27,7 @@ once_cell = { version = "1.18", default-features = false, features = ["std"] }
 reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json", "stream"], optional = true }
 roaring = { version = "0.10.2", default-features = false, features = ["serde"], optional = true }
 sd-jwt-payload = { version = "0.2.1", default-features = false, features = ["sha"], optional = true }
+sd-jwt-payload-rework = { package = "sd-jwt-payload", git = "https://github.com/iotaledger/sd-jwt-payload.git", branch = "feat/sd-jwt-v11", default-features = false, features = ["sha"], optional = true }
 serde.workspace = true
 serde-aux = { version = "4.3.1", default-features = false }
 serde_json.workspace = true
@@ -50,7 +51,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["revocation-bitmap", "validator", "credential", "presentation", "domain-linkage-fetch", "sd-jwt"]
+default = ["revocation-bitmap", "validator", "credential", "presentation", "domain-linkage-fetch", "sd-jwt", "sd-jwt-vc"]
 credential = []
 presentation = ["credential"]
 revocation-bitmap = ["dep:flate2", "dep:roaring"]
@@ -59,6 +60,7 @@ validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation"]
 domain-linkage = ["validator"]
 domain-linkage-fetch = ["domain-linkage", "dep:reqwest", "dep:futures"]
 sd-jwt = ["credential", "validator", "dep:sd-jwt-payload"]
+sd-jwt-vc = ["sd-jwt", "dep:sd-jwt-payload-rework"]
 jpt-bbs-plus = ["credential", "validator", "dep:zkryptium", "dep:bls12_381_plus", "dep:json-proof-token"]
 
 [lints]
