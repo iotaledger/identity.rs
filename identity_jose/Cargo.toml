@@ -34,3 +34,10 @@ test = true
 
 [lints]
 workspace = true
+
+[features]
+custom_alg = []
+
+[[test]]
+name = "custom_alg"
+required-features = ["custom_alg"]
