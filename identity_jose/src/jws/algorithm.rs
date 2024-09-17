@@ -149,8 +149,16 @@ impl FromStr for JwsAlgorithm {
   }
 }
 
+#[cfg(not(feature = "custom_alg"))]
 impl Display for JwsAlgorithm {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_str(&self.clone().name())
+    f.write_str(self.name())
+  }
+}
+
+#[cfg(feature = "custom_alg")]
+impl Display for JwsAlgorithm {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    f.write_str(&(*self).name())
   }
 }
