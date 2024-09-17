@@ -8,6 +8,9 @@ use std::str::FromStr;
 use super::claims::SdJwtVcClaims;
 use super::Error;
 use super::Result;
+use super::SdJwtVcPresentationBuilder;
+use sd_jwt_payload_rework::Hasher;
+use sd_jwt_payload_rework::JsonObject;
 use sd_jwt_payload_rework::SdJwt;
 use serde_json::Value;
 
@@ -18,8 +21,8 @@ pub const SD_JWT_VC_TYP: &str = "vc+sd-jwt";
 /// An SD-JWT carrying a verifiable credential as described in
 /// [SD-JWT VC specification](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-04.html).
 pub struct SdJwtVc {
-  sd_jwt: SdJwt,
-  parsed_claims: SdJwtVcClaims,
+  pub(crate) sd_jwt: SdJwt,
+  pub(crate) parsed_claims: SdJwtVcClaims,
 }
 
 impl Deref for SdJwtVc {
@@ -30,6 +33,13 @@ impl Deref for SdJwtVc {
 }
 
 impl SdJwtVc {
+  pub(crate) fn new(sd_jwt: SdJwt, claims: SdJwtVcClaims) -> Self {
+    Self {
+      sd_jwt,
+      parsed_claims: claims,
+    }
+  }
+
   /// Parses a string into an [`SdJwtVc`].
   pub fn parse(s: &str) -> Result<Self> {
     s.parse()
@@ -38,6 +48,20 @@ impl SdJwtVc {
   /// Returns a reference to this [`SdJwtVc`]'s JWT claims.
   pub fn claims(&self) -> &SdJwtVcClaims {
     &self.parsed_claims
+  }
+
+  /// Prepares this [`SdJwtVc`] for a presentation, returning an [`SdJwtVcPresentationBuilder`].
+  /// ## Errors
+  /// - [`Error::SdJwt`] is returned if the provided `hasher`'s algorithm doesn't match the algorithm specified
+  ///   by SD-JWT's `_sd_alg` claim. "sha-256" is used if the claim is missing.
+  pub fn into_presentation(self, hasher: &dyn Hasher) -> Result<SdJwtVcPresentationBuilder> {
+    SdJwtVcPresentationBuilder::new(self, hasher)
+  }
+
+  /// Returns the JSON object obtained by replacing all disclosures into their
+  /// corresponding JWT concealable claims.
+  pub fn into_disclosed_object(self, hasher: &dyn Hasher) -> Result<JsonObject> {
+    SdJwt::from(self).into_disclosed_object(hasher).map_err(Error::SdJwt)
   }
 }
 
@@ -77,6 +101,19 @@ impl FromStr for SdJwtVc {
 impl Display for SdJwtVc {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "{}", self.sd_jwt)
+  }
+}
+
+impl From<SdJwtVc> for SdJwt {
+  fn from(value: SdJwtVc) -> Self {
+    let SdJwtVc {
+      mut sd_jwt,
+      parsed_claims,
+    } = value;
+    // Put back `parsed_claims`.
+    *sd_jwt.claims_mut() = parsed_claims.into();
+
+    sd_jwt
   }
 }
 

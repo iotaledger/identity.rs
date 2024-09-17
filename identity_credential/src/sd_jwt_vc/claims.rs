@@ -9,6 +9,7 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use sd_jwt_payload_rework::Disclosure;
 use sd_jwt_payload_rework::SdJwtClaims;
+use serde_json::Value;
 
 use super::Error;
 use super::Result;
@@ -184,5 +185,30 @@ impl SdJwtVcClaims {
       sub,
       sd_jwt_claims: claims,
     })
+  }
+}
+
+impl From<SdJwtVcClaims> for SdJwtClaims {
+  fn from(claims: SdJwtVcClaims) -> Self {
+    let SdJwtVcClaims {
+      iss,
+      nbf,
+      exp,
+      vct,
+      status,
+      iat,
+      sub,
+      mut sd_jwt_claims,
+    } = claims;
+
+    sd_jwt_claims.insert("iss".to_string(), Value::String(iss.into_string()));
+    nbf.and_then(|t| sd_jwt_claims.insert("nbf".to_string(), Value::Number(t.to_unix().into())));
+    exp.and_then(|t| sd_jwt_claims.insert("exp".to_string(), Value::Number(t.to_unix().into())));
+    sd_jwt_claims.insert("vct".to_string(), Value::String(vct.into()));
+    status.and_then(|status| sd_jwt_claims.insert("status".to_string(), serde_json::to_value(status).unwrap()));
+    iat.and_then(|t| sd_jwt_claims.insert("iat".to_string(), Value::Number(t.to_unix().into())));
+    sub.and_then(|sub| sd_jwt_claims.insert("sub".to_string(), Value::String(sub.into())));
+
+    sd_jwt_claims
   }
 }

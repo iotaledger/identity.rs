@@ -5,8 +5,10 @@ mod claims;
 mod error;
 mod status;
 mod token;
+mod presentation;
 
 pub use claims::*;
+pub use presentation::*;
 pub use error::Error;
 pub use error::Result;
 pub use status::*;

@@ -97,6 +97,15 @@ impl From<String> for StringOrUrl {
   }
 }
 
+impl From<StringOrUrl> for String {
+  fn from(value: StringOrUrl) -> Self {
+    match value {
+      StringOrUrl::String(s) => s,
+      StringOrUrl::Url(url) => url.into_string(),
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
