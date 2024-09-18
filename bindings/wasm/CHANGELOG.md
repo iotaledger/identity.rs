@@ -1,6 +1,6 @@
 # Changelog
 
-## [wasm-v1.3.1](https://github.com/iotaledger/identity.rs/tree/wasm-v1.3.1) (2024-06-27)
+## [wasm-v1.3.1](https://github.com/iotaledger/identity.rs/tree/wasm-v1.3.1) (2024-06-28)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v1.3.0...wasm-v1.3.1)
 
