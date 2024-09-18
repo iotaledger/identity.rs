@@ -6,9 +6,14 @@ use std::ops::Deref;
 use std::str::FromStr;
 
 use super::claims::SdJwtVcClaims;
+use super::metadata::IssuerMetadata;
+use super::metadata::WELL_KNOWN_VC_ISSUER;
+use super::resolver::Error as ResolverErr;
 use super::Error;
+use super::Resolver;
 use super::Result;
 use super::SdJwtVcPresentationBuilder;
+use identity_core::common::Url;
 use sd_jwt_payload_rework::Hasher;
 use sd_jwt_payload_rework::JsonObject;
 use sd_jwt_payload_rework::SdJwt;
@@ -62,6 +67,32 @@ impl SdJwtVc {
   /// corresponding JWT concealable claims.
   pub fn into_disclosed_object(self, hasher: &dyn Hasher) -> Result<JsonObject> {
     SdJwt::from(self).into_disclosed_object(hasher).map_err(Error::SdJwt)
+  }
+
+  /// Retrieves this SD-JWT VC's issuer's metadata by querying its default location.
+  /// ## Notes
+  /// This method doesn't perform any validation of the retrieved [`IssuerMetadata`]
+  /// besides its syntactical validity. 
+  /// To check if the retrieved [`IssuerMetadata`] is valid use [`IssuerMetadata::validate`].
+  pub async fn issuer_metadata<R>(&self, resolver: &R) -> Result<Option<IssuerMetadata>>
+  where
+    R: Resolver<Url, Target = Value>,
+  {
+    let metadata_url = {
+      let origin = self.claims().iss.origin().ascii_serialization();
+      let path = self.claims().iss.path();
+      format!("{origin}{WELL_KNOWN_VC_ISSUER}{path}").parse().unwrap()
+    };
+    match resolver.resolve(&metadata_url).await {
+      Err(ResolverErr::NotFound(_)) => Ok(None),
+      Err(e) => Err(Error::Resolution {
+        input: metadata_url.to_string(),
+        source: e,
+      }),
+      Ok(json_res) => serde_json::from_value(json_res)
+        .map_err(|e| Error::InvalidIssuerMetadata(e.into()))
+        .map(Some),
+    }
   }
 }
 

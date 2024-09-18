@@ -30,6 +30,18 @@ pub enum Error {
   /// Value of header parameter `typ` is not valid.
   #[error("invalid \"typ\" value; expected \"vc+sd-jwt\" (or a superset) but found \"{0}\"")]
   InvalidJoseType(String),
+  /// Resolution error.
+  #[error("failed to resolve \"{input}\"")]
+  Resolution {
+    /// The resource's identifier.
+    input: String,
+    /// Low level error.
+    #[source]
+    source: super::resolver::Error,
+  },
+  /// Invalid issuer Metadata object.
+  #[error("invalid Issuer Metadata: {0}")]
+  InvalidIssuerMetadata(#[source] anyhow::Error)
 }
 
 /// Either a value of type `T` or an [`Error`].
