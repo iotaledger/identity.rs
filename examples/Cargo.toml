@@ -105,9 +105,13 @@ path = "1_advanced/10_zkp_revocation.rs"
 name = "10_zkp_revocation"
 
 [[example]]
-path = "1_advanced/11_pqc.rs"
-name = "11_pqc"
+path = "1_advanced/11_linked_verifiable_presentation.rs"
+name = "11_linked_verifiable_presentation"
 
 [[example]]
-path = "1_advanced/12_hybrid.rs"
-name = "12_hybrid"
+path = "1_advanced/12_pqc.rs"
+name = "12_pqc"
+
+[[example]]
+path = "1_advanced/13_hybrid.rs"
+name = "13_hybrid"

@@ -123,7 +123,7 @@ impl StatusList2021Credential {
   ///
   /// ## Note:
   /// - A revoked credential cannot ever be unrevoked and will lead to a
-  /// [`StatusList2021CredentialError::UnreversibleRevocation`].
+  ///   [`StatusList2021CredentialError::UnreversibleRevocation`].
   /// - Trying to set `revoked_or_suspended` to `false` for an already valid credential will have no impact.
   pub fn set_credential_status(
     &mut self,

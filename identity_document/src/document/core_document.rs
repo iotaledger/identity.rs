@@ -7,6 +7,7 @@ use core::fmt::Formatter;
 use std::collections::HashMap;
 use std::convert::Infallible;
 
+use identity_did::DIDJwk;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::DecodedJws;
 use identity_verification::jose::jws::Decoder;
@@ -938,8 +939,8 @@ impl CoreDocument {
   /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
   /// take place.
   /// - The JWS must be encoded according to the JWS compact serialization.
-  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document,
-  /// or set explicitly in the `options`.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document, or
+  ///   set explicitly in the `options`.
   //
   // NOTE: This is tested in `identity_storage` and `identity_credential`.
   pub fn verify_jws<'jws, T: JwsVerifier>(
@@ -1028,6 +1029,23 @@ impl CoreDocument {
         composite_public_key.pq_public_key(),
       )
       .map_err(Error::JwsVerificationError)
+  }
+}
+
+impl CoreDocument {
+  /// Creates a [`CoreDocument`] from a did:jwk DID.
+  pub fn expand_did_jwk(did_jwk: DIDJwk) -> Result<Self, Error> {
+    let verification_method = VerificationMethod::try_from(did_jwk.clone()).map_err(Error::InvalidKeyMaterial)?;
+    let verification_method_id = verification_method.id().clone();
+
+    DocumentBuilder::default()
+      .id(did_jwk.into())
+      .verification_method(verification_method)
+      .assertion_method(verification_method_id.clone())
+      .authentication(verification_method_id.clone())
+      .capability_invocation(verification_method_id.clone())
+      .capability_delegation(verification_method_id.clone())
+      .build()
   }
 }
 
@@ -1728,5 +1746,34 @@ mod tests {
     ] {
       verifier(json);
     }
+  }
+
+  #[test]
+  fn test_did_jwk_expansion() {
+    let did_jwk = "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZYdDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9"
+      .parse::<DIDJwk>()
+      .unwrap();
+    let target_doc = serde_json::from_value(serde_json::json!({
+      "id": "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZYdDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9",
+      "verificationMethod": [
+        {
+          "id": "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZYdDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9#0",
+          "type": "JsonWebKey2020",
+          "controller": "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZYdDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9",
+          "publicKeyJwk": {
+            "kty":"OKP",
+            "crv":"X25519",
+            "use":"enc",
+            "x":"3p7bfXt9wbTTW2HC7OQ1Nz-DQ8hbeGdNrfx-FG-IK08"
+          }
+        }
+      ],
+      "assertionMethod": ["did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZYdDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9#0"],
+      "authentication": ["did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZYdDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9#0"],
+      "capabilityInvocation": ["did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZYdDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9#0"],
+      "capabilityDelegation": ["did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZYdDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9#0"]
+    })).unwrap();
+
+    assert_eq!(CoreDocument::expand_did_jwk(did_jwk).unwrap(), target_doc);
   }
 }

@@ -18,6 +18,7 @@
 
 #[allow(clippy::module_inception)]
 mod did;
+mod did_jwk;
 mod did_url;
 mod error;
 
@@ -26,4 +27,5 @@ pub use crate::did_url::RelativeDIDUrl;
 pub use ::did_url_parser::DID as BaseDIDUrl;
 pub use did::CoreDID;
 pub use did::DID;
+pub use did_jwk::*;
 pub use error::Error;

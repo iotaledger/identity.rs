@@ -17,6 +17,7 @@ mod jws;
 mod jwt;
 mod jwt_serialization;
 mod linked_domain_service;
+mod linked_verifiable_presentation_service;
 mod policy;
 mod proof;
 mod refresh;
@@ -41,6 +42,7 @@ pub(crate) use self::jwt_serialization::CredentialJwtClaims;
 #[cfg(feature = "presentation")]
 pub(crate) use self::jwt_serialization::IssuanceDateClaims;
 pub use self::linked_domain_service::LinkedDomainService;
+pub use self::linked_verifiable_presentation_service::LinkedVerifiablePresentationService;
 pub use self::policy::Policy;
 pub use self::proof::Proof;
 pub use self::refresh::RefreshService;

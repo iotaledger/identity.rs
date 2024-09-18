@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use std::borrow::Cow;
 
+use identity_did::DIDJwk;
 use identity_jose::jwk::Jwk;
 use serde::de;
 use serde::Deserialize;
@@ -244,6 +245,14 @@ impl KeyComparable for VerificationMethod {
   #[inline]
   fn key(&self) -> &Self::Key {
     self.id()
+  }
+}
+
+impl TryFrom<DIDJwk> for VerificationMethod {
+  type Error = Error;
+  fn try_from(did: DIDJwk) -> Result<Self, Self::Error> {
+    let jwk = did.jwk();
+    Self::new_from_jwk(did, jwk, Some("0"))
   }
 }
 

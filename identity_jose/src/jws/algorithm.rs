@@ -6,12 +6,11 @@ use core::fmt::Formatter;
 use core::fmt::Result;
 use std::str::FromStr;
 
-use crate::error::Error;
-
 /// Supported algorithms for the JSON Web Signatures `alg` claim.
 ///
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-signature-encryption-algorithms)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(not(feature = "custom_alg"), derive(Copy))]
 #[allow(non_camel_case_types)]
 pub enum JwsAlgorithm {
   /// HMAC using SHA-256
@@ -99,10 +98,19 @@ pub enum JwsAlgorithm {
 
   #[serde(rename = "id-MLDSA65-Ed25519-SHA512")]
   IdMldsa65Ed25519Sha512,
+  /// Custom algorithm
+  #[cfg(feature = "custom_alg")]
+  #[serde(untagged)]
+  Custom(String),
 }
 
 impl JwsAlgorithm {
   /// A slice of all supported [`JwsAlgorithm`]s.
+  ///
+  /// Not available when feature `custom_alg` is enabled
+  /// as it is not possible to enumerate all variants when
+  /// supporting arbitrary `alg` values.
+  #[cfg(not(feature = "custom_alg"))]
   pub const ALL: &'static [Self] = &[
     Self::HS256,
     Self::HS384,
@@ -141,6 +149,7 @@ impl JwsAlgorithm {
   ];
 
   /// Returns the JWS algorithm as a `str` slice.
+  #[cfg(not(feature = "custom_alg"))]
   pub const fn name(self) -> &'static str {
     match self {
       Self::HS256 => "HS256",
@@ -180,6 +189,29 @@ impl JwsAlgorithm {
 
       Self::IdMldsa44Ed25519Sha512 => "id-MLDSA44-Ed25519-SHA512",
       Self::IdMldsa65Ed25519Sha512 => "id-MLDSA65-Ed25519-SHA512",
+    }
+  }
+
+  /// Returns the JWS algorithm as a `str` slice.
+  #[cfg(feature = "custom_alg")]
+  pub fn name(&self) -> String {
+    match self {
+      Self::HS256 => "HS256".to_string(),
+      Self::HS384 => "HS384".to_string(),
+      Self::HS512 => "HS512".to_string(),
+      Self::RS256 => "RS256".to_string(),
+      Self::RS384 => "RS384".to_string(),
+      Self::RS512 => "RS512".to_string(),
+      Self::PS256 => "PS256".to_string(),
+      Self::PS384 => "PS384".to_string(),
+      Self::PS512 => "PS512".to_string(),
+      Self::ES256 => "ES256".to_string(),
+      Self::ES384 => "ES384".to_string(),
+      Self::ES512 => "ES512".to_string(),
+      Self::ES256K => "ES256K".to_string(),
+      Self::NONE => "none".to_string(),
+      Self::EdDSA => "EdDSA".to_string(),
+      Self::Custom(name) => name.clone(),
     }
   }
 }
@@ -226,13 +258,24 @@ impl FromStr for JwsAlgorithm {
 
       "id-MLDSA44-Ed25519-SHA512" => Ok(Self::IdMldsa44Ed25519Sha512),
       "id-MLDSA65-Ed25519-SHA512" => Ok(Self::IdMldsa65Ed25519Sha512),
-      _ => Err(Error::JwsAlgorithmParsingError),
+      #[cfg(feature = "custom_alg")]
+      value => Ok(Self::Custom(value.to_string())),
+      #[cfg(not(feature = "custom_alg"))]
+      _ => Err(crate::error::Error::JwsAlgorithmParsingError),
     }
   }
 }
 
+#[cfg(not(feature = "custom_alg"))]
 impl Display for JwsAlgorithm {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_str(self.name())
+  }
+}
+
+#[cfg(feature = "custom_alg")]
+impl Display for JwsAlgorithm {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    f.write_str(&(*self).name())
   }
 }

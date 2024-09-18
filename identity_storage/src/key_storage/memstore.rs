@@ -64,7 +64,7 @@ impl JwkStorage for JwkMemStore {
   async fn generate(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
     let key_type: MemStoreKeyType = MemStoreKeyType::try_from(&key_type)?;
 
-    check_key_alg_compatibility(key_type, alg)?;
+    check_key_alg_compatibility(key_type, &alg)?;
 
     let (private_key, public_key) = match key_type {
       MemStoreKeyType::Ed25519 => {
@@ -108,7 +108,7 @@ impl JwkStorage for JwkMemStore {
       Some(alg) => {
         let alg: JwsAlgorithm = JwsAlgorithm::from_str(alg)
           .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm).with_source(err))?;
-        check_key_alg_compatibility(key_type, alg)?;
+        check_key_alg_compatibility(key_type, &alg)?;
       }
       None => {
         return Err(
@@ -309,7 +309,7 @@ fn random_key_id() -> KeyId {
 }
 
 /// Check that the key type can be used with the algorithm.
-fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: JwsAlgorithm) -> KeyStorageResult<()> {
+fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: &JwsAlgorithm) -> KeyStorageResult<()> {
   match (key_type, alg) {
     (MemStoreKeyType::Ed25519, JwsAlgorithm::EdDSA) => Ok(()),
     (key_type, alg) => Err(
