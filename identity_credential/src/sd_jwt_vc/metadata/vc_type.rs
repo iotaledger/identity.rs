@@ -11,6 +11,8 @@ use crate::sd_jwt_vc::Error;
 use crate::sd_jwt_vc::Resolver;
 use crate::sd_jwt_vc::Result;
 
+use super::IntegrityMetadata;
+
 /// Path used to retrieve VC Type Metadata.
 pub const WELL_KNOWN_VCT: &str = "/.well-known/vct";
 
@@ -21,7 +23,7 @@ pub struct TypeMetadata {
   description: Option<String>,
   extends: Option<StringOrUrl>,
   #[serde(rename = "extends#integrity")]
-  extends_integrity: Option<String>,
+  extends_integrity: Option<IntegrityMetadata>,
   #[serde(flatten)]
   schema: Option<TypeSchema>,
 }
@@ -41,7 +43,7 @@ impl TypeMetadata {
   }
   /// Returns the integrity string of the extended type object, if any.
   pub fn extends_integrity(&self) -> Option<&str> {
-    self.extends_integrity.as_deref()
+    self.extends_integrity.as_ref().map(|meta| meta.as_ref())
   }
   /// Uses this [`TypeMetadata`] to validate JSON object `credential`. This method fails
   /// if the schema is referenced instead of embedded.
@@ -69,6 +71,7 @@ impl TypeMetadata {
   }
 }
 
+/// Does this method signature look weird? Turns out having recursive async functions is not that ez :'(.
 fn validate_credential_impl<'c, 'r, R>(
   current_type: TypeMetadata,
   credential: &'c Value,
@@ -149,7 +152,7 @@ pub enum TypeSchema {
     schema_uri: Url,
     /// Integrity string for the referenced schema.
     #[serde(rename = "schema_uri#integrity")]
-    schema_uri_integrity: Option<String>,
+    schema_uri_integrity: Option<IntegrityMetadata>,
   },
   /// An embedded JSON schema.
   Object {
@@ -157,7 +160,7 @@ pub enum TypeSchema {
     schema: Value,
     /// Integrity of the JSON schema.
     #[serde(rename = "schema#integrity")]
-    schema_integrity: Option<String>,
+    schema_integrity: Option<IntegrityMetadata>,
   },
 }
 
