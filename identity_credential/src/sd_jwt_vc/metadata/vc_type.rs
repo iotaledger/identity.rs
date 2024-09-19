@@ -132,8 +132,6 @@ where
 }
 
 fn validate_credential_with_schema(schema: &Value, credential: &Value) -> Result<()> {
-  dbg!(&schema);
-  dbg!(&credential);
   let schema = jsonschema::compile(schema).map_err(|e| Error::Validation(anyhow::anyhow!(e.to_string())))?;
   schema.validate(credential).map_err(|errors| {
     let error_msg = errors.map(|e| e.to_string()).join("; ");

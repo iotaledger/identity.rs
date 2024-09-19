@@ -80,7 +80,7 @@ impl SdJwtVc {
   /// To check if the retrieved [`IssuerMetadata`] is valid use [`IssuerMetadata::validate`].
   pub async fn issuer_metadata<R>(&self, resolver: &R) -> Result<Option<IssuerMetadata>>
   where
-    R: Resolver<Url, Target = Value>,
+    R: Resolver<Url, Target = Vec<u8>>,
   {
     let metadata_url = {
       let origin = self.claims().iss.origin().ascii_serialization();
@@ -93,7 +93,7 @@ impl SdJwtVc {
         input: metadata_url.to_string(),
         source: e,
       }),
-      Ok(json_res) => serde_json::from_value(json_res)
+      Ok(json_res) => serde_json::from_slice(&json_res)
         .map_err(|e| Error::InvalidIssuerMetadata(e.into()))
         .map(Some),
     }
