@@ -7,12 +7,16 @@ use std::str::FromStr;
 
 use super::claims::SdJwtVcClaims;
 use super::metadata::IssuerMetadata;
+use super::metadata::TypeMetadata;
+#[allow(unused_imports)]
+use super::metadata::WELL_KNOWN_VCT;
 use super::metadata::WELL_KNOWN_VC_ISSUER;
 use super::resolver::Error as ResolverErr;
 use super::Error;
 use super::Resolver;
 use super::Result;
 use super::SdJwtVcPresentationBuilder;
+use identity_core::common::StringOrUrl;
 use identity_core::common::Url;
 use sd_jwt_payload_rework::Hasher;
 use sd_jwt_payload_rework::JsonObject;
@@ -57,8 +61,8 @@ impl SdJwtVc {
 
   /// Prepares this [`SdJwtVc`] for a presentation, returning an [`SdJwtVcPresentationBuilder`].
   /// ## Errors
-  /// - [`Error::SdJwt`] is returned if the provided `hasher`'s algorithm doesn't match the algorithm specified
-  ///   by SD-JWT's `_sd_alg` claim. "sha-256" is used if the claim is missing.
+  /// - [`Error::SdJwt`] is returned if the provided `hasher`'s algorithm doesn't match the algorithm specified by
+  ///   SD-JWT's `_sd_alg` claim. "sha-256" is used if the claim is missing.
   pub fn into_presentation(self, hasher: &dyn Hasher) -> Result<SdJwtVcPresentationBuilder> {
     SdJwtVcPresentationBuilder::new(self, hasher)
   }
@@ -72,7 +76,7 @@ impl SdJwtVc {
   /// Retrieves this SD-JWT VC's issuer's metadata by querying its default location.
   /// ## Notes
   /// This method doesn't perform any validation of the retrieved [`IssuerMetadata`]
-  /// besides its syntactical validity. 
+  /// besides its syntactical validity.
   /// To check if the retrieved [`IssuerMetadata`] is valid use [`IssuerMetadata::validate`].
   pub async fn issuer_metadata<R>(&self, resolver: &R) -> Result<Option<IssuerMetadata>>
   where
@@ -93,6 +97,42 @@ impl SdJwtVc {
         .map_err(|e| Error::InvalidIssuerMetadata(e.into()))
         .map(Some),
     }
+  }
+
+  /// Retrieve this SD-JWT VC credential's type metadata [`TypeMetadata`].
+  /// ## Notes
+  /// `resolver` is fed with whatever value [`SdJwtVc`]'s `vct` might have.
+  /// If `vct` is a URI with scheme `https`, `resolver` must fetch the [`TypeMetadata`]
+  /// resource by combining `vct`'s value with [`WELL_KNOWN_VCT`]. To simplify this process
+  /// the utility function [`vct_to_url`] is provided.
+  ///
+  /// Returns the parsed [`TypeMetadata`] along with the raw [`Resolver`]'s response.
+  /// The latter can be used to validate the `vct#integrity` claim if present.
+  pub async fn type_metadata<R>(&self, resolver: &R) -> Result<(TypeMetadata, Vec<u8>)>
+  where
+    R: Resolver<StringOrUrl, Target = Vec<u8>>,
+  {
+    let vct = &self.claims().vct;
+    let raw = resolver.resolve(vct).await.map_err(|e| Error::Resolution {
+      input: vct.to_string(),
+      source: e,
+    })?;
+    let metadata = serde_json::from_slice(&raw).map_err(|e| Error::InvalidTypeMetadata(e.into()))?;
+
+    Ok((metadata, raw))
+  }
+}
+
+/// Converts `vct` claim's URI value into the appropriate well-known URL.
+/// ## Warnings
+/// Returns an [`Option::None`] if the URI's scheme is not `https`.
+pub fn vct_to_url(resource: &Url) -> Option<Url> {
+  if resource.scheme() != "https" {
+    None
+  } else {
+    let origin = resource.origin().ascii_serialization();
+    let path = resource.path();
+    Some(format!("{origin}{WELL_KNOWN_VC_ISSUER}{path}").parse().unwrap())
   }
 }
 

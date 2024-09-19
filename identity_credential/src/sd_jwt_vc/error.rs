@@ -41,7 +41,13 @@ pub enum Error {
   },
   /// Invalid issuer Metadata object.
   #[error("invalid Issuer Metadata: {0}")]
-  InvalidIssuerMetadata(#[source] anyhow::Error)
+  InvalidIssuerMetadata(#[source] anyhow::Error),
+  /// Invalid credential type metadata object.
+  #[error("invalid Type Metadata: {0}")]
+  InvalidTypeMetadata(#[source] anyhow::Error),
+  /// Credential validation failed.
+  #[error("credential validation failed: {0}")]
+  Validation(#[source] anyhow::Error),
 }
 
 /// Either a value of type `T` or an [`Error`].

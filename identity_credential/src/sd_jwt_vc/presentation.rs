@@ -19,7 +19,10 @@ pub struct SdJwtVcPresentationBuilder {
 impl SdJwtVcPresentationBuilder {
   /// Prepare a presentation for a given [`SdJwtVc`].
   pub fn new(token: SdJwtVc, hasher: &dyn Hasher) -> Result<Self> {
-    let SdJwtVc { sd_jwt, parsed_claims: vc_claims } = token;
+    let SdJwtVc {
+      sd_jwt,
+      parsed_claims: vc_claims,
+    } = token;
     let builder = sd_jwt.into_presentation(hasher).map_err(Error::SdJwt)?;
 
     Ok(Self { vc_claims, builder })

@@ -17,7 +17,7 @@ bls12_381_plus = { workspace = true, optional = true }
 flate2 = { version = "1.0.28", default-features = false, features = [
     "rust_backend",
 ], optional = true }
-futures = { version = "0.3", default-features = false, optional = true }
+futures = { version = "0.3", default-features = false, optional = true, features = ["alloc"] }
 identity_core = { version = "=1.3.1", path = "../identity_core", default-features = false }
 identity_did = { version = "=1.3.1", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.3.1", path = "../identity_document", default-features = false }
@@ -54,6 +54,7 @@ thiserror.workspace = true
 url = { version = "2.5", default-features = false }
 zkryptium = { workspace = true, optional = true }
 anyhow = { version = "1" }
+jsonschema = { version = "0.19", optional = true, default-features = false }
 
 [dev-dependencies]
 anyhow = "1.0.62"
@@ -95,7 +96,7 @@ validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation"]
 domain-linkage = ["validator"]
 domain-linkage-fetch = ["domain-linkage", "dep:reqwest", "dep:futures"]
 sd-jwt = ["credential", "validator", "dep:sd-jwt-payload"]
-sd-jwt-vc = ["sd-jwt", "dep:sd-jwt-payload-rework"]
+sd-jwt-vc = ["sd-jwt", "dep:sd-jwt-payload-rework", "dep:jsonschema"]
 jpt-bbs-plus = [
     "credential",
     "validator",

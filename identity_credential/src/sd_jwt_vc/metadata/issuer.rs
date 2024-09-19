@@ -3,11 +3,13 @@
 
 use identity_core::common::Url;
 use identity_verification::jwk::Jwk;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
+use crate::sd_jwt_vc::Error;
+use crate::sd_jwt_vc::SdJwtVc;
 #[allow(unused_imports)]
 use crate::sd_jwt_vc::SdJwtVcClaims;
-use crate::sd_jwt_vc::{Error, SdJwtVc};
 
 /// Path used to query [`IssuerMetadata`] for a given JWT VC issuer.
 pub const WELL_KNOWN_VC_ISSUER: &str = "/.well-known/jwt-vc-issuer";
@@ -15,8 +17,7 @@ pub const WELL_KNOWN_VC_ISSUER: &str = "/.well-known/jwt-vc-issuer";
 /// SD-JWT VC issuer's metadata. Contains information about one issuer's
 /// public keys, either as an embedded JWK Set or a reference to one.
 /// ## Notes
-/// - [`IssuerMetadata::issuer`] must exactly match [`SdJwtVcClaims::iss`] in
-///   order to be considered valid.
+/// - [`IssuerMetadata::issuer`] must exactly match [`SdJwtVcClaims::iss`] in order to be considered valid.
 #[derive(Debug, Clone, Eq, PartialEq, Deserialize, Serialize)]
 pub struct IssuerMetadata {
   /// Issuer URI.
@@ -33,7 +34,9 @@ impl IssuerMetadata {
     let expected_issuer = &sd_jwt_vc.claims().iss;
     let actual_issuer = &self.issuer;
     if actual_issuer != expected_issuer {
-      Err(Error::InvalidIssuerMetadata(anyhow::anyhow!("expected issuer \"{expected_issuer}\", but found \"{actual_issuer}\"")))
+      Err(Error::InvalidIssuerMetadata(anyhow::anyhow!(
+        "expected issuer \"{expected_issuer}\", but found \"{actual_issuer}\""
+      )))
     } else {
       Ok(())
     }
@@ -89,6 +92,6 @@ mod tests {
   #[test]
   fn deserializing_jwks_metadata_works() {
     let issuer_metadata: IssuerMetadata = serde_json::from_str(EXAMPLE_JWKS_ISSUER_METADATA).unwrap();
-    assert!(matches!(issuer_metadata.jwks, Jwks::Object{ .. }));
+    assert!(matches!(issuer_metadata.jwks, Jwks::Object { .. }));
   }
 }
