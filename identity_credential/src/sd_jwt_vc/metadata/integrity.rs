@@ -1,8 +1,11 @@
-use std::{fmt::Display, str::FromStr};
+use std::fmt::Display;
+use std::str::FromStr;
 
 use anyhow::anyhow;
-use identity_core::convert::{Base, BaseEncoding};
-use serde::{Deserialize, Serialize};
+use identity_core::convert::Base;
+use identity_core::convert::BaseEncoding;
+use serde::Deserialize;
+use serde::Serialize;
 
 /// An integrity metadata string as defined in [W3C SRI](https://www.w3.org/TR/SRI/#integrity-metadata).
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -14,8 +17,11 @@ impl IntegrityMetadata {
   /// ## Example
   /// ```rust
   /// use identity_credential::sd_jwt_vc::metadata::IntegrityMetadata;
-  /// 
-  /// let integrity_data = IntegrityMetadata::parse("sha384-dOTZf16X8p34q2/kYyEFm0jh89uTjikhnzjeLeF0FHsEaYKb1A1cv+Lyv4Hk8vHd").unwrap();
+  ///
+  /// let integrity_data = IntegrityMetadata::parse(
+  ///   "sha384-dOTZf16X8p34q2/kYyEFm0jh89uTjikhnzjeLeF0FHsEaYKb1A1cv+Lyv4Hk8vHd",
+  /// )
+  /// .unwrap();
   /// ```
   pub fn parse(s: &str) -> Result<Self, anyhow::Error> {
     s.parse()
@@ -25,8 +31,11 @@ impl IntegrityMetadata {
   /// ## Example
   /// ```rust
   /// use identity_credential::sd_jwt_vc::metadata::IntegrityMetadata;
-  /// 
-  /// let integrity_data: IntegrityMetadata = "sha384-dOTZf16X8p34q2/kYyEFm0jh89uTjikhnzjeLeF0FHsEaYKb1A1cv+Lyv4Hk8vHd".parse().unwrap();
+  ///
+  /// let integrity_data: IntegrityMetadata =
+  ///   "sha384-dOTZf16X8p34q2/kYyEFm0jh89uTjikhnzjeLeF0FHsEaYKb1A1cv+Lyv4Hk8vHd"
+  ///     .parse()
+  ///     .unwrap();
   /// assert_eq!(integrity_data.alg(), "sha384");
   /// ```
   pub fn alg(&self) -> &str {
@@ -37,9 +46,15 @@ impl IntegrityMetadata {
   /// ## Example
   /// ```rust
   /// use identity_credential::sd_jwt_vc::metadata::IntegrityMetadata;
-  /// 
-  /// let integrity_data: IntegrityMetadata = "sha384-dOTZf16X8p34q2/kYyEFm0jh89uTjikhnzjeLeF0FHsEaYKb1A1cv+Lyv4Hk8vHd".parse().unwrap();
-  /// assert_eq!(integrity_data.digest(), "dOTZf16X8p34q2/kYyEFm0jh89uTjikhnzjeLeF0FHsEaYKb1A1cv+Lyv4Hk8vHd");
+  ///
+  /// let integrity_data: IntegrityMetadata =
+  ///   "sha384-dOTZf16X8p34q2/kYyEFm0jh89uTjikhnzjeLeF0FHsEaYKb1A1cv+Lyv4Hk8vHd"
+  ///     .parse()
+  ///     .unwrap();
+  /// assert_eq!(
+  ///   integrity_data.digest(),
+  ///   "dOTZf16X8p34q2/kYyEFm0jh89uTjikhnzjeLeF0FHsEaYKb1A1cv+Lyv4Hk8vHd"
+  /// );
   /// ```
   pub fn digest(&self) -> &str {
     self.0.split('-').nth(1).unwrap()
@@ -54,8 +69,11 @@ impl IntegrityMetadata {
   /// ## Example
   /// ```rust
   /// use identity_credential::sd_jwt_vc::metadata::IntegrityMetadata;
-  /// 
-  /// let integrity_data: IntegrityMetadata = "sha384-dOTZf16X8p34q2/kYyEFm0jh89uTjikhnzjeLeF0FHsEaYKb1A1cv+Lyv4Hk8vHd".parse().unwrap();
+  ///
+  /// let integrity_data: IntegrityMetadata =
+  ///   "sha384-dOTZf16X8p34q2/kYyEFm0jh89uTjikhnzjeLeF0FHsEaYKb1A1cv+Lyv4Hk8vHd"
+  ///     .parse()
+  ///     .unwrap();
   /// assert!(integrity_data.options().is_none());
   /// ```
   pub fn options(&self) -> Option<&str> {

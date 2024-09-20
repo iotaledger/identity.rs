@@ -23,6 +23,6 @@ mod one_or_many;
 mod one_or_set;
 mod ordered_set;
 mod single_struct_error;
+mod string_or_url;
 mod timestamp;
 mod url;
-mod string_or_url;

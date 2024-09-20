@@ -4,7 +4,7 @@
 #[cfg(feature = "v2")]
 #[path = ""]
 mod v2 {
-  mod error; 
+  mod error;
   mod resolver;
 
   pub use error::Error;

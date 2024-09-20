@@ -1,0 +1,21 @@
+use serde::Deserialize;
+use serde::Serialize;
+use serde_json::Value;
+
+/// Credential type's display information of a given languange.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct DisplayMetadata {
+  /// Language tag as defined in [RFC5646](https://www.rfc-editor.org/rfc/rfc5646.txt).
+  pub lang: String,
+  /// VC type's human-readable name.
+  pub name: String,
+  /// VC type's human-readable description.
+  pub description: Option<String>,
+  /// Optional rendering information.
+  pub rendering: Option<serde_json::Map<String, Value>>,
+}
+
+/// Information on how to render a given credential type.
+// TODO: model the actual object properties.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct RenderingMetadata(serde_json::Map<String, Value>);

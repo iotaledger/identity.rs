@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod commands;
-mod resolver;
 mod error;
+mod resolver;
 
 use self::commands::SingleThreadedCommand;
 use identity_document::document::CoreDocument;

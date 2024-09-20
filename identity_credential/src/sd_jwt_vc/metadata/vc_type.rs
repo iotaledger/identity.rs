@@ -1,6 +1,5 @@
 use futures::future::BoxFuture;
 use futures::future::FutureExt;
-use identity_core::common::StringOrUrl;
 use identity_core::common::Url;
 use itertools::Itertools as _;
 use serde::Deserialize;
@@ -11,21 +10,29 @@ use crate::sd_jwt_vc::Error;
 use crate::sd_jwt_vc::Resolver;
 use crate::sd_jwt_vc::Result;
 
+use super::DisplayMetadata;
 use super::IntegrityMetadata;
 
 /// Path used to retrieve VC Type Metadata.
 pub const WELL_KNOWN_VCT: &str = "/.well-known/vct";
 
 /// SD-JWT VC's credential type.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TypeMetadata {
-  name: Option<String>,
-  description: Option<String>,
-  extends: Option<StringOrUrl>,
+  /// A human-readable name for the type, intended for developers reading the JSON document.
+  pub name: Option<String>,
+  /// A human-readable description for the type, intended for developers reading the JSON document.
+  pub description: Option<String>,
+  /// A URI of another type that this type extends.
+  pub extends: Option<Url>,
+  /// Integrity metadata for the extended type.
   #[serde(rename = "extends#integrity")]
-  extends_integrity: Option<IntegrityMetadata>,
+  pub extends_integrity: Option<IntegrityMetadata>,
+  /// Either an embedded schema or a reference to one.
   #[serde(flatten)]
-  schema: Option<TypeSchema>,
+  pub schema: Option<TypeSchema>,
+  /// An object containing display information for the type.
+  pub display: Option<DisplayMetadata>,
 }
 
 impl TypeMetadata {
@@ -38,7 +45,7 @@ impl TypeMetadata {
     self.description.as_deref()
   }
   /// Returns the URI or string of the type this VC type extends, if any.
-  pub fn extends(&self) -> Option<&StringOrUrl> {
+  pub fn extends(&self) -> Option<&Url> {
     self.extends.as_ref()
   }
   /// Returns the integrity string of the extended type object, if any.
@@ -65,7 +72,7 @@ impl TypeMetadata {
   /// another type or JSON schema.
   pub async fn validate_credential_with_resolver<R>(&self, credential: &Value, resolver: &R) -> Result<()>
   where
-    R: Resolver<StringOrUrl, Target = Value> + Sync,
+    R: Resolver<Url, Target = Value> + Sync,
   {
     validate_credential_impl(self.clone(), credential, resolver, vec![]).await
   }
@@ -79,7 +86,7 @@ fn validate_credential_impl<'c, 'r, R>(
   mut passed_types: Vec<TypeMetadata>,
 ) -> BoxFuture<'c, Result<()>>
 where
-  R: Resolver<StringOrUrl, Target = Value> + Sync,
+  R: Resolver<Url, Target = Value> + Sync,
   'r: 'c,
 {
   async move {
@@ -107,8 +114,7 @@ where
       let TypeSchema::Uri { schema_uri, .. } = current_type.schema.as_ref().unwrap() else {
         unreachable!("schema is provided through `schema_uri` as checked by `validate_credential`");
       };
-      let schema_uri = StringOrUrl::Url(schema_uri.clone());
-      let schema = resolver.resolve(&schema_uri).await.map_err(|e| Error::Resolution {
+      let schema = resolver.resolve(schema_uri).await.map_err(|e| Error::Resolution {
         input: schema_uri.to_string(),
         source: e,
       })?;
@@ -180,6 +186,7 @@ mod tests {
     description: None,
     extends: None,
     extends_integrity: None,
+    display: None,
     schema: Some(TypeSchema::Object {
       schema: json!({
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -202,6 +209,7 @@ mod tests {
     description: None,
     extends: None,
     extends_integrity: None,
+    display: None,
     schema: Some(TypeSchema::Uri {
       schema_uri: Url::parse("https://example.com/vc_types/1").unwrap(),
       schema_uri_integrity: None,
@@ -210,9 +218,9 @@ mod tests {
 
   struct SchemaResolver;
   #[async_trait]
-  impl Resolver<StringOrUrl> for SchemaResolver {
+  impl Resolver<Url> for SchemaResolver {
     type Target = Value;
-    async fn resolve(&self, _input: &StringOrUrl) -> resolver::Result<Self::Target> {
+    async fn resolve(&self, _input: &Url) -> resolver::Result<Self::Target> {
       Ok(serde_json::to_value(IMMEDIATE_TYPE_METADATA.clone().schema).unwrap())
     }
   }

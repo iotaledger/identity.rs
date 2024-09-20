@@ -72,4 +72,3 @@ pub enum ErrorCause {
   #[error("none of the attached clients support the network {0}")]
   UnsupportedNetwork(String),
 }
-

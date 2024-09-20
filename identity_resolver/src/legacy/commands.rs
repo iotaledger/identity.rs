@@ -138,4 +138,3 @@ impl<DOC: 'static> SingleThreadedCommand<DOC> {
     Self { fun }
   }
 }
-
