@@ -10,6 +10,7 @@ use crate::sd_jwt_vc::Error;
 use crate::sd_jwt_vc::Resolver;
 use crate::sd_jwt_vc::Result;
 
+use super::ClaimMetadata;
 use super::DisplayMetadata;
 use super::IntegrityMetadata;
 
@@ -31,8 +32,12 @@ pub struct TypeMetadata {
   /// Either an embedded schema or a reference to one.
   #[serde(flatten)]
   pub schema: Option<TypeSchema>,
-  /// An object containing display information for the type.
-  pub display: Option<DisplayMetadata>,
+  /// A list containing display information for the type.
+  #[serde(skip_serializing_if = "Vec::is_empty", default)]
+  pub display: Vec<DisplayMetadata>,
+  /// A list of [`ClaimMetadata`] containing information about particular claims.
+  #[serde(skip_serializing_if = "Vec::is_empty", default)]
+  pub claims: Vec<ClaimMetadata>,
 }
 
 impl TypeMetadata {
@@ -186,7 +191,8 @@ mod tests {
     description: None,
     extends: None,
     extends_integrity: None,
-    display: None,
+    display: vec![],
+    claims: vec![],
     schema: Some(TypeSchema::Object {
       schema: json!({
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -209,7 +215,8 @@ mod tests {
     description: None,
     extends: None,
     extends_integrity: None,
-    display: None,
+    display: vec![],
+    claims: vec![],
     schema: Some(TypeSchema::Uri {
       schema_uri: Url::parse("https://example.com/vc_types/1").unwrap(),
       schema_uri_integrity: None,
