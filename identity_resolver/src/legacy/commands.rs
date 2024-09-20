@@ -4,9 +4,7 @@
 use core::future::Future;
 use identity_did::DID;
 
-use crate::Error;
-use crate::ErrorCause;
-use crate::Result;
+use super::error::*;
 use std::pin::Pin;
 
 /// Internal trait used by the resolver to apply the command pattern.

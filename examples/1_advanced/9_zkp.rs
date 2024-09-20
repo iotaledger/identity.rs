@@ -164,12 +164,9 @@ async fn main() -> anyhow::Result<()> {
   // Step 4: Holder resolves Issuer's DID, retrieve Issuer's document and validate the Credential
   // ============================================================================================
 
-  let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_iota_handler(client);
-
   // Holder resolves issuer's DID
   let issuer: CoreDID = JptCredentialValidatorUtils::extract_issuer_from_issued_jpt(&credential_jpt).unwrap();
-  let issuer_document: IotaDocument = resolver.resolve(&issuer).await?;
+  let issuer_document: IotaDocument = client.resolve(&issuer).await?;
 
   // Holder validates the credential and retrieve the JwpIssued, needed to construct the JwpPresented
   let decoded_credential = JptCredentialValidator::validate::<_, Object>(
@@ -237,7 +234,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Verifier resolve Issuer DID
   let issuer: CoreDID = JptPresentationValidatorUtils::extract_issuer_from_presented_jpt(&presentation_jpt).unwrap();
-  let issuer_document: IotaDocument = resolver.resolve(&issuer).await?;
+  let issuer_document: IotaDocument = client.resolve(&issuer).await?;
 
   let presentation_validation_options = JptPresentationValidationOptions::default().nonce(challenge);
 

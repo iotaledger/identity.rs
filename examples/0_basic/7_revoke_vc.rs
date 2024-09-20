@@ -211,10 +211,8 @@ async fn main() -> anyhow::Result<()> {
   client.publish_did_output(&secret_manager_issuer, alias_output).await?;
 
   // We expect the verifiable credential to be revoked.
-  let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_iota_handler(client);
   let resolved_issuer_did: IotaDID = JwtCredentialValidatorUtils::extract_issuer_from_jwt(&credential_jwt)?;
-  let resolved_issuer_doc: IotaDocument = resolver.resolve(&resolved_issuer_did).await?;
+  let resolved_issuer_doc: IotaDocument = client.resolve(&resolved_issuer_did).await?;
 
   let validation_result = validator.validate::<_, Object>(
     &credential_jwt,
