@@ -10,6 +10,7 @@ mod presentation;
 mod resolver;
 mod status;
 mod token;
+mod validation;
 
 pub use claims::*;
 pub use error::Error;
@@ -18,3 +19,4 @@ pub use presentation::*;
 pub use resolver::*;
 pub use status::*;
 pub use token::*;
+pub use validation::*;

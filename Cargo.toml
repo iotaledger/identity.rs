@@ -15,7 +15,7 @@ members = [
   "identity_ecdsa_verifier",
   "identity_eddsa_verifier",
   "examples",
-  "compound_resolver", 
+  "compound_resolver",
 ]
 
 exclude = ["bindings/wasm", "bindings/grpc"]

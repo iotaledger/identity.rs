@@ -7,6 +7,7 @@ use std::str::FromStr;
 
 use super::claims::SdJwtVcClaims;
 use super::metadata::IssuerMetadata;
+use super::metadata::Jwks;
 use super::metadata::TypeMetadata;
 #[allow(unused_imports)]
 use super::metadata::WELL_KNOWN_VCT;
@@ -16,8 +17,11 @@ use super::Error;
 use super::Resolver;
 use super::Result;
 use super::SdJwtVcPresentationBuilder;
+use anyhow::anyhow;
 use identity_core::common::StringOrUrl;
 use identity_core::common::Url;
+use identity_verification::jwk::Jwk;
+use identity_verification::jwk::JwkSet;
 use sd_jwt_payload_rework::Hasher;
 use sd_jwt_payload_rework::JsonObject;
 use sd_jwt_payload_rework::SdJwt;
@@ -121,7 +125,73 @@ impl SdJwtVc {
 
     Ok((metadata, raw))
   }
+
+  /// Resolves the issuer's public key in JWK format.
+  pub async fn issuer_jwk<R>(&self, resolver: &R) -> Result<Jwk>
+  where
+    R: Resolver<Url, Target = Vec<u8>>,
+  {
+    let kid = self
+      .header()
+      .get("kid")
+      .and_then(|value| value.as_str())
+      .ok_or_else(|| Error::Verification(anyhow!("missing header claim `kid`")))?;
+
+    // Try to find the key among issuer metadata jwk set.
+    if let jwk @ Ok(_) = self.issuer_jwk_from_iss_metadata(resolver, kid).await {
+      jwk
+    } else {
+      // Issuer has no metadata that can lead to its JWK. Let's see if it can be resolved directly.
+      let jwk_uri = kid.parse::<Url>().map_err(|e| Error::Verification(e.into()))?;
+      resolver
+        .resolve(&jwk_uri)
+        .await
+        .map_err(|e| Error::Resolution {
+          input: jwk_uri.to_string(),
+          source: e,
+        })
+        .and_then(|bytes| {
+          serde_json::from_slice(&bytes).map_err(|e| Error::Verification(anyhow!("invalid JWK: {}", e)))
+        })
+    }
+  }
+
+  async fn issuer_jwk_from_iss_metadata<R>(&self, resolver: &R, kid: &str) -> Result<Jwk>
+  where
+    R: Resolver<Url, Target = Vec<u8>>,
+  {
+    let metadata = self
+      .issuer_metadata(resolver)
+      .await?
+      .ok_or_else(|| Error::Verification(anyhow!("missing issuer metadata")))?;
+    metadata.validate(self)?;
+
+    let jwks = match metadata.jwks {
+      Jwks::Object(jwks) => jwks,
+      Jwks::Uri(jwks_uri) => resolver
+        .resolve(&jwks_uri)
+        .await
+        .map_err(|e| Error::Resolution {
+          input: jwks_uri.into_string(),
+          source: e,
+        })
+        .and_then(|bytes| serde_json::from_slice::<JwkSet>(&bytes).map_err(|e| Error::Verification(e.into())))?,
+    };
+    jwks
+      .iter()
+      .find(|jwk| jwk.kid() == Some(kid))
+      .cloned()
+      .ok_or_else(|| Error::Verification(anyhow!("missing key \"{kid}\" in issuer JWK set")))
+  }
 }
+// Verifies SD-JWT signature.
+// pub async fn verify<R, V>(&self, resolver: &R, jws_verifier: &V) -> Result<(), SignatureVerificationError>
+// where
+//   R: Resolver<Url, Target = Jwk>,
+//   V: JwsVerifier,
+// {
+//   // Fetch the issuer's public key.
+// }
 
 /// Converts `vct` claim's URI value into the appropriate well-known URL.
 /// ## Warnings

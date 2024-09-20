@@ -48,6 +48,9 @@ pub enum Error {
   /// Credential validation failed.
   #[error("credential validation failed: {0}")]
   Validation(#[source] anyhow::Error),
+  /// SD-JWT VC signature verification failed.
+  #[error("verification failed: {0}")]
+  Verification(#[source] anyhow::Error),
 }
 
 /// Either a value of type `T` or an [`Error`].

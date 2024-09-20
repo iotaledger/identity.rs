@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Url;
-use identity_verification::jwk::Jwk;
+use identity_verification::jwk::JwkSet;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -51,10 +51,7 @@ pub enum Jwks {
   Uri(Url),
   /// An embedded JWK set.
   #[serde(rename = "jwks")]
-  Object {
-    /// List of JWKs.
-    keys: Vec<Jwk>,
-  },
+  Object(JwkSet),
 }
 
 #[cfg(test)]

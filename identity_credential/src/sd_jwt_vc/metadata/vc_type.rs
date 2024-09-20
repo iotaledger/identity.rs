@@ -57,6 +57,14 @@ impl TypeMetadata {
   pub fn extends_integrity(&self) -> Option<&str> {
     self.extends_integrity.as_ref().map(|meta| meta.as_ref())
   }
+  /// Returns the [`ClaimMetadata`]s associated with this credential type.
+  pub fn claim_metadata(&self) -> &[ClaimMetadata] {
+    &self.claims
+  }
+  /// Returns the [`DisplayMetadata`]s associated with this credential type.
+  pub fn display_metadata(&self) -> &[DisplayMetadata] {
+    &self.display
+  }
   /// Uses this [`TypeMetadata`] to validate JSON object `credential`. This method fails
   /// if the schema is referenced instead of embedded.
   /// Use [`TypeMetadata::validate_credential_with_resolver`] for such cases.
