@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.4.0](https://github.com/iotaledger/identity.rs/tree/v1.4.0) (2024-09-23)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v1.3.1...v1.4.0)
+
+### Added
+
+- Add feature to support custom `now_utc` implementations [\#1397](https://github.com/iotaledger/identity.rs/pull/1397)
+- Add support for `did:jwk` resolution [\#1404](https://github.com/iotaledger/identity.rs/pull/1404)
+- Linked Verifiable Presentations [\#1398](https://github.com/iotaledger/identity.rs/pull/1398)
+- Add support for custom JWS algorithms [\#1410](https://github.com/iotaledger/identity.rs/pull/1410)
+
+### Patch
+
+- Make `bls12_381_plus` dependency more flexible again [\#1393](https://github.com/iotaledger/identity.rs/pull/1393)
+- Mark `js-sys` as optional for identity_core [\#1405](https://github.com/iotaledger/identity.rs/pull/1405)
+- Remove dependency on `identity_core` default features [\#1408](https://github.com/iotaledger/identity.rs/pull/1408)
+
 ## [v1.3.1](https://github.com/iotaledger/identity.rs/tree/v1.3.1) (2024-06-12)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v1.3.0...v1.3.1)
@@ -7,8 +24,6 @@
 ### Patch
 
 - Pin and bump `bls12_381_plus` dependency [\#1378](https://github.com/iotaledger/identity.rs/pull/1378)
-
-# Changelog
 
 ## [v1.3.0](https://github.com/iotaledger/identity.rs/tree/v1.3.0) (2024-05-28)
 
