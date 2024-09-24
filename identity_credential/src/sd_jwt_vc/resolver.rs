@@ -15,11 +15,9 @@ pub enum Error {
   Generic(#[from] anyhow::Error),
 }
 
-/// A type capable of asynchronously producing values of type [`Resolver::Target`] from inputs of type `I`.
+/// A type capable of asynchronously producing values of type `T` from inputs of type `I`.
 #[async_trait]
-pub trait Resolver<I: Sync> {
-  /// The resulting type.
-  type Target;
+pub trait Resolver<I: Sync, T> {
   /// Fetch the resource of type [`Resolver::Target`] using `input`.
-  async fn resolve(&self, input: &I) -> Result<Self::Target>;
+  async fn resolve(&self, input: &I) -> Result<T>;
 }

@@ -85,7 +85,7 @@ impl TypeMetadata {
   /// another type or JSON schema.
   pub async fn validate_credential_with_resolver<R>(&self, credential: &Value, resolver: &R) -> Result<()>
   where
-    R: Resolver<Url, Target = Value> + Sync,
+    R: Resolver<Url, Value> + Sync,
   {
     validate_credential_impl(self.clone(), credential, resolver, vec![]).await
   }
@@ -99,7 +99,7 @@ fn validate_credential_impl<'c, 'r, R>(
   mut passed_types: Vec<TypeMetadata>,
 ) -> BoxFuture<'c, Result<()>>
 where
-  R: Resolver<Url, Target = Value> + Sync,
+  R: Resolver<Url, Value> + Sync,
   'r: 'c,
 {
   async move {
@@ -233,9 +233,8 @@ mod tests {
 
   struct SchemaResolver;
   #[async_trait]
-  impl Resolver<Url> for SchemaResolver {
-    type Target = Value;
-    async fn resolve(&self, _input: &Url) -> resolver::Result<Self::Target> {
+  impl Resolver<Url, Value> for SchemaResolver {
+    async fn resolve(&self, _input: &Url) -> resolver::Result<Value> {
       Ok(serde_json::to_value(IMMEDIATE_TYPE_METADATA.clone().schema).unwrap())
     }
   }

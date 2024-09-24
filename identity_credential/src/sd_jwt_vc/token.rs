@@ -87,7 +87,7 @@ impl SdJwtVc {
   /// To check if the retrieved [`IssuerMetadata`] is valid use [`IssuerMetadata::validate`].
   pub async fn issuer_metadata<R>(&self, resolver: &R) -> Result<Option<IssuerMetadata>>
   where
-    R: Resolver<Url, Target = Vec<u8>>,
+    R: Resolver<Url, Vec<u8>>,
   {
     let metadata_url = {
       let origin = self.claims().iss.origin().ascii_serialization();
@@ -117,10 +117,13 @@ impl SdJwtVc {
   /// The latter can be used to validate the `vct#integrity` claim if present.
   pub async fn type_metadata<R>(&self, resolver: &R) -> Result<(TypeMetadata, Vec<u8>)>
   where
-    R: Resolver<StringOrUrl, Target = Vec<u8>>,
+    R: Resolver<StringOrUrl, Vec<u8>>,
   {
-    let vct = &self.claims().vct;
-    let raw = resolver.resolve(vct).await.map_err(|e| Error::Resolution {
+    let vct = match self.claims().vct.clone() {
+      StringOrUrl::Url(url) => StringOrUrl::Url(vct_to_url(&url).unwrap_or(url)),
+      s => s,
+    };
+    let raw = resolver.resolve(&vct).await.map_err(|e| Error::Resolution {
       input: vct.to_string(),
       source: e,
     })?;
@@ -135,7 +138,7 @@ impl SdJwtVc {
   /// through `kid`'s value.
   pub async fn issuer_jwk<R>(&self, resolver: &R) -> Result<Jwk>
   where
-    R: Resolver<Url, Target = Vec<u8>>,
+    R: Resolver<Url, Vec<u8>>,
   {
     let kid = self
       .header()
@@ -164,7 +167,7 @@ impl SdJwtVc {
 
   async fn issuer_jwk_from_iss_metadata<R>(&self, resolver: &R, kid: &str) -> Result<Jwk>
   where
-    R: Resolver<Url, Target = Vec<u8>>,
+    R: Resolver<Url, Vec<u8>>,
   {
     let metadata = self
       .issuer_metadata(resolver)
@@ -215,6 +218,39 @@ impl SdJwtVc {
     claims_metadata
       .iter()
       .try_fold((), |_, meta| meta.check_value_disclosability(&disclosed_object))
+  }
+
+  /// Check whether this [`SdJwtVc`] is valid.
+  ///
+  /// This method checks:
+  /// - JWS signature
+  /// - credential's type
+  /// - claims' disclosability
+  pub async fn validate<R, V>(&self, resolver: &R, jws_verifier: &V, hasher: &dyn Hasher) -> Result<()>
+  where
+    R: Resolver<Url, Vec<u8>>,
+    R: Resolver<StringOrUrl, Vec<u8>>,
+    R: Resolver<Url, Value>,
+    R: Sync,
+    V: JwsVerifier,
+  {
+    // Signature verification.
+    // Fetch issuer's JWK.
+    let jwk = self.issuer_jwk(resolver).await?;
+    self.verify_signature(jws_verifier, &jwk)?;
+
+    // Credential type.
+    // Fetch type metadata. Skip integrity check.
+    let fully_disclosed_token = self.clone().into_disclosed_object(hasher).map(Value::Object)?;
+    let (type_metadata, _) = self.type_metadata(resolver).await?;
+    type_metadata
+      .validate_credential_with_resolver(&fully_disclosed_token, resolver)
+      .await?;
+
+    // Claims' disclosability.
+    self.validate_claims_disclosability(hasher, type_metadata.claim_metadata())?;
+
+    Ok(())
   }
 }
 
