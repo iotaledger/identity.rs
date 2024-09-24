@@ -6,6 +6,7 @@ use std::ops::Deref;
 use std::str::FromStr;
 
 use super::claims::SdJwtVcClaims;
+use super::metadata::ClaimMetadata;
 use super::metadata::IssuerMetadata;
 use super::metadata::Jwks;
 use super::metadata::TypeMetadata;
@@ -17,11 +18,13 @@ use super::Error;
 use super::Resolver;
 use super::Result;
 use super::SdJwtVcPresentationBuilder;
+use crate::validator::JwtCredentialValidator as JwsUtils;
 use anyhow::anyhow;
 use identity_core::common::StringOrUrl;
 use identity_core::common::Url;
 use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkSet;
+use identity_verification::jws::JwsVerifier;
 use sd_jwt_payload_rework::Hasher;
 use sd_jwt_payload_rework::JsonObject;
 use sd_jwt_payload_rework::SdJwt;
@@ -127,6 +130,9 @@ impl SdJwtVc {
   }
 
   /// Resolves the issuer's public key in JWK format.
+  /// The issuer's JWK is first fetched through the issuer's metadata,
+  /// if this attempt fails `resolver` is used to query the key directly
+  /// through `kid`'s value.
   pub async fn issuer_jwk<R>(&self, resolver: &R) -> Result<Jwk>
   where
     R: Resolver<Url, Target = Vec<u8>>,
@@ -183,15 +189,34 @@ impl SdJwtVc {
       .cloned()
       .ok_or_else(|| Error::Verification(anyhow!("missing key \"{kid}\" in issuer JWK set")))
   }
+
+  /// Verifies this [`SdJwtVc`] JWT's signature.
+  pub fn verify_signature<V>(&self, jws_verifier: &V, jwk: &Jwk) -> Result<()>
+  where
+    V: JwsVerifier,
+  {
+    let sd_jwt_str = self.sd_jwt.to_string();
+    let jws_input = {
+      let jwt_str = sd_jwt_str.split_once('~').unwrap().0;
+      JwsUtils::<V>::decode(jwt_str).map_err(|e| Error::Verification(e.into()))?
+    };
+
+    JwsUtils::<V>::verify_signature_raw(jws_input, jwk, jws_verifier)
+      .map_err(|e| Error::Verification(e.into()))
+      .and(Ok(()))
+  }
+
+  /// Checks the disclosability of this [`SdJwtVc`]'s claims against a list of [`ClaimMetadata`].
+  /// ## Notes
+  /// This check should be performed by the token's holder in order to assert the issuer's compliance with
+  /// the credential's type.
+  pub fn validate_claims_disclosability(&self, hasher: &dyn Hasher, claims_metadata: &[ClaimMetadata]) -> Result<()> {
+    let disclosed_object = Value::Object(self.clone().into_disclosed_object(hasher)?);
+    claims_metadata
+      .iter()
+      .try_fold((), |_, meta| meta.check_value_disclosability(&disclosed_object))
+  }
 }
-// Verifies SD-JWT signature.
-// pub async fn verify<R, V>(&self, resolver: &R, jws_verifier: &V) -> Result<(), SignatureVerificationError>
-// where
-//   R: Resolver<Url, Target = Jwk>,
-//   V: JwsVerifier,
-// {
-//   // Fetch the issuer's public key.
-// }
 
 /// Converts `vct` claim's URI value into the appropriate well-known URL.
 /// ## Warnings

@@ -16,7 +16,7 @@ pub use claims::*;
 pub use error::Error;
 pub use error::Result;
 pub use presentation::*;
-pub use resolver::*;
+pub use resolver::Resolver;
 pub use status::*;
 pub use token::*;
 pub use validation::*;
