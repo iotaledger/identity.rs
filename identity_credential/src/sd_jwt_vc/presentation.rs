@@ -44,8 +44,8 @@ impl SdJwtVcPresentationBuilder {
   }
 
   /// Returns the resulting [`SdJwtVc`] together with all removed disclosures.
-  pub fn finish(self) -> (SdJwtVc, Vec<Disclosure>) {
-    let (sd_jwt, disclosures) = self.builder.finish();
-    (SdJwtVc::new(sd_jwt, self.vc_claims), disclosures)
+  pub fn finish(self) -> Result<(SdJwtVc, Vec<Disclosure>)> {
+    let (sd_jwt, disclosures) = self.builder.finish()?;
+    Ok((SdJwtVc::new(sd_jwt, self.vc_claims), disclosures))
   }
 }

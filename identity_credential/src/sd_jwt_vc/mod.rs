@@ -11,6 +11,7 @@ mod resolver;
 mod status;
 mod token;
 mod validation;
+mod builder;
 
 pub use claims::*;
 pub use error::Error;
@@ -20,3 +21,4 @@ pub use resolver::Resolver;
 pub use status::*;
 pub use token::*;
 pub use validation::*;
+pub use builder::*;

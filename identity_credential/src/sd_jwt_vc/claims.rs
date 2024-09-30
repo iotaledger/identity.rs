@@ -9,6 +9,8 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use sd_jwt_payload_rework::Disclosure;
 use sd_jwt_payload_rework::SdJwtClaims;
+use serde::Deserialize;
+use serde::Serialize;
 use serde_json::Value;
 
 use super::Error;
@@ -16,7 +18,7 @@ use super::Result;
 use super::Status;
 
 /// JOSE payload claims for SD-JWT VC.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct SdJwtVcClaims {
   /// Issuer.
@@ -41,6 +43,7 @@ pub struct SdJwtVcClaims {
   /// Subject.
   /// See [RFC7519 section 4.1.2](https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.2) for more information.
   pub sub: Option<StringOrUrl>,
+  #[serde(flatten)]
   sd_jwt_claims: SdJwtClaims,
 }
 
