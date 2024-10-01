@@ -1,20 +1,20 @@
 use std::str::FromStr;
 
 use identity_iota_core::IotaDocument;
-use iota_sdk::rpc_types::IotaTransactionBlockEffects;
-use iota_sdk::rpc_types::OwnedObjectRef;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::Argument;
-use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::TypeTag;
+use crate::iota_sdk_abstraction::IotaTransactionBlockResponseT;
+use crate::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
+use crate::iota_sdk_abstraction::types::base_types::ObjectID;
+use crate::iota_sdk_abstraction::types::base_types::ObjectRef;
+use crate::iota_sdk_abstraction::types::transaction::Argument;
+use crate::iota_sdk_abstraction::ProgrammableTransactionBcs;
+use crate::iota_sdk_abstraction::types::TypeTag;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::migration::OnChainIdentity;
 use crate::migration::Proposal;
-use crate::sui::move_calls;
+use crate::sui::iota_sdk_adapter::IdentityMoveCallsAdapter;
+use crate::iota_sdk_abstraction::IdentityMoveCalls;
 use crate::utils::MoveType;
 use crate::Error;
 
@@ -47,19 +47,19 @@ impl ProposalT for Proposal<UpdateDidDocument> {
     controller_cap: ObjectRef,
     _identity: OnChainIdentity,
     package: ObjectID,
-  ) -> Result<(ProgrammableTransactionBuilder, Argument), Error> {
-    move_calls::identity::propose_update(identity_ref, controller_cap, &action.0, expiration, package)
+  ) -> Result<(<IdentityMoveCallsAdapter as IdentityMoveCalls>::TxBuilder, Argument), Error> {
+    IdentityMoveCallsAdapter::propose_update(identity_ref, controller_cap, &action.0, expiration, package)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
   }
 
   fn make_chained_execution_tx(
-    ptb: ProgrammableTransactionBuilder,
+    ptb: <IdentityMoveCallsAdapter as IdentityMoveCalls>::TxBuilder,
     proposal_arg: Argument,
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
     package: ObjectID,
-  ) -> Result<ProgrammableTransaction, Error> {
-    move_calls::identity::execute_update(
+  ) -> Result<ProgrammableTransactionBcs, Error> {
+    IdentityMoveCallsAdapter::execute_update(
       Some(ptb),
       Some(proposal_arg),
       identity,
@@ -75,12 +75,12 @@ impl ProposalT for Proposal<UpdateDidDocument> {
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
     package: ObjectID,
-  ) -> Result<ProgrammableTransaction, Error> {
-    move_calls::identity::execute_update(None, None, identity, controller_cap, self.id(), package)
+  ) -> Result<ProgrammableTransactionBcs, Error> {
+    IdentityMoveCallsAdapter::execute_update(None, None, identity, controller_cap, self.id(), package)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
   }
 
-  fn parse_tx_effects(_effects: IotaTransactionBlockEffects) -> Result<Self::Output, Error> {
+  fn parse_tx_effects(_tx_response: &dyn IotaTransactionBlockResponseT<Error = Error>) -> Result<Self::Output, Error> {
     Ok(())
   }
 }

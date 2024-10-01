@@ -1,7 +1,8 @@
+#![allow(unused_imports)]
 mod number;
 
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::id::UID;
+use crate::iota_sdk_abstraction::types::base_types::ObjectID;
+use crate::iota_sdk_abstraction::types::id::UID;
 pub use number::*;
 use serde::Deserialize;
 use serde::Serialize;

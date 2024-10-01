@@ -1,7 +1,15 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+// This file has been moved here from identity_iota_core/src/client_dummy.
+// The file will be removed after the TS-Client-SDK is integrated.
+// The file provides a POC for the wasm-bindgen glue code needed to
+// implement the TS-Client-SDK integration.
+
 use super::Error;
 use super::IdentityClient;
 use super::IotaClientTrait;
-use super::ObjectID;
+use super::types::base_types::{ObjectID};
 
 pub struct IdentityClientBuilder<T: IotaClientTrait> {
   pub(crate) identity_iota_package_id: Option<ObjectID>,

@@ -2,27 +2,28 @@ use std::str::FromStr as _;
 
 use crate::client::IdentityClient;
 use crate::client::IotaKeySignature;
-use crate::sui::move_calls;
+use crate::sui::iota_sdk_adapter::AssetMoveCallsAdapter;
+use crate::iota_sdk_abstraction::AssetMoveCalls;
 use crate::transaction::Transaction;
 use crate::utils::MoveType;
 use crate::Error;
 use anyhow::anyhow;
 use anyhow::Context;
 use async_trait::async_trait;
-use iota_sdk::rpc_types::IotaData as _;
-use iota_sdk::rpc_types::IotaExecutionStatus;
-use iota_sdk::rpc_types::IotaObjectDataOptions;
-use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::base_types::SequenceNumber;
-use iota_sdk::types::id::UID;
-use iota_sdk::types::object::Owner;
-use iota_sdk::types::TypeTag;
-use iota_sdk::IotaClient;
-use move_core_types::ident_str;
-use move_core_types::language_storage::StructTag;
+use crate::iota_sdk_abstraction::IotaClientTrait;
+use crate::sui::iota_sdk_adapter::IotaClientAdapter;
+use crate::iota_sdk_abstraction::rpc_types::IotaData as _;
+use crate::iota_sdk_abstraction::rpc_types::IotaExecutionStatus;
+use crate::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
+use crate::iota_sdk_abstraction::types::base_types::IotaAddress;
+use crate::iota_sdk_abstraction::types::base_types::ObjectID;
+use crate::iota_sdk_abstraction::types::base_types::ObjectRef;
+use crate::iota_sdk_abstraction::types::base_types::SequenceNumber;
+use crate::iota_sdk_abstraction::types::id::UID;
+use crate::iota_sdk_abstraction::types::object::Owner;
+use crate::iota_sdk_abstraction::types::TypeTag;
+use crate::iota_sdk_abstraction::move_types::language_storage::StructTag;
+use crate::ident_str;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -63,7 +64,7 @@ impl<T> AuthenticatedAsset<T>
 where
   T: for<'de> Deserialize<'de>,
 {
-  pub async fn get_by_id(id: ObjectID, client: &IotaClient) -> Result<Self, Error> {
+  pub async fn get_by_id(id: ObjectID, client: &IotaClientAdapter) -> Result<Self, Error> {
     let res = client
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
@@ -83,7 +84,7 @@ where
 }
 
 impl<T> AuthenticatedAsset<T> {
-  async fn object_ref(&self, client: &IotaClient) -> Result<ObjectRef, Error> {
+  async fn object_ref(&self, client: &IotaClientAdapter) -> Result<ObjectRef, Error> {
     client
       .read_api()
       .get_object_with_options(self.id(), IotaObjectDataOptions::default())
@@ -207,7 +208,7 @@ impl MoveType for TransferProposal {
 }
 
 impl TransferProposal {
-  pub async fn get_by_id(id: ObjectID, client: &IotaClient) -> Result<Self, Error> {
+  pub async fn get_by_id(id: ObjectID, client: &IotaClientAdapter) -> Result<Self, Error> {
     let res = client
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
@@ -242,7 +243,7 @@ impl TransferProposal {
       })
   }
 
-  async fn asset_metadata(&self, client: &IotaClient) -> anyhow::Result<(ObjectRef, TypeTag)> {
+  async fn asset_metadata(&self, client: &IotaClientAdapter) -> anyhow::Result<(ObjectRef, TypeTag)> {
     let res = client
       .read_api()
       .get_object_with_options(self.asset_id, IotaObjectDataOptions::default().with_type())
@@ -266,7 +267,7 @@ impl TransferProposal {
     Ok((asset_ref, param_type))
   }
 
-  async fn initial_shared_version(&self, client: &IotaClient) -> anyhow::Result<SequenceNumber> {
+  async fn initial_shared_version(&self, client: &IotaClientAdapter) -> anyhow::Result<SequenceNumber> {
     let owner = client
       .read_api()
       .get_object_with_options(*self.id.object_id(), IotaObjectDataOptions::default().with_owner())
@@ -325,7 +326,7 @@ where
   where
     S: Signer<IotaKeySignature> + Sync,
   {
-    let tx = move_calls::asset::update(
+    let tx = AssetMoveCallsAdapter::update(
       self.asset.object_ref(client).await?,
       self.new_content.clone(),
       client.package_id(),
@@ -333,10 +334,8 @@ where
     let tx_status = client
       .execute_transaction(tx, gas_budget)
       .await?
-      .effects
-      .context("transaction had no effects")
-      .map(|effects| effects.into_status())
-      .map_err(|e| Error::TransactionUnexpectedResponse(e.to_string()))?;
+      .effects_execution_status()
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("transaction had no effects".to_string()))?;
     if let IotaExecutionStatus::Failure { error } = tx_status {
       return Err(Error::TransactionUnexpectedResponse(error));
     }
@@ -364,7 +363,7 @@ where
     S: Signer<IotaKeySignature> + Sync,
   {
     let asset_ref = self.0.object_ref(client).await?;
-    let tx = move_calls::asset::delete::<T>(asset_ref, client.package_id())?;
+    let tx = AssetMoveCallsAdapter::delete::<T>(asset_ref, client.package_id())?;
 
     client.execute_transaction(tx, gas_budget).await?;
     Ok(())
@@ -394,14 +393,13 @@ where
       transferable,
       deletable,
     } = self.0;
-    let tx = move_calls::asset::new(inner, mutable, transferable, deletable, client.package_id())?;
+    let tx = AssetMoveCallsAdapter::new_asset(inner, mutable, transferable, deletable, client.package_id())?;
 
     let created_asset_id = client
       .execute_transaction(tx, gas_budget)
       .await?
-      .effects
+      .effects_created()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?
-      .created()
       .first()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("no object was created in this transaction".to_owned()))?
       .object_id();
@@ -431,7 +429,7 @@ where
   where
     S: Signer<IotaKeySignature> + Sync,
   {
-    let tx = move_calls::asset::transfer::<T>(
+    let tx = AssetMoveCallsAdapter::transfer::<T>(
       self.asset.object_ref(client).await?,
       self.recipient,
       client.package_id(),
@@ -439,9 +437,8 @@ where
     for id in client
       .execute_transaction(tx, gas_budget)
       .await?
-      .effects
+      .effects_created()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?
-      .created()
       .iter()
       .map(|obj| obj.reference.object_id)
     {
@@ -496,7 +493,7 @@ impl Transaction for AcceptTransferTx {
       .initial_shared_version(client)
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
-    let tx = move_calls::asset::accept_proposal(
+    let tx = AssetMoveCallsAdapter::accept_proposal(
       (self.0.id(), initial_shared_version),
       cap,
       asset_ref,
@@ -535,7 +532,7 @@ impl Transaction for ConcludeTransferTx {
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
 
-    let tx = move_calls::asset::conclude_or_cancel(
+    let tx = AssetMoveCallsAdapter::conclude_or_cancel(
       (self.0.id(), initial_shared_version),
       cap,
       asset_ref,

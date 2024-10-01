@@ -11,18 +11,19 @@ use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use identity_iota_core::NetworkName;
 use identity_iota_core::StateMetadataDocument;
-use iota_sdk::rpc_types::EventFilter;
-use iota_sdk::rpc_types::IotaData as _;
-use iota_sdk::rpc_types::IotaObjectData;
-use iota_sdk::rpc_types::IotaObjectDataFilter;
-use iota_sdk::rpc_types::IotaObjectDataOptions;
-use iota_sdk::rpc_types::IotaObjectResponseQuery;
-use iota_sdk::rpc_types::OwnedObjectRef;
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::IotaClient;
-use move_core_types::language_storage::StructTag;
+use crate::iota_sdk_abstraction::IotaClientTrait;
+use crate::iota_sdk_abstraction::rpc_types::EventFilter;
+use crate::iota_sdk_abstraction::rpc_types::IotaData as _;
+use crate::iota_sdk_abstraction::rpc_types::IotaObjectData;
+use crate::iota_sdk_abstraction::rpc_types::IotaObjectDataFilter;
+use crate::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
+use crate::iota_sdk_abstraction::rpc_types::IotaObjectResponseQuery;
+use crate::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
+use crate::iota_sdk_abstraction::types::base_types::IotaAddress;
+use crate::iota_sdk_abstraction::types::base_types::ObjectID;
+use crate::iota_sdk_abstraction::types::base_types::ObjectRef;
+use crate::sui::iota_sdk_adapter::IotaClientAdapter;
+use crate::iota_sdk_abstraction::move_types::language_storage::StructTag;
 use serde::Deserialize;
 
 use crate::migration::get_alias;
@@ -37,14 +38,14 @@ const UNKNOWN_NETWORK_HRP: &str = "unknwn";
 /// functionalities.
 #[derive(Clone)]
 pub struct IdentityClientReadOnly {
-  iota_client: IotaClient,
+  iota_client: IotaClientAdapter,
   identity_iota_pkg_id: ObjectID,
   migration_registry_id: ObjectID,
   network: NetworkName,
 }
 
 impl Deref for IdentityClientReadOnly {
-  type Target = IotaClient;
+  type Target = IotaClientAdapter;
   fn deref(&self) -> &Self::Target {
     &self.iota_client
   }
@@ -70,7 +71,7 @@ impl IdentityClientReadOnly {
 
   /// Attempts to create a new [`IdentityClientReadOnly`] from
   /// the given [`IotaClient`].
-  pub async fn new(iota_client: IotaClient, identity_iota_pkg_id: ObjectID) -> Result<Self, Error> {
+  pub async fn new(iota_client: IotaClientAdapter, identity_iota_pkg_id: ObjectID) -> Result<Self, Error> {
     let IdentityPkgMetadata {
       migration_registry_id, ..
     } = identity_pkg_metadata(&iota_client, identity_iota_pkg_id).await?;
@@ -86,7 +87,7 @@ impl IdentityClientReadOnly {
   /// Same as [`Self::new`], but if the network isn't recognized among IOTA's official networks,
   /// the provided `network_name` will be used.
   pub async fn new_with_network_name(
-    iota_client: IotaClient,
+    iota_client: IotaClientAdapter,
     identity_iota_pkg_id: ObjectID,
     network_name: NetworkName,
   ) -> Result<Self, Error> {
@@ -225,7 +226,7 @@ struct MigrationRegistryCreatedEvent {
   id: ObjectID,
 }
 
-async fn get_client_network(client: &IotaClient) -> Result<NetworkName, Error> {
+async fn get_client_network(client: &IotaClientAdapter) -> Result<NetworkName, Error> {
   let network_id = client
     .read_api()
     .get_chain_identifier()
@@ -246,7 +247,7 @@ async fn get_client_network(client: &IotaClient) -> Result<NetworkName, Error> {
 // TODO: remove argument `package_id` and use `EventFilter::MoveEventField` to find the beacon event and thus the
 // package id.
 // TODO: authenticate the beacon event with though sender's ID.
-async fn identity_pkg_metadata(iota_client: &IotaClient, package_id: ObjectID) -> Result<IdentityPkgMetadata, Error> {
+async fn identity_pkg_metadata(iota_client: &IotaClientAdapter, package_id: ObjectID) -> Result<IdentityPkgMetadata, Error> {
   // const EVENT_BEACON_PATH: &str = "/beacon";
   // const EVENT_BEACON_VALUE: &[u8] = b"identity.rs_pkg";
 

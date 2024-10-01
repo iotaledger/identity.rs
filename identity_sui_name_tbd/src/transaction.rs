@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use iota_sdk::types::transaction::ProgrammableTransaction;
+use crate::iota_sdk_abstraction::ProgrammableTransactionBcs;
 use secret_storage::Signer;
 
 use crate::client::IdentityClient;
@@ -31,7 +31,7 @@ pub trait Transaction: Sized {
 }
 
 #[derive(Debug)]
-pub struct SimpleTransaction(pub ProgrammableTransaction);
+pub struct SimpleTransaction(pub ProgrammableTransactionBcs);
 
 #[async_trait]
 impl Transaction for SimpleTransaction {

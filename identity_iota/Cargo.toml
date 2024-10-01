@@ -33,10 +33,6 @@ default = ["revocation-bitmap", "client", "iota-client", "resolver"]
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["identity_iota_core/client"]
 
-# TODO: remove this feature as soon as we can build the new identity client in against wasm
-# include temporary dummy client to build wasm bindings against
-dummy-client = ["identity_iota_core/dummy-client"]
-
 # Enables the iota-client integration, the client trait implementations for it, and the `IotaClientExt` trait.
 iota-client = ["identity_iota_core/iota-client", "identity_resolver?/iota"]
 

@@ -10,5 +10,7 @@ mod sui;
 pub mod transaction;
 pub mod utils;
 
+pub mod iota_sdk_abstraction;
+
 pub use assets::*;
 pub use error::Error;

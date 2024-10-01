@@ -1,2 +1,2 @@
-pub mod move_calls;
+pub mod iota_sdk_adapter;
 pub mod types;

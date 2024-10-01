@@ -1,27 +1,35 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::HashMap;
+// This file has been moved here from identity_iota_core/src/client_dummy.
+// The file will be removed after the TS-Client-SDK is integrated.
+// The file provides a POC for the wasm-bindgen glue code needed to
+// implement the TS-Client-SDK integration.
 
-use crate::IotaDocument;
+use std::collections::HashMap;
+use std::str::FromStr;
+
+use identity_iota_core::IotaDocument;
 
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
+
 use super::DummySigner;
 use super::Error;
 use super::IdentityClient;
-use super::IotaAddress;
 use super::IotaClientTrait;
-use super::IotaObjectData;
 use super::Multicontroller;
-use super::ObjectID;
-use super::OwnedObjectRef;
 use super::Proposal;
-use super::UID;
 
-// #[derive(Debug, Deserialize, Serialize)]
+use super::rpc_types::{
+  IotaObjectData,
+  OwnedObjectRef,
+};
+use super::types::base_types::{IotaAddress, ObjectID};
+use super::types::id::UID;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OnChainIdentity {
   pub id: UID,
@@ -135,7 +143,10 @@ impl IdentityBuilder {
     C: IotaClientTrait,
   {
     Ok(OnChainIdentity {
-      id: "did:iota:foobar:0x0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+      id: UID::new(
+        ObjectID::from_str("did:iota:foobar:0x0000000000000000000000000000000000000000000000000000000000000000")
+            .map_err(|e| Error::Dummy(e.to_string()) )?
+      ),
       did_doc: Multicontroller::new(vec![1u8, 2u8, 3u8]),
       obj_ref: None,
       proposals: HashMap::new(),

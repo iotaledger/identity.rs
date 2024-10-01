@@ -38,7 +38,6 @@ path = "../../identity_iota"
 default-features = false
 features = [
     "client",
-    "dummy-client",
     "revocation-bitmap",
     "resolver",
     "domain-linkage",

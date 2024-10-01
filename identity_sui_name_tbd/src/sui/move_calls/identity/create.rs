@@ -3,7 +3,7 @@ use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use iota_sdk::types::transaction::Command;
 use iota_sdk::types::transaction::ProgrammableMoveCall;
-use iota_sdk::types::transaction::ProgrammableTransaction;
+use iota_sdk::types::transaction::ProgrammableTransactionBcs;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use move_core_types::ident_str;
@@ -14,7 +14,7 @@ use crate::sui::move_calls::utils;
 use crate::utils::MoveType;
 use crate::Error;
 
-pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransaction, Error> {
+pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Error> {
   let mut ptb = ProgrammableTransactionBuilder::new();
   let doc_arg = utils::ptb_pure(&mut ptb, "did_doc", did_doc)?;
 
@@ -44,9 +44,9 @@ pub fn new_with_controllers<C>(
   controllers: C,
   threshold: u64,
   package_id: ObjectID,
-) -> Result<ProgrammableTransaction, Error>
+) -> Result<ProgrammableTransactionBcs, Error>
 where
-  C: IntoIterator<Item = (IotaAddress, u64)>,
+  >,
 {
   let mut ptb = ProgrammableTransactionBuilder::new();
 

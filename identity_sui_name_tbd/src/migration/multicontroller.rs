@@ -3,11 +3,11 @@ use std::collections::HashSet;
 
 use crate::sui::types::Bag;
 use crate::sui::types::Number;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::collection_types::Entry;
-use iota_sdk::types::collection_types::VecMap;
-use iota_sdk::types::collection_types::VecSet;
-use iota_sdk::types::id::UID;
+use crate::iota_sdk_abstraction::types::base_types::ObjectID;
+use crate::iota_sdk_abstraction::types::collection_types::Entry;
+use crate::iota_sdk_abstraction::types::collection_types::VecMap;
+use crate::iota_sdk_abstraction::types::collection_types::VecSet;
+use crate::iota_sdk_abstraction::types::id::UID;
 use serde::Deserialize;
 use serde::Serialize;
 

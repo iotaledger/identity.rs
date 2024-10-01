@@ -1,16 +1,26 @@
-use crate::IotaDID;
-use crate::IotaDocument;
-use crate::NetworkName;
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+// This file has been moved here from identity_iota_core/src/client_dummy.
+// The file will be removed after the TS-Client-SDK is integrated.
+// The file provides a POC for the wasm-bindgen glue code needed to
+// implement the TS-Client-SDK integration.
+
+use std::str::FromStr;
+
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
+use identity_iota_core::NetworkName;
 
 use super::DummySigner;
 use super::Identity;
 use super::IdentityBuilder;
 use super::IdentityClientBuilder;
-use super::IotaAddress;
 use super::IotaClientTrait;
-use super::ObjectID;
 
-// dummy `IdentityClient` as placeholder to prepare wasm bindings for the actual one
+use super::types::base_types::{IotaAddress, ObjectID};
+
+// `IdentityClient` is a dummy placeholder to prepare wasm bindings for the actual one
 // as long as it is not compilable to wasm
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
@@ -55,7 +65,9 @@ where
   }
 
   pub fn sender_address(&self) -> Result<IotaAddress, Error> {
-    Ok("dummy sender address".to_string())
+    Ok(IotaAddress::from_str("dummy sender address")
+        .map_err(|e| Error::Dummy(e.to_string()))?
+    )
   }
 
   pub fn network_name(&self) -> &NetworkName {
@@ -63,7 +75,7 @@ where
   }
 
   pub fn create_identity(&self, _iota_document: &[u8]) -> IdentityBuilder {
-    IdentityBuilder::new(&[], "foobar".to_string())
+    IdentityBuilder::new(&[], ObjectID::from_str("foobar").expect("foobar can not be parsed into ObjectId"))
   }
 
   pub async fn get_identity(&self, _object_id: ObjectID) -> Result<Identity, Error> {
@@ -108,6 +120,6 @@ where
   T: IotaClientTrait<Error = Error>,
 {
   pub async fn get_chain_identifier(&self) -> Result<String, Error> {
-    self.client.get_chain_identifier().await
+    self.client.read_api().get_chain_identifier().await
   }
 }

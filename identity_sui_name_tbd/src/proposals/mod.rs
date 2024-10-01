@@ -8,17 +8,16 @@ use std::ops::DerefMut;
 use async_trait::async_trait;
 pub use config_change::*;
 pub use deactive_did::*;
-use iota_sdk::error::Error as IotaSdkError;
-use iota_sdk::rpc_types::IotaExecutionStatus;
-use iota_sdk::rpc_types::IotaTransactionBlockEffects;
-use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
-use iota_sdk::rpc_types::OwnedObjectRef;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::object::Owner;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::Argument;
-use iota_sdk::types::transaction::ProgrammableTransaction;
+use crate::iota_sdk_abstraction::error::Error as IotaSdkError;
+use crate::iota_sdk_abstraction::rpc_types::IotaExecutionStatus;
+use crate::iota_sdk_abstraction::IotaTransactionBlockResponseT;
+use crate::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
+use crate::iota_sdk_abstraction::types::base_types::ObjectID;
+use crate::iota_sdk_abstraction::types::base_types::ObjectRef;
+use crate::iota_sdk_abstraction::types::object::Owner;
+use crate::iota_sdk_abstraction::TransactionBuilderT;
+use crate::iota_sdk_abstraction::types::transaction::Argument;
+use crate::iota_sdk_abstraction::ProgrammableTransactionBcs;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 pub use update_did_doc::*;
@@ -27,7 +26,8 @@ use crate::client::IdentityClient;
 use crate::client::IotaKeySignature;
 use crate::migration::OnChainIdentity;
 use crate::migration::Proposal;
-use crate::sui::move_calls;
+use crate::sui::iota_sdk_adapter::IdentityMoveCallsAdapter;
+use crate::iota_sdk_abstraction::IdentityMoveCalls;
 use crate::transaction::Transaction;
 use crate::utils::MoveType;
 use crate::Error;
@@ -42,21 +42,21 @@ pub trait ProposalT {
     controller_cap: ObjectRef,
     identity_ref: OnChainIdentity,
     package: ObjectID,
-  ) -> Result<(ProgrammableTransactionBuilder, Argument), Error>;
+  ) -> Result<(<IdentityMoveCallsAdapter as IdentityMoveCalls>::TxBuilder, Argument), Error>;
   fn make_chained_execution_tx(
-    ptb: ProgrammableTransactionBuilder,
+    ptb: <IdentityMoveCallsAdapter as IdentityMoveCalls>::TxBuilder,
     proposal_arg: Argument,
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
     package: ObjectID,
-  ) -> Result<ProgrammableTransaction, Error>;
+  ) -> Result<ProgrammableTransactionBcs, Error>;
   fn make_execute_tx(
     &self,
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
     package: ObjectID,
-  ) -> Result<ProgrammableTransaction, Error>;
-  fn parse_tx_effects(tx_effects: IotaTransactionBlockEffects) -> Result<Self::Output, Error>;
+  ) -> Result<ProgrammableTransactionBcs, Error>;
+  fn parse_tx_effects(_tx_response: &dyn IotaTransactionBlockResponseT<Error = Error>) -> Result<Self::Output, Error>;
 }
 
 impl<A> Proposal<A> {
@@ -144,6 +144,7 @@ where
   A: Send,
 {
   type Output = ProposalResult<Proposal<A>>;
+
   async fn execute_with_opt_gas<S>(
     self,
     gas_budget: Option<u64>,
@@ -175,24 +176,24 @@ where
     let tx = if chain_execute {
       Proposal::<A>::make_chained_execution_tx(ptb, proposal_arg, identity_ref, controller_cap, client.package_id())?
     } else {
-      ptb.finish()
+      ptb.finish()?
     };
-    let tx_effects = client
+    let tx_response = client
       .execute_transaction(tx, gas_budget)
-      .await?
-      .effects
+      .await?;
+    let tx_effects_status = tx_response.effects_execution_status()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
-    if let IotaExecutionStatus::Failure { error } = tx_effects.status() {
+    if let IotaExecutionStatus::Failure { error } = tx_effects_status {
       return Err(IotaSdkError::Data(error.clone()).into());
     }
 
     if chain_execute {
-      Proposal::<A>::parse_tx_effects(tx_effects).map(ProposalResult::Executed)
+      Proposal::<A>::parse_tx_effects(tx_response.as_ref()).map(ProposalResult::Executed)
     } else {
       // 2 objects are created, one is the Bag's Field and the other is our Proposal. Proposal is not owned by the bag,
       // but the field is.
-      let proposal_id = tx_effects
-        .created()
+      let proposal_id = tx_response.effects_created()
+        .ok_or_else(|| Error::TransactionUnexpectedResponse("transaction had no effects".to_string()))?
         .iter()
         .find(|obj_ref| obj_ref.owner != multicontroller_proposals_bag_id)
         .expect("tx was successful")
@@ -233,15 +234,16 @@ where
     let controller_cap = identity.get_controller_cap(client).await?;
 
     let tx = proposal.make_execute_tx(identity_ref, controller_cap, client.package_id())?;
-    let tx_effects = client
+    let tx_response = client
       .execute_transaction(tx, gas_budget)
-      .await?
-      .effects
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
-    if let IotaExecutionStatus::Failure { error } = tx_effects.status() {
+      .await?;
+    let tx_effects_status = tx_response.effects_execution_status()
+        .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
+
+    if let IotaExecutionStatus::Failure { error } = tx_effects_status {
       Err(IotaSdkError::Data(error.clone()).into())
     } else {
-      Proposal::<A>::parse_tx_effects(tx_effects)
+      Proposal::<A>::parse_tx_effects(tx_response.as_ref())
     }
   }
 }
@@ -270,7 +272,7 @@ where
     let Self { proposal, identity } = self;
     let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
     let controller_cap = identity.get_controller_cap(client).await?;
-    let tx = move_calls::identity::proposal::approve::<A>(
+    let tx = IdentityMoveCallsAdapter::approve_proposal::<A>(
       identity_ref.clone(),
       controller_cap,
       proposal.id(),
@@ -278,7 +280,7 @@ where
     )?;
 
     let response = client.execute_transaction(tx, gas_budget).await?;
-    if let IotaExecutionStatus::Failure { error } = response.effects.expect("had effects").into_status() {
+    if let Some(IotaExecutionStatus::Failure { error }) = response.effects_execution_status() {
       return Err(Error::TransactionUnexpectedResponse(error));
     }
 

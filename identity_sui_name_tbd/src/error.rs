@@ -9,7 +9,7 @@
 pub enum Error {
   /// failed to connect to network.
   #[error("failed to connect to iota network node; {0:?}")]
-  Network(String, #[source] iota_sdk::error::Error),
+  Network(String, #[source] crate::iota_sdk_abstraction::error::Error),
   /// could not lookup an object ID.
   #[error("failed to lookup an object; {0}")]
   ObjectLookup(String),
@@ -39,7 +39,7 @@ pub enum Error {
   TransactionSigningFailed(String),
   /// Could not execute transaction.
   #[error("data store disconnected")]
-  TransactionExecutionFailed(#[from] iota_sdk::error::Error),
+  TransactionExecutionFailed(#[from] crate::iota_sdk_abstraction::error::Error),
   /// Transaction yielded invalid response. This usually means that the transaction was executed but did not produce
   /// the expected result.
   #[error("transaction returned an unexpected response; {0}")]
@@ -64,4 +64,7 @@ pub enum Error {
   /// An error caused by either a connection issue or an invalid RPC call.
   #[error("RPC error: {0}")]
   RpcError(String),
+  /// An error caused by a bcs serialization or deserialization.
+  #[error("BCS error: {0}")]
+  BcsError(#[from] bcs::Error),
 }
