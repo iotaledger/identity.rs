@@ -1,6 +1,6 @@
 # Iota Client SDK Abstraction
 
-The folder `sdk_types` contained in this folder provides a selection of
+The folder `sdk_types`, contained in this folder, provides a selection of
 code copied from the iotaledger/iota.git repository:
 
 | Folder Name                           | Original Source in iotaledger/iota.git |
@@ -14,14 +14,15 @@ code copied from the iotaledger/iota.git repository:
 The folder structure in `sdk_types` matches the way the original IOTA Client Rust SDK
 provides the above listed crates via `pub use`.
 
-The `target` specific `pub use` and `type` expressions contained in the local
-'mod.rs' file are switching these dependencies so that for NON wasm32 targets
-the original IOTA Client Rust SDK is use and for wasm32 targets the code conatained
-in the `sdk_types` folder is used.
+This module (file 'mod.rs' contained in this folder) provides several
+`build target` specific `pub use` and `type` expressions.
+For **NON wasm32 targets**, these target specific dependency switches,
+provide the original IOTA Client Rust SDK sources.
+For **WASM32 targets** the code contained in the `sdk_types` folder is used.
 
-Please make sure always to use 'use crate::iota_sdk_abstraction:: ...'
-instead of 'use iota_sdk:: ...'. This way the dependencies needed for your
-code are automatically switsched according to the currently used build target.
+Please make sure always to use `use crate::iota_sdk_abstraction:: ...`
+instead of `use iota_sdk:: ...` in you code. This way the dependencies needed for your
+code are automatically switched according to the currently used build target.
 
 The Advantage of this target specific dependency switching is,
 that for NON wasm32 targets no type marshalling is needed because
@@ -35,10 +36,11 @@ TODOs:
 * Allways build your code additionally for the wasm32-unknown-unknown target
   before committing your code:<br>
   `build --package identity_sui_name_tbd --lib --target wasm32-unknown-unknown` 
-* We need to add tests for the wasm32-unknown-unknown target in the CI tool chain
+* We need to add tests for the wasm32-unknown-unknown target in the CI toolchain
   to make sure the code is always buildable for wasm32 targets. 
   
 All cross platform usable types and traits (cross platform traits)
 are contained in this folder.
 Platform specific adapters (implementing the cross platform traits) are contained in 
-the fodler `identity_sui_name_tbd/src/sui/iota_sdk_adapter`.
+the folder 
+[identity_sui_name_tbd/src/sui/iota_sdk_adapter](../sui/iota_sdk_adapter).
