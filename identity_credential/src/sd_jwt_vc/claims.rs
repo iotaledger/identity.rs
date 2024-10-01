@@ -44,7 +44,7 @@ pub struct SdJwtVcClaims {
   /// See [RFC7519 section 4.1.2](https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.2) for more information.
   pub sub: Option<StringOrUrl>,
   #[serde(flatten)]
-  sd_jwt_claims: SdJwtClaims,
+  pub(crate) sd_jwt_claims: SdJwtClaims,
 }
 
 impl Deref for SdJwtVcClaims {

@@ -1,6 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod builder;
 mod claims;
 mod error;
 /// Additional metadata defined by the SD-JWT VC specification
@@ -9,10 +10,11 @@ pub mod metadata;
 mod presentation;
 mod resolver;
 mod status;
+#[cfg(test)]
+pub(crate) mod tests;
 mod token;
-mod validation;
-mod builder;
 
+pub use builder::*;
 pub use claims::*;
 pub use error::Error;
 pub use error::Result;
@@ -20,5 +22,3 @@ pub use presentation::*;
 pub use resolver::Resolver;
 pub use status::*;
 pub use token::*;
-pub use validation::*;
-pub use builder::*;

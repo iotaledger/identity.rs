@@ -1,14 +1,22 @@
 use std::cell::LazyCell;
 
-use identity_core::common::{StringOrUrl, Timestamp, Url};
-use sd_jwt_payload_rework::{Hasher, JsonObject, JwsSigner, RequiredKeyBinding};
-use sd_jwt_payload_rework::{SdJwtBuilder, Sha256Hasher};
+use identity_core::common::StringOrUrl;
+use identity_core::common::Timestamp;
+use identity_core::common::Url;
+use sd_jwt_payload_rework::Hasher;
+use sd_jwt_payload_rework::JsonObject;
+use sd_jwt_payload_rework::JwsSigner;
+use sd_jwt_payload_rework::RequiredKeyBinding;
+use sd_jwt_payload_rework::SdJwtBuilder;
+use sd_jwt_payload_rework::Sha256Hasher;
 use serde::Serialize;
 use serde_json::json;
 
+use super::Error;
+use super::Result;
 use super::SdJwtVc;
-use super::{Error, Status};
-use super::{Result, SD_JWT_VC_TYP};
+use super::Status;
+use super::SD_JWT_VC_TYP;
 
 const DEFAULT_HEADER: LazyCell<JsonObject> = LazyCell::new(|| {
   let mut object = JsonObject::default();
@@ -119,13 +127,8 @@ impl<H: Hasher> SdJwtVcBuilder<H> {
 
   /// Sets the JWT header.
   /// ## Notes
-  /// - if [`SdJwtVcBuilder::header`] is not called, the default header is used:
-  ///   ```json
-  ///   {
-  ///     "typ": "sd-jwt",
-  ///     "alg": "<algorithm used in SdJwtBulider::finish>"
-  ///   }
-  ///   ```
+  /// - if [`SdJwtVcBuilder::header`] is not called, the default header is used: ```json { "typ": "sd-jwt", "alg":
+  ///   "<algorithm used in SdJwtBulider::finish>" } ```
   /// - `alg` is always replaced with the value passed to [`SdJwtVcBuilder::finish`].
   pub fn header(mut self, header: JsonObject) -> Self {
     self.header = header;
@@ -235,27 +238,7 @@ impl<H: Hasher> SdJwtVcBuilder<H> {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use async_trait::async_trait;
-  use josekit::{
-    jwt::{self, JwtPayload},
-    {jws::JwsHeader, jws::HS256},
-  };
-  use serde_json::json;
-
-  struct TestSigner;
-
-  #[async_trait]
-  impl JwsSigner for TestSigner {
-    type Error = josekit::JoseError;
-    async fn sign(&self, header: &JsonObject, payload: &JsonObject) -> std::result::Result<Vec<u8>, Self::Error> {
-      let signer = HS256.signer_from_bytes(b"0123456789ABCDEF0123456789ABCDEF")?;
-      let header = JwsHeader::from_map(header.clone())?;
-      let payload = JwtPayload::from_map(payload.clone())?;
-      let jws = jwt::encode_with_signer(&payload, &header, &signer)?;
-
-      Ok(jws.into_bytes())
-    }
-  }
+  use crate::sd_jwt_vc::tests::TestSigner;
 
   #[tokio::test]
   async fn building_valid_vc_works() -> anyhow::Result<()> {
@@ -310,14 +293,30 @@ mod tests {
       .finish(&TestSigner, "HS256")
       .await
       .unwrap_err();
-    
-    assert!(matches!(
-      err,
-      Error::InvalidClaimValue {
-        name: "vct",
-        ..
-      }
-    ));
+
+    assert!(matches!(err, Error::InvalidClaimValue { name: "vct", .. }));
+
+    Ok(())
+  }
+
+  #[tokio::test]
+  async fn building_vc_with_disclosed_mandatory_claim_fails() -> anyhow::Result<()> {
+    let credential = json!({
+      "name": "John Doe",
+      "birthdate": "1970-01-01",
+      "vct": { "id": 1234567890 }
+    });
+
+    let err = SdJwtVcBuilder::new(credential)?
+      .iat(Timestamp::now_utc())
+      .iss("https://example.com".parse()?)
+      .make_concealable("/birthdate")?
+      .make_concealable("/vct")?
+      .finish(&TestSigner, "HS256")
+      .await
+      .unwrap_err();
+
+    assert!(matches!(err, Error::DisclosedClaim("vct")));
 
     Ok(())
   }

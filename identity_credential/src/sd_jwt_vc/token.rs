@@ -213,11 +213,11 @@ impl SdJwtVc {
   /// ## Notes
   /// This check should be performed by the token's holder in order to assert the issuer's compliance with
   /// the credential's type.
-  pub fn validate_claims_disclosability(&self, hasher: &dyn Hasher, claims_metadata: &[ClaimMetadata]) -> Result<()> {
-    let disclosed_object = Value::Object(self.clone().into_disclosed_object(hasher)?);
+  pub fn validate_claims_disclosability(&self, claims_metadata: &[ClaimMetadata]) -> Result<()> {
+    let claims = Value::Object(self.parsed_claims.sd_jwt_claims.deref().clone());
     claims_metadata
       .iter()
-      .try_fold((), |_, meta| meta.check_value_disclosability(&disclosed_object))
+      .try_fold((), |_, meta| meta.check_value_disclosability(&claims))
   }
 
   /// Check whether this [`SdJwtVc`] is valid.
@@ -248,7 +248,7 @@ impl SdJwtVc {
       .await?;
 
     // Claims' disclosability.
-    self.validate_claims_disclosability(hasher, type_metadata.claim_metadata())?;
+    self.validate_claims_disclosability(type_metadata.claim_metadata())?;
 
     Ok(())
   }
@@ -263,7 +263,7 @@ pub fn vct_to_url(resource: &Url) -> Option<Url> {
   } else {
     let origin = resource.origin().ascii_serialization();
     let path = resource.path();
-    Some(format!("{origin}{WELL_KNOWN_VC_ISSUER}{path}").parse().unwrap())
+    Some(format!("{origin}{WELL_KNOWN_VCT}{path}").parse().unwrap())
   }
 }
 
