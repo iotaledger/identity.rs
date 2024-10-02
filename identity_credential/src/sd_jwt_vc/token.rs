@@ -19,15 +19,21 @@ use super::Resolver;
 use super::Result;
 use super::SdJwtVcPresentationBuilder;
 use crate::validator::JwtCredentialValidator as JwsUtils;
+use crate::validator::KeyBindingJWTValidationOptions;
 use anyhow::anyhow;
 use identity_core::common::StringOrUrl;
+use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_core::convert::ToJson as _;
 use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkSet;
 use identity_verification::jws::JwsVerifier;
+use itertools::Itertools;
 use sd_jwt_payload_rework::Hasher;
 use sd_jwt_payload_rework::JsonObject;
+use sd_jwt_payload_rework::RequiredKeyBinding;
 use sd_jwt_payload_rework::SdJwt;
+use sd_jwt_payload_rework::SHA_ALG_NAME;
 use serde_json::Value;
 
 /// SD-JWT VC's JOSE header `typ`'s value.
@@ -249,6 +255,123 @@ impl SdJwtVc {
 
     // Claims' disclosability.
     self.validate_claims_disclosability(type_metadata.claim_metadata())?;
+
+    //
+
+    Ok(())
+  }
+
+  /// Verify the signature of this [`SdJwtVc`]'s [sd_jwt_payload_rework::KeyBindingJwt].
+  pub fn verify_key_binding<V: JwsVerifier>(&self, jws_verifier: &V, jwk: &Jwk) -> Result<()> {
+    let Some(kb_jwt) = self.key_binding_jwt() else {
+      return Ok(());
+    };
+    let kb_jwt_str = kb_jwt.to_string();
+    let jws_input = JwsUtils::<V>::decode(&kb_jwt_str).map_err(|e| Error::Verification(e.into()))?;
+
+    JwsUtils::<V>::verify_signature_raw(jws_input, jwk, jws_verifier)
+      .map_err(|e| Error::Verification(e.into()))
+      .and(Ok(()))
+  }
+
+  /// Check the validity of this [`SdJwtVc`]'s [sd_jwt_payload_rework::KeyBindingJwt].
+  /// # Notes
+  /// Validation of the required key binding (specified through the `cnf` JWT's claim)
+  /// is only partially validated - custom and "jwe" requirement are not checked.
+  pub fn validate_key_binding<V: JwsVerifier>(
+    &self,
+    jws_verifier: &V,
+    jwk: &Jwk,
+    hasher: &dyn Hasher,
+    options: &KeyBindingJWTValidationOptions,
+  ) -> Result<()> {
+    self.verify_key_binding(jws_verifier, jwk)?;
+
+    if let Some(requirement) = self.required_key_bind() {
+      if self.key_binding_jwt().is_none() {
+        return Err(Error::Validation(anyhow!(
+          "a key binding was required but none was provided"
+        )));
+      }
+      match requirement {
+        RequiredKeyBinding::Jwk(json_jwk) => {
+          if jwk.to_json_value().unwrap().as_object().unwrap() != json_jwk {
+            return Err(Error::Validation(anyhow!(
+              "key used for signing KB-JWT does not match the key required in this SD-JWT"
+            )));
+          }
+        }
+        RequiredKeyBinding::Kid(kid) | RequiredKeyBinding::Jwu { kid, .. } => jwk
+          .kid()
+          .filter(|id| id == kid)
+          .ok_or_else(|| {
+            Error::Validation(anyhow::anyhow!(
+              "the provided JWK doesn't have required `kid` \"{kid}\""
+            ))
+          })
+          .map(|_| ())?,
+        _ => (),
+      }
+    }
+
+    let Some(kb_jwt) = self.key_binding_jwt() else {
+      return Ok(());
+    };
+    let KeyBindingJWTValidationOptions {
+      nonce,
+      aud,
+      earliest_issuance_date,
+      latest_issuance_date,
+      ..
+    } = options;
+
+    let issuance_date =
+      Timestamp::from_unix(kb_jwt.claims().iat).map_err(|_| Error::Validation(anyhow!("invalid `iat` value")))?;
+
+    if let Some(earliest_issuance_date) = earliest_issuance_date {
+      if issuance_date < *earliest_issuance_date {
+        return Err(Error::Validation(anyhow!(
+          "this KB-JWT has been created earlier than `earliest_issuance_date`"
+        )));
+      }
+    }
+
+    if let Some(latest_issuance_date) = latest_issuance_date {
+      if issuance_date > *latest_issuance_date {
+        return Err(Error::Validation(anyhow!(
+          "this KB-JWT has been created later than `latest_issuance_date`"
+        )));
+      }
+    } else if issuance_date > Timestamp::now_utc() {
+      return Err(Error::Validation(anyhow!("this KB-JWT has been created in the future")));
+    }
+
+    if let Some(nonce) = nonce {
+      if nonce != &kb_jwt.claims().nonce {
+        return Err(Error::Validation(anyhow!("invalid KB-JWT's nonce: expected {nonce}")));
+      }
+    }
+
+    if let Some(aud) = aud {
+      if aud != &kb_jwt.claims().aud {
+        return Err(Error::Validation(anyhow!("invalid KB-JWT's `aud`: expected \"{aud}\"")));
+      }
+    }
+
+    // Validate SD-JWT digest.
+    if self.claims()._sd_alg.as_deref().unwrap_or(SHA_ALG_NAME) != hasher.alg_name() {
+      return Err(Error::Validation(anyhow!("invalid hasher")));
+    }
+    let encoded_sd_jwt = self.to_string();
+    let digest = {
+      let last_tilde_idx = encoded_sd_jwt.chars().rev().find_position(|ch| *ch == '~').unwrap().0;
+      let sd_jwt_no_kb = &encoded_sd_jwt[..=last_tilde_idx];
+
+      hasher.encoded_digest(sd_jwt_no_kb)
+    };
+    if kb_jwt.claims().sd_hash != digest {
+      return Err(Error::Validation(anyhow!("invalid KB-JWT's `sd_hash`")));
+    }
 
     Ok(())
   }

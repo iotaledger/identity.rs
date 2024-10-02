@@ -1,4 +1,5 @@
-use std::cell::LazyCell;
+#![allow(clippy::vec_init_then_push)]
+use std::sync::LazyLock;
 
 use identity_core::common::StringOrUrl;
 use identity_core::common::Timestamp;
@@ -18,7 +19,7 @@ use super::SdJwtVc;
 use super::Status;
 use super::SD_JWT_VC_TYP;
 
-const DEFAULT_HEADER: LazyCell<JsonObject> = LazyCell::new(|| {
+static DEFAULT_HEADER: LazyLock<JsonObject> = LazyLock::new(|| {
   let mut object = JsonObject::default();
   object.insert("typ".to_string(), SD_JWT_VC_TYP.into());
   object
@@ -187,6 +188,7 @@ impl<H: Hasher> SdJwtVcBuilder<H> {
   }
 
   /// Inserts a `sub` claim. See [`super::SdJwtVcClaims::sub`].
+  #[allow(clippy::should_implement_trait)]
   pub fn sub(mut self, sub: impl Into<StringOrUrl>) -> Self {
     self.sub = Some(sub.into());
     self

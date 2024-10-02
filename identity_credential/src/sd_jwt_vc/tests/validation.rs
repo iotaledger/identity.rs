@@ -8,6 +8,7 @@ use crate::sd_jwt_vc::metadata::IssuerMetadata;
 use crate::sd_jwt_vc::metadata::Jwks;
 use crate::sd_jwt_vc::metadata::TypeMetadata;
 use crate::sd_jwt_vc::tests::TestJwsVerifier;
+use crate::sd_jwt_vc::Error;
 use crate::sd_jwt_vc::SdJwtVcBuilder;
 
 use super::TestResolver;
@@ -35,7 +36,7 @@ fn test_resolver() -> TestResolver {
 }
 
 #[tokio::test]
-async fn validation_works() -> anyhow::Result<()> {
+async fn validation_of_valid_token_works() -> anyhow::Result<()> {
   let sd_jwt_credential = SdJwtVcBuilder::new(json!({
     "name": "John Doe",
     "address": {
@@ -57,6 +58,35 @@ async fn validation_works() -> anyhow::Result<()> {
   sd_jwt_credential
     .validate(&resolver, &TestJwsVerifier, &Sha256Hasher::new())
     .await?;
+  Ok(())
+}
+
+#[tokio::test]
+async fn validation_of_invalid_token_fails() -> anyhow::Result<()> {
+  let sd_jwt_credential = SdJwtVcBuilder::new(json!({
+    "name": "John Doe",
+    "address": {
+      "street_address": "A random street",
+      "number": "3a"
+    },
+    "degree": []
+  }))?
+  .header(std::iter::once(("kid".to_string(), serde_json::Value::String("invalid_key".to_string()))).collect())
+  .vct("https://example.com/education_credential".parse::<Url>()?)
+  .iat(Timestamp::now_utc())
+  .iss("https://example.com".parse()?)
+  .make_concealable("/address/street_address")?
+  .make_concealable("/address")?
+  .finish(&TestSigner, "HS256")
+  .await?;
+
+  let resolver = test_resolver();
+  let error = sd_jwt_credential
+    .validate(&resolver, &TestJwsVerifier, &Sha256Hasher::new())
+    .await
+    .unwrap_err();
+  assert!(matches!(error, Error::Verification(_)));
+
   Ok(())
 }
 
