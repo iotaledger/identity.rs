@@ -15,7 +15,7 @@ description = "SUI related tooling for identity-rs"
 anyhow = "1.0.75"
 async-trait = "0.1.81"
 bcs = "0.1.4"
-fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "fastcrypto-zkp-v0.1.3", package = "fastcrypto" }
+fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "5f2c63266a065996d53f98156f0412782b468597", package = "fastcrypto" }
 futures = { version = "0.3", default-features = false }
 identity_core = { version = "=1.2.0", path = "../identity_core" }
 identity_credential = { version = "=1.2.0", path = "../identity_credential" }
@@ -30,7 +30,7 @@ iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk
 itertools = "0.13.0"
 move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", version = "0.0.4" }
 rand = "0.8.5"
-secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", branch = "proposal-for-changes" }
+secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", branch = "main" }
 serde.workspace = true
 serde-aux = "4.5.0"
 serde_json.workspace = true

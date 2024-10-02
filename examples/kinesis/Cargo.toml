@@ -16,7 +16,7 @@ iota-sdk-legacy = { package = "iota-sdk", version = "1.0", default-features = fa
 primitive-types = "0.12.1"
 rand = "0.8.5"
 sd-jwt-payload = { version = "0.2.1", default-features = false, features = ["sha"] }
-secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", branch = "proposal-for-changes" }
+secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", branch = "main" }
 serde_json = { version = "1.0", default-features = false }
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
 
