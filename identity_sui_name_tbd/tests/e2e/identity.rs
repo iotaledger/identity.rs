@@ -11,9 +11,11 @@ use identity_sui_name_tbd::migration::has_previous_version;
 use identity_sui_name_tbd::migration::Identity;
 use identity_sui_name_tbd::proposals::ProposalResult;
 use identity_sui_name_tbd::transaction::Transaction;
+use identity_sui_name_tbd::rpc_types::IotaObjectData;
+use identity_sui_name_tbd::types::base_types::SequenceNumber;
+use identity_sui_name_tbd::move_core_types::language_storage::StructTag;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
-use move_core_types::language_storage::StructTag;
 use serial_test::serial;
 
 #[tokio::test]
@@ -135,12 +137,11 @@ async fn adding_controller_works() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-#[serial]
 async fn can_get_historical_identity_data() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
 
-  let newly_created_identity = identity_client
+  let mut newly_created_identity = identity_client
     .create_identity(TEST_DOC)
     .finish()
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
@@ -177,52 +178,46 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
     .collect::<Result<Vec<bool>, identity_sui_name_tbd::Error>>()?;
   assert_eq!(has_previous_version_responses, vec![true, false]);
 
-  // TODO: inspect irregularity with sequence numbers here
-  // // test version numbers
-  // let expected_versions = vec![SequenceNumber::from_u64(11), SequenceNumber::from_u64(10)];
-  // let versions: Vec<SequenceNumber> = history.iter().map(|elem| elem.version).collect();
-  // assert_eq!(versions, expected_versions,);
+  let versions: Vec<SequenceNumber> = history.iter().map(|elem| elem.version).collect();
+  let version_numbers: Vec<usize> = versions.iter().map(|v| (*v).into()).collect();
+  let oldest_version: usize = *version_numbers.last().unwrap();
+  let version_diffs: Vec<usize> = version_numbers.iter().map(|v| v - oldest_version).collect();
+  assert_eq!(version_diffs, vec![1, 0],);
 
-  // // paging:
-  // //   you can either loop until no result is returned
-  // let mut result_index = 0;
-  // let mut current_item: Option<&IotaObjectData> = None;
-  // let mut history: Vec<IotaObjectData>;
-  // loop {
-  //   history = updated_identity
-  //     .get_history(&identity_client, current_item, Some(1))
-  //     .await?;
-  //   if history.is_empty() {
-  //     break;
-  //   }
-  //   current_item = history.first();
-  //   assert_eq!(
-  //     current_item.unwrap().version,
-  //     *expected_versions.get(result_index).unwrap()
-  //   );
-  //   result_index += 1;
-  // }
+  // paging:
+  //   you can either loop until no result is returned
+  let mut result_index = 0;
+  let mut current_item: Option<&IotaObjectData> = None;
+  let mut history: Vec<IotaObjectData>;
+  loop {
+    history = updated_identity
+      .get_history(&identity_client, current_item, Some(1))
+      .await?;
+    if history.is_empty() {
+      break;
+    }
+    current_item = history.first();
+    assert_eq!(current_item.unwrap().version, *versions.get(result_index).unwrap());
+    result_index += 1;
+  }
 
-  // //   or check before fetching next page
-  // let mut result_index = 0;
-  // let mut current_item: Option<&IotaObjectData> = None;
-  // let mut history: Vec<IotaObjectData>;
-  // loop {
-  //   history = updated_identity
-  //     .get_history(&identity_client, current_item, Some(1))
-  //     .await?;
+  //   or check before fetching next page
+  let mut result_index = 0;
+  let mut current_item: Option<&IotaObjectData> = None;
+  let mut history: Vec<IotaObjectData>;
+  loop {
+    history = updated_identity
+      .get_history(&identity_client, current_item, Some(1))
+      .await?;
 
-  //   current_item = history.first();
-  //   assert_eq!(
-  //     current_item.unwrap().version,
-  //     *expected_versions.get(result_index).unwrap()
-  //   );
-  //   result_index += 1;
+    current_item = history.first();
+    assert_eq!(current_item.unwrap().version, *versions.get(result_index).unwrap());
+    result_index += 1;
 
-  //   if !has_previous_version(current_item.unwrap())? {
-  //     break;
-  //   }
-  // }
+    if !has_previous_version(current_item.unwrap())? {
+      break;
+    }
+  }
 
   Ok(())
 }
