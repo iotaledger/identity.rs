@@ -31,6 +31,7 @@ use move_core_types::language_storage::StructTag;
 use secret_storage::Signer;
 use serde;
 use serde::Deserialize;
+use serde::Serialize;
 
 use crate::client::IdentityClient;
 use crate::client::IdentityClientReadOnly;
@@ -83,7 +84,7 @@ impl Identity {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct OnChainIdentity {
   id: UID,
   multi_controller: Multicontroller<Vec<u8>>,
