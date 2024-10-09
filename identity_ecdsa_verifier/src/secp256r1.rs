@@ -13,6 +13,7 @@ use p256::elliptic_curve::sec1::FromEncodedPoint;
 use p256::elliptic_curve::subtle::CtOption;
 use p256::EncodedPoint;
 use p256::PublicKey;
+use signature::hazmat::PrehashVerifier;
 
 /// A verifier that can handle the
 /// [`JwsAlgorithm::ES256`](identity_verification::jws::JwsAlgorithm::ES256)
@@ -79,11 +80,8 @@ impl Secp256R1Verifier {
       SignatureVerificationError::new(SignatureVerificationErrorKind::InvalidSignature).with_source(err)
     })?;
 
-    match signature::Verifier::verify(&verifying_key, &input.signing_input, &signature) {
-      Ok(()) => Ok(()),
-      Err(err) => {
-        Err(SignatureVerificationError::new(SignatureVerificationErrorKind::InvalidSignature).with_source(err))
-      }
-    }
+    verifying_key
+      .verify_prehash(&input.signing_input, &signature)
+      .map_err(|e| SignatureVerificationError::new(SignatureVerificationErrorKind::InvalidSignature).with_source(e))
   }
 }
