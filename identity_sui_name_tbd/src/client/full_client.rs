@@ -181,9 +181,7 @@ where
     document: IotaDocument,
     gas_budget: u64,
   ) -> Result<IotaDocument, Error> {
-    let oci = if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(document.id())?).await? {
-      value
-    } else {
+    let Identity::FullFledged(oci) = self.get_identity(get_object_id_from_did(document.id())?).await? else {
       return Err(Error::Identity("only new identities can be updated".to_string()));
     };
 
@@ -197,9 +195,7 @@ where
   }
 
   pub async fn deactivate_did_output(&self, did: &IotaDID, gas_budget: u64) -> Result<(), Error> {
-    let oci = if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(did)?).await? {
-      value
-    } else {
+    let Identity::FullFledged(oci) = self.get_identity(get_object_id_from_did(did)?).await? else {
       return Err(Error::Identity("only new identities can be deactivated".to_string()));
     };
 

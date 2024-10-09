@@ -175,7 +175,7 @@ impl WasmIdentityBuilder {
     Self(
       self
         .0
-        .controllers(controllers.iter().map(|v| (v.0.clone(), v.1)).collect::<Vec<_>>()),
+        .controllers(controllers.into_iter().map(|v| (v.0, v.1)).collect::<Vec<_>>()),
     )
   }
 
