@@ -401,9 +401,9 @@ impl IotaClientRustSdk {
             .map_err(Error::TransactionExecutionFailed)?;
 
         if let Some(IotaTransactionBlockEffects::V1(IotaTransactionBlockEffectsV1 {
-                                                        status: IotaExecutionStatus::Failure { error },
-                                                        ..
-                                                    })) = &response.effects
+            status: IotaExecutionStatus::Failure { error },
+            ..
+        })) = &response.effects
         {
             Err(Error::TransactionUnexpectedResponse(error.to_string()))
         } else {
