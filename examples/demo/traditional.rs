@@ -1,4 +1,5 @@
 use std::{collections::HashMap, fs::File, path::Path};
+use env_logger::Env;
 use examples::{create_did, random_stronghold_path, MemStorage, API_ENDPOINT};
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::{core::{Duration, FromJson, Object, Timestamp, Url}, credential::{Credential, CredentialBuilder, DecodedJwtCredential, DecodedJwtPresentation, FailFast, Jwt, JwtCredentialValidationOptions, JwtCredentialValidator, JwtCredentialValidatorUtils, JwtPresentationOptions, JwtPresentationValidationOptions, JwtPresentationValidator, JwtPresentationValidatorUtils, Presentation, PresentationBuilder, Subject, SubjectHolderRelationship}, did::{CoreDID, DIDJwk, DID}, document::{verifiable::JwsVerificationOptions, CoreDocument}, iota::{IotaDocument, NetworkName}, resolver::Resolver, storage::{DidJwkDocumentExt, JwkGenOutput, JwkMemStore, JwkStorage, JwsSignatureOptions, KeyIdMemstore, KeyIdStorage, KeyStorageResult, MethodDigest}, verification::{jws::JwsAlgorithm, jwu::encode_b64_json, MethodScope}};
@@ -19,21 +20,19 @@ pub fn write_to_file(doc: &CoreDocument, path: Option<&str>) -> anyhow::Result<(
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     let did_url: &str = "https://localhost:4443/.well-known/did.json";
     let path_did_file: &str = "C:/Projects/did-web-server/.well-known/did.json";
+
+    log::info!("[Issuer]: Create DID (with did:web method) and publish the DID Document at {}", did_url);
   
-    // Create a new client to make HTTPS requests.
     let client= ClientBuilder::new()
     .danger_accept_invalid_certs(true)
     .build()?;
   
-    // Create a new Web DID document.
     let mut issuer_document: CoreDocument = CoreDocument::new_from_url(did_url)?;
-  
-    // Insert a new Ed25519 verification method in the DID document.
+
     let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
     let fragment_issuer = issuer_document
       .generate_method(
@@ -46,10 +45,6 @@ async fn main() -> anyhow::Result<()> {
       .await?;
   
     write_to_file(&issuer_document, Some(path_did_file))?;
-    println!("Web DID Document: {:#}", issuer_document);
-  
-
-    // ----------------------------
 
     let storage_alice: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
@@ -59,13 +54,9 @@ async fn main() -> anyhow::Result<()> {
       JwsAlgorithm::EdDSA
     ).await?;
 
-    // ----------------------------
-  
-    // ===========================================================================
-    // Step 2: Issuer creates and signs a Verifiable Credential.
-    // ===========================================================================
-  
-    // Create a credential subject indicating the degree earned by Alice.
+    log::info!("[Holder]: Create DID Jwk: {}", alice_document.id().as_str());
+
+
     let subject: Subject = Subject::from_json_value(json!({
       "id": alice_document.id().as_str(),
       "name": "Alice",
@@ -75,8 +66,14 @@ async fn main() -> anyhow::Result<()> {
       },
       "GPA": "4.0",
     }))?;
+
+    log::info!("[Holder]: Inserted Credential subject information: {}", serde_json::to_string_pretty(&subject)?);
+
+    log::info!("[Holder] <-> [Issuer]: Challenge-response protocol to authenticate Holder's DID");
+
   
-    // Build credential using subject above and issuer.
+    log::info!("[Issuer]: Construct VC");
+    
     let credential: Credential = CredentialBuilder::default()
       .id(Url::parse("https://example.edu/credentials/3732")?)
       .issuer(Url::parse(issuer_document.id().as_str())?)
@@ -93,12 +90,14 @@ async fn main() -> anyhow::Result<()> {
         None,
       )
       .await?;
-  
-    // Before sending this credential to the holder the issuer wants to validate that some properties
-    // of the credential satisfy their expectations.
-  
-    // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure,
-    // that the issuance date is not in the future and that the expiration date is not in the past:
+
+
+    log::info!("[Issuer] -> [Holder]: Sending VC (as JWT): {}", credential_jwt.as_str());
+
+    log::info!("[Holder]: Resolve Issuer's DID: {}", issuer_document.id().as_str());
+
+    log::info!("[Holder]: Validate VC");
+
     JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default())
       .validate::<_, Object>(
         &credential_jwt,
@@ -108,36 +107,19 @@ async fn main() -> anyhow::Result<()> {
       )
       .unwrap();
   
-    println!("VC successfully validated");
+    log::info!("[Verifier] -> [Holder]: Send challenge");
   
-    // ===========================================================================
-    // Step 3: Issuer sends the Verifiable Credential to the holder.
-    // ===========================================================================
-    println!("Sending credential (as JWT) to the holder: {credential:#}");
-  
-    // ===========================================================================
-    // Step 4: Verifier sends the holder a challenge and requests a signed Verifiable Presentation.
-    // ===========================================================================
-  
-    // A unique random challenge generated by the requester per presentation can mitigate replay attacks.
     let challenge: &str = "475a7984-1bb5-4c4c-a56f-822bccd46440";
   
-    // The verifier and holder also agree that the signature should have an expiry date
-    // 10 minutes from now.
     let expires: Timestamp = Timestamp::now_utc().checked_add(Duration::minutes(10)).unwrap();
   
-    // ===========================================================================
-    // Step 5: Holder creates and signs a verifiable presentation from the issued credential.
-    // ===========================================================================
-  
-    // Create an unsigned Presentation from the previously issued Verifiable Credential.
+    log::info!("[Holder]: Construct VP");
+    
     let presentation: Presentation<Jwt> =
       PresentationBuilder::new(alice_document.id().to_url().into(), Default::default())
         .credential(credential_jwt)
         .build()?;
   
-    // Create a JWT verifiable presentation using the holder's verification method
-    // and include the requested challenge and expiry timestamp.
     let presentation_jwt: Jwt = alice_document
       .create_presentation_jwt(
         &presentation,
@@ -147,13 +129,8 @@ async fn main() -> anyhow::Result<()> {
         &JwtPresentationOptions::default().expiration_date(expires),
       )
       .await?;
-  
-    // ===========================================================================
-    // Step 6: Holder sends a verifiable presentation to the verifier.
-    // ===========================================================================
-    println!("Sending presentation (as JWT) to the verifier: {presentation:#}");
 
-    println!("Presentation JWT: {}", presentation_jwt.as_str());
+    log::info!("[Holder] -> [Verifier]: Sending VP (as JWT): {}", presentation_jwt.as_str());
   
     // ===========================================================================
     // Step 7: Verifier receives the Verifiable Presentation and verifies it.

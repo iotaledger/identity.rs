@@ -29,7 +29,7 @@ pub trait DidJwkDocumentExt{
         storage: &Storage<K, I>,
         key_type: KeyType,
         alg: JwsAlgorithm,
-      ) -> Self
+      ) -> StorageResult<(CoreDocument, String)>
       where
         K: JwkStoragePQ,
         I: KeyIdStorage;
@@ -39,7 +39,7 @@ pub trait DidJwkDocumentExt{
         storage: &Storage<K, I>,
         key_type: KeyType,
         alg: ProofAlgorithm,
-      ) -> Self
+      ) -> StorageResult<(CoreDocument, String)>
       where
         K: JwkStorageBbsPlusExt,
         I: KeyIdStorage;
@@ -96,21 +96,82 @@ impl DidJwkDocumentExt for CoreDocument {
         storage: &Storage<K, I>,
         key_type: KeyType,
         alg: JwsAlgorithm,
-      ) -> Self
+      ) -> StorageResult<(CoreDocument, String)>
       where
         K: JwkStoragePQ,
         I: KeyIdStorage {
-        todo!()
+
+            let JwkGenOutput { key_id, jwk } = K::generate_pq_key(storage.key_storage(),
+            key_type,
+                alg
+            ).await
+            .map_err(Error::KeyStorageError)?;
+        
+            let b64 = encode_b64_json(&jwk)
+            .map_err(|err| Error::EncodingError(Box::new(err)))?;
+        
+            let did = DIDJwk::parse(&("did:jwk:".to_string() + &b64))
+            .map_err(|err| Error::EncodingError(Box::new(err)))?;
+    
+        
+            let document = CoreDocument::expand_did_jwk(did)
+            .map_err(|err| Error::EncodingError(Box::new(err)))?;
+
+        
+            let fragment = "0";
+        
+            let verification_method = document.resolve_method(fragment, None)
+            .ok_or(identity_verification::Error::MissingIdFragment)
+            .map_err(Error::VerificationMethodConstructionError)?;
+        
+            let method_digest = MethodDigest::new(verification_method)
+            .map_err(|err| Error::MethodDigestConstructionError(err))?;
+        
+            I::insert_key_id(&storage.key_id_storage(), method_digest, key_id.clone())
+            .await
+            .map_err(Error::KeyIdStorageError)?;
+
+            Ok((document, fragment.to_string()))
     }
 
     async fn new_did_jwk_zk<K, I>(
         storage: &Storage<K, I>,
         key_type: KeyType,
         alg: ProofAlgorithm,
-      ) -> Self
+      ) -> StorageResult<(CoreDocument, String)>
       where
         K: JwkStorageBbsPlusExt,
         I: KeyIdStorage {
-        todo!()
+            let JwkGenOutput { key_id, jwk } = K::generate_bbs(storage.key_storage(),
+            key_type,
+                alg
+            ).await
+            .map_err(Error::KeyStorageError)?;
+        
+            let b64 = encode_b64_json(&jwk)
+            .map_err(|err| Error::EncodingError(Box::new(err)))?;
+        
+            let did = DIDJwk::parse(&("did:jwk:".to_string() + &b64))
+            .map_err(|err| Error::EncodingError(Box::new(err)))?;
+    
+        
+            let document = CoreDocument::expand_did_jwk(did)
+            .map_err(|err| Error::EncodingError(Box::new(err)))?;
+
+        
+            let fragment = "0";
+        
+            let verification_method = document.resolve_method(fragment, None)
+            .ok_or(identity_verification::Error::MissingIdFragment)
+            .map_err(Error::VerificationMethodConstructionError)?;
+        
+            let method_digest = MethodDigest::new(verification_method)
+            .map_err(|err| Error::MethodDigestConstructionError(err))?;
+        
+            I::insert_key_id(&storage.key_id_storage(), method_digest, key_id.clone())
+            .await
+            .map_err(Error::KeyIdStorageError)?;
+
+            Ok((document, fragment.to_string()))
     }
 }
