@@ -87,19 +87,17 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
     fn to_string(&self) -> String { format!("{:?}", self.response) }
 
     fn effects_execution_status(&self) -> Option<IotaExecutionStatus> {
-        if let Some(effects) = self.response.effects.as_ref() {
-            Some(effects.status().clone())
-        } else {
-            None
-        }
+        self.response
+            .effects
+            .as_ref()
+            .map(|effects| effects.status().clone())
     }
 
     fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
-        if let Some(effects) = self.response.effects.as_ref() {
-            Some(effects.created().to_vec())
-        } else {
-            None
-        }
+        self.response
+            .effects
+            .as_ref()
+            .map(|effects| effects.created().to_vec())
     }
 }
 
