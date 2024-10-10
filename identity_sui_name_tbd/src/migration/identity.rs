@@ -51,12 +51,16 @@ const MODULE: &str = "identity";
 const NAME: &str = "Identity";
 const HISTORY_DEFAULT_PAGE_SIZE: usize = 10;
 
+/// An on-chain object holding a DID Document.
 pub enum Identity {
+  /// A legacy IOTA Stardust's Identity.
   Legacy(UnmigratedAlias),
+  /// An on-chain Identity.
   FullFledged(OnChainIdentity),
 }
 
 impl Identity {
+  /// Returns the [`IotaDocument`] DID Document stored inside this [`Identity`].
   pub fn did_document(&self, client: &IdentityClientReadOnly) -> Result<IotaDocument, Error> {
     let original_did = IotaDID::from_alias_id(self.id().to_string().as_str(), client.network());
     let doc_bytes = self.doc_bytes().ok_or(Error::DidDocParsingFailed(
@@ -83,6 +87,7 @@ impl Identity {
   }
 }
 
+/// Representation of `identity.rs`'s `Identity` Move type.
 #[derive(Debug)]
 pub struct OnChainIdentity {
   id: UID,
@@ -98,28 +103,40 @@ impl Deref for OnChainIdentity {
 }
 
 impl OnChainIdentity {
+  /// Returns the [`ObjectID`] of this [`OnChainIdentity`].
   pub fn id(&self) -> ObjectID {
     *self.id.object_id()
   }
+
   /// Returns true if this [`OnChainIdentity`] is shared between multiple controllers.
   pub fn is_shared(&self) -> bool {
     self.multi_controller.controllers().len() > 1
   }
+
+  /// Returns this [`OnChainIdentity`]'s list of active proposals.
   pub fn proposals(&self) -> &HashSet<ObjectID> {
     self.multi_controller.proposals()
   }
+
+  /// Returns this [`OnChainIdentity`]'s controllers as the map: `controller_id -> controller_voting_power`.
   pub fn controllers(&self) -> &HashMap<ObjectID, u64> {
     self.multi_controller.controllers()
   }
+
+  /// Returns the threshold required by this [`OnChainIdentity`] for executing a proposal.
   pub fn threshold(&self) -> u64 {
     self.multi_controller.threshold()
   }
+
+  /// Returns the voting power of controller with ID `controller_id`, if any.
   pub fn controller_voting_power(&self, controller_id: ObjectID) -> Option<u64> {
     self.multi_controller.controller_voting_power(controller_id)
   }
+
   pub(crate) fn multicontroller(&self) -> &Multicontroller<Vec<u8>> {
     &self.multi_controller
   }
+
   pub(crate) async fn get_controller_cap<S>(&self, client: &IdentityClient<S>) -> Result<ObjectRef, Error> {
     let controller_cap_tag = StructTag::from_str(&format!("{}::multicontroller::ControllerCap", client.package_id()))
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
@@ -131,18 +148,22 @@ impl OnChainIdentity {
       .ok_or_else(|| Error::Identity("this address has no control over the requested identity".to_string()))
   }
 
+  /// Updates this [`OnChainIdentity`]'s DID Document.
   pub fn update_did_document(&mut self, updated_doc: IotaDocument) -> ProposalBuilder<'_, UpdateDidDocument> {
     ProposalBuilder::new(self, UpdateDidDocument::new(updated_doc))
   }
 
+  /// Updates this [`OnChainIdentity`]'s configuration.
   pub fn update_config(&mut self) -> ProposalBuilder<'_, ConfigChange> {
     ProposalBuilder::new(self, ConfigChange::default())
   }
 
+  /// Deactivates the DID Document represented by this [`OnChainIdentity`].
   pub fn deactivate_did(&mut self) -> ProposalBuilder<'_, DeactiveDid> {
     ProposalBuilder::new(self, DeactiveDid::new())
   }
 
+  /// Returns historical data for this [`OnChainIdentity`].
   pub async fn get_history(
     &self,
     client: &IdentityClientReadOnly,
@@ -282,6 +303,7 @@ async fn get_previous_version(
   }
 }
 
+/// Returns the [`OnChainIdentity`] having ID `object_id`, if it exists.
 pub async fn get_identity(
   client: &IdentityClientReadOnly,
   object_id: ObjectID,
@@ -348,6 +370,7 @@ fn is_identity(value: &IotaParsedMoveObject) -> bool {
   value.type_.module.as_ident_str().as_str() == MODULE && value.type_.name.as_ident_str().as_str() == NAME
 }
 
+/// Builder-style struct to create a new [`OnChainIdentity`].
 #[derive(Debug)]
 pub struct IdentityBuilder<'a> {
   did_doc: &'a [u8],
@@ -356,6 +379,10 @@ pub struct IdentityBuilder<'a> {
 }
 
 impl<'a> IdentityBuilder<'a> {
+  /// Initializes a new builder for an [`OnChainIdentity`], where the passed `did_doc` will be
+  /// used as the identity's DID Document.
+  /// ## Warning
+  /// Validation of `did_doc` is deferred to [`CreateIdentityTx`].
   pub fn new(did_doc: &'a [u8]) -> Self {
     Self {
       did_doc,
@@ -364,16 +391,19 @@ impl<'a> IdentityBuilder<'a> {
     }
   }
 
+  /// Gives `address` the capability to act as a controller with voting power `voting_power`. 
   pub fn controller(mut self, address: IotaAddress, voting_power: u64) -> Self {
     self.controllers.insert(address, voting_power);
     self
   }
 
+  /// Sets the identity's threshold.
   pub fn threshold(mut self, threshold: u64) -> Self {
     self.threshold = Some(threshold);
     self
   }
 
+  /// Sets multiple controllers in a single step. See [`IdentityBuilder::controller`].
   pub fn controllers<I>(self, controllers: I) -> Self
   where
     I: IntoIterator<Item = (IotaAddress, u64)>,
@@ -383,6 +413,7 @@ impl<'a> IdentityBuilder<'a> {
       .fold(self, |builder, (addr, vp)| builder.controller(addr, vp))
   }
 
+  /// Turns this builder into a [`Transaction`], ready to be executed.
   pub fn finish(self) -> CreateIdentityTx<'a> {
     CreateIdentityTx(self)
   }
@@ -399,6 +430,7 @@ impl MoveType for OnChainIdentity {
   }
 }
 
+/// A [`Transaction`] for creating a new [`OnChainIdentity`] from an [`IdentityBuilder`].
 #[derive(Debug)]
 pub struct CreateIdentityTx<'a>(IdentityBuilder<'a>);
 
