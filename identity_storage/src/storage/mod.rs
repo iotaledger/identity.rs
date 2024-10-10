@@ -16,6 +16,8 @@ mod hybrid_jws_document_ext;
 #[cfg(feature = "pqc")]
 mod pqc_jws_document_ext;
 
+mod did_jwk_document_ext;
+
 #[cfg(all(test, feature = "memstore"))]
 pub(crate) mod tests;
 
@@ -31,6 +33,8 @@ pub use timeframe_revocation_ext::*;
 pub use hybrid_jws_document_ext::*;
 #[cfg(feature = "pqc")]
 pub use pqc_jws_document_ext::*;
+
+pub use did_jwk_document_ext::*;
 
 /// A type wrapping a key and key id storage, typically used with [`JwkStorage`](crate::key_storage::JwkStorage) and
 /// [`KeyIdStorage`](crate::key_id_storage::KeyIdStorage) that should always be used together when calling methods from

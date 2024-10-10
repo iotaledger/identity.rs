@@ -160,6 +160,7 @@ impl CoreDID {
 
   /// Checks if the given `did` is valid according to the base [`DID`] specification.
   pub fn check_validity(did: &BaseDIDUrl) -> Result<(), Error> {
+    println!("did: {}", did);
     // Validate basic DID constraints.
     Self::valid_method_name(did.method())?;
     Self::valid_method_id(did.method_id())?;
