@@ -35,7 +35,7 @@ the original Rust SDK can be used in your code that is not contained in the
 TODOs:
 * Allways build your code additionally for the wasm32-unknown-unknown target
   before committing your code:<br>
-  `build --package identity_sui_name_tbd --lib --target wasm32-unknown-unknown` 
+  `cargo build --package identity_sui_name_tbd --lib --target wasm32-unknown-unknown` 
 * We need to add tests for the wasm32-unknown-unknown target in the CI toolchain
   to make sure the code is always buildable for wasm32 targets. 
   
