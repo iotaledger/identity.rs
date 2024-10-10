@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use crate::common::get_client as get_test_client;
+use crate::common::TEST_DOC;
 use crate::common::TEST_GAS_BUDGET;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
@@ -20,7 +21,6 @@ use identity_sui_name_tbd::AuthenticatedAsset;
 use identity_sui_name_tbd::PublicAvailableVC;
 use identity_sui_name_tbd::TransferProposal;
 use identity_verification::VerificationMethod;
-use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::TypeTag;
 use itertools::Itertools as _;
 use move_core_types::language_storage::StructTag;
@@ -176,10 +176,17 @@ async fn hosting_vc_works() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
 
-  let did = {
-    let object_id = ObjectID::random();
-    IotaDID::parse(&format!("did:iota:{object_id}"))?
-  };
+  let newly_created_identity = identity_client
+    .create_identity(TEST_DOC)
+    .finish()
+    .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
+    .await?;
+  let object_id = newly_created_identity.id();
+  let did = { IotaDID::parse(&format!("did:iota:{object_id}"))? };
+
+  test_client
+    .store_key_id_for_verification_method(identity_client.clone(), did.clone())
+    .await?;
   let did_doc = CoreDocument::builder(Object::default())
     .id(did.clone().into())
     .verification_method(VerificationMethod::new_from_jwk(

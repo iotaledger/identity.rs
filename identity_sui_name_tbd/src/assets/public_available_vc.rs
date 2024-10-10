@@ -8,8 +8,13 @@ use identity_credential::credential::JwtCredential;
 use identity_jose::jwt::JwtHeader;
 use identity_jose::jwu;
 use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use iota_sdk::types::transaction::Argument;
+use iota_sdk::types::transaction::Command;
+use iota_sdk::types::transaction::ProgrammableMoveCall;
 use iota_sdk::types::TypeTag;
 use itertools::Itertools;
+use move_core_types::ident_str;
 use secret_storage::Signer;
 use serde::Deserialize;
 use serde::Serialize;
@@ -19,6 +24,7 @@ use crate::client::IdentityClientReadOnly;
 use crate::client::IotaKeySignature;
 use crate::transaction::Transaction;
 use crate::utils::MoveType;
+use crate::Error;
 
 use super::AuthenticatedAsset;
 use super::AuthenticatedAssetBuilder;
@@ -31,6 +37,23 @@ struct IotaVerifiableCredential {
 impl MoveType for IotaVerifiableCredential {
   fn move_type(package: ObjectID) -> TypeTag {
     TypeTag::from_str(&format!("{package}::public_vc::PublicVc")).expect("valid utf8")
+  }
+
+  fn try_to_argument(
+    &self,
+    ptb: &mut ProgrammableTransactionBuilder,
+    package: Option<ObjectID>,
+  ) -> Result<Argument, Error> {
+    let values = ptb
+      .pure(&self.data)
+      .map_err(|e| Error::InvalidArgument(e.to_string()))?;
+    Ok(ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
+      package: package.ok_or_else(|| Error::InvalidArgument("missing package ID".to_string()))?,
+      module: ident_str!("public_vc").into(),
+      function: ident_str!("new").into(),
+      type_arguments: vec![],
+      arguments: vec![values],
+    }))))
   }
 }
 

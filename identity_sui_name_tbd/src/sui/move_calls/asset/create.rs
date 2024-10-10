@@ -17,7 +17,7 @@ pub fn new<T: Serialize + MoveType>(
   package: ObjectID,
 ) -> Result<ProgrammableTransaction, Error> {
   let mut ptb = ProgrammableTransactionBuilder::new();
-  let inner = ptb.pure(inner).map_err(|e| Error::InvalidArgument(e.to_string()))?;
+  let inner = inner.try_to_argument(&mut ptb, Some(package))?;
   let mutable = ptb.pure(mutable).map_err(|e| Error::InvalidArgument(e.to_string()))?;
   let transferable = ptb
     .pure(transferable)
