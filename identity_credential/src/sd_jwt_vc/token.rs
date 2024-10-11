@@ -28,7 +28,6 @@ use identity_core::convert::ToJson as _;
 use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkSet;
 use identity_verification::jws::JwsVerifier;
-use itertools::Itertools;
 use sd_jwt_payload_rework::Hasher;
 use sd_jwt_payload_rework::JsonObject;
 use sd_jwt_payload_rework::RequiredKeyBinding;
@@ -364,7 +363,7 @@ impl SdJwtVc {
     }
     let encoded_sd_jwt = self.to_string();
     let digest = {
-      let last_tilde_idx = encoded_sd_jwt.chars().rev().find_position(|ch| *ch == '~').unwrap().0;
+      let last_tilde_idx = encoded_sd_jwt.rfind('~').expect("SD-JWT has a '~'");
       let sd_jwt_no_kb = &encoded_sd_jwt[..=last_tilde_idx];
 
       hasher.encoded_digest(sd_jwt_no_kb)

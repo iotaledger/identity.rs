@@ -78,6 +78,7 @@ jpt-bbs-plus = [
   "dep:zkryptium",
   "dep:bls12_381_plus",
   "dep:json-proof-token",
+  "dep:futures",
 ]
 
 [lints]
