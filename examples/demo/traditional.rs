@@ -7,6 +7,8 @@ use identity_iota::storage::JwkDocumentExt;
 use iota_sdk::{client::{secret::{stronghold::StrongholdSecretManager, SecretManager}, Client, Password}, types::block::address::Address};
 use reqwest::ClientBuilder;
 use serde_json::json;
+use colored::Colorize;
+
 
 
 pub fn write_to_file(doc: &CoreDocument, path: Option<&str>) -> anyhow::Result<()> {
@@ -20,12 +22,12 @@ pub fn write_to_file(doc: &CoreDocument, path: Option<&str>) -> anyhow::Result<(
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+    //env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     let did_url: &str = "https://localhost:4443/.well-known/did.json";
     let path_did_file: &str = "C:/Projects/did-web-server/.well-known/did.json";
 
-    log::info!("[Issuer]: Create DID (with did:web method) and publish the DID Document at {}", did_url);
+    println!("{} {} {}", "[Issuer]".red(), ": Create DID (with did:web method) and publish the DID Document at", did_url);
   
     let client= ClientBuilder::new()
     .danger_accept_invalid_certs(true)
@@ -54,8 +56,7 @@ async fn main() -> anyhow::Result<()> {
       JwsAlgorithm::EdDSA
     ).await?;
 
-    log::info!("[Holder]: Create DID Jwk: {}", alice_document.id().as_str());
-
+    println!("{} {} {}", "[Holder]".blue(), ": Create DID Jwk:", alice_document.id().as_str());
 
     let subject: Subject = Subject::from_json_value(json!({
       "id": alice_document.id().as_str(),
@@ -67,12 +68,11 @@ async fn main() -> anyhow::Result<()> {
       "GPA": "4.0",
     }))?;
 
-    log::info!("[Holder]: Inserted Credential subject information: {}", serde_json::to_string_pretty(&subject)?);
+    println!("{} {} {}", "[Holder]".blue(), ": Inserted Credential subject information: ", serde_json::to_string_pretty(&subject)?);
 
-    log::info!("[Holder] <-> [Issuer]: Challenge-response protocol to authenticate Holder's DID");
+    println!("{} {} {}", "[Holder]".blue(), " <-> [Issuer]".red(), ": Challenge-response protocol to authenticate Holder's DID");
 
-  
-    log::info!("[Issuer]: Construct VC");
+    println!("{} {} ","[Issuer]".red(), ": Construct VC");
     
     let credential: Credential = CredentialBuilder::default()
       .id(Url::parse("https://example.edu/credentials/3732")?)
@@ -92,11 +92,11 @@ async fn main() -> anyhow::Result<()> {
       .await?;
 
 
-    log::info!("[Issuer] -> [Holder]: Sending VC (as JWT): {}", credential_jwt.as_str());
+    println!("{} {} {} {}", "[Issuer]".red(), " -> [Holder]".blue(), ": Sending VC (as JWT):", credential_jwt.as_str());
 
-    log::info!("[Holder]: Resolve Issuer's DID: {}", issuer_document.id().as_str());
+    println!("{} {} {}", "[Holder]".blue(), ": Resolve Issuer's DID:", issuer_document.id().as_str());
 
-    log::info!("[Holder]: Validate VC");
+    println!("{} {}", "[Holder]".blue(), ": Validate VC");
 
     JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default())
       .validate::<_, Object>(
@@ -107,13 +107,13 @@ async fn main() -> anyhow::Result<()> {
       )
       .unwrap();
   
-    log::info!("[Verifier] -> [Holder]: Send challenge");
+    println!("{} {}", "[Verifier]".green(),  "-> [Holder]: Send challenge");
   
     let challenge: &str = "475a7984-1bb5-4c4c-a56f-822bccd46440";
   
     let expires: Timestamp = Timestamp::now_utc().checked_add(Duration::minutes(10)).unwrap();
   
-    log::info!("[Holder]: Construct VP");
+    println!("{} {}", "[Holder]".blue(), ": Construct VP");
     
     let presentation: Presentation<Jwt> =
       PresentationBuilder::new(alice_document.id().to_url().into(), Default::default())
@@ -130,7 +130,7 @@ async fn main() -> anyhow::Result<()> {
       )
       .await?;
 
-    log::info!("[Holder] -> [Verifier]: Sending VP (as JWT): {}", presentation_jwt.as_str());
+    println!("{} {} {} {}", "[Holder]".blue(), " -> [Verifier]".green(),  ": Sending VP (as JWT):", presentation_jwt.as_str());
   
     // ===========================================================================
     // Step 7: Verifier receives the Verifiable Presentation and verifies it.
