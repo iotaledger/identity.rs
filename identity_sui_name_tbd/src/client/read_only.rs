@@ -23,6 +23,7 @@ use crate::iota_sdk_abstraction::types::base_types::IotaAddress;
 use crate::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::iota_sdk_abstraction::types::base_types::ObjectRef;
 use crate::iota_sdk_abstraction::move_types::language_storage::StructTag;
+use serde::de::DeserializeOwned;
 use serde::Deserialize;
 
 use crate::migration::get_alias;
