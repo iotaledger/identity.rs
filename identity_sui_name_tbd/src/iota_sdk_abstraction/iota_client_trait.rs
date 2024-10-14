@@ -146,7 +146,6 @@ pub trait EventTrait {
 #[async_trait::async_trait()]
 pub trait IotaClientTrait {
   type Error;
-  type SdkIotaClient;
 
   fn quorum_driver_api(&self) -> Box<dyn QuorumDriverTrait<Error = Self::Error> + Send + '_>;
 

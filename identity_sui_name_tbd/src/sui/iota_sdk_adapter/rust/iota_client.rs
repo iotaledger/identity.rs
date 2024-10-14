@@ -54,8 +54,6 @@ use crate::iota_sdk_abstraction::rpc_types::{
     EventFilter,
     EventPage,
     IotaObjectData,
-    IotaParsedData,
-    IotaParsedMoveObject,
     ObjectChange,
     OwnedObjectRef,
 };
@@ -246,7 +244,6 @@ pub struct IotaClientRustSdk {
 #[async_trait::async_trait()]
 impl IotaClientTrait for IotaClientRustSdk {
     type Error = Error;
-    type SdkIotaClient = IotaClient;
 
     fn quorum_driver_api(&self) -> Box<dyn QuorumDriverTrait<Error = Self::Error> + Send + '_> {
         Box::new(QuorumDriverAdapter{api: self.iota_client.quorum_driver_api()})

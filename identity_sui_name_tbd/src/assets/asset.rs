@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use std::str::FromStr as _;
 
 use crate::client::IdentityClient;
@@ -10,8 +11,7 @@ use crate::Error;
 use anyhow::anyhow;
 use anyhow::Context;
 use async_trait::async_trait;
-use crate::iota_sdk_abstraction::IotaClientTrait;
-use crate::sui::iota_sdk_adapter::IotaClientAdapter;
+use crate::sui::iota_sdk_adapter::IotaClientTraitCore;
 use crate::iota_sdk_abstraction::rpc_types::IotaData as _;
 use crate::iota_sdk_abstraction::rpc_types::IotaExecutionStatus;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
@@ -64,7 +64,7 @@ impl<T> AuthenticatedAsset<T>
 where
   T: for<'de> Deserialize<'de>,
 {
-  pub async fn get_by_id(id: ObjectID, client: &IotaClientAdapter) -> Result<Self, Error> {
+  pub async fn get_by_id<C: IotaClientTraitCore>(id: ObjectID, client: &C) -> Result<Self, Error> {
     let res = client
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
@@ -84,7 +84,7 @@ where
 }
 
 impl<T> AuthenticatedAsset<T> {
-  async fn object_ref(&self, client: &IotaClientAdapter) -> Result<ObjectRef, Error> {
+  async fn object_ref<C: IotaClientTraitCore>(&self, client: &C) -> Result<ObjectRef, Error> {
     client
       .read_api()
       .get_object_with_options(self.id(), IotaObjectDataOptions::default())
@@ -208,7 +208,7 @@ impl MoveType for TransferProposal {
 }
 
 impl TransferProposal {
-  pub async fn get_by_id(id: ObjectID, client: &IotaClientAdapter) -> Result<Self, Error> {
+  pub async fn get_by_id<C: IotaClientTraitCore>(id: ObjectID, client: &C) -> Result<Self, Error> {
     let res = client
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
@@ -226,7 +226,7 @@ impl TransferProposal {
       .map_err(|e| Error::ObjectLookup(e.to_string()))
   }
 
-  async fn get_cap<S>(&self, cap_type: &str, client: &IdentityClient<S>) -> Result<ObjectRef, Error> {
+  async fn get_cap<S, C: IotaClientTraitCore>(&self, cap_type: &str, client: &IdentityClient<S, C>) -> Result<ObjectRef, Error> {
     let cap_tag = StructTag::from_str(&format!("{}::asset::{cap_type}", client.package_id()))
       .map_err(|e| Error::ParsingFailed(e.to_string()))?;
     client
@@ -243,7 +243,7 @@ impl TransferProposal {
       })
   }
 
-  async fn asset_metadata(&self, client: &IotaClientAdapter) -> anyhow::Result<(ObjectRef, TypeTag)> {
+  async fn asset_metadata<C: IotaClientTraitCore>(&self, client: &C) -> anyhow::Result<(ObjectRef, TypeTag)> {
     let res = client
       .read_api()
       .get_object_with_options(self.asset_id, IotaObjectDataOptions::default().with_type())
@@ -267,7 +267,7 @@ impl TransferProposal {
     Ok((asset_ref, param_type))
   }
 
-  async fn initial_shared_version(&self, client: &IotaClientAdapter) -> anyhow::Result<SequenceNumber> {
+  async fn initial_shared_version<C: IotaClientTraitCore>(&self, client: &C) -> anyhow::Result<SequenceNumber> {
     let owner = client
       .read_api()
       .get_object_with_options(*self.id.object_id(), IotaObjectDataOptions::default().with_owner())
@@ -318,16 +318,17 @@ where
 {
   type Output = ();
 
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas<S, C>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    client: &IdentityClient<S, C>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
+    C: IotaClientTraitCore + Sync,
   {
     let tx = AssetMoveCallsAdapter::update(
-      self.asset.object_ref(client).await?,
+      self.asset.object_ref(client.deref().deref()).await?,
       self.new_content.clone(),
       client.package_id(),
     )?;
@@ -354,15 +355,16 @@ where
 {
   type Output = ();
 
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas<S, C>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    client: &IdentityClient<S, C>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
+    C: IotaClientTraitCore + Sync,
   {
-    let asset_ref = self.0.object_ref(client).await?;
+    let asset_ref = self.0.object_ref(client.deref().deref()).await?;
     let tx = AssetMoveCallsAdapter::delete::<T>(asset_ref, client.package_id())?;
 
     client.execute_transaction(tx, gas_budget).await?;
@@ -379,13 +381,14 @@ where
 {
   type Output = AuthenticatedAsset<T>;
 
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas<S, C>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    client: &IdentityClient<S, C>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
+    C: IotaClientTraitCore + Sync,
   {
     let AuthenticatedAssetBuilder {
       inner,
@@ -404,7 +407,7 @@ where
       .ok_or_else(|| Error::TransactionUnexpectedResponse("no object was created in this transaction".to_owned()))?
       .object_id();
 
-    AuthenticatedAsset::get_by_id(created_asset_id, client).await
+    AuthenticatedAsset::get_by_id(created_asset_id, client.deref().deref()).await
   }
 }
 
@@ -421,16 +424,17 @@ where
 {
   type Output = TransferProposal;
 
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas<S, C>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    client: &IdentityClient<S, C>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
+    C: IotaClientTraitCore + Sync,
   {
     let tx = AssetMoveCallsAdapter::transfer::<T>(
-      self.asset.object_ref(client).await?,
+      self.asset.object_ref(client.deref().deref()).await?,
       self.recipient,
       client.package_id(),
     )?;
@@ -452,7 +456,7 @@ where
         .map_err(|e| Error::ObjectLookup(e.to_string()))?;
 
       if object_type == TransferProposal::move_type(client.package_id()).to_string() {
-        return TransferProposal::get_by_id(id, client).await;
+        return TransferProposal::get_by_id(id, client.deref().deref()).await;
       }
     }
 
@@ -468,13 +472,14 @@ pub struct AcceptTransferTx(TransferProposal);
 #[async_trait]
 impl Transaction for AcceptTransferTx {
   type Output = ();
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas<S, C>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    client: &IdentityClient<S, C>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
+    C: IotaClientTraitCore + Sync,
   {
     if self.0.done {
       return Err(Error::TransactionBuildingFailed(
@@ -485,12 +490,12 @@ impl Transaction for AcceptTransferTx {
     let cap = self.0.get_cap("RecipientCap", client).await?;
     let (asset_ref, param_type) = self
       .0
-      .asset_metadata(client)
+      .asset_metadata(client.deref().deref())
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
     let initial_shared_version = self
       .0
-      .initial_shared_version(client)
+      .initial_shared_version(client.deref().deref())
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
     let tx = AssetMoveCallsAdapter::accept_proposal(
@@ -512,23 +517,24 @@ pub struct ConcludeTransferTx(TransferProposal);
 #[async_trait]
 impl Transaction for ConcludeTransferTx {
   type Output = ();
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas<S, C>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    client: &IdentityClient<S, C>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
+    C: IotaClientTraitCore + Sync,
   {
     let cap = self.0.get_cap("SenderCap", client).await?;
     let (asset_ref, param_type) = self
       .0
-      .asset_metadata(client)
+      .asset_metadata(client.deref().deref())
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
     let initial_shared_version = self
       .0
-      .initial_shared_version(client)
+      .initial_shared_version(client.deref().deref())
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
 

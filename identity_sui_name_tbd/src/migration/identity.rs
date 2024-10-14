@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use identity_iota_core::StateMetadataDocument;
-use crate::iota_sdk_abstraction::IotaClientTrait;
+use crate::sui::iota_sdk_adapter::IotaClientTraitCore;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectData;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
 use crate::iota_sdk_abstraction::rpc_types::IotaParsedData;
@@ -55,7 +55,7 @@ pub enum Identity {
 }
 
 impl Identity {
-  pub fn did_document(&self, client: &IdentityClientReadOnly) -> Result<IotaDocument, Error> {
+  pub fn did_document<C>(&self, client: &IdentityClientReadOnly<C>) -> Result<IotaDocument, Error> {
     let original_did = IotaDID::from_alias_id(self.id().to_string().as_str(), client.network());
     let doc_bytes = self.doc_bytes().ok_or(Error::DidDocParsingFailed(
       "legacy alias output does not encode a DID document".to_owned(),
@@ -118,7 +118,11 @@ impl OnChainIdentity {
   pub(crate) fn multicontroller(&self) -> &Multicontroller<Vec<u8>> {
     &self.multi_controller
   }
-  pub(crate) async fn get_controller_cap<S>(&self, client: &IdentityClient<S>) -> Result<ObjectRef, Error> {
+  
+  pub(crate) async fn get_controller_cap<S, C>(&self, client: &IdentityClient<S, C>) -> Result<ObjectRef, Error>
+  where
+    C: IotaClientTraitCore,
+  {
     let controller_cap_tag = StructTag::from_str(&format!("{}::multicontroller::ControllerCap", client.package_id()))
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
     client
@@ -141,12 +145,15 @@ impl OnChainIdentity {
     ProposalBuilder::new(self, DeactiveDid::new())
   }
 
-  pub async fn get_history(
+  pub async fn get_history<C>(
     &self,
-    client: &IdentityClientReadOnly,
+    client: &IdentityClientReadOnly<C>,
     last_version: Option<&IotaObjectData>,
     page_size: Option<usize>,
-  ) -> Result<Vec<IotaObjectData>, Error> {
+  ) -> Result<Vec<IotaObjectData>, Error>
+  where
+      C: IotaClientTraitCore + Sync,
+  {
     let identity_ref = client
       .get_object_ref_by_id(self.id())
       .await?
@@ -198,15 +205,15 @@ pub fn has_previous_version(history_item: &IotaObjectData) -> Result<bool, Error
   }
 }
 
-async fn get_previous_version(
-  client: &IdentityClientReadOnly,
+async fn get_previous_version<C: IotaClientTraitCore,>(
+  client: &IdentityClientReadOnly<C>,
   iod: IotaObjectData,
 ) -> Result<Option<IotaObjectData>, Error> {
   client.get_previous_version(iod).await
 }
 
-pub async fn get_identity(
-  client: &IdentityClientReadOnly,
+pub async fn get_identity<C: IotaClientTraitCore>(
+  client: &IdentityClientReadOnly<C>,
   object_id: ObjectID,
 ) -> Result<Option<OnChainIdentity>, Error> {
   let response = client
@@ -328,13 +335,14 @@ pub struct CreateIdentityTx(IdentityBuilder);
 #[async_trait]
 impl Transaction for CreateIdentityTx {
   type Output = OnChainIdentity;
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas<S, C>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    client: &IdentityClient<S, C>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
+    C: IotaClientTraitCore + Sync,
   {
     let IdentityBuilder {
       did_doc,

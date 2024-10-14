@@ -1,14 +1,20 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![allow(unused_imports)]
-//pub mod asset_move_caller;
-//pub mod iota_client_provider;
+//#![allow(unused_imports)]
+
+use crate::iota_sdk_abstraction::IotaClientTrait;
 
 #[cfg(target_arch = "wasm32")]
 mod typescript;
 #[cfg(not(target_arch = "wasm32"))]
 mod rust;
+
+use crate::Error;
+
+/// Alias name for IotaClientTrait using crate::error as associated error type 
+pub trait IotaClientTraitCore: IotaClientTrait<Error=Error> {}
+impl<T> IotaClientTraitCore for T where T: IotaClientTrait<Error=Error> {}
 
 // ************************************************************************
 // ************************** WASM32 **************************************

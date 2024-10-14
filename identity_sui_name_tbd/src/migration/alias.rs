@@ -1,13 +1,12 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::iota_sdk_abstraction::IotaClientTrait;
+use crate::sui::iota_sdk_adapter::IotaClientTraitCore;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
 use crate::iota_sdk_abstraction::rpc_types::IotaParsedData;
 use crate::iota_sdk_abstraction::rpc_types::IotaParsedMoveObject;
 use crate::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::iota_sdk_abstraction::types::id::UID;
-use crate::sui::iota_sdk_adapter::IotaClientAdapter;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -41,7 +40,7 @@ pub struct UnmigratedAlias {
   pub immutable_metadata: Option<Vec<u8>>,
 }
 
-pub async fn get_alias(client: &IotaClientAdapter, object_id: ObjectID) -> Result<Option<UnmigratedAlias>, Error> {
+pub async fn get_alias<C: IotaClientTraitCore>(client: &C, object_id: ObjectID) -> Result<Option<UnmigratedAlias>, Error> {
   let options = IotaObjectDataOptions {
     show_type: true,
     show_owner: true,

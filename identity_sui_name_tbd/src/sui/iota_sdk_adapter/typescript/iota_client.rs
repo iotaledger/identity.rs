@@ -77,7 +77,6 @@ pub struct IotaClientTsSdk {
 #[async_trait::async_trait()]
 impl IotaClientTrait for IotaClientTsSdk {
     type Error = Error;
-    type SdkIotaClient = BindgenTsSdkIotaClientPlaceholder;
 
     fn quorum_driver_api(&self) -> Box<dyn QuorumDriverTrait<Error = Self::Error> + Send + '_> {
         unimplemented!();

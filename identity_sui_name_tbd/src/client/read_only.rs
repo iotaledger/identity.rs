@@ -11,7 +11,7 @@ use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use identity_iota_core::NetworkName;
 use identity_iota_core::StateMetadataDocument;
-use crate::iota_sdk_abstraction::IotaClientTrait;
+use crate::sui::iota_sdk_adapter::IotaClientTraitCore;
 use crate::iota_sdk_abstraction::rpc_types::EventFilter;
 use crate::iota_sdk_abstraction::rpc_types::IotaData as _;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectData;
@@ -22,7 +22,6 @@ use crate::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
 use crate::iota_sdk_abstraction::types::base_types::IotaAddress;
 use crate::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::iota_sdk_abstraction::types::base_types::ObjectRef;
-use crate::sui::iota_sdk_adapter::IotaClientAdapter;
 use crate::iota_sdk_abstraction::move_types::language_storage::StructTag;
 use serde::Deserialize;
 
@@ -37,21 +36,21 @@ const UNKNOWN_NETWORK_HRP: &str = "unknwn";
 /// An [`IotaClient`] enriched with identity-related
 /// functionalities.
 #[derive(Clone)]
-pub struct IdentityClientReadOnly {
-  iota_client: IotaClientAdapter,
+pub struct IdentityClientReadOnly<C> {
+  iota_client: C,
   identity_iota_pkg_id: ObjectID,
   migration_registry_id: ObjectID,
   network: NetworkName,
 }
 
-impl Deref for IdentityClientReadOnly {
-  type Target = IotaClientAdapter;
+impl<C: IotaClientTraitCore> Deref for IdentityClientReadOnly<C> {
+  type Target = C;
   fn deref(&self) -> &Self::Target {
     &self.iota_client
   }
 }
 
-impl IdentityClientReadOnly {
+impl<C> IdentityClientReadOnly<C> {
   /// Returns `identity_iota`'s package ID.
   /// The ID of the packages depends on the network
   /// the client is connected to.
@@ -68,10 +67,12 @@ impl IdentityClientReadOnly {
   pub const fn migration_registry_id(&self) -> ObjectID {
     self.migration_registry_id
   }
+}
 
+impl<C: IotaClientTraitCore + Sync> IdentityClientReadOnly<C> {
   /// Attempts to create a new [`IdentityClientReadOnly`] from
   /// the given [`IotaClient`].
-  pub async fn new(iota_client: IotaClientAdapter, identity_iota_pkg_id: ObjectID) -> Result<Self, Error> {
+  pub async fn new(iota_client: C, identity_iota_pkg_id: ObjectID) -> Result<Self, Error> {
     let IdentityPkgMetadata {
       migration_registry_id, ..
     } = identity_pkg_metadata(&iota_client, identity_iota_pkg_id).await?;
@@ -87,7 +88,7 @@ impl IdentityClientReadOnly {
   /// Same as [`Self::new`], but if the network isn't recognized among IOTA's official networks,
   /// the provided `network_name` will be used.
   pub async fn new_with_network_name(
-    iota_client: IotaClientAdapter,
+    iota_client: C,
     identity_iota_pkg_id: ObjectID,
     network_name: NetworkName,
   ) -> Result<Self, Error> {
@@ -226,7 +227,7 @@ struct MigrationRegistryCreatedEvent {
   id: ObjectID,
 }
 
-async fn get_client_network(client: &IotaClientAdapter) -> Result<NetworkName, Error> {
+async fn get_client_network<C: IotaClientTraitCore>(client: &C) -> Result<NetworkName, Error> {
   let network_id = client
     .read_api()
     .get_chain_identifier()
@@ -247,7 +248,7 @@ async fn get_client_network(client: &IotaClientAdapter) -> Result<NetworkName, E
 // TODO: remove argument `package_id` and use `EventFilter::MoveEventField` to find the beacon event and thus the
 // package id.
 // TODO: authenticate the beacon event with though sender's ID.
-async fn identity_pkg_metadata(iota_client: &IotaClientAdapter, package_id: ObjectID) -> Result<IdentityPkgMetadata, Error> {
+async fn identity_pkg_metadata<C: IotaClientTraitCore>(iota_client: &C, package_id: ObjectID) -> Result<IdentityPkgMetadata, Error> {
   // const EVENT_BEACON_PATH: &str = "/beacon";
   // const EVENT_BEACON_VALUE: &[u8] = b"identity.rs_pkg";
 
@@ -287,7 +288,7 @@ async fn identity_pkg_metadata(iota_client: &IotaClientAdapter, package_id: Obje
   })
 }
 
-async fn resolve_new(client: &IdentityClientReadOnly, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+async fn resolve_new<C: IotaClientTraitCore>(client: &IdentityClientReadOnly<C>, object_id: ObjectID) -> Result<Option<Identity>, Error> {
   let onchain_identity = get_identity(client, object_id).await.map_err(|err| {
     Error::DIDResolutionError(format!(
       "could not get identity document for object id {object_id}; {err}"
@@ -296,7 +297,7 @@ async fn resolve_new(client: &IdentityClientReadOnly, object_id: ObjectID) -> Re
   Ok(onchain_identity.map(Identity::FullFledged))
 }
 
-async fn resolve_migrated(client: &IdentityClientReadOnly, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+async fn resolve_migrated<C: IotaClientTraitCore>(client: &IdentityClientReadOnly<C>, object_id: ObjectID) -> Result<Option<Identity>, Error> {
   let onchain_identity = lookup(client, object_id).await.map_err(|err| {
     Error::DIDResolutionError(format!(
       "failed to look up object_id {object_id} in migration registry; {err}"
@@ -305,8 +306,8 @@ async fn resolve_migrated(client: &IdentityClientReadOnly, object_id: ObjectID) 
   Ok(onchain_identity.map(Identity::FullFledged))
 }
 
-async fn resolve_unmigrated(client: &IdentityClientReadOnly, object_id: ObjectID) -> Result<Option<Identity>, Error> {
-  let unmigrated_alias = get_alias(client, object_id)
+async fn resolve_unmigrated<C: IotaClientTraitCore>(client: &IdentityClientReadOnly<C>, object_id: ObjectID) -> Result<Option<Identity>, Error> {
+  let unmigrated_alias = get_alias(client.deref(), object_id)
     .await
     .map_err(|err| Error::DIDResolutionError(format!("could  no query for object id {object_id}; {err}")))?;
   Ok(unmigrated_alias.map(Identity::Legacy))

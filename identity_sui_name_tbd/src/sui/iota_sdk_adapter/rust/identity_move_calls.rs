@@ -4,8 +4,6 @@
 use std::collections::HashSet;
 use std::str::FromStr;
 
-use serde::Serialize;
-
 use bcs;
 
 use crate::iota_sdk_abstraction::{
@@ -21,7 +19,7 @@ use crate::iota_sdk_abstraction::types::{
 };
 use crate::iota_sdk_abstraction::types::{
     object::Owner,
-    base_types::{SequenceNumber, ObjectID, ObjectRef, IotaAddress},
+    base_types::{ObjectID, ObjectRef, IotaAddress},
     transaction::{Argument, Command, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction},
 };
 use crate::iota_sdk_abstraction::rpc_types::OwnedObjectRef;

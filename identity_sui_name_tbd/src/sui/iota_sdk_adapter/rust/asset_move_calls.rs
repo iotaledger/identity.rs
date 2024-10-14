@@ -14,9 +14,8 @@ use crate::iota_sdk_abstraction::{
     types::{
         TypeTag,
         base_types::{SequenceNumber, ObjectID, ObjectRef, IotaAddress},
-        transaction::{Argument, Command, ObjectArg},
+        transaction::{Command, ObjectArg},
     },
-    rpc_types::OwnedObjectRef
 };
 use crate::utils::MoveType;
 use crate::Error;

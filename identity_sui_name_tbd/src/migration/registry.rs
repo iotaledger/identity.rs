@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::iota_sdk_abstraction::IotaClientTrait;
+use crate::sui::iota_sdk_adapter::IotaClientTraitCore;
 use crate::iota_sdk_abstraction::rpc_types::IotaData;
 use crate::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::iota_sdk_abstraction::types::id::ID;
@@ -23,8 +23,8 @@ pub enum Error {
 
 /// Lookup a legacy `alias_id` into the migration registry
 /// to get the UID of the corresponding migrated DID document if any.
-pub async fn lookup(
-  iota_client: &IdentityClientReadOnly,
+pub async fn lookup<C: IotaClientTraitCore>(
+  iota_client: &IdentityClientReadOnly<C>,
   alias_id: ObjectID,
 ) -> Result<Option<OnChainIdentity>, Error> {
   let dynamic_field_name = serde_json::from_value(serde_json::json!({

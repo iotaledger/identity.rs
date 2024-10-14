@@ -10,7 +10,7 @@ pub use config_change::*;
 pub use deactive_did::*;
 use crate::iota_sdk_abstraction::error::Error as IotaSdkError;
 use crate::iota_sdk_abstraction::rpc_types::IotaExecutionStatus;
-use crate::iota_sdk_abstraction::IotaTransactionBlockResponseT;
+use crate::iota_sdk_abstraction::{IotaClientTrait, IotaTransactionBlockResponseT};
 use crate::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
 use crate::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::iota_sdk_abstraction::types::base_types::ObjectRef;
@@ -145,13 +145,14 @@ where
 {
   type Output = ProposalResult<Proposal<A>>;
 
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas<S, C>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    client: &IdentityClient<S, C>,
   ) -> Result<ProposalResult<Proposal<A>>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
+    C: IotaClientTrait<Error=Error> + Sync,
   {
     let ProposalBuilder {
       identity,
@@ -221,13 +222,14 @@ where
   A: Send,
 {
   type Output = <Proposal<A> as ProposalT>::Output;
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas<S, C>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    client: &IdentityClient<S, C>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
+    C: IotaClientTrait<Error=Error> + Sync,
   {
     let Self { proposal, identity } = self;
     let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
@@ -261,13 +263,14 @@ where
   A: MoveType + Send,
 {
   type Output = ();
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas<S, C>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    client: &IdentityClient<S, C>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
+    C: IotaClientTrait<Error=Error> + Sync,
   {
     let Self { proposal, identity } = self;
     let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();

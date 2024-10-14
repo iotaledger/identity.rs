@@ -10,7 +10,7 @@ use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use identity_iota_core::StateMetadataDocument;
 use identity_verification::jwk::Jwk;
-use crate::iota_sdk_abstraction::IotaClientTrait;
+use crate::sui::iota_sdk_adapter::IotaClientTraitCore;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectData;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectDataFilter;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectResponseQuery;
@@ -63,25 +63,26 @@ impl From<KeyId> for String {
 }
 
 #[derive(Clone)]
-pub struct IdentityClient<S> {
-  read_client: IdentityClientReadOnly,
+pub struct IdentityClient<S, C> {
+  read_client: IdentityClientReadOnly<C>,
   address: IotaAddress,
   public_key: Vec<u8>,
   signer: S,
 }
 
-impl<S> Deref for IdentityClient<S> {
-  type Target = IdentityClientReadOnly;
+impl<S, C> Deref for IdentityClient<S, C> {
+  type Target = IdentityClientReadOnly<C>;
   fn deref(&self) -> &Self::Target {
     &self.read_client
   }
 }
 
-impl<S> IdentityClient<S>
+impl<S, C> IdentityClient<S, C>
 where
   S: Signer<IotaKeySignature> + Sync,
+  C: IotaClientTraitCore,  
 {
-  pub async fn new(client: IdentityClientReadOnly, signer: S) -> Result<Self, Error> {
+  pub async fn new(client: IdentityClientReadOnly<C>, signer: S) -> Result<Self, Error> {
     let public_key = signer
       .public_key()
       .await
@@ -111,7 +112,7 @@ where
   }
 }
 
-impl<S> IdentityClient<S> {
+impl<S, C> IdentityClient<S, C> {
   pub fn sender_public_key(&self) -> &[u8] {
     &self.public_key
   }
@@ -131,11 +132,13 @@ impl<S> IdentityClient<S> {
 
   pub fn create_authenticated_asset<T>(&self, content: T) -> AuthenticatedAssetBuilder<T>
   where
-    T: MoveType + Serialize + DeserializeOwned,
+      T: MoveType + Serialize + DeserializeOwned,
   {
     AuthenticatedAssetBuilder::new(content)
   }
+}
 
+impl<S, C: IotaClientTraitCore> IdentityClient<S, C> {
   pub async fn find_owned_ref<P>(&self, tag: StructTag, predicate: P) -> Result<Option<ObjectRef>, Error>
   where
     P: Fn(&IotaObjectData) -> bool,
@@ -167,9 +170,10 @@ impl<S> IdentityClient<S> {
   }
 }
 
-impl<S> IdentityClient<S>
+impl<S, C> IdentityClient<S, C>
 where
   S: Signer<IotaKeySignature> + Sync,
+  C: IotaClientTraitCore + Sync,
 {
   pub fn publish_did_document(&self, document: IotaDocument) -> PublishDidTx {
     PublishDidTx(document)
@@ -228,13 +232,14 @@ pub struct PublishDidTx(IotaDocument);
 #[async_trait]
 impl TransactionT for PublishDidTx {
   type Output = IotaDocument;
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas<S, C>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    client: &IdentityClient<S, C>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
+    C: IotaClientTraitCore + Sync,  
   {
     let packed = self
       .0
