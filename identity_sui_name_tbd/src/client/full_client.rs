@@ -80,7 +80,7 @@ impl<S, C> Deref for IdentityClient<S, C> {
 impl<S, C> IdentityClient<S, C>
 where
   S: Signer<IotaKeySignature> + Sync,
-  C: IotaClientTraitCore,  
+  C: IotaClientTraitCore,
 {
   pub async fn new(client: IdentityClientReadOnly<C>, signer: S) -> Result<Self, Error> {
     let public_key = signer
@@ -113,23 +113,27 @@ where
 }
 
 impl<S, C> IdentityClient<S, C> {
-  pub fn sender_public_key(&self) -> &[u8] {
+    /// Returns the bytes of the sender's public key.
+    pub fn sender_public_key(&self) -> &[u8] {
     &self.public_key
   }
 
+  /// Returns this [`IdentityClient`]'s sender address.
   pub fn sender_address(&self) -> IotaAddress {
     self.address
   }
 
+  /// Returns a reference to this [`IdentityClient`]'s [`Signer`].
   pub fn signer(&self) -> &S {
     &self.signer
   }
 
-  /// Creates a new onchain Identity.
+  /// Returns a new [`IdentityBuilder`] in order to build a new [`crate::migration::OnChainIdentity`].
   pub fn create_identity(&self, iota_document: &[u8]) -> IdentityBuilder {
     IdentityBuilder::new(iota_document)
   }
 
+  /// Returns a new [`IdentityBuilder`] in order to build a new [`crate::migration::OnChainIdentity`].
   pub fn create_authenticated_asset<T>(&self, content: T) -> AuthenticatedAssetBuilder<T>
   where
       T: MoveType + Serialize + DeserializeOwned,
@@ -139,6 +143,8 @@ impl<S, C> IdentityClient<S, C> {
 }
 
 impl<S, C: IotaClientTraitCore> IdentityClient<S, C> {
+  /// Query the objects owned by the address wrapped by this client to find the object of type `tag`
+  /// and that satifies `predicate`.
   pub async fn find_owned_ref<P>(&self, tag: StructTag, predicate: P) -> Result<Option<ObjectRef>, Error>
   where
     P: Fn(&IotaObjectData) -> bool,
@@ -175,11 +181,13 @@ where
   S: Signer<IotaKeySignature> + Sync,
   C: IotaClientTraitCore + Sync,
 {
+  /// Returns [`Transaction`] [`PublishDidTx`] that - when executed - will publish a new DID Document on chain.
   pub fn publish_did_document(&self, document: IotaDocument) -> PublishDidTx {
     PublishDidTx(document)
   }
 
   // TODO: define what happens for (legacy|migrated|new) documents
+  /// Updates a DID Document.
   pub async fn publish_did_document_update(
     &self,
     document: IotaDocument,
@@ -198,6 +206,7 @@ where
     Ok(document)
   }
 
+  /// Deactivates a DID document.
   pub async fn deactivate_did_output(&self, did: &IotaDID, gas_budget: u64) -> Result<(), Error> {
     let Identity::FullFledged(oci) = self.get_identity(get_object_id_from_did(did)?).await? else {
       return Err(Error::Identity("only new identities can be deactivated".to_string()));
@@ -209,6 +218,7 @@ where
   }
 }
 
+/// Utility function that returns the key's bytes of a JWK encoded public ed25519 key.
 pub fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> {
   let public_key_base_64 = &sender_public_jwk
     .try_okp_params()
@@ -219,6 +229,7 @@ pub fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> 
     .map_err(|err| Error::InvalidKey(format!("could not decode base64 public key; {err}")))
 }
 
+/// Utility function to convert a public key's bytes into an [`IotaAddress`].
 pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error> {
   let public_key = Ed25519PublicKey::from_bytes(sender_public_key)
     .map_err(|err| Error::InvalidKey(format!("could not parse public key to Ed25519 public key; {err}")))?;
@@ -226,6 +237,8 @@ pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error
   Ok(IotaAddress::from(&public_key))
 }
 
+/// Publishes a new DID Document on-chain. An [`crate::migration::OnChainIdentity`] will be created to contain
+/// the provided document.
 #[derive(Debug)]
 pub struct PublishDidTx(IotaDocument);
 
@@ -240,7 +253,7 @@ impl TransactionT for PublishDidTx {
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
-    C: IotaClientTraitCore + Sync,  
+    C: IotaClientTraitCore + Sync,
   {
     let packed = self
       .0

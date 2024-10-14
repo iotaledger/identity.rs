@@ -30,6 +30,7 @@ use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
 
+// An on-chain asset that carries information about its owned and its creator.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AuthenticatedAsset<T> {
   id: UID,
@@ -48,7 +49,7 @@ pub struct AuthenticatedAsset<T> {
 fn deserialize_inner<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
   D: Deserializer<'de>,
-  T: for<'a> Deserialize<'a>,
+  T: DeserializeOwned,
 {
   use serde::de::Error as _;
 
@@ -62,9 +63,10 @@ where
 
 impl<T> AuthenticatedAsset<T>
 where
-  T: for<'de> Deserialize<'de>,
+  T: DeserializeOwned,
 {
-  pub async fn get_by_id<C: IotaClientTraitCore>(id: ObjectID, client: &C) -> Result<Self, Error> {
+    /// Resolves an [`AuthenticatedAsset`] by its ID `id`.
+    pub async fn get_by_id<C: IotaClientTraitCore>(id: ObjectID, client: &C) -> Result<Self, Error> {
     let res = client
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
@@ -93,14 +95,22 @@ impl<T> AuthenticatedAsset<T> {
       .ok_or_else(|| Error::ObjectLookup("missing object reference in response".to_owned()))
   }
 
+  /// Returns this [`AuthenticatedAsset`]'s ID.
   pub fn id(&self) -> ObjectID {
     *self.id.object_id()
   }
 
+  /// Returns a reference to this [`AuthenticatedAsset`]'s content.
   pub fn content(&self) -> &T {
     &self.inner
   }
 
+  /// Transfers ownership of this [`AuthenticatedAsset`] to `recipient`.
+  /// # Notes
+  /// This function doesn't perform the transfer right away, but instead creates a [`Transaction`] that
+  /// can be executed to carry out the transfer.
+  /// # Failures
+  /// * Returns an [`Error::InvalidConfig`] if this asset is not transferable.
   pub fn transfer(self, recipient: IotaAddress) -> Result<TransferAssetTx<T>, Error> {
     if !self.transferable {
       return Err(Error::InvalidConfig(format!(
@@ -111,6 +121,12 @@ impl<T> AuthenticatedAsset<T> {
     Ok(TransferAssetTx { asset: self, recipient })
   }
 
+  /// Destroys this [`AuthenticatedAsset`].
+  /// # Notes
+  /// This function doesn't delete the asset right away, but instead creates a [`Transaction`] that
+  /// can be executed in order to destory the asset.
+  /// # Failures
+  /// * Returns an [`Error::InvalidConfig`] if this asset cannot be deleted.
   pub fn delete(self) -> Result<DeleteAssetTx<T>, Error> {
     if !self.deletable {
       return Err(Error::InvalidConfig(format!(
@@ -121,6 +137,13 @@ impl<T> AuthenticatedAsset<T> {
 
     Ok(DeleteAssetTx(self))
   }
+
+  /// Changes this [`AuthenticatedAsset`]'s content.
+  /// # Notes
+  /// This function doesn't update the asset right away, but instead creates a [`Transaction`] that
+  /// can be executed in order to update the asset's content.
+  /// # Failures
+  /// * Returns an [`Error::InvalidConfig`] if this asset cannot be updated.
   pub fn set_content(&mut self, new_content: T) -> Result<UpdateContentTx<'_, T>, Error> {
     if !self.mutable {
       return Err(Error::InvalidConfig(format!(
@@ -136,6 +159,7 @@ impl<T> AuthenticatedAsset<T> {
   }
 }
 
+/// Builder-style struct to ease the creation of a new [`AuthenticatedAsset`].
 #[derive(Debug)]
 pub struct AuthenticatedAssetBuilder<T> {
   inner: T,
@@ -156,6 +180,7 @@ impl<T: MoveType> MoveType for AuthenticatedAsset<T> {
 }
 
 impl<T> AuthenticatedAssetBuilder<T> {
+  /// Initializes the builder with the asset's content.
   pub fn new(content: T) -> Self {
     Self {
       inner: content,
@@ -165,26 +190,48 @@ impl<T> AuthenticatedAssetBuilder<T> {
     }
   }
 
+  /// Sets whether the new asset allows for its modification.
+  ///
+  /// By default an [`AuthenticatedAsset`] is **immutable**.
   pub fn mutable(mut self, mutable: bool) -> Self {
     self.mutable = mutable;
     self
   }
 
+  /// Sets whether the new asset allows the transfer of its ownership.
+  ///
+  /// By default an [`AuthenticatedAsset`] **cannot** be transfered.
   pub fn transferable(mut self, transferable: bool) -> Self {
     self.transferable = transferable;
     self
   }
 
+  /// Sets whether the new asset can be deleted.
+  ///
+  /// By default an [`AuthenticatedAsset`] **cannot** be deleted.
   pub fn deletable(mut self, deletable: bool) -> Self {
     self.deletable = deletable;
     self
   }
 
+  /// Creates a [`Transaction`] that will create the specified [`AuthenticatedAsset`] when executed.
   pub fn finish(self) -> CreateAssetTx<T> {
     CreateAssetTx(self)
   }
 }
 
+/// Proposal for the transfer of an [`AuthenticatedAsset`]'s ownership from one [`IotaAddress`] to another.
+
+/// # Detailed Workflow
+/// A [`TransferProposal`] is a **shared** _Move_ object that represents a request to transfer ownership
+/// of an [`AuthenticatedAsset`] to a new owner.
+///
+/// When a [`TransferProposal`] is created, it will seize the asset and send a `SenderCap` token to the current asset's owner
+/// and a `RecipientCap` to the specified `recipient` address.
+/// `recipient` can accept the transfer by presenting its `RecipientCap` (this prevents other users from claiming the asset
+/// for themselves).
+/// The current owner can cancel the proposal at any time - given the transfer hasn't been conclued yet - by presenting its
+/// `SenderCap`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransferProposal {
   id: UID,
@@ -208,7 +255,8 @@ impl MoveType for TransferProposal {
 }
 
 impl TransferProposal {
-  pub async fn get_by_id<C: IotaClientTraitCore>(id: ObjectID, client: &C) -> Result<Self, Error> {
+    /// Resolves a [`TransferProposal`] by its ID `id`.
+    pub async fn get_by_id<C: IotaClientTraitCore>(id: ObjectID, client: &C) -> Result<Self, Error> {
     let res = client
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
@@ -280,31 +328,44 @@ impl TransferProposal {
     }
   }
 
+  /// Accepts this [`TransferProposal`].
+  /// # Warning
+  /// This operation only has an effects when it's invoked by this [`TransferProposal`]'s `recipient`.
   pub fn accept(self) -> AcceptTransferTx {
     AcceptTransferTx(self)
   }
 
+  /// Concludes or cancels this [`TransferProposal`].
+  /// # Warning
+  /// * This operation only has an effects when it's invoked by this [`TransferProposal`]'s `sender`.
+  /// * Accepting a [`TransferProposal`] **doesn't** consume it from the ledger. This function must be used
+  ///   to correctly consume both [`TransferProposal`] and `SenderCap`.
   pub fn conclude_or_cancel(self) -> ConcludeTransferTx {
     ConcludeTransferTx(self)
   }
 
+  /// Returns this [`TransferProposal`]'s ID.
   pub fn id(&self) -> ObjectID {
     *self.id.object_id()
   }
 
+  /// Returns this [`TransferProposal`]'s `sender`'s address.
   pub fn sender(&self) -> IotaAddress {
     self.sender_address
   }
 
+  /// Returns this [`TransferProposal`]'s `recipient`'s address.
   pub fn recipient(&self) -> IotaAddress {
     self.recipient_address
   }
 
+  /// Returns `true` if this [`TransferProposal`] is concluded.
   pub fn is_concluded(&self) -> bool {
     self.done
   }
 }
 
+/// A [`Transaction`] that updates an [`AuthenticatedAsset`]'s content.
 #[derive(Debug)]
 pub struct UpdateContentTx<'a, T> {
   asset: &'a mut AuthenticatedAsset<T>,
@@ -346,6 +407,7 @@ where
   }
 }
 
+/// A [`Transaction`] that deletes an [`AuthenticatedAsset`].
 #[derive(Debug)]
 pub struct DeleteAssetTx<T>(AuthenticatedAsset<T>);
 
@@ -373,6 +435,7 @@ where
     Ok(())
   }
 }
+/// A [`Transaction`] that creates a new [`AuthenticatedAsset`].
 #[derive(Debug)]
 pub struct CreateAssetTx<T>(AuthenticatedAssetBuilder<T>);
 
@@ -414,6 +477,7 @@ where
   }
 }
 
+/// A [`Transaction`] that proposes the transfer of an [`AuthenticatedAsset`].
 #[derive(Debug)]
 pub struct TransferAssetTx<T> {
   asset: AuthenticatedAsset<T>,
@@ -470,6 +534,7 @@ where
   }
 }
 
+/// A [`Transaction`] that accepts the transfer of an [`AuthenticatedAsset`].
 #[derive(Debug)]
 pub struct AcceptTransferTx(TransferProposal);
 
@@ -516,6 +581,7 @@ impl Transaction for AcceptTransferTx {
   }
 }
 
+/// A [`Transaction`] that concludes the transfer of an [`AuthenticatedAsset`].
 #[derive(Debug)]
 pub struct ConcludeTransferTx(TransferProposal);
 

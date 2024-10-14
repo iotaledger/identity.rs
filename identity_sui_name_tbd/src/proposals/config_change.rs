@@ -27,6 +27,11 @@ use super::Proposal;
 use super::ProposalBuilder;
 use super::ProposalT;
 
+/// [`Proposal`] action that modifies an [`OnChainIdentity`]'s configuration - e.g:
+/// - remove controllers
+/// - add controllers
+/// - update controllers voting powers
+/// - update threshold
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(try_from = "Modify")]
 pub struct ConfigChange {
@@ -102,16 +107,19 @@ impl ProposalT for Proposal<ConfigChange> {
 }
 
 impl ProposalBuilder<ConfigChange> {
-  pub fn threshold(mut self, threshold: u64) -> Self {
+    /// Sets a new value for the identity's threshold.
+    pub fn threshold(mut self, threshold: u64) -> Self {
     self.set_threshold(threshold);
     self
   }
 
+  /// Makes address `address` a new controller with voting power `voting_power`.
   pub fn add_controller(mut self, address: IotaAddress, voting_power: u64) -> Self {
     self.deref_mut().add_controller(address, voting_power);
     self
   }
 
+  /// Adds multiple controllers. See [`ProposalBuilder::add_controller`].
   pub fn add_multiple_controllers<I>(mut self, controllers: I) -> Self
   where
     I: IntoIterator<Item = (IotaAddress, u64)>,
@@ -120,11 +128,13 @@ impl ProposalBuilder<ConfigChange> {
     self
   }
 
+  /// Removes an existing controller.
   pub fn remove_controller(mut self, controller_id: ObjectID) -> Self {
     self.deref_mut().remove_controller(controller_id);
     self
   }
 
+  /// Removes many controllers.
   pub fn remove_multiple_controllers<I>(mut self, controllers: I) -> Self
   where
     I: IntoIterator<Item = ObjectID>,
@@ -139,14 +149,17 @@ impl ConfigChange {
     Self::default()
   }
 
+  /// Sets the new threshold.
   pub fn set_threshold(&mut self, new_threshold: u64) {
     self.threshold = Some(new_threshold);
   }
 
+  /// Adds a controller.
   pub fn add_controller(&mut self, address: IotaAddress, voting_power: u64) {
     self.controllers_to_add.insert(address, voting_power);
   }
 
+  /// Adds many controllers.
   pub fn add_multiple_controllers<I>(&mut self, controllers: I)
   where
     I: IntoIterator<Item = (IotaAddress, u64)>,
@@ -156,10 +169,12 @@ impl ConfigChange {
     }
   }
 
+  /// Removes an existing controller.
   pub fn remove_controller(&mut self, controller_id: ObjectID) {
     self.controllers_to_remove.insert(controller_id);
   }
 
+  /// Removes many controllers.
   pub fn remove_multiple_controllers<I>(&mut self, controllers: I)
   where
     I: IntoIterator<Item = ObjectID>,

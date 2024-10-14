@@ -16,6 +16,7 @@ use crate::Error;
 const MODULE: &str = "alias";
 const NAME: &str = "Alias";
 
+/// A legacy IOTA Stardust Output type, used to store DID Documents.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UnmigratedAlias {
   /// The ID of the Alias = hash of the Output ID that created the Alias Output in Stardust.
@@ -40,6 +41,7 @@ pub struct UnmigratedAlias {
   pub immutable_metadata: Option<Vec<u8>>,
 }
 
+/// Resolves an [`UnmigratedAlias`] given its ID `object_id`.
 pub async fn get_alias<C: IotaClientTraitCore>(client: &C, object_id: ObjectID) -> Result<Option<UnmigratedAlias>, Error> {
   let options = IotaObjectDataOptions {
     show_type: true,
