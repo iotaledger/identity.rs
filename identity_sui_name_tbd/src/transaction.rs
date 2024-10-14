@@ -3,10 +3,12 @@ use crate::iota_sdk_abstraction::{IotaClientTrait, ProgrammableTransactionBcs};
 use secret_storage::Signer;
 
 use crate::client::IdentityClient;
-use crate::client::IotaKeySignature;
+use crate::iota_sdk_abstraction::IotaKeySignature;
 use crate::Error;
 
-#[async_trait]
+
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 pub trait Transaction: Sized {
   type Output;
 
@@ -46,7 +48,8 @@ pub trait Transaction: Sized {
 #[derive(Debug)]
 pub struct SimpleTransaction(pub ProgrammableTransactionBcs);
 
-#[async_trait]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl Transaction for SimpleTransaction {
   type Output = ();
   async fn execute_with_opt_gas<S, C>(

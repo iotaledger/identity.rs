@@ -5,7 +5,7 @@ use std::option::Option;
 use std::result::Result;
 use std::boxed::Box;
 use std::marker::Send;
-
+use async_trait::async_trait;
 use secret_storage::Signer;
 
 use crate::Error;
@@ -38,7 +38,7 @@ use crate::iota_sdk_abstraction::rpc_types::{
     OwnedObjectRef,
 };
 
-use crate::client::IotaKeySignature;
+use crate::iota_sdk_abstraction::IotaKeySignature;
 
 pub struct IotaTransactionBlockResponseProvider {}
 
@@ -74,7 +74,8 @@ pub struct IotaClientTsSdk {
     iota_client: BindgenTsSdkIotaClientPlaceholder,
 }
 
-#[async_trait::async_trait()]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl IotaClientTrait for IotaClientTsSdk {
     type Error = Error;
 

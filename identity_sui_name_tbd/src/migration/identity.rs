@@ -31,7 +31,7 @@ use serde::Deserialize;
 
 use crate::client::IdentityClient;
 use crate::client::IdentityClientReadOnly;
-use crate::client::IotaKeySignature;
+use crate::iota_sdk_abstraction::IotaKeySignature;
 use crate::proposals::ConfigChange;
 use crate::proposals::DeactiveDid;
 use crate::proposals::ProposalBuilder;
@@ -332,7 +332,8 @@ impl MoveType for OnChainIdentity {
 #[derive(Debug)]
 pub struct CreateIdentityTx(IdentityBuilder);
 
-#[async_trait]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl Transaction for CreateIdentityTx {
   type Output = OnChainIdentity;
   async fn execute_with_opt_gas<S, C>(

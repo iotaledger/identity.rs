@@ -2,7 +2,7 @@ use std::ops::Deref;
 use std::str::FromStr as _;
 
 use crate::client::IdentityClient;
-use crate::client::IotaKeySignature;
+use crate::iota_sdk_abstraction::IotaKeySignature;
 use crate::sui::iota_sdk_adapter::AssetMoveCallsAdapter;
 use crate::iota_sdk_abstraction::AssetMoveCalls;
 use crate::transaction::Transaction;
@@ -311,7 +311,8 @@ pub struct UpdateContentTx<'a, T> {
   new_content: T,
 }
 
-#[async_trait]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl<'a, T> Transaction for UpdateContentTx<'a, T>
 where
   T: MoveType + Serialize + Clone + Send + Sync,
@@ -348,7 +349,8 @@ where
 #[derive(Debug)]
 pub struct DeleteAssetTx<T>(AuthenticatedAsset<T>);
 
-#[async_trait]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl<T> Transaction for DeleteAssetTx<T>
 where
   T: MoveType + Send + Sync,
@@ -374,7 +376,8 @@ where
 #[derive(Debug)]
 pub struct CreateAssetTx<T>(AuthenticatedAssetBuilder<T>);
 
-#[async_trait]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl<T> Transaction for CreateAssetTx<T>
 where
   T: MoveType + Serialize + DeserializeOwned + Send,
@@ -417,7 +420,8 @@ pub struct TransferAssetTx<T> {
   recipient: IotaAddress,
 }
 
-#[async_trait]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl<T> Transaction for TransferAssetTx<T>
 where
   T: MoveType + Send + Sync,
@@ -469,7 +473,8 @@ where
 #[derive(Debug)]
 pub struct AcceptTransferTx(TransferProposal);
 
-#[async_trait]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl Transaction for AcceptTransferTx {
   type Output = ();
   async fn execute_with_opt_gas<S, C>(
@@ -514,7 +519,8 @@ impl Transaction for AcceptTransferTx {
 #[derive(Debug)]
 pub struct ConcludeTransferTx(TransferProposal);
 
-#[async_trait]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl Transaction for ConcludeTransferTx {
   type Output = ();
   async fn execute_with_opt_gas<S, C>(

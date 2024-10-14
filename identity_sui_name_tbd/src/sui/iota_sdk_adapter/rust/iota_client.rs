@@ -59,7 +59,7 @@ use crate::iota_sdk_abstraction::rpc_types::{
 };
 use crate::iota_sdk_abstraction::shared_crypto::intent::{Intent, IntentMessage};
 use crate::iota_sdk_abstraction::apis::{QuorumDriverApi, ReadApi, CoinReadApi, EventApi};
-use crate::client::IotaKeySignature;
+use crate::iota_sdk_abstraction::IotaKeySignature;
 
 pub struct IotaTransactionBlockResponseProvider {
     response: IotaTransactionBlockResponse
@@ -241,7 +241,8 @@ pub struct IotaClientRustSdk {
     iota_client: IotaClient,
 }
 
-#[async_trait::async_trait()]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl IotaClientTrait for IotaClientRustSdk {
     type Error = Error;
 

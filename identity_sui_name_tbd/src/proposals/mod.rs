@@ -23,7 +23,7 @@ use serde::de::DeserializeOwned;
 pub use update_did_doc::*;
 
 use crate::client::IdentityClient;
-use crate::client::IotaKeySignature;
+use crate::iota_sdk_abstraction::IotaKeySignature;
 use crate::migration::OnChainIdentity;
 use crate::migration::Proposal;
 use crate::sui::iota_sdk_adapter::IdentityMoveCallsAdapter;
@@ -137,7 +137,8 @@ pub enum ProposalResult<P: ProposalT> {
 #[derive(Debug)]
 pub struct CreateProposalTx<A>(ProposalBuilder<A>);
 
-#[async_trait]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl<A> Transaction for CreateProposalTx<A>
 where
   Proposal<A>: ProposalT<Action = A> + DeserializeOwned,
@@ -215,7 +216,8 @@ pub struct ExecuteProposalTx<'i, A> {
   identity: &'i mut OnChainIdentity,
 }
 
-#[async_trait]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl<'i, A> Transaction for ExecuteProposalTx<'i, A>
 where
   Proposal<A>: ProposalT<Action = A>,
@@ -256,7 +258,8 @@ pub struct ApproveProposalTx<'p, 'i, A> {
   identity: &'i OnChainIdentity,
 }
 
-#[async_trait]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl<'p, 'i, A> Transaction for ApproveProposalTx<'p, 'i, A>
 where
   Proposal<A>: ProposalT<Action = A>,

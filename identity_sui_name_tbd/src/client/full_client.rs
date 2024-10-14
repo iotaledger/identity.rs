@@ -27,7 +27,7 @@ use crate::assets::AuthenticatedAssetBuilder;
 use crate::migration::Identity;
 use crate::migration::IdentityBuilder;
 use crate::transaction::Transaction as TransactionT;
-use crate::client::IotaKeySignature;
+use crate::iota_sdk_abstraction::IotaKeySignature;
 use crate::utils::MoveType;
 use crate::Error;
 
@@ -229,7 +229,8 @@ pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error
 #[derive(Debug)]
 pub struct PublishDidTx(IotaDocument);
 
-#[async_trait]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl TransactionT for PublishDidTx {
   type Output = IotaDocument;
   async fn execute_with_opt_gas<S, C>(

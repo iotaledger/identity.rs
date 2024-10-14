@@ -43,7 +43,7 @@ tokio = { version = "1.29.0", default-features = false, features = ["macros", "s
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 eyre = { version = "0.6" }
-fastcrypto-zkp = { git = "https://github.com/MystenLabs/fastcrypto", rev = "fastcrypto-zkp-v0.1.3", package = "fastcrypto-zkp" }
+fastcrypto-zkp = { git = "https://github.com/MystenLabs/fastcrypto", rev = "5f2c63266a065996d53f98156f0412782b468597", package = "fastcrypto-zkp" }
 hex = { version = "0.4" }
 identity_iota_core = { version = "=1.2.0", path = "../identity_iota_core", default-features = false, features = ["client"] }
 jsonrpsee = { version = "0.24", default-features = false, features = ["wasm-client"] }
@@ -52,7 +52,7 @@ num-bigint = { version = "0.4" }
 primitive-types = { version = "0.12", features = ["impl-serde"] }
 ref-cast = { version = "1.0" }
 serde_repr = { version = "0.1" }
-serde_with = { version = "2.3", features = ["hex"] } # Version 3 is incompatable with fastcrypto
+serde_with = { version = "3.8", features = ["hex"] }
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
 tracing = { version = "0.1.40" }
 uint = { version = "0.9" }
@@ -66,3 +66,7 @@ serial_test = "3.1.1"
 
 [lints]
 workspace = true
+
+[features]
+default=["send-sync-transaction"]
+send-sync-transaction = []

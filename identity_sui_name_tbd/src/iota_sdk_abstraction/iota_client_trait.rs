@@ -5,8 +5,8 @@ use std::option::Option;
 use std::result::Result;
 use std::boxed::Box;
 use std::marker::Send;
-
-use secret_storage::Signer;
+use async_trait::async_trait;
+use secret_storage::{Signer, SignatureScheme};
 
 use crate::iota_sdk_abstraction::{
   ProgrammableTransactionBcs,
@@ -35,7 +35,15 @@ use crate::iota_sdk_abstraction::{
   error::IotaRpcResult,
 };
 
-use crate::client::IotaKeySignature;
+pub struct IotaKeySignature {
+  pub public_key: Vec<u8>,
+  pub signature: Vec<u8>,
+}
+
+impl SignatureScheme for IotaKeySignature {
+  type PublicKey = Vec<u8>;
+  type Signature = Vec<u8>;
+}
 
 /// Allows to query information from an IotaTransactionBlockResponse instance.
 /// As IotaTransactionBlockResponse pulls too many dependencies we need to
@@ -143,7 +151,8 @@ pub trait EventTrait {
   ) -> IotaRpcResult<EventPage>;
 }
 
-#[async_trait::async_trait()]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 pub trait IotaClientTrait {
   type Error;
 
