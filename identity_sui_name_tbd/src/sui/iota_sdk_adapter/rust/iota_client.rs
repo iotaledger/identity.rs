@@ -5,11 +5,7 @@ use std::option::Option;
 use std::result::Result;
 use std::boxed::Box;
 use std::marker::Send;
-
-use anyhow::Context;
-
-use serde_json::{ self, Value as JsonValue};
-use serde::Deserialize;
+use async_trait::async_trait;
 
 use secret_storage::Signer;
 use fastcrypto::secp256k1::DefaultHash;

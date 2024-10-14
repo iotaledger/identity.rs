@@ -3,11 +3,10 @@
 
 use std::rc::Rc;
 
-use identity_iota::iota::client_dummy::DummySigner;
-use identity_iota::iota::client_dummy::Identity;
-use identity_iota::iota::client_dummy::IdentityClient;
-use identity_iota::iota::client_dummy::IotaAddress;
-use identity_iota::iota::client_dummy::ObjectID;
+use identity_iota::iota::iota_sdk_abstraction::DummySigner;
+use identity_iota::iota::iota_sdk_abstraction::Identity;
+use identity_iota::iota::iota_sdk_abstraction::IdentityClient;
+use identity_iota::iota::iota_sdk_abstraction::types::base_types::{IotaAddress, ObjectID};
 use identity_iota::iota::IotaDocument;
 use wasm_bindgen::prelude::*;
 
@@ -15,12 +14,13 @@ use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
 
-use super::kinesis_identity_client_builder::WasmKinesisIdentityClientBuilder;
+use super::wasm_identity_client_builder::WasmKinesisIdentityClientBuilder;
 use super::WasmIdentityBuilder;
-use super::WasmKinesisClient;
+use super::ts_client_sdk::IotaClientTsSdk;
+use super::types::{WasmIotaAddress, WasmObjectID};
 
 #[wasm_bindgen(js_name = KinesisIdentityClient)]
-pub struct WasmKinesisIdentityClient(pub(crate) IdentityClient<WasmKinesisClient>);
+pub struct WasmKinesisIdentityClient(pub(crate) IdentityClient<IotaClientTsSdk>);
 
 // builder related functions
 #[wasm_bindgen(js_class = KinesisIdentityClient)]
@@ -28,7 +28,7 @@ impl WasmKinesisIdentityClient {
   #[wasm_bindgen]
   pub fn builder() -> WasmKinesisIdentityClientBuilder {
     // WasmKinesisIdentityClientBuilder::default()
-    WasmKinesisIdentityClientBuilder(IdentityClient::<WasmKinesisClient>::builder())
+    WasmKinesisIdentityClientBuilder(IdentityClient::<IotaClientTsSdk>::builder())
   }
 
   // mock functions for wasm integration
@@ -39,8 +39,11 @@ impl WasmKinesisIdentityClient {
   }
 
   #[wasm_bindgen(js_name = senderAddress)]
-  pub fn sender_address(&self) -> Result<IotaAddress, JsError> {
-    self.0.sender_address().map_err(|e| e.into())
+  pub fn sender_address(&self) -> Result<WasmIotaAddress, JsError> {
+    self.0
+        .sender_address()
+        .map(|a| a.to_string())
+        .map_err(|e| e.into())
   }
 
   #[wasm_bindgen(js_name = networkName)]
@@ -54,8 +57,8 @@ impl WasmKinesisIdentityClient {
   }
 
   #[wasm_bindgen(js_name = getIdentity)]
-  pub async fn get_identity(&self, object_id: ObjectID) -> Result<Identity, JsError> {
-    self.0.get_identity(object_id).await.map_err(|e| e.into())
+  pub async fn get_identity(&self, object_id: WasmObjectID) -> Result<Identity, JsError> {
+    self.0.get_identity(object_id.parse()?).await.map_err(|e| e.into())
   }
 
   #[wasm_bindgen(js_name = resolveDid)]
@@ -64,7 +67,7 @@ impl WasmKinesisIdentityClient {
       .0
       .resolve_did(&did.0)
       .await
-      .map_err(<identity_iota::iota::client_dummy::Error as std::convert::Into<JsError>>::into)?;
+      .map_err(<identity_iota::iota::iota_sdk_abstraction::Error as std::convert::Into<JsError>>::into)?;
     Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
   }
 
@@ -84,7 +87,7 @@ impl WasmKinesisIdentityClient {
       .0
       .publish_did_document(doc, gas_budget, signer)
       .await
-      .map_err(<identity_iota::iota::client_dummy::Error as std::convert::Into<JsError>>::into)?;
+      .map_err(<identity_iota::iota::iota_sdk_abstraction::Error as std::convert::Into<JsError>>::into)?;
 
     Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
   }
@@ -105,7 +108,7 @@ impl WasmKinesisIdentityClient {
       .0
       .publish_did_document_update(doc, gas_budget, signer)
       .await
-      .map_err(<identity_iota::iota::client_dummy::Error as std::convert::Into<JsError>>::into)?;
+      .map_err(<identity_iota::iota::iota_sdk_abstraction::Error as std::convert::Into<JsError>>::into)?;
 
     Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
   }
@@ -121,7 +124,7 @@ impl WasmKinesisIdentityClient {
       .0
       .deactivate_did_output(&did.0, gas_budget, signer)
       .await
-      .map_err(<identity_iota::iota::client_dummy::Error as std::convert::Into<JsError>>::into)?;
+      .map_err(<identity_iota::iota::iota_sdk_abstraction::Error as std::convert::Into<JsError>>::into)?;
 
     Ok(())
   }

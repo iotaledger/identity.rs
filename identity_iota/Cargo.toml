@@ -20,6 +20,7 @@ identity_iota_core = { version = "=1.2.0", path = "../identity_iota_core", defau
 identity_resolver = { version = "=1.2.0", path = "../identity_resolver", default-features = false, optional = true }
 identity_storage = { version = "=1.2.0", path = "../identity_storage", default-features = false, features = ["iota-document"] }
 identity_verification = { version = "=1.2.0", path = "../identity_verification", default-features = false }
+identity_sui_name_tbd = { version = "=0.0.1", path = "../identity_sui_name_tbd", default-features = false, optional = true }
 
 [dev-dependencies]
 anyhow = "1.0.64"
@@ -42,6 +43,9 @@ kinesis-client = [
   "identity_storage/send-sync-storage",
   "identity_storage/storage-signer",
 ]
+
+# Switches module 'iota' from identity_iota_core to identity_sui_name_tbd
+identity-sui-name-tbd = ["dep:identity_sui_name_tbd"]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [

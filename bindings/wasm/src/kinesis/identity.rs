@@ -1,35 +1,36 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::iota::client_dummy::DummySigner;
-use identity_iota::iota::client_dummy::IdentityBuilder;
-use identity_iota::iota::client_dummy::IotaAddress;
-use identity_iota::iota::client_dummy::IotaObjectData;
-use identity_iota::iota::client_dummy::ObjectID;
-use identity_iota::iota::client_dummy::OnChainIdentity;
-use identity_iota::iota::client_dummy::ProposalAction;
-use identity_iota::iota::client_dummy::ProposalBuilder;
+use identity_iota::iota::iota_sdk_abstraction::DummySigner;
+use identity_iota::iota::iota_sdk_abstraction::IdentityBuilder;
+use identity_iota::iota::iota_sdk_abstraction::OnChainIdentity;
+use identity_iota::iota::iota_sdk_abstraction::ProposalAction;
+use identity_iota::iota::iota_sdk_abstraction::ProposalBuilder;
+use identity_iota::iota::iota_sdk_abstraction::types::base_types::{ObjectID};
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaObjectData;
 use identity_iota::iota::IotaDocument;
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
-use super::WasmKinesisClient;
-use super::WasmKinesisIdentityClient;
-use super::WasmProposal;
 use crate::error::wasm_error;
 use crate::error::Result;
 use crate::iota::WasmIotaDocument;
+
+use super::ts_client_sdk::IotaClientTsSdk;
+use super::{WasmKinesisIdentityClient};
+use super::WasmProposal;
+use super::types::{into_sdk_type, WasmIotaAddress, WasmObjectID, WasmIotaObjectData};
 
 /// Helper type for `WasmIdentityBuilder::controllers`.
 /// Has getters to support `Clone` for serialization
 #[derive(Debug)]
 #[wasm_bindgen(getter_with_clone)]
-pub struct ControllerAndVotingPower(pub IotaAddress, pub u64);
+pub struct ControllerAndVotingPower(pub WasmIotaAddress, pub u64);
 
 #[wasm_bindgen(js_class = ControllerAndVotingPower)]
 impl ControllerAndVotingPower {
   #[wasm_bindgen(constructor)]
-  pub fn new(address: IotaAddress, voting_power: u64) -> Self {
+  pub fn new(address: WasmIotaAddress, voting_power: u64) -> Self {
     Self(address, voting_power)
   }
 }
@@ -57,25 +58,25 @@ impl WasmOnChainIdentity {
       .map_err(|err| JsError::new(&format!("failed to read DID document; {err:?}")))?
       .clone();
     Ok(WasmProposalBuilder(
-      self.0.update_did_document::<WasmKinesisClient>(doc),
+      self.0.update_did_document::<IotaClientTsSdk>(doc),
     ))
   }
 
   #[wasm_bindgen(js_name = deactivateDid)]
   pub fn deactivate_did(self) -> WasmProposalBuilder {
-    WasmProposalBuilder(self.0.deactivate_did::<WasmKinesisClient>())
+    WasmProposalBuilder(self.0.deactivate_did::<IotaClientTsSdk>())
   }
 
   #[wasm_bindgen(js_name = getHistory, skip_typescript)] // ts type in custom section below
   pub async fn get_history(
     &self,
     client: WasmKinesisIdentityClient,
-    last_version: Option<IotaObjectData>,
+    last_version: Option<WasmIotaObjectData>,
     page_size: Option<usize>,
   ) -> Result<JsValue> {
     let rs_history = self
       .0
-      .get_history(&client.0, last_version.as_ref(), page_size)
+      .get_history(&client.0, last_version.map(|lv| into_sdk_type(lv)).as_ref(), page_size)
       .await
       .map_err(wasm_error)?;
     serde_wasm_bindgen::to_value(&rs_history).map_err(wasm_error)
@@ -154,12 +155,12 @@ pub struct WasmIdentityBuilder(pub(crate) IdentityBuilder);
 #[wasm_bindgen(js_class = IdentityBuilder)]
 impl WasmIdentityBuilder {
   #[wasm_bindgen(constructor)]
-  pub fn new(did_doc: &[u8], _package_id: ObjectID) -> Self {
-    Self(IdentityBuilder::new(did_doc, "foobar".to_string()))
+  pub fn new(did_doc: &[u8], _package_id: WasmObjectID) -> Self {
+    Self(IdentityBuilder::new(did_doc, "foobar".parse().expect("foobar won't be parsable into an ObjectID, TODO: Replace foobar with correct ObjectID")))
   }
 
-  pub fn controller(self, address: IotaAddress, voting_power: u64) -> Self {
-    Self(self.0.controller(address, voting_power))
+  pub fn controller(self, address: WasmIotaAddress, voting_power: u64) -> Self {
+    Self(self.0.controller(address.parse().expect("Parameter address could not be parsed into valid IotaAddress"), voting_power))
   }
 
   pub fn threshold(self, threshold: u64) -> Self {
@@ -175,7 +176,15 @@ impl WasmIdentityBuilder {
     Self(
       self
         .0
-        .controllers(controllers.into_iter().map(|v| (v.0, v.1)).collect::<Vec<_>>()),
+        .controllers(controllers
+            .into_iter()
+            .map(
+              |v| (
+                v.0.parse().expect("controller can not be parsed into valid IotaAddress"),
+                v.1
+              )
+            )
+            .collect::<Vec<_>>()),
     )
   }
 

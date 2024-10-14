@@ -1,10 +1,12 @@
 use identity_iota::core::Object;
-use identity_iota::iota::client_dummy::Multicontroller;
-use identity_iota::iota::client_dummy::ObjectID;
-use identity_iota::iota::client_dummy::Proposal;
+use identity_iota::iota::iota_sdk_abstraction::Multicontroller;
+use identity_iota::iota::iota_sdk_abstraction::Proposal;
+use identity_iota::iota::iota_sdk_abstraction::types::base_types::ObjectID;
 use wasm_bindgen::prelude::*;
 
 use crate::common::MapStringAny;
+
+use super::types::WasmObjectID;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[wasm_bindgen(js_name = Proposal)]
@@ -31,8 +33,8 @@ impl WasmMulticontroller {
   }
 
   #[wasm_bindgen(js_name = controllerVotingPower)]
-  pub fn controller_voting_power(&self, controller_cap_id: ObjectID) -> Option<u64> {
-    self.0.controller_voting_power(controller_cap_id)
+  pub fn controller_voting_power(&self, controller_cap_id: WasmObjectID) -> Option<u64> {
+    self.0.controller_voting_power(controller_cap_id.parse().expect("Could not parse controller_cap_id into ObjectID"))
   }
 
   pub fn proposals(&self) -> Result<MapStringAny, JsValue> {
@@ -61,7 +63,7 @@ impl WasmMulticontroller {
   }
 
   #[wasm_bindgen(js_name = hasMember)]
-  pub fn has_member(&self, cap_id: ObjectID) -> bool {
-    self.0.has_member(cap_id)
+  pub fn has_member(&self, cap_id: WasmObjectID) -> bool {
+    self.0.has_member(cap_id.parse().expect("cap_id is no valid ObjectID"))
   }
 }
