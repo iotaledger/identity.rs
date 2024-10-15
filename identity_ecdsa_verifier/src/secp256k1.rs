@@ -1,18 +1,14 @@
 // Copyright 2020-2024 IOTA Stiftung, Filancore GmbH
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::Deref;
-
-use identity_verification::jwk::JwkParamsEc;
+use identity_verification::jwk::Jwk;
 use identity_verification::jws::SignatureVerificationError;
-use identity_verification::jws::SignatureVerificationErrorKind;
-use identity_verification::jwu::{self};
-use k256::ecdsa::Signature;
+use identity_verification::jws::VerificationInput;
 use k256::ecdsa::VerifyingKey;
-use k256::elliptic_curve::sec1::FromEncodedPoint;
-use k256::elliptic_curve::subtle::CtOption;
-use k256::EncodedPoint;
-use k256::PublicKey;
+use signature::hazmat::PrehashVerifier;
+use signature::Verifier;
+
+use crate::common;
 
 /// A verifier that can handle the
 /// [`JwsAlgorithm::ES256K`](identity_verification::jws::JwsAlgorithm::ES256K)
@@ -35,59 +31,17 @@ impl Secp256K1Verifier {
   ///
   /// # Warning
   ///
-  /// This function does not check whether `alg = ES256K` in the protected
+  /// This function does not check whether `alg = ES256K` is in the protected
   /// header. Callers are expected to assert this prior to calling the
   /// function.
-  pub fn verify(
-    input: &identity_verification::jws::VerificationInput,
-    public_key: &identity_verification::jwk::Jwk,
-  ) -> Result<(), SignatureVerificationError> {
-    // Obtain a K256 public key.
-    let params: &JwkParamsEc = public_key
-      .try_ec_params()
-      .map_err(|_| SignatureVerificationErrorKind::UnsupportedKeyType)?;
+  pub fn verify(input: &VerificationInput, public_key: &Jwk) -> Result<(), SignatureVerificationError> {
+    common::verify_signature(input, public_key, VerifyingKey::verify)
+  }
 
-    // Concatenate x and y coordinates as required by
-    // EncodedPoint::from_untagged_bytes.
-    let public_key_bytes = jwu::decode_b64(&params.x)
-      .map_err(|err| {
-        SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure).with_source(err)
-      })?
-      .into_iter()
-      .chain(jwu::decode_b64(&params.y).map_err(|err| {
-        SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure).with_source(err)
-      })?)
-      .collect();
-
-    // The JWK contains the uncompressed x and y coordinates, so we can create the
-    // encoded point directly without prefixing an SEC1 tag.
-    let encoded_point: EncodedPoint = EncodedPoint::from_untagged_bytes(&public_key_bytes);
-    let public_key: PublicKey = {
-      let opt_public_key: CtOption<PublicKey> = PublicKey::from_encoded_point(&encoded_point);
-      if opt_public_key.is_none().into() {
-        return Err(SignatureVerificationError::new(
-          SignatureVerificationErrorKind::KeyDecodingFailure,
-        ));
-      } else {
-        opt_public_key.unwrap()
-      }
-    };
-
-    let verifying_key: VerifyingKey = VerifyingKey::from(public_key);
-
-    let mut signature: Signature = Signature::try_from(input.decoded_signature.deref()).map_err(|err| {
-      SignatureVerificationError::new(SignatureVerificationErrorKind::InvalidSignature).with_source(err)
-    })?;
-
-    if let Some(normalized) = signature.normalize_s() {
-      signature = normalized;
-    }
-
-    match signature::Verifier::verify(&verifying_key, &input.signing_input, &signature) {
-      Ok(()) => Ok(()),
-      Err(err) => {
-        Err(SignatureVerificationError::new(SignatureVerificationErrorKind::InvalidSignature).with_source(err))
-      }
-    }
+  /// Pre-hashed variant of [`Secp256K1Verifier::verify`].
+  /// # Warning
+  /// `input.signing_input` **MUST** be the result of a cryptographically secure hashing algorithm.
+  pub fn verify_prehashed(input: &VerificationInput, public_key: &Jwk) -> Result<(), SignatureVerificationError> {
+    common::verify_signature(input, public_key, VerifyingKey::verify_prehash)
   }
 }

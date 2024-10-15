@@ -32,3 +32,22 @@ impl JwsVerifier for EcDSAJwsVerifier {
     }
   }
 }
+
+impl EcDSAJwsVerifier {
+  /// Verifies the provided JWS signature `input` using `public_key`.
+  /// # Warning
+  /// `input.signing_input` must be the result of a cryptographically secure hashing algorithm.
+  pub fn verify_prehashed(
+    &self,
+    input: identity_verification::jws::VerificationInput,
+    public_key: &identity_verification::jwk::Jwk,
+  ) -> Result<(), identity_verification::jws::SignatureVerificationError> {
+    match input.alg {
+      #[cfg(feature = "es256")]
+      JwsAlgorithm::ES256 => crate::Secp256R1Verifier::verify_prehashed(&input, public_key),
+      #[cfg(feature = "es256k")]
+      JwsAlgorithm::ES256K => crate::Secp256K1Verifier::verify_prehashed(&input, public_key),
+      _ => Err(SignatureVerificationErrorKind::UnsupportedAlg.into()),
+    }
+  }
+}
