@@ -101,6 +101,12 @@ where
     tx_bcs: ProgrammableTransactionBcs,
     gas_budget: Option<u64>,
   ) -> Result<Box<dyn IotaTransactionBlockResponseT<Error=Error>>, Error> {
+    // This code looks like we would call execute_transaction() on
+    // self.read_client (which is an IdentityClientReadOnly).
+    // Actually we call execute_transaction() on self.read_client.iota_client
+    // which is an IotaClientAdapter instance now, provided via the Deref trait.
+    // TODO: Find a more transparent way to reference the
+    //       IotaClientAdapter for readonly.
     self.read_client.execute_transaction(
       self.sender_address(),
       self.sender_public_key(),

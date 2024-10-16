@@ -14,3 +14,4 @@ pub mod iota_sdk_abstraction;
 
 pub use assets::*;
 pub use error::Error;
+pub use sui::iota_sdk_adapter;
