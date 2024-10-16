@@ -141,6 +141,8 @@ async fn main() -> anyhow::Result<()> {
     // - JWT verification of the credentials.
     // - The presentation holder must always be the subject, regardless of the presence of the nonTransferable property
     // - The issuance date must not be in the future.
+
+    println!("{}: Resolve Issuer's DID and verifies the Verifiable Presentation", "[Verifier]".green());
   
     let presentation_verifier_options: JwsVerificationOptions =
       JwsVerificationOptions::default().nonce(challenge.to_owned());
@@ -189,10 +191,6 @@ async fn main() -> anyhow::Result<()> {
         .validate::<_, Object>(jwt_vc, issuer_document, &validation_options, FailFast::FirstError)
         .unwrap();
     }
-  
-    // Since no errors were thrown by `verify_presentation` we know that the validation was successful.
-    println!("VP successfully validated: {:#?}", presentation.presentation);
-  
   
     Ok(())
 }

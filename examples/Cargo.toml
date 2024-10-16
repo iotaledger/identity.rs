@@ -136,3 +136,7 @@ name = "pqc"
 path = "demo/hybrid.rs"
 name = "hybrid"
 
+[[example]]
+path = "demo/traditional_zk.rs"
+name = "traditional_zk"
+
