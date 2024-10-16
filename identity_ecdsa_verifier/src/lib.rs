@@ -19,6 +19,8 @@ mod secp256k1;
 #[cfg(feature = "es256")]
 mod secp256r1;
 
+pub(crate) mod common;
+
 pub use ecdsa_jws_verifier::*;
 #[cfg(feature = "es256k")]
 pub use secp256k1::*;

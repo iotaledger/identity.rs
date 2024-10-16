@@ -120,4 +120,28 @@ impl WasmEcDSAJwsVerifier {
     };
     EcDSAJwsVerifier::default().verify(input, &publicKey.0).wasm_result()
   }
+
+  /// Pre-hashed version of {@link EcDSAJwsVerifier.verify}.
+  /// # Warning
+  /// Users of this function **MUST** make sure `signingInput` is the result
+  /// of a cryptographically-secure hashing algorithm.
+  #[wasm_bindgen(js_name = verifyPrehashed)]
+  #[allow(non_snake_case)]
+  pub fn verify_prehashed(
+    &self,
+    alg: WasmJwsAlgorithm,
+    signingInput: &[u8],
+    decodedSignature: &[u8],
+    publicKey: &WasmJwk,
+  ) -> Result<(), JsValue> {
+    let alg = JwsAlgorithm::try_from(alg)?;
+    let input = VerificationInput {
+      alg,
+      signing_input: signingInput.into(),
+      decoded_signature: decodedSignature.into(),
+    };
+    EcDSAJwsVerifier::default()
+      .verify_prehashed(input, &publicKey.0)
+      .wasm_result()
+  }
 }

@@ -3,6 +3,8 @@
 
 use std::ops::Deref;
 
+use crypto::signatures::ed25519::PublicKey;
+use crypto::signatures::ed25519::Signature;
 use identity_jose::jwk::EdCurve;
 use identity_jose::jwk::Jwk;
 use identity_jose::jwk::JwkParamsOkp;
@@ -31,45 +33,48 @@ impl Ed25519Verifier {
   /// prior to calling the function.
   pub fn verify(input: VerificationInput, public_key: &Jwk) -> Result<(), SignatureVerificationError> {
     // Obtain an Ed25519 public key.
-    let params: &JwkParamsOkp = public_key
-      .try_okp_params()
-      .map_err(|_| SignatureVerificationErrorKind::UnsupportedKeyType)?;
+    let public_key = jwk_to_public_key(public_key)?;
 
-    if params
-      .try_ed_curve()
-      .ok()
-      .filter(|curve_param| *curve_param == EdCurve::Ed25519)
-      .is_none()
-    {
-      return Err(SignatureVerificationErrorKind::UnsupportedKeyParams.into());
-    }
+    let signature = input
+      .decoded_signature
+      .deref()
+      .try_into()
+      .map(Signature::from_bytes)
+      .map_err(|_| SignatureVerificationErrorKind::InvalidSignature)?;
 
-    let pk: [u8; crypto::signatures::ed25519::PublicKey::LENGTH] = identity_jose::jwu::decode_b64(params.x.as_str())
-      .map_err(|_| {
+    public_key
+      .verify(&signature, &input.signing_input)
+      .then_some(())
+      .ok_or_else(|| SignatureVerificationErrorKind::InvalidSignature.into())
+  }
+}
+
+fn jwk_to_public_key(jwk: &Jwk) -> Result<PublicKey, SignatureVerificationError> {
+  let params: &JwkParamsOkp = jwk
+    .try_okp_params()
+    .map_err(|_| SignatureVerificationErrorKind::UnsupportedKeyType)?;
+
+  if params
+    .try_ed_curve()
+    .ok()
+    .filter(|curve_param| *curve_param == EdCurve::Ed25519)
+    .is_none()
+  {
+    return Err(SignatureVerificationErrorKind::UnsupportedKeyParams.into());
+  }
+
+  let pk: [u8; PublicKey::LENGTH] = identity_jose::jwu::decode_b64(params.x.as_str())
+    .map_err(|_| {
+      SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure)
+        .with_custom_message("could not decode x parameter from jwk")
+    })
+    .and_then(|value| {
+      TryInto::try_into(value).map_err(|_| {
         SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure)
-          .with_custom_message("could not decode x parameter from jwk")
+          .with_custom_message("invalid public key length")
       })
-      .and_then(|value| {
-        TryInto::try_into(value).map_err(|_| {
-          SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure)
-            .with_custom_message("invalid public key length")
-        })
-      })?;
-
-    let public_key_ed25519 = crypto::signatures::ed25519::PublicKey::try_from(pk).map_err(|err| {
-      SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure).with_source(err)
     })?;
 
-    let signature_arr =
-      <[u8; crypto::signatures::ed25519::Signature::LENGTH]>::try_from(input.decoded_signature.deref())
-        .map_err(|_| SignatureVerificationErrorKind::InvalidSignature)?;
-
-    let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
-
-    if crypto::signatures::ed25519::PublicKey::verify(&public_key_ed25519, &signature, &input.signing_input) {
-      Ok(())
-    } else {
-      Err(SignatureVerificationErrorKind::InvalidSignature.into())
-    }
-  }
+  PublicKey::try_from(pk)
+    .map_err(|err| SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure).with_source(err))
 }
