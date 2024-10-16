@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::jose::jwk::Jwk;
-use crate::CompositePublicKey;
+use identity_jose::jwk::CompositeJwk;
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use identity_core::convert::BaseEncoding;
@@ -28,9 +28,8 @@ pub enum MethodData {
   PublicKeyBase58(String),
   /// Verification Material in the JSON Web Key format.
   PublicKeyJwk(Jwk),
-  /// Verification Material containing two keys in JSON Web Key format, one traditional and one PQ //TODO: Hybrid - new
-  /// MethodData
-  CompositePublicKey(CompositePublicKey),
+  /// Verification Material containing two keys in JSON Web Key format, one traditional and one PQ //TODO: Hybrid - new MethodData
+  CompositeJwk(CompositeJwk),
   /// Arbitrary verification material.
   #[serde(untagged)]
   Custom(CustomMethodData),
@@ -63,7 +62,7 @@ impl MethodData {
   /// represented as a vector of bytes.
   pub fn try_decode(&self) -> Result<Vec<u8>> {
     match self {
-      Self::PublicKeyJwk(_) | Self::Custom(_) | Self::CompositePublicKey(_) => Err(
+      Self::PublicKeyJwk(_) | Self::Custom(_) | Self::CompositeJwk(_) => Err(
         Error::InvalidMethodDataTransformation("method data is not base encoded"),
       ),
       Self::PublicKeyMultibase(input) => {
@@ -75,8 +74,8 @@ impl MethodData {
 
   //TODO: hybrid - return CompositePublicKey
   /// Returns the wrapped `CompositePublicKey` if the format is [`MethodData::CompositePublicKey`].
-  pub fn composite_public_key(&self) -> Option<&CompositePublicKey> {
-    if let Self::CompositePublicKey(ref c) = self {
+  pub fn composite_public_key(&self) -> Option<&CompositeJwk> {
+    if let Self::CompositeJwk(ref c) = self {
       Some(c)
     } else {
       None
@@ -84,7 +83,7 @@ impl MethodData {
   }
 
   /// Fallible version of [`Self::composite_public_key`](Self::composite_public_key()).
-  pub fn try_composite_public_key(&self) -> Result<&CompositePublicKey> {
+  pub fn try_composite_public_key(&self) -> Result<&CompositeJwk> {
     self.composite_public_key().ok_or(Error::NotCompositePublicKey)
   }
 
@@ -118,7 +117,7 @@ impl Debug for MethodData {
       Self::PublicKeyJwk(inner) => f.write_fmt(format_args!("PublicKeyJwk({inner:#?})")),
       Self::PublicKeyMultibase(inner) => f.write_fmt(format_args!("PublicKeyMultibase({inner})")),
       Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({inner})")),
-      Self::CompositePublicKey(inner) => f.write_fmt(format_args!("CompositePublicKey({inner:#?})")),
+      Self::CompositeJwk(inner) => f.write_fmt(format_args!("CompositePublicKey({inner:#?})")),
       Self::Custom(CustomMethodData { name, data }) => f.write_fmt(format_args!("{name}({data})")),
     }
   }

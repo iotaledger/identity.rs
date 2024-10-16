@@ -1,6 +1,6 @@
 //TODO: hybrid - composite public key
 
-use identity_jose::jwk::Jwk;
+use crate::jwk::Jwk;
 
 /// Mame of algorithms used to generate the hybrid signature. Values taken from [here](https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-02#name-domain-separators).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
@@ -25,7 +25,7 @@ impl CompositeAlgId {
 
 /// Represent a combination of a traditional public key and a post-quantum public key both in Jwk format.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
-pub struct CompositePublicKey {
+pub struct CompositeJwk {
   #[serde(rename = "algId")]
   alg_id: CompositeAlgId,
   #[serde(rename = "traditionalPublicKey")]
@@ -34,7 +34,7 @@ pub struct CompositePublicKey {
   pq_public_key: Jwk,
 }
 
-impl CompositePublicKey {
+impl CompositeJwk {
   /// Create a new CompositePublicKey structure.
   pub fn new(alg_id: CompositeAlgId, traditional_public_key: Jwk, pq_public_key: Jwk) -> Self {
     Self {

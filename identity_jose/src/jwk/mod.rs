@@ -12,6 +12,7 @@ mod key_params;
 mod key_set;
 mod key_type;
 mod key_use;
+mod composite_jwk;
 
 pub use self::curve::*;
 pub use self::jwk_pq::*;
@@ -21,3 +22,4 @@ pub use self::key_params::*;
 pub use self::key_set::*;
 pub use self::key_type::*;
 pub use self::key_use::*;
+pub use self::composite_jwk::*;

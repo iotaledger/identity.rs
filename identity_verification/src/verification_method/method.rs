@@ -5,7 +5,9 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use std::borrow::Cow;
 
+use identity_did::DIDCompositeJwk;
 use identity_did::DIDJwk;
+use identity_jose::jwk::CompositeJwk;
 use identity_jose::jwk::Jwk;
 use serde::de;
 use serde::Deserialize;
@@ -227,6 +229,48 @@ impl VerificationMethod {
   }
 }
 
+
+impl VerificationMethod {
+  pub fn new_from_compositejwk<D: DID>(did: D, key: CompositeJwk, fragment: Option<&str>) -> Result<Self> {
+    // Can i use ~ in a URI safely since is an unreserved character (https://www.rfc-editor.org/rfc/rfc3986#section-2.3)
+    let composite_fragment = key.traditional_public_key()
+    .kid()
+    .map(|s| s.to_string())
+    .or_else(|| key.pq_public_key().kid().map(|s| s.to_string()))
+    .map(|s| {
+      if let (Some(str1), Some(str2)) = (key.traditional_public_key().kid(), key.pq_public_key().kid()) {
+        format!("{}~{}", str1, str2)
+      } else {
+        s
+      }
+    });
+
+
+    let fragment: Cow<'_, str> = {
+      let given_fragment: &str = fragment
+        .or_else(|| composite_fragment.as_deref())
+        .ok_or(Error::InvalidMethod(
+          "an explicit fragment or kid is required",
+        ))?;
+      // Make sure the fragment starts with "#"
+      if given_fragment.starts_with('#') {
+        Cow::Borrowed(given_fragment)
+      } else {
+        Cow::Owned(format!("#{given_fragment}"))
+      }
+    };
+
+    let id: DIDUrl = did.to_url().join(fragment).map_err(Error::DIDUrlConstructionError)?;
+
+    MethodBuilder::default()
+      .id(id)
+      .type_(MethodType::custom("CompositeSignaturePublicKey"))
+      .controller(did.into())
+      .data(MethodData::CompositeJwk(key))
+      .build()
+  }
+}
+
 impl Display for VerificationMethod {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
@@ -253,6 +297,14 @@ impl TryFrom<DIDJwk> for VerificationMethod {
   fn try_from(did: DIDJwk) -> Result<Self, Self::Error> {
     let jwk = did.jwk();
     Self::new_from_jwk(did, jwk, Some("0"))
+  }
+}
+
+impl TryFrom<DIDCompositeJwk> for VerificationMethod {
+  type Error = Error;
+  fn try_from(did: DIDCompositeJwk) -> Result<Self, Self::Error> {
+    let jwk = did.composite_jwk();
+    Self::new_from_compositejwk(did, jwk, Some("0"))
   }
 }
 
@@ -285,7 +337,7 @@ impl From<_VerificationMethod> for VerificationMethod {
       MethodData::PublicKeyBase58(_) => "publicKeyBase58",
       MethodData::PublicKeyJwk(_) => "publicKeyJwk",
       MethodData::PublicKeyMultibase(_) => "publicKeyMultibase",
-      MethodData::CompositePublicKey(_) => "compositePublicKey",
+      MethodData::CompositeJwk(_) => "compositePublicKey",
       MethodData::Custom(CustomMethodData { name, .. }) => name.as_str(),
     };
     properties.remove(key);

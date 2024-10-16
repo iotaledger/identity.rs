@@ -30,8 +30,8 @@ use identity_verification::jws::CompactJwsEncoder;
 use identity_verification::jws::CompactJwsEncodingOptions;
 use identity_verification::jws::JwsAlgorithm;
 use identity_verification::jws::JwsHeader;
-use identity_verification::CompositeAlgId;
-use identity_verification::CompositePublicKey;
+use identity_verification::jwk::CompositeAlgId;
+use identity_verification::jwk::CompositeJwk;
 use identity_verification::MethodBuilder;
 use identity_verification::MethodData;
 use identity_verification::MethodScope;
@@ -82,54 +82,12 @@ macro_rules! generate_method_hybrid_for_document_type {
         .await
         .map_err(Error::KeyStorageError)?;
 
-      // Can i use ~ in a URI safely since is an unreserved character (https://www.rfc-editor.org/rfc/rfc3986#section-2.3)
-      let composite_fragment = t_jwk
-        .kid()
-        .map(|s| s.to_string())
-        .or_else(|| pq_jwk.kid().map(|s| s.to_string()))
-        .map(|s| {
-          if let (Some(str1), Some(str2)) = (t_jwk.kid(), pq_jwk.kid()) {
-            format!("{}~{}", str1, str2)
-          } else {
-            s
-          }
-        });
-
       let composite_kid = KeyId::new(format!("{}~{}", t_key_id.as_str(), pq_key_id.as_str()));
 
-      let fragment: Cow<'_, str> = {
-        let given_fragment: &str = fragment
-          .or_else(|| composite_fragment.as_deref())
-          .ok_or(identity_verification::Error::InvalidMethod(
-            "an explicit fragment or JWK kid is required",
-          ))
-          .map_err(Error::VerificationMethodConstructionError)?;
-        // Make sure the fragment starts with "#"
-        if given_fragment.starts_with('#') {
-          Cow::Borrowed(given_fragment)
-        } else {
-          Cow::Owned(format!("#{given_fragment}"))
-        }
-      };
+      let composite_pk = CompositeJwk::new(alg_id, t_jwk, pq_jwk);
 
-      let id: DIDUrl = document
-        .id()
-        .to_url()
-        .join(fragment)
-        .map_err(identity_verification::Error::DIDUrlConstructionError)
-        .map_err(Error::VerificationMethodConstructionError)?;
-
-      let composite_pk = CompositePublicKey::new(alg_id, t_jwk, pq_jwk);
-
-      // Produce a new verification method containing the generated JWK. If this operation fails we handle the error
-      // by attempting to revert key generation before returning an error.
       let method: VerificationMethod = {
-        match MethodBuilder::default()
-          .id(id)
-          .type_(MethodType::custom("CompositeSignaturePublicKey"))
-          .controller(document.id().clone().into())
-          .data(identity_verification::MethodData::CompositePublicKey(composite_pk))
-          .build()
+        match VerificationMethod::new_from_compositejwk(document.id().clone(), composite_pk, fragment)
           .map_err(Error::VerificationMethodConstructionError)
         {
           Ok(method) => method,
@@ -270,7 +228,7 @@ impl JwkDocumentExtHybrid for CoreDocument {
   {
     // Obtain the method corresponding to the given fragment.
     let method: &VerificationMethod = self.resolve_method(fragment, None).ok_or(Error::MethodNotFound)?;
-    let MethodData::CompositePublicKey(ref composite) = method.data() else {
+    let MethodData::CompositeJwk(ref composite) = method.data() else {
       return Err(Error::NotCompositePublicKey);
     };
 

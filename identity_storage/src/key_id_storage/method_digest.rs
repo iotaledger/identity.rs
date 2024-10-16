@@ -58,7 +58,7 @@ impl MethodDigest {
     match method_data {
       MethodData::PublicKeyJwk(jwk) => hasher.write(jwk.thumbprint_sha256().as_ref()),
       // MethodData::Custom(e) => hasher.write(&e.to_json_vec().unwrap()), //TODO: Hybrid - to be changed
-      MethodData::CompositePublicKey(composite) => {
+      MethodData::CompositeJwk(composite) => {
         let algid = composite
           .alg_id()
           .to_json_vec()

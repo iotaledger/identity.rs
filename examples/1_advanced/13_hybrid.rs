@@ -38,7 +38,7 @@ use identity_iota::storage::JwkDocumentExtHybrid;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::JwsSignatureOptions;
 use identity_iota::storage::KeyIdMemstore;
-use identity_iota::verification::CompositeAlgId;
+use identity_iota::verification::jwk::CompositeAlgId;
 use identity_iota::verification::MethodScope;
 use identity_pqc_verifier::PQCJwsVerifier;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
@@ -49,10 +49,13 @@ use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
 use serde_json::json;
 
-// The API endpoint of an IOTA node, e.g. Hornet.
-const API_ENDPOINT: &str = "http://localhost";
-// The faucet endpoint allows requesting funds for testing purposes.
-const FAUCET_ENDPOINT: &str = "http://localhost/faucet/api/enqueue";
+// // The API endpoint of an IOTA node, e.g. Hornet.
+// const API_ENDPOINT: &str = "http://localhost";
+// // The faucet endpoint allows requesting funds for testing purposes.
+// const FAUCET_ENDPOINT: &str = "http://localhost/faucet/api/enqueue";
+
+const API_ENDPOINT: &str = "https://api.testnet.shimmer.network";
+const FAUCET_ENDPOINT: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
 async fn create_did(
   client: &Client,

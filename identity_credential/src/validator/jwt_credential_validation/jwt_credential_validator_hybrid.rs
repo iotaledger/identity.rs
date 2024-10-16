@@ -8,7 +8,7 @@ use identity_verification::jws::DecodedJws;
 use identity_verification::jws::Decoder;
 use identity_verification::jws::JwsValidationItem;
 use identity_verification::jws::JwsVerifier;
-use identity_verification::CompositePublicKey;
+use identity_verification::jwk::CompositeJwk;
 
 use super::CompoundCredentialValidationError;
 use super::DecodedJwtCredential;
@@ -184,7 +184,7 @@ impl<TRV: JwsVerifier, PQV: JwsVerifier> JwtCredentialValidatorHybrid<TRV, PQV> 
     jws: &JwsValidationItem<'a>,
     trusted_issuers: &'i [DOC],
     options: &JwsVerificationOptions,
-  ) -> Result<(&'a CompositePublicKey, DIDUrl), JwtValidationError>
+  ) -> Result<(&'a CompositeJwk, DIDUrl), JwtValidationError>
   where
     DOC: AsRef<CoreDocument>,
     'i: 'a,
@@ -236,7 +236,7 @@ impl<TRV: JwsVerifier, PQV: JwsVerifier> JwtCredentialValidatorHybrid<TRV, PQV> 
         message: "could not extract CompositePublicKey from a method identified by kid",
         signer_ctx: SignerContext::Issuer,
       })
-      .map(move |c: &CompositePublicKey| (c, method_id))
+      .map(move |c: &CompositeJwk| (c, method_id))
   }
 
   /// Stateless version of [`Self::verify_signature`]

@@ -7,6 +7,7 @@ use core::fmt::Formatter;
 use std::collections::HashMap;
 use std::convert::Infallible;
 
+use identity_did::DIDCompositeJwk;
 use identity_did::DIDJwk;
 use identity_did::WebDID;
 use identity_verification::jose::jwk::Jwk;
@@ -1042,6 +1043,25 @@ impl CoreDocument {
 
     DocumentBuilder::default()
       .id(did_jwk.into())
+      .verification_method(verification_method)
+      .assertion_method(verification_method_id.clone())
+      .authentication(verification_method_id.clone())
+      .capability_invocation(verification_method_id.clone())
+      .capability_delegation(verification_method_id.clone())
+      .build()
+  }
+}
+
+
+//TODO: expand_composite_jwk
+impl CoreDocument {
+  /// Creates a [`CoreDocument`] from a did:jwk DID.
+  pub fn expand_did_compositejwk(did_compositejwk: DIDCompositeJwk) -> Result<Self, Error> {
+    let verification_method = VerificationMethod::try_from(did_compositejwk.clone()).map_err(Error::InvalidKeyMaterial)?;
+    let verification_method_id = verification_method.id().clone();
+
+    DocumentBuilder::default()
+      .id(did_compositejwk.into())
       .verification_method(verification_method)
       .assertion_method(verification_method_id.clone())
       .authentication(verification_method_id.clone())
