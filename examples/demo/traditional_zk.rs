@@ -1,5 +1,4 @@
 use std::{collections::HashMap, fs::File, path::Path};
-use env_logger::Env;
 use examples::{create_did, random_stronghold_path, MemStorage, API_ENDPOINT};
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::{core::{Duration, FromJson, Object, Timestamp, Url}, credential::{Credential, CredentialBuilder, DecodedJwtCredential, DecodedJwtPresentation, FailFast, Jpt, JptCredentialValidationOptions, JptCredentialValidator, JptPresentationValidationOptions, JptPresentationValidator, JptPresentationValidatorUtils, JwpCredentialOptions, JwpPresentationOptions, Jwt, JwtCredentialValidationOptions, JwtCredentialValidator, JwtCredentialValidatorUtils, JwtPresentationOptions, JwtPresentationValidationOptions, JwtPresentationValidator, JwtPresentationValidatorUtils, Presentation, PresentationBuilder, SelectiveDisclosurePresentation, Subject, SubjectHolderRelationship}, did::{CoreDID, DIDJwk, DID}, document::{verifiable::JwsVerificationOptions, CoreDocument}, iota::{IotaDocument, NetworkName}, resolver::Resolver, storage::{DidJwkDocumentExt, JwkGenOutput, JwkMemStore, JwkStorage, JwpDocumentExt, JwsSignatureOptions, KeyIdMemstore, KeyIdStorage, KeyStorageResult, MethodDigest}, verification::{jws::JwsAlgorithm, jwu::encode_b64_json, MethodScope}};
@@ -23,7 +22,6 @@ pub fn write_to_file(doc: &CoreDocument, path: Option<&str>) -> anyhow::Result<(
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    //env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     let did_url: &str = "https://localhost:4443/.well-known/did_zk.json";
     let path_did_file: &str = "C:/Projects/did-web-server/.well-known/did_zk.json";
@@ -51,10 +49,10 @@ async fn main() -> anyhow::Result<()> {
 
     let storage_alice: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-    let (alice_document, fragment_alice) = CoreDocument::new_did_jwk_zk(
+    let (alice_document, fragment_alice) = CoreDocument::new_did_jwk(
       &storage_alice, 
-      JwkMemStore::BLS12381G2_KEY_TYPE, 
-      ProofAlgorithm::BLS12381_SHA256
+      JwkMemStore::ED25519_KEY_TYPE, 
+      JwsAlgorithm::EdDSA
     ).await?;
 
     println!("{} {} {}", "[Holder]".blue(), ": Create DID Jwk:", alice_document.id().as_str());

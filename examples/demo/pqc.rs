@@ -1,5 +1,4 @@
 use std::{collections::HashMap, fs::File, path::Path};
-use env_logger::Env;
 use examples::{create_did, random_stronghold_path, MemStorage, API_ENDPOINT};
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::{core::{Duration, FromJson, Object, Timestamp, Url}, credential::{Credential, CredentialBuilder, DecodedJwtCredential, DecodedJwtPresentation, FailFast, Jwt, JwtCredentialValidationOptions, JwtCredentialValidator, JwtCredentialValidatorUtils, JwtPresentationOptions, JwtPresentationValidationOptions, JwtPresentationValidator, JwtPresentationValidatorUtils, Presentation, PresentationBuilder, Subject, SubjectHolderRelationship}, did::{CoreDID, DIDJwk, DID}, document::{verifiable::JwsVerificationOptions, CoreDocument}, iota::{IotaDocument, NetworkName}, resolver::Resolver, storage::{DidJwkDocumentExt, JwkGenOutput, JwkMemStore, JwkStorage, JwsDocumentExtPQC, JwsSignatureOptions, KeyIdMemstore, KeyIdStorage, KeyStorageResult, MethodDigest}, verification::{jws::JwsAlgorithm, jwu::encode_b64_json, MethodScope}};
@@ -21,7 +20,6 @@ pub fn write_to_file(doc: &CoreDocument, path: Option<&str>) -> anyhow::Result<(
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     let did_url: &str = "https://localhost:4443/.well-known/did_pqc.json";
     let path_did_file: &str = "C:/Projects/did-web-server/.well-known/did_pqc.json";
@@ -142,9 +140,6 @@ async fn main() -> anyhow::Result<()> {
   
     println!("{}: Resolve Issuer's DID and verifies the Verifiable Presentation", "[Verifier]".green());
 
-    let presentation_verifier_options: JwsVerificationOptions =
-      JwsVerificationOptions::default().nonce(challenge.to_owned());
-  
     let mut resolver: Resolver<CoreDocument> = Resolver::new();
     resolver.attach_did_jwk_handler();
     
@@ -153,6 +148,8 @@ async fn main() -> anyhow::Result<()> {
     let holder_did: DIDJwk = JwtPresentationValidatorUtils::extract_holder::<DIDJwk>(&presentation_jwt)?;
     let holder: CoreDocument = resolver.resolve(&holder_did).await?;
 
+    let presentation_verifier_options: JwsVerificationOptions =
+    JwsVerificationOptions::default().nonce(challenge.to_owned());
   
     // Validate presentation. Note that this doesn't validate the included credentials.
     let presentation_validation_options =

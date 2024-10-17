@@ -21,8 +21,6 @@ serde_json = { version = "1.0", default-features = false }
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
 identity_pqc_verifier = { path = "../identity_pqc_verifier", default-features = true }
 serde.workspace = true
-log = "0.4.0"
-env_logger = "0.10.0"
 colored = "2.1.0"
 
 [lib]
