@@ -24,6 +24,7 @@ use crate::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::iota_sdk_abstraction::types::base_types::ObjectRef;
 use crate::sui::iota_sdk_adapter::IotaClientAdapter;
 use crate::iota_sdk_abstraction::move_types::language_storage::StructTag;
+use serde::de::DeserializeOwned;
 use serde::Deserialize;
 
 use crate::migration::get_alias;
@@ -65,6 +66,7 @@ impl IdentityClientReadOnly {
     &self.network
   }
 
+  /// Returns the migration registry's ID.
   pub const fn migration_registry_id(&self) -> ObjectID {
     self.migration_registry_id
   }
@@ -99,9 +101,10 @@ impl IdentityClientReadOnly {
     Ok(identity_client)
   }
 
+  /// Resolves a _Move_ Object of ID `id` and parses it to a value of type `T`.
   pub async fn get_object_by_id<T>(&self, id: ObjectID) -> Result<T, Error>
   where
-    T: for<'de> Deserialize<'de>,
+    T: DeserializeOwned,
   {
     self
       .read_api()
@@ -167,6 +170,7 @@ impl IdentityClientReadOnly {
     Ok(None)
   }
 
+  /// Queries an [`IotaDocument`] DID Document through its `did`.
   pub async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument, Error> {
     let identity = get_identity(self, get_object_id_from_did(did)?)
       .await?
@@ -192,6 +196,8 @@ impl IdentityClientReadOnly {
         ))
       })
   }
+
+  /// Resolves an [`Identity`] from its ID `object_id`.
   pub async fn get_identity(&self, object_id: ObjectID) -> Result<Identity, Error> {
     // spawn all checks
     let mut all_futures =

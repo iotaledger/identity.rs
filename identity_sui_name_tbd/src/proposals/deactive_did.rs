@@ -19,6 +19,7 @@ use crate::Error;
 
 use super::ProposalT;
 
+/// Action for deactivating a DID Document inside an Identity.
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct DeactiveDid;
 

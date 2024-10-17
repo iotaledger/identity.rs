@@ -11,6 +11,7 @@ use crate::iota_sdk_abstraction::types::id::UID;
 use serde::Deserialize;
 use serde::Serialize;
 
+/// A [`Multicontroller`]'s proposal for changes.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(
   try_from = "IotaProposal::<T>",
@@ -26,15 +27,21 @@ pub struct Proposal<T> {
 }
 
 impl<T> Proposal<T> {
+  /// Returns this [Proposal]'s ID.
   pub fn id(&self) -> ObjectID {
     *self.id.object_id()
   }
+
+  /// Returns the votes received by this [`Proposal`].
   pub fn votes(&self) -> u64 {
     self.votes
   }
+
   pub(crate) fn votes_mut(&mut self) -> &mut u64 {
     &mut self.votes
   }
+
+  /// Returns a reference to the action contained by this [`Proposal`].
   pub fn action(&self) -> &T {
     &self.action
   }
@@ -93,6 +100,7 @@ impl<T> From<Proposal<T>> for IotaProposal<T> {
   }
 }
 
+/// Representation of `identity.rs`'s `multicontroller::Multicontroller` Move type.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(try_from = "IotaMulticontroller::<T>")]
 pub struct Multicontroller<T> {
@@ -104,27 +112,40 @@ pub struct Multicontroller<T> {
 }
 
 impl<T> Multicontroller<T> {
+  /// Returns a reference to the value that is shared between many controllers.
   pub fn controlled_value(&self) -> &T {
     &self.controlled_value
   }
+  
+  /// Returns this [`Multicontroller`]'s threshold.
   pub fn threshold(&self) -> u64 {
     self.threshold
   }
+
+  /// Returns the lists of active [`Proposal`]s for this [`Multicontroller`].
   pub fn proposals(&self) -> &HashSet<ObjectID> {
     &self.active_proposals
   }
-  pub fn proposals_bag_id(&self) -> ObjectID {
+
+  pub(crate) fn proposals_bag_id(&self) -> ObjectID {
     *self.proposals.id.object_id()
   }
+
+  /// Returns the voting power for controller with ID `controller_cap_id`, if any.
   pub fn controller_voting_power(&self, controller_cap_id: ObjectID) -> Option<u64> {
     self.controllers.get(&controller_cap_id).copied()
   }
+
+  /// Consumes this [`Multicontroller`], returning the wrapped value.
   pub fn into_inner(self) -> T {
     self.controlled_value
   }
+
   pub(crate) fn controllers(&self) -> &HashMap<ObjectID, u64> {
     &self.controllers
   }
+
+  /// Returns `true` if `cap_id` is among this [`Multicontroller`]'s controllers' IDs.
   pub fn has_member(&self, cap_id: ObjectID) -> bool {
     self.controllers.contains_key(&cap_id)
   }

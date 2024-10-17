@@ -20,6 +20,7 @@ use crate::Error;
 
 use super::ProposalT;
 
+/// Proposal's action for updating a DID Document.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(into = "UpdateValue::<Vec<u8>>", from = "UpdateValue::<Vec<u8>>")]
 pub struct UpdateDidDocument(Vec<u8>);
