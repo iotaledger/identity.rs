@@ -11,9 +11,9 @@ use identity_sui_name_tbd::migration::has_previous_version;
 use identity_sui_name_tbd::migration::Identity;
 use identity_sui_name_tbd::proposals::ProposalResult;
 use identity_sui_name_tbd::transaction::Transaction;
-use identity_sui_name_tbd::rpc_types::IotaObjectData;
-use identity_sui_name_tbd::types::base_types::SequenceNumber;
-use identity_sui_name_tbd::move_core_types::language_storage::StructTag;
+use identity_sui_name_tbd::iota_sdk_abstraction::rpc_types::IotaObjectData;
+use identity_sui_name_tbd::iota_sdk_abstraction::types::base_types::SequenceNumber;
+use identity_sui_name_tbd::iota_sdk_abstraction::move_types::language_storage::StructTag;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use serial_test::serial;
@@ -141,7 +141,7 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
 
-  let mut newly_created_identity = identity_client
+  let newly_created_identity = identity_client
     .create_identity(TEST_DOC)
     .finish()
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)

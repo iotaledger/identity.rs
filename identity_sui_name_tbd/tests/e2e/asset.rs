@@ -20,10 +20,11 @@ use identity_sui_name_tbd::AuthenticatedAsset;
 use identity_sui_name_tbd::PublicAvailableVC;
 use identity_sui_name_tbd::TransferProposal;
 use identity_verification::VerificationMethod;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::TypeTag;
+use identity_sui_name_tbd::iota_sdk_abstraction::types::base_types::ObjectID;
+use identity_sui_name_tbd::iota_sdk_abstraction::types::TypeTag;
+use identity_sui_name_tbd::iota_sdk_abstraction::IotaClientTrait;
 use itertools::Itertools as _;
-use move_core_types::language_storage::StructTag;
+use identity_sui_name_tbd::iota_sdk_abstraction::move_types::language_storage::StructTag;
 
 #[tokio::test]
 async fn creating_authenticated_asset_works() -> anyhow::Result<()> {

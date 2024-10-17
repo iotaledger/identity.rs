@@ -3,7 +3,7 @@
 
 use crate::common::get_client;
 use identity_sui_name_tbd::migration;
-use iota_sdk::types::base_types::ObjectID;
+use identity_sui_name_tbd::iota_sdk_abstraction::types::base_types::ObjectID;
 
 #[tokio::test]
 async fn migration_registry_is_found() -> anyhow::Result<()> {

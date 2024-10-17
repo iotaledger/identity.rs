@@ -20,9 +20,11 @@ use identity_storage::StorageSigner;
 use identity_sui_name_tbd::client::IdentityClient;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
 use identity_sui_name_tbd::utils::request_funds;
-use iota_sdk::rpc_types::IotaObjectDataOptions;
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::base_types::ObjectID;
+use identity_sui_name_tbd::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
+use identity_sui_name_tbd::iota_sdk_abstraction::types::base_types::IotaAddress;
+use identity_sui_name_tbd::iota_sdk_abstraction::types::base_types::ObjectID;
+use identity_sui_name_tbd::iota_sdk_abstraction::IotaClientTrait;
+use identity_sui_name_tbd::iota_sdk_adapter::IotaClientAdapter;
 use iota_sdk::IotaClient;
 use iota_sdk::IotaClientBuilder;
 use jsonpath_rust::JsonPathQuery;
@@ -65,7 +67,8 @@ pub async fn get_client() -> anyhow::Result<TestClient> {
   request_funds(&address).await?;
 
   let storage = Arc::new(Storage::new(JwkMemStore::new(), KeyIdMemstore::new()));
-  let identity_client = IdentityClientReadOnly::new(client, package_id).await?;
+  let client_adapter = IotaClientAdapter::new(client)?;
+  let identity_client = IdentityClientReadOnly::new(client_adapter, package_id).await?;
 
   Ok(TestClient {
     client: identity_client,
