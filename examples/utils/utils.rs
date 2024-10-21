@@ -31,6 +31,9 @@ use serde_json::Value;
 pub static API_ENDPOINT: &str = "http://localhost";
 pub static FAUCET_ENDPOINT: &str = "http://localhost/faucet/api/enqueue";
 
+pub static DID_URL: &str = "https://localhost:4443/.well-known/";
+pub static PATH_DID_FILE: &str = "C:/Projects/did-web-server/.well-known/";
+
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
 /// Creates a DID Document and publishes it in a new Alias Output.
