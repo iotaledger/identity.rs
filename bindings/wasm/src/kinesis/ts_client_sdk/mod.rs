@@ -1,6 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 mod wasm_iota_client;
 
-pub mod iota_client_ts_sdk;
-
-pub use iota_client_ts_sdk::*;
 pub use wasm_iota_client::*;

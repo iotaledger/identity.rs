@@ -3,9 +3,9 @@
 
 use std::ops::{Deref, DerefMut};
 
-use crate::iota_sdk_abstraction::ProgrammableTransactionBcs;
-use crate::iota_sdk_abstraction::TransactionBuilderT;
-use crate::error::Error;
+use identity_iota::iota::iota_sdk_abstraction::ProgrammableTransactionBcs;
+use identity_iota::iota::iota_sdk_abstraction::TransactionBuilderT;
+use identity_iota::iota::sui_name_tbd_error::Error;
 
 type NativeTsCodeBindingWrapper = ();
 

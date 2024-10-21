@@ -3,7 +3,7 @@
 
 pub mod assets;
 pub mod client;
-mod error;
+pub mod error;
 pub mod migration;
 pub mod proposals;
 mod sui;
@@ -14,4 +14,5 @@ pub mod iota_sdk_abstraction;
 
 pub use assets::*;
 pub use error::Error;
+#[cfg(not(target_arch = "wasm32"))]
 pub use sui::iota_sdk_adapter;

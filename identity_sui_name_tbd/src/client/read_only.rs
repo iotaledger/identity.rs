@@ -11,7 +11,7 @@ use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use identity_iota_core::NetworkName;
 use identity_iota_core::StateMetadataDocument;
-use crate::sui::iota_sdk_adapter::IotaClientTraitCore;
+use crate::iota_sdk_abstraction::IotaClientTraitCore;
 use crate::iota_sdk_abstraction::rpc_types::EventFilter;
 use crate::iota_sdk_abstraction::rpc_types::IotaData as _;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectData;
@@ -37,7 +37,7 @@ const UNKNOWN_NETWORK_HRP: &str = "unknwn";
 /// An [`IotaClient`] enriched with identity-related
 /// functionalities.
 #[derive(Clone)]
-pub struct IdentityClientReadOnly<C> {
+pub struct IdentityClientReadOnly<C: Clone> {
   iota_client: C,
   identity_iota_pkg_id: ObjectID,
   migration_registry_id: ObjectID,
@@ -51,7 +51,16 @@ impl<C: IotaClientTraitCore> Deref for IdentityClientReadOnly<C> {
   }
 }
 
-impl<C> IdentityClientReadOnly<C> {
+impl<C> AsRef<C> for IdentityClientReadOnly<C>
+where
+    C: IotaClientTraitCore,
+{
+  fn as_ref(&self) -> &C {
+    self.deref()
+  }
+}
+
+impl<C: Clone> IdentityClientReadOnly<C> {
   /// Returns `identity_iota`'s package ID.
   /// The ID of the packages depends on the network
   /// the client is connected to.

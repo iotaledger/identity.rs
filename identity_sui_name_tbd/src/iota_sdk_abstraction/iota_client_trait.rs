@@ -7,7 +7,7 @@ use std::boxed::Box;
 use std::marker::Send;
 use async_trait::async_trait;
 use secret_storage::{Signer, SignatureScheme};
-
+use crate::Error;
 use crate::iota_sdk_abstraction::{
   ProgrammableTransactionBcs,
   TransactionBcs,
@@ -187,3 +187,7 @@ pub trait IotaClientTrait {
     version: SequenceNumber,
   ) -> Result<IotaPastObjectResponse, Self::Error>;
 }
+
+/// Alias name for IotaClientTrait using crate identity_sui_name_tbd::error as associated error type
+pub trait IotaClientTraitCore: IotaClientTrait<Error=Error> + Clone {}
+impl<T> IotaClientTraitCore for T where T: IotaClientTrait<Error=Error> + Clone {}

@@ -2,6 +2,7 @@ mod config_change;
 mod deactive_did;
 mod update_did_doc;
 
+use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
@@ -10,7 +11,7 @@ pub use config_change::*;
 pub use deactive_did::*;
 use crate::iota_sdk_abstraction::error::Error as IotaSdkError;
 use crate::iota_sdk_abstraction::rpc_types::IotaExecutionStatus;
-use crate::iota_sdk_abstraction::{IotaClientTrait, IotaTransactionBlockResponseT};
+use crate::iota_sdk_abstraction::{IdentityMoveCallsCore, IotaTransactionBlockResponseT};
 use crate::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
 use crate::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::iota_sdk_abstraction::types::base_types::ObjectRef;
@@ -26,7 +27,7 @@ use crate::client::IdentityClient;
 use crate::iota_sdk_abstraction::IotaKeySignature;
 use crate::migration::OnChainIdentity;
 use crate::migration::Proposal;
-use crate::sui::iota_sdk_adapter::IdentityMoveCallsAdapter;
+use crate::iota_sdk_abstraction::IotaClientTraitCore;
 use crate::iota_sdk_abstraction::IdentityMoveCalls;
 use crate::transaction::Transaction;
 use crate::utils::MoveType;
@@ -35,22 +36,23 @@ use crate::Error;
 pub trait ProposalT {
   type Action;
   type Output;
-  fn make_create_tx(
+
+  fn make_create_tx<M: IdentityMoveCalls>(
     action: Self::Action,
     expiration: Option<u64>,
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
     identity_ref: OnChainIdentity,
     package: ObjectID,
-  ) -> Result<(<IdentityMoveCallsAdapter as IdentityMoveCalls>::TxBuilder, Argument), Error>;
-  fn make_chained_execution_tx(
-    ptb: <IdentityMoveCallsAdapter as IdentityMoveCalls>::TxBuilder,
+  ) -> Result<(<M as IdentityMoveCalls>::TxBuilder, Argument), Error>;
+  fn make_chained_execution_tx<M: IdentityMoveCalls>(
+    ptb: <M as IdentityMoveCalls>::TxBuilder,
     proposal_arg: Argument,
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Error>;
-  fn make_execute_tx(
+  fn make_execute_tx<M: IdentityMoveCalls>(
     &self,
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
@@ -60,17 +62,19 @@ pub trait ProposalT {
 }
 
 impl<A> Proposal<A> {
-  pub fn approve<'i>(&mut self, identity: &'i OnChainIdentity) -> ApproveProposalTx<'_, 'i, A> {
+  pub fn approve<'i, M>(&mut self, identity: &'i OnChainIdentity) -> ApproveProposalTx<'_, 'i, A, M> {
     ApproveProposalTx {
       proposal: self,
       identity,
+      phantom: PhantomData,
     }
   }
 
-  pub fn execute(self, identity: &mut OnChainIdentity) -> ExecuteProposalTx<'_, A> {
+  pub fn execute<M>(self, identity: &mut OnChainIdentity) -> ExecuteProposalTx<'_, A, M> {
     ExecuteProposalTx {
       proposal: self,
       identity,
+      phantom: PhantomData,
     }
   }
 }
@@ -118,8 +122,8 @@ impl<A> ProposalBuilder<A> {
 
   /// Creates a [`Proposal`] with the provided arguments. If `forbid_chained_execution` is set to `true`,
   /// the [`Proposal`] won't be executed even if creator alone has enough voting power.
-  pub fn finish(self) -> CreateProposalTx<A> {
-    CreateProposalTx(self)
+  pub fn finish<M>(self) -> CreateProposalTx<A, M> {
+    CreateProposalTx(self, PhantomData)
   }
 }
 
@@ -135,25 +139,27 @@ pub enum ProposalResult<P: ProposalT> {
 }
 
 #[derive(Debug)]
-pub struct CreateProposalTx<A>(ProposalBuilder<A>);
+pub struct CreateProposalTx<A, M>(ProposalBuilder<A>, PhantomData<M>);
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
-impl<A> Transaction for CreateProposalTx<A>
+impl<A, M> Transaction for CreateProposalTx<A, M>
 where
   Proposal<A>: ProposalT<Action = A> + DeserializeOwned,
   A: Send,
+  M:  IdentityMoveCalls + Sync + Send,
 {
   type Output = ProposalResult<Proposal<A>>;
 
-  async fn execute_with_opt_gas<S, C>(
+  async fn execute_with_opt_gas<S, C, M_>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S, C>,
+    client: &IdentityClient<S, C, M_>,
   ) -> Result<ProposalResult<Proposal<A>>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
-    C: IotaClientTrait<Error=Error> + Sync,
+    C: IotaClientTraitCore + Sync,
+    M_: IdentityMoveCallsCore + Sync + Send,
   {
     let ProposalBuilder {
       identity,
@@ -166,7 +172,7 @@ where
 
     let is_threshold_reached = identity.controller_voting_power(controller_cap.0).unwrap() >= identity.threshold();
     let multicontroller_proposals_bag_id = Owner::ObjectOwner(identity.multicontroller().proposals_bag_id().into());
-    let (ptb, proposal_arg) = Proposal::<A>::make_create_tx(
+    let (ptb, proposal_arg) = Proposal::<A>::make_create_tx::<M>(
       action,
       expiration,
       identity_ref.clone(),
@@ -176,7 +182,7 @@ where
     )?;
     let chain_execute = !forbid_chained_execution && is_threshold_reached;
     let tx = if chain_execute {
-      Proposal::<A>::make_chained_execution_tx(ptb, proposal_arg, identity_ref, controller_cap, client.package_id())?
+      Proposal::<A>::make_chained_execution_tx::<M>(ptb, proposal_arg, identity_ref, controller_cap, client.package_id())?
     } else {
       ptb.finish()?
     };
@@ -211,33 +217,36 @@ where
 }
 
 #[derive(Debug)]
-pub struct ExecuteProposalTx<'i, A> {
+pub struct ExecuteProposalTx<'i, A, M> {
   proposal: Proposal<A>,
   identity: &'i mut OnChainIdentity,
+  phantom: PhantomData<M>,
 }
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
-impl<'i, A> Transaction for ExecuteProposalTx<'i, A>
+impl<'i, A, M> Transaction for ExecuteProposalTx<'i, A, M>
 where
   Proposal<A>: ProposalT<Action = A>,
   A: Send,
+  M: IdentityMoveCalls + Sync + Send,
 {
   type Output = <Proposal<A> as ProposalT>::Output;
-  async fn execute_with_opt_gas<S, C>(
+  async fn execute_with_opt_gas<S, C, M_>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S, C>,
+    client: &IdentityClient<S, C, M_>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
-    C: IotaClientTrait<Error=Error> + Sync,
+    C: IotaClientTraitCore + Sync,
+    M_: IdentityMoveCallsCore + Sync + Send,
   {
-    let Self { proposal, identity } = self;
+    let Self { proposal, identity, .. } = self;
     let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
     let controller_cap = identity.get_controller_cap(client).await?;
 
-    let tx = proposal.make_execute_tx(identity_ref, controller_cap, client.package_id())?;
+    let tx = proposal.make_execute_tx::<M>(identity_ref, controller_cap, client.package_id())?;
     let tx_response = client
       .execute_transaction(tx, gas_budget)
       .await?;
@@ -253,32 +262,35 @@ where
 }
 
 #[derive(Debug)]
-pub struct ApproveProposalTx<'p, 'i, A> {
+pub struct ApproveProposalTx<'p, 'i, A, M> {
   proposal: &'p mut Proposal<A>,
   identity: &'i OnChainIdentity,
+  phantom: PhantomData<M>,
 }
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
-impl<'p, 'i, A> Transaction for ApproveProposalTx<'p, 'i, A>
+impl<'p, 'i, A, M> Transaction for ApproveProposalTx<'p, 'i, A, M>
 where
   Proposal<A>: ProposalT<Action = A>,
   A: MoveType + Send,
+  M: IdentityMoveCallsCore + Sync + Send, 
 {
   type Output = ();
-  async fn execute_with_opt_gas<S, C>(
+  async fn execute_with_opt_gas<S, C, M_>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S, C>,
+    client: &IdentityClient<S, C, M_>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
-    C: IotaClientTrait<Error=Error> + Sync,
+    C: IotaClientTraitCore + Sync,
+    M_: IdentityMoveCallsCore + Sync + Send,
   {
-    let Self { proposal, identity } = self;
+    let Self { proposal, identity, .. } = self;
     let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
     let controller_cap = identity.get_controller_cap(client).await?;
-    let tx = IdentityMoveCallsAdapter::approve_proposal::<A>(
+    let tx = <M as IdentityMoveCalls>::approve_proposal::<A>(
       identity_ref.clone(),
       controller_cap,
       proposal.id(),

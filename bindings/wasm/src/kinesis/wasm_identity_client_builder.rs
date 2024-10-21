@@ -9,7 +9,8 @@ use identity_iota::iota::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::error::wasm_error;
 use crate::error::Result;
 
-use super::ts_client_sdk::{IotaClientTsSdk, WasmIotaClient};
+use super::ts_client_sdk::WasmIotaClient;
+use super::iota_sdk_adapter::IotaClientTsSdk;
 use super::WasmKinesisIdentityClient;
 use super::types::WasmObjectID;
 

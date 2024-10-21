@@ -17,6 +17,7 @@ use identity_sui_name_tbd::iota_sdk_abstraction::move_types::language_storage::S
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use serial_test::serial;
+use identity_sui_name_tbd::iota_sdk_adapter::{IdentityMoveCallsAdapter};
 
 #[tokio::test]
 #[serial]
@@ -46,7 +47,7 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
 
   newly_created_identity
     .update_did_document(updated_did_doc)
-    .finish()
+    .finish::<IdentityMoveCallsAdapter>()
     .execute(&identity_client)
     .await?;
 
@@ -84,7 +85,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
   };
   let ProposalResult::Pending(mut proposal) = identity
     .update_did_document(did_doc)
-    .finish()
+    .finish::<IdentityMoveCallsAdapter>()
     .execute(&alice_client)
     .await?
   else {
@@ -95,7 +96,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     anyhow::bail!("resolved identity should be an onchain identity");
   };
 
-  proposal.approve(&mut identity).execute(&bob_client).await?;
+  proposal.approve::<IdentityMoveCallsAdapter>(&mut identity).execute(&bob_client).await?;
 
   assert_eq!(proposal.votes(), 2);
 
@@ -120,7 +121,7 @@ async fn adding_controller_works() -> anyhow::Result<()> {
   identity
     .update_config()
     .add_controller(bob_client.sender_address(), 1)
-    .finish()
+    .finish::<IdentityMoveCallsAdapter>()
     .execute(&alice_client)
     .await?;
 
@@ -160,7 +161,7 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
 
   newly_created_identity
     .update_did_document(updated_did_doc)
-    .finish()
+    .finish::<IdentityMoveCallsAdapter>()
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
     .await?;
 

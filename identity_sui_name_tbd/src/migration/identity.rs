@@ -3,6 +3,7 @@
 
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::marker::PhantomData;
 use std::ops::Deref;
 use std::str::FromStr;
 
@@ -10,7 +11,7 @@ use async_trait::async_trait;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use identity_iota_core::StateMetadataDocument;
-use crate::sui::iota_sdk_adapter::IotaClientTraitCore;
+use crate::iota_sdk_abstraction::{IdentityMoveCallsCore, IotaClientTraitCore};
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectData;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
 use crate::iota_sdk_abstraction::rpc_types::IotaParsedData;
@@ -36,7 +37,6 @@ use crate::proposals::ConfigChange;
 use crate::proposals::DeactiveDid;
 use crate::proposals::ProposalBuilder;
 use crate::proposals::UpdateDidDocument;
-use crate::sui::iota_sdk_adapter::IdentityMoveCallsAdapter;
 use crate::iota_sdk_abstraction::IdentityMoveCalls;
 use crate::transaction::Transaction;
 use crate::utils::MoveType;
@@ -59,7 +59,7 @@ pub enum Identity {
 
 impl Identity {
   /// Returns the [`IotaDocument`] DID Document stored inside this [`Identity`].
-  pub fn did_document<C>(&self, client: &IdentityClientReadOnly<C>) -> Result<IotaDocument, Error> {
+  pub fn did_document<C: Clone>(&self, client: &IdentityClientReadOnly<C>) -> Result<IotaDocument, Error> {
     let original_did = IotaDID::from_alias_id(self.id().to_string().as_str(), client.network());
     let doc_bytes = self.doc_bytes().ok_or(Error::DidDocParsingFailed(
       "legacy alias output does not encode a DID document".to_owned(),
@@ -135,9 +135,9 @@ impl OnChainIdentity {
     &self.multi_controller
   }
 
-  pub(crate) async fn get_controller_cap<S, C>(&self, client: &IdentityClient<S, C>) -> Result<ObjectRef, Error>
+  pub(crate) async fn get_controller_cap<S, C, M>(&self, client: &IdentityClient<S, C, M>) -> Result<ObjectRef, Error>
   where
-    C: IotaClientTraitCore,
+    C: IotaClientTraitCore, M: Send
   {
     let controller_cap_tag = StructTag::from_str(&format!("{}::multicontroller::ControllerCap", client.package_id()))
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
@@ -301,13 +301,14 @@ fn is_identity(value: &IotaParsedMoveObject) -> bool {
 
 /// Builder-style struct to create a new [`OnChainIdentity`].
 #[derive(Debug)]
-pub struct IdentityBuilder {
+pub struct IdentityBuilder<M> {
   did_doc: Vec<u8>,
   threshold: Option<u64>,
   controllers: HashMap<IotaAddress, u64>,
+  phantom: PhantomData<M>,
 }
 
-impl IdentityBuilder {
+impl<M: Send> IdentityBuilder<M> {
   /// Initializes a new builder for an [`OnChainIdentity`], where the passed `did_doc` will be
   /// used as the identity's DID Document.
   /// ## Warning
@@ -317,6 +318,7 @@ impl IdentityBuilder {
       did_doc: did_doc.to_vec(),
       threshold: None,
       controllers: HashMap::new(),
+      phantom: PhantomData,
     }
   }
 
@@ -343,7 +345,7 @@ impl IdentityBuilder {
   }
 
   /// Turns this builder into a [`Transaction`], ready to be executed.
-  pub fn finish(self) -> CreateIdentityTx {
+  pub fn finish(self) -> CreateIdentityTx::<M> {
     CreateIdentityTx(self)
   }
 }
@@ -361,28 +363,33 @@ impl MoveType for OnChainIdentity {
 
 /// A [`Transaction`] for creating a new [`OnChainIdentity`] from an [`IdentityBuilder`].
 #[derive(Debug)]
-pub struct CreateIdentityTx(IdentityBuilder);
+pub struct CreateIdentityTx<M: Send>(IdentityBuilder<M>);
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
-impl Transaction for CreateIdentityTx {
+impl<M> Transaction for CreateIdentityTx<M>
+where 
+    M: IdentityMoveCallsCore + Sync + Send,
+{
   type Output = OnChainIdentity;
-  async fn execute_with_opt_gas<S, C>(
+  async fn execute_with_opt_gas<S, C, M_>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S, C>,
+    client: &IdentityClient<S, C, M_>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
     C: IotaClientTraitCore + Sync,
+    M_: IdentityMoveCallsCore + Sync + Send,
   {
     let IdentityBuilder {
       did_doc,
       threshold,
       controllers,
+      phantom: PhantomData,
     } = self.0;
     let programmable_transaction = if controllers.is_empty() {
-      IdentityMoveCallsAdapter::new_identity(&did_doc, client.package_id())?
+      <M as IdentityMoveCalls>::new_identity(&did_doc, client.package_id())?
     } else {
       let threshold = match threshold {
         Some(t) => t,
@@ -396,7 +403,7 @@ impl Transaction for CreateIdentityTx {
           ))
         }
       };
-      IdentityMoveCallsAdapter::new_with_controllers(&did_doc, controllers, threshold, client.package_id())?
+      <M as IdentityMoveCalls>::new_with_controllers(&did_doc, controllers, threshold, client.package_id())?
     };
 
     let response = client.execute_transaction(programmable_transaction, gas_budget).await?;

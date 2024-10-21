@@ -1,6 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::marker::PhantomData;
 use std::ops::Deref;
 
 use async_trait::async_trait;
@@ -10,7 +11,7 @@ use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use identity_iota_core::StateMetadataDocument;
 use identity_verification::jwk::Jwk;
-use crate::sui::iota_sdk_adapter::IotaClientTraitCore;
+use crate::iota_sdk_abstraction::{AssetMoveCallsCore, IdentityMoveCallsCore, IotaClientTraitCore};
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectData;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectDataFilter;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectResponseQuery;
@@ -29,10 +30,13 @@ use crate::migration::IdentityBuilder;
 use crate::transaction::Transaction as TransactionT;
 use crate::iota_sdk_abstraction::IotaKeySignature;
 use crate::utils::MoveType;
-use crate::Error;
+use crate::{Error};
 
 use super::get_object_id_from_did;
 use super::IdentityClientReadOnly;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub type IdentityClientAdapter<S, C> = IdentityClient<S, C, crate::iota_sdk_adapter::IdentityMoveCallsAdapter>;
 
 /// Mirrored types from identity_storage::KeyId
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
@@ -63,21 +67,31 @@ impl From<KeyId> for String {
 }
 
 #[derive(Clone)]
-pub struct IdentityClient<S, C> {
+pub struct IdentityClient<S, C: Clone, M: Send> {
   read_client: IdentityClientReadOnly<C>,
   address: IotaAddress,
   public_key: Vec<u8>,
   signer: S,
+  phantom: PhantomData<M>,
 }
 
-impl<S, C> Deref for IdentityClient<S, C> {
+impl<S, C: Clone, M: Send> Deref for IdentityClient<S, C, M> {
   type Target = IdentityClientReadOnly<C>;
   fn deref(&self) -> &Self::Target {
     &self.read_client
   }
 }
 
-impl<S, C> IdentityClient<S, C>
+impl<S, C, M: Send> AsRef<C> for IdentityClient<S, C, M>
+where
+    C: IotaClientTraitCore,
+{
+  fn as_ref(&self) -> &C {
+    self.deref().deref()
+  }
+}
+
+impl<S, C, M: Send> IdentityClient<S, C, M>
 where
   S: Signer<IotaKeySignature> + Sync,
   C: IotaClientTraitCore,
@@ -94,6 +108,7 @@ where
       address,
       read_client: client,
       signer,
+      phantom: PhantomData,
     })
   }
 
@@ -118,7 +133,7 @@ where
   }
 }
 
-impl<S, C> IdentityClient<S, C> {
+impl<S, C: Clone, M: Send> IdentityClient<S, C, M> {
     /// Returns the bytes of the sender's public key.
     pub fn sender_public_key(&self) -> &[u8] {
     &self.public_key
@@ -135,12 +150,12 @@ impl<S, C> IdentityClient<S, C> {
   }
 
   /// Returns a new [`IdentityBuilder`] in order to build a new [`crate::migration::OnChainIdentity`].
-  pub fn create_identity(&self, iota_document: &[u8]) -> IdentityBuilder {
+  pub fn create_identity(&self, iota_document: &[u8]) -> IdentityBuilder<M> {
     IdentityBuilder::new(iota_document)
   }
 
   /// Returns a new [`IdentityBuilder`] in order to build a new [`crate::migration::OnChainIdentity`].
-  pub fn create_authenticated_asset<T>(&self, content: T) -> AuthenticatedAssetBuilder<T>
+  pub fn create_authenticated_asset<T, A: AssetMoveCallsCore>(&self, content: T) -> AuthenticatedAssetBuilder<T, A>
   where
       T: MoveType + Serialize + DeserializeOwned,
   {
@@ -148,7 +163,7 @@ impl<S, C> IdentityClient<S, C> {
   }
 }
 
-impl<S, C: IotaClientTraitCore> IdentityClient<S, C> {
+impl<S, C: IotaClientTraitCore, M: Send> IdentityClient<S, C, M> {
   /// Query the objects owned by the address wrapped by this client to find the object of type `tag`
   /// and that satifies `predicate`.
   pub async fn find_owned_ref<P>(&self, tag: StructTag, predicate: P) -> Result<Option<ObjectRef>, Error>
@@ -182,14 +197,15 @@ impl<S, C: IotaClientTraitCore> IdentityClient<S, C> {
   }
 }
 
-impl<S, C> IdentityClient<S, C>
+impl<S, C: Clone, M> IdentityClient<S, C, M>
 where
   S: Signer<IotaKeySignature> + Sync,
   C: IotaClientTraitCore + Sync,
+  M: IdentityMoveCallsCore + Sync + Send,
 {
   /// Returns [`Transaction`] [`PublishDidTx`] that - when executed - will publish a new DID Document on chain.
-  pub fn publish_did_document(&self, document: IotaDocument) -> PublishDidTx {
-    PublishDidTx(document)
+  pub fn publish_did_document(&self, document: IotaDocument) -> PublishDidTx<M> {
+    PublishDidTx(document, PhantomData)
   }
 
   // TODO: define what happens for (legacy|migrated|new) documents
@@ -205,7 +221,7 @@ where
 
     oci
       .update_did_document(document.clone())
-      .finish()
+      .finish::<M>()
       .execute_with_gas(gas_budget, self)
       .await?;
 
@@ -218,7 +234,7 @@ where
       return Err(Error::Identity("only new identities can be deactivated".to_string()));
     };
 
-    oci.deactivate_did().finish().execute_with_gas(gas_budget, self).await?;
+    oci.deactivate_did().finish::<M>().execute_with_gas(gas_budget, self).await?;
 
     Ok(())
   }
@@ -246,20 +262,24 @@ pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error
 /// Publishes a new DID Document on-chain. An [`crate::migration::OnChainIdentity`] will be created to contain
 /// the provided document.
 #[derive(Debug)]
-pub struct PublishDidTx(IotaDocument);
+pub struct PublishDidTx<M>(IotaDocument, PhantomData<M>);
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
-impl TransactionT for PublishDidTx {
+impl<IDM> TransactionT for PublishDidTx<IDM>
+where
+    IDM: IdentityMoveCallsCore + Sync + Send,
+{
   type Output = IotaDocument;
-  async fn execute_with_opt_gas<S, C>(
+  async fn execute_with_opt_gas<S, C, M>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S, C>,
+    client: &IdentityClient<S, C, M>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
     C: IotaClientTraitCore + Sync,
+    M: IdentityMoveCallsCore + Sync + Send,
   {
     let packed = self
       .0

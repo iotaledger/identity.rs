@@ -16,7 +16,7 @@ use crate::iota::WasmIotaDocument;
 
 use super::wasm_identity_client_builder::WasmKinesisIdentityClientBuilder;
 use super::WasmIdentityBuilder;
-use super::ts_client_sdk::IotaClientTsSdk;
+use super::iota_sdk_adapter::IotaClientTsSdk;
 use super::types::{WasmIotaAddress, WasmObjectID};
 
 #[wasm_bindgen(js_name = KinesisIdentityClient)]

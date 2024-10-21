@@ -1,17 +1,16 @@
+use std::marker::PhantomData;
 use std::ops::Deref;
 use std::str::FromStr as _;
 
 use crate::client::IdentityClient;
-use crate::iota_sdk_abstraction::IotaKeySignature;
-use crate::sui::iota_sdk_adapter::AssetMoveCallsAdapter;
-use crate::iota_sdk_abstraction::AssetMoveCalls;
+use crate::iota_sdk_abstraction::{AssetMoveCalls, AssetMoveCallsCore, IdentityMoveCallsCore, IotaKeySignature};
 use crate::transaction::Transaction;
 use crate::utils::MoveType;
 use crate::Error;
 use anyhow::anyhow;
 use anyhow::Context;
 use async_trait::async_trait;
-use crate::sui::iota_sdk_adapter::IotaClientTraitCore;
+use crate::iota_sdk_abstraction::IotaClientTraitCore;
 use crate::iota_sdk_abstraction::rpc_types::IotaData as _;
 use crate::iota_sdk_abstraction::rpc_types::IotaExecutionStatus;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
@@ -30,9 +29,12 @@ use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
 
+#[cfg(not(target_arch = "wasm32"))]
+pub type AuthenticatedAssetAdapter<T> = AuthenticatedAsset<T, crate::iota_sdk_adapter::AssetMoveCallsAdapter>;
+
 // An on-chain asset that carries information about its owned and its creator.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct AuthenticatedAsset<T> {
+pub struct AuthenticatedAsset<T, M> {
   id: UID,
   #[serde(
     deserialize_with = "deserialize_inner",
@@ -44,6 +46,7 @@ pub struct AuthenticatedAsset<T> {
   mutable: bool,
   transferable: bool,
   deletable: bool,
+  phantom: PhantomData<M>,
 }
 
 fn deserialize_inner<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -61,7 +64,7 @@ where
   }
 }
 
-impl<T> AuthenticatedAsset<T>
+impl<T, M> AuthenticatedAsset<T, M>
 where
   T: DeserializeOwned,
 {
@@ -85,7 +88,10 @@ where
   }
 }
 
-impl<T> AuthenticatedAsset<T> {
+impl<T, M> AuthenticatedAsset<T, M>
+where 
+  M: AssetMoveCallsCore,
+{
   async fn object_ref<C: IotaClientTraitCore>(&self, client: &C) -> Result<ObjectRef, Error> {
     client
       .read_api()
@@ -111,7 +117,7 @@ impl<T> AuthenticatedAsset<T> {
   /// can be executed to carry out the transfer.
   /// # Failures
   /// * Returns an [`Error::InvalidConfig`] if this asset is not transferable.
-  pub fn transfer(self, recipient: IotaAddress) -> Result<TransferAssetTx<T>, Error> {
+  pub fn transfer(self, recipient: IotaAddress) -> Result<TransferAssetTx<T, M>, Error> {
     if !self.transferable {
       return Err(Error::InvalidConfig(format!(
         "`AuthenticatedAsset` {} is not transferable",
@@ -127,7 +133,7 @@ impl<T> AuthenticatedAsset<T> {
   /// can be executed in order to destory the asset.
   /// # Failures
   /// * Returns an [`Error::InvalidConfig`] if this asset cannot be deleted.
-  pub fn delete(self) -> Result<DeleteAssetTx<T>, Error> {
+  pub fn delete(self) -> Result<DeleteAssetTx<T, M>, Error> {
     if !self.deletable {
       return Err(Error::InvalidConfig(format!(
         "`AuthenticatedAsset` {} cannot be deleted",
@@ -144,7 +150,7 @@ impl<T> AuthenticatedAsset<T> {
   /// can be executed in order to update the asset's content.
   /// # Failures
   /// * Returns an [`Error::InvalidConfig`] if this asset cannot be updated.
-  pub fn set_content(&mut self, new_content: T) -> Result<UpdateContentTx<'_, T>, Error> {
+  pub fn set_content(&mut self, new_content: T) -> Result<UpdateContentTx<'_, T, M>, Error> {
     if !self.mutable {
       return Err(Error::InvalidConfig(format!(
         "`AuthenticatedAsset` {} is immutable",
@@ -161,14 +167,15 @@ impl<T> AuthenticatedAsset<T> {
 
 /// Builder-style struct to ease the creation of a new [`AuthenticatedAsset`].
 #[derive(Debug)]
-pub struct AuthenticatedAssetBuilder<T> {
+pub struct AuthenticatedAssetBuilder<T, M> {
   inner: T,
   mutable: bool,
   transferable: bool,
   deletable: bool,
+  phantom: PhantomData<M>,
 }
 
-impl<T: MoveType> MoveType for AuthenticatedAsset<T> {
+impl<T: MoveType, M> MoveType for AuthenticatedAsset<T, M> {
   fn move_type(package: ObjectID) -> TypeTag {
     TypeTag::Struct(Box::new(StructTag {
       address: package.into(),
@@ -179,7 +186,7 @@ impl<T: MoveType> MoveType for AuthenticatedAsset<T> {
   }
 }
 
-impl<T> AuthenticatedAssetBuilder<T> {
+impl<T, M> AuthenticatedAssetBuilder<T, M> {
   /// Initializes the builder with the asset's content.
   pub fn new(content: T) -> Self {
     Self {
@@ -187,6 +194,7 @@ impl<T> AuthenticatedAssetBuilder<T> {
       mutable: false,
       transferable: false,
       deletable: false,
+      phantom: PhantomData,
     }
   }
 
@@ -215,10 +223,14 @@ impl<T> AuthenticatedAssetBuilder<T> {
   }
 
   /// Creates a [`Transaction`] that will create the specified [`AuthenticatedAsset`] when executed.
-  pub fn finish(self) -> CreateAssetTx<T> {
+  pub fn finish(self) -> CreateAssetTx<T, M> {
     CreateAssetTx(self)
   }
 }
+
+
+#[cfg(not(target_arch = "wasm32"))]
+pub type TransferProposalCore = TransferProposal<crate::iota_sdk_adapter::AssetMoveCallsAdapter>;
 
 /// Proposal for the transfer of an [`AuthenticatedAsset`]'s ownership from one [`IotaAddress`] to another.
 
@@ -233,7 +245,7 @@ impl<T> AuthenticatedAssetBuilder<T> {
 /// The current owner can cancel the proposal at any time - given the transfer hasn't been conclued yet - by presenting its
 /// `SenderCap`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TransferProposal {
+pub struct TransferProposal<M> {
   id: UID,
   asset_id: ObjectID,
   sender_cap_id: ObjectID,
@@ -241,9 +253,10 @@ pub struct TransferProposal {
   recipient_cap_id: ObjectID,
   recipient_address: IotaAddress,
   done: bool,
+  phantom: PhantomData<M>,
 }
 
-impl MoveType for TransferProposal {
+impl<M> MoveType for TransferProposal<M> {
   fn move_type(package: ObjectID) -> TypeTag {
     TypeTag::Struct(Box::new(StructTag {
       address: package.into(),
@@ -254,9 +267,9 @@ impl MoveType for TransferProposal {
   }
 }
 
-impl TransferProposal {
-    /// Resolves a [`TransferProposal`] by its ID `id`.
-    pub async fn get_by_id<C: IotaClientTraitCore>(id: ObjectID, client: &C) -> Result<Self, Error> {
+impl<M> TransferProposal<M> {
+  /// Resolves a [`TransferProposal`] by its ID `id`.
+  pub async fn get_by_id<C: IotaClientTraitCore>(id: ObjectID, client: &C) -> Result<Self, Error> {
     let res = client
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
@@ -274,7 +287,11 @@ impl TransferProposal {
       .map_err(|e| Error::ObjectLookup(e.to_string()))
   }
 
-  async fn get_cap<S, C: IotaClientTraitCore>(&self, cap_type: &str, client: &IdentityClient<S, C>) -> Result<ObjectRef, Error> {
+  async fn get_cap<S, C, MID>(&self, cap_type: &str, client: &IdentityClient<S, C, MID>) -> Result<ObjectRef, Error>
+  where
+    C: IotaClientTraitCore,
+    MID: Send,
+  {
     let cap_tag = StructTag::from_str(&format!("{}::asset::{cap_type}", client.package_id()))
       .map_err(|e| Error::ParsingFailed(e.to_string()))?;
     client
@@ -327,11 +344,13 @@ impl TransferProposal {
       _ => anyhow::bail!("`TransferProposal` is not a shared object"),
     }
   }
+}
 
+impl<M: AssetMoveCallsCore> TransferProposal<M> {
   /// Accepts this [`TransferProposal`].
   /// # Warning
   /// This operation only has an effects when it's invoked by this [`TransferProposal`]'s `recipient`.
-  pub fn accept(self) -> AcceptTransferTx {
+  pub fn accept(self) -> AcceptTransferTx<M> {
     AcceptTransferTx(self)
   }
 
@@ -340,10 +359,12 @@ impl TransferProposal {
   /// * This operation only has an effects when it's invoked by this [`TransferProposal`]'s `sender`.
   /// * Accepting a [`TransferProposal`] **doesn't** consume it from the ledger. This function must be used
   ///   to correctly consume both [`TransferProposal`] and `SenderCap`.
-  pub fn conclude_or_cancel(self) -> ConcludeTransferTx {
+  pub fn conclude_or_cancel(self) -> ConcludeTransferTx<M> {
     ConcludeTransferTx(self)
   }
+}
 
+impl<M> TransferProposal<M> {
   /// Returns this [`TransferProposal`]'s ID.
   pub fn id(&self) -> ObjectID {
     *self.id.object_id()
@@ -367,29 +388,31 @@ impl TransferProposal {
 
 /// A [`Transaction`] that updates an [`AuthenticatedAsset`]'s content.
 #[derive(Debug)]
-pub struct UpdateContentTx<'a, T> {
-  asset: &'a mut AuthenticatedAsset<T>,
+pub struct UpdateContentTx<'a, T, M: AssetMoveCallsCore> {
+  asset: &'a mut AuthenticatedAsset<T, M>,
   new_content: T,
 }
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
-impl<'a, T> Transaction for UpdateContentTx<'a, T>
+impl<'a, T, M> Transaction for UpdateContentTx<'a, T, M>
 where
   T: MoveType + Serialize + Clone + Send + Sync,
+  M: AssetMoveCallsCore + Send + Sync,
 {
   type Output = ();
 
-  async fn execute_with_opt_gas<S, C>(
+  async fn execute_with_opt_gas<S, C, MID>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S, C>,
+    client: &IdentityClient<S, C, MID>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
     C: IotaClientTraitCore + Sync,
+    MID: IdentityMoveCallsCore + Sync + Send,
   {
-    let tx = AssetMoveCallsAdapter::update(
+    let tx = <M as AssetMoveCalls>::update(
       self.asset.object_ref(client.deref().deref()).await?,
       self.new_content.clone(),
       client.package_id(),
@@ -409,27 +432,29 @@ where
 
 /// A [`Transaction`] that deletes an [`AuthenticatedAsset`].
 #[derive(Debug)]
-pub struct DeleteAssetTx<T>(AuthenticatedAsset<T>);
+pub struct DeleteAssetTx<T, M>(AuthenticatedAsset<T, M>);
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
-impl<T> Transaction for DeleteAssetTx<T>
+impl<T, M> Transaction for DeleteAssetTx<T, M>
 where
   T: MoveType + Send + Sync,
+  M: AssetMoveCallsCore + Send + Sync,
 {
   type Output = ();
 
-  async fn execute_with_opt_gas<S, C>(
+  async fn execute_with_opt_gas<S, C, MID>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S, C>,
+    client: &IdentityClient<S, C, MID>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
     C: IotaClientTraitCore + Sync,
+    MID: IdentityMoveCallsCore + Sync + Send,
   {
     let asset_ref = self.0.object_ref(client.deref().deref()).await?;
-    let tx = AssetMoveCallsAdapter::delete::<T>(asset_ref, client.package_id())?;
+    let tx = <M as AssetMoveCalls>::delete::<T>(asset_ref, client.package_id())?;
 
     client.execute_transaction(tx, gas_budget).await?;
     Ok(())
@@ -437,32 +462,35 @@ where
 }
 /// A [`Transaction`] that creates a new [`AuthenticatedAsset`].
 #[derive(Debug)]
-pub struct CreateAssetTx<T>(AuthenticatedAssetBuilder<T>);
+pub struct CreateAssetTx<T, M>(AuthenticatedAssetBuilder<T, M>);
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
-impl<T> Transaction for CreateAssetTx<T>
+impl<T, M> Transaction for CreateAssetTx<T, M>
 where
   T: MoveType + Serialize + DeserializeOwned + Send,
+  M: AssetMoveCallsCore + Send,
 {
-  type Output = AuthenticatedAsset<T>;
+  type Output = AuthenticatedAsset<T, M>;
 
-  async fn execute_with_opt_gas<S, C>(
+  async fn execute_with_opt_gas<S, C, MID>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S, C>,
+    client: &IdentityClient<S, C, MID>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
     C: IotaClientTraitCore + Sync,
+    MID: IdentityMoveCallsCore + Sync + Send,
   {
     let AuthenticatedAssetBuilder {
       inner,
       mutable,
       transferable,
       deletable,
+      phantom: PhantomData,
     } = self.0;
-    let tx = AssetMoveCallsAdapter::new_asset(inner, mutable, transferable, deletable, client.package_id())?;
+    let tx = <M as AssetMoveCalls>::new_asset(inner, mutable, transferable, deletable, client.package_id())?;
 
     let created_asset_id = client
       .execute_transaction(tx, gas_budget)
@@ -479,29 +507,31 @@ where
 
 /// A [`Transaction`] that proposes the transfer of an [`AuthenticatedAsset`].
 #[derive(Debug)]
-pub struct TransferAssetTx<T> {
-  asset: AuthenticatedAsset<T>,
+pub struct TransferAssetTx<T, M> {
+  asset: AuthenticatedAsset<T, M>,
   recipient: IotaAddress,
 }
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
-impl<T> Transaction for TransferAssetTx<T>
+impl<T, M> Transaction for TransferAssetTx<T, M>
 where
   T: MoveType + Send + Sync,
+  M: AssetMoveCallsCore + Send + Sync,
 {
-  type Output = TransferProposal;
+  type Output = TransferProposal<M>;
 
-  async fn execute_with_opt_gas<S, C>(
+  async fn execute_with_opt_gas<S, C, MID>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S, C>,
+    client: &IdentityClient<S, C, MID>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
     C: IotaClientTraitCore + Sync,
+    MID: IdentityMoveCallsCore + Sync + Send,
   {
-    let tx = AssetMoveCallsAdapter::transfer::<T>(
+    let tx = <M as AssetMoveCalls>::transfer::<T>(
       self.asset.object_ref(client.deref().deref()).await?,
       self.recipient,
       client.package_id(),
@@ -523,7 +553,7 @@ where
         .and_then(|data| Ok(data.object_type()?.to_string()))
         .map_err(|e| Error::ObjectLookup(e.to_string()))?;
 
-      if object_type == TransferProposal::move_type(client.package_id()).to_string() {
+      if object_type == TransferProposal::<M>::move_type(client.package_id()).to_string() {
         return TransferProposal::get_by_id(id, client.deref().deref()).await;
       }
     }
@@ -536,20 +566,24 @@ where
 
 /// A [`Transaction`] that accepts the transfer of an [`AuthenticatedAsset`].
 #[derive(Debug)]
-pub struct AcceptTransferTx(TransferProposal);
+pub struct AcceptTransferTx<M>(TransferProposal<M>);
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
-impl Transaction for AcceptTransferTx {
+impl<M> Transaction for AcceptTransferTx<M>
+where 
+  M: AssetMoveCallsCore + Send + Sync,
+{
   type Output = ();
-  async fn execute_with_opt_gas<S, C>(
+  async fn execute_with_opt_gas<S, C, MID>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S, C>,
+    client: &IdentityClient<S, C, MID>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
     C: IotaClientTraitCore + Sync,
+    MID: IdentityMoveCallsCore + Sync + Send,
   {
     if self.0.done {
       return Err(Error::TransactionBuildingFailed(
@@ -568,7 +602,7 @@ impl Transaction for AcceptTransferTx {
       .initial_shared_version(client.deref().deref())
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
-    let tx = AssetMoveCallsAdapter::accept_proposal(
+    let tx = <M as AssetMoveCalls>::accept_proposal(
       (self.0.id(), initial_shared_version),
       cap,
       asset_ref,
@@ -583,20 +617,24 @@ impl Transaction for AcceptTransferTx {
 
 /// A [`Transaction`] that concludes the transfer of an [`AuthenticatedAsset`].
 #[derive(Debug)]
-pub struct ConcludeTransferTx(TransferProposal);
+pub struct ConcludeTransferTx<M>(TransferProposal<M>);
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
-impl Transaction for ConcludeTransferTx {
+impl<M> Transaction for ConcludeTransferTx<M>
+where
+    M: AssetMoveCallsCore + Send + Sync,
+{
   type Output = ();
-  async fn execute_with_opt_gas<S, C>(
+  async fn execute_with_opt_gas<S, C, MID>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S, C>,
+    client: &IdentityClient<S, C, MID>,
   ) -> Result<Self::Output, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
     C: IotaClientTraitCore + Sync,
+    MID: IdentityMoveCallsCore + Sync + Send,
   {
     let cap = self.0.get_cap("SenderCap", client).await?;
     let (asset_ref, param_type) = self
@@ -610,7 +648,7 @@ impl Transaction for ConcludeTransferTx {
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
 
-    let tx = AssetMoveCallsAdapter::conclude_or_cancel(
+    let tx = <M as AssetMoveCalls>::conclude_or_cancel(
       (self.0.id(), initial_shared_version),
       cap,
       asset_ref,

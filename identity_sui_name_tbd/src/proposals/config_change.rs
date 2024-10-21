@@ -17,7 +17,6 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::migration::OnChainIdentity;
-use crate::sui::iota_sdk_adapter::IdentityMoveCallsAdapter;
 use crate::iota_sdk_abstraction::IdentityMoveCalls;
 use crate::sui::types::Number;
 use crate::utils::MoveType;
@@ -51,16 +50,16 @@ impl ProposalT for Proposal<ConfigChange> {
   type Action = ConfigChange;
   type Output = ();
 
-  fn make_create_tx(
+  fn make_create_tx<M: IdentityMoveCalls>(
     action: Self::Action,
     expiration: Option<u64>,
     identity_ref: OwnedObjectRef,
     controller_cap: ObjectRef,
     identity: OnChainIdentity,
     package: ObjectID,
-  ) -> Result<(<IdentityMoveCallsAdapter as IdentityMoveCalls>::TxBuilder, Argument), Error> {
+  ) -> Result<(<M as IdentityMoveCalls>::TxBuilder, Argument), Error> {
     action.validate(&identity)?;
-    IdentityMoveCallsAdapter::propose_config_change(
+    <M as IdentityMoveCalls>::propose_config_change(
       identity_ref,
       controller_cap,
       expiration,
@@ -73,14 +72,14 @@ impl ProposalT for Proposal<ConfigChange> {
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
   }
 
-  fn make_chained_execution_tx(
-    ptb: <IdentityMoveCallsAdapter as IdentityMoveCalls>::TxBuilder,
+  fn make_chained_execution_tx<M: IdentityMoveCalls>(
+    ptb: <M as IdentityMoveCalls>::TxBuilder,
     proposal_arg: Argument,
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Error> {
-    IdentityMoveCallsAdapter::execute_config_change(
+    <M as IdentityMoveCalls>::execute_config_change(
       Some(ptb),
       Some(proposal_arg),
       identity,
@@ -91,13 +90,13 @@ impl ProposalT for Proposal<ConfigChange> {
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
   }
 
-  fn make_execute_tx(
+  fn make_execute_tx<M: IdentityMoveCalls>(
     &self,
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Error> {
-    IdentityMoveCallsAdapter::execute_config_change(None, None, identity, controller_cap, self.id(), package)
+    <M as IdentityMoveCalls>::execute_config_change(None, None, identity, controller_cap, self.id(), package)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
   }
 

@@ -16,7 +16,7 @@ use crate::error::wasm_error;
 use crate::error::Result;
 use crate::iota::WasmIotaDocument;
 
-use super::ts_client_sdk::IotaClientTsSdk;
+use super::iota_sdk_adapter::IotaClientTsSdk;
 use super::{WasmKinesisIdentityClient};
 use super::WasmProposal;
 use super::types::{into_sdk_type, WasmIotaAddress, WasmObjectID, WasmIotaObjectData};

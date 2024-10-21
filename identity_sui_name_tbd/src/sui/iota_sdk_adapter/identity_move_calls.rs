@@ -29,7 +29,7 @@ use crate::utils::MoveType;
 use crate::Error;
 use crate::ident_str;
 
-use super::super::TransactionBuilderAdapter;
+use super::TransactionBuilderAdapter;
 
 pub struct IdentityMoveCallsRustSdk {}
 

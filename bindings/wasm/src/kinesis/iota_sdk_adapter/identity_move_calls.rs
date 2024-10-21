@@ -4,8 +4,8 @@
 use serde::Serialize;
 use std::collections::HashSet;
 
-use crate::sui::iota_sdk_adapter::TransactionBuilderAdapter;
-use crate::iota_sdk_abstraction::{
+use super::TransactionBuilderAdapter;
+use identity_iota::iota::iota_sdk_abstraction::{
     IdentityMoveCalls,
     ProgrammableTransactionBcs,
     types::{
@@ -14,9 +14,9 @@ use crate::iota_sdk_abstraction::{
         transaction::Argument,
     }
 };
-use crate::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
-use crate::utils::MoveType;
-use crate::Error;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
+use identity_iota::iota::utils::MoveType;
+use identity_iota::iota::sui_name_tbd_error::Error;
 
 pub struct IdentityMoveCallsTsSdk {}
 

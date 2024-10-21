@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::sui::iota_sdk_adapter::IotaClientTraitCore;
+use crate::iota_sdk_abstraction::IotaClientTraitCore;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
 use crate::iota_sdk_abstraction::rpc_types::IotaParsedData;
 use crate::iota_sdk_abstraction::rpc_types::IotaParsedMoveObject;

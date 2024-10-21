@@ -5,15 +5,9 @@ use std::collections::HashSet;
 use std::iter::IntoIterator;
 
 use serde::Serialize;
-
+use crate::Error;
 use crate::utils::MoveType;
-use crate::iota_sdk_abstraction::{
-    ProgrammableTransactionBcs,
-    types::TypeTag,
-    types::base_types::{SequenceNumber, ObjectID, ObjectRef, IotaAddress},
-    types::transaction::{Argument},
-    rpc_types::OwnedObjectRef
-};
+use crate::iota_sdk_abstraction::{ProgrammableTransactionBcs, types::TypeTag, types::base_types::{SequenceNumber, ObjectID, ObjectRef, IotaAddress}, types::transaction::{Argument}, rpc_types::OwnedObjectRef, TransactionBuilderT};
 
 pub trait AssetMoveCalls {
     type Error;
@@ -63,9 +57,13 @@ pub trait AssetMoveCalls {
         -> Result<ProgrammableTransactionBcs, Self::Error>;
 }
 
+/// Alias name for AssetMoveCalls using crate identity_sui_name_tbd::error as associated error type
+pub trait AssetMoveCallsCore: AssetMoveCalls<Error=Error> {}
+impl<T> AssetMoveCallsCore for T where T: AssetMoveCalls<Error=Error> {}
+
 pub trait IdentityMoveCalls {
     type Error;
-    type TxBuilder;
+    type TxBuilder: TransactionBuilderT;
 
     fn propose_config_change<I1, I2>(
         identity: OwnedObjectRef,
@@ -140,3 +138,7 @@ pub trait IdentityMoveCalls {
         package_id: ObjectID,
     ) -> Result<ProgrammableTransactionBcs, anyhow::Error>;
 }
+
+/// Alias name for AssetMoveCalls using crate identity_sui_name_tbd::error as associated error type
+pub trait IdentityMoveCallsCore: IdentityMoveCalls<Error=Error> {}
+impl<T> IdentityMoveCallsCore for T where T: IdentityMoveCalls<Error=Error> {}

@@ -66,9 +66,14 @@ pub mod document {
 pub mod iota {
   //! The IOTA DID method implementation for the IOTA ledger.
 
+  //#[cfg(not(feature = "identity-sui-name-tbd"))]
   pub use identity_iota_core::*;
   #[cfg(feature = "identity-sui-name-tbd")]
   pub use identity_sui_name_tbd::iota_sdk_abstraction;
+  #[cfg(feature = "identity-sui-name-tbd")]
+  pub use identity_sui_name_tbd::utils;
+  #[cfg(feature = "identity-sui-name-tbd")]
+  pub use identity_sui_name_tbd::error as sui_name_tbd_error;
 }
 
 pub mod prelude {
