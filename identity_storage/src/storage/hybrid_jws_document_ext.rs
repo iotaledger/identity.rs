@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::ops::Deref;
 
 use super::JwkStorageDocumentError as Error;
@@ -23,7 +22,6 @@ use identity_credential::credential::Jwt;
 use identity_credential::presentation::JwtPresentationOptions;
 use identity_credential::presentation::Presentation;
 use identity_did::DIDUrl;
-use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_verification::jws::CharSet;
 use identity_verification::jws::CompactJwsEncoder;
@@ -32,10 +30,8 @@ use identity_verification::jws::JwsAlgorithm;
 use identity_verification::jws::JwsHeader;
 use identity_verification::jwk::CompositeAlgId;
 use identity_verification::jwk::CompositeJwk;
-use identity_verification::MethodBuilder;
 use identity_verification::MethodData;
 use identity_verification::MethodScope;
-use identity_verification::MethodType;
 use identity_verification::VerificationMethod;
 use serde::de::DeserializeOwned;
 use serde::Serialize;

@@ -13,10 +13,6 @@ use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkType;
 use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::jwk::BlsCurve;
-use identity_verification::jwk::JwkParams;
-use identity_verification::jwu;
-use oqs::sig::Algorithm;
-use oqs::sig::Sig;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
@@ -32,7 +28,7 @@ use super::KeyStorageResult;
 use super::KeyType;
 
 use crate::key_storage::JwkStorage;
-use crate::key_storage::jwk_storage_pqc::JwkStoragePQ;
+
 
 /// The map from key ids to JWKs.
 type JwkKeyStore = HashMap<KeyId, Jwk>;

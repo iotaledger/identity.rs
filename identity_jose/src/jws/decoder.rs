@@ -17,8 +17,7 @@ use crate::jwu::filter_non_empty_bytes;
 use crate::jwu::parse_utf8;
 use crate::jwu::validate_jws_headers;
 use crypto::hashes::Digest;
-use crypto::signatures::ed25519::Signature;
-use identity_core::common::SingleStructError;
+
 
 use super::JwsVerifier;
 use super::VerificationInput;

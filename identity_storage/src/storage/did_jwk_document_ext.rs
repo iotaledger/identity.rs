@@ -1,12 +1,12 @@
 use identity_did::{DIDCompositeJwk, DIDJwk};
-use identity_document::document::{self, CoreDocument};
-use identity_verification::{jwk::{CompositeAlgId, CompositeJwk}, jws::JwsAlgorithm, jwu::encode_b64_json, verification_method};
+use identity_document::document::CoreDocument;
+use identity_verification::{jwk::{CompositeAlgId, CompositeJwk}, jws::JwsAlgorithm, jwu::encode_b64_json};
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use async_trait::async_trait;
 
 use crate::{JwkGenOutput, JwkStorage, JwkStorageBbsPlusExt, JwkStorageDocumentError as Error, JwkStoragePQ, KeyId, KeyIdStorage, KeyType, MethodDigest};
 
-use super::{try_undo_key_generation, Storage, StorageResult};
+use super::{Storage, StorageResult};
 
 
 

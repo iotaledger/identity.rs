@@ -4,8 +4,6 @@
 
 use zeroize::Zeroize;
 
-use super::JwkParams;
-use super::JwkType;
 
 // TODO: PQ - parameter for PQ keys
 

@@ -33,6 +33,7 @@ pub enum JwkType {
   #[serde(rename = "SLH-DSA")]
   SLHDSA,
 
+  ///Falcon
   FALCON,
 }
 

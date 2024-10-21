@@ -6,7 +6,6 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 use identity_jose::jwk::CompositeJwk;
-use identity_jose::jwk::Jwk;
 use identity_jose::jwu::decode_b64_json;
 
 use crate::CoreDID;
