@@ -4,6 +4,7 @@
 use std::net::SocketAddr;
 
 use identity_stronghold::StrongholdStorage;
+use identity_sui_name_tbd::client::IdentityClientReadOnly;
 use iota_sdk::client::Client;
 use tonic::transport::server::Router;
 use tonic::transport::server::Server;
@@ -17,7 +18,7 @@ pub struct GRpcServer {
 }
 
 impl GRpcServer {
-  pub fn new(client: Client, stronghold: StrongholdStorage) -> Self {
+  pub fn new(client: IdentityClientReadOnly, stronghold: StrongholdStorage) -> Self {
     let router = Server::builder().add_routes(services::routes(&client, &stronghold));
     Self { router, stronghold }
   }

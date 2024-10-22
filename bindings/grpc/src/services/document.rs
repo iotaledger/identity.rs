@@ -6,16 +6,19 @@ use _document::document_service_server::DocumentServiceServer;
 use _document::CreateDidRequest;
 use _document::CreateDidResponse;
 use identity_iota::core::ToJson;
-use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::{IotaClientExt, IotaDID};
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkStorageDocumentError;
 use identity_iota::storage::Storage;
 use identity_iota::verification::jws::JwsAlgorithm;
-use identity_iota::verification::MethodScope;
+use identity_iota::verification::{MethodScope, VerificationMethod};
+use identity_storage::{KeyId, StorageSigner};
 use identity_stronghold::StrongholdStorage;
 use identity_stronghold::ED25519_KEY_TYPE;
+use identity_sui_name_tbd::client::{IdentityClient, IdentityClientReadOnly};
+use identity_sui_name_tbd::transaction::Transaction;
 use iota_sdk::client::Client;
 use iota_sdk::types::block::address::Address;
 use std::error::Error as _;
@@ -50,11 +53,11 @@ impl From<Error> for Status {
 
 pub struct DocumentSvc {
   storage: Storage<StrongholdStorage, StrongholdStorage>,
-  client: Client,
+  client: IdentityClientReadOnly,
 }
 
 impl DocumentSvc {
-  pub fn new(client: &Client, stronghold: &StrongholdStorage) -> Self {
+  pub fn new(client: &IdentityClientReadOnly, stronghold: &StrongholdStorage) -> Self {
     Self {
       storage: Storage::new(stronghold.clone(), stronghold.clone()),
       client: client.clone(),
@@ -72,9 +75,25 @@ impl DocumentService for DocumentSvc {
     err,
   )]
   async fn create(&self, req: Request<CreateDidRequest>) -> Result<Response<CreateDidResponse>, Status> {
-    let CreateDidRequest { bech32_address } = req.into_inner();
-    let address = Address::try_from_bech32(&bech32_address).map_err(|_| Error::InvalidAddress)?;
-    let network_name = self.client.network_name().await.map_err(Error::IotaClientError)?;
+    let CreateDidRequest { key_id } = req.into_inner();
+
+    let key_id = KeyId::new(key_id);
+    let pub_key = self.storage.key_id_storage().get_public_key(&key_id).await.unwrap();
+
+    let network_name = self.client.network();
+
+    let storage = StorageSigner::new(&self.storage, key_id, pub_key);
+
+    let identity_client = IdentityClient::new(self.client.clone(), storage).await.unwrap();
+
+    let mut created_identity = identity_client
+      .create_identity(&[])
+      .finish()
+      .execute(&identity_client)
+      .await
+      .unwrap();
+
+    let did = IotaDID::parse(format!("did::iota::{}", created_identity.id())).unwrap();
 
     let mut document = IotaDocument::new(&network_name);
     let fragment = document
@@ -88,19 +107,12 @@ impl DocumentService for DocumentSvc {
       .await
       .map_err(Error::StorageError)?;
 
-    let alias_output = self
-      .client
-      .new_did_output(address, document, None)
+    created_identity
+      .update_did_document(document.clone())
+      .finish()
+      .execute(&identity_client)
       .await
-      .map_err(Error::IotaClientError)?;
-
-    let document = self
-      .client
-      .publish_did_output(self.storage.key_storage().as_secret_manager(), alias_output)
-      .await
-      .map_err(Error::IotaClientError)
-      .inspect_err(|e| tracing::error!("{:?}", e.source()))?;
-    let did = document.id();
+      .unwrap();
 
     Ok(Response::new(CreateDidResponse {
       document_json: document.to_json().unwrap(),
@@ -110,6 +122,6 @@ impl DocumentService for DocumentSvc {
   }
 }
 
-pub fn service(client: &Client, stronghold: &StrongholdStorage) -> DocumentServiceServer<DocumentSvc> {
+pub fn service(client: &IdentityClientReadOnly, stronghold: &StrongholdStorage) -> DocumentServiceServer<DocumentSvc> {
   DocumentServiceServer::new(DocumentSvc::new(client, stronghold))
 }
