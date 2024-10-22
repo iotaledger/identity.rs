@@ -67,7 +67,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     .await?;
 
   let did_doc = {
-    let did = IotaDID::parse(format!("did:iota:{}", identity.id().to_string()))?;
+    let did = IotaDID::parse(format!("did:iota:{}", identity.id()))?;
     let mut doc = IotaDocument::new_with_id(did.clone());
     doc.insert_method(
       VerificationMethod::new_from_jwk(
@@ -88,7 +88,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     anyhow::bail!("the proposal is executed");
   };
 
-  proposal.approve(&mut identity).execute(&bob_client).await?;
+  proposal.approve(&identity).execute(&bob_client).await?;
 
   assert_eq!(proposal.votes(), 2);
 

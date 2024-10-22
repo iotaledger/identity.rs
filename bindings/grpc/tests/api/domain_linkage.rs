@@ -62,7 +62,7 @@ async fn prepare_test() -> anyhow::Result<(TestServer, Url, String, Jwt)> {
   let service_url: DIDUrl = did.clone().join("#domain-linkage")?;
   let linked_domain_service: LinkedDomainService = LinkedDomainService::new(service_url, domains, Object::new())?;
   issuer
-    .update_document(&api_client, |mut doc| {
+    .update_document(api_client, |mut doc| {
       doc.insert_service(linked_domain_service.into()).ok().map(|_| doc)
     })
     .await?;
@@ -92,8 +92,8 @@ async fn prepare_test() -> anyhow::Result<(TestServer, Url, String, Jwt)> {
   let jwt: Jwt = updated_did_document
     .create_credential_jwt(
       &domain_linkage_credential,
-      &issuer.storage(),
-      &issuer
+      issuer.storage(),
+      issuer
         .fragment()
         .ok_or_else(|| anyhow::anyhow!("no fragment for issuer"))?,
       &JwsSignatureOptions::default(),
