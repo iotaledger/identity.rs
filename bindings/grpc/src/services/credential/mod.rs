@@ -7,7 +7,6 @@ pub mod validation;
 
 use identity_stronghold::StrongholdStorage;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use iota_sdk::client::Client;
 use tonic::transport::server::RoutesBuilder;
 
 pub fn init_services(routes: &mut RoutesBuilder, client: &IdentityClientReadOnly, stronghold: &StrongholdStorage) {

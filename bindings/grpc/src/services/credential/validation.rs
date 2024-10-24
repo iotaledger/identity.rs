@@ -17,7 +17,6 @@ use identity_iota::iota::IotaDID;
 use identity_iota::resolver;
 use identity_iota::resolver::Resolver;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use iota_sdk::client::Client;
 
 use _credentials::vc_validation_server::VcValidation;
 use _credentials::vc_validation_server::VcValidationServer;

@@ -21,7 +21,6 @@ use identity_iota::resolver::Resolver;
 use identity_iota::sd_jwt_payload::SdJwt;
 use identity_iota::sd_jwt_payload::SdObjectDecoder;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use iota_sdk::client::Client;
 use serde::Deserialize;
 use serde::Serialize;
 use thiserror::Error;

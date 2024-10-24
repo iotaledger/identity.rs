@@ -13,7 +13,6 @@ use identity_iota::storage::JwsSignatureOptions;
 use identity_iota::storage::Storage;
 use identity_stronghold::StrongholdStorage;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use iota_sdk::client::Client;
 use tonic::Request;
 use tonic::Response;
 use tonic::Status;

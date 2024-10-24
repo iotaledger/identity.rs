@@ -5,7 +5,6 @@ use std::net::SocketAddr;
 
 use identity_stronghold::StrongholdStorage;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use iota_sdk::client::Client;
 use tonic::transport::server::Router;
 use tonic::transport::server::Server;
 

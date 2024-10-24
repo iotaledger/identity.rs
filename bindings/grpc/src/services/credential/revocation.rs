@@ -13,7 +13,6 @@ use identity_iota::credential::{self};
 use identity_iota::prelude::IotaDocument;
 use identity_iota::prelude::Resolver;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use iota_sdk::client::Client;
 use prost::bytes::Bytes;
 use serde::Deserialize;
 use serde::Serialize;

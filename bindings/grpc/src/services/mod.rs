@@ -10,7 +10,6 @@ pub mod status_list_2021;
 
 use identity_stronghold::StrongholdStorage;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use iota_sdk::client::Client;
 use tonic::transport::server::Routes;
 use tonic::transport::server::RoutesBuilder;
 

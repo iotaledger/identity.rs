@@ -6,9 +6,8 @@ use std::str::FromStr;
 use identity_grpc::server::GRpcServer;
 use identity_stronghold::StrongholdStorage;
 use iota_sdk::client::stronghold::StrongholdAdapter;
-use iota_sdk::client::Client;
 
-use identity_sui_name_tbd::client::{IdentityClient, IdentityClientReadOnly};
+use identity_sui_name_tbd::client::IdentityClientReadOnly;
 use iota_sdk_move::types::base_types::ObjectID;
 
 #[tokio::main]

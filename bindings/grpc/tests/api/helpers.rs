@@ -4,10 +4,7 @@
 use anyhow::Context;
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::ToFromBytes;
-use identity_iota::core::ToJson;
-use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
@@ -21,18 +18,9 @@ use identity_storage::{JwkStorage, KeyId, StorageSigner};
 use identity_stronghold::StrongholdStorage;
 use identity_sui_name_tbd::client::{IdentityClient, IdentityClientReadOnly};
 use identity_sui_name_tbd::transaction::Transaction;
-use iota_sdk::client::api::GetAddressesOptions;
-use iota_sdk::client::node_api::indexer::query_parameters::QueryParameter;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
-use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::stronghold::StrongholdAdapter;
-use iota_sdk::client::Client;
 use iota_sdk::client::Password;
-use iota_sdk::crypto::keys::bip39;
-use iota_sdk::types::block::address::Address;
-use iota_sdk::types::block::address::Bech32Address;
-use iota_sdk::types::block::address::Hrp;
-use iota_sdk::types::block::output::AliasOutputBuilder;
 use iota_sdk_move::types::base_types::{IotaAddress, ObjectID};
 use iota_sdk_move::IotaClientBuilder;
 use rand::distributions::Alphanumeric;
@@ -129,23 +117,12 @@ where
   let identity_client = IdentityClient::new(client.clone(), signer).await?;
 
   let network_name = client.network();
-  let (document, fragment): (IotaDocument, String) = create_did_document(&network_name, storage).await?;
-  // let alias_output = client.new_did_output(address, document, None).await?;
+  let (document, fragment): (IotaDocument, String) = create_did_document(network_name, storage).await?;
 
-  // let document: IotaDocument = client.publish_did_output(secret_manager, alias_output).await?;
-
-  // Create Identity
-  let identity = identity_client
-    .create_identity(document.to_json().unwrap().as_bytes())
-    .finish()
+  let document = identity_client
+    .publish_did_document(document)
     .execute(&identity_client)
-    .await
-    .unwrap();
-
-  // let document = identity_client
-  //   .publish_did_document(document)
-  //   .execute(&identity_client)
-  //   .await?;
+    .await?;
 
   Ok((address, document, key_id, fragment))
 }
@@ -177,23 +154,7 @@ where
   Ok((document, fragment))
 }
 
-/// Generates an address from the given [`SecretManager`] and adds funds from the faucet.
-pub async fn get_address_with_funds<I, K>(storage: &Storage<K, I>, faucet_endpoint: &str) -> anyhow::Result<IotaAddress>
-where
-  K: JwkStorage,
-  I: KeyIdStorage,
-{
-  let (address, _, _) = get_address(storage).await?;
-
-  request_faucet_funds(address, faucet_endpoint)
-    .await
-    .context("failed to request faucet funds")?;
-
-  Ok(address)
-}
-
-/// Initializes the [`SecretManager`] with a new mnemonic, if necessary,
-/// and generates an address from the given [`SecretManager`].
+/// Generates a new Ed25519 key pair
 pub async fn get_address<I, K>(storage: &Storage<K, I>) -> anyhow::Result<(IotaAddress, KeyId, Jwk)>
 where
   K: JwkStorage,
@@ -242,7 +203,6 @@ async fn request_faucet_funds(address: IotaAddress, faucet_endpoint: &str) -> an
 }
 
 pub struct Entity<K, I> {
-  secret_manager: SecretManager,
   storage: Storage<K, I>,
   did: Option<(IotaAddress, IotaDocument, KeyId, String)>,
 }
@@ -262,14 +222,9 @@ pub fn random_stronghold_path() -> PathBuf {
 
 impl Default for Entity<JwkMemStore, KeyIdMemstore> {
   fn default() -> Self {
-    let secret_manager = SecretManager::Stronghold(make_stronghold());
     let storage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-    Self {
-      secret_manager,
-      storage,
-      did: None,
-    }
+    Self { storage, did: None }
   }
 }
 
@@ -281,14 +236,9 @@ impl Entity<JwkMemStore, KeyIdMemstore> {
 
 impl Entity<StrongholdStorage, StrongholdStorage> {
   pub fn new_with_stronghold(s: StrongholdStorage) -> Self {
-    let secret_manager = SecretManager::Stronghold(make_stronghold());
     let storage = Storage::new(s.clone(), s);
 
-    Self {
-      secret_manager,
-      storage,
-      did: None,
-    }
+    Self { storage, did: None }
   }
 }
 
@@ -347,53 +297,4 @@ pub fn make_stronghold() -> StrongholdAdapter {
     .password(random_password(18))
     .build(random_stronghold_path())
     .expect("Failed to create temporary stronghold")
-}
-
-#[tokio::test]
-async fn test_lol() {
-  let iota_client = IotaClientBuilder::default()
-    .build(API_ENDPOINT)
-    .await
-    .expect("Failed to connect to API's endpoint");
-
-  let identity_pkg_id =
-    ObjectID::from_str("0xc030a6ab95219bc1a669b222abb3f43692ec9c06e166ec4590630287364e017d").unwrap();
-
-  let identity_client = IdentityClientReadOnly::new(iota_client, identity_pkg_id)
-    .await
-    .expect("Failed to build Identity client");
-
-  println!("network name : {:?}", identity_client.network());
-
-  let s = StrongholdStorage::new(make_stronghold());
-
-  let storage = Storage::new(s.clone(), s);
-
-  let (address, key_id, pub_key_jwk) = get_address(&storage)
-    .await
-    .context("failed to get address with funds")
-    .unwrap();
-
-  // Fund the account
-  request_faucet_funds(address, FAUCET_ENDPOINT).await.unwrap();
-
-  let signer = StorageSigner::new(&storage, key_id.clone(), pub_key_jwk);
-
-  let identity_client = IdentityClient::new(identity_client.clone(), signer).await.unwrap();
-
-  let network_name = identity_client.network();
-  let (document, fragment): (IotaDocument, String) = create_did_document(&network_name, &storage).await.unwrap();
-
-  // Create Identity
-  let identity = identity_client
-    .create_identity(document.to_json().unwrap().as_bytes())
-    .finish()
-    .execute(&identity_client)
-    .await
-    .unwrap();
-
-  // let document = identity_client
-  //   .publish_did_document(document)
-  //   .execute(&identity_client)
-  //   .await?;
 }
