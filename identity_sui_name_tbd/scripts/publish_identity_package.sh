@@ -8,4 +8,4 @@ package_dir=$script_dir/../packages/identity_iota
 
 # echo "publishing package from $package_dir"
 cd $package_dir
-iota client publish --with-unpublished-dependencies --skip-dependency-verification --gas-budget 500000000 .
+iota client publish --with-unpublished-dependencies --skip-dependency-verification --json --gas-budget 500000000 .

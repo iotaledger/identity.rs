@@ -1,6 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::anyhow;
 use anyhow::Context;
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::ToFromBytes;
@@ -22,24 +23,36 @@ use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::stronghold::StrongholdAdapter;
 use iota_sdk::client::Password;
 use iota_sdk_move::types::base_types::{IotaAddress, ObjectID};
-use iota_sdk_move::IotaClientBuilder;
+use iota_sdk_move::{IotaClient, IotaClientBuilder};
+use jsonpath_rust::JsonPathQuery;
 use rand::distributions::Alphanumeric;
 use rand::distributions::DistString;
 use rand::thread_rng;
+use serde_json::Value;
+use std::io::Write;
 use std::net::SocketAddr;
 use std::path::PathBuf;
-use std::str::FromStr;
+
 use tokio::net::TcpListener;
 use tokio::process::Command;
+use tokio::sync::OnceCell;
 use tokio::task::JoinHandle;
 use tonic::transport::Uri;
+const TEST_GAS_BUDGET: u64 = 50_000_000;
 
-pub const TEST_GAS_BUDGET: u64 = 50_000_000;
+type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
-pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
+const FAUCET_ENDPOINT: &str = "http://localhost:9123/gas";
 
-pub const API_ENDPOINT: &str = "http://127.0.0.1:9000";
-pub const FAUCET_ENDPOINT: &str = "http://localhost:9123/gas";
+static PACKAGE_ID: OnceCell<ObjectID> = OnceCell::const_new();
+
+const SCRIPT_DIR: &str = concat!(
+  env!("CARGO_MANIFEST_DIR"),
+  "/../../",
+  "identity_sui_name_tbd",
+  "/scripts"
+);
+const CACHED_PKG_ID: &str = "/tmp/identity_iota_pkg_id.txt";
 
 pub struct TestServer {
   client: IdentityClientReadOnly,
@@ -67,12 +80,15 @@ impl TestServer {
     let addr = listener.local_addr().unwrap();
 
     let iota_client = IotaClientBuilder::default()
-      .build(API_ENDPOINT)
+      .build_localnet()
       .await
       .expect("Failed to connect to API's endpoint");
 
-    let identity_pkg_id =
-      ObjectID::from_str("0xc030a6ab95219bc1a669b222abb3f43692ec9c06e166ec4590630287364e017d").unwrap();
+    let identity_pkg_id = PACKAGE_ID
+      .get_or_try_init(|| init(&iota_client))
+      .await
+      .copied()
+      .expect("failed to publish package ID");
 
     let identity_client = IdentityClientReadOnly::new(iota_client, identity_pkg_id)
       .await
@@ -297,4 +313,80 @@ pub fn make_stronghold() -> StrongholdAdapter {
     .password(random_password(18))
     .build(random_stronghold_path())
     .expect("Failed to create temporary stronghold")
+}
+
+async fn get_active_address() -> anyhow::Result<IotaAddress> {
+  Command::new("iota")
+    .arg("client")
+    .arg("active-address")
+    .arg("--json")
+    .output()
+    .await
+    .context("Failed to execute command")
+    .and_then(|output| Ok(serde_json::from_slice::<IotaAddress>(&output.stdout)?))
+}
+
+async fn init(iota_client: &IotaClient) -> anyhow::Result<ObjectID> {
+  let network_id = iota_client.read_api().get_chain_identifier().await?;
+  let address = get_active_address().await?;
+
+  // Request Funds
+
+  request_faucet_funds(address, FAUCET_ENDPOINT).await.unwrap();
+
+  if let Ok(id) = std::env::var("IDENTITY_IOTA_PKG_ID").or(get_cached_id(&network_id).await) {
+    std::env::set_var("IDENTITY_IOTA_PKG_ID", id.clone());
+    id.parse().context("failed to parse object id from str")
+  } else {
+    publish_package(address).await
+  }
+}
+
+async fn get_cached_id(network_id: &str) -> anyhow::Result<String> {
+  let cache = tokio::fs::read_to_string(CACHED_PKG_ID).await?;
+  let (cached_id, cached_network_id) = cache.split_once(';').ok_or(anyhow!("Invalid or empty cached data"))?;
+
+  if cached_network_id == network_id {
+    Ok(cached_id.to_owned())
+  } else {
+    Err(anyhow!("A network change has invalidated the cached data"))
+  }
+}
+
+async fn publish_package(active_address: IotaAddress) -> anyhow::Result<ObjectID> {
+  let output = Command::new("sh")
+    .current_dir(SCRIPT_DIR)
+    .arg("publish_identity_package.sh")
+    .output()
+    .await?;
+
+  if !output.status.success() {
+    anyhow::bail!(
+      "Failed to publish move package: \n\n{}\n\n{}",
+      std::str::from_utf8(&output.stdout).unwrap(),
+      std::str::from_utf8(&output.stderr).unwrap()
+    );
+  }
+
+  let publish_result = {
+    let output_str = std::str::from_utf8(&output.stdout).unwrap();
+    let start_of_json = output_str.find('{').ok_or(anyhow!("No json in output"))?;
+    serde_json::from_str::<Value>(output_str[start_of_json..].trim())?
+  };
+
+  let package_id = publish_result
+    .path("$.objectChanges[?(@.type == 'published')].packageId")
+    .map_err(|e| anyhow!("Failed to parse JSONPath: {e}"))
+    .and_then(|value| Ok(serde_json::from_value::<Vec<ObjectID>>(value)?))?
+    .first()
+    .copied()
+    .ok_or_else(|| anyhow!("Failed to parse package ID after publishing"))?;
+
+  // Persist package ID in order to avoid publishing the package for every test.
+  let package_id_str = package_id.to_string();
+  std::env::set_var("IDENTITY_IOTA_PKG_ID", package_id_str.as_str());
+  let mut file = std::fs::File::create(CACHED_PKG_ID)?;
+  write!(&mut file, "{};{}", package_id_str, active_address)?;
+
+  Ok(package_id)
 }

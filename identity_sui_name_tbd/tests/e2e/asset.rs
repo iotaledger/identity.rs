@@ -178,7 +178,7 @@ async fn hosting_vc_works() -> anyhow::Result<()> {
 
   let did = {
     let object_id = ObjectID::random();
-    IotaDID::parse(&format!("did:iota:{object_id}"))?
+    IotaDID::parse(format!("did:iota:{object_id}"))?
   };
   let did_doc = CoreDocument::builder(Object::default())
     .id(did.clone().into())

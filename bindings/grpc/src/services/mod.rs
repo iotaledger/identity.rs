@@ -10,8 +10,8 @@ pub mod status_list_2021;
 
 use identity_stronghold::StrongholdStorage;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use tonic::transport::server::Routes;
-use tonic::transport::server::RoutesBuilder;
+use tonic::service::Routes;
+use tonic::service::RoutesBuilder;
 
 pub fn routes(client: &IdentityClientReadOnly, stronghold: &StrongholdStorage) -> Routes {
   let mut routes = RoutesBuilder::default();

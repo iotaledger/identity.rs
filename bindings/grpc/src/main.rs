@@ -22,10 +22,6 @@ async fn main() -> anyhow::Result<()> {
 
   let identity_pkg_id = ObjectID::from_str(&identity_iota_pkg_id)?;
 
-  // let client: Client = Client::builder()
-  //   .with_primary_node(&api_endpoint, None)?
-  //   .finish()
-  //   .await?;
   let iota_client = iota_sdk_move::IotaClientBuilder::default().build(api_endpoint).await?;
 
   let read_only_client = IdentityClientReadOnly::new(iota_client, identity_pkg_id).await?;

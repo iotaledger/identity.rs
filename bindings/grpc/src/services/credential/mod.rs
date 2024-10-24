@@ -7,7 +7,7 @@ pub mod validation;
 
 use identity_stronghold::StrongholdStorage;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use tonic::transport::server::RoutesBuilder;
+use tonic::service::RoutesBuilder;
 
 pub fn init_services(routes: &mut RoutesBuilder, client: &IdentityClientReadOnly, stronghold: &StrongholdStorage) {
   routes.add_service(revocation::service(client));
