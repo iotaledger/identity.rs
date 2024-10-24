@@ -127,8 +127,8 @@ path = "demo/traditional.rs"
 name = "traditional"
 
 [[example]]
-path = "demo/pqc.rs"
-name = "pqc"
+path = "demo/pq.rs"
+name = "pq"
 
 [[example]]
 path = "demo/hybrid.rs"
