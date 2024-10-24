@@ -4,6 +4,7 @@
 use anyhow::Context;
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::ToFromBytes;
+use identity_iota::core::ToJson;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
@@ -39,6 +40,7 @@ use rand::distributions::DistString;
 use rand::thread_rng;
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use std::str::FromStr;
 use tokio::net::TcpListener;
 use tokio::process::Command;
 use tokio::task::JoinHandle;
@@ -81,7 +83,8 @@ impl TestServer {
       .await
       .expect("Failed to connect to API's endpoint");
 
-    let identity_pkg_id = ObjectID::random();
+    let identity_pkg_id =
+      ObjectID::from_str("0xc030a6ab95219bc1a669b222abb3f43692ec9c06e166ec4590630287364e017d").unwrap();
 
     let identity_client = IdentityClientReadOnly::new(iota_client, identity_pkg_id)
       .await
@@ -131,10 +134,18 @@ where
 
   // let document: IotaDocument = client.publish_did_output(secret_manager, alias_output).await?;
 
-  let document = identity_client
-    .publish_did_document(document)
+  // Create Identity
+  let identity = identity_client
+    .create_identity(document.to_json().unwrap().as_bytes())
+    .finish()
     .execute(&identity_client)
-    .await?;
+    .await
+    .unwrap();
+
+  // let document = identity_client
+  //   .publish_did_document(document)
+  //   .execute(&identity_client)
+  //   .await?;
 
   Ok((address, document, key_id, fragment))
 }
@@ -336,4 +347,53 @@ pub fn make_stronghold() -> StrongholdAdapter {
     .password(random_password(18))
     .build(random_stronghold_path())
     .expect("Failed to create temporary stronghold")
+}
+
+#[tokio::test]
+async fn test_lol() {
+  let iota_client = IotaClientBuilder::default()
+    .build(API_ENDPOINT)
+    .await
+    .expect("Failed to connect to API's endpoint");
+
+  let identity_pkg_id =
+    ObjectID::from_str("0xc030a6ab95219bc1a669b222abb3f43692ec9c06e166ec4590630287364e017d").unwrap();
+
+  let identity_client = IdentityClientReadOnly::new(iota_client, identity_pkg_id)
+    .await
+    .expect("Failed to build Identity client");
+
+  println!("network name : {:?}", identity_client.network());
+
+  let s = StrongholdStorage::new(make_stronghold());
+
+  let storage = Storage::new(s.clone(), s);
+
+  let (address, key_id, pub_key_jwk) = get_address(&storage)
+    .await
+    .context("failed to get address with funds")
+    .unwrap();
+
+  // Fund the account
+  request_faucet_funds(address, FAUCET_ENDPOINT).await.unwrap();
+
+  let signer = StorageSigner::new(&storage, key_id.clone(), pub_key_jwk);
+
+  let identity_client = IdentityClient::new(identity_client.clone(), signer).await.unwrap();
+
+  let network_name = identity_client.network();
+  let (document, fragment): (IotaDocument, String) = create_did_document(&network_name, &storage).await.unwrap();
+
+  // Create Identity
+  let identity = identity_client
+    .create_identity(document.to_json().unwrap().as_bytes())
+    .finish()
+    .execute(&identity_client)
+    .await
+    .unwrap();
+
+  // let document = identity_client
+  //   .publish_did_document(document)
+  //   .execute(&identity_client)
+  //   .await?;
 }

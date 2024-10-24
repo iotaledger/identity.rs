@@ -86,22 +86,29 @@ impl DocumentService for DocumentSvc {
 
     let identity_client = IdentityClient::new(self.client.clone(), storage).await.unwrap();
 
+    let iota_doc = IotaDocument::new(network_name).to_json().unwrap();
+    let mut doc = vec![];
+    doc.extend_from_slice(b"DID"); // Add the DID Marker
+    doc.extend_from_slice(&iota_doc.as_bytes());
+
+    println!("Creating identity with doc: {:?}", doc);
+
     let mut created_identity = identity_client
-      .create_identity(&[])
+      .create_identity(&doc)
       .finish()
       .execute(&identity_client)
       .await
       .unwrap();
 
-    let did = IotaDID::parse(format!("did::iota::{}", created_identity.id())).unwrap();
+    let did = IotaDID::parse(format!("did:iota:{}", created_identity.id())).unwrap();
 
-    let mut document = IotaDocument::new(&network_name);
+    let mut document = IotaDocument::new_with_id(did.clone());
     let fragment = document
       .generate_method(
         &self.storage,
         ED25519_KEY_TYPE.clone(),
         JwsAlgorithm::EdDSA,
-        None,
+        Some(identity_client.signer().key_id().as_str()),
         MethodScope::VerificationMethod,
       )
       .await

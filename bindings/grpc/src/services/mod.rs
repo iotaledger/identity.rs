@@ -20,7 +20,7 @@ pub fn routes(client: &IdentityClientReadOnly, stronghold: &StrongholdStorage) -
   credential::init_services(&mut routes, client, stronghold);
   routes.add_service(sd_jwt::service(client));
   routes.add_service(domain_linkage::service(client));
-  // routes.add_service(document::service(client, stronghold)); TODO:: Come back here @itsyaasir
+  routes.add_service(document::service(client, stronghold));
   routes.add_service(status_list_2021::service());
 
   routes.routes()
