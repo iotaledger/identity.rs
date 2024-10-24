@@ -5,3 +5,5 @@ Cargo.lock
 
 .well-known/*
 /.well-known/*
+
+!.well-known/.gitkeep
