@@ -8,4 +8,14 @@ The IOTA Identity Framework now supports Zero-Knowledge functionalities, thanks 
 For more details on the implementation and how to use these features, you can find the full documentation [here](https://wiki.iota.org/identity.rs/how-tos/verifiable-credentials/zero-knowledge-selective-disclosure/).
 
 # PQ/T Hybrid
-# Examples
+
+### Example
+
+To test the above functionalities, you can refer to practical code snippets available in the [example](https://github.com/Cybersecurity-LINKS/pq-zk-identity/tree/PQ/T-Hybrid/examples) directory.
+
+> **Note**: The examples in the `example/demo` directory are configured to use the [DID Web Method](https://w3c-ccg.github.io/did-method-web/). To run these examples, you must have a server instance that hosts the DID Document. Additionally, ensure that the following variables in `utils.rs` are correctly configured to point to your server instance:
+> ```rust
+> pub static DID_URL: &str = "https://localhost:4443/.well-known/";
+> pub static PATH_DID_FILE: &str = "C:/Projects/did-web-server/.well-known/";
+> ```
+Make sure your server is set up before running the examples to avoid any configuration issues.
