@@ -9,11 +9,12 @@ For more details on the implementation and how to use these features, you can fi
 
 # PQ/T Hybrid
 
-### Example
+# Examples
 
 To test the above functionalities, you can refer to practical code snippets available in the [example](https://github.com/Cybersecurity-LINKS/pq-zk-identity/tree/PQ/T-Hybrid/examples) directory.
-
-> **Note**: The examples in the `example/demo` directory are configured to use the [DID Web Method](https://w3c-ccg.github.io/did-method-web/). To run these examples, you must have a server instance that hosts the DID Document. Additionally, ensure that the following variables in `utils.rs` are correctly configured to point to your server instance:
+> **Note**: The examples in the `example/demo` directory are configured to use the [DID Web Method](https://w3c-ccg.github.io/did-method-web/). To run these examples, you must
+> have a server instance that hosts the Issuer's DID Document. You can use the default server provided in the `example/demo/server` folder, or configure one yourself. However,
+> ensure that the following variables in `utils.rs` are correctly set to point to your server instance:
 > ```rust
 > pub static DID_URL: &str = "https://localhost:4443/.well-known/";
 > pub static PATH_DID_FILE: &str = "C:/Projects/did-web-server/.well-known/";
