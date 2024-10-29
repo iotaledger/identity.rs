@@ -4,6 +4,7 @@
 use core::future::Future;
 use futures::stream::FuturesUnordered;
 use futures::TryStreamExt;
+use identity_did::DIDJwk;
 use identity_did::DID;
 use std::collections::HashSet;
 
@@ -247,6 +248,22 @@ impl<DOC: 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
   }
 }
 
+impl<DOC: From<CoreDocument> + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
+  /// Attaches a handler capable of resolving `did:jwk` DIDs.
+  pub fn attach_did_jwk_handler(&mut self) {
+    let handler = |did_jwk: DIDJwk| async move { CoreDocument::expand_did_jwk(did_jwk) };
+    self.attach_handler(DIDJwk::METHOD.to_string(), handler)
+  }
+}
+
+impl<DOC: From<CoreDocument> + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
+  /// Attaches a handler capable of resolving `did:jwk` DIDs.
+  pub fn attach_did_jwk_handler(&mut self) {
+    let handler = |did_jwk: DIDJwk| async move { CoreDocument::expand_did_jwk(did_jwk) };
+    self.attach_handler(DIDJwk::METHOD.to_string(), handler)
+  }
+}
+
 #[cfg(feature = "iota")]
 mod iota_handler {
   use crate::ErrorCause;
@@ -301,10 +318,10 @@ mod iota_handler {
     ///
     /// # Note
     ///
-    /// - Using `attach_iota_handler` or `attach_handler` for the IOTA method would override all
-    /// previously added clients.
-    /// - This function does not validate the provided configuration. Ensure that the provided
-    /// network name corresponds with the client, possibly by using `client.network_name()`.
+    /// - Using `attach_iota_handler` or `attach_handler` for the IOTA method would override all previously added
+    ///   clients.
+    /// - This function does not validate the provided configuration. Ensure that the provided network name corresponds
+    ///   with the client, possibly by using `client.network_name()`.
     pub fn attach_multiple_iota_handlers<CLI, I>(&mut self, clients: I)
     where
       CLI: IotaIdentityClientExt + Send + Sync + 'static,
@@ -413,5 +430,16 @@ mod tests {
 
     let doc = resolver.resolve(&did2).await.unwrap();
     assert_eq!(doc.id(), &did2);
+  }
+
+  #[tokio::test]
+  async fn test_did_jwk_resolution() {
+    let mut resolver = Resolver::<CoreDocument>::new();
+    resolver.attach_did_jwk_handler();
+
+    let did_jwk = "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZYdDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9".parse::<DIDJwk>().unwrap();
+
+    let doc = resolver.resolve(&did_jwk).await.unwrap();
+    assert_eq!(doc.id(), did_jwk.as_ref());
   }
 }

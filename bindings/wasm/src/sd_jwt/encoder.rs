@@ -47,7 +47,6 @@ impl WasmSdObjectEncoder {
   /// Path "/id" conceals `"id": "did:value"`
   /// Path "/claim1/abc" conceals `"abc": true`
   /// Path "/claim2/0" conceals `val_1`
-  /// ```
   ///
   /// ## Errors
   /// * `InvalidPath` if pointer is invalid.

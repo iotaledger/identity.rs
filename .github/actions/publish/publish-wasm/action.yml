@@ -24,7 +24,7 @@ runs:
         registry-url: 'https://registry.npmjs.org'
 
     - name: Download bindings/wasm artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.input-artifact-name }}
         path: bindings/wasm

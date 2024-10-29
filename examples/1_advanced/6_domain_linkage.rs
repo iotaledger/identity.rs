@@ -49,12 +49,14 @@ async fn main() -> anyhow::Result<()> {
     .with_primary_node(API_ENDPOINT, None)?
     .finish()
     .await?;
+  let stronghold_path = random_stronghold_path();
 
+  println!("Using stronghold path: {stronghold_path:?}");
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password(Password::from("secure_password".to_owned()))
-      .build(random_stronghold_path())?,
+      .build(stronghold_path)?,
   );
 
   // Create a DID for the entity that will issue the Domain Linkage Credential.
