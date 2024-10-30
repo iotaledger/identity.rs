@@ -33,7 +33,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
         controllers_to_remove: HashSet<ObjectID>,
         controllers_to_update: I2,
         package: ObjectID,
-    ) -> anyhow::Result<(Self::TxBuilder, Argument)>
+    ) -> anyhow::Result<ProgrammableTransactionBcs>
         where
             I1: IntoIterator<Item = (IotaAddress, u64)>,
             I2: IntoIterator<Item = (ObjectID, u64)>,
@@ -70,7 +70,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
         capability: ObjectRef,
         expiration: Option<u64>,
         package_id: ObjectID,
-    ) -> Result<(Self::TxBuilder, Argument), anyhow::Error> {
+    ) -> Result<ProgrammableTransactionBcs, anyhow::Error> {
         unimplemented!();
     }
 
@@ -100,7 +100,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
         did_doc: impl AsRef<[u8]>,
         expiration: Option<u64>,
         package_id: ObjectID,
-    ) -> Result<(Self::TxBuilder, Argument), anyhow::Error> {
+    ) -> Result<ProgrammableTransactionBcs, anyhow::Error> {
         unimplemented!();
     }
 

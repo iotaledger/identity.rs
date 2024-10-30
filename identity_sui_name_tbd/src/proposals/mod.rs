@@ -16,8 +16,6 @@ use crate::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
 use crate::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::iota_sdk_abstraction::types::base_types::ObjectRef;
 use crate::iota_sdk_abstraction::types::object::Owner;
-use crate::iota_sdk_abstraction::TransactionBuilderT;
-use crate::iota_sdk_abstraction::types::transaction::Argument;
 use crate::iota_sdk_abstraction::ProgrammableTransactionBcs;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
@@ -43,13 +41,6 @@ pub trait ProposalT {
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
     identity_ref: OnChainIdentity,
-    package: ObjectID,
-  ) -> Result<(<M as IdentityMoveCalls>::TxBuilder, Argument), Error>;
-  fn make_chained_execution_tx<M: IdentityMoveCalls>(
-    ptb: <M as IdentityMoveCalls>::TxBuilder,
-    proposal_arg: Argument,
-    identity: OwnedObjectRef,
-    controller_cap: ObjectRef,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Error>;
   fn make_execute_tx<M: IdentityMoveCalls>(
@@ -84,7 +75,6 @@ pub struct ProposalBuilder<A> {
   identity: OnChainIdentity,
   expiration: Option<u64>,
   action: A,
-  forbid_chained_execution: bool,
 }
 
 impl<A> Deref for ProposalBuilder<A> {
@@ -106,17 +96,11 @@ impl<A> ProposalBuilder<A> {
       identity,
       expiration: None,
       action,
-      forbid_chained_execution: false,
     }
   }
 
   pub fn expiration_epoch(mut self, exp: u64) -> Self {
     self.expiration = Some(exp);
-    self
-  }
-
-  pub fn forbid_chained_execution(mut self) -> Self {
-    self.forbid_chained_execution = true;
     self
   }
 
@@ -165,14 +149,13 @@ where
       identity,
       expiration,
       action,
-      forbid_chained_execution,
     } = self.0;
     let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
     let controller_cap = identity.get_controller_cap(client).await?;
 
     let is_threshold_reached = identity.controller_voting_power(controller_cap.0).unwrap() >= identity.threshold();
     let multicontroller_proposals_bag_id = Owner::ObjectOwner(identity.multicontroller().proposals_bag_id().into());
-    let (ptb, proposal_arg) = Proposal::<A>::make_create_tx::<M>(
+    let tx = Proposal::<A>::make_create_tx::<M>(
       action,
       expiration,
       identity_ref.clone(),
@@ -180,12 +163,6 @@ where
       identity,
       client.package_id(),
     )?;
-    let chain_execute = !forbid_chained_execution && is_threshold_reached;
-    let tx = if chain_execute {
-      Proposal::<A>::make_chained_execution_tx::<M>(ptb, proposal_arg, identity_ref, controller_cap, client.package_id())?
-    } else {
-      ptb.finish()?
-    };
     let tx_response = client
       .execute_transaction(tx, gas_budget)
       .await?;
@@ -195,7 +172,8 @@ where
       return Err(IotaSdkError::Data(error.clone()).into());
     }
 
-    if chain_execute {
+    if is_threshold_reached {
+      // The proposal has been created and executed right-away. Parse its effects.
       Proposal::<A>::parse_tx_effects(tx_response.as_ref()).map(ProposalResult::Executed)
     } else {
       // 2 objects are created, one is the Bag's Field and the other is our Proposal. Proposal is not owned by the bag,

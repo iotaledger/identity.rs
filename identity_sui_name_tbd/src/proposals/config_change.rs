@@ -10,7 +10,6 @@ use crate::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::iota_sdk_abstraction::types::base_types::ObjectRef;
 use crate::iota_sdk_abstraction::types::collection_types::Entry;
 use crate::iota_sdk_abstraction::types::collection_types::VecMap;
-use crate::iota_sdk_abstraction::types::transaction::Argument;
 use crate::iota_sdk_abstraction::ProgrammableTransactionBcs;
 use crate::iota_sdk_abstraction::types::TypeTag;
 use serde::Deserialize;
@@ -57,7 +56,7 @@ impl ProposalT for Proposal<ConfigChange> {
     controller_cap: ObjectRef,
     identity: OnChainIdentity,
     package: ObjectID,
-  ) -> Result<(<M as IdentityMoveCalls>::TxBuilder, Argument), Error> {
+  ) -> Result<ProgrammableTransactionBcs, Error> {
     action.validate(&identity)?;
     <M as IdentityMoveCalls>::propose_config_change(
       identity_ref,
@@ -67,24 +66,6 @@ impl ProposalT for Proposal<ConfigChange> {
       action.controllers_to_add,
       action.controllers_to_remove,
       action.controllers_voting_power,
-      package,
-    )
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
-  }
-
-  fn make_chained_execution_tx<M: IdentityMoveCalls>(
-    ptb: <M as IdentityMoveCalls>::TxBuilder,
-    proposal_arg: Argument,
-    identity: OwnedObjectRef,
-    controller_cap: ObjectRef,
-    package: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, Error> {
-    <M as IdentityMoveCalls>::execute_config_change(
-      Some(ptb),
-      Some(proposal_arg),
-      identity,
-      controller_cap,
-      ObjectID::ZERO,
       package,
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
