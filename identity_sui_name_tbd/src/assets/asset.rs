@@ -48,7 +48,7 @@ pub struct AuthenticatedAsset<T> {
 fn deserialize_inner<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
   D: Deserializer<'de>,
-  T: DeserializeOwned, 
+  T: DeserializeOwned,
 {
   use serde::de::Error as _;
 
@@ -190,7 +190,7 @@ impl<T> AuthenticatedAssetBuilder<T> {
   }
 
   /// Sets whether the new asset allows for its modification.
-  /// 
+  ///
   /// By default an [`AuthenticatedAsset`] is **immutable**.
   pub fn mutable(mut self, mutable: bool) -> Self {
     self.mutable = mutable;
@@ -198,7 +198,7 @@ impl<T> AuthenticatedAssetBuilder<T> {
   }
 
   /// Sets whether the new asset allows the transfer of its ownership.
-  /// 
+  ///
   /// By default an [`AuthenticatedAsset`] **cannot** be transfered.
   pub fn transferable(mut self, transferable: bool) -> Self {
     self.transferable = transferable;
@@ -206,7 +206,7 @@ impl<T> AuthenticatedAssetBuilder<T> {
   }
 
   /// Sets whether the new asset can be deleted.
-  /// 
+  ///
   /// By default an [`AuthenticatedAsset`] **cannot** be deleted.
   pub fn deletable(mut self, deletable: bool) -> Self {
     self.deletable = deletable;
@@ -224,13 +224,13 @@ impl<T> AuthenticatedAssetBuilder<T> {
 /// # Detailed Workflow
 /// A [`TransferProposal`] is a **shared** _Move_ object that represents a request to transfer ownership
 /// of an [`AuthenticatedAsset`] to a new owner.
-/// 
-/// When a [`TransferProposal`] is created, it will seize the asset and send a `SenderCap` token to the current asset's owner
-/// and a `RecipientCap` to the specified `recipient` address. 
-/// `recipient` can accept the transfer by presenting its `RecipientCap` (this prevents other users from claiming the asset
-/// for themselves).
-/// The current owner can cancel the proposal at any time - given the transfer hasn't been conclued yet - by presenting its
-/// `SenderCap`.
+///
+/// When a [`TransferProposal`] is created, it will seize the asset and send a `SenderCap` token to the current asset's
+/// owner and a `RecipientCap` to the specified `recipient` address.
+/// `recipient` can accept the transfer by presenting its `RecipientCap` (this prevents other users from claiming the
+/// asset for themselves).
+/// The current owner can cancel the proposal at any time - given the transfer hasn't been conclued yet - by presenting
+/// its `SenderCap`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransferProposal {
   id: UID,
@@ -337,8 +337,8 @@ impl TransferProposal {
   /// Concludes or cancels this [`TransferProposal`].
   /// # Warning
   /// * This operation only has an effects when it's invoked by this [`TransferProposal`]'s `sender`.
-  /// * Accepting a [`TransferProposal`] **doesn't** consume it from the ledger. This function must be used
-  ///   to correctly consume both [`TransferProposal`] and `SenderCap`.
+  /// * Accepting a [`TransferProposal`] **doesn't** consume it from the ledger. This function must be used to correctly
+  ///   consume both [`TransferProposal`] and `SenderCap`.
   pub fn conclude_or_cancel(self) -> ConcludeTransferTx {
     ConcludeTransferTx(self)
   }

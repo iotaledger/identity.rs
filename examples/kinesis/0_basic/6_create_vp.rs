@@ -66,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
   // create new client for verifier
   // new client actually not necessary, but shows, that client is independent from issuer and holder
   let verifier_storage = &get_memstorage()?;
-  let verifier_client = get_client_and_create_account(&verifier_storage).await?;
+  let verifier_client = get_client_and_create_account(verifier_storage).await?;
 
   // ===========================================================================
   // Step 2: Issuer creates and signs a Verifiable Credential.
