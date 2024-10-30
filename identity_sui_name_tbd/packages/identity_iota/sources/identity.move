@@ -268,12 +268,8 @@ module identity_iota::identity_tests {
         // Create a request to add a second controller.
         let mut identity = scenario.take_shared<Identity>();
         let controller1_cap = scenario.take_from_address<ControllerCap>(controller1);
-        let proposal_id = identity.propose_new_controller(&controller1_cap, option::none(), controller2, 1, scenario.ctx());
-
-        // Request is fullfilled, add a second controller and send the capability to `controller2`.
-        scenario.next_tx(controller1);
-
-        identity.execute_config_change(&controller1_cap, proposal_id, scenario.ctx());
+        // This is carried out immediately.
+        identity.propose_new_controller(&controller1_cap, option::none(), controller2, 1, scenario.ctx());
 
         scenario.next_tx(controller2);
 
@@ -325,7 +321,7 @@ module identity_iota::identity_tests {
             vector[controller3_cap.id().to_inner()],
             vec_map::empty(),
             scenario.ctx()
-        );
+        ).destroy_some();
 
         scenario.next_tx(controller2);
 
@@ -380,11 +376,8 @@ module identity_iota::identity_tests {
             let mut identity = scenario.take_shared<Identity>();
             let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
 
-            // Create a request to add a new controller.
-            let proposal_id = identity.propose_new_controller(&controller_a_cap, option::none(), controller_d, 1, scenario.ctx());
-
-            scenario.next_tx(controller_a);
-            identity.execute_config_change(&controller_a_cap, proposal_id, scenario.ctx());
+            // Create a request to add a new controller. This is carried out immediately as controller_a has enough voting power
+            identity.propose_new_controller(&controller_a_cap, option::none(), controller_d, 1, scenario.ctx());
 
             scenario.next_tx(controller_d);
 
@@ -412,7 +405,7 @@ module identity_iota::identity_tests {
             let mut identity = scenario.take_shared<Identity>();
             let controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
 
-            let proposal_id = identity.propose_new_controller(&controller_b_cap, option::none(), controller_d, 1, scenario.ctx());
+            let proposal_id = identity.propose_new_controller(&controller_b_cap, option::none(), controller_d, 1, scenario.ctx()).destroy_some();
 
             scenario.next_tx(controller_b);
             identity.execute_config_change(&controller_b_cap, proposal_id, scenario.ctx());
@@ -459,7 +452,7 @@ module identity_iota::identity_tests {
         let controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
 
         // Create a request to add a new controller.
-        let proposal_id = identity.propose_new_controller(&controller_b_cap, option::none(), controller_d, 10, scenario.ctx());
+        let proposal_id = identity.propose_new_controller(&controller_b_cap, option::none(), controller_d, 10, scenario.ctx()).destroy_some();
 
         scenario.next_tx(controller_b);
         let controller_c_cap = scenario.take_from_address<ControllerCap>(controller_c);
@@ -513,10 +506,9 @@ module identity_iota::identity_tests {
         let mut second_identity = scenario.take_shared<Identity>();
 
         assert!(second_identity.did_doc().controllers().contains(&first_identity_cap.id().to_inner()), 0);
+        
+        second_identity.propose_new_controller(&first_identity_cap, option::none(), controller_a, 10, scenario.ctx()).destroy_none();
 
-        let proposal_id = second_identity.propose_new_controller(&first_identity_cap, option::none(), controller_a, 10, scenario.ctx());
-
-        second_identity.execute_config_change(&first_identity_cap, proposal_id, scenario.ctx());
         scenario.next_tx(controller_a);
         let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
 
@@ -554,25 +546,35 @@ module identity_iota::identity_tests {
 
     #[test, expected_failure(abort_code = EExpiredProposal)]
     fun expired_proposals_cannot_be_executed() {
-        let controller = @0x1;
-        let new_controller = @0x2;
-        let mut scenario = test_scenario::begin(controller);
+        let controller_a = @0x1;
+        let controller_b = @0x2;
+        let new_controller = @0x3;
+        let mut scenario = test_scenario::begin(controller_a);
         let expiration_epoch = scenario.ctx().epoch();
+        
+        let mut controllers = vec_map::empty();
+        controllers.insert(controller_a, 1);
+        controllers.insert(controller_b, 1);
 
-        let identity = new(b"DID", scenario.ctx());
+        let identity = new_with_controllers(b"DID", controllers, 2, scenario.ctx());
         transfer::public_share_object(identity);
 
-        scenario.next_tx(controller);
+        scenario.next_tx(controller_a);
 
         let mut identity = scenario.take_shared<Identity>();
-        let cap = scenario.take_from_address<ControllerCap>(controller);
-        let proposal_id = identity.propose_new_controller(&cap, option::some(expiration_epoch), new_controller, 1, scenario.ctx());
+        let cap = scenario.take_from_address<ControllerCap>(controller_a);
+        let proposal_id = identity.propose_new_controller(&cap, option::some(expiration_epoch), new_controller, 1, scenario.ctx()).destroy_some();
 
-        scenario.later_epoch(100, controller);
+        scenario.next_tx(controller_b);
+        let cap_b = scenario.take_from_address<ControllerCap>(controller_b);
+        identity.approve_proposal<Modify>(&cap_b, proposal_id);
+
+        scenario.later_epoch(100, controller_a);
         // this should fail!
         identity.execute_config_change(&cap, proposal_id, scenario.ctx());
 
-        test_scenario::return_to_address(controller, cap);
+        test_scenario::return_to_address(controller_a, cap);
+        test_scenario::return_to_address(controller_b, cap_b);
         test_scenario::return_shared(identity);
 
         scenario.end();
