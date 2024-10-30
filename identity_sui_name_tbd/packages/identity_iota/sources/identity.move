@@ -1,10 +1,10 @@
 module identity_iota::identity {
-    use iota::{transfer::Receiving, vec_map::{Self, VecMap}, vec_set::VecSet};
+    use iota::{vec_map::{Self, VecMap}, vec_set::VecSet};
     use identity_iota::{
-        multicontroller::{Self, Action, ControllerCap, Multicontroller},
+        multicontroller::{Self, ControllerCap, Multicontroller},
         update_value_proposal,
         config_proposal,
-        transfer_proposal::{Self, Send},
+        transfer_proposal,
         did_deactivation_proposal::{Self, DidDeactivation},
     };
 
@@ -78,13 +78,22 @@ module identity_iota::identity {
         cap: &ControllerCap,
         expiration: Option<u64>,
         ctx: &mut TxContext,
-    ): ID {
-        self.did_doc.create_proposal(
+    ): Option<ID> {
+        let proposal_id = self.did_doc.create_proposal(
             cap,
             did_deactivation_proposal::new(),
             expiration,
             ctx,
-        )
+        );
+        let is_resolved = self
+            .did_doc
+            .is_proposal_resolved<_, did_deactivation_proposal::DidDeactivation>(proposal_id);
+        if (is_resolved) {
+            self.execute_deactivation(cap, proposal_id, ctx);
+            option::none()
+        } else {
+            option::some(proposal_id)
+        }
     }
 
     public fun execute_deactivation(
@@ -107,15 +116,23 @@ module identity_iota::identity {
         updated_doc: vector<u8>,
         expiration: Option<u64>,
         ctx: &mut TxContext,
-    ): ID {
+    ): Option<ID> {
         assert!(is_did_output(&updated_doc), ENotADidDocument);
-        update_value_proposal::propose_update(
+        let proposal_id = update_value_proposal::propose_update(
             &mut self.did_doc,
             cap,
             updated_doc,
             expiration,
             ctx,
-        )
+        );
+
+        let is_resolved = self.did_doc.is_proposal_resolved<_, update_value_proposal::UpdateValue<vector<u8>>>(proposal_id);
+        if (is_resolved) {
+            self.execute_update(cap, proposal_id, ctx);
+            option::none()
+        } else {
+            option::some(proposal_id)
+        }
     }
 
     public fun execute_update(
@@ -141,8 +158,8 @@ module identity_iota::identity {
         controllers_to_remove: vector<ID>,
         controllers_to_update: VecMap<ID, u64>,
         ctx: &mut TxContext,
-    ): ID {
-        config_proposal::propose_modify(
+    ): Option<ID> {
+        let proposal_id = config_proposal::propose_modify(
             &mut self.did_doc,
             cap,
             expiration,
@@ -151,7 +168,15 @@ module identity_iota::identity {
             controllers_to_remove,
             controllers_to_update,
             ctx
-        )
+        );
+
+        let is_resolved = self.did_doc.is_proposal_resolved<_, config_proposal::Modify>(proposal_id);
+        if (is_resolved) {
+            self.execute_config_change(cap, proposal_id, ctx);
+            option::none()
+        } else {
+            option::some(proposal_id)
+        }
     }
 
     public fun execute_config_change(
@@ -186,14 +211,6 @@ module identity_iota::identity {
         );
     }
 
-    public fun send<T: key + store>(
-        self: &mut Identity,
-        send_action: &mut Action<Send>,
-        received: Receiving<T>,
-    ) {
-        transfer_proposal::send(send_action, &mut self.id, received);
-    }
-
     public fun propose_new_controller(
         self: &mut Identity,
         cap: &ControllerCap,
@@ -201,7 +218,7 @@ module identity_iota::identity {
         new_controller_addr: address,
         voting_power: u64,
         ctx: &mut TxContext, 
-    ): ID {
+    ): Option<ID> {
         let mut new_controllers = vec_map::empty();
         new_controllers.insert(new_controller_addr, voting_power);
 

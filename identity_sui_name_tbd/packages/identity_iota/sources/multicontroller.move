@@ -218,6 +218,11 @@ module identity_iota::multicontroller {
         inner
     }
 
+    public(package) fun is_proposal_resolved<V, A: store>(multi: &Multicontroller<V>, proposal_id: ID): bool {
+        let proposal = multi.proposals.borrow<ID, Proposal<A>>(proposal_id);
+        proposal.votes >= multi.threshold
+    }
+
     public(package) fun add_members<V>(multi: &mut Multicontroller<V>, to_add: VecMap<address, u64>, ctx: &mut TxContext) {
         let mut i = 0;
         while (i < to_add.size()) {

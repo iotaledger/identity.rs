@@ -17,7 +17,7 @@ use identity_sui_name_tbd::iota_sdk_abstraction::move_types::language_storage::S
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use serial_test::serial;
-use identity_sui_name_tbd::iota_sdk_adapter::{IdentityMoveCallsAdapter};
+use identity_sui_name_tbd::iota_sdk_adapter::IdentityMoveCallsAdapter;
 
 #[tokio::test]
 #[serial]
