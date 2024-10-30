@@ -1,7 +1,14 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use _credentials::validate_did_response::Domains;
+use _credentials::validate_domain_response::LinkedDids;
+
+use crate::domain_linkage::_credentials::validate_did_response::domains::InvalidDomain;
+use crate::domain_linkage::_credentials::validate_did_response::domains::ValidDomain;
+use crate::domain_linkage::_credentials::validate_domain_response::linked_dids::ValidDid;
 use identity_iota::core::Duration;
+use identity_iota::core::FromJson;
 use identity_iota::core::Object;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
@@ -13,13 +20,13 @@ use identity_iota::credential::Jwt;
 use identity_iota::credential::LinkedDomainService;
 use identity_iota::did::DIDUrl;
 use identity_iota::did::DID;
+use identity_iota::iota::IotaDocument;
 use identity_storage::JwkDocumentExt;
 use identity_storage::JwsSignatureOptions;
 use identity_stronghold::StrongholdStorage;
 
 use crate::domain_linkage::_credentials::domain_linkage_client::DomainLinkageClient;
-use crate::domain_linkage::_credentials::LinkedDidEndpointValidationStatus;
-use crate::domain_linkage::_credentials::LinkedDidValidationStatus;
+
 use crate::domain_linkage::_credentials::ValidateDidAgainstDidConfigurationsRequest;
 use crate::domain_linkage::_credentials::ValidateDidResponse;
 use crate::domain_linkage::_credentials::ValidateDomainAgainstDidConfigurationRequest;
@@ -33,7 +40,7 @@ mod _credentials {
 }
 
 /// Prepares basically the same test setup as in test `examples/1_advanced/6_domain_linkage.rs`.
-async fn prepare_test() -> anyhow::Result<(TestServer, Url, String, Jwt)> {
+async fn prepare_test() -> anyhow::Result<(TestServer, Url, Url, String, Jwt)> {
   let stronghold = StrongholdStorage::new(make_stronghold());
   let server = TestServer::new_with_stronghold(stronghold.clone()).await;
   let api_client = server.client();
@@ -42,9 +49,9 @@ async fn prepare_test() -> anyhow::Result<(TestServer, Url, String, Jwt)> {
   issuer.create_did(api_client).await?;
   let did = issuer
     .document()
-    .ok_or_else(|| anyhow::anyhow!("no DID document for issuer"))?
-    .id();
-  let did_string = did.to_string();
+    .ok_or_else(|| anyhow::anyhow!("no DID document for issuer"))?;
+
+  let did = did.id().clone();
   // =====================================================
   // Create Linked Domain service
   // =====================================================
@@ -69,6 +76,8 @@ async fn prepare_test() -> anyhow::Result<(TestServer, Url, String, Jwt)> {
   let updated_did_document = issuer
     .document()
     .ok_or_else(|| anyhow::anyhow!("no DID document for issuer"))?;
+
+  let did_string = updated_did_document.to_string();
 
   println!("DID document with linked domain service: {updated_did_document:#}");
 
@@ -101,12 +110,12 @@ async fn prepare_test() -> anyhow::Result<(TestServer, Url, String, Jwt)> {
     )
     .await?;
 
-  Ok((server, domain_1, did_string, jwt))
+  Ok((server, domain_1, domain_2, did_string, jwt))
 }
 
 #[tokio::test]
 async fn can_validate_domain() -> anyhow::Result<()> {
-  let (server, linked_domain, _, jwt) = prepare_test().await?;
+  let (server, linked_domain, _, did, jwt) = prepare_test().await?;
   let configuration_resource: DomainLinkageConfiguration = DomainLinkageConfiguration::new(vec![jwt.clone()]);
   let mut grpc_client = DomainLinkageClient::connect(server.endpoint()).await?;
 
@@ -116,15 +125,20 @@ async fn can_validate_domain() -> anyhow::Result<()> {
       did_configuration: configuration_resource.to_string(),
     })
     .await?;
+  let did_id = IotaDocument::from_json(&did)?.id().to_string();
 
   assert_eq!(
     response.into_inner(),
     ValidateDomainResponse {
-      linked_dids: vec![LinkedDidValidationStatus {
-        valid: true,
-        document: Some(jwt.as_str().to_string()),
-        error: None,
-      }],
+      linked_dids: Some(LinkedDids {
+        invalid: vec![],
+        valid: vec![ValidDid {
+          service_id: did_id,
+          did: did.to_string().clone(),
+          credential: jwt.as_str().to_string(),
+        }]
+      }),
+      domain: linked_domain.to_string(),
     }
   );
 
@@ -133,13 +147,14 @@ async fn can_validate_domain() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn can_validate_did() -> anyhow::Result<()> {
-  let (server, linked_domain, issuer_did, jwt) = prepare_test().await?;
+  let (server, linked_domain, domain2, issuer_did, jwt) = prepare_test().await?;
   let configuration_resource: DomainLinkageConfiguration = DomainLinkageConfiguration::new(vec![jwt.clone()]);
   let mut grpc_client = DomainLinkageClient::connect(server.endpoint()).await?;
+  let did_id = IotaDocument::from_json(&issuer_did)?.id().to_string();
 
   let response = grpc_client
     .validate_did_against_did_configurations(ValidateDidAgainstDidConfigurationsRequest {
-      did: issuer_did.clone(),
+      did: did_id.clone(),
       did_configurations: vec![ValidateDomainAgainstDidConfigurationRequest {
         domain: linked_domain.to_string(),
         did_configuration: configuration_resource.to_string(),
@@ -147,26 +162,31 @@ async fn can_validate_did() -> anyhow::Result<()> {
     })
     .await?;
 
+  let service_id = format!("{}#domain-linkage", did_id);
+
+  let valid_domain = ValidDomain {
+    service_id: service_id.clone(),
+    url: linked_domain.to_string(),
+    credential: jwt.as_str().to_string(),
+  };
+
+  let error = format!("could not get domain linkage config: domain linkage error: error sending request for url ({}.well-known/did-configuration.json): error trying to connect: dns error: failed to lookup address information: nodename nor servname provided, or not known", domain2.to_string());
+
+  let invalid_domain = InvalidDomain {
+    service_id: service_id.clone(),
+    credential: None,
+    url: domain2.to_string(),
+    error,
+  };
+
   assert_eq!(
     response.into_inner(),
     ValidateDidResponse {
-      service: vec![
-        LinkedDidEndpointValidationStatus {
-          id: issuer_did,
-          service_endpoint: vec![
-            LinkedDidValidationStatus {
-                valid: true,
-                document: Some(jwt.as_str().to_string()),
-                error: None,
-            },
-            LinkedDidValidationStatus {
-                valid: false,
-                document: None,
-                error: Some("could not get domain linkage config; domain linkage error: error sending request for url (https://bar.example.com/.well-known/did-configuration.json): error trying to connect: dns error: failed to lookup address information: nodename nor servname provided, or not known".to_string()),
-            }
-          ],
-        }
-      ]
+      did: did_id,
+      domains: Some(Domains {
+        invalid: vec![invalid_domain],
+        valid: vec![valid_domain],
+      }),
     }
   );
 

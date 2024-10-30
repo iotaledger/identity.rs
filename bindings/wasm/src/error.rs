@@ -126,6 +126,8 @@ macro_rules! impl_wasm_error_from_with_struct_name {
   }
 }
 
+impl_wasm_error_from_with_struct_name!(jsonprooftoken::errors::CustomError);
+
 // identity_iota::iota now has some errors where the error message does not include the source error's error message.
 // This is in compliance with the Rust error handling project group's recommendation:
 // * An error type with a source error should either return that error via source or include that source's error message

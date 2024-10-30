@@ -1,6 +1,6 @@
 [package]
 name = "identity_storage"
-version = "1.2.0"
+version = "1.4.0"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -12,8 +12,9 @@ rust-version.workspace = true
 description = "Abstractions over storage for cryptographic keys used in DID Documents"
 
 [dependencies]
-anyhow = { version = "1.0.57" }
+anyhow = { version = "1.0.82" }
 async-trait = { version = "0.1.64", default-features = false }
+bls12_381_plus = { workspace = true, optional = true }
 futures = { version = "0.3.27", default-features = false, features = ["async-await"] }
 identity_core = { version = "=1.2.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=1.2.0", path = "../identity_credential", default-features = false, features = ["credential", "presentation"] }
@@ -30,10 +31,12 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync"], optional = true }
+zkryptium = { workspace = true, optional = true }
+json-proof-token = { workspace = true, optional = true }
 
 [dev-dependencies]
-identity_credential = { version = "=1.2.0", path = "../identity_credential", features = ["revocation-bitmap"] }
-identity_eddsa_verifier = { version = "=1.2.0", path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
+identity_credential = { version = "=1.4.0", path = "../identity_credential", features = ["revocation-bitmap"] }
+identity_eddsa_verifier = { version = "=1.4.0", path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 once_cell = { version = "1.18", default-features = false }
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
 
@@ -47,6 +50,13 @@ send-sync-storage = ["identity_iota_core?/send-sync-client-ext"]
 iota-document = ["dep:identity_iota_core"]
 # enables support to sign via storage
 storage-signer = ["dep:secret-storage"]
+# Enables JSON Proof Token & BBS+ related features
+jpt-bbs-plus = [
+  "identity_credential/jpt-bbs-plus",
+  "dep:zkryptium",
+  "dep:bls12_381_plus",
+  "dep:json-proof-token",
+]
 
 [lints]
 workspace = true
