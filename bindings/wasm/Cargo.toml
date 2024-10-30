@@ -31,7 +31,7 @@ serde_repr = { version = "0.1", default-features = false }
 # Want to use the nice API of tokio::sync::RwLock for now even though we can't use threads.
 tokio = { version = "=1.39.2", default-features = false, features = ["sync"] }
 tsify = "0.4.5"
-wasm-bindgen = { version = "0.2.85", features = ["serde-serialize"] }
+wasm-bindgen = { version = "=0.2.93", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 [dependencies.identity_iota]
@@ -57,3 +57,4 @@ instant = { version = "0.1", default-features = false, features = ["wasm-bindgen
 [profile.release]
 opt-level = 's'
 lto = true
+debug = true

@@ -82,7 +82,8 @@ pub trait QuorumDriverTrait {
   ) -> IotaRpcResult<Box<dyn IotaTransactionBlockResponseT<Error = Self::Error>>>;
 }
 
-#[async_trait::async_trait()]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 pub trait ReadTrait {
   type Error;
 
@@ -156,12 +157,24 @@ pub trait EventTrait {
 pub trait IotaClientTrait {
   type Error;
 
+  #[cfg(not(feature = "send-sync-transaction"))]
+  fn quorum_driver_api(&self) -> Box<dyn QuorumDriverTrait<Error = Self::Error> + '_>;
+  #[cfg(feature = "send-sync-transaction")]
   fn quorum_driver_api(&self) -> Box<dyn QuorumDriverTrait<Error = Self::Error> + Send + '_>;
 
+  #[cfg(not(feature = "send-sync-transaction"))]
+  fn read_api(&self) -> Box<dyn ReadTrait<Error = Self::Error> + '_>;
+  #[cfg(feature = "send-sync-transaction")]
   fn read_api(&self) -> Box<dyn ReadTrait<Error = Self::Error> + Send + '_>;
 
+  #[cfg(not(feature = "send-sync-transaction"))]
+  fn coin_read_api(&self) -> Box<dyn CoinReadTrait<Error = Self::Error> + '_>;
+  #[cfg(feature = "send-sync-transaction")]
   fn coin_read_api(&self) -> Box<dyn CoinReadTrait<Error = Self::Error> + Send + '_>;
 
+  #[cfg(not(feature = "send-sync-transaction"))]
+  fn event_api(&self) -> Box<dyn EventTrait<Error = Self::Error> + '_>;
+  #[cfg(feature = "send-sync-transaction")]
   fn event_api(&self) -> Box<dyn EventTrait<Error = Self::Error> + Send + '_>;
 
   async fn execute_transaction<S: Signer<IotaKeySignature> + Sync>(

@@ -125,8 +125,7 @@ export async function testApiCall(): Promise<void> {
     // test builder
     let identityClient = KinesisIdentityClient
       .builder()
-      .identityIotaPackageId('foo')
-      .networkName('bar')
+      .identityIotaPackageId('replace me with actual package id')
       .senderPublicKey(new Uint8Array([1, 2, 3, 4]))
       .iotaClient(kinesis_client)
       .build()
