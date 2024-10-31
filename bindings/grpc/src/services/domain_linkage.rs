@@ -277,14 +277,12 @@ impl DomainLinkageService {
       .for_each(|(credential, issuer_did_doc)| {
         let id = issuer_did_doc.id().to_string();
 
-        if let Err(err) = JwtDomainLinkageValidator::with_signature_verifier(Verifier::default())
-          .validate_linkage(
-            &issuer_did_doc,
-            &domain_linkage_configuration,
-            &domain,
-            &JwtCredentialValidationOptions::default(),
-          )
-        {
+        if let Err(err) = JwtDomainLinkageValidator::with_signature_verifier(Verifier::default()).validate_linkage(
+          &issuer_did_doc,
+          &domain_linkage_configuration,
+          domain,
+          &JwtCredentialValidationOptions::default(),
+        ) {
           invalid_dids.push(InvalidDid {
             service_id: Some(id),
             credential: Some(credential.as_str().to_string()),

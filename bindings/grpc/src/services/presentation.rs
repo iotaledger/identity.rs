@@ -1,13 +1,13 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::verifier::Verifier;
 use _presentation::credential_presentation_server::CredentialPresentation as PresentationService;
 use _presentation::credential_presentation_server::CredentialPresentationServer;
 use _presentation::credential_validation_result::Result as ValidationResult;
 use _presentation::CredentialValidationResult;
 use _presentation::JwtPresentationRequest;
 use _presentation::JwtPresentationResponse;
-use crate::verifier::Verifier;
 use identity_iota::core::Object;
 use identity_iota::core::ToJson;
 use identity_iota::credential::CompoundJwtPresentationValidationError;
@@ -24,7 +24,7 @@ use identity_iota::did::CoreDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Error as ResolverError;
 use identity_iota::resolver::Resolver;
-use iota_sdk::client::Client;
+use identity_sui_name_tbd::client::IdentityClientReadOnly;
 use tonic::async_trait;
 use tonic::Code;
 use tonic::Request;
@@ -65,10 +65,10 @@ pub struct PresentationSvc {
 }
 
 impl PresentationSvc {
-  pub fn new(client: Client) -> Self {
+  pub fn new(client: IdentityClientReadOnly) -> Self {
     let mut resolver = Resolver::<IotaDocument>::new_with_did_key_handler();
     resolver.attach_did_jwk_handler();
-    resolver.attach_iota_handler(client);
+    resolver.attach_kinesis_iota_handler(client);
 
     Self { resolver }
   }
@@ -159,6 +159,6 @@ impl PresentationService for PresentationSvc {
   }
 }
 
-pub fn service(client: &Client) -> CredentialPresentationServer<PresentationSvc> {
+pub fn service(client: &IdentityClientReadOnly) -> CredentialPresentationServer<PresentationSvc> {
   CredentialPresentationServer::new(PresentationSvc::new(client.clone()))
 }

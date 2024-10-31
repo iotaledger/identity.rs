@@ -32,10 +32,10 @@ use iota_sdk::types::block::address::Hrp;
 use iota_sdk::types::block::address::ToBech32Ext as _;
 use iota_sdk::types::block::output::AliasId;
 use tonic::async_trait;
-use tonic::transport::server::RoutesBuilder;
 use tonic::Request;
 use tonic::Response;
 use tonic::Status;
+use tonic::service::RoutesBuilder;
 
 mod _utils {
   tonic::include_proto!("utils");

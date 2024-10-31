@@ -170,7 +170,7 @@ async fn can_validate_did() -> anyhow::Result<()> {
     credential: jwt.as_str().to_string(),
   };
 
-  let error = format!("could not get domain linkage config: domain linkage error: error sending request for url ({}.well-known/did-configuration.json): error trying to connect: dns error: failed to lookup address information: nodename nor servname provided, or not known", domain2.to_string());
+  let error = format!("could not get domain linkage config: domain linkage error: error sending request for url ({domain2}.well-known/did-configuration.json): error trying to connect: dns error: failed to lookup address information: nodename nor servname provided, or not known");
 
   let invalid_domain = InvalidDomain {
     service_id: service_id.clone(),

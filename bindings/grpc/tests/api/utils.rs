@@ -16,7 +16,7 @@ mod _utils {
   tonic::include_proto!("utils");
 }
 
-const SAMPLE_SIGNING_DATA: &'static [u8] = b"I'm just some random data to be signed :)";
+const SAMPLE_SIGNING_DATA: &[u8] = b"I'm just some random data to be signed :)";
 
 #[tokio::test]
 async fn raw_data_signing_works() -> anyhow::Result<()> {
