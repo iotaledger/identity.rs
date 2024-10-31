@@ -32,12 +32,22 @@ use js_sys::Array;
 use js_sys::Promise;
 use js_sys::Uint8Array;
 use wasm_bindgen_futures::JsFuture;
+use super::jwk_storage::PromiseJwkGenOutput;
+
+#[wasm_bindgen]
+extern "C" {
+
+  #[wasm_bindgen(method, js_name = generatePQKey)]
+  pub fn _generate_pq_key(this: &WasmJwkStorage, key_type: String, alg: String) -> PromiseJwkGenOutput;
+
+}
+
 
 #[async_trait::async_trait(?Send)]
 impl JwkStoragePQ for WasmJwkStorage {
   async fn generate_pq_key(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
-    web_sys::console::log_1(&"EEEEEEEEEEEEET".into());
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::generate_pq_key(self, key_type.into(), alg.name().to_owned()));
+    web_sys::console::log_1(&"YYYYYYYYYYYYYYY".into());
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::_generate_pq_key(self, key_type.into(), alg.name().to_owned()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
@@ -58,5 +68,5 @@ interface JwkStoragePQ {
   /** Generate a new key represented as a JSON Web Key.
    * 
    * It's recommend that the implementer exposes constants for the supported key type string. */
-  generate_pq_key: (keyType: string, algorithm: JwsAlgorithm) => Promise<JwkGenOutput>;
+  generatePQKey: (keyType: string, algorithm: JwsAlgorithm) => Promise<JwkGenOutput>;
 }"#;
