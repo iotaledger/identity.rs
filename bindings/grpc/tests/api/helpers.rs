@@ -290,7 +290,10 @@ impl Entity<StrongholdStorage, StrongholdStorage> {
     if let Some(doc) = new_doc.take() {
       let Entity { storage, .. } = self;
 
-      let public_key = storage.key_id_storage().get_public_key(&key_id).await?;
+      let public_key = storage
+        .key_id_storage()
+        .get_public_key_with_type(&key_id, identity_stronghold::StrongholdKeyType::Ed25519)
+        .await?;
       let signer = StorageSigner::new(storage, key_id.clone(), public_key);
 
       let identity_client = IdentityClient::new(client.clone(), signer).await?;

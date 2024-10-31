@@ -78,7 +78,7 @@ impl DocumentService for DocumentSvc {
     let pub_key = self
       .storage
       .key_id_storage()
-      .get_public_key(&key_id)
+      .get_public_key_with_type(&key_id, identity_stronghold::StrongholdKeyType::Ed25519)
       .await
       .map_err(Error::StrongholdError)?;
 
