@@ -20,11 +20,17 @@ impl WasmMethodType {
     WasmMethodType(MethodType::X25519_KEY_AGREEMENT_KEY_2019)
   }
 
-  /// A verification method for use with JWT verification as prescribed by the {@link Jwk}
-  /// in the `publicKeyJwk` entry.
-  #[wasm_bindgen(js_name = JsonWebKey)]
+  /// @deprecated Use {@link JsonWebKey2020} instead.
+  #[wasm_bindgen(js_name = JsonWebKey, skip_jsdoc)]
   pub fn json_web_key() -> WasmMethodType {
     WasmMethodType(MethodType::JSON_WEB_KEY)
+  }
+
+  /// A verification method for use with JWT verification as prescribed by the {@link Jwk}
+  /// in the `publicKeyJwk` entry.
+  #[wasm_bindgen(js_name = JsonWebKey2020)]
+  pub fn json_web_key_2020() -> WasmMethodType {
+    WasmMethodType(MethodType::JSON_WEB_KEY_2020)
   }
 
   /// A custom method.

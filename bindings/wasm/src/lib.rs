@@ -24,6 +24,7 @@ pub mod did;
 pub mod error;
 pub mod iota;
 pub mod jose;
+pub mod jpt;
 pub mod resolver;
 pub mod revocation;
 pub mod sd_jwt;
