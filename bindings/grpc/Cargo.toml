@@ -20,6 +20,7 @@ path = "src/main.rs"
 anyhow = "1.0"
 futures = { version = "0.3" }
 identity_eddsa_verifier = { path = "../../identity_eddsa_verifier" }
+identity_ecdsa_verifier = { path = "../../identity_ecdsa_verifier" }
 identity_iota = { path = "../../identity_iota", features = [
     "resolver",
     "sd-jwt",
@@ -33,7 +34,7 @@ identity_stronghold = { path = "../../identity_stronghold", features = [
     "send-sync-storage",
 ] }
 identity_sui_name_tbd = { path = "../../identity_sui_name_tbd" }
-iota-sdk = { version = "1.1.2", features = ["stronghold"] }
+iota-sdk = { version = "1.1.5", features = ["stronghold"] }
 iota-sdk-move = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk" }
 openssl = { version = "0.10", features = ["vendored"] }
 prost = "0.13"

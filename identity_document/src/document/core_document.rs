@@ -29,6 +29,7 @@ use crate::utils::DIDUrlQuery;
 use crate::utils::Queryable;
 use crate::verifiable::JwsVerificationOptions;
 use identity_did::CoreDID;
+use identity_did::DIDKey;
 use identity_did::DIDUrl;
 use identity_verification::MethodRef;
 use identity_verification::MethodRelationship;
@@ -985,7 +986,20 @@ impl CoreDocument {
   }
 }
 
+// did:* expansion
 impl CoreDocument {
+  /// Creates a [`CoreDocument`] from a did:key DID.
+  pub fn expand_did_key(did_key: DIDKey) -> Result<Self, Error> {
+    Self::builder(Object::default())
+      .id(did_key.clone().into())
+      .verification_method(VerificationMethod::try_from(did_key.clone()).map_err(Error::InvalidKeyMaterial)?)
+      .authentication(MethodRef::Refer(did_key.clone().into()))
+      .capability_delegation(MethodRef::Refer(did_key.clone().into()))
+      .capability_invocation(MethodRef::Refer(did_key.clone().into()))
+      .assertion_method(MethodRef::Refer(did_key.into()))
+      .build()
+  }
+
   /// Creates a [`CoreDocument`] from a did:jwk DID.
   pub fn expand_did_jwk(did_jwk: DIDJwk) -> Result<Self, Error> {
     let verification_method = VerificationMethod::try_from(did_jwk.clone()).map_err(Error::InvalidKeyMaterial)?;
@@ -1699,6 +1713,40 @@ mod tests {
     ] {
       verifier(json);
     }
+  }
+
+   #[test]
+  fn test_did_key_expansion() {
+    let did_key = "did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp"
+      .parse::<DIDKey>()
+      .unwrap();
+    let target_doc = serde_json::from_value(serde_json::json!({
+      "id": "did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp",
+      "verificationMethod": [{
+        "id": "did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp#z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp",
+        "type": "JsonWebKey",
+        "controller": "did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp",
+        "publicKeyJwk": {
+          "kty": "OKP",
+          "crv": "Ed25519",
+          "x": "O2onvM62pC1io6jQKm8Nc2UyFXcd4kOmOsBIoYtZ2ik"
+        }
+      }],
+      "authentication": [
+        "did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp"
+      ],
+      "assertionMethod": [
+        "did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp"
+      ],
+      "capabilityDelegation": [
+        "did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp"
+      ],
+      "capabilityInvocation": [
+        "did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp"
+      ]
+    })).unwrap();
+
+    assert_eq!(CoreDocument::expand_did_key(did_key).unwrap(), target_doc);
   }
 
   #[test]

@@ -31,12 +31,15 @@ use iota_stronghold::Location;
 use iota_stronghold::Stronghold;
 #[cfg(feature = "bbs-plus")]
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
+use stronghold_ext::{execute_procedure_ext, procs::es256, procs::es256k};
 use tokio::sync::MutexGuard;
 #[cfg(feature = "bbs-plus")]
 use zeroize::Zeroizing;
 #[cfg(feature = "bbs-plus")]
 use zkryptium::bbsplus::keys::BBSplusSecretKey;
 
+use crate::ecdsa::es256_pk_bytes_to_jwk;
+use crate::ecdsa::es256k_pk_bytes_to_jwk;
 use crate::stronghold_key_type::StrongholdKeyType;
 use crate::utils::get_client;
 use crate::utils::IDENTITY_VAULT_PATH;
@@ -117,11 +120,45 @@ impl StrongholdStorage {
       .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound).with_source(e))
   }
 
+  async fn get_es256_public_key(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
+    let stronghold = self.get_stronghold().await;
+    let client = get_client(&stronghold)?;
+
+    let location = Location::generic(
+      IDENTITY_VAULT_PATH.as_bytes().to_vec(),
+      key_id.to_string().as_bytes().to_vec(),
+    );
+    let procedure = es256::Es256Procs::PublicKey(es256::PublicKey { private_key: location });
+    let pk_bytes: Vec<u8> = execute_procedure_ext(&client, procedure)
+      .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(e))?
+      .into();
+
+    es256_pk_bytes_to_jwk(&pk_bytes).map_err(|e| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(e))
+  }
+
+  async fn get_es256k_public_key(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
+    let stronghold = self.get_stronghold().await;
+    let client = get_client(&stronghold)?;
+
+    let location = Location::generic(
+      IDENTITY_VAULT_PATH.as_bytes().to_vec(),
+      key_id.to_string().as_bytes().to_vec(),
+    );
+    let procedure = es256k::Es256kProcs::PublicKey(es256k::PublicKey { private_key: location });
+    let pk_bytes: Vec<u8> = execute_procedure_ext(&client, procedure)
+      .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(e))?
+      .into();
+
+    es256k_pk_bytes_to_jwk(&pk_bytes).map_err(|e| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(e))
+  }
+
   /// Attepts to retrieve the public key corresponding to the key of id `key_id`,
   /// returning it as a `key_type` encoded public JWK.
   pub async fn get_public_key_with_type(&self, key_id: &KeyId, key_type: StrongholdKeyType) -> KeyStorageResult<Jwk> {
     match key_type {
       StrongholdKeyType::Ed25519 => self.get_ed25519_public_key(key_id).await,
+      StrongholdKeyType::Es256 => self.get_es256_public_key(key_id).await,
+      StrongholdKeyType::Es256k => self.get_es256k_public_key(key_id).await,
       #[cfg(feature = "bbs-plus")]
       StrongholdKeyType::Bls12381G2 => self.get_bls12381g2_public_key(key_id).await,
       #[allow(unreachable_patterns)]
