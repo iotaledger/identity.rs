@@ -4,18 +4,20 @@
 use std::collections::HashMap;
 use std::error::Error;
 
-use domain_linkage::domain_linkage_server::DomainLinkage;
-use domain_linkage::domain_linkage_server::DomainLinkageServer;
-use domain_linkage::LinkedDidEndpointValidationStatus;
-use domain_linkage::LinkedDidValidationStatus;
-use domain_linkage::ValidateDidAgainstDidConfigurationsRequest;
-use domain_linkage::ValidateDidRequest;
-use domain_linkage::ValidateDidResponse;
-use domain_linkage::ValidateDomainAgainstDidConfigurationRequest;
-use domain_linkage::ValidateDomainRequest;
-use domain_linkage::ValidateDomainResponse;
-use futures::stream::FuturesOrdered;
-use futures::TryStreamExt;
+use _domain_linkage::domain_linkage_server::DomainLinkage;
+use _domain_linkage::domain_linkage_server::DomainLinkageServer;
+use _domain_linkage::validate_did_response::domains::InvalidDomain;
+use _domain_linkage::validate_did_response::domains::ValidDomain;
+use _domain_linkage::validate_did_response::Domains;
+use _domain_linkage::validate_domain_response::linked_dids::InvalidDid;
+use _domain_linkage::validate_domain_response::linked_dids::ValidDid;
+use _domain_linkage::validate_domain_response::LinkedDids;
+use _domain_linkage::ValidateDidAgainstDidConfigurationsRequest;
+use _domain_linkage::ValidateDidRequest;
+use _domain_linkage::ValidateDidResponse;
+use _domain_linkage::ValidateDomainAgainstDidConfigurationRequest;
+use _domain_linkage::ValidateDomainRequest;
+use _domain_linkage::ValidateDomainResponse;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::FromJson;
 use identity_iota::core::Url;
@@ -36,8 +38,7 @@ use tonic::Response;
 use tonic::Status;
 use url::Origin;
 
-#[allow(clippy::module_inception)]
-mod domain_linkage {
+mod _domain_linkage {
   tonic::include_proto!("domain_linkage");
 }
 
@@ -90,11 +91,15 @@ impl DomainValidationConfig {
 }
 
 /// Builds a validation status for a failed validation from an `Error`.
-fn get_validation_failed_status(message: &str, err: &impl Error) -> LinkedDidValidationStatus {
-  LinkedDidValidationStatus {
-    valid: false,
-    document: None,
-    error: Some(format!("{}; {}", message, &err.to_string())),
+fn get_linked_did_validation_failed_status(message: &str, err: &impl Error) -> LinkedDids {
+  LinkedDids {
+    valid: vec![],
+    invalid: vec![InvalidDid {
+      service_id: None,
+      credential: None,
+      did: None,
+      error: format!("{}: {}", message, err),
+    }],
   }
 }
 
@@ -121,8 +126,7 @@ impl DomainLinkageService {
     &self,
     did: &IotaDID,
     did_configurations: Option<Vec<DomainValidationConfig>>,
-  ) -> Result<Vec<LinkedDidEndpointValidationStatus>, DomainLinkageError> {
-    // fetch DID document for given DID
+  ) -> Result<Domains, DomainLinkageError> {
     let did_document = self
       .resolver
       .resolve(did)
@@ -144,36 +148,66 @@ impl DomainLinkageService {
       None => HashMap::new(),
     };
 
-    // check validation for all services and endpoints in them
-    let mut service_futures = FuturesOrdered::new();
-    for service in services {
-      let service_id: CoreDID = did.clone().into();
-      let domains: Vec<Url> = service.domains().into();
-      let local_config_map = config_map.clone();
-      service_futures.push_back(async move {
-        let mut domain_futures = FuturesOrdered::new();
-        for domain in domains {
-          let config = local_config_map.get(&domain.origin()).map(|value| value.to_owned());
-          domain_futures.push_back(self.validate_domains_with_optional_configuration(
-            domain.clone(),
-            Some(did.clone().into()),
-            config,
-          ));
-        }
-        domain_futures
-          .try_collect::<Vec<Vec<LinkedDidValidationStatus>>>()
-          .await
-          .map(|value| LinkedDidEndpointValidationStatus {
-            id: service_id.to_string(),
-            service_endpoint: value.into_iter().flatten().collect(),
-          })
-      });
-    }
-    let endpoint_validation_status = service_futures
-      .try_collect::<Vec<LinkedDidEndpointValidationStatus>>()
-      .await?;
+    let mut futures = vec![];
 
-    Ok(endpoint_validation_status)
+    for service in services {
+      let service_id = service.id().to_string();
+      let domains: Vec<Url> = service.domains().into();
+      for domain in domains {
+        let config = config_map.get(&domain.origin()).cloned();
+        let service_id_clone = service_id.clone();
+        futures.push({
+          let domain = domain.clone();
+          async move {
+            let result = self
+              .validate_domains_with_optional_configuration(&domain, Some(did.clone().into()), config)
+              .await;
+
+            (service_id_clone, domain, result)
+          }
+        });
+      }
+    }
+
+    let results = futures::future::join_all(futures).await;
+
+    let mut valid_domains = vec![];
+    let mut invalid_domains = vec![];
+
+    for (service_id, domain, result) in results {
+      match result {
+        Ok(status) => {
+          status.valid.iter().for_each(|valid| {
+            valid_domains.push(ValidDomain {
+              service_id: service_id.to_string(),
+              url: domain.to_string(),
+              credential: valid.credential.clone(),
+            });
+          });
+          status.invalid.iter().for_each(|invalid| {
+            invalid_domains.push(InvalidDomain {
+              service_id: service_id.to_string(),
+              credential: invalid.credential.clone(),
+              url: domain.to_string(),
+              error: invalid.error.clone(),
+            });
+          });
+        }
+        Err(err) => {
+          invalid_domains.push(InvalidDomain {
+            service_id: service_id.to_string(),
+            credential: None,
+            url: domain.to_string(),
+            error: err.to_string(),
+          });
+        }
+      }
+    }
+
+    Ok(Domains {
+      valid: valid_domains,
+      invalid: invalid_domains,
+    })
   }
 
   /// Validates domain linkage for given origin.
@@ -186,10 +220,10 @@ impl DomainLinkageService {
   ///   origin
   async fn validate_domains_with_optional_configuration(
     &self,
-    domain: Url,
+    domain: &Url,
     did: Option<CoreDID>,
     config: Option<DomainLinkageConfiguration>,
-  ) -> Result<Vec<LinkedDidValidationStatus>, DomainLinkageError> {
+  ) -> Result<LinkedDids, DomainLinkageError> {
     // get domain linkage config
     let domain_linkage_configuration: DomainLinkageConfiguration = if let Some(config_value) = config {
       config_value
@@ -197,10 +231,10 @@ impl DomainLinkageService {
       match DomainLinkageConfiguration::fetch_configuration(domain.clone()).await {
         Ok(value) => value,
         Err(err) => {
-          return Ok(vec![get_validation_failed_status(
+          return Ok(get_linked_did_validation_failed_status(
             "could not get domain linkage config",
             &err,
-          )]);
+          ));
         }
       }
     };
@@ -212,10 +246,10 @@ impl DomainLinkageService {
       match domain_linkage_configuration.issuers() {
         Ok(value) => value,
         Err(err) => {
-          return Ok(vec![get_validation_failed_status(
+          return Ok(get_linked_did_validation_failed_status(
             "could not get issuers from domain linkage config credential",
             &err,
-          )]);
+          ));
         }
       }
     };
@@ -224,40 +258,51 @@ impl DomainLinkageService {
     let resolved = match self.resolver.resolve_multiple(&linked_dids).await {
       Ok(value) => value,
       Err(err) => {
-        return Ok(vec![get_validation_failed_status(
+        return Ok(get_linked_did_validation_failed_status(
           "could not resolve linked DIDs from domain linkage config",
           &err,
-        )]);
+        ));
       }
     };
 
+    let mut valid_dids = vec![];
+    let mut invalid_dids = vec![];
+
     // check linked DIDs separately
-    let errors: Vec<Option<String>> = resolved
-      .values()
-      .map(|issuer_did_doc| {
-        JwtDomainLinkageValidator::with_signature_verifier(EdDSAJwsVerifier::default())
+    domain_linkage_configuration
+      .linked_dids()
+      .iter()
+      .zip(resolved.values())
+      .for_each(|(credential, issuer_did_doc)| {
+        let id = issuer_did_doc.id().to_string();
+
+        if let Err(err) = JwtDomainLinkageValidator::with_signature_verifier(EdDSAJwsVerifier::default())
           .validate_linkage(
             &issuer_did_doc,
             &domain_linkage_configuration,
-            &domain.clone(),
+            &domain,
             &JwtCredentialValidationOptions::default(),
           )
-          .err()
-          .map(|err| err.to_string())
-      })
-      .collect();
+        {
+          invalid_dids.push(InvalidDid {
+            service_id: Some(id),
+            credential: Some(credential.as_str().to_string()),
+            did: Some(issuer_did_doc.to_string()),
+            error: err.to_string(),
+          });
+        } else {
+          valid_dids.push(ValidDid {
+            service_id: id,
+            did: issuer_did_doc.to_string(),
+            credential: credential.as_str().to_string(),
+          });
+        }
+      });
 
-    // collect resolved documents and their validation status into array following the order of `linked_dids`
-    let status_infos = domain_linkage_configuration
-      .linked_dids()
-      .iter()
-      .zip(errors.iter())
-      .map(|(credential, error)| LinkedDidValidationStatus {
-        valid: error.is_none(),
-        document: Some(credential.as_str().to_string()),
-        error: error.clone(),
-      })
-      .collect();
+    let status_infos = LinkedDids {
+      valid: valid_dids,
+      invalid: invalid_dids,
+    };
 
     Ok(status_infos)
   }
@@ -282,12 +327,13 @@ impl DomainLinkage for DomainLinkageService {
       Url::parse(&request_data.domain).map_err(|err| DomainLinkageError::DomainParsing(err.to_string()))?;
 
     // get validation status for all issuer dids
-    let status_infos = self
-      .validate_domains_with_optional_configuration(domain, None, None)
+    let linked_dids = self
+      .validate_domains_with_optional_configuration(&domain, None, None)
       .await?;
 
     Ok(Response::new(ValidateDomainResponse {
-      linked_dids: status_infos,
+      domain: domain.to_string(),
+      linked_dids: Some(linked_dids),
     }))
   }
 
@@ -306,18 +352,19 @@ impl DomainLinkage for DomainLinkageService {
     // parse given domain
     let domain: Url =
       Url::parse(&request_data.domain).map_err(|err| DomainLinkageError::DomainParsing(err.to_string()))?;
+
     // parse config
     let config = DomainLinkageConfiguration::from_json(&request_data.did_configuration.to_string()).map_err(|err| {
       DomainLinkageError::DidConfigurationParsing(format!("could not parse given DID configuration; {}", &err))
     })?;
 
-    // get validation status for all issuer dids
-    let status_infos = self
-      .validate_domains_with_optional_configuration(domain, None, Some(config))
+    let linked_dids = self
+      .validate_domains_with_optional_configuration(&domain, None, Some(config))
       .await?;
 
     Ok(Response::new(ValidateDomainResponse {
-      linked_dids: status_infos,
+      domain: request_data.domain.clone(),
+      linked_dids: Some(linked_dids),
     }))
   }
 
@@ -332,10 +379,11 @@ impl DomainLinkage for DomainLinkageService {
     // fetch DID document for given DID
     let did: IotaDID = IotaDID::parse(req.into_inner().did).map_err(|e| Status::internal(e.to_string()))?;
 
-    let endpoint_validation_status = self.validate_did_with_optional_configurations(&did, None).await?;
+    let domains = self.validate_did_with_optional_configurations(&did, None).await?;
 
     let response = ValidateDidResponse {
-      service: endpoint_validation_status,
+      did: did.to_string(),
+      domains: Some(domains),
     };
 
     Ok(Response::new(response))
@@ -360,12 +408,13 @@ impl DomainLinkage for DomainLinkageService {
       .map(DomainValidationConfig::try_parse)
       .collect::<Result<Vec<DomainValidationConfig>, DomainLinkageError>>()?;
 
-    let endpoint_validation_status = self
+    let domains = self
       .validate_did_with_optional_configurations(&did, Some(did_configurations))
       .await?;
 
     let response = ValidateDidResponse {
-      service: endpoint_validation_status,
+      did: did.to_string(),
+      domains: Some(domains),
     };
 
     Ok(Response::new(response))

@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod did_jwk;
 mod jws_verification_options;
 mod service;
 mod wasm_core_did;
@@ -19,5 +20,6 @@ pub use self::wasm_core_document::PromiseJws;
 pub use self::wasm_core_document::PromiseJwt;
 pub use self::wasm_core_document::WasmCoreDocument;
 pub use self::wasm_did_url::WasmDIDUrl;
+pub use did_jwk::*;
 
 pub use self::jws_verification_options::*;

@@ -391,7 +391,7 @@ impl<'a> IdentityBuilder<'a> {
     }
   }
 
-  /// Gives `address` the capability to act as a controller with voting power `voting_power`. 
+  /// Gives `address` the capability to act as a controller with voting power `voting_power`.
   pub fn controller(mut self, address: IotaAddress, voting_power: u64) -> Self {
     self.controllers.insert(address, voting_power);
     self
