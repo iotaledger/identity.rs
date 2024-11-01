@@ -1,11 +1,15 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
+
 use anyhow::Context;
 use identity_grpc::server::GRpcServer;
 use identity_stronghold::StrongholdStorage;
 use iota_sdk::client::stronghold::StrongholdAdapter;
-use iota_sdk::client::Client;
+
+use identity_sui_name_tbd::client::IdentityClientReadOnly;
+use iota_sdk_move::types::base_types::ObjectID;
 
 #[tokio::main]
 #[tracing::instrument(err)]
@@ -15,15 +19,19 @@ async fn main() -> anyhow::Result<()> {
 
   let api_endpoint = std::env::var("API_ENDPOINT")?;
 
-  let client: Client = Client::builder()
-    .with_primary_node(&api_endpoint, None)?
-    .finish()
-    .await?;
+  let identity_iota_pkg_id = std::env::var("IDENTITY_IOTA_PKG_ID")?;
+
+  let identity_pkg_id = ObjectID::from_str(&identity_iota_pkg_id)?;
+
+  let iota_client = iota_sdk_move::IotaClientBuilder::default().build(api_endpoint).await?;
+
+  let read_only_client = IdentityClientReadOnly::new(iota_client, identity_pkg_id).await?;
+
   let stronghold = init_stronghold()?;
 
   let addr = "0.0.0.0:50051".parse()?;
   tracing::info!("gRPC server listening on {}", addr);
-  GRpcServer::new(client, stronghold).serve(addr).await?;
+  GRpcServer::new(read_only_client, stronghold).serve(addr).await?;
 
   Ok(())
 }
