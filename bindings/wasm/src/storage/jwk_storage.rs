@@ -10,6 +10,7 @@ use crate::jose::WasmJwk;
 
 use identity_iota::storage::key_storage::JwkGenOutput;
 use identity_iota::storage::key_storage::JwkStorage;
+use identity_iota::storage::key_storage::JwkStoragePQ;
 use identity_iota::storage::key_storage::KeyId;
 use identity_iota::storage::key_storage::KeyStorageError;
 use identity_iota::storage::key_storage::KeyStorageErrorKind;
@@ -38,7 +39,7 @@ extern "C" {
 
   #[wasm_bindgen(method)]
   pub fn generate(this: &WasmJwkStorage, key_type: String, algorithm: String) -> PromiseJwkGenOutput;
-
+  
   #[wasm_bindgen(method)]
   pub fn insert(this: &WasmJwkStorage, jwk: WasmJwk) -> PromiseString;
 
@@ -57,6 +58,7 @@ extern "C" {
 
 #[async_trait::async_trait(?Send)]
 impl JwkStorage for WasmJwkStorage {
+
   async fn generate(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
     let promise: Promise = Promise::resolve(&WasmJwkStorage::generate(self, key_type.into(), alg.name().to_owned()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -64,6 +66,7 @@ impl JwkStorage for WasmJwkStorage {
   }
 
   async fn insert(&self, jwk: Jwk) -> KeyStorageResult<KeyId> {
+    web_sys::console::log_1(&"WWWWWWWWWWW".into());
     let promise: Promise = Promise::resolve(&WasmJwkStorage::insert(self, WasmJwk::from(jwk)));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()

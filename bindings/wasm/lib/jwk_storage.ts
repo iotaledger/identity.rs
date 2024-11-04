@@ -130,6 +130,7 @@ function decodeJwk(jwk: Jwk): [Ed25519PrivateKey, Ed25519PublicKey] {
     }
 }
 
+//TODO: non sembra servire a nulla
 export interface JwkStorageBBSPlusExt {
     // Generate a new BLS12381 key represented as a JSON Web Key.
     generateBBS: (algorithm: ProofAlgorithm) => Promise<JwkGenOutput>;

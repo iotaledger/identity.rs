@@ -15,6 +15,7 @@ use crate::jose::WasmJwkParamsEc;
 use crate::jose::WasmJwkParamsOct;
 use crate::jose::WasmJwkParamsOkp;
 use crate::jose::WasmJwkParamsRsa;
+use crate::jose::WasmJwkParamsMLDSA;
 use crate::jose::WasmJwkType;
 use crate::jose::WasmJwkUse;
 use crate::jose::WasmJwsAlgorithm;
@@ -164,6 +165,16 @@ impl WasmJwk {
     }
   }
 
+  #[wasm_bindgen(js_name = paramsMldsa)]
+  pub fn params_mldsa(&self) -> crate::error::Result<Option<WasmJwkParamsMLDSA>> {
+    if let JwkParams::MLDSA(params_mldsa) = self.0.params() {
+      // WARNING: this does not validate the return type. Check carefully.
+      Ok(Some(JsValue::from_serde(params_mldsa).wasm_result()?.unchecked_into()))
+    } else {
+      Ok(None)
+    }
+  }
+
   /// Returns a clone of the {@link Jwk} with _all_ private key components unset.
   /// Nothing is returned when `kty = oct` as this key type is not considered public by this library.
   #[wasm_bindgen(js_name = toPublic)]
@@ -201,7 +212,7 @@ impl_wasm_clone!(WasmJwk, Jwk);
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWK: &'static str = r#"
-type IJwkParams = IJwkEc | IJwkRsa | IJwkOkp | IJwkOct
+type IJwkParams = IJwkEc | IJwkRsa | IJwkOkp | IJwkOct | IJwkMLDSA
 /** A JSON Web Key with EC params. */
 export interface IJwkEc extends IJwk, JwkParamsEc {
   kty: JwkType.Ec
@@ -217,6 +228,9 @@ export interface IJwkOkp extends IJwk, JwkParamsOkp {
 /** A JSON Web Key with OCT params. */
 export interface IJwkOct extends IJwk, JwkParamsOct {
   kty: JwkType.Oct
+}
+export interface IJwkMLDSA extends IJwk, JwkParamsPQ {
+  kty: JwkType.MLDSA
 }
 "#;
 
@@ -400,4 +414,12 @@ interface JwkParamsOct {
    * 
    * [More Info](https://tools.ietf.org/html/rfc7518#section-6.4.1) */
   k: string
+}"#;
+
+
+#[wasm_bindgen(typescript_custom_section)]
+const IJWK_PARAMS_PQ: &str = r#"
+interface JwkParamsPQ {
+  pub: string,
+  priv?: string
 }"#;
