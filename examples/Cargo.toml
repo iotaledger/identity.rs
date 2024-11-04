@@ -23,6 +23,8 @@ identity_pqc_verifier = { path = "../identity_pqc_verifier", default-features = 
 serde.workspace = true
 colored = "2.1.0"
 
+identity_resolver = { path = "../identity_resolver", default-features = false, features = ["did-web"] }
+
 [lib]
 path = "utils/utils.rs"
 

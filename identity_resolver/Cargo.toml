@@ -42,6 +42,7 @@ default = ["revocation-bitmap", "iota"]
 revocation-bitmap = ["identity_credential/revocation-bitmap", "identity_iota_core?/revocation-bitmap"]
 # Enables the IOTA integration for the resolver.
 iota = ["dep:identity_iota_core"]
+did-web = []
 
 [lints]
 workspace = true
