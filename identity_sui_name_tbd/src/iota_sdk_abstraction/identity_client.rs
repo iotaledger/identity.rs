@@ -65,7 +65,7 @@ where
   }
 
   pub fn sender_address(&self) -> Result<IotaAddress, Error> {
-    Ok(IotaAddress::from_str("dummy sender address")
+    Ok(IotaAddress::from_str("0x0101010101010101010101010101010101010101010101010101010101010101")
         .map_err(|e| Error::Dummy(e.to_string()))?
     )
   }
