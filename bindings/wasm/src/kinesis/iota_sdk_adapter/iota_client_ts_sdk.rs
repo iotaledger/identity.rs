@@ -11,7 +11,7 @@ use identity_iota::iota::iota_sdk_abstraction::types::dynamic_field::DynamicFiel
 use secret_storage::Signer;
 
 use identity_iota::iota::iota_sdk_abstraction::error::IotaRpcResult;
-use identity_iota::iota::iota_sdk_abstraction::Error;
+use identity_iota::iota::iota_sdk_abstraction::{Error, TransactionBcs};
 use identity_iota::iota::iota_sdk_abstraction::shared_crypto::intent::{Intent, IntentMessage};
 use identity_iota::iota::iota_sdk_abstraction::{
     ProgrammableTransactionBcs,
@@ -40,7 +40,8 @@ use identity_iota::iota::iota_sdk_abstraction::rpc_types::{
     IotaObjectData,
     OwnedObjectRef,
 };
-
+use identity_iota::iota::iota_sdk_abstraction::types::event::EventID;
+use identity_iota::iota::iota_sdk_abstraction::types::quorum_driver_types::ExecuteTransactionRequestType;
 use super::super::ts_client_sdk::{WasmIotaClient, ManagedWasmIotaClient};
 
 pub struct IotaTransactionBlockResponseProvider {}
@@ -129,6 +130,61 @@ impl ReadTrait for ReadAdapter {
     }
 }
 
+pub struct QuorumDriverAdapter {
+    client: ManagedWasmIotaClient,
+}
+
+#[async_trait::async_trait(?Send)]
+impl QuorumDriverTrait for QuorumDriverAdapter {
+    type Error = Error;
+
+    async fn execute_transaction_block(
+        &self,
+        tx_bcs: TransactionBcs,
+        options: IotaTransactionBlockResponseOptions,
+        request_type: Option<ExecuteTransactionRequestType>
+    ) -> IotaRpcResult<Box<dyn IotaTransactionBlockResponseT<Error=Self::Error>>> {
+        todo!()
+    }
+}
+
+pub struct EventAdapter {
+    client: ManagedWasmIotaClient,
+}
+
+#[async_trait::async_trait(?Send)]
+impl EventTrait for EventAdapter {
+    type Error = Error;
+
+    async fn query_events(
+        &self, query: EventFilter,
+        cursor: Option<EventID>,
+        limit: Option<usize>,
+        descending_order: bool
+    ) -> IotaRpcResult<EventPage> {
+        todo!()
+    }
+}
+
+pub struct CoinReadAdapter {
+    client: ManagedWasmIotaClient,
+}
+
+#[async_trait::async_trait(?Send)]
+impl CoinReadTrait for CoinReadAdapter {
+    type Error = Error;
+
+    async fn get_coins(
+        &self,
+        owner: IotaAddress,
+        coin_type: Option<String>,
+        cursor: Option<ObjectID>,
+        limit: Option<usize>
+    ) -> IotaRpcResult<CoinPage> {
+        todo!()
+    }
+}
+
 #[derive(Clone)]
 pub struct IotaClientTsSdk {
     iota_client: ManagedWasmIotaClient,
@@ -139,7 +195,9 @@ impl IotaClientTrait for IotaClientTsSdk {
     type Error = Error;
 
     fn quorum_driver_api(&self) -> Box<dyn QuorumDriverTrait<Error = Self::Error> + '_> {
-        unimplemented!();
+        Box::new(QuorumDriverAdapter {
+            client: self.iota_client.clone(),
+        })
     }
 
     fn read_api(&self) -> Box<dyn ReadTrait<Error = Self::Error> + '_> {
@@ -149,11 +207,15 @@ impl IotaClientTrait for IotaClientTsSdk {
     }
 
     fn coin_read_api(&self) -> Box<dyn CoinReadTrait<Error = Self::Error> + '_> {
-        unimplemented!();
+        Box::new(CoinReadAdapter {
+            client: self.iota_client.clone(),
+        })
     }
 
     fn event_api(&self) -> Box<dyn EventTrait<Error = Self::Error> + '_> {
-        unimplemented!();
+        Box::new(EventAdapter {
+            client: self.iota_client.clone(),
+        })
     }
 
     async fn execute_transaction<S: Signer<IotaKeySignature> + Sync>(

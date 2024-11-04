@@ -48,7 +48,8 @@ impl SignatureScheme for IotaKeySignature {
 /// Allows to query information from an IotaTransactionBlockResponse instance.
 /// As IotaTransactionBlockResponse pulls too many dependencies we need to
 /// hide it behind a trait.
-#[async_trait::async_trait()]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 pub trait IotaTransactionBlockResponseT: Send {
   type Error;
 
@@ -70,7 +71,8 @@ pub trait IotaTransactionBlockResponseT: Send {
   fn effects_created(&self) -> Option<Vec<OwnedObjectRef>>;
 }
 
-#[async_trait::async_trait()]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 pub trait QuorumDriverTrait {
   type Error;
 
@@ -125,7 +127,8 @@ pub trait ReadTrait {
   ) -> IotaRpcResult<IotaPastObjectResponse>;
 }
 
-#[async_trait::async_trait()]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 pub trait CoinReadTrait {
   type Error;
 
@@ -139,7 +142,8 @@ pub trait CoinReadTrait {
 }
 
 
-#[async_trait::async_trait()]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 pub trait EventTrait {
   type Error;
 
