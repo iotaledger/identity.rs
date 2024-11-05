@@ -19,6 +19,10 @@ import { sdJwt } from "./1_advanced/6_sd_jwt";
 import { statusList2021 } from "./1_advanced/7_status_list_2021";
 import { zkp } from "./1_advanced/8_zkp";
 import { zkp_revocation } from "./1_advanced/9_zkp_revocation";
+import { createDidJwk } from "./wallet/did_jwk_traditional"
+import { createDidJwkZk } from "./wallet/did_jwk_zk"
+import { createDidJwkPq } from "./wallet/did_jwk_pq"
+import { createDidJwkHybrid } from "./wallet/did_jwk_hybrid"
 
 async function main() {
     // Extract example name.
@@ -64,6 +68,14 @@ async function main() {
             return await zkp();
         case "9_zkp_revocation":
             return await zkp_revocation();
+        case "traditional":
+            return createDidJwk();
+        case "zk":
+            return createDidJwkZk();
+        case "pq":
+            return createDidJwkPq();
+        case "hybrid":
+            return createDidJwkHybrid();
         default:
             throw "Unknown example name: '" + argument + "'";
     }
