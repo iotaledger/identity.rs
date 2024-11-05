@@ -14,57 +14,54 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_class = CoreDocument)]
 impl WasmCoreDocument {
-    
-    #[wasm_bindgen(js_name = newDidJwk)]
-    pub async fn _new_did_jwk(
-      storage: &WasmStorage,
-      key_type: String,
-      alg: WasmJwsAlgorithm,
-    //) -> Result<(WasmCoreDocument, String)>{
-    ) -> Result<WasmCoreDocument>{
-        let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
-        let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
-        
-        CoreDocument::new_did_jwk(
-            &storage_clone,
-            KeyType::from(key_type),
-            alg)
-            .await
-            .map(|doc| WasmCoreDocument(Rc::new(CoreDocumentLock::new(doc.0))))
-            .wasm_result()
-    }
+
+  #[wasm_bindgen(js_name = newDidJwk)]
+  pub async fn _new_did_jwk(
+    storage: &WasmStorage,
+    key_type: String,
+    alg: WasmJwsAlgorithm,
+  ) -> Result<WasmCoreDocument>{
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
+    CoreDocument::new_did_jwk(
+      &storage_clone,
+      KeyType::from(key_type),
+      alg
+    ).await
+    .map(|doc| WasmCoreDocument(Rc::new(CoreDocumentLock::new(doc.0))))
+    .wasm_result()
+  }
 
 
+/*   #[cfg(feature = "pqc")]
+  async fn _new_did_jwk_pqc(
+    storage: &WasmStorage,
+    key_type: String,
+    alg: WasmJwsAlgorithm,
+  ) -> Result<WasmCoreDocument> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
+    CoreDocument::new_did_jwk_pqc(
+      &storage_clone,
+      KeyType::from(key_type),
+      alg
+    ).await
+    .map(|doc| WasmCoreDocument(Rc::new(CoreDocumentLock::new(doc.0))))
+    .wasm_result()
 
+  } */
 
-
+  #[wasm_bindgen(js_name = fragmentJwk)]
+  pub fn _fragment(self) -> String {
+    "0".to_string()
+  }
 
 }
-
-
 
 /* impl DidJwkDocumentExt for WasmCoreDocument{
 
 
-    async fn new_did_jwk<K, I>(
-        storage: &Storage<K, I>,
-        key_type: KeyType,
-        alg: JwsAlgorithm,
-      ) -> StorageResult<(CoreDocument, String)>
-    where
-        K: JwkStorage,
-        I: KeyIdStorage {
-            todo!()
-        }
-/// a 
-    #[cfg(feature = "pqc")]
-    async fn new_did_jwk_pqc<K, I>(
-        storage: &Storage<K, I>,
-        key_type: KeyType,
-        alg: JwsAlgorithm,
-      ) -> StorageResult<(CoreDocument, String)> {
-        todo!()
-    }
+
 
     #[cfg(feature = "jpt-bbs-plus")]
     async fn new_did_jwk_zk<K, I>(

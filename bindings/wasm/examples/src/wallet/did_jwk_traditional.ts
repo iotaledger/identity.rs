@@ -24,10 +24,11 @@ export async function createDidJwk(){
     // Create a new DID document with a placeholder DID.
     // The DID will be derived from the Alias Id of the Alias Output after publishing.
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    const document = await CoreDocument.newDidJwk(
+    const document: CoreDocument = await CoreDocument.newDidJwk(
         storage,
         JwkMemStore.ed25519KeyType(),
         JwsAlgorithm.EdDSA,)
 
     console.log(JSON.stringify(document, null, 2));
+    console.log("fragment" + document.fragmentJwk());
 }
