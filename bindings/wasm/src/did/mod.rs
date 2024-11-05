@@ -7,6 +7,7 @@ mod service;
 mod wasm_core_did;
 mod wasm_core_document;
 mod wasm_did_url;
+mod wasm_did_jwk_document_ext;
 
 pub use self::service::IService;
 pub use self::service::UServiceEndpoint;
