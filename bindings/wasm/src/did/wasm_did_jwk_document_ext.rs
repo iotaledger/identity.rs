@@ -1,8 +1,6 @@
-use std::str::FromStr;
 use std::rc::Rc;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::jose::WasmJwk;
 use identity_iota::storage::DidJwkDocumentExt;
 use identity_iota::document::CoreDocument;
 use identity_iota::storage::key_storage::KeyType;
@@ -13,8 +11,6 @@ use crate::storage::WasmStorage;
 use super::CoreDocumentLock;
 use super::WasmCoreDocument;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_class = CoreDocument)]
 impl WasmCoreDocument {
