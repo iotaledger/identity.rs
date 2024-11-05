@@ -179,7 +179,7 @@ impl<'a> JwsValidationItem<'a> {
     })
   }
 
-  //TODO: hybrid - verify_hybrid
+  ///TODO: hybrid - verify_hybrid
   pub fn verify_hybrid<TRV, PQV>(
     self,
     traditional_verifier: &TRV,
