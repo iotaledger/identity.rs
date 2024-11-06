@@ -8,7 +8,7 @@ use std::marker::Send;
 use async_trait::async_trait;
 
 use secret_storage::Signer;
-use fastcrypto::secp256k1::DefaultHash;
+use fastcrypto::hash::Blake2b256;
 use fastcrypto::traits::ToFromBytes;
 
 use crate::Error;
@@ -467,7 +467,7 @@ impl IotaClientRustSdk {
 
         let intent = Intent::iota_transaction();
         let intent_msg = IntentMessage::new(intent, tx_data);
-        let mut hasher = DefaultHash::default();
+        let mut hasher = Blake2b256::default();
         let bcs_bytes = bcs::to_bytes(&intent_msg).map_err(|err| {
             Error::TransactionSigningFailed(format!("could not serialize transaction message to bcs; {err}"))
         })?;
