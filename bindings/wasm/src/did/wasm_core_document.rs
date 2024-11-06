@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::rc::Rc;
+use std::sync::Arc;
 
 use super::WasmCoreDID;
 use super::WasmJwsVerificationOptions;
@@ -628,7 +629,7 @@ impl WasmCoreDocument {
   ) -> Result<PromiseString> {
     let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
     let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let scope: MethodScope = scope.0;
     let promise: Promise = future_to_promise(async move {
       let method_fragment: String = document_lock_clone
@@ -646,7 +647,7 @@ impl WasmCoreDocument {
   /// the `storage`.
   #[wasm_bindgen(js_name = purgeMethod)]
   pub fn purge_method(&mut self, storage: &WasmStorage, id: &WasmDIDUrl) -> Result<PromiseVoid> {
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
     let id: DIDUrl = id.0.clone();
     let promise: Promise = future_to_promise(async move {
@@ -674,7 +675,7 @@ impl WasmCoreDocument {
     payload: String,
     options: &WasmJwsSignatureOptions,
   ) -> Result<PromiseJws> {
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
@@ -707,7 +708,7 @@ impl WasmCoreDocument {
     options: &WasmJwsSignatureOptions,
     custom_claims: Option<RecordStringAny>,
   ) -> Result<PromiseJwt> {
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
     let credential_clone: Credential = credential.0.clone();
@@ -742,7 +743,7 @@ impl WasmCoreDocument {
     signature_options: &WasmJwsSignatureOptions,
     presentation_options: &WasmJwtPresentationOptions,
   ) -> Result<PromiseJwt> {
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = signature_options.0.clone();
     let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
     let presentation_clone: Presentation<UnknownCredential> = presentation.0.clone();

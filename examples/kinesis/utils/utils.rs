@@ -12,6 +12,7 @@ use identity_iota::storage::Storage;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 
+use identity_iota::iota::iota_sdk_abstraction::IotaKeySignature;
 use identity_storage::JwkStorage;
 use identity_storage::KeyIdStorage;
 use identity_storage::KeyType;
@@ -21,7 +22,6 @@ use identity_sui_name_tbd::client::convert_to_address;
 use identity_sui_name_tbd::client::get_sender_public_key;
 use identity_sui_name_tbd::client::IdentityClient;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use identity_iota::iota::iota_sdk_abstraction::IotaKeySignature;
 use identity_sui_name_tbd::transaction::Transaction;
 use identity_sui_name_tbd::utils::request_funds;
 use iota_sdk::IotaClientBuilder;

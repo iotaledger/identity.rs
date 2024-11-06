@@ -1,10 +1,46 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { ProposalAction, IotaDID, IotaDocument, KinesisIdentityClient, Multicontroller, ProposalBuilder, ControllerAndVotingPower } from "@iota/identity-wasm/node";
+import {
+    ControllerAndVotingPower,
+    IotaDID,
+    IotaDocument,
+    JwkMemStore,
+    JwsAlgorithm,
+    KeyIdMemStore,
+    KinesisIdentityClient,
+    Multicontroller,
+    ProposalAction,
+    Storage,
+    StorageSigner,
+ } from "@iota/identity-wasm/node";
 
 import { IotaClient as KinesisClient } from "@iota/iota.js/client";
 
+async function signerTest(): Promise<void> {
+    // create new storage
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+
+    // generate new key
+    let generate = await storage.keyStorage().generate("Ed25519", JwsAlgorithm.EdDSA);
+    let publicKeyJwk = generate.jwk().toPublic();
+    if (typeof publicKeyJwk === 'undefined') {
+        throw new Error("failed to derive public JWK from generated JWK");
+    }
+    let keyId = generate.keyId();
+    console.dir({
+        keyId,
+        publicKeyJwk: publicKeyJwk
+    });
+
+    // create signer from storage
+    let signer = new StorageSigner(storage, keyId, publicKeyJwk);
+    console.log({ keyIdFromSigner: signer.keyId() });
+
+    // sign test
+    let signed = await signer.sign(new Uint8Array([0, 1, 2, 4]));
+    console.dir({ signed });
+}
 
 async function testIdentityClient(identityClient: KinesisIdentityClient): Promise<void> {
     console.dir(await identityClient.getBalance());
@@ -125,17 +161,39 @@ export async function testApiCall(): Promise<void> {
     // test builder
     let identityClient = KinesisIdentityClient
       .builder()
-      .identityIotaPackageId('replace me with actual package id')
+      .identityIotaPackageId('0xc34ce841eb15fc8f2b185f62ded52759cc179209a6407be4f2a4235cc7254956')
       .senderPublicKey(new Uint8Array([1, 2, 3, 4]))
       .iotaClient(kinesis_client)
       .build()
       ;
 
-    await testIdentityClient(identityClient);
+    try {
+        await testIdentityClient(identityClient);
+    } catch (err) {
+        const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
+        console.error(`identity client binding test failed: ${suffix}`);
+    }
 
-    testMultiController();
+    try {
+        testMultiController();
+    } catch (err) {
+        const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
+        console.error(`multi controller binding test failed: ${suffix}`);
+    }
 
-    await testProposals(identityClient);
+    try {
+        await testProposals(identityClient);
+    } catch (err) {
+        const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
+        console.error(`proposals binding test failed: ${suffix}`);
+    }
+
+    try {
+        await signerTest();
+    } catch (err) {
+        const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
+        console.error(`signer binding test failed: ${suffix}`);
+    }
 
     console.log("done");
 }

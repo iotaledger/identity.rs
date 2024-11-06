@@ -41,6 +41,12 @@ iota-client = ["identity_iota_core/iota-client", "identity_resolver?/iota"]
 kinesis-client = [
   "identity_resolver/kinesis",
   "identity_storage/send-sync-storage",
+  "storage-signer",
+]
+
+storage-signer = [
+  "identity_storage/iota-document",
+  "identity_storage/memstore",
   "identity_storage/storage-signer",
 ]
 

@@ -8,6 +8,7 @@ mod key_id_storage;
 mod method_digest;
 mod signature_options;
 mod wasm_storage;
+mod wasm_storage_signer;
 
 pub use jwk_gen_output::*;
 pub use jwk_storage::*;
@@ -16,3 +17,4 @@ pub use key_id_storage::*;
 pub use method_digest::*;
 pub use signature_options::*;
 pub use wasm_storage::*;
+pub use wasm_storage_signer::*;

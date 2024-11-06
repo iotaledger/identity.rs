@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use identity_sui_name_tbd::iota_sdk_abstraction::IotaKeySignature;
 use identity_verification::jwk::Jwk;
@@ -15,25 +17,30 @@ use crate::Storage;
 
 /// Signer that offers signing capabilities for `Signer` trait from `secret_storage`.
 /// `Storage` is used to sign.
-pub struct StorageSigner<'a, K, I> {
+pub struct StorageSigner<K, I> {
   key_id: KeyId,
   public_key: Jwk,
-  storage: &'a Storage<K, I>,
+  storage: Arc<Storage<K, I>>,
 }
 
-impl<'a, K, I> Clone for StorageSigner<'a, K, I> {
+impl<K, I> Clone for StorageSigner<K, I> {
   fn clone(&self) -> Self {
     StorageSigner {
       key_id: self.key_id.clone(),
       public_key: self.public_key.clone(),
-      storage: self.storage,
+      storage: self.storage.clone(),
     }
   }
 }
 
-impl<'a, K, I> StorageSigner<'a, K, I> {
+impl<K, I> StorageSigner<K, I> {
   /// Creates new `StorageSigner` with reference to a `Storage` instance.
-  pub fn new(storage: &'a Storage<K, I>, key_id: KeyId, public_key: Jwk) -> Self {
+  pub fn new(storage: Storage<K, I>, key_id: KeyId, public_key: Jwk) -> Self {
+    Self::new_with_shared_storage(Arc::new(storage), key_id, public_key)
+  }
+
+  /// Creates new `StorageSigner` with reference to an existing `Arc<Storage>`.
+  pub fn new_with_shared_storage(storage: Arc<Storage<K, I>>, key_id: KeyId, public_key: Jwk) -> Self {
     Self {
       key_id,
       public_key,
@@ -52,17 +59,35 @@ impl<'a, K, I> StorageSigner<'a, K, I> {
   }
 
   /// Returns a reference to this [`Signer`]'s [`Storage`].
-  pub fn storage(&self) -> &Storage<K, I> {
-    self.storage
+  pub fn storage(&self) -> Arc<Storage<K, I>> {
+    self.storage.clone()
+  }
+}
+
+cfg_if::cfg_if! {
+  if #[cfg(feature = "send-sync-storage")] {
+    /// Trait alias for a `JwkStorage` version that is `Sync`.
+    trait JwkStorageGeneric: JwkStorage + Sync {}
+    impl<T> JwkStorageGeneric for T where T: JwkStorage + Sync {}
+    /// Trait alias for a `KeyIdStorage` version that is `Sync`.
+    trait KeyIdStorageGeneric: KeyIdStorage + Sync {}
+    impl<T> KeyIdStorageGeneric for T where T: KeyIdStorage + Sync {}
+  } else {
+    /// Trait alias for a `JwkStorage` version that is not explicitly `Sync`.
+    trait JwkStorageGeneric: JwkStorage {}
+    impl<T> JwkStorageGeneric for T where T: JwkStorage {}
+    /// Trait alias for a `KeyIdStorage` version that is not explicitly `Sync`.
+    trait KeyIdStorageGeneric: KeyIdStorage {}
+    impl<T> KeyIdStorageGeneric for T where T: KeyIdStorage {}
   }
 }
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-impl<'a, K, I> Signer<IotaKeySignature> for StorageSigner<'a, K, I>
+impl<K, I> Signer<IotaKeySignature> for StorageSigner<K, I>
 where
-  K: JwkStorage + Sync,
-  I: KeyIdStorage + Sync,
+  K: JwkStorageGeneric,
+  I: KeyIdStorageGeneric,
 {
   type KeyId = KeyId;
   fn key_id(&self) -> &KeyId {

@@ -201,7 +201,7 @@ async fn hosting_vc_works() -> anyhow::Result<()> {
   let credential_jwt = did_doc
     .create_credential_jwt(
       &credential,
-      identity_client.signer().storage(),
+      &identity_client.signer().storage(),
       identity_client.signer().key_id().as_str(),
       &JwsSignatureOptions::default(),
       None,
