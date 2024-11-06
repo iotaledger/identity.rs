@@ -4,8 +4,8 @@
 use serde::Serialize;
 use std::collections::HashSet;
 
-use crate::sui::iota_sdk_adapter::TransactionBuilderAdapter;
-use crate::iota_sdk_abstraction::{
+use super::TransactionBuilderAdapter;
+use identity_iota::iota::iota_sdk_abstraction::{
     IdentityMoveCalls,
     ProgrammableTransactionBcs,
     types::{
@@ -14,9 +14,9 @@ use crate::iota_sdk_abstraction::{
         transaction::Argument,
     }
 };
-use crate::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
-use crate::utils::MoveType;
-use crate::Error;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
+use identity_iota::iota::utils::MoveType;
+use identity_iota::iota::sui_name_tbd_error::Error;
 
 pub struct IdentityMoveCallsTsSdk {}
 
@@ -33,7 +33,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
         controllers_to_remove: HashSet<ObjectID>,
         controllers_to_update: I2,
         package: ObjectID,
-    ) -> anyhow::Result<(Self::TxBuilder, Argument)>
+    ) -> anyhow::Result<ProgrammableTransactionBcs>
         where
             I1: IntoIterator<Item = (IotaAddress, u64)>,
             I2: IntoIterator<Item = (ObjectID, u64)>,
@@ -70,7 +70,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
         capability: ObjectRef,
         expiration: Option<u64>,
         package_id: ObjectID,
-    ) -> Result<(Self::TxBuilder, Argument), anyhow::Error> {
+    ) -> Result<ProgrammableTransactionBcs, anyhow::Error> {
         unimplemented!();
     }
 
@@ -100,7 +100,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
         did_doc: impl AsRef<[u8]>,
         expiration: Option<u64>,
         package_id: ObjectID,
-    ) -> Result<(Self::TxBuilder, Argument), anyhow::Error> {
+    ) -> Result<ProgrammableTransactionBcs, anyhow::Error> {
         unimplemented!();
     }
 

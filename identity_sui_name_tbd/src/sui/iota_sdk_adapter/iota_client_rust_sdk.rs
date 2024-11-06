@@ -5,11 +5,7 @@ use std::option::Option;
 use std::result::Result;
 use std::boxed::Box;
 use std::marker::Send;
-
-use anyhow::Context;
-
-use serde_json::{ self, Value as JsonValue};
-use serde::Deserialize;
+use async_trait::async_trait;
 
 use secret_storage::Signer;
 use fastcrypto::hash::Blake2b256;
@@ -54,14 +50,12 @@ use crate::iota_sdk_abstraction::rpc_types::{
     EventFilter,
     EventPage,
     IotaObjectData,
-    IotaParsedData,
-    IotaParsedMoveObject,
     ObjectChange,
     OwnedObjectRef,
 };
 use crate::iota_sdk_abstraction::shared_crypto::intent::{Intent, IntentMessage};
 use crate::iota_sdk_abstraction::apis::{QuorumDriverApi, ReadApi, CoinReadApi, EventApi};
-use crate::client::IotaKeySignature;
+use crate::iota_sdk_abstraction::IotaKeySignature;
 
 pub struct IotaTransactionBlockResponseProvider {
     response: IotaTransactionBlockResponse
@@ -243,10 +237,10 @@ pub struct IotaClientRustSdk {
     iota_client: IotaClient,
 }
 
-#[async_trait::async_trait()]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl IotaClientTrait for IotaClientRustSdk {
     type Error = Error;
-    type SdkIotaClient = IotaClient;
 
     fn quorum_driver_api(&self) -> Box<dyn QuorumDriverTrait<Error = Self::Error> + Send + '_> {
         Box::new(QuorumDriverAdapter{api: self.iota_client.quorum_driver_api()})

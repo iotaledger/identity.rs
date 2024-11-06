@@ -56,7 +56,7 @@ mod resolution {
       let test_client = get_test_client().await?;
       let alias_id = test_client.create_legacy_did().await?;
 
-      let resolved_alias = migration::get_alias(&test_client, alias_id).await?;
+      let resolved_alias = migration::get_alias(test_client.as_ref(), alias_id).await?;
 
       assert!(resolved_alias.is_some());
 
@@ -87,7 +87,7 @@ mod resolution {
       let alias_id = test_client.create_legacy_did().await?;
       let _ = test_client.migrate_legacy_did(alias_id).await?;
 
-      assert!(migration::get_alias(&test_client, alias_id).await?.is_none());
+      assert!(migration::get_alias(test_client.as_ref(), alias_id).await?.is_none());
 
       Ok(())
     }

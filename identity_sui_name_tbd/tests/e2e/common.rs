@@ -17,13 +17,13 @@ use identity_storage::KeyIdMemstore;
 use identity_storage::KeyType;
 use identity_storage::Storage;
 use identity_storage::StorageSigner;
-use identity_sui_name_tbd::client::IdentityClient;
+use identity_sui_name_tbd::client::{IdentityClient, IdentityClientAdapter};
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
 use identity_sui_name_tbd::utils::request_funds;
 use identity_sui_name_tbd::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
 use identity_sui_name_tbd::iota_sdk_abstraction::types::base_types::IotaAddress;
 use identity_sui_name_tbd::iota_sdk_abstraction::types::base_types::ObjectID;
-use identity_sui_name_tbd::iota_sdk_abstraction::IotaClientTrait;
+use identity_sui_name_tbd::iota_sdk_abstraction::IotaClientTraitCore;
 use identity_sui_name_tbd::iota_sdk_adapter::IotaClientAdapter;
 use iota_sdk::IotaClient;
 use iota_sdk::IotaClientBuilder;
@@ -36,7 +36,7 @@ pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 pub type MemSigner<'s> = StorageSigner<'s, JwkMemStore, KeyIdMemstore>;
 
 static PACKAGE_ID: OnceCell<ObjectID> = OnceCell::const_new();
-static CLIENT: OnceCell<TestClient> = OnceCell::const_new();
+static CLIENT: OnceCell<TestClient<IotaClientAdapter>> = OnceCell::const_new();
 const SCRIPT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/scripts/");
 const CACHED_PKG_ID: &str = "/tmp/identity_iota_pkg_id.txt";
 
@@ -59,7 +59,7 @@ pub const TEST_DOC: &[u8] = &[
   52, 45, 48, 53, 45, 50, 50, 84, 49, 50, 58, 49, 52, 58, 51, 50, 90, 34, 125, 125,
 ];
 
-pub async fn get_client() -> anyhow::Result<TestClient> {
+pub async fn get_client() -> anyhow::Result<TestClient<IotaClientAdapter>> {
   let client = IotaClientBuilder::default().build_localnet().await?;
   let package_id = PACKAGE_ID.get_or_try_init(|| init(&client)).await.copied()?;
   let address = get_active_address().await?;
@@ -173,22 +173,31 @@ fn get_public_key_bytes(sender_public_jwk: &Jwk) -> Result<Vec<u8>, anyhow::Erro
 }
 
 #[derive(Clone)]
-pub struct TestClient {
-  client: IdentityClientReadOnly,
+pub struct TestClient<C: Clone> {
+  client: IdentityClientReadOnly<C>,
   package_id: ObjectID,
   #[allow(dead_code)]
   address: IotaAddress,
   storage: Arc<MemStorage>,
 }
 
-impl Deref for TestClient {
-  type Target = IdentityClientReadOnly;
+impl<C: IotaClientTraitCore> Deref for TestClient<C> {
+  type Target = IdentityClientReadOnly<C>;
   fn deref(&self) -> &Self::Target {
     &self.client
   }
 }
 
-impl TestClient {
+impl<C> AsRef<C> for TestClient<C>
+where
+    C: IotaClientTraitCore,
+{
+  fn as_ref(&self) -> &C {
+    self.deref().deref()
+  }
+}
+
+impl<C: IotaClientTraitCore> TestClient<C> {
   /// Creates a new DID document inside a stardust alias output.
   /// Returns alias's ID.
   pub async fn create_legacy_did(&self) -> anyhow::Result<ObjectID> {
@@ -280,7 +289,7 @@ impl TestClient {
     self.switch_address().await?;
     // Find the ID of the AliasOutput that owns `alias_id`.
     let alias_output_id = {
-      let dynamic_field_id = self
+      let dynamic_field_id = self.client.deref()
         .read_api()
         .get_object_with_options(alias_id, IotaObjectDataOptions::default().with_owner())
         .await?
@@ -367,7 +376,7 @@ impl TestClient {
     Ok(new_client)
   }
 
-  pub async fn new_user_client(&self) -> anyhow::Result<IdentityClient<MemSigner>> {
+  pub async fn new_user_client(&self) -> anyhow::Result<IdentityClientAdapter<MemSigner, C>> {
     let generate = self
       .storage
       .key_storage()

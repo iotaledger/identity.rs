@@ -8,22 +8,23 @@ use std::marker::Send;
 
 use secret_storage::Signer;
 
-use crate::Error;
-use crate::iota_sdk_abstraction::error::IotaRpcResult;
-use crate::iota_sdk_abstraction::shared_crypto::intent::{Intent, IntentMessage};
-use crate::iota_sdk_abstraction::{
+use identity_iota::iota::iota_sdk_abstraction::error::IotaRpcResult;
+use identity_iota::iota::iota_sdk_abstraction::Error;
+use identity_iota::iota::iota_sdk_abstraction::shared_crypto::intent::{Intent, IntentMessage};
+use identity_iota::iota::iota_sdk_abstraction::{
     ProgrammableTransactionBcs,
     IotaClientTrait,
+    IotaKeySignature,
     QuorumDriverTrait,
     ReadTrait,
     CoinReadTrait,
     EventTrait,
     IotaTransactionBlockResponseT
 };
-use crate::iota_sdk_abstraction::types::{
+use identity_iota::iota::iota_sdk_abstraction::types::{
     base_types::{SequenceNumber, ObjectID, IotaAddress},
 };
-use crate::iota_sdk_abstraction::rpc_types::{
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::{
     IotaTransactionBlockResponseOptions,
     IotaObjectResponse,
     IotaPastObjectResponse,
@@ -38,7 +39,7 @@ use crate::iota_sdk_abstraction::rpc_types::{
     OwnedObjectRef,
 };
 
-use crate::client::IotaKeySignature;
+use super::super::ts_client_sdk::{WasmIotaClient, ManagedWasmIotaClient};
 
 pub struct IotaTransactionBlockResponseProvider {}
 
@@ -67,17 +68,13 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
 }
 
 #[derive(Clone)]
-pub struct BindgenTsSdkIotaClientPlaceholder {}
-
-#[derive(Clone)]
 pub struct IotaClientTsSdk {
-    iota_client: BindgenTsSdkIotaClientPlaceholder,
+    iota_client: ManagedWasmIotaClient,
 }
 
-#[async_trait::async_trait()]
+#[async_trait::async_trait(?Send)]
 impl IotaClientTrait for IotaClientTsSdk {
     type Error = Error;
-    type SdkIotaClient = BindgenTsSdkIotaClientPlaceholder;
 
     fn quorum_driver_api(&self) -> Box<dyn QuorumDriverTrait<Error = Self::Error> + Send + '_> {
         unimplemented!();
@@ -95,7 +92,7 @@ impl IotaClientTrait for IotaClientTsSdk {
         unimplemented!();
     }
 
-    async fn execute_transaction<S: Signer<IotaKeySignature>>(
+    async fn execute_transaction<S: Signer<IotaKeySignature> + Sync>(
         &self,
         sender_address: IotaAddress,
         sender_public_key: &[u8],
@@ -124,7 +121,9 @@ impl IotaClientTrait for IotaClientTsSdk {
 }
 
 impl IotaClientTsSdk {
-    pub fn new(iota_client: BindgenTsSdkIotaClientPlaceholder) -> Result<Self, Error> {
-        Ok(Self { iota_client })
+    pub fn new(iota_client: WasmIotaClient) -> Result<Self, Error> {
+        Ok(
+            Self {iota_client: ManagedWasmIotaClient::new(iota_client)}
+        )
     }
 }

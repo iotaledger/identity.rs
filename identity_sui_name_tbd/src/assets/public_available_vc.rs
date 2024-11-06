@@ -1,14 +1,14 @@
 use std::ops::Deref;
 use std::str::FromStr;
 
+use crate::iota_sdk_abstraction::types::base_types::ObjectID;
+use crate::iota_sdk_abstraction::types::TypeTag;
 use anyhow::Context as _;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jwt;
 use identity_credential::credential::JwtCredential;
 use identity_jose::jwt::JwtHeader;
 use identity_jose::jwu;
-use crate::iota_sdk_abstraction::types::base_types::ObjectID;
-use crate::iota_sdk_abstraction::types::TypeTag;
 use itertools::Itertools;
 use secret_storage::Signer;
 use serde::Deserialize;
@@ -16,7 +16,9 @@ use serde::Serialize;
 
 use crate::client::IdentityClient;
 use crate::client::IdentityClientReadOnly;
-use crate::client::IotaKeySignature;
+use crate::iota_sdk_abstraction::{AssetMoveCallsCore, IdentityMoveCallsCore};
+use crate::iota_sdk_abstraction::IotaClientTraitCore;
+use crate::iota_sdk_abstraction::IotaKeySignature;
 use crate::transaction::Transaction;
 use crate::utils::MoveType;
 
@@ -34,20 +36,27 @@ impl MoveType for IotaVerifiableCredential {
   }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+pub type PublicAvailableVCCore = PublicAvailableVC<crate::iota_sdk_adapter::AssetMoveCallsAdapter>;
+
+
 #[derive(Debug, Clone)]
-pub struct PublicAvailableVC {
-  asset: AuthenticatedAsset<IotaVerifiableCredential>,
+pub struct PublicAvailableVC<M> {
+  asset: AuthenticatedAsset<IotaVerifiableCredential, M>,
   credential: Credential,
 }
 
-impl Deref for PublicAvailableVC {
+impl<M> Deref for PublicAvailableVC<M> {
   type Target = Credential;
   fn deref(&self) -> &Self::Target {
     &self.credential
   }
 }
 
-impl PublicAvailableVC {
+impl<M> PublicAvailableVC<M>
+where
+  M: AssetMoveCallsCore + Send,
+{
   pub fn object_id(&self) -> ObjectID {
     self.asset.id()
   }
@@ -58,9 +67,15 @@ impl PublicAvailableVC {
       .expect("JWT is valid UTF8")
   }
 
-  pub async fn new<S>(jwt: Jwt, gas_budget: Option<u64>, client: &IdentityClient<S>) -> Result<Self, anyhow::Error>
+  pub async fn new<S, C, MID>(
+    jwt: Jwt,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S, C, MID>,
+  ) -> Result<Self, anyhow::Error>
   where
     S: Signer<IotaKeySignature> + Sync,
+    C: IotaClientTraitCore + Sync,
+    MID: IdentityMoveCallsCore + Sync + Send,
   {
     let jwt_bytes = String::from(jwt).into_bytes();
     let credential = parse_jwt_credential(&jwt_bytes)?;
@@ -75,9 +90,12 @@ impl PublicAvailableVC {
     Ok(Self { credential, asset })
   }
 
-  pub async fn get_by_id(id: ObjectID, client: &IdentityClientReadOnly) -> Result<Self, crate::Error> {
+  pub async fn get_by_id<C: IotaClientTraitCore + Sync>(
+    id: ObjectID,
+    client: &IdentityClientReadOnly<C>,
+  ) -> Result<Self, crate::Error> {
     let asset = client
-      .get_object_by_id::<AuthenticatedAsset<IotaVerifiableCredential>>(id)
+      .get_object_by_id::<AuthenticatedAsset<IotaVerifiableCredential, M>>(id)
       .await?;
     Self::try_from_asset(asset).map_err(|e| {
       crate::Error::ObjectLookup(format!(
@@ -86,7 +104,7 @@ impl PublicAvailableVC {
     })
   }
 
-  fn try_from_asset(asset: AuthenticatedAsset<IotaVerifiableCredential>) -> Result<Self, anyhow::Error> {
+  fn try_from_asset(asset: AuthenticatedAsset<IotaVerifiableCredential, M>) -> Result<Self, anyhow::Error> {
     let credential = parse_jwt_credential(&asset.content().data)?;
     Ok(Self { asset, credential })
   }

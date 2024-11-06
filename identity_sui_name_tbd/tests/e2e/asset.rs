@@ -16,15 +16,14 @@ use identity_storage::JwkDocumentExt;
 use identity_storage::JwsSignatureOptions;
 use identity_sui_name_tbd::transaction::Transaction;
 use identity_sui_name_tbd::utils::MoveType as _;
-use identity_sui_name_tbd::AuthenticatedAsset;
-use identity_sui_name_tbd::PublicAvailableVC;
-use identity_sui_name_tbd::TransferProposal;
+use identity_sui_name_tbd::{AuthenticatedAssetAdapter, PublicAvailableVCCore, TransferProposalCore};
 use identity_verification::VerificationMethod;
 use identity_sui_name_tbd::iota_sdk_abstraction::types::base_types::ObjectID;
 use identity_sui_name_tbd::iota_sdk_abstraction::types::TypeTag;
 use identity_sui_name_tbd::iota_sdk_abstraction::IotaClientTrait;
-use itertools::Itertools as _;
 use identity_sui_name_tbd::iota_sdk_abstraction::move_types::language_storage::StructTag;
+use identity_sui_name_tbd::iota_sdk_adapter::AssetMoveCallsAdapter;
+use itertools::Itertools as _;
 
 #[tokio::test]
 async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
@@ -32,7 +31,7 @@ async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
   let alice_client = test_client.new_user_client().await?;
 
   let asset = alice_client
-    .create_authenticated_asset::<u64>(42)
+    .create_authenticated_asset::<u64, AssetMoveCallsAdapter>(42)
     .finish()
     .execute(&alice_client)
     .await?;
@@ -49,7 +48,7 @@ async fn transfering_asset_works() -> anyhow::Result<()> {
 
   // Alice creates a new asset.
   let asset = alice_client
-    .create_authenticated_asset::<u64>(42)
+    .create_authenticated_asset::<u64, AssetMoveCallsAdapter>(42)
     .transferable(true)
     .finish()
     .execute(&alice_client)
@@ -64,7 +63,7 @@ async fn transfering_asset_works() -> anyhow::Result<()> {
   let proposal_id = proposal.id();
   // Bob accepts the transfer.
   proposal.accept().execute(&bob_client).await?;
-  let TypeTag::Struct(asset_type) = AuthenticatedAsset::<u64>::move_type(test_client.package_id()) else {
+  let TypeTag::Struct(asset_type) = AuthenticatedAssetAdapter::<u64>::move_type(test_client.package_id()) else {
     unreachable!("asset is a struct");
   };
   let bob_owns_asset = bob_client
@@ -74,7 +73,7 @@ async fn transfering_asset_works() -> anyhow::Result<()> {
   assert!(bob_owns_asset);
 
   // Alice concludes the transfer.
-  let proposal = TransferProposal::get_by_id(proposal_id, &alice_client).await?;
+  let proposal = TransferProposalCore::get_by_id(proposal_id, alice_client.as_ref()).await?;
   assert!(proposal.is_concluded());
   proposal.conclude_or_cancel().execute(&alice_client).await?;
 
@@ -108,7 +107,7 @@ async fn accepting_the_transfer_of_an_asset_requires_capability() -> anyhow::Res
 
   // Alice creates a new asset.
   let asset = alice_client
-    .create_authenticated_asset::<u64>(42)
+    .create_authenticated_asset::<u64, AssetMoveCallsAdapter>(42)
     .transferable(true)
     .finish()
     .execute(&alice_client)
@@ -133,7 +132,7 @@ async fn modifying_mutable_asset_works() -> anyhow::Result<()> {
   let alice_client = test_client.new_user_client().await?;
 
   let mut asset = alice_client
-    .create_authenticated_asset::<u64>(42)
+    .create_authenticated_asset::<u64, AssetMoveCallsAdapter>(42)
     .mutable(true)
     .finish()
     .execute(&alice_client)
@@ -151,7 +150,7 @@ async fn deleting_asset_works() -> anyhow::Result<()> {
   let alice_client = test_client.new_user_client().await?;
 
   let asset = alice_client
-    .create_authenticated_asset::<u64>(42)
+    .create_authenticated_asset::<u64, AssetMoveCallsAdapter>(42)
     .deletable(true)
     .finish()
     .execute(&alice_client)
@@ -209,7 +208,7 @@ async fn hosting_vc_works() -> anyhow::Result<()> {
     )
     .await?;
 
-  let vc = PublicAvailableVC::new(credential_jwt.clone(), Some(TEST_GAS_BUDGET), &identity_client).await?;
+  let vc = PublicAvailableVCCore::new(credential_jwt.clone(), Some(TEST_GAS_BUDGET), &identity_client).await?;
   assert_eq!(credential_jwt, vc.jwt());
 
   let validator = JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());

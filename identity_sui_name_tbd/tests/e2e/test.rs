@@ -20,7 +20,7 @@ async fn can_fetch_alias_output_by_object_id() -> anyhow::Result<()> {
   let alias_id = test_client.create_legacy_did().await?;
   let iota_client = get_client().await?;
 
-  let result = get_alias(&iota_client, alias_id).await;
+  let result = get_alias(iota_client.as_ref(), alias_id).await;
 
   assert!(result.is_ok());
 

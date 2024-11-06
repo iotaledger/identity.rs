@@ -4,8 +4,6 @@
 use std::collections::HashSet;
 use std::str::FromStr;
 
-use serde::Serialize;
-
 use bcs;
 
 use crate::iota_sdk_abstraction::{
@@ -21,7 +19,7 @@ use crate::iota_sdk_abstraction::types::{
 };
 use crate::iota_sdk_abstraction::types::{
     object::Owner,
-    base_types::{SequenceNumber, ObjectID, ObjectRef, IotaAddress},
+    base_types::{ObjectID, ObjectRef, IotaAddress},
     transaction::{Argument, Command, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction},
 };
 use crate::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
@@ -31,7 +29,7 @@ use crate::utils::MoveType;
 use crate::Error;
 use crate::ident_str;
 
-use super::super::TransactionBuilderAdapter;
+use super::TransactionBuilderAdapter;
 
 pub struct IdentityMoveCallsRustSdk {}
 
@@ -48,7 +46,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
         controllers_to_remove: HashSet<ObjectID>,
         controllers_to_update: I2,
         package: ObjectID,
-    ) -> anyhow::Result<(Self::TxBuilder, Argument)>
+    ) -> anyhow::Result<ProgrammableTransactionBcs>
         where
             I1: IntoIterator<Item = (IotaAddress, u64)>,
             I2: IntoIterator<Item = (ObjectID, u64)>,
@@ -87,7 +85,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
         let threshold = super::utils::option_to_move(threshold, &mut ptb, package)?;
         let controllers_to_remove = ptb.pure(controllers_to_remove)?;
 
-        let proposal_id = ptb.programmable_move_call(
+        let _proposal_id = ptb.programmable_move_call(
             package,
             ident_str!("identity").into(),
             ident_str!("propose_config_change").into(),
@@ -103,7 +101,8 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
             ],
         );
 
-        Ok((TransactionBuilderAdapter::new(ptb), proposal_id))
+        let programmable_tx = ptb.finish();
+        Ok(bcs::to_bytes(&programmable_tx)?)
     }
 
     fn execute_config_change(
@@ -202,13 +201,13 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
         capability: ObjectRef,
         expiration: Option<u64>,
         package_id: ObjectID,
-    ) -> Result<(Self::TxBuilder, Argument), anyhow::Error> {
+    ) -> Result<ProgrammableTransactionBcs, anyhow::Error> {
         let mut ptb = ProgrammableTransactionBuilder::new();
         let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
         let identity_arg = super::utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
         let exp_arg = super::utils::option_to_move(expiration, &mut ptb, package_id)?;
 
-        let proposal_id = ptb.programmable_move_call(
+        let _proposal_id = ptb.programmable_move_call(
             package_id,
             ident_str!("identity").into(),
             ident_str!("propose_deactivation").into(),
@@ -216,7 +215,8 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
             vec![identity_arg, cap_arg, exp_arg],
         );
 
-        Ok((TransactionBuilderAdapter::new(ptb), proposal_id))
+        let programmable_tx = ptb.finish();
+        Ok(bcs::to_bytes(&programmable_tx)?)
     }
 
     fn execute_deactivation(
@@ -284,14 +284,14 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
         did_doc: impl AsRef<[u8]>,
         expiration: Option<u64>,
         package_id: ObjectID,
-    ) -> Result<(Self::TxBuilder, Argument), anyhow::Error> {
+    ) -> Result<ProgrammableTransactionBcs, anyhow::Error> {
         let mut ptb = ProgrammableTransactionBuilder::new();
         let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
         let identity_arg = super::utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
         let exp_arg = super::utils::option_to_move(expiration, &mut ptb, package_id)?;
         let doc_arg = ptb.pure(did_doc.as_ref())?;
 
-        let proposal_id = ptb.programmable_move_call(
+        let _proposal_id = ptb.programmable_move_call(
             package_id,
             ident_str!("identity").into(),
             ident_str!("propose_update").into(),
@@ -299,7 +299,8 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
             vec![identity_arg, cap_arg, doc_arg, exp_arg],
         );
 
-        Ok((TransactionBuilderAdapter::new(ptb), proposal_id))
+        let programmable_tx = ptb.finish();
+        Ok(bcs::to_bytes(&programmable_tx)?)
     }
 
     fn execute_update(

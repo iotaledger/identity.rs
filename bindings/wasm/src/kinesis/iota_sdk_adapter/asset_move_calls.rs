@@ -3,7 +3,7 @@
 
 use serde::Serialize;
 
-use crate::iota_sdk_abstraction::{
+use identity_iota::iota::iota_sdk_abstraction::{
     AssetMoveCalls,
     ProgrammableTransactionBcs,
     types::{
@@ -11,8 +11,8 @@ use crate::iota_sdk_abstraction::{
         base_types::{SequenceNumber, ObjectID, ObjectRef, IotaAddress},
     }
 };
-use crate::utils::MoveType;
-use crate::Error;
+use identity_iota::iota::utils::MoveType;
+use identity_iota::iota::sui_name_tbd_error::Error;
 
 pub struct AssetMoveCallsTsSdk {}
 

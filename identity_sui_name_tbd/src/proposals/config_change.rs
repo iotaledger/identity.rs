@@ -10,14 +10,12 @@ use crate::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::iota_sdk_abstraction::types::base_types::ObjectRef;
 use crate::iota_sdk_abstraction::types::collection_types::Entry;
 use crate::iota_sdk_abstraction::types::collection_types::VecMap;
-use crate::iota_sdk_abstraction::types::transaction::Argument;
 use crate::iota_sdk_abstraction::ProgrammableTransactionBcs;
 use crate::iota_sdk_abstraction::types::TypeTag;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::migration::OnChainIdentity;
-use crate::sui::iota_sdk_adapter::IdentityMoveCallsAdapter;
 use crate::iota_sdk_abstraction::IdentityMoveCalls;
 use crate::sui::types::Number;
 use crate::utils::MoveType;
@@ -51,16 +49,16 @@ impl ProposalT for Proposal<ConfigChange> {
   type Action = ConfigChange;
   type Output = ();
 
-  fn make_create_tx(
+  fn make_create_tx<M: IdentityMoveCalls>(
     action: Self::Action,
     expiration: Option<u64>,
     identity_ref: OwnedObjectRef,
     controller_cap: ObjectRef,
     identity: OnChainIdentity,
     package: ObjectID,
-  ) -> Result<(<IdentityMoveCallsAdapter as IdentityMoveCalls>::TxBuilder, Argument), Error> {
+  ) -> Result<ProgrammableTransactionBcs, Error> {
     action.validate(&identity)?;
-    IdentityMoveCallsAdapter::propose_config_change(
+    <M as IdentityMoveCalls>::propose_config_change(
       identity_ref,
       controller_cap,
       expiration,
@@ -73,31 +71,13 @@ impl ProposalT for Proposal<ConfigChange> {
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
   }
 
-  fn make_chained_execution_tx(
-    ptb: <IdentityMoveCallsAdapter as IdentityMoveCalls>::TxBuilder,
-    proposal_arg: Argument,
-    identity: OwnedObjectRef,
-    controller_cap: ObjectRef,
-    package: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, Error> {
-    IdentityMoveCallsAdapter::execute_config_change(
-      Some(ptb),
-      Some(proposal_arg),
-      identity,
-      controller_cap,
-      ObjectID::ZERO,
-      package,
-    )
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
-  }
-
-  fn make_execute_tx(
+  fn make_execute_tx<M: IdentityMoveCalls>(
     &self,
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Error> {
-    IdentityMoveCallsAdapter::execute_config_change(None, None, identity, controller_cap, self.id(), package)
+    <M as IdentityMoveCalls>::execute_config_change(None, None, identity, controller_cap, self.id(), package)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
   }
 
@@ -107,8 +87,8 @@ impl ProposalT for Proposal<ConfigChange> {
 }
 
 impl ProposalBuilder<ConfigChange> {
-  /// Sets a new value for the identity's threshold.
-  pub fn threshold(mut self, threshold: u64) -> Self {
+    /// Sets a new value for the identity's threshold.
+    pub fn threshold(mut self, threshold: u64) -> Self {
     self.set_threshold(threshold);
     self
   }
