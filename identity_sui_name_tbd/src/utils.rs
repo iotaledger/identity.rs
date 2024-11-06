@@ -3,7 +3,10 @@
 
 use anyhow::Context as _;
 use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use iota_sdk::types::transaction::Argument;
 use iota_sdk::types::TypeTag;
+use serde::Serialize;
 use tokio::process::Command;
 
 use iota_sdk::types::base_types::IotaAddress;
@@ -46,8 +49,16 @@ pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
   Ok(())
 }
 
-pub trait MoveType {
+pub trait MoveType<T: Serialize = Self>: Serialize {
   fn move_type(package: ObjectID) -> TypeTag;
+
+  fn try_to_argument(
+    &self,
+    ptb: &mut ProgrammableTransactionBuilder,
+    _package: Option<ObjectID>,
+  ) -> Result<Argument, Error> {
+    ptb.pure(self).map_err(|e| Error::InvalidArgument(e.to_string()))
+  }
 }
 
 impl MoveType for u8 {

@@ -38,7 +38,7 @@ pub enum Error {
   #[error("failed to sign transaction; {0}")]
   TransactionSigningFailed(String),
   /// Could not execute transaction.
-  #[error("data store disconnected")]
+  #[error("transaction execution failed; {0}")]
   TransactionExecutionFailed(#[from] iota_sdk::error::Error),
   /// Transaction yielded invalid response. This usually means that the transaction was executed but did not produce
   /// the expected result.

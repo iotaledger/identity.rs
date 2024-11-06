@@ -1,5 +1,5 @@
 module identity_iota::public_vc {
-    public struct PublicVc {
+    public struct PublicVc has store {
         data: vector<u8>,
     }
 
