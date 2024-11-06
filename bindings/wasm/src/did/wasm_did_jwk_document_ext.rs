@@ -14,7 +14,8 @@ use super::CoreDocumentLock;
 use super::WasmCoreDocument;
 use wasm_bindgen::prelude::*;
 
-//use crate::jpt::WasmProofAlgorithm;
+use crate::jpt::WasmProofAlgorithm;
+use jsonprooftoken::jpa::algs::ProofAlgorithm;
 
 #[wasm_bindgen(js_class = CoreDocument)]
 impl WasmCoreDocument {
@@ -53,33 +54,9 @@ impl WasmCoreDocument {
     .wasm_result()
   }
 
-
-
-/*   pub enum CompositeAlgId {
-    /// DER encoded value in hex = 060B6086480186FA6B50080103
-    #[serde(rename = "id-MLDSA44-Ed25519-SHA512")]
-    IdMldsa44Ed25519Sha512,
-    /// DER encoded value in hex = 060B6086480186FA6B5008010A
-    #[serde(rename = "id-MLDSA65-Ed25519-SHA512")]
-    IdMldsa65Ed25519Sha512,
-  }
-  
-  impl CompositeAlgId {
-    /// Returns the JWS algorithm as a `str` slice.
-    pub const fn name(self) -> &'static str {
-      match self {
-        Self::IdMldsa44Ed25519Sha512 => "id-MLDSA44-Ed25519-SHA512",
-        Self::IdMldsa65Ed25519Sha512 => "id-MLDSA65-Ed25519-SHA512",
-      }
-    }
-  } */
-
-
-
   #[wasm_bindgen(js_name = newDidCompositeJwk)]
   pub async fn _new_did_compositejwk(
     storage: &WasmStorage,
-    //alg: identity_verification::jwk::CompositeAlgId,
     alg: WasmCompositeAlgId
   ) -> Result<WasmCoreDocument>{
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
@@ -92,9 +69,21 @@ impl WasmCoreDocument {
     .wasm_result()
   }
 
-
-
-
+  #[wasm_bindgen(js_name = newDidJwkZk)]
+  pub async fn _new_did_jwk_zk(
+    storage: &WasmStorage,
+    alg: WasmProofAlgorithm,
+  ) -> Result<WasmCoreDocument> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let alg: ProofAlgorithm = alg.into();
+    CoreDocument::new_did_jwk_zk(
+      &storage_clone,
+      KeyType::from_static_str("BLS12381"),
+      alg
+    ).await
+    .map(|doc| WasmCoreDocument(Rc::new(CoreDocumentLock::new(doc.0))))
+    .wasm_result()
+  }
 
   #[wasm_bindgen(js_name = fragmentJwk)]
   pub fn _fragment(self) -> String {
@@ -102,36 +91,3 @@ impl WasmCoreDocument {
   }
 
 }
-
-/* impl DidJwkDocumentExt for WasmCoreDocument{
-
-
-
-
-
-
-/// a
-    #[cfg(feature = "hybrid")]
-    async fn new_did_compositejwk<K, I>(
-        storage: &Storage<K, I>,
-        alg: identity_verification::jwk::CompositeAlgId,
-      ) -> StorageResult<(CoreDocument, String)> {
-        todo!()
-    }
-/// a 
-
-
-
-
-    
-    pub async fn new_did_jwk(
-      storage: &WasmStorage,
-      key_type: String,
-      alg: WasmJwsAlgorithm,
-    //) -> Result<(WasmCoreDocument, String)>{
-    ) -> Result<WasmCoreDocument>{
-
-
-    }
-}
- */
