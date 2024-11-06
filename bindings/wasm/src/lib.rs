@@ -43,5 +43,5 @@ pub fn start() -> Result<(), JsValue> {
 // It appears the import path must be relative to `src`.
 #[wasm_bindgen(typescript_custom_section)]
 const CUSTOM_IMPORTS: &'static str = r#"
-import { JwsAlgorithm, JwkOperation, JwkUse, JwkType } from '../lib/jose/index';
+import { JwsAlgorithm, JwkOperation, JwkUse, JwkType, CompositeAlgId} from '../lib/jose/index';
 "#;

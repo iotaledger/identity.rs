@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    IotaDID,
+    CompositeAlgId,
     IotaDocument,
     IotaIdentityClient,
     JwkMemStore,
@@ -17,17 +17,12 @@ import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
 /** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
 export async function createDidJwkHybrid(){
 
-    const mnemonicSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
-
     // Create a new DID document with a placeholder DID.
     // The DID will be derived from the Alias Id of the Alias Output after publishing.
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    const document = await CoreDocument.newDidJwk(
+    const document = await CoreDocument.newDidCompositeJwk(
         storage,
-        JwkMemStore.ed25519KeyType(),
-        JwsAlgorithm.EdDSA,)
+        CompositeAlgId.IdMldsa44Ed25519Sha512)
 
     console.log(JSON.stringify(document, null, 2));
 }

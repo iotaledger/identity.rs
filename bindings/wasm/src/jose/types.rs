@@ -27,6 +27,8 @@ extern "C" {
   pub type WasmJwkParamsOct;
   #[wasm_bindgen(typescript_type = "JwkParamsPQ")]
   pub type WasmJwkParamsMLDSA;
+  #[wasm_bindgen(typescript_type = "CompositeAlgId")]
+  pub type WasmCompositeAlgId;
 }
 
 impl TryFrom<WasmJwsAlgorithm> for JwsAlgorithm {
