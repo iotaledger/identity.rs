@@ -46,6 +46,7 @@ pub struct AuthenticatedAsset<T, M> {
   mutable: bool,
   transferable: bool,
   deletable: bool,
+  #[serde(skip)]
   phantom: PhantomData<M>,
 }
 
@@ -253,6 +254,7 @@ pub struct TransferProposal<M> {
   recipient_cap_id: ObjectID,
   recipient_address: IotaAddress,
   done: bool,
+  #[serde(skip)]
   phantom: PhantomData<M>,
 }
 
