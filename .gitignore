@@ -29,5 +29,6 @@ index.html
 
 !/bindings/wasm/static/index.html
 
+docs
 # ignore SUI build artifacts
 build

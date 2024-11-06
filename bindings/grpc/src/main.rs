@@ -1,10 +1,15 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
+
+use anyhow::Context;
 use identity_grpc::server::GRpcServer;
 use identity_stronghold::StrongholdStorage;
 use iota_sdk::client::stronghold::StrongholdAdapter;
-use iota_sdk::client::Client;
+
+use identity_sui_name_tbd::client::IdentityClientReadOnly;
+use iota_sdk_move::types::base_types::ObjectID;
 
 #[tokio::main]
 #[tracing::instrument(err)]
@@ -14,26 +19,37 @@ async fn main() -> anyhow::Result<()> {
 
   let api_endpoint = std::env::var("API_ENDPOINT")?;
 
-  let client: Client = Client::builder()
-    .with_primary_node(&api_endpoint, None)?
-    .finish()
-    .await?;
+  let identity_iota_pkg_id = std::env::var("IDENTITY_IOTA_PKG_ID")?;
+
+  let identity_pkg_id = ObjectID::from_str(&identity_iota_pkg_id)?;
+
+  let iota_client = iota_sdk_move::IotaClientBuilder::default().build(api_endpoint).await?;
+
+  let read_only_client = IdentityClientReadOnly::new(iota_client, identity_pkg_id).await?;
+
   let stronghold = init_stronghold()?;
 
   let addr = "0.0.0.0:50051".parse()?;
   tracing::info!("gRPC server listening on {}", addr);
-  GRpcServer::new(client, stronghold).serve(addr).await?;
+  GRpcServer::new(read_only_client, stronghold).serve(addr).await?;
 
   Ok(())
 }
 
 #[tracing::instrument]
 fn init_stronghold() -> anyhow::Result<StrongholdStorage> {
-  let stronghold_password = std::env::var("STRONGHOLD_PWD")?;
-  let snapshot_path = std::env::var("SNAPSHOT_PATH")?;
+  use std::env;
+  use std::fs;
+  let stronghold_password = env::var("STRONGHOLD_PWD_FILE")
+    .context("Unset \"STRONGHOLD_PWD_FILE\" env variable")
+    .and_then(|path| fs::read_to_string(&path).context(format!("{path} does not exists")))
+    .map(sanitize_pwd)
+    .or(env::var("STRONGHOLD_PWD"))
+    .context("No password for stronghold was provided")?;
+  let snapshot_path = env::var("SNAPSHOT_PATH")?;
 
   // Check for snapshot file at specified path
-  let metadata = std::fs::metadata(&snapshot_path)?;
+  let metadata = fs::metadata(&snapshot_path)?;
   if !metadata.is_file() {
     return Err(anyhow::anyhow!("No snapshot at provided path \"{}\"", &snapshot_path));
   }
@@ -44,4 +60,12 @@ fn init_stronghold() -> anyhow::Result<StrongholdStorage> {
       .build(snapshot_path)
       .map(StrongholdStorage::new)?,
   )
+}
+
+/// Remove any trailing whitespace in-place.
+fn sanitize_pwd(mut pwd: String) -> String {
+  let trimmed = pwd.trim_end();
+  pwd.truncate(trimmed.len());
+  pwd.shrink_to_fit();
+  pwd
 }
