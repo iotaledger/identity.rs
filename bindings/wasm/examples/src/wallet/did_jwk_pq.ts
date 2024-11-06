@@ -22,10 +22,10 @@ export async function createDidJwkPq(){
     };
 
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    const document = await CoreDocument.newDidJwk(
+    const document = await CoreDocument.newDidJwkPq(
         storage,
-        JwkMemStore.ed25519KeyType(),
-        JwsAlgorithm.EdDSA,)
+        JwkMemStore.mldsaKeyType(),
+        JwsAlgorithm.MLDSA44)
 
     console.log(JSON.stringify(document, null, 2));
 }

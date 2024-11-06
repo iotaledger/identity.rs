@@ -12,6 +12,8 @@ use super::CoreDocumentLock;
 use super::WasmCoreDocument;
 use wasm_bindgen::prelude::*;
 
+//use crate::jpt::WasmProofAlgorithm;
+
 #[wasm_bindgen(js_class = CoreDocument)]
 impl WasmCoreDocument {
 
@@ -32,9 +34,8 @@ impl WasmCoreDocument {
     .wasm_result()
   }
 
-
-/*   #[cfg(feature = "pqc")]
-  async fn _new_did_jwk_pqc(
+  #[wasm_bindgen(js_name = newDidJwkPq)]
+  pub async fn _new_did_jwk_pqc(
     storage: &WasmStorage,
     key_type: String,
     alg: WasmJwsAlgorithm,
@@ -48,8 +49,7 @@ impl WasmCoreDocument {
     ).await
     .map(|doc| WasmCoreDocument(Rc::new(CoreDocumentLock::new(doc.0))))
     .wasm_result()
-
-  } */
+  } 
 
   #[wasm_bindgen(js_name = fragmentJwk)]
   pub fn _fragment(self) -> String {
@@ -63,14 +63,7 @@ impl WasmCoreDocument {
 
 
 
-    #[cfg(feature = "jpt-bbs-plus")]
-    async fn new_did_jwk_zk<K, I>(
-        storage: &Storage<K, I>,
-        key_type: KeyType,
-        alg: ProofAlgorithm,
-      ) -> StorageResult<(CoreDocument, String)>{
-        todo!()
-    }
+
 
 /// a
     #[cfg(feature = "hybrid")]
