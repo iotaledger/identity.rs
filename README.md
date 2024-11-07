@@ -1,5 +1,5 @@
-# PQ/T Hybrid
-This repository extends the IOTA Identity framework by implementing both **Post-Quantum (PQ)** and **Post-Quantum/Traditional (PQ/T) Hybrid** cryptographic approaches. These approaches address emerging threats to traditional cryptography posed by quantum computing.
+# Post-Quantum/Traditional (PQ/T) hybrid VCs
+This repository extends IOTA Identity by implementing both pure **Post-Quantum (PQ)** and **Post-Quantum/Traditional (PQ/T) hybrid** VCs with a crypto-agility approach.
 
 ### Overview
 
