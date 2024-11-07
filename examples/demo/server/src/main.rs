@@ -1,3 +1,5 @@
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
 
 use warp::Filter;
 

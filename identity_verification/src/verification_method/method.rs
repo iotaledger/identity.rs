@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use core::fmt::Display;
 use core::fmt::Formatter;
 use std::borrow::Cow;
@@ -231,6 +235,12 @@ impl VerificationMethod {
 
 
 impl VerificationMethod {
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+
+  /// Creates a new [`VerificationMethod`] from the given `did` and [`CompositeJwk`]. If `fragment` is not given
+  /// the `kid` value of the given `key` will be used, if present, otherwise an error is returned.
   pub fn new_from_compositejwk<D: DID>(did: D, key: CompositeJwk, fragment: Option<&str>) -> Result<Self> {
     // Can i use ~ in a URI safely since is an unreserved character (https://www.rfc-editor.org/rfc/rfc3986#section-2.3)
     let composite_fragment = key.traditional_public_key()

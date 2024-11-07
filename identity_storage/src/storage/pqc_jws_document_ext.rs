@@ -1,3 +1,6 @@
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
+
 use super::JwkStorageDocumentError as Error;
 use crate::key_id_storage::MethodDigest;
 use crate::try_undo_key_generation;
@@ -127,7 +130,6 @@ impl JwsDocumentExtPQC for CoreDocument {
     K: JwkStoragePQ,
     I: KeyIdStorage,
   {
-    // todo!()
     generate_method_core_document(self, storage, key_type, alg, fragment, scope).await
   }
 
