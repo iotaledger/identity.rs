@@ -1,12 +1,3 @@
-# Zero-Knowledge (ZK)
-
-The IOTA Identity Framework now supports Zero-Knowledge functionalities, thanks to the [integration](https://github.com/iotaledger/identity.rs/pull/1285) of two key components:
-
-* **BBS+ Signature Scheme**: This scheme has been integrated through the [ZKryptium](https://github.com/Cybersecurity-LINKS/zkryptium) library, allowing for secure and privacy-preserving credential management.
-* **JSON Web Proof Representation**: The [json-proof-token](https://github.com/Cybersecurity-LINKS/json-proof-token) library implements the JSON Web Proof specification, enabling verifiable claims with selective disclosure.
-
-For more details on the implementation and how to use these features, you can find the full documentation [here](https://wiki.iota.org/identity.rs/how-tos/verifiable-credentials/zero-knowledge-selective-disclosure/).
-
 # PQ/T Hybrid
 This repository extends the IOTA Identity framework by implementing both **Post-Quantum (PQ)** and **Post-Quantum/Traditional (PQ/T) Hybrid** cryptographic approaches. These approaches address emerging threats to traditional cryptography posed by quantum computing.
 
@@ -29,3 +20,12 @@ To test the above functionalities, you can refer to practical code snippets avai
 > pub static PATH_DID_FILE: &str = "C:/Projects/did-web-server/.well-known/";
 > ```
 Make sure your server is set up before running the examples to avoid any configuration issues.
+
+# Zero-Knowledge (ZK)
+
+The IOTA Identity Framework now supports Zero-Knowledge functionalities, thanks to the [integration](https://github.com/iotaledger/identity.rs/pull/1285) of two key components:
+
+* **BBS+ Signature Scheme**: This scheme has been integrated through the [ZKryptium](https://github.com/Cybersecurity-LINKS/zkryptium) library, allowing for secure and privacy-preserving credential management.
+* **JSON Web Proof Representation**: The [json-proof-token](https://github.com/Cybersecurity-LINKS/json-proof-token) library implements the JSON Web Proof specification, enabling verifiable claims with selective disclosure.
+
+For more details on the implementation and how to use these features, you can find the full documentation [here](https://wiki.iota.org/identity.rs/how-tos/verifiable-credentials/zero-knowledge-selective-disclosure/).
