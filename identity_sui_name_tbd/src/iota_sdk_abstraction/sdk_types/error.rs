@@ -32,4 +32,6 @@ pub enum Error {
     InsufficientFund { address: IotaAddress, amount: u128 },
     #[error(transparent)]
     Json(#[from] serde_json::Error),
+    #[error("Error caused by a foreign function interface call: {0}")]
+    FfiError(String),
 }

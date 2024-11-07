@@ -12,6 +12,8 @@ use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use identity_iota_core::NetworkName;
 
+use crate::error::Error;
+
 use super::DummySigner;
 use super::Identity;
 use super::IdentityBuilder;
@@ -22,15 +24,6 @@ use super::types::base_types::{IotaAddress, ObjectID};
 
 // `IdentityClient` is a dummy placeholder to prepare wasm bindings for the actual one
 // as long as it is not compilable to wasm
-
-#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
-#[non_exhaustive]
-pub enum Error {
-  #[error("identity dummy error was triggered; {0}")]
-  Dummy(String),
-  #[error("function or feature not implemented in dummy: {0}")]
-  NotImplemented(String),
-}
 
 pub struct IdentityClient<T: IotaClientTrait> {
   client: T,
@@ -66,7 +59,7 @@ where
 
   pub fn sender_address(&self) -> Result<IotaAddress, Error> {
     Ok(IotaAddress::from_str("0x0101010101010101010101010101010101010101010101010101010101010101")
-        .map_err(|e| Error::Dummy(e.to_string()))?
+        .map_err(|e| Error::InvalidArgument(e.to_string()))?
     )
   }
 
@@ -79,11 +72,11 @@ where
   }
 
   pub async fn get_identity(&self, _object_id: ObjectID) -> Result<Identity, Error> {
-    Err(Error::NotImplemented("get_identity".to_string()))
+    unimplemented!("get_identity");
   }
 
   pub async fn resolve_did(&self, _did: &IotaDID) -> Result<IotaDocument, Error> {
-    Err(Error::NotImplemented("resolve_did".to_string()))
+    unimplemented!("resolve_did");
   }
 
   pub async fn publish_did_document(
@@ -92,7 +85,7 @@ where
     _gas_budget: u64,
     _signer: &DummySigner,
   ) -> Result<IotaDocument, Error> {
-    Err(Error::NotImplemented("publish_did_document".to_string()))
+    unimplemented!("publish_did_document");
   }
 
   pub async fn publish_did_document_update(
@@ -101,7 +94,7 @@ where
     _gas_budget: u64,
     _signer: &DummySigner,
   ) -> Result<IotaDocument, Error> {
-    Err(Error::NotImplemented("publish_did_document_update".to_string()))
+    unimplemented!("publish_did_document_update");
   }
 
   pub async fn deactivate_did_output(
@@ -110,7 +103,7 @@ where
     _gas_budget: u64,
     _signer: &DummySigner,
   ) -> Result<(), Error> {
-    Err(Error::NotImplemented("deactivate_did_output".to_string()))
+    unimplemented!("deactivate_did_output");
   }
 }
 

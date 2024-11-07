@@ -67,7 +67,7 @@ impl WasmKinesisIdentityClient {
       .0
       .resolve_did(&did.0)
       .await
-      .map_err(<identity_iota::iota::iota_sdk_abstraction::Error as std::convert::Into<JsError>>::into)?;
+      .map_err(<identity_iota::iota::sui_name_tbd_error::Error as std::convert::Into<JsError>>::into)?;
     Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
   }
 
@@ -87,7 +87,7 @@ impl WasmKinesisIdentityClient {
       .0
       .publish_did_document(doc, gas_budget, signer)
       .await
-      .map_err(<identity_iota::iota::iota_sdk_abstraction::Error as std::convert::Into<JsError>>::into)?;
+      .map_err(<identity_iota::iota::sui_name_tbd_error::Error as std::convert::Into<JsError>>::into)?;
 
     Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
   }
@@ -108,7 +108,7 @@ impl WasmKinesisIdentityClient {
       .0
       .publish_did_document_update(doc, gas_budget, signer)
       .await
-      .map_err(<identity_iota::iota::iota_sdk_abstraction::Error as std::convert::Into<JsError>>::into)?;
+      .map_err(<identity_iota::iota::sui_name_tbd_error::Error as std::convert::Into<JsError>>::into)?;
 
     Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
   }
@@ -124,7 +124,7 @@ impl WasmKinesisIdentityClient {
       .0
       .deactivate_did_output(&did.0, gas_budget, signer)
       .await
-      .map_err(<identity_iota::iota::iota_sdk_abstraction::Error as std::convert::Into<JsError>>::into)?;
+      .map_err(<identity_iota::iota::sui_name_tbd_error::Error as std::convert::Into<JsError>>::into)?;
 
     Ok(())
   }

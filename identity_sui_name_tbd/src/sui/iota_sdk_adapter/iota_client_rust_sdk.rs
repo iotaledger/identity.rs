@@ -13,9 +13,8 @@ use fastcrypto::traits::ToFromBytes;
 
 use crate::Error;
 use crate::iota_sdk_abstraction::error::IotaRpcResult;
-use crate::iota_sdk_abstraction::IotaClient;
+use crate::iota_sdk_abstraction::{IotaClient, SignatureBcs, TransactionDataBcs};
 use crate::iota_sdk_abstraction::{
-    TransactionBcs,
     ProgrammableTransactionBcs,
     IotaClientTrait,
     QuorumDriverTrait,
@@ -105,13 +104,19 @@ impl<'a> QuorumDriverTrait for QuorumDriverAdapter<'a> {
 
     async fn execute_transaction_block(
         &self,
-        tx_data_bcs: TransactionBcs,
+        tx_data_bcs: TransactionDataBcs,
+        signatures: Vec<SignatureBcs>,
         options: IotaTransactionBlockResponseOptions,
         request_type: Option<ExecuteTransactionRequestType>,
     ) -> IotaRpcResult<Box<dyn IotaTransactionBlockResponseT<Error = Self::Error>>> {
-        let tx_data = bcs::from_bytes::<Transaction>(tx_data_bcs.as_slice())?;
+        let tx_data = bcs::from_bytes::<TransactionData>(tx_data_bcs.as_slice())?;
+        let signatures_vec = signatures
+          .into_iter()
+          .map(|signature_bcs| bcs::from_bytes::<Signature>(signature_bcs.as_slice()))
+          .collect::<Result::<Vec<Signature>, _>>()?;
+        let tx = Transaction::from_data(tx_data, signatures_vec);
         let response = self.sdk_execute_transaction_block(
-            tx_data,
+            tx,
             options,
             request_type,
         ).await?;

@@ -6,12 +6,14 @@ use std::result::Result;
 use std::boxed::Box;
 use std::marker::Send;
 
+use identity_iota::iota::sui_name_tbd_error::Error;
+
 use identity_iota::iota::iota_sdk_abstraction::types::digests::TransactionDigest;
 use identity_iota::iota::iota_sdk_abstraction::types::dynamic_field::DynamicFieldName;
 use secret_storage::Signer;
 
 use identity_iota::iota::iota_sdk_abstraction::error::IotaRpcResult;
-use identity_iota::iota::iota_sdk_abstraction::{Error, TransactionBcs};
+use identity_iota::iota::iota_sdk_abstraction::{SignatureBcs, TransactionBcs, TransactionDataBcs};
 use identity_iota::iota::iota_sdk_abstraction::shared_crypto::intent::{Intent, IntentMessage};
 use identity_iota::iota::iota_sdk_abstraction::{
     ProgrammableTransactionBcs,
@@ -24,49 +26,57 @@ use identity_iota::iota::iota_sdk_abstraction::{
     IotaTransactionBlockResponseT
 };
 use identity_iota::iota::iota_sdk_abstraction::types::{
+    event::EventID,
+    quorum_driver_types::ExecuteTransactionRequestType,
     base_types::{SequenceNumber, ObjectID, IotaAddress},
 };
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::{
-    IotaTransactionBlockResponseOptions,
     IotaObjectResponse,
     IotaPastObjectResponse,
     ObjectsPage,
     IotaObjectResponseQuery,
     IotaObjectDataOptions,
     IotaExecutionStatus,
+    IotaTransactionBlockResponseOptions,
     CoinPage,
     EventFilter,
     EventPage,
     IotaObjectData,
-    OwnedObjectRef,
+    OwnedObjectRef
 };
-use identity_iota::iota::iota_sdk_abstraction::types::event::EventID;
-use identity_iota::iota::iota_sdk_abstraction::types::quorum_driver_types::ExecuteTransactionRequestType;
 use super::super::ts_client_sdk::{WasmIotaClient, ManagedWasmIotaClient};
+use super::super::types::IotaTransactionBlockResponseAdapter;
 
-pub struct IotaTransactionBlockResponseProvider {}
+pub struct IotaTransactionBlockResponseProvider {
+    response: IotaTransactionBlockResponseAdapter
+}
 
+impl IotaTransactionBlockResponseProvider {
+    pub fn new(response: IotaTransactionBlockResponseAdapter) -> Self {
+        IotaTransactionBlockResponseProvider{response}
+    }
+}
+
+#[async_trait::async_trait(?Send)]
 impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
     type Error = Error;
 
     fn effects_is_none(&self) -> bool {
-        unimplemented!();
+        self.response.effects_is_none()
     }
 
-    fn effects_is_some(&self) -> bool {
-        unimplemented!();
+    fn effects_is_some(&self) -> bool{
+        self.response.effects_is_some()
     }
 
-    fn to_string(&self) -> String {
-        unimplemented!();
-    }
+    fn to_string(&self) -> String { format!("{:?}", self.response.to_string()) }
 
     fn effects_execution_status(&self) -> Option<IotaExecutionStatus> {
-        unimplemented!();
+        self.response.effects_execution_status().map(|wasm_status| wasm_status.into())
     }
 
     fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
-        unimplemented!();
+        self.response.effects_created().map(|wasm_o_ref_vec| wasm_o_ref_vec.into())
     }
 }
 
@@ -140,11 +150,20 @@ impl QuorumDriverTrait for QuorumDriverAdapter {
 
     async fn execute_transaction_block(
         &self,
-        tx_bcs: TransactionBcs,
+        tx_data_bcs: TransactionDataBcs,
+        signatures: Vec<SignatureBcs>,
         options: IotaTransactionBlockResponseOptions,
-        request_type: Option<ExecuteTransactionRequestType>
+        request_type: Option<ExecuteTransactionRequestType>,
     ) -> IotaRpcResult<Box<dyn IotaTransactionBlockResponseT<Error=Self::Error>>> {
-        todo!()
+        let wasm_response = self
+          .client
+          .execute_transaction_block(
+            tx_data_bcs,
+            signatures,
+            options,
+            request_type)
+          .await?;
+        Ok(Box::new(IotaTransactionBlockResponseProvider::new(wasm_response)))
     }
 }
 
@@ -233,7 +252,7 @@ impl IotaClientTrait for IotaClientTsSdk {
         &self,
         sender_address: IotaAddress,
         tx_bcs: &ProgrammableTransactionBcs,
-    ) -> Result<u64, Error> {
+    ) -> Result<u64, Self::Error> {
         unimplemented!();
     }
 

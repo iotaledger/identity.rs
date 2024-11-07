@@ -6,7 +6,7 @@
 // The file provides a POC for the wasm-bindgen glue code needed to
 // implement the TS-Client-SDK integration.
 
-use super::Error;
+use crate::error::Error;
 use super::IdentityClient;
 use super::IotaClientTrait;
 use super::types::base_types::{ObjectID};

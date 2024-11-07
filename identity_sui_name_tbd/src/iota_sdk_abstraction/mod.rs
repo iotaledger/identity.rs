@@ -34,8 +34,12 @@ pub use move_core_types as move_types;
 #[cfg(not(target_arch = "wasm32"))]
 pub use shared_crypto;
 
-/// BCS serialized Transaction
+/// BCS serialized Transaction, where a Transaction includes the TransactionData and a Vec<Signature>
 pub type TransactionBcs = Vec<u8>;
+/// BCS serialized TransactionData
+pub type TransactionDataBcs = Vec<u8>;
+/// BCS serialized Signature
+pub type SignatureBcs = Vec<u8>;
 /// BCS serialized ProgrammableTransaction
 pub type ProgrammableTransactionBcs = Vec<u8>;
 

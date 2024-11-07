@@ -8,9 +8,9 @@ use std::marker::Send;
 use async_trait::async_trait;
 use secret_storage::{Signer, SignatureScheme};
 use crate::Error;
+use crate::utils::OptionalSend;
 use crate::iota_sdk_abstraction::{
   ProgrammableTransactionBcs,
-  TransactionBcs,
   rpc_types::{
     IotaTransactionBlockResponseOptions,
     IotaObjectResponse,
@@ -33,6 +33,8 @@ use crate::iota_sdk_abstraction::{
     event::EventID,
   },
   error::IotaRpcResult,
+  TransactionDataBcs,
+  SignatureBcs
 };
 
 pub struct IotaKeySignature {
@@ -50,7 +52,7 @@ impl SignatureScheme for IotaKeySignature {
 /// hide it behind a trait.
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
-pub trait IotaTransactionBlockResponseT: Send {
+pub trait IotaTransactionBlockResponseT: OptionalSend {
   type Error;
 
   /// Indicates if IotaTransactionBlockResponse::effects is None
@@ -78,7 +80,8 @@ pub trait QuorumDriverTrait {
 
   async fn execute_transaction_block(
     &self,
-    tx_bcs: TransactionBcs,
+    tx_data_bcs: TransactionDataBcs,
+    signatures: Vec<SignatureBcs>,
     options: IotaTransactionBlockResponseOptions,
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> IotaRpcResult<Box<dyn IotaTransactionBlockResponseT<Error = Self::Error>>>;
