@@ -1,3 +1,6 @@
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
+
 use std::{fs::File, path::Path};
 use examples::{MemStorage, DID_URL, PATH_DID_FILE};
 use identity_iota::{core::{FromJson, Object, Url}, credential::{Credential, CredentialBuilder, FailFast, Jpt, JptCredentialValidationOptions, JptCredentialValidator, JptPresentationValidationOptions, JptPresentationValidator, JptPresentationValidatorUtils, JwpCredentialOptions, JwpPresentationOptions, SelectiveDisclosurePresentation, Subject}, did::{CoreDID, DID}, document::CoreDocument, resolver::Resolver, storage::{DidJwkDocumentExt, JwkMemStore, JwpDocumentExt, KeyIdMemstore}, verification::{jws::JwsAlgorithm, MethodScope}};
@@ -59,11 +62,13 @@ async fn main() -> anyhow::Result<()> {
     "GPA": "4.0",
   }))?;
 
-  println!("{} {} {}", "[Holder]".blue(), ": Inserted Credential subject information: ", serde_json::to_string_pretty(&subject)?);
+  println!("{} {} {} {}", "[Holder]".blue(), "->", "[Issuer]".red(), ": Request Verifiable Credential (VC)");
 
-  println!("{} {} {}", "[Holder]".blue(), " <-> [Issuer]".red(), ": Challenge-response protocol to authenticate Holder's DID");
+  println!("{} {} {}", "[Holder]".blue(), ": Credential information: ", serde_json::to_string_pretty(&subject)?);
 
-  println!("{} {} ","[Issuer]".red(), ": Construct VC");
+  println!("{} {} {} {}", "[Holder]".blue(), " <->", "[Issuer]".red(), ": Challenge-response protocol to authenticate Holder's DID");
+
+  println!("{} {} ","[Issuer]".red(), ": Generate VC");
   
   let credential: Credential = CredentialBuilder::default()
     .id(Url::parse("https://example.edu/credentials/3732")?)
@@ -84,6 +89,8 @@ async fn main() -> anyhow::Result<()> {
 
   println!("{} {} {}", "[Holder]".blue(), ": Resolve Issuer's DID:", issuer_document.id().as_str());
 
+  println!("{} {} {issuer_document:#}", "[Holder]".blue(), ": Issuer's DID Document:");
+
   println!("{} {}", "[Holder]".blue(), ": Validate VC");
 
   let decoded_jpt = JptCredentialValidator::validate::<_, Object>(
@@ -93,11 +100,15 @@ async fn main() -> anyhow::Result<()> {
       FailFast::FirstError,
     ).unwrap();
 
-  println!("{} {}", "[Verifier]".green(),  "-> [Holder]: Send challenge");
+  println!("{} {}", "[Holder]".blue(), ": Successfull verification");
+
+  println!("{} {} {} {}", "[Holder]".blue(), "->", "[Verifier]".green(), ": Request access with Selective Disclosure of VC attributes");
 
   let challenge: &str = "475a7984-1bb5-4c4c-a56f-822bccd46440";
 
-  println!("{}: Engages in the Selective Disclosure of credential's attributes", "[Holder]".blue());
+  println!("{} {} {} {} {}", "[Verifier]".green(),  "->",  "[Holder]".blue(), ": Send challenge:", challenge);
+
+  println!("{} : Engages in the Selective Disclosure of credential's attributes", "[Holder]".blue());
 
   let method_id = decoded_jpt
   .decoded_jwp
@@ -107,10 +118,12 @@ async fn main() -> anyhow::Result<()> {
 
   let mut selective_disclosure_presentation = SelectiveDisclosurePresentation::new(&decoded_jpt.decoded_jwp);
   selective_disclosure_presentation
-  .conceal_in_subject("degree.name")
+  .conceal_in_subject("GPA")
   .unwrap();
 
-  println!("{} {}", "[Holder]".blue(), ": Compute the Signature Proof of Knowledge and construct the Presentation JPT");
+  selective_disclosure_presentation.conceal_in_subject("name").unwrap();
+
+  println!("{} {}", "[Holder]".blue(), ": Compute the Signature Proof of Knowledge and generate the Presentation/zk_proof (JPT encoded)");
   
   let presentation_jpt: Jpt = issuer_document
   .create_presentation_jpt(
@@ -120,9 +133,9 @@ async fn main() -> anyhow::Result<()> {
     )
   .await?;
 
-  println!("{} {} {} {}", "[Holder]".blue(), " -> [Verifier]".green(),  ": Sending Presentation (as JPT):", presentation_jpt.as_str());
+  println!("{} {} {} {} {}", "[Holder]".blue(), "->",  "[Verifier]".green(),  ": Sending Presentation (as JPT):", presentation_jpt.as_str());
 
-  println!("{}: Resolve Issuer's DID and verifies the Presentation JPT","[Verifier]".green());
+  println!("{}: Resolve Issuer's DID and verifies the Presentation/zk_proof (JPT encoded)","[Verifier]".green());
   
   let mut resolver_web: Resolver<CoreDocument> = Resolver::new();
   let _ = resolver_web.attach_web_handler(client)?;
@@ -132,7 +145,6 @@ async fn main() -> anyhow::Result<()> {
 
   let presentation_validation_options = JptPresentationValidationOptions::default().nonce(challenge);
 
-  // Verifier validate the Presented Credential and retrieve the JwpPresented
   let _decoded_presented_credential = JptPresentationValidator::validate::<_, Object>(
     &presentation_jpt,
     &issuer_document,
@@ -140,7 +152,7 @@ async fn main() -> anyhow::Result<()> {
     FailFast::FirstError,
   ).unwrap();
 
-  println!("{}: Presentation JPT successfully verified", "[Verifier]".green());
+  println!("{}: JPT successfully verified, access granted", "[Verifier]".green());
 
   Ok(())
 }

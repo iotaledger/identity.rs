@@ -1,3 +1,6 @@
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
+
 use std::{collections::HashMap, fs::File, path::Path};
 use examples::{MemStorage, DID_URL, PATH_DID_FILE};
 use identity_iota::{core::{Duration, FromJson, Object, Timestamp, Url}, credential::{Credential, CredentialBuilder, DecodedJwtCredential, DecodedJwtPresentation, FailFast, Jwt, JwtCredentialValidationOptions, JwtCredentialValidator, JwtCredentialValidatorUtils, JwtPresentationOptions, JwtPresentationValidationOptions, JwtPresentationValidator, JwtPresentationValidatorUtils, Presentation, PresentationBuilder, Subject, SubjectHolderRelationship}, did::{CoreDID, DIDJwk, DID}, document::{verifiable::JwsVerificationOptions, CoreDocument}, resolver::Resolver, storage::{DidJwkDocumentExt, JwkMemStore, JwsDocumentExtPQC, JwsSignatureOptions, KeyIdMemstore}, verification::{jws::JwsAlgorithm, MethodScope}};
@@ -45,7 +48,7 @@ async fn main() -> anyhow::Result<()> {
   let (alice_document, fragment_alice) = CoreDocument::new_did_jwk_pqc(
     &storage_alice, 
     JwkMemStore::ML_DSA_KEY_TYPE, 
-    JwsAlgorithm::ML_DSA_87
+    JwsAlgorithm::ML_DSA_44
   ).await?;
 
   println!("{} {} {}", "[Holder]".blue(), ": Create DID Jwk:", alice_document.id().as_str());
@@ -60,11 +63,11 @@ async fn main() -> anyhow::Result<()> {
     "GPA": "4.0",
   }))?;
 
-  println!("{} {} {}", "[Holder]".blue(), ": Inserted Credential subject information: ", serde_json::to_string_pretty(&subject)?);
+  println!("{} {} {} {}", "[Holder]".blue(), "->", "[Issuer]".red(), ": Request Verifiable Credential (VC)");
 
-  println!("{} {} {}", "[Holder]".blue(), " <-> [Issuer]".red(), ": Challenge-response protocol to authenticate Holder's DID");
+  println!("{} {} {}", "[Holder]".blue(), ": Credential information: ", serde_json::to_string_pretty(&subject)?);
 
-  println!("{} {} ","[Issuer]".red(), ": Construct VC");
+  println!("{} {} {} {}", "[Holder]".blue(), "<->", "[Issuer]".red(), ": Challenge-response protocol to authenticate Holder's DID");
   
   let credential: Credential = CredentialBuilder::default()
   .id(Url::parse("https://example.edu/credentials/3732")?)
@@ -81,11 +84,15 @@ async fn main() -> anyhow::Result<()> {
     None,
   ).await?;
 
-  println!("{} {} {} {}", "[Issuer]".red(), " -> [Holder]".blue(), ": Sending VC (as JWT):", credential_jwt.as_str());
+  println!("{} {} {}","[Issuer]".red(), ": Generate VC (JWT encoded): ", credential_jwt.as_str());
+
+  println!("{} {} {} {}", "[Issuer]".red(), "->", "[Holder]".blue(), ": Sending VC");
 
   println!("{} {} {}", "[Holder]".blue(), ": Resolve Issuer's DID:", issuer_document.id().as_str());
 
-  println!("{} {}", "[Holder]".blue(), ": Validate VC");
+  println!("{} {} {issuer_document:#}", "[Holder]".blue(), ": Issuer's DID Document:");
+
+  println!("{} {}", "[Holder]".blue(), ": Verify VC");
 
   JwtCredentialValidator::with_signature_verifier(PQCJwsVerifier::default())
   .validate::<_, Object>(
@@ -95,13 +102,15 @@ async fn main() -> anyhow::Result<()> {
     FailFast::FirstError,
   ).unwrap();
 
-  println!("{} {}", "[Verifier]".green(),  "-> [Holder]: Send challenge");
+  println!("{} {}", "[Holder]".blue(), ": Successfull verification");
+
+  println!("{} {} {} {}", "[Holder]".blue(), "->", "[Verifier]".green(), ": Request access");
 
   let challenge: &str = "475a7984-1bb5-4c4c-a56f-822bccd46440";
 
-  let expires: Timestamp = Timestamp::now_utc().checked_add(Duration::minutes(10)).unwrap();
+  println!("{} {} {} {} {}", "[Verifier]".green(),  "->",  "[Holder]".blue(), ": Send challenge: ", challenge);
 
-  println!("{} {}", "[Holder]".blue(), ": Construct VP");
+  let expires: Timestamp = Timestamp::now_utc().checked_add(Duration::minutes(10)).unwrap();
   
   let presentation: Presentation<Jwt> =PresentationBuilder::new(
     alice_document.id().to_url().into(),
@@ -116,31 +125,21 @@ async fn main() -> anyhow::Result<()> {
     &JwtPresentationOptions::default().expiration_date(expires),
   ).await?;
 
-  println!("{} {} {} {}", "[Holder]".blue(), " -> [Verifier]".green(),  ": Sending VP (as JWT):", presentation_jwt.as_str());
+  println!("{} {} {}", "[Holder]".blue(), ": Generate Verifiable Presentation (VP) (JWT encoded) :", presentation_jwt.as_str());
+  
+  println!("{} {} {} {}", "[Holder]".blue(), "->", "[Verifier]".green(),  ": Sending VP");
 
-  // ===========================================================================
-  // Step 7: Verifier receives the Verifiable Presentation and verifies it.
-  // ===========================================================================
-
-  // The verifier wants the following requirements to be satisfied:
-  // - JWT verification of the presentation (including checking the requested challenge to mitigate replay attacks)
-  // - JWT verification of the credentials.
-  // - The presentation holder must always be the subject, regardless of the presence of the nonTransferable property
-  // - The issuance date must not be in the future.
-
-  println!("{}: Resolve Issuer's DID and verifies the Verifiable Presentation", "[Verifier]".green());
+  println!("{}: Resolve Issuer's DID and Holder's DID to verify the VP", "[Verifier]".green());
 
   let mut resolver: Resolver<CoreDocument> = Resolver::new();
   resolver.attach_did_jwk_handler();
   
-  // Resolve the holder's document.
   let holder_did: DIDJwk = JwtPresentationValidatorUtils::extract_holder::<DIDJwk>(&presentation_jwt)?;
   let holder: CoreDocument = resolver.resolve(&holder_did).await?;
 
   let presentation_verifier_options: JwsVerificationOptions =
   JwsVerificationOptions::default().nonce(challenge.to_owned());
 
-  // Validate presentation. Note that this doesn't validate the included credentials.
   let presentation_validation_options =
     JwtPresentationValidationOptions::default().presentation_verifier_options(presentation_verifier_options);
   let presentation: DecodedJwtPresentation<Jwt> = JwtPresentationValidator::with_signature_verifier(
@@ -148,7 +147,6 @@ async fn main() -> anyhow::Result<()> {
   )
   .validate(&presentation_jwt, &holder, &presentation_validation_options)?;
 
-  // Concurrently resolve the issuers' documents.
   let jwt_credentials: &Vec<Jwt> = &presentation.presentation.verifiable_credential;
 
   let mut resolver_web: Resolver<CoreDocument> = Resolver::new();
@@ -160,14 +158,12 @@ async fn main() -> anyhow::Result<()> {
     .collect::<Result<Vec<CoreDID>, _>>()?;
   let issuers_documents: HashMap<CoreDID, CoreDocument> = resolver_web.resolve_multiple(&issuers).await?;
 
-  // Validate the credentials in the presentation.
   let credential_validator: JwtCredentialValidator<PQCJwsVerifier> =
     JwtCredentialValidator::with_signature_verifier(PQCJwsVerifier::default());
   let validation_options: JwtCredentialValidationOptions = JwtCredentialValidationOptions::default()
     .subject_holder_relationship(holder_did.to_url().into(), SubjectHolderRelationship::AlwaysSubject);
 
   for (index, jwt_vc) in jwt_credentials.iter().enumerate() {
-    // SAFETY: Indexing should be fine since we extracted the DID from each credential and resolved it.
     let issuer_document: &CoreDocument = &issuers_documents[&issuers[index]];
 
     let _decoded_credential: DecodedJwtCredential<Object> = credential_validator
@@ -175,7 +171,7 @@ async fn main() -> anyhow::Result<()> {
       .unwrap();
   }
 
-  println!("{}: Verifiable Presentation successfully verified", "[Verifier]".green());
+  println!("{}: VP successfully verified, access granted", "[Verifier]".green());
 
   Ok(())
 }
