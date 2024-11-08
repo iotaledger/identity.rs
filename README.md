@@ -23,16 +23,18 @@ This repository extends IOTA Identity by implementing both pure **Post-Quantum (
 
 # did:compositejwk
 
-Refer to [did:compositejwk](https://github.com/Cybersecurity-LINKS/zkryptium) specification for all details.
+The transition to PQC is a delicate and lengthy process. Today, the Distributed Ledger Technologies (DLT) that underpin decentralised identity are not yet quantum-secure, so this repository extends the IOTA Identity library with a new DID method called `did:compositejwk` for Holders to use PQ/T hybrid signatures. Refer to [did:compositejwk](https://github.com/Cybersecurity-LINKS/did-compositejwk/blob/main/spec.md) specification for the details.
+
+**Note**: this repository also extends the existing `did:jwk` method to deal with pure PQ keys and signatures (ML-DSA, SLH-DSA and FALCON), and adds a simple `did:web` method for the Issuers. 
 
 # Zero-Knowledge (ZK)
 
-The IOTA Identity Framework now supports Zero-Knowledge functionalities, thanks to the [integration](https://github.com/iotaledger/identity.rs/pull/1285) of two key components:
+The IOTA Identity now supports Zero-Knowledge functionalities, thanks to the [integration](https://github.com/iotaledger/identity.rs/pull/1285) of two key components:
 
-* **BBS+ Signature Scheme**: This scheme has been integrated through the [ZKryptium](https://github.com/Cybersecurity-LINKS/zkryptium) library, allowing for secure and privacy-preserving credential management.
-* **JSON Web Proof Representation**: The [json-proof-token](https://github.com/Cybersecurity-LINKS/json-proof-token) library implements the JSON Web Proof specification, enabling verifiable claims with selective disclosure.
+* **BBS+ Signature**: the scheme has been integrated through the [ZKryptium](https://github.com/Cybersecurity-LINKS/zkryptium) library for secure and privacy-preserving VC management with ZK selective disclosure.
+* **JSON Web Proof Representation**: the [json-proof-token](https://github.com/Cybersecurity-LINKS/json-proof-token) library implements the JSON Web Proof specification, enabling verifiable claims with selective disclosure.
 
-For more details on the implementation and how to use these features, you can find the full documentation [here](https://wiki.iota.org/identity.rs/how-tos/verifiable-credentials/zero-knowledge-selective-disclosure/).
+For more details on the implementation and how to use these features, refer to the [full documentation](https://wiki.iota.org/identity.rs/how-tos/verifiable-credentials/zero-knowledge-selective-disclosure/).
 
 # Examples
 
