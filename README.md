@@ -34,7 +34,7 @@ The IOTA Identity now supports Zero-Knowledge functionalities, thanks to the [in
 * **BBS+ Signature**: the scheme has been integrated through the [ZKryptium](https://github.com/Cybersecurity-LINKS/zkryptium) library for secure and privacy-preserving VC management with ZK selective disclosure.
 * **JSON Web Proof Representation**: the [json-proof-token](https://github.com/Cybersecurity-LINKS/json-proof-token) library implements the JSON Web Proof (JWP) specification, enabling verifiable claims with selective disclosure.
 
-For more details on the implementation and how to use these features, refer to the [full documentation](https://wiki.iota.org/identity.rs/how-tos/verifiable-credentials/zero-knowledge-selective-disclosure/).
+**Note**: the BBS+ signature scheme uses traditional cryptography, hence it is not quantum-secure; for more details on the implementation and how to use these features, refer to the [full documentation](https://wiki.iota.org/identity.rs/how-tos/verifiable-credentials/zero-knowledge-selective-disclosure/).
 
 # Examples
 
