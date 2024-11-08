@@ -1,13 +1,12 @@
-# Post-Quantum/Traditional (PQ/T) hybrid VCs
-This repository extends IOTA Identity by implementing both pure **Post-Quantum (PQ)** and **Post-Quantum/Traditional (PQ/T) hybrid** VCs with a crypto-agility approach.
+# Post-Quantum (PQ) and Post-Quantum/Traditional (PQ/T) hybrid signatures for VCs
+This repository extends IOTA Identity by implementing both pure **Post-Quantum (PQ)** and **Post-Quantum/Traditional (PQ/T) hybrid** signatures and JWT encoding for VCs with a crypto-agility approach.
 
 ### Overview
 
-1. **PQ Approach**: To transition to quantum-resistant cryptography, the framework has been updated to support selected PQ signature algorithms, such as [**ML-DSA**](https://csrc.nist.gov/pubs/fips/204/final), [**SLH-DSA**](https://csrc.nist.gov/pubs/fips/205/final) and [**FALCON**](https://falcon-sign.info/). The implementation of these algorithms is provided by [**liboqs**](https://github.com/open-quantum-safe/liboqs-rust).
+1. **PQ Signatures**: IOTA Identity extends its support for selected PQ signature algorithms, such as [ML-DSA](https://csrc.nist.gov/pubs/fips/204/final), [SLH-DSA](https://csrc.nist.gov/pubs/fips/205/final) and [FALCON](https://falcon-sign.info/). The implementation of these algorithms is provided by [liboqs](https://github.com/open-quantum-safe/liboqs-rust).
 
-2. **PQ/T Hybrid Approach**: To mitigate risks associated with the relative immaturity of certain PQ algorithms, the PQ/T Hybrid combines a PQ algorithm with a traditional one in a composite signature. This ensures secure authentication, even if one of the two algorithms becomes compromised.
-   - **Hybrid Signatures and Composite Key**: In the PQ/T Hybrid approach, both PQ and traditional keys are managed and verified using the newly introduced [verification material property](https://www.w3.org/TR/did-core/#verification-material) type called `compositeJwk`, which stores both types of keys within the DID document. This setup enforces the non-separability of signatures, protecting against stripping attacks.
-   - **Supported Algorithms**: Currently, there are two supported algorithms: **id-MLDSA44-Ed25519-SHA512** and **id-MLDSA65-Ed25519-SHA512**. The first combines ML-DSA-44 with Ed25519, while the second combines ML-DSA-65 with Ed25519.
+2. **PQ/T hybrid Signatures**: mitigate risks associated with the relative immaturity of Post-Quantum Cryptography (PQC), IOTA Identity extends its support for PQ/T hybrid signatures. The hybrid scheme combines a PQ signature with a Traditional signature in a single composite signature. This ensures secure authentication, even if one of the two algorithms becomes compromised. The PQ/T hybrid signature requires a PQ/T hybrid key pair; the PQ/T hybrid public key is handled using the newly introduced [verification material property](https://www.w3.org/TR/did-core/#verification-material) type called `compositeJwk`, which stores both types of public keys within the DID document. This setup enforces the `Weak Non-Separability` (WSN) property of signatures, protecting against stripping attack.
+   - **Supported Algorithms**: Currently, the implmentation supports **id-MLDSA44-Ed25519-SHA512** and **id-MLDSA65-Ed25519-SHA512** algorithms. The first combines ML-DSA-44 with Ed25519 signatures, while the second combines ML-DSA-65 with Ed25519 signatures.
 
 # Examples
 
