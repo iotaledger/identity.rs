@@ -5,7 +5,6 @@ import * as ed from "@noble/ed25519";
 import { decodeB64, encodeB64, Jwk, JwkGenOutput, JwkStorage, ProofAlgorithm, ProofUpdateCtx, JwkStoragePQ } from "~identity_wasm";
 import { EdCurve, JwkType, JwsAlgorithm } from "./jose";
 import { ml_dsa44, ml_dsa65, ml_dsa87 } from '@noble/post-quantum/ml-dsa';
-//import {  } from "../node/jose";
 
 type Ed25519PrivateKey = Uint8Array;
 type Ed25519PublicKey = Uint8Array;
@@ -20,7 +19,6 @@ export class JwkMemStore implements JwkStorage,  JwkStoragePQ{
     }
 
     public async generatePQKey(keyType: String, algorithm: JwsAlgorithm):  Promise<JwkGenOutput> {
-        console.log("Inside generatePQ");
         if (keyType !== JwkMemStore.mldsaKeyType()) {
             throw new Error(`unsupported key type ${keyType}`);
         }
@@ -93,7 +91,7 @@ export class JwkMemStore implements JwkStorage,  JwkStoragePQ{
     }
 
     public async sign(keyId: string, data: Uint8Array, publicKey: Jwk): Promise<Uint8Array> {
-        if (!publicKey.alg() || publicKey.alg() !== JwsAlgorithm.EdDSA) {
+        if (publicKey.alg()! !== JwsAlgorithm.EdDSA) {
             throw new Error("unsupported JWS algorithm");
         } else {
             if (publicKey.paramsOkp()?.crv !== (EdCurve.Ed25519 as string)) {
@@ -148,8 +146,6 @@ async function encodeJwk(
     publicKey: Uint8Array,
     alg: JwsAlgorithm
 ): Promise<Jwk | undefined> {
-    // const publicKey = await ed25519.getPublicKey(privateKey);
-    console.log("Inside encodeJwk");
     const x = encodeB64(publicKey);
     const d = encodeB64(privateKey);
 
@@ -215,7 +211,6 @@ function decodeJwk(jwk: Jwk): [Uint8Array, Uint8Array] {
     }
 }
 
-//TODO: non sembra servire a nulla
 export interface JwkStorageBBSPlusExt {
     // Generate a new BLS12381 key represented as a JSON Web Key.
     generateBBS: (algorithm: ProofAlgorithm) => Promise<JwkGenOutput>;
