@@ -1,7 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::stronghold_jwk_storage::IDENTITY_CLIENT_PATH;
+use crate::utils::IDENTITY_CLIENT_PATH;
 use crate::StrongholdStorage;
 use async_trait::async_trait;
 use identity_storage::key_id_storage::KeyIdStorage;

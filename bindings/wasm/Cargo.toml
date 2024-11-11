@@ -1,6 +1,6 @@
 [package]
 name = "identity_wasm"
-version = "1.2.0"
+version = "1.4.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -18,10 +18,13 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 anyhow = "1.0.75"
 async-trait = { version = "0.1", default-features = false }
+bls12_381_plus = "0.8.17"
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
+identity_ecdsa_verifier = { path = "../../identity_ecdsa_verifier", default-features = false, features = ["es256", "es256k"] }
 identity_eddsa_verifier = { path = "../../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 js-sys = { version = "0.3.61" }
+json-proof-token = "0.3.4"
 proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", branch = "main" }
 serde = { version = "1.0", features = ["derive"] }
@@ -33,6 +36,7 @@ tokio = { version = "=1.39.2", default-features = false, features = ["sync"] }
 tsify = "0.4.5"
 wasm-bindgen = { version = "0.2.85", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
+zkryptium = "0.2.2"
 
 [dependencies.identity_iota]
 path = "../../identity_iota"
@@ -44,6 +48,7 @@ features = [
     "domain-linkage",
     "sd-jwt",
     "status-list-2021",
+    "jpt-bbs-plus",
     "identity-sui-name-tbd",
 ]
 
@@ -57,3 +62,8 @@ instant = { version = "0.1", default-features = false, features = ["wasm-bindgen
 [profile.release]
 opt-level = 's'
 lto = true
+
+[lints.clippy]
+# can be removed as soon as fix has been added to clippy
+# see https://github.com/rust-lang/rust-clippy/issues/12377
+empty_docs = "allow"

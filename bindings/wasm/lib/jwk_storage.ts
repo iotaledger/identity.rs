@@ -1,5 +1,5 @@
 import * as ed from "@noble/ed25519";
-import { decodeB64, encodeB64, Jwk, JwkGenOutput, JwkStorage } from "~identity_wasm";
+import { decodeB64, encodeB64, Jwk, JwkGenOutput, JwkStorage, ProofAlgorithm, ProofUpdateCtx } from "~identity_wasm";
 import { EdCurve, JwkType, JwsAlgorithm } from "./jose";
 
 type Ed25519PrivateKey = Uint8Array;
@@ -16,6 +16,10 @@ export class JwkMemStore implements JwkStorage {
 
     public static ed25519KeyType(): string {
         return "Ed25519";
+    }
+
+    private _get_key(keyId: string): Jwk | undefined {
+        return this._keys.get(keyId);
     }
 
     public async generate(keyType: string, algorithm: JwsAlgorithm): Promise<JwkGenOutput> {
@@ -124,6 +128,23 @@ function decodeJwk(jwk: Jwk): [Ed25519PrivateKey, Ed25519PublicKey] {
     } else {
         throw new Error("expected Okp params");
     }
+}
+
+export interface JwkStorageBBSPlusExt {
+    // Generate a new BLS12381 key represented as a JSON Web Key.
+    generateBBS: (algorithm: ProofAlgorithm) => Promise<JwkGenOutput>;
+    /** Signs a chunk of data together with an optional header
+     * using the private key corresponding to the given `keyId` and according
+     * to `publicKey`'s requirements.
+     */
+    signBBS: (keyId: string, data: Uint8Array[], publicKey: Jwk, header?: Uint8Array) => Promise<Uint8Array>;
+    // Updates the timeframe validity period information of a given signature.
+    updateBBSSignature: (
+        keyId: string,
+        publicKey: Jwk,
+        signature: Uint8Array,
+        proofCtx: ProofUpdateCtx,
+    ) => Promise<Uint8Array>;
 }
 
 // Returns a random number between `min` and `max` (inclusive).

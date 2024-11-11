@@ -8,23 +8,28 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use anyhow::Context;
+use identity_iota_core::IotaDID;
 use identity_jose::jwk::Jwk;
 use identity_jose::jws::JwsAlgorithm;
 use identity_storage::JwkMemStore;
 use identity_storage::JwkStorage;
 use identity_storage::KeyId;
 use identity_storage::KeyIdMemstore;
+use identity_storage::KeyIdStorage;
 use identity_storage::KeyType;
+use identity_storage::MethodDigest;
 use identity_storage::Storage;
 use identity_storage::StorageSigner;
 use identity_sui_name_tbd::client::{IdentityClient, IdentityClientAdapter};
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
+use identity_sui_name_tbd::iota_sdk_adapter::IdentityMoveCallsAdapter;
 use identity_sui_name_tbd::utils::request_funds;
 use identity_sui_name_tbd::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
 use identity_sui_name_tbd::iota_sdk_abstraction::types::base_types::IotaAddress;
 use identity_sui_name_tbd::iota_sdk_abstraction::types::base_types::ObjectID;
 use identity_sui_name_tbd::iota_sdk_abstraction::IotaClientTraitCore;
 use identity_sui_name_tbd::iota_sdk_adapter::IotaClientAdapter;
+use identity_verification::VerificationMethod;
 use iota_sdk::IotaClient;
 use iota_sdk::IotaClientBuilder;
 use jsonpath_rust::JsonPathQuery;
@@ -390,5 +395,25 @@ impl<C: IotaClientTraitCore> TestClient<C> {
     request_funds(&user_client.sender_address()).await?;
 
     Ok(user_client)
+  }
+
+  pub async fn store_key_id_for_verification_method(
+    &self,
+    identity_client: IdentityClient<StorageSigner<'_, JwkMemStore, KeyIdMemstore>, IotaClientAdapter, IdentityMoveCallsAdapter>,
+    did: IotaDID,
+  ) -> anyhow::Result<()> {
+    let public_key = identity_client.signer().public_key();
+    let key_id = identity_client.signer().key_id();
+    let fragment = key_id.as_str();
+    let method = VerificationMethod::new_from_jwk(did, public_key.clone(), Some(fragment))?;
+    let method_digest: MethodDigest = MethodDigest::new(&method)?;
+
+    self
+      .storage
+      .key_id_storage()
+      .insert_key_id(method_digest, key_id.clone())
+      .await?;
+
+    Ok(())
   }
 }

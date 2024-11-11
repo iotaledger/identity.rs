@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use std::borrow::Cow;
 
+use identity_did::DIDJwk;
 use identity_jose::jwk::Jwk;
 use serde::de;
 use serde::Deserialize;
@@ -220,7 +221,7 @@ impl VerificationMethod {
     MethodBuilder::default()
       .id(id)
       .controller(did.into())
-      .type_(MethodType::JSON_WEB_KEY)
+      .type_(MethodType::JSON_WEB_KEY_2020)
       .data(MethodData::PublicKeyJwk(key))
       .build()
   }
@@ -244,6 +245,14 @@ impl KeyComparable for VerificationMethod {
   #[inline]
   fn key(&self) -> &Self::Key {
     self.id()
+  }
+}
+
+impl TryFrom<DIDJwk> for VerificationMethod {
+  type Error = Error;
+  fn try_from(did: DIDJwk) -> Result<Self, Self::Error> {
+    let jwk = did.jwk();
+    Self::new_from_jwk(did, jwk, Some("0"))
   }
 }
 

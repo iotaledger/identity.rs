@@ -123,7 +123,7 @@ impl StatusList2021Credential {
   ///
   /// ## Note:
   /// - A revoked credential cannot ever be unrevoked and will lead to a
-  /// [`StatusList2021CredentialError::UnreversibleRevocation`].
+  ///   [`StatusList2021CredentialError::UnreversibleRevocation`].
   /// - Trying to set `revoked_or_suspended` to `false` for an already valid credential will have no impact.
   pub fn set_credential_status(
     &mut self,
@@ -279,7 +279,7 @@ impl StatusList2021CredentialSubject {
       return Err(StatusList2021CredentialError::MultipleCredentialSubject);
     };
     if let Some(subject_type) = subject.properties.get("type") {
-      if !subject_type.as_str().is_some_and(|t| t == CREDENTIAL_SUBJECT_TYPE) {
+      if subject_type.as_str() != Some(CREDENTIAL_SUBJECT_TYPE) {
         return Err(StatusList2021CredentialError::InvalidProperty("credentialSubject.type"));
       }
     } else {

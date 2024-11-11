@@ -3,14 +3,8 @@ use std::ops::Deref;
 use std::str::FromStr as _;
 
 use crate::client::IdentityClient;
-use crate::iota_sdk_abstraction::{AssetMoveCalls, AssetMoveCallsCore, IdentityMoveCallsCore, IotaKeySignature};
-use crate::transaction::Transaction;
-use crate::utils::MoveType;
-use crate::Error;
-use anyhow::anyhow;
-use anyhow::Context;
-use async_trait::async_trait;
-use crate::iota_sdk_abstraction::IotaClientTraitCore;
+use crate::ident_str;
+use crate::iota_sdk_abstraction::move_types::language_storage::StructTag;
 use crate::iota_sdk_abstraction::rpc_types::IotaData as _;
 use crate::iota_sdk_abstraction::rpc_types::IotaExecutionStatus;
 use crate::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
@@ -21,8 +15,17 @@ use crate::iota_sdk_abstraction::types::base_types::SequenceNumber;
 use crate::iota_sdk_abstraction::types::id::UID;
 use crate::iota_sdk_abstraction::types::object::Owner;
 use crate::iota_sdk_abstraction::types::TypeTag;
-use crate::iota_sdk_abstraction::move_types::language_storage::StructTag;
-use crate::ident_str;
+use crate::iota_sdk_abstraction::AssetMoveCalls;
+use crate::iota_sdk_abstraction::AssetMoveCallsCore;
+use crate::iota_sdk_abstraction::IdentityMoveCallsCore;
+use crate::iota_sdk_abstraction::IotaClientTraitCore;
+use crate::iota_sdk_abstraction::IotaKeySignature;
+use crate::transaction::Transaction;
+use crate::utils::MoveType;
+use crate::Error;
+use anyhow::anyhow;
+use anyhow::Context;
+use async_trait::async_trait;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -46,6 +49,7 @@ pub struct AuthenticatedAsset<T, M> {
   mutable: bool,
   transferable: bool,
   deletable: bool,
+  #[serde(skip)]
   phantom: PhantomData<M>,
 }
 
@@ -68,8 +72,8 @@ impl<T, M> AuthenticatedAsset<T, M>
 where
   T: DeserializeOwned,
 {
-    /// Resolves an [`AuthenticatedAsset`] by its ID `id`.
-    pub async fn get_by_id<C: IotaClientTraitCore>(id: ObjectID, client: &C) -> Result<Self, Error> {
+  /// Resolves an [`AuthenticatedAsset`] by its ID `id`.
+  pub async fn get_by_id<C: IotaClientTraitCore>(id: ObjectID, client: &C) -> Result<Self, Error> {
     let res = client
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
@@ -89,7 +93,7 @@ where
 }
 
 impl<T, M> AuthenticatedAsset<T, M>
-where 
+where
   M: AssetMoveCallsCore,
 {
   async fn object_ref<C: IotaClientTraitCore>(&self, client: &C) -> Result<ObjectRef, Error> {
@@ -167,7 +171,8 @@ where
 
 /// Builder-style struct to ease the creation of a new [`AuthenticatedAsset`].
 #[derive(Debug)]
-pub struct AuthenticatedAssetBuilder<T, M> {
+pub struct AuthenticatedAssetBuilder<T, M> 
+{
   inner: T,
   mutable: bool,
   transferable: bool,
@@ -228,7 +233,6 @@ impl<T, M> AuthenticatedAssetBuilder<T, M> {
   }
 }
 
-
 #[cfg(not(target_arch = "wasm32"))]
 pub type TransferProposalCore = TransferProposal<crate::iota_sdk_adapter::AssetMoveCallsAdapter>;
 
@@ -238,12 +242,12 @@ pub type TransferProposalCore = TransferProposal<crate::iota_sdk_adapter::AssetM
 /// A [`TransferProposal`] is a **shared** _Move_ object that represents a request to transfer ownership
 /// of an [`AuthenticatedAsset`] to a new owner.
 ///
-/// When a [`TransferProposal`] is created, it will seize the asset and send a `SenderCap` token to the current asset's owner
-/// and a `RecipientCap` to the specified `recipient` address.
-/// `recipient` can accept the transfer by presenting its `RecipientCap` (this prevents other users from claiming the asset
-/// for themselves).
-/// The current owner can cancel the proposal at any time - given the transfer hasn't been conclued yet - by presenting its
-/// `SenderCap`.
+/// When a [`TransferProposal`] is created, it will seize the asset and send a `SenderCap` token to the current asset's
+/// owner and a `RecipientCap` to the specified `recipient` address.
+/// `recipient` can accept the transfer by presenting its `RecipientCap` (this prevents other users from claiming the
+/// asset for themselves).
+/// The current owner can cancel the proposal at any time - given the transfer hasn't been concluded yet - by presenting
+/// its `SenderCap`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransferProposal<M> {
   id: UID,
@@ -253,6 +257,7 @@ pub struct TransferProposal<M> {
   recipient_cap_id: ObjectID,
   recipient_address: IotaAddress,
   done: bool,
+  #[serde(skip)]
   phantom: PhantomData<M>,
 }
 
@@ -357,8 +362,8 @@ impl<M: AssetMoveCallsCore> TransferProposal<M> {
   /// Concludes or cancels this [`TransferProposal`].
   /// # Warning
   /// * This operation only has an effects when it's invoked by this [`TransferProposal`]'s `sender`.
-  /// * Accepting a [`TransferProposal`] **doesn't** consume it from the ledger. This function must be used
-  ///   to correctly consume both [`TransferProposal`] and `SenderCap`.
+  /// * Accepting a [`TransferProposal`] **doesn't** consume it from the ledger. This function must be used to correctly
+  ///   consume both [`TransferProposal`] and `SenderCap`.
   pub fn conclude_or_cancel(self) -> ConcludeTransferTx<M> {
     ConcludeTransferTx(self)
   }
@@ -571,7 +576,7 @@ pub struct AcceptTransferTx<M>(TransferProposal<M>);
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl<M> Transaction for AcceptTransferTx<M>
-where 
+where
   M: AssetMoveCallsCore + Send + Sync,
 {
   type Output = ();
@@ -623,7 +628,7 @@ pub struct ConcludeTransferTx<M>(TransferProposal<M>);
 #[cfg_attr(feature = "send-sync-transaction", async_trait)]
 impl<M> Transaction for ConcludeTransferTx<M>
 where
-    M: AssetMoveCallsCore + Send + Sync,
+  M: AssetMoveCallsCore + Send + Sync,
 {
   type Output = ();
   async fn execute_with_opt_gas<S, C, MID>(

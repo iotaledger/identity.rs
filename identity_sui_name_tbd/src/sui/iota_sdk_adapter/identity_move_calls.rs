@@ -31,6 +31,7 @@ use crate::ident_str;
 
 use super::TransactionBuilderAdapter;
 
+#[derive(Clone)]
 pub struct IdentityMoveCallsRustSdk {}
 
 impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
