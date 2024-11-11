@@ -1,3 +1,6 @@
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
 import * as ed from "@noble/ed25519";
 import { decodeB64, encodeB64, Jwk, JwkGenOutput, JwkStorage, ProofAlgorithm, ProofUpdateCtx, JwkStoragePQ } from "~identity_wasm";
 import { EdCurve, JwkType, JwsAlgorithm } from "./jose";
