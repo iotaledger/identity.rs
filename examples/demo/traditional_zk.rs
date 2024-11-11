@@ -137,7 +137,7 @@ async fn main() -> anyhow::Result<()> {
 
   println!("{} {} {} {} {}", "[Holder]".blue(), "->",  "[Verifier]".green(),  ": Sending Presentation (as JPT):", presentation_jpt.as_str());
 
-  println!("{}: Resolve Issuer's DID and verifies the Presentation/zk_proof (JPT encoded)","[Verifier]".green());
+  println!("{} : Resolve Issuer's DID and verifies the Presentation/zk_proof (JPT encoded)","[Verifier]".green());
   
   let mut resolver_web: Resolver<CoreDocument> = Resolver::new();
   let _ = resolver_web.attach_web_handler(client)?;
@@ -154,7 +154,7 @@ async fn main() -> anyhow::Result<()> {
     FailFast::FirstError,
   ).unwrap();
 
-  println!("{}: JPT successfully verified, access granted", "[Verifier]".green());
+  println!("{} : JPT successfully verified, access granted", "[Verifier]".green());
 
   Ok(())
 }

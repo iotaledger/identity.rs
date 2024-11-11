@@ -131,7 +131,7 @@ async fn main() -> anyhow::Result<()> {
   
   println!("{} {} {} {}", "[Holder]".blue(), "->", "[Verifier]".green(),  ": Sending VP");
 
-  println!("{}: Resolve Issuer's DID and Holder's DID to verify the VP", "[Verifier]".green());
+  println!("{} : Resolve Issuer's DID and Holder's DID to verify the VP", "[Verifier]".green());
 
   let mut resolver: Resolver<CoreDocument> = Resolver::new();
   resolver.attach_did_jwk_handler();
@@ -174,7 +174,7 @@ async fn main() -> anyhow::Result<()> {
       .unwrap();
   }
 
-  println!("{}: VP successfully verified, access granted", "[Verifier]".green());
+  println!("{} : VP successfully verified, access granted", "[Verifier]".green());
 
   Ok(())
 }
