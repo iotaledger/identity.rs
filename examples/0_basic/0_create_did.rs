@@ -1,10 +1,10 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples_kinesis::create_kinesis_did_document;
-use examples_kinesis::get_client_and_create_account;
+use examples::create_kinesis_did_document;
+use examples::get_client_and_create_account;
 
-use examples_kinesis::get_memstorage;
+use examples::get_memstorage;
 
 /// Demonstrates how to create a DID Document and publish it on chain.
 ///

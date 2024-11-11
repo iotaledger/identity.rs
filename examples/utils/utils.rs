@@ -31,8 +31,6 @@ use rand::distributions::DistString;
 use secret_storage::Signer;
 use serde_json::Value;
 
-pub static API_ENDPOINT: &str = "http://localhost";
-pub static FAUCET_ENDPOINT: &str = "http://localhost/faucet/api/enqueue";
 pub const TEST_GAS_BUDGET: u64 = 50_000_000;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
@@ -107,7 +105,9 @@ where
     .and_then(|pkg_str| pkg_str.parse().context("invalid package id"))?;
 
   let read_only_client = IdentityClientReadOnly::new(iota_client, package_id).await?;
+
   let signer = StorageSigner::new(storage, generate.key_id, public_key_jwk);
+
   let identity_client = IdentityClient::new(read_only_client, signer).await?;
 
   Ok(identity_client)

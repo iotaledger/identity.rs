@@ -1,26 +1,27 @@
 [package]
-name = "examples_kinesis"
-version = "1.2.0"
+name = "examples"
+version = "1.4.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 publish = false
 
 [dependencies]
 anyhow = "1.0.62"
-identity_eddsa_verifier = { path = "../../identity_eddsa_verifier", default-features = false, features = [
+identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false, features = [
   "ed25519",
 ] }
-identity_storage = { path = "../../identity_storage" }
-identity_stronghold = { path = "../../identity_stronghold", default-features = false, features = [
+identity_storage = { path = "../identity_storage" }
+identity_stronghold = { path = "../identity_stronghold", default-features = false, features = [
   "send-sync-storage",
 ] }
-identity_sui_name_tbd = { path = "../../identity_sui_name_tbd" }
+identity_sui_name_tbd = { path = "../identity_sui_name_tbd" }
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.0-alpha" }
 iota-sdk-legacy = { package = "iota-sdk", version = "1.0", default-features = false, features = [
   "tls",
   "client",
   "stronghold",
 ] }
+json-proof-token.workspace = true
 primitive-types = "0.12.1"
 rand = "0.8.5"
 sd-jwt-payload = { version = "0.2.1", default-features = false, features = [
@@ -31,7 +32,7 @@ serde_json = { version = "1.0", default-features = false }
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
 
 [dependencies.identity_iota]
-path = "../../identity_iota"
+path = "../identity_iota"
 default-features = false
 features = [
   "iota-client",
@@ -64,9 +65,6 @@ name = "2_resolve_did"
 path = "0_basic/3_deactivate_did.rs"
 name = "3_deactivate_did"
 
-# [[example]]
-# path = "0_basic/4_delete_did.rs"
-# name = "4_delete_did"
 
 [[example]]
 path = "0_basic/5_create_vc.rs"
@@ -83,22 +81,6 @@ name = "7_revoke_vc"
 [[example]]
 path = "0_basic/8_stronghold.rs"
 name = "8_stronghold"
-
-# [[example]]
-# path = "1_advanced/0_did_controls_did.rs"
-# name = "0_did_controls_did"
-
-# [[example]]
-# path = "1_advanced/1_did_issues_nft.rs"
-# name = "1_did_issues_nft"
-
-# [[example]]
-# path = "1_advanced/2_nft_owns_did.rs"
-# name = "2_nft_owns_did"
-
-# [[example]]
-# path = "1_advanced/3_did_issues_tokens.rs"
-# name = "3_did_issues_tokens"
 
 [[example]]
 path = "1_advanced/4_alias_output_history.rs"
@@ -119,3 +101,15 @@ name = "7_sd_jwt"
 [[example]]
 path = "1_advanced/8_status_list_2021.rs"
 name = "8_status_list_2021"
+
+[[example]]
+path = "1_advanced/9_zkp.rs"
+name = "9_zkp"
+
+[[example]]
+path = "1_advanced/10_zkp_revocation.rs"
+name = "10_zkp_revocation"
+
+[[example]]
+path = "1_advanced/11_linked_verifiable_presentation.rs"
+name = "11_linked_verifiable_presentation"
