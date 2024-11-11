@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use crate::jose::jwk::Jwk;
 use identity_jose::jwk::CompositeJwk;
 use core::fmt::Debug;
@@ -72,7 +76,6 @@ impl MethodData {
     }
   }
 
-  //TODO: hybrid - return CompositePublicKey
   /// Returns the wrapped `CompositePublicKey` if the format is [`MethodData::CompositePublicKey`].
   pub fn composite_public_key(&self) -> Option<&CompositeJwk> {
     if let Self::CompositeJwk(ref c) = self {

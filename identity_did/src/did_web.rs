@@ -1,4 +1,5 @@
-//TODO: Web - WebDID
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
 
 use std::{fmt::{Display, Formatter}, str::FromStr};
 
@@ -41,9 +42,7 @@ impl WebDID {
       });
 
       let did_web = format!("did:{}:{}{}{}", Self::METHOD, domain, port, path);
-      println!("DID Web: {}", did_web);
       let core_did = CoreDID::parse(did_web).map_err(|_| Error::Other("Cannot convert to CoreDID"))?;
-      println!("{}",core_did);
       Ok(Self(core_did))
 
     } else {
@@ -139,9 +138,7 @@ impl WebDID {
     Ok(url)
   }
 
-  // did:web:cybersecurity-links.github.io%3A3000:did-web-server:.well-known:did.json
-
-  /// cybersecurity-links.github.io%3A3000:did-web-server:.well-known:did.json -> https:://cybersecurity-links.github.io:3000/did-web-server/.well-known/did.json
+  /// example.github.io%3A3000:did-web-server:.well-known:did.json -> https:://example.github.io:3000/did-web-server/.well-known/did.json
   #[inline(always)]
   fn denormalized_components(input: &str) -> (String, Option<String>, Option<String>) {
 

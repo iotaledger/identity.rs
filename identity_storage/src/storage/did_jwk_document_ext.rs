@@ -1,3 +1,6 @@
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_did::{DIDCompositeJwk, DIDJwk};
 use identity_document::document::CoreDocument;
 use identity_verification::{jwk::{CompositeAlgId, CompositeJwk}, jws::JwsAlgorithm, jwu::encode_b64_json};

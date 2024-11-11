@@ -1,3 +1,6 @@
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_jose::jwk::Jwk;
 use identity_jose::jws::JwsAlgorithm;
 use identity_jose::jws::JwsVerifier;

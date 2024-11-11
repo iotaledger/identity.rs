@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use zeroize::Zeroize;
 
 use super::BlsCurve;
@@ -29,7 +33,6 @@ pub enum JwkParams {
   /// Octet Key Pairs parameters.
   Okp(JwkParamsOkp),
 
-  //TODO: PQ - new JwkParams
   /// ML-DSA parameters
   MLDSA(JwkParamsPQ),
   /// SLH-DSA parameters

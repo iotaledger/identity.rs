@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use core::fmt::Display;
 use core::fmt::Formatter;
 use std::borrow::Cow;
@@ -237,14 +241,6 @@ impl VerificationMethod {
 
   /// Creates a new [`VerificationMethod`] from the given `did` and [`CompositeJwk`]. If `fragment` is not given
   /// the `kid` value of the given `key` will be used, if present, otherwise an error is returned.
-  ///
-  /// # Recommendations
-  /// The following recommendations are essentially taken from the `publicKeyJwk` description from
-  /// the [DID specification](https://www.w3.org/TR/did-core/#dfn-publickeyjwk):
-  /// - It is recommended that verification methods that use [`CompositeJwk`](CompositeJwk) to represent their public keys use the value
-  ///   of `kid` as their fragment identifier. This is done automatically if `None` is passed in as the fragment.
-  /// - It is recommended that [`CompositeJwk`] kid values are set to the public key fingerprint. See
-  ///   [`CompositeJwk::thumbprint_sha256_b64`](CompositeJwk::thumbprint_sha256_b64).
   pub fn new_from_compositejwk<D: DID>(did: D, key: CompositeJwk, fragment: Option<&str>) -> Result<Self> {
     // Can i use ~ in a URI safely since is an unreserved character (https://www.rfc-editor.org/rfc/rfc3986#section-2.3)
     let composite_fragment = key.traditional_public_key()

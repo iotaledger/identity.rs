@@ -1,3 +1,6 @@
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
+
 use std::{collections::HashMap, fs::File, path::Path};
 
 use examples::{create_did, random_stronghold_path, MemStorage, API_ENDPOINT};
