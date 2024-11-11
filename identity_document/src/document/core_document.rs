@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use core::convert::TryInto as _;
 use core::fmt::Display;
 use core::fmt::Formatter;
@@ -36,7 +40,6 @@ use identity_verification::MethodRef;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
-
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[rustfmt::skip]
@@ -1052,8 +1055,6 @@ impl CoreDocument {
   }
 }
 
-
-//TODO: expand_composite_jwk
 impl CoreDocument {
   /// Creates a [`CoreDocument`] from a did:jwk DID.
   pub fn expand_did_compositejwk(did_compositejwk: DIDCompositeJwk) -> Result<Self, Error> {
@@ -1071,9 +1072,8 @@ impl CoreDocument {
   }
 }
 
-//TODO: Web - impl CoreDocument (WebDID)
-/// DID web
 impl CoreDocument {
+  /// Creates a [`CoreDocument`] from a url following the did:web method.
   pub fn new_from_url(url: &str) -> Result<Self, Error>{
     let id = WebDID::new(url).map_err(|_| Error::InvalidDocument("Invalid DID Web", None))?;
     let document: CoreDocument = CoreDocument::builder(Object::default())

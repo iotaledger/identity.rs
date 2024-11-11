@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use identity_core::convert::ToJson;
 use identity_verification::MethodData;
 use identity_verification::VerificationMethod;
@@ -57,7 +61,6 @@ impl MethodDigest {
 
     match method_data {
       MethodData::PublicKeyJwk(jwk) => hasher.write(jwk.thumbprint_sha256().as_ref()),
-      // MethodData::Custom(e) => hasher.write(&e.to_json_vec().unwrap()), //TODO: Hybrid - to be changed
       MethodData::CompositeJwk(composite) => {
         let algid = composite
           .alg_id()

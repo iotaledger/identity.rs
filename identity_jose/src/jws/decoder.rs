@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use core::str;
 use std::borrow::Cow;
 use std::ops::Deref;
@@ -179,7 +183,7 @@ impl<'a> JwsValidationItem<'a> {
     })
   }
 
-  //TODO: hybrid - verify_hybrid
+  ///Hybrid verify
   pub fn verify_hybrid<TRV, PQV>(
     self,
     traditional_verifier: &TRV,

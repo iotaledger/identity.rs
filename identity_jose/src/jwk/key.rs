@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use crypto::hashes::sha::SHA256;
 use crypto::hashes::sha::SHA256_LEN;
 use identity_core::common::Url;

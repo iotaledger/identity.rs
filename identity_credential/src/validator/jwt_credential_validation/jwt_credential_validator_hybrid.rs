@@ -1,3 +1,6 @@
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_core::convert::FromJson;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;

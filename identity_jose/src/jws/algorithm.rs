@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
@@ -71,31 +75,42 @@ pub enum JwsAlgorithm {
   #[serde(rename = "SLH-DSA-SHA2-128f")]
   SLH_DSA_SHA2_128f,
 
+  ///SLH_DSA_SHAKE_128f
   #[serde(rename = "SLH-DSA-SHAKE-128f")]
   SLH_DSA_SHAKE_128f,
+  ///SLH_DSA_SHA2_192s
   #[serde(rename = "SLH-DSA-SHA2-192s")]
   SLH_DSA_SHA2_192s,
+  ///SLH_DSA_SHAKE_192s
   #[serde(rename = "SLH-DSA-SHAKE-192s")]
   SLH_DSA_SHAKE_192s,
+  ///SLH-DSA-SHA2-192f
   #[serde(rename = "SLH-DSA-SHA2-192f")]
   SLH_DSA_SHA2_192f,
+  ///SLH-DSA-SHAKE-192f
   #[serde(rename = "SLH-DSA-SHAKE-192f")]
   SLH_DSA_SHAKE_192f,
+  ///SLH-DSA-SHA2-256s
   #[serde(rename = "SLH-DSA-SHA2-256s")]
   SLH_DSA_SHA2_256s,
+  ///SLH-DSA-SHA2-256s
   #[serde(rename = "SLH-DSA-SHAKE-256s")]
   SLH_DSA_SHAKE_256s,
+  ///SLH-DSA-SHA2-256f
   #[serde(rename = "SLH-DSA-SHA2-256f")]
   SLH_DSA_SHA2_256f,
+  ///SLH-DSA-SHAKE-256f
   #[serde(rename = "SLH-DSA-SHAKE-256f")]
   SLH_DSA_SHAKE_256f,
 
+  ///FALCON512
   FALCON512,
+  ///FALCON1024
   FALCON1024,
-
+  ///id-MLDSA44-Ed25519-SHA512
   #[serde(rename = "id-MLDSA44-Ed25519-SHA512")]
   IdMldsa44Ed25519Sha512,
-
+  ///id-MLDSA65-Ed25519-SHA512
   #[serde(rename = "id-MLDSA65-Ed25519-SHA512")]
   IdMldsa65Ed25519Sha512,
   /// Custom algorithm

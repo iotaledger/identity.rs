@@ -1,3 +1,7 @@
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
+
+
 // =============================================================================
 // Post-quantum algorithm key parameters
 // =============================================================================

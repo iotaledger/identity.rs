@@ -1,3 +1,6 @@
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
+
 use std::ops::Deref;
 
 use super::JwkStorageDocumentError as Error;
