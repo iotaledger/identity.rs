@@ -138,3 +138,8 @@ name = "hybrid"
 path = "demo/traditional_zk.rs"
 name = "traditional_zk"
 
+[[example]]
+path = "demo/revocation_zk.rs"
+name = "revocation_zk"
+
+
