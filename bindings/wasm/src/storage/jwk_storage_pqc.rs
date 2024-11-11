@@ -12,6 +12,40 @@ use wasm_bindgen::prelude::*;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
 use crate::error::JsValueResult;
 use js_sys::Promise;
+use std::str::FromStr;
+
+use crate::error::Result as WasmResult;
+use crate::error::WasmResult as _;
+use crate::jose::WasmJwk;
+use crate::jose::WasmJwsAlgorithm;
+
+use super::WasmJwkGenOutput;
+use super::WasmJwkStorage;
+use super::WasmProofUpdateCtx;
+
+use identity_iota::storage::bls::encode_bls_jwk;
+use identity_iota::storage::bls::expand_bls_jwk;
+use identity_iota::storage::bls::generate_bbs_keypair;
+use identity_iota::storage::bls::sign_bbs;
+use identity_iota::storage::bls::update_bbs_signature;
+use identity_iota::storage::JwkGenOutput;
+use identity_iota::storage::JwkStorage;
+use identity_iota::storage::JwkStoragePQ;
+use identity_iota::storage::KeyId;
+use identity_iota::storage::KeyStorageError;
+use identity_iota::storage::KeyStorageErrorKind;
+use identity_iota::storage::KeyStorageResult;
+use identity_iota::storage::KeyType;
+use identity_iota::storage::ProofUpdateCtx;
+use identity_iota::verification::jwk::Jwk;
+use jsonprooftoken::jpa::algs::ProofAlgorithm;
+use wasm_bindgen::prelude::*;
+use identity_iota::verification::jose::jws::JwsAlgorithm;
+use crate::error::JsValueResult;
+use js_sys::Array;
+use js_sys::Promise;
+use js_sys::Uint8Array;
+
 use wasm_bindgen_futures::JsFuture;
 use super::jwk_storage::PromiseJwkGenOutput;
 

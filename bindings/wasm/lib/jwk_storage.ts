@@ -211,6 +211,7 @@ function decodeJwk(jwk: Jwk): [Uint8Array, Uint8Array] {
     }
 }
 
+//TODO: non sembra servire a nulla
 export interface JwkStorageBBSPlusExt {
     // Generate a new BLS12381 key represented as a JSON Web Key.
     generateBBS: (algorithm: ProofAlgorithm) => Promise<JwkGenOutput>;
