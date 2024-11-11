@@ -1,10 +1,10 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples_kinesis::create_kinesis_did_document;
-use examples_kinesis::get_client_and_create_account;
-use examples_kinesis::get_stronghold_storage;
-use examples_kinesis::random_stronghold_path;
+use examples::create_kinesis_did_document;
+use examples::get_client_and_create_account;
+use examples::get_stronghold_storage;
+use examples::random_stronghold_path;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::credential::Jws;
 use identity_iota::document::verifiable::JwsVerificationOptions;

@@ -31,8 +31,6 @@ use rand::distributions::DistString;
 use secret_storage::Signer;
 use serde_json::Value;
 
-pub static API_ENDPOINT: &str = "http://localhost";
-pub static FAUCET_ENDPOINT: &str = "http://localhost/faucet/api/enqueue";
 pub const TEST_GAS_BUDGET: u64 = 50_000_000;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
