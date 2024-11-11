@@ -67,7 +67,7 @@ async fn main() -> anyhow::Result<()> {
 
   println!("{} {} {}", "[Holder]".blue(), ": Credential information: ", serde_json::to_string_pretty(&subject)?);
 
-  println!("{} {} {}", "[Holder]".blue(), " <-> [Issuer]".red(), ": Challenge-response protocol to authenticate Holder's DID");
+  println!("{} {} {}", "[Holder]".blue(), "<-> [Issuer]".red(), ": Challenge-response protocol to authenticate Holder's DID");
   
   let credential: Credential = CredentialBuilder::default()
   .id(Url::parse("https://example.edu/credentials/3732")?)
