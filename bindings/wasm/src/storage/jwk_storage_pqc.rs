@@ -1,5 +1,7 @@
-use super::WasmJwkStorage;
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
 
+use super::WasmJwkStorage;
 use identity_iota::storage::JwkGenOutput;
 use identity_iota::storage::JwkStoragePQ;
 use identity_iota::storage::KeyId;

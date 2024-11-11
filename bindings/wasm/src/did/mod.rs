@@ -1,6 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
 mod did_jwk;
 mod jws_verification_options;
 mod service;

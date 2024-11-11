@@ -65,7 +65,6 @@ impl JwkStorage for WasmJwkStorage {
   }
 
   async fn insert(&self, jwk: Jwk) -> KeyStorageResult<KeyId> {
-    web_sys::console::log_1(&"WWWWWWWWWWW".into());
     let promise: Promise = Promise::resolve(&WasmJwkStorage::insert(self, WasmJwk::from(jwk)));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
