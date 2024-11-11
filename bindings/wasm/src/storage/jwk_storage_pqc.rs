@@ -1,3 +1,17 @@
+// Copyright 2024 Fondazione Links
+// SPDX-License-Identifier: Apache-2.0
+
+use super::WasmJwkStorage;
+use identity_iota::storage::JwkGenOutput;
+use identity_iota::storage::JwkStoragePQ;
+use identity_iota::storage::KeyId;
+use identity_iota::storage::KeyStorageResult;
+use identity_iota::storage::KeyType;
+use identity_iota::verification::jwk::Jwk;
+use wasm_bindgen::prelude::*;
+use identity_iota::verification::jose::jws::JwsAlgorithm;
+use crate::error::JsValueResult;
+use js_sys::Promise;
 use std::str::FromStr;
 
 use crate::error::Result as WasmResult;
@@ -31,6 +45,7 @@ use crate::error::JsValueResult;
 use js_sys::Array;
 use js_sys::Promise;
 use js_sys::Uint8Array;
+
 use wasm_bindgen_futures::JsFuture;
 use super::jwk_storage::PromiseJwkGenOutput;
 
@@ -52,14 +67,11 @@ impl JwkStoragePQ for WasmJwkStorage {
     result.into()
   }
 
-  async fn pq_sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>> {
+  async fn pq_sign(&self, _key_id: &KeyId, _data: &[u8], _public_key: &Jwk) -> KeyStorageResult<Vec<u8>> {
     todo!();
   }
 
-  
 }
-
-
 
 #[wasm_bindgen(typescript_custom_section)]
 const JWK_STORAGE_PQ: &'static str = r#"

@@ -1,5 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
 
 mod jpt_timeframe_revocation_ext;
 mod jwk_gen_output;
@@ -20,4 +23,7 @@ pub use key_id_storage::*;
 pub use method_digest::*;
 pub use signature_options::*;
 pub use wasm_storage::*;
-pub use jwk_storage_pqc::*;
+
+//pub use jwk_storage_pqc::*;
+
+

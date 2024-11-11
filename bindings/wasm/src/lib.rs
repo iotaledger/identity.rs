@@ -1,5 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
 
 #![forbid(unsafe_code)]
 #![allow(deprecated)]
@@ -43,5 +46,5 @@ pub fn start() -> Result<(), JsValue> {
 // It appears the import path must be relative to `src`.
 #[wasm_bindgen(typescript_custom_section)]
 const CUSTOM_IMPORTS: &'static str = r#"
-import { JwsAlgorithm, JwkOperation, JwkUse, JwkType } from '../lib/jose/index';
+import { JwsAlgorithm, JwkOperation, JwkUse, JwkType, CompositeAlgId} from '../lib/jose/index';
 "#;
