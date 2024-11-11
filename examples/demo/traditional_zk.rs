@@ -108,13 +108,15 @@ async fn main() -> anyhow::Result<()> {
 
   println!("{} {} {} {} {}", "[Verifier]".green(),  "->",  "[Holder]".blue(), ": Send challenge:", challenge);
 
-  println!("{} : Engages in the Selective Disclosure of credential's attributes", "[Holder]".blue());
+  println!("{} : Resolve Issuer's Public Key to compute the Signature Proof of Knowledge", "[Holder]".blue());
 
   let method_id = decoded_jpt
   .decoded_jwp
   .get_issuer_protected_header()
   .kid()
   .unwrap();
+
+  println!("{} : Engages in the Selective Disclosure of credential's attributes", "[Holder]".blue());
 
   let mut selective_disclosure_presentation = SelectiveDisclosurePresentation::new(&decoded_jpt.decoded_jwp);
   selective_disclosure_presentation
