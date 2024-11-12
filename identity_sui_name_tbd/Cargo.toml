@@ -37,22 +37,12 @@ serde_json.workspace = true
 shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto" }
 strum.workspace = true
 thiserror.workspace = true
-tokio = { version = "1.29.0", default-features = false, features = [
-    "macros",
-    "sync",
-    "rt",
-    "process",
-] }
+tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt", "process"] }
 
 [dev-dependencies]
 bcs = "0.1.4"
-identity_credential = { version = "=1.4.0", path = "../identity_credential", features = [
-    "validator",
-] }
-identity_storage = { path = "../identity_storage", features = [
-    "send-sync-storage",
-    "storage-signer",
-] }
+identity_credential = { version = "=1.4.0", path = "../identity_credential", features = ["validator"] }
+identity_storage = { path = "../identity_storage", features = ["send-sync-storage", "storage-signer"] }
 jsonpath-rust = "0.5.1"
 serial_test = "3.1.1"
 

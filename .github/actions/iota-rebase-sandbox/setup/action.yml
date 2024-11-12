@@ -1,0 +1,48 @@
+name: "iota-private-network setup"
+description: "Setup IOTA Sandbox"
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout IOTA repository
+      uses: actions/checkout@v3
+      with:
+        repository: "iotaledger/iota"
+        ref: "develop"
+        path: "iota"
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: list files
+      shell: bash
+      run: ls -la docker/iota-private-network
+
+    - name: build docker images
+      shell: bash
+      run: |
+        cd docker/iota-private-network
+        ../iota-node/build.sh -t iota-node --no-cache
+        ../iota-indexer/build.sh -t iota-indexer --no-cache
+        ../iota-tools/build.sh -t iota-tools --no-cache
+
+    - name: Bootstrap the network
+      shell: bash
+      run: ./bootstrap.sh
+      working-directory: iota/docker/iota-private-network
+
+    - name: Start the Network
+      shell: bash
+      run: ./run.sh faucet
+      working-directory: iota/docker/iota-private-network
+
+    - name: Wait for iota network to start
+      shell: bash
+      run: wget -qO- https://raw.githubusercontent.com/eficode/wait-for/$WAIT_FOR_VERSION/wait-for | sh -s -- -t 60 http://127.0.0.1:9000 -- echo "IOTA full node is up"
+      env:
+        WAIT_FOR_VERSION: 4df3f9262d84cab0039c07bf861045fbb3c20ab7 # v2.2.3
+
+    - name: Wait for faucet to start
+      shell: bash
+      run: wget -qO- https://raw.githubusercontent.com/eficode/wait-for/$WAIT_FOR_VERSION/wait-for | sh -s -- -t 60 http://127.0.0.1:5003 -- echo "Faucet is up"
+      env:
+        WAIT_FOR_VERSION: 4df3f9262d84cab0039c07bf861045fbb3c20ab7 # v2.2.3
+

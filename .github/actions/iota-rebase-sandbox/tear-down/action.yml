@@ -1,0 +1,12 @@
+name: "iota-private-network-tear-down"
+description: "tear-down a iota private network"
+runs:
+  using: "composite"
+  steps:
+    - name: Tear down iota sandbox
+      shell: bash
+      run: |
+        cd iota/docker/iota-private-network
+        docker compose down
+        cd ../..
+        sudo rm -rf iota
