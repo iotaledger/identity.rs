@@ -44,7 +44,7 @@ The following advanced examples are available:
 | [6_domain_linkage](./1_advanced/6_domain_linkage)                                      | Demonstrates how to link a domain and a DID and verify the linkage.                                      |
 | [7_sd_jwt](./1_advanced/7_sd_jwt)                                                      | Demonstrates how to create and verify selective disclosure verifiable credentials.                       |
 | [8_status_list_2021](./1_advanced/8_status_list_2021.rs)                               | Demonstrates how to revoke a credential using `StatusList2021`.                                          |
-| [9_zpk](./1_advanced/9_zkp.rs)                                                         | Demonstrates how to generate, present and verify a ZK VC (BBS+) with Selective Disclosure.               |
+| [9_zkp](./1_advanced/9_zkp.rs)                                                         | Demonstrates how to generate, present and verify a ZK VC (BBS+) with Selective Disclosure.               |
 | [10_zkp_revocation](./1_advanced/10_zkp_revocation.rs)                                 | Demonstrates how to revoke a ZK VC (BBS+).                                                               |
 | [11_linked_verifiable_presentation](./1_advanced/11_linked_verifiable_presentation.rs) | Demonstrates how to link a public Verifiable Presentation to an identity and how it can be verified.     |
 
