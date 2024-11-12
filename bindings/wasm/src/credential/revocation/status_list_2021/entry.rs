@@ -21,7 +21,7 @@ impl WasmStatusList2021Entry {
   pub fn new(
     status_list: &str,
     purpose: WasmStatusPurpose,
-    index: usize,
+    index: &str,
     id: Option<String>,
   ) -> Result<WasmStatusList2021Entry> {
     let status_list = Url::parse(status_list).map_err(|e| JsError::new(&e.to_string()))?;
@@ -47,8 +47,8 @@ impl WasmStatusList2021Entry {
 
   /// Returns the index of this entry.
   #[wasm_bindgen]
-  pub fn index(&self) -> usize {
-    self.0.index()
+  pub fn index(&self) -> String {
+    self.0.index().to_string()
   }
 
   /// Returns the referenced {@link StatusList2021Credential}'s url.
