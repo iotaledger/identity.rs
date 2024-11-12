@@ -27,15 +27,6 @@ The transition to PQC is a delicate and lengthy process. Today, the Distributed 
 
 **Note**: this repository also extends the existing `did:jwk` method to deal with pure PQ keys and signatures (ML-DSA, SLH-DSA and FALCON), and adds a simple `did:web` method for the Issuers. 
 
-# Zero-Knowledge (ZK)
-
-The IOTA Identity now supports Zero-Knowledge functionalities, thanks to the [integration](https://github.com/iotaledger/identity.rs/pull/1285) of two key components:
-
-* **BBS+ Signature**: the scheme has been integrated through the [ZKryptium](https://github.com/Cybersecurity-LINKS/zkryptium) library for secure and privacy-preserving VC management with ZK selective disclosure.
-* **JSON Web Proof Representation**: the [json-proof-token](https://github.com/Cybersecurity-LINKS/json-proof-token) library implements the JSON Web Proof (JWP) specification, enabling verifiable claims with selective disclosure.
-
-**Note**: the BBS+ signature scheme uses traditional cryptography, hence it is not quantum-secure; for more details on the implementation and how to use these features, refer to the [full documentation](https://wiki.iota.org/identity.rs/how-tos/verifiable-credentials/zero-knowledge-selective-disclosure/).
-
 # Examples
 
 To test all the above quantum-secure functionalities, refer to practical PQC examples available in the [example](https://github.com/Cybersecurity-LINKS/pq-zk-identity/tree/PQ/T-Hybrid/examples) directory.
@@ -46,4 +37,13 @@ To test all the above quantum-secure functionalities, refer to practical PQC exa
 > pub static PATH_DID_FILE: &str = "C:/Projects/did-web-server/.well-known/";
 > ```
 Make sure your server is set up before running the examples to avoid any configuration issues.
+
+# Zero-Knowledge (ZK)
+
+The IOTA Identity already supports Zero-Knowledge functionalities, thanks to the [integration](https://github.com/iotaledger/identity.rs/pull/1285) of two key components:
+
+* **BBS+ Signature**: the scheme has been integrated through the [ZKryptium](https://github.com/Cybersecurity-LINKS/zkryptium) library for secure and privacy-preserving VC management with ZK selective disclosure.
+* **JSON Web Proof Representation**: the [json-proof-token](https://github.com/Cybersecurity-LINKS/json-proof-token) library implements the JSON Web Proof (JWP) specification, enabling verifiable claims with selective disclosure.
+
+**Note**: the BBS+ signature scheme uses traditional cryptography, hence it is not quantum-secure; for more details on the implementation and how to use these features, refer to the [full documentation](https://wiki.iota.org/identity.rs/how-tos/verifiable-credentials/zero-knowledge-selective-disclosure/).
 
