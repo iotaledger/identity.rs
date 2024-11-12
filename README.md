@@ -38,7 +38,7 @@ The IOTA Identity now supports Zero-Knowledge functionalities, thanks to the [in
 
 # Examples
 
-To test all the above quantum-secure functionalities, refer to practical code snippets available in the [example](https://github.com/Cybersecurity-LINKS/pq-zk-identity/tree/PQ/T-Hybrid/examples) directory.
+To test all the above quantum-secure functionalities, refer to practical PQC examples available in the [example](https://github.com/Cybersecurity-LINKS/pq-zk-identity/tree/PQ/T-Hybrid/examples) directory.
 > **Note**: The examples in the `example/demo` directory are configured with the Issuer using the [did:web](https://w3c-ccg.github.io/did-method-web/) method.
 > To run these examples, you must have a server instance that hosts the Issuer's DID Document. You can use the default server provided in the `example/demo/server` folder, or configure one yourself. However, ensure that the following variables in `utils.rs` are correctly set to point to your server instance:
 > ```rust
