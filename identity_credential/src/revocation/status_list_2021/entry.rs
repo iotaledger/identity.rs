@@ -153,4 +153,13 @@ mod tests {
     });
     serde_json::from_value::<StatusList2021Entry>(status).expect("wrong type");
   }
+
+  #[test]
+  fn test_status_list_index_serialization() {
+    let base_url = Url::parse("https://example.com/credentials/status/3").unwrap();
+
+    let entry1 = StatusList2021Entry::new(base_url.clone(), StatusPurpose::Revocation, 94567, None);
+    let json1 = serde_json::to_value(&entry1).unwrap();
+    assert_eq!(json1["statusListIndex"], "94567");
+  }
 }
