@@ -50,7 +50,7 @@ The following advanced examples are available:
 
 ## PQC Examples
 
-The following Post-Quantum (PQ) and Post-Quantum/Traditinal (PQ/T) hybrid examples are available:
+The following Post-Quantum (PQ) and Post-Quantum/Traditional (PQ/T) hybrid examples are available:
 | Name                                                                                   | Information                                                                                              |
 | :------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
 |                                                                                        |                                                                                                          |
