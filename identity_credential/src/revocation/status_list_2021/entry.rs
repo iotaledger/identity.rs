@@ -37,6 +37,14 @@ where
     .map(ToOwned::to_owned)
 }
 
+/// Serialize usize as string.
+fn serialize_number_as_string<S>(value: &usize, serializer: S) -> Result<S::Ok, S::Error>
+where
+  S: serde::Serializer,
+{
+  serializer.serialize_str(&value.to_string())
+}
+
 /// [StatusList2021Entry](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021entry) implementation.
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -45,7 +53,10 @@ pub struct StatusList2021Entry {
   #[serde(rename = "type", deserialize_with = "deserialize_status_entry_type")]
   type_: String,
   status_purpose: StatusPurpose,
-  #[serde(deserialize_with = "serde_aux::prelude::deserialize_number_from_string")]
+  #[serde(
+    deserialize_with = "serde_aux::prelude::deserialize_number_from_string",
+    serialize_with = "serialize_number_as_string"
+  )]
   status_list_index: usize,
   status_list_credential: Url,
 }
