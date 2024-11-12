@@ -1,5 +1,3 @@
-![banner](./../documentation/static/img/Banner/banner_identity.svg)
-
 # IOTA Identity Examples
 
 This folder provides code examples to learn how IOTA Identity can be used.
@@ -15,8 +13,6 @@ For instance, to run the example `0_create_did`, use:
 ```rust
 cargo run --release --example 0_create_did
 ```
-
-### Note: Running the examples with the release flag will be significantly faster due to stronghold performance issues in debug mode.
 
 ## Basic Examples
 
@@ -49,3 +45,19 @@ The following advanced examples are available:
 | [7_sd_jwt](./1_advanced/7_sd_jwt)                                                      | Demonstrates how to create and verify selective disclosure verifiable credentials.                       |
 | [8_status_list_2021](./1_advanced/8_status_list_2021.rs)                               | Demonstrates how to revoke a credential using `StatusList2021`.                                          |
 | [11_linked_verifiable_presentation](./1_advanced/11_linked_verifiable_presentation.rs) | Demonstrates how to link a public Verifiable Presentation to an identity and how it can be verified.     |
+
+## PQC Examples
+
+The following Post-Quantum (PQ) and Post-Quantum/Traditinal (PQ/T) hybrid examples are available:
+| Name                                                                                   | Information                                                                                              |
+| :------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
+|                                                                                        |                                                                                                          |
+
+## ZK Examples
+
+The following Zero Knowledge(ZK) examples are available:
+| Name                                                                                   | Information                                                                                              |
+| :------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
+|                                                                                        |                                                                                                          |
+
+### Note: Running the examples with the release flag will be significantly faster due to stronghold performance issues in debug mode.
