@@ -52,6 +52,6 @@ The following Post-Quantum (PQ) and Post-Quantum/Traditional (PQ/T) hybrid examp
 | Name                                                                                   | Information                                                                                              |
 | :------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
 |  [0_pq](./2_pqc/0_pq.rs)                                | Demonstrates how to generate and verify VC and VP with pure PQ signatures. This example uses did:jwk  |
-|[1_hybrid](./2_pqc/1_hybrid.rs)| Demonstrates how to generate and verify VC and VP with PQ/T hybrid signatures. This example uses did:compositejwk |
+|[1_hybrid](./2_pqc/1_hybrid.rs)| Demonstrates how to generate and verify VC and VP with PQ/T hybrid signatures. This example uses [did:compositejwk](https://github.com/Cybersecurity-LINKS/did-compositejwk/blob/main/spec.md) |
                                                                                                          
 #### Note: Running the examples with the release flag will be significantly faster due to stronghold performance issues in debug mode.
