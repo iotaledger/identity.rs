@@ -100,7 +100,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create an unsigned `UniversityDegree` credential for Alice.
   // The issuer also chooses a unique `StatusList2021` index to be able to revoke it later.
-  let credential_index: usize = 420;
+  let credential_index: &str = "420";
   let status: Status = StatusList2021Entry::new(
     status_list_credential.id().cloned().unwrap(),
     status_list_credential.purpose(),

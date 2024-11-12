@@ -109,7 +109,7 @@ impl JwtCredentialValidatorUtils {
           && status.purpose() == status_list_credential.purpose()
         {
           let entry_status = status_list_credential
-            .entry(status.index())
+            .entry(status.index().parse().expect("Failed to parse index"))
             .map_err(|e| JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(e.to_string())))?;
           match entry_status {
             CredentialStatus::Revoked => Err(JwtValidationError::Revoked),

@@ -45,8 +45,7 @@ pub struct StatusList2021Entry {
   #[serde(rename = "type", deserialize_with = "deserialize_status_entry_type")]
   type_: String,
   status_purpose: StatusPurpose,
-  #[serde(deserialize_with = "serde_aux::prelude::deserialize_number_from_string")]
-  status_list_index: usize,
+  status_list_index: String,
   status_list_credential: Url,
 }
 
@@ -67,7 +66,7 @@ impl From<StatusList2021Entry> for Status {
 
 impl StatusList2021Entry {
   /// Creates a new [`StatusList2021Entry`].
-  pub fn new(status_list: Url, purpose: StatusPurpose, index: usize, id: Option<Url>) -> Self {
+  pub fn new(status_list: Url, purpose: StatusPurpose, index: impl Into<String>, id: Option<Url>) -> Self {
     let id = id.unwrap_or_else(|| {
       let mut id = status_list.clone();
       id.set_fragment(None);
@@ -79,7 +78,7 @@ impl StatusList2021Entry {
       type_: CREDENTIAL_STATUS_TYPE.to_owned(),
       status_purpose: purpose,
       status_list_credential: status_list,
-      status_list_index: index,
+      status_list_index: index.into(),
     }
   }
 
@@ -94,8 +93,8 @@ impl StatusList2021Entry {
   }
 
   /// Returns the index of this entry.
-  pub const fn index(&self) -> usize {
-    self.status_list_index
+  pub fn index(&self) -> &str {
+    &self.status_list_index
   }
 
   /// Returns the referenced [`StatusList2021Credential`]'s [`Url`].
@@ -124,7 +123,7 @@ mod tests {
     let status = StatusList2021Entry::new(
       Url::parse("https://example.com/credentials/status/3").unwrap(),
       StatusPurpose::Revocation,
-      94567,
+      "94567",
       Url::parse("https://example.com/credentials/status/3#94567").ok(),
     );
     assert_eq!(status, deserialized);

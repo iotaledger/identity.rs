@@ -128,7 +128,7 @@ impl StatusList2021Credential {
   pub fn set_credential_status(
     &mut self,
     credential: &mut Credential,
-    index: usize,
+    index: &str,
     revoked_or_suspended: bool,
   ) -> Result<StatusList2021Entry, StatusList2021CredentialError> {
     let id = self
@@ -136,8 +136,9 @@ impl StatusList2021Credential {
       .cloned()
       .ok_or(StatusList2021CredentialError::Unreferenceable)?;
     let entry = StatusList2021Entry::new(id, self.purpose(), index, None);
+    let index_int = index.parse::<usize>().expect("should be integer serialized as string");
 
-    self.set_entry(index, revoked_or_suspended)?;
+    self.set_entry(index_int, revoked_or_suspended)?;
     credential.credential_status = Some(entry.clone().into());
 
     Ok(entry)
