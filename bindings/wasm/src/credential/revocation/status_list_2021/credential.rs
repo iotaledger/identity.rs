@@ -127,7 +127,7 @@ impl WasmStatusList2021Credential {
   pub fn set_credential_status(
     &mut self,
     credential: &mut WasmCredential,
-    index: &str,
+    index: usize,
     revoked_or_suspended: bool,
   ) -> Result<WasmStatusList2021Entry> {
     let entry = self

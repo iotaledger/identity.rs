@@ -21,7 +21,7 @@ impl WasmStatusList2021Entry {
   pub fn new(
     status_list: &str,
     purpose: WasmStatusPurpose,
-    index: &str,
+    index: usize,
     id: Option<String>,
   ) -> Result<WasmStatusList2021Entry> {
     let status_list = Url::parse(status_list).map_err(|e| JsError::new(&e.to_string()))?;
