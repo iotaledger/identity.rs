@@ -44,8 +44,6 @@ The following advanced examples are available:
 | [6_domain_linkage](./1_advanced/6_domain_linkage)                                      | Demonstrates how to link a domain and a DID and verify the linkage.                                      |
 | [7_sd_jwt](./1_advanced/7_sd_jwt)                                                      | Demonstrates how to create and verify selective disclosure verifiable credentials.                       |
 | [8_status_list_2021](./1_advanced/8_status_list_2021.rs)                               | Demonstrates how to revoke a credential using `StatusList2021`.                                          |
-|                                                                                        |                                                                                                          |
-|                                                                                        |                                                                                                          |
 | [11_linked_verifiable_presentation](./1_advanced/11_linked_verifiable_presentation.rs) | Demonstrates how to link a public Verifiable Presentation to an identity and how it can be verified.     |
 
 ## PQC Examples
@@ -53,6 +51,7 @@ The following advanced examples are available:
 The following Post-Quantum (PQ) and Post-Quantum/Traditional (PQ/T) hybrid examples are available:
 | Name                                                                                   | Information                                                                                              |
 | :------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
-|                                                                                        |                                                                                                          |
+|  [0_pq](./2_pqc/0_pq.rs)                                | Demonstrates how to generate and verify VC and VP with pure PQ signatures. This example uses did:jwk  |
+|[1_hybrid](./2_pqc/1_hybrid.rs)| Demonstrates how to generate and verify VC and VP with PQ/T hybrid signatures. This example uses did:compositejwk |
                                                                                                          
 #### Note: Running the examples with the release flag will be significantly faster due to stronghold performance issues in debug mode.
