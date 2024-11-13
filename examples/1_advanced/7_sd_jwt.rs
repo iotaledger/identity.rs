@@ -6,10 +6,10 @@
 //!
 //! cargo run --release --example 7_sd_jwt
 
-use examples_kinesis::create_kinesis_did_document;
-use examples_kinesis::get_client_and_create_account;
-use examples_kinesis::get_memstorage;
-use examples_kinesis::pretty_print_json;
+use examples::create_kinesis_did_document;
+use examples::get_client_and_create_account;
+use examples::get_memstorage;
+use examples::pretty_print_json;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;

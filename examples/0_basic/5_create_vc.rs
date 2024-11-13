@@ -9,9 +9,9 @@
 //!
 //! cargo run --release --example 5_create_vc
 
-use examples_kinesis::create_kinesis_did_document;
-use examples_kinesis::get_client_and_create_account;
-use examples_kinesis::get_memstorage;
+use examples::create_kinesis_did_document;
+use examples::get_client_and_create_account;
+use examples::get_memstorage;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::Object;
 
