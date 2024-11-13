@@ -41,7 +41,7 @@ async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn transfering_asset_works() -> anyhow::Result<()> {
+async fn transferring_asset_works() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let alice_client = test_client.new_user_client().await?;
   let bob_client = test_client.new_user_client().await?;
