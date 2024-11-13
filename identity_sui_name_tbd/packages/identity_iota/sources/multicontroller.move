@@ -7,6 +7,7 @@ module identity_iota::multicontroller {
     const EInvalidThreshold: u64 = 3;
     const EExpiredProposal: u64 = 4;
     const ENotVotedYet: u64 = 5;
+    const EProposalNotFound: u64 = 6;
 
     public struct ControllerCap has key {
         id: UID,
@@ -139,7 +140,7 @@ module identity_iota::multicontroller {
         let cap_id = cap.id.to_inner();
         let voting_power = multi.voting_power(cap_id);
 
-        let proposal = multi.proposals.borrow_mut<ID, Proposal<T>>(proposal_id); 
+        let proposal = multi.proposals.borrow_mut<ID, Proposal<T>>(proposal_id);
         assert!(!proposal.voters.contains(&cap_id), EControllerAlreadyVoted);
 
         proposal.votes = proposal.votes + voting_power;
@@ -167,6 +168,11 @@ module identity_iota::multicontroller {
         } = proposal;
 
         id.delete();
+
+        let (present, i) = multi.active_proposals.index_of(&proposal_id);
+        assert!(present, EProposalNotFound);
+
+        multi.active_proposals.remove(i);
 
         Action { inner }
     }

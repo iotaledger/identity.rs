@@ -41,7 +41,7 @@ async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn transfering_asset_works() -> anyhow::Result<()> {
+async fn transferring_asset_works() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let alice_client = test_client.new_user_client().await?;
   let bob_client = test_client.new_user_client().await?;
@@ -182,7 +182,7 @@ async fn hosting_vc_works() -> anyhow::Result<()> {
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
     .await?;
   let object_id = newly_created_identity.id();
-  let did = { IotaDID::parse(&format!("did:iota:{object_id}"))? };
+  let did = { IotaDID::parse(format!("did:iota:{object_id}"))? };
 
   test_client
     .store_key_id_for_verification_method(identity_client.clone(), did.clone())
