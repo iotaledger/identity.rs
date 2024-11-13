@@ -1,5 +1,5 @@
 [toolchain]
-#@itsyaasir - Update to latest stable version when wasm-bindgen is updated
+# @itsyaasir - Update to latest stable version when wasm-bindgen is updated
 channel = "1.81"
 components = ["rustfmt"]
 targets = ["wasm32-unknown-unknown"]
