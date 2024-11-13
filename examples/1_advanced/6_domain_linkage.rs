@@ -1,10 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples_kinesis::create_kinesis_did_document;
-use examples_kinesis::get_client_and_create_account;
-use examples_kinesis::get_memstorage;
-use examples_kinesis::TEST_GAS_BUDGET;
+use examples::create_kinesis_did_document;
+use examples::get_client_and_create_account;
+use examples::get_memstorage;
+use examples::TEST_GAS_BUDGET;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::Duration;
 use identity_iota::core::FromJson;
