@@ -96,7 +96,7 @@ impl Display for NetworkName {
 
 #[cfg(feature = "client")]
 mod try_from_network_name {
-  use iota_sdk::types::block::address::Hrp;
+  use iota_sdk_legacy::types::block::address::Hrp;
 
   use crate::Error;
   use crate::NetworkName;

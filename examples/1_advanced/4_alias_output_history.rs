@@ -13,9 +13,9 @@ use identity_iota::document::Service;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::verification::MethodRelationship;
-use identity_sui_name_tbd::client::get_object_id_from_did;
-use identity_sui_name_tbd::migration::has_previous_version;
-use identity_sui_name_tbd::migration::Identity;
+use identity_iota::iota::rebased::client::get_object_id_from_did;
+use identity_iota::iota::rebased::migration::has_previous_version;
+use identity_iota::iota::rebased::migration::Identity;
 use iota_sdk::rpc_types::IotaObjectData;
 
 /// Demonstrates how to obtain the alias output history.

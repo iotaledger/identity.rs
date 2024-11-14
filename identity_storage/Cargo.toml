@@ -25,7 +25,6 @@ identity_credential = { version = "=1.2.0", path = "../identity_credential", def
 identity_did = { version = "=1.2.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.2.0", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=1.2.0", path = "../identity_iota_core", default-features = false, optional = true }
-identity_sui_name_tbd = { path = "../identity_sui_name_tbd" }
 identity_verification = { version = "=1.2.0", path = "../identity_verification", default-features = false }
 iota-crypto = { version = "0.23", default-features = false, features = [
     "ed25519",
@@ -67,7 +66,7 @@ send-sync-storage = ["identity_iota_core?/send-sync-client-ext"]
 # Implements the JwkStorageDocumentExt trait for IotaDocument
 iota-document = ["dep:identity_iota_core"]
 # enables support to sign via storage
-storage-signer = ["dep:secret-storage"]
+storage-signer = ["identity_iota_core?/kinesis-client", "dep:secret-storage"]
 
 [lints]
 workspace = true
