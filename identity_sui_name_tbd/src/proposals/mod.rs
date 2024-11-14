@@ -30,6 +30,7 @@ use crate::migration::OnChainIdentity;
 use crate::migration::Proposal;
 use crate::sui::move_calls;
 use crate::transaction::Transaction;
+use crate::transaction::TransactionOutput;
 use crate::utils::MoveType;
 use crate::Error;
 
@@ -149,7 +150,7 @@ where
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<ProposalResult<Proposal<A>>, Error>
+  ) -> Result<TransactionOutput<ProposalResult<Proposal<A>>>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -177,17 +178,17 @@ where
     } else {
       ptb.finish()
     };
-    let tx_effects = client
-      .execute_transaction(tx, gas_budget)
-      .await?
+    let tx_result = client.execute_transaction(tx, gas_budget).await?;
+    let tx_effects = tx_result
       .effects
+      .as_ref()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
     if let IotaExecutionStatus::Failure { error } = tx_effects.status() {
       return Err(IotaSdkError::Data(error.clone()).into());
     }
 
     if chain_execute {
-      Proposal::<A>::parse_tx_effects(tx_effects).map(ProposalResult::Executed)
+      Proposal::<A>::parse_tx_effects(tx_effects.clone()).map(ProposalResult::Executed)
     } else {
       // 2 objects are created, one is the Bag's Field and the other is our Proposal. Proposal is not owned by the bag,
       // but the field is.
@@ -204,6 +205,10 @@ where
 
       client.get_object_by_id(proposal_id).await.map(ProposalResult::Pending)
     }
+    .map(move |output| TransactionOutput {
+      output,
+      response: tx_result,
+    })
   }
 }
 
@@ -224,7 +229,7 @@ where
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<Self::Output, Error>
+  ) -> Result<TransactionOutput<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -233,15 +238,18 @@ where
     let controller_cap = identity.get_controller_cap(client).await?;
 
     let tx = proposal.make_execute_tx(identity_ref, controller_cap, client.package_id())?;
-    let tx_effects = client
-      .execute_transaction(tx, gas_budget)
-      .await?
+    let tx_result = client.execute_transaction(tx, gas_budget).await?;
+    let tx_effects = tx_result
       .effects
+      .as_ref()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
     if let IotaExecutionStatus::Failure { error } = tx_effects.status() {
       Err(IotaSdkError::Data(error.clone()).into())
     } else {
-      Proposal::<A>::parse_tx_effects(tx_effects)
+      Proposal::<A>::parse_tx_effects(tx_effects.clone()).map(move |output| TransactionOutput {
+        output,
+        response: tx_result,
+      })
     }
   }
 }
@@ -263,7 +271,7 @@ where
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<Self::Output, Error>
+  ) -> Result<TransactionOutput<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -278,8 +286,8 @@ where
     )?;
 
     let response = client.execute_transaction(tx, gas_budget).await?;
-    if let IotaExecutionStatus::Failure { error } = response.effects.expect("had effects").into_status() {
-      return Err(Error::TransactionUnexpectedResponse(error));
+    if let IotaExecutionStatus::Failure { error } = response.effects.as_ref().expect("had effects").status() {
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     let vp = identity
@@ -287,6 +295,6 @@ where
       .expect("is identity's controller");
     *proposal.votes_mut() = proposal.votes() + vp;
 
-    Ok(())
+    Ok(TransactionOutput { output: (), response })
   }
 }

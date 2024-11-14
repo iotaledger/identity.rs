@@ -4,6 +4,7 @@ use crate::client::IdentityClient;
 use crate::client::IotaKeySignature;
 use crate::sui::move_calls;
 use crate::transaction::Transaction;
+use crate::transaction::TransactionOutput;
 use crate::utils::MoveType;
 use crate::Error;
 use anyhow::anyhow;
@@ -382,7 +383,7 @@ where
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<Self::Output, Error>
+  ) -> Result<TransactionOutput<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -391,18 +392,21 @@ where
       self.new_content.clone(),
       client.package_id(),
     )?;
-    let tx_status = client
-      .execute_transaction(tx, gas_budget)
-      .await?
+    let response = client.execute_transaction(tx, gas_budget).await?;
+    let tx_status = response
       .effects
+      .as_ref()
       .context("transaction had no effects")
-      .map(|effects| effects.into_status())
+      .map(|effects| effects.status())
       .map_err(|e| Error::TransactionUnexpectedResponse(e.to_string()))?;
+
     if let IotaExecutionStatus::Failure { error } = tx_status {
-      return Err(Error::TransactionUnexpectedResponse(error));
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
+
     self.asset.inner = self.new_content;
-    Ok(())
+
+    Ok(TransactionOutput { output: (), response })
   }
 }
 
@@ -421,15 +425,15 @@ where
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<Self::Output, Error>
+  ) -> Result<TransactionOutput<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
     let asset_ref = self.0.object_ref(client).await?;
     let tx = move_calls::asset::delete::<T>(asset_ref, client.package_id())?;
 
-    client.execute_transaction(tx, gas_budget).await?;
-    Ok(())
+    let response = client.execute_transaction(tx, gas_budget).await?;
+    Ok(TransactionOutput { output: (), response })
   }
 }
 /// A [`Transaction`] that creates a new [`AuthenticatedAsset`].
@@ -447,7 +451,7 @@ where
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<Self::Output, Error>
+  ) -> Result<TransactionOutput<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -459,17 +463,20 @@ where
     } = self.0;
     let tx = move_calls::asset::new(inner, mutable, transferable, deletable, client.package_id())?;
 
-    let created_asset_id = client
-      .execute_transaction(tx, gas_budget)
-      .await?
+    let response = client.execute_transaction(tx, gas_budget).await?;
+
+    let created_asset_id = response
       .effects
+      .as_ref()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?
       .created()
       .first()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("no object was created in this transaction".to_owned()))?
       .object_id();
 
-    AuthenticatedAsset::get_by_id(created_asset_id, client).await
+    AuthenticatedAsset::get_by_id(created_asset_id, client)
+      .await
+      .map(move |output| TransactionOutput { output, response })
   }
 }
 
@@ -491,7 +498,7 @@ where
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<Self::Output, Error>
+  ) -> Result<TransactionOutput<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -500,15 +507,16 @@ where
       self.recipient,
       client.package_id(),
     )?;
-    for id in client
-      .execute_transaction(tx, gas_budget)
-      .await?
+
+    let tx_result = client.execute_transaction(tx, gas_budget).await?;
+    let created_obj_ids = tx_result
       .effects
+      .as_ref()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?
       .created()
       .iter()
-      .map(|obj| obj.reference.object_id)
-    {
+      .map(|obj| obj.reference.object_id);
+    for id in created_obj_ids {
       let object_type = client
         .read_api()
         .get_object_with_options(id, IotaObjectDataOptions::new().with_type())
@@ -519,7 +527,12 @@ where
         .map_err(|e| Error::ObjectLookup(e.to_string()))?;
 
       if object_type == TransferProposal::move_type(client.package_id()).to_string() {
-        return TransferProposal::get_by_id(id, client).await;
+        return TransferProposal::get_by_id(id, client)
+          .await
+          .map(move |proposal| TransactionOutput {
+            output: proposal,
+            response: tx_result,
+          });
       }
     }
 
@@ -540,7 +553,7 @@ impl Transaction for AcceptTransferTx {
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<Self::Output, Error>
+  ) -> Result<TransactionOutput<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -569,8 +582,8 @@ impl Transaction for AcceptTransferTx {
       client.package_id(),
     )?;
 
-    client.execute_transaction(tx, gas_budget).await?;
-    Ok(())
+    let response = client.execute_transaction(tx, gas_budget).await?;
+    Ok(TransactionOutput { output: (), response })
   }
 }
 
@@ -585,7 +598,7 @@ impl Transaction for ConcludeTransferTx {
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<Self::Output, Error>
+  ) -> Result<TransactionOutput<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -609,7 +622,7 @@ impl Transaction for ConcludeTransferTx {
       client.package_id(),
     )?;
 
-    client.execute_transaction(tx, gas_budget).await?;
-    Ok(())
+    let response = client.execute_transaction(tx, gas_budget).await?;
+    Ok(TransactionOutput { output: (), response })
   }
 }

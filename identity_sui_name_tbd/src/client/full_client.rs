@@ -40,6 +40,7 @@ use crate::assets::AuthenticatedAssetBuilder;
 use crate::migration::Identity;
 use crate::migration::IdentityBuilder;
 use crate::transaction::Transaction as TransactionT;
+use crate::transaction::TransactionOutput;
 use crate::utils::MoveType;
 use crate::Error;
 
@@ -389,7 +390,7 @@ impl TransactionT for PublishDidTx {
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<Self::Output, Error>
+  ) -> Result<TransactionOutput<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -399,14 +400,17 @@ impl TransactionT for PublishDidTx {
       .pack()
       .map_err(|err| Error::DidDocSerialization(format!("could not pack DID document: {err}")))?;
 
-    let oci = client
+    let TransactionOutput {
+      output: identity,
+      response,
+    } = client
       .create_identity(&packed)
       .finish()
       .execute_with_opt_gas(gas_budget, client)
       .await?;
 
     // replace placeholders in document
-    let did: IotaDID = IotaDID::new(&oci.id(), client.network());
+    let did: IotaDID = IotaDID::new(&identity.id(), client.network());
     let metadata_document: StateMetadataDocument = self.0.into();
     let document_without_placeholders = metadata_document.into_iota_document(&did).map_err(|err| {
       Error::DidDocParsingFailed(format!(
@@ -414,6 +418,9 @@ impl TransactionT for PublishDidTx {
       ))
     })?;
 
-    Ok(document_without_placeholders)
+    Ok(TransactionOutput {
+      output: document_without_placeholders,
+      response,
+    })
   }
 }
