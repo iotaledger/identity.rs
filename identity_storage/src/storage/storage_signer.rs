@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use identity_sui_name_tbd::client::IotaKeySignature;
+use identity_iota_core::rebased::client::IotaKeySignature;
 use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkParams;
 use identity_verification::jwu;

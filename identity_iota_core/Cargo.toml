@@ -12,15 +12,15 @@ rust-version.workspace = true
 description = "An IOTA Ledger integration for the IOTA DID Method."
 
 [dependencies]
-anyhow = { version = "1.0.57" }
-async-trait = { version = "0.1.56", default-features = false, optional = true }
+anyhow = "1.0.75"
+async-trait = { version = "0.1.81", default-features = false, optional = true }
 futures = { version = "0.3", default-features = false }
 identity_core = { version = "=1.4.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=1.4.0", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=1.4.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.4.0", path = "../identity_document", default-features = false }
 identity_verification = { version = "=1.4.0", path = "../identity_verification", default-features = false }
-iota-sdk = { version = "1.1.5", default-features = false, features = ["serde", "std"], optional = true }
+iota_sdk_legacy = { version = "1.1.5", default-features = false, features = ["serde", "std"], optional = true, package="iota-sdk" }
 num-derive = { version = "0.4", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
@@ -31,11 +31,41 @@ serde_json.workspace = true
 strum.workspace = true
 thiserror.workspace = true
 
+# for feature `kinesis-client`
+bcs = { version = "0.1.4", optional = true }
+fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "5f2c63266a065996d53f98156f0412782b468597", package = "fastcrypto", optional = true }
+identity_eddsa_verifier = { version = "=1.4.0", path = "../identity_eddsa_verifier", optional = true }
+identity_jose = { version = "=1.4.0", path = "../identity_jose", optional = true }
+iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config", tag = "v0.7.0-alpha", optional = true }
+iota-crypto = { version = "0.23", optional = true }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.0-alpha", optional = true }
+itertools = { version = "0.13.0", optional = true }
+move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.7.0-alpha", optional = true }
+rand = { version = "0.8.5", optional = true }
+secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", branch = "main", optional = true }
+serde-aux = { version = "4.5.0", optional = true }
+shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.7.0-alpha", optional = true }
+tokio = { version = "1.29.0", default-features = false, optional = true, features = [
+    "macros",
+    "sync",
+    "rt",
+    "process",
+] }
+
 [dev-dependencies]
 anyhow = { version = "1.0.57" }
 iota-crypto = { version = "0.23", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.29.0", default-features = false, features = ["rt-multi-thread", "macros"] }
+
+# for feature kinesis-client tests
+identity_iota_core= { path = ".", features = ["kinesis-client"] } # enable for e2e tests
+identity_storage = { path = "../identity_storage", features = [
+    "send-sync-storage",
+    "storage-signer",
+] }
+jsonpath-rust = "0.5.1"
+serial_test = "3.1.1"
 
 [package.metadata.docs.rs]
 # To build locally:
@@ -44,11 +74,29 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["client", "iota-client", "revocation-bitmap", "send-sync-client-ext"]
+default = ["client", "iota-client", "kinesis-client", "revocation-bitmap", "send-sync-client-ext"]
 # Exposes the IotaIdentityClient and IotaIdentityClientExt traits.
-client = ["dep:async-trait", "iota-sdk"]
-# Enables the implementation of the extension traits on the iota-sdk's Client.
-iota-client = ["client", "iota-sdk/client", "iota-sdk/tls"]
+client = ["dep:async-trait", "iota_sdk_legacy"]
+# Client for rebased.
+kinesis-client = [
+    "dep:async-trait",
+    "dep:bcs",
+    "dep:fastcrypto",
+    "dep:identity_eddsa_verifier",
+    "dep:identity_jose",
+    "dep:iota-config",
+    "dep:iota-crypto",
+    "dep:iota-sdk",
+    "dep:itertools",
+    "dep:move-core-types",
+    "dep:rand",
+    "dep:secret-storage",
+    "dep:serde-aux",
+    "dep:shared-crypto",
+    "dep:tokio",
+]
+# Enables the implementation of the extension traits on the iota_sdk_legacy's Client.
+iota-client = ["client", "iota_sdk_legacy/client", "iota_sdk_legacy/tls"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_credential/revocation-bitmap"]
 # Adds Send bounds on the futures produces by the client extension traits.

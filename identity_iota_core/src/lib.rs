@@ -19,8 +19,8 @@
 pub mod block {
   //! See [iota_sdk::types::block].
 
-  pub use iota_sdk::types::block::*;
-  pub use iota_sdk::types::TryFromDto;
+  pub use iota_sdk_legacy::types::block::*;
+  pub use iota_sdk_legacy::types::TryFromDto;
 }
 
 #[cfg(feature = "client")]
@@ -39,4 +39,6 @@ mod did;
 mod document;
 mod error;
 mod network;
+#[cfg(feature = "kinesis-client")]
+pub mod rebased;
 mod state_metadata;
