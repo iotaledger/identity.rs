@@ -369,9 +369,23 @@ pub async fn get_identity(
     ))
   })?;
   let original_did = IotaDID::from_alias_id(id.object_id().to_string().as_str(), client.network());
-  let did_doc = StateMetadataDocument::unpack(multi_controller.controlled_value())
-    .and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(&original_did))
-    .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?;
+  let controlled_value = multi_controller.controlled_value();
+
+  // check if DID has been deactivated
+  let did_doc = if controlled_value.len() == 0 {
+    // DID has been deactivated by setting controlled value empty, therefore craft an empty document
+    let mut empty_document = IotaDocument::new_with_id(original_did.clone());
+    empty_document.metadata.created = None;
+    empty_document.metadata.updated = None;
+    empty_document.metadata.deactivated = Some(true);
+
+    empty_document
+  } else {
+    // we have a value, therefore unpack it
+    StateMetadataDocument::unpack(controlled_value)
+      .and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(&original_did))
+      .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?
+  };
 
   Ok(Some(OnChainIdentity {
     id,

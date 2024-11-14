@@ -9,7 +9,6 @@ use futures::TryStreamExt as _;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::NetworkName;
-use crate::StateMetadataDocument;
 use iota_sdk::rpc_types::EventFilter;
 use iota_sdk::rpc_types::IotaData as _;
 use iota_sdk::rpc_types::IotaObjectData;
@@ -173,26 +172,8 @@ impl IdentityClientReadOnly {
     let identity = get_identity(self, get_object_id_from_did(did)?)
       .await?
       .ok_or_else(|| Error::DIDResolutionError(format!("call succeeded but could not resolve {did} to object")))?;
-    let state_metadata = identity.multicontroller().controlled_value();
 
-    // return empty document if disabled
-    if state_metadata.is_empty() {
-      let mut empty_document = IotaDocument::new_with_id(did.clone());
-      empty_document.metadata.created = None;
-      empty_document.metadata.updated = None;
-      empty_document.metadata.deactivated = Some(true);
-
-      return Ok(empty_document);
-    }
-
-    // unpack, replace placeholders and return document
-    StateMetadataDocument::unpack(state_metadata)
-      .and_then(|doc| doc.into_iota_document(did))
-      .map_err(|err| {
-        Error::DidDocParsingFailed(format!(
-          "could not transform DID document to IotaDocument for DID {did}; {err}"
-        ))
-      })
+      Ok(identity.clone())
   }
 
   /// Resolves an [`Identity`] from its ID `object_id`.
