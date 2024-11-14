@@ -34,11 +34,12 @@ tokio = { version = "1.29", default-features = false, features = ["rt"] }
 path = "../identity_iota"
 default-features = false
 features = [
-  "iota-client",
-  "kinesis-client",
   "client",
-  "memstore",
   "domain-linkage",
+  "iota-client",
+  "jpt-bbs-plus",
+  "kinesis-client",
+  "memstore",
   "resolver",
   "revocation-bitmap",
   "sd-jwt",
