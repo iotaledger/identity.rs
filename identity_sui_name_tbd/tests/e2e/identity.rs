@@ -26,7 +26,8 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
     .create_identity(TEST_DOC)
     .finish()
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
-    .await?;
+    .await?
+    .output;
 
   let updated_did_doc = {
     let did = IotaDID::parse(format!("did:iota:{}", newly_created_identity.id()))?;
@@ -46,7 +47,8 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
     .update_did_document(updated_did_doc)
     .finish()
     .execute(&identity_client)
-    .await?;
+    .await?
+    .output;
 
   Ok(())
 }
@@ -64,7 +66,8 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     .threshold(2)
     .finish()
     .execute(&alice_client)
-    .await?;
+    .await?
+    .output;
 
   let did_doc = {
     let did = IotaDID::parse(format!("did:iota:{}", identity.id()))?;
@@ -84,6 +87,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     .finish()
     .execute(&alice_client)
     .await?
+    .output
   else {
     anyhow::bail!("the proposal is executed");
   };
@@ -105,7 +109,8 @@ async fn adding_controller_works() -> anyhow::Result<()> {
     .create_identity(TEST_DOC)
     .finish()
     .execute(&alice_client)
-    .await?;
+    .await?
+    .output;
 
   // Alice proposes to add Bob as a controller. Since Alice has enough voting power the proposal
   // is executed directly after creation.
@@ -137,7 +142,8 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
     .create_identity(TEST_DOC)
     .finish()
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
-    .await?;
+    .await?
+    .output;
 
   let did = IotaDID::parse(format!("did:iota:{}", newly_created_identity.id()))?;
   let updated_did_doc = {

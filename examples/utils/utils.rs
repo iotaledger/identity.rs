@@ -60,7 +60,8 @@ where
   let document = identity_client
     .publish_did_document(unpublished)
     .execute_with_gas(TEST_GAS_BUDGET, identity_client)
-    .await?;
+    .await?
+    .output;
 
   Ok((document, verification_method_fragment))
 }

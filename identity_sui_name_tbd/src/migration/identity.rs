@@ -42,6 +42,7 @@ use crate::proposals::ProposalBuilder;
 use crate::proposals::UpdateDidDocument;
 use crate::sui::move_calls;
 use crate::transaction::Transaction;
+use crate::transaction::TransactionOutput;
 use crate::utils::MoveType;
 use crate::Error;
 
@@ -441,7 +442,7 @@ impl<'a> Transaction for CreateIdentityTx<'a> {
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<Self::Output, Error>
+  ) -> Result<TransactionOutput<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -501,5 +502,9 @@ impl<'a> Transaction for CreateIdentityTx<'a> {
     get_identity(client, new_identity_id)
       .await
       .and_then(|identity| identity.ok_or_else(|| Error::ObjectLookup(new_identity_id.to_string())))
+      .map(move |identity| TransactionOutput {
+        output: identity,
+        response,
+      })
   }
 }
