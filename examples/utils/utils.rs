@@ -105,7 +105,9 @@ where
     .and_then(|pkg_str| pkg_str.parse().context("invalid package id"))?;
 
   let read_only_client = IdentityClientReadOnly::new(iota_client, package_id).await?;
+
   let signer = StorageSigner::new(storage, generate.key_id, public_key_jwk);
+
   let identity_client = IdentityClient::new(read_only_client, signer).await?;
 
   Ok(identity_client)

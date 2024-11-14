@@ -20,6 +20,7 @@ iota-sdk-legacy = { package = "iota-sdk", version = "1.0", default-features = fa
   "client",
   "stronghold",
 ] }
+json-proof-token.workspace = true
 primitive-types = "0.12.1"
 rand = "0.8.5"
 sd-jwt-payload = { version = "0.2.1", default-features = false, features = [
@@ -99,3 +100,15 @@ name = "7_sd_jwt"
 [[example]]
 path = "1_advanced/8_status_list_2021.rs"
 name = "8_status_list_2021"
+
+[[example]]
+path = "1_advanced/9_zkp.rs"
+name = "9_zkp"
+
+[[example]]
+path = "1_advanced/10_zkp_revocation.rs"
+name = "10_zkp_revocation"
+
+[[example]]
+path = "1_advanced/11_linked_verifiable_presentation.rs"
+name = "11_linked_verifiable_presentation"
