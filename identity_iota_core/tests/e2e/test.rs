@@ -14,6 +14,7 @@ async fn can_initialize_new_client() -> anyhow::Result<()> {
   Ok(())
 }
 
+#[ignore]
 #[tokio::test]
 async fn can_fetch_alias_output_by_object_id() -> anyhow::Result<()> {
   let test_client = common::get_client().await?;

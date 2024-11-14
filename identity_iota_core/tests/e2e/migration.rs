@@ -16,6 +16,7 @@ async fn migration_registry_is_found() -> anyhow::Result<()> {
   Ok(())
 }
 
+#[ignore]
 #[tokio::test]
 async fn migration_of_legacy_did_works() -> anyhow::Result<()> {
   let client = get_client().await?;

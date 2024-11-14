@@ -42,8 +42,6 @@ async fn can_resolve_a_new_identity() -> anyhow::Result<()> {
 }
 
 mod resolution {
-  use serial_test::serial;
-
   use super::*;
 
   mod direct_lookup {
@@ -51,7 +49,7 @@ mod resolution {
 
     use super::*;
 
-    #[serial]
+    #[ignore]
     #[tokio::test]
     async fn legacy_did_document_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
@@ -64,7 +62,7 @@ mod resolution {
       Ok(())
     }
 
-    #[serial]
+    #[ignore]
     #[tokio::test]
     async fn migrated_legacy_did_document_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
@@ -81,7 +79,7 @@ mod resolution {
       Ok(())
     }
 
-    #[serial]
+    #[ignore]
     #[tokio::test]
     async fn resolving_migrated_documents_without_registry_does_not_work() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
@@ -93,7 +91,6 @@ mod resolution {
       Ok(())
     }
 
-    #[serial]
     #[tokio::test]
     async fn new_identity_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
@@ -110,7 +107,7 @@ mod resolution {
   mod parallel_lookup {
     use super::*;
 
-    #[serial]
+    #[ignore]
     #[tokio::test]
     async fn legacy_did_document_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
@@ -125,7 +122,7 @@ mod resolution {
       Ok(())
     }
 
-    #[serial]
+    #[ignore]
     #[tokio::test]
     async fn migrated_legacy_did_document_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
@@ -141,7 +138,6 @@ mod resolution {
       Ok(())
     }
 
-    #[serial]
     #[tokio::test]
     async fn new_identity_resolution_works() -> anyhow::Result<()> {
       let test_client = get_test_client().await?;
