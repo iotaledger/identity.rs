@@ -1,76 +1,74 @@
+mod borrow;
 mod config_change;
 mod deactive_did;
+mod send;
 mod update_did_doc;
 
+use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
+use crate::client::IdentityClientReadOnly;
+use crate::client::IotaKeySignature;
+use crate::migration::get_identity;
+use crate::sui::move_calls;
 use async_trait::async_trait;
+pub use borrow::*;
 pub use config_change::*;
 pub use deactive_did::*;
-use iota_sdk::error::Error as IotaSdkError;
 use iota_sdk::rpc_types::IotaExecutionStatus;
-use iota_sdk::rpc_types::IotaTransactionBlockEffects;
+use iota_sdk::rpc_types::IotaObjectData;
+use iota_sdk::rpc_types::IotaObjectDataOptions;
 use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
-use iota_sdk::rpc_types::OwnedObjectRef;
+use iota_sdk::rpc_types::IotaTransactionBlockResponse;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::object::Owner;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::Argument;
+use iota_sdk::types::base_types::ObjectType;
 use iota_sdk::types::transaction::ProgrammableTransaction;
+use iota_sdk::types::TypeTag;
 use secret_storage::Signer;
+pub use send::*;
 use serde::de::DeserializeOwned;
 pub use update_did_doc::*;
 
 use crate::client::IdentityClient;
-use crate::client::IotaKeySignature;
-use crate::migration::get_identity;
 use crate::migration::OnChainIdentity;
 use crate::migration::Proposal;
-use crate::sui::move_calls;
 use crate::transaction::Transaction;
 use crate::transaction::TransactionOutput;
 use crate::utils::MoveType;
 use crate::Error;
 
+/// Interface that allows the creation and execution of an [`OnChainIdentity`]'s [`Proposal`]s.
+#[async_trait]
 pub trait ProposalT {
+  /// The [`Proposal`] action's type.
   type Action;
   type Output;
-  fn make_create_tx(
+
+  async fn create<'i, S>(
     action: Self::Action,
     expiration: Option<u64>,
-    identity: OwnedObjectRef,
-    controller_cap: ObjectRef,
-    identity_ref: &OnChainIdentity,
-    package: ObjectID,
-  ) -> Result<(ProgrammableTransactionBuilder, Argument), Error>;
-  fn make_chained_execution_tx(
-    ptb: ProgrammableTransactionBuilder,
-    proposal_arg: Argument,
-    identity: OwnedObjectRef,
-    controller_cap: ObjectRef,
-    package: ObjectID,
-  ) -> Result<ProgrammableTransaction, Error>;
-  fn make_execute_tx(
-    &self,
-    identity: OwnedObjectRef,
-    controller_cap: ObjectRef,
-    package: ObjectID,
-  ) -> Result<ProgrammableTransaction, Error>;
-  fn parse_tx_effects(tx_effects: IotaTransactionBlockEffects) -> Result<Self::Output, Error>;
+    identity: &'i mut OnChainIdentity,
+    client: &IdentityClient<S>,
+  ) -> Result<CreateProposalTx<'i, Self::Action>, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync;
+
+  async fn execute<'i, S>(
+    self,
+    identity: &'i mut OnChainIdentity,
+    client: &IdentityClient<S>,
+  ) -> Result<ExecuteProposalTx<'i, Self::Action>, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync;
+
+  fn parse_tx_effects(tx_response: &IotaTransactionBlockResponse) -> Result<Self::Output, Error>;
 }
 
 impl<A> Proposal<A> {
   pub fn approve<'i>(&mut self, identity: &'i OnChainIdentity) -> ApproveProposalTx<'_, 'i, A> {
     ApproveProposalTx {
-      proposal: self,
-      identity,
-    }
-  }
-
-  pub fn execute(self, identity: &mut OnChainIdentity) -> ExecuteProposalTx<'_, A> {
-    ExecuteProposalTx {
       proposal: self,
       identity,
     }
@@ -82,7 +80,6 @@ pub struct ProposalBuilder<'i, A> {
   identity: &'i mut OnChainIdentity,
   expiration: Option<u64>,
   action: A,
-  forbid_chained_execution: bool,
 }
 
 impl<'i, A> Deref for ProposalBuilder<'i, A> {
@@ -104,7 +101,6 @@ impl<'i, A> ProposalBuilder<'i, A> {
       identity,
       expiration: None,
       action,
-      forbid_chained_execution: false,
     }
   }
 
@@ -113,15 +109,19 @@ impl<'i, A> ProposalBuilder<'i, A> {
     self
   }
 
-  pub fn forbid_chained_execution(mut self) -> Self {
-    self.forbid_chained_execution = true;
-    self
-  }
-
   /// Creates a [`Proposal`] with the provided arguments. If `forbid_chained_execution` is set to `true`,
   /// the [`Proposal`] won't be executed even if creator alone has enough voting power.
-  pub fn finish(self) -> CreateProposalTx<'i, A> {
-    CreateProposalTx(self)
+  pub async fn finish<S>(self, client: &IdentityClient<S>) -> Result<CreateProposalTx<'i, A>, Error>
+  where
+    Proposal<A>: ProposalT<Action = A>,
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let Self {
+      action,
+      expiration,
+      identity,
+    } = self;
+    Proposal::<A>::create(action, expiration, identity, client).await
   }
 }
 
@@ -137,7 +137,12 @@ pub enum ProposalResult<P: ProposalT> {
 }
 
 #[derive(Debug)]
-pub struct CreateProposalTx<'i, A>(ProposalBuilder<'i, A>);
+pub struct CreateProposalTx<'i, A> {
+  identity: &'i mut OnChainIdentity,
+  tx: ProgrammableTransaction,
+  chained_execution: bool,
+  _action: PhantomData<A>,
+}
 
 #[async_trait]
 impl<'i, A> Transaction for CreateProposalTx<'i, A>
@@ -146,6 +151,7 @@ where
   A: Send,
 {
   type Output = ProposalResult<Proposal<A>>;
+
   async fn execute_with_opt_gas<S>(
     self,
     gas_budget: Option<u64>,
@@ -154,48 +160,37 @@ where
   where
     S: Signer<IotaKeySignature> + Sync,
   {
-    let ProposalBuilder {
+    let Self {
       identity,
-      expiration,
-      action,
-      forbid_chained_execution,
-    } = self.0;
-    let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
-    let controller_cap = identity.get_controller_cap(client).await?;
-
-    let (ptb, proposal_arg) = Proposal::<A>::make_create_tx(
-      action,
-      expiration,
-      identity_ref.clone(),
-      controller_cap,
-      identity,
-      client.package_id(),
-    )?;
-    let is_threshold_reached = identity.controller_voting_power(controller_cap.0).unwrap() >= identity.threshold();
-    let chain_execute = !forbid_chained_execution && is_threshold_reached;
-    let tx = if chain_execute {
-      Proposal::<A>::make_chained_execution_tx(ptb, proposal_arg, identity_ref, controller_cap, client.package_id())?
-    } else {
-      ptb.finish()
-    };
-    let tx_result = client.execute_transaction(tx, gas_budget).await?;
-    let tx_effects = tx_result
+      tx,
+      chained_execution,
+      ..
+    } = self;
+    let tx_response = client.execute_transaction(tx, gas_budget).await?;
+    let tx_effects_status = tx_response
       .effects
       .as_ref()
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
-    if let IotaExecutionStatus::Failure { error } = tx_effects.status() {
-      return Err(IotaSdkError::Data(error.clone()).into());
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("missing transaction's effects".to_string()))?
+      .status();
+
+    if let IotaExecutionStatus::Failure { error } = tx_effects_status {
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
-    if chain_execute {
-      Proposal::<A>::parse_tx_effects(tx_effects.clone()).map(ProposalResult::Executed)
+    if chained_execution {
+      // The proposal has been created and executed right-away. Parse its effects.
+      Proposal::<A>::parse_tx_effects(&tx_response).map(ProposalResult::Executed)
     } else {
       // 2 objects are created, one is the Bag's Field and the other is our Proposal. Proposal is not owned by the bag,
       // but the field is.
-      let proposal_id = tx_effects
+      let proposals_bag_id = identity.multicontroller().proposals_bag_id();
+      let proposal_id = tx_response
+        .effects
+        .as_ref()
+        .ok_or_else(|| Error::TransactionUnexpectedResponse("transaction had no effects".to_string()))?
         .created()
         .iter()
-        .find(|obj_ref| obj_ref.owner != Owner::ObjectOwner(identity.multicontroller().proposals_bag_id().into()))
+        .find(|obj_ref| obj_ref.owner != proposals_bag_id)
         .expect("tx was successful")
         .object_id();
 
@@ -207,15 +202,16 @@ where
     }
     .map(move |output| TransactionOutput {
       output,
-      response: tx_result,
+      response: tx_response,
     })
   }
 }
 
 #[derive(Debug)]
 pub struct ExecuteProposalTx<'i, A> {
-  proposal: Proposal<A>,
+  tx: ProgrammableTransaction,
   identity: &'i mut OnChainIdentity,
+  _action: PhantomData<A>,
 }
 
 #[async_trait]
@@ -233,23 +229,22 @@ where
   where
     S: Signer<IotaKeySignature> + Sync,
   {
-    let Self { proposal, identity } = self;
-    let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
-    let controller_cap = identity.get_controller_cap(client).await?;
-
-    let tx = proposal.make_execute_tx(identity_ref, controller_cap, client.package_id())?;
-    let tx_result = client.execute_transaction(tx, gas_budget).await?;
-    let tx_effects = tx_result
+    let Self { identity, tx, .. } = self;
+    let tx_response = client.execute_transaction(tx, gas_budget).await?;
+    let tx_effects_status = tx_response
       .effects
       .as_ref()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
-    if let IotaExecutionStatus::Failure { error } = tx_effects.status() {
-      Err(IotaSdkError::Data(error.clone()).into())
+
+    if let IotaExecutionStatus::Failure { error } = tx_effects_status.status() {
+      Err(Error::TransactionUnexpectedResponse(error.clone()))
     } else {
-      Proposal::<A>::parse_tx_effects(tx_effects.clone()).map(move |output| TransactionOutput {
-        output,
-        response: tx_result,
-      })
+      *identity = get_identity(client, identity.id())
+        .await?
+        .expect("identity exists on-chain");
+
+      Proposal::<A>::parse_tx_effects(&tx_response)
+        .map(move |output| TransactionOutput { output, response: tx_response })
     }
   }
 }
@@ -275,7 +270,7 @@ where
   where
     S: Signer<IotaKeySignature> + Sync,
   {
-    let Self { proposal, identity } = self;
+    let Self { proposal, identity, .. } = self;
     let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
     let controller_cap = identity.get_controller_cap(client).await?;
     let tx = move_calls::identity::proposal::approve::<A>(
@@ -286,7 +281,12 @@ where
     )?;
 
     let response = client.execute_transaction(tx, gas_budget).await?;
-    if let IotaExecutionStatus::Failure { error } = response.effects.as_ref().expect("had effects").status() {
+    let tx_effects_status = response
+      .effects
+      .as_ref()
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
+
+    if let IotaExecutionStatus::Failure { error } = tx_effects_status.status() {
       return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
@@ -297,4 +297,29 @@ where
 
     Ok(TransactionOutput { output: (), response })
   }
+}
+
+async fn obj_data_for_id(client: &IdentityClientReadOnly, obj_id: ObjectID) -> anyhow::Result<IotaObjectData> {
+  use anyhow::Context;
+
+  client
+    .read_api()
+    .get_object_with_options(obj_id, IotaObjectDataOptions::default().with_type().with_owner())
+    .await?
+    .into_object()
+    .context("no iota object in response")
+}
+
+async fn obj_ref_and_type_for_id(
+  client: &IdentityClientReadOnly,
+  obj_id: ObjectID,
+) -> anyhow::Result<(ObjectRef, TypeTag)> {
+  let res = obj_data_for_id(client, obj_id).await?;
+  let obj_ref = res.object_ref();
+  let obj_type = match res.object_type().expect("object type is requested") {
+    ObjectType::Package => anyhow::bail!("a move package cannot be sent"),
+    ObjectType::Struct(type_) => type_.into(),
+  };
+
+  Ok((obj_ref, obj_type))
 }
