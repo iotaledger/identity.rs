@@ -34,7 +34,8 @@ use identity_iota::storage::KeyType;
 use identity_iota::verification::MethodScope;
 
 use identity_storage::Storage;
-use identity_sui_name_tbd::client::{IdentityClient, IotaKeySignature};
+use identity_sui_name_tbd::client::IdentityClient;
+use identity_sui_name_tbd::client::IotaKeySignature;
 use identity_sui_name_tbd::transaction::Transaction;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use secret_storage::Signer;

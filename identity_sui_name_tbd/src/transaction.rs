@@ -1,3 +1,5 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 use async_trait::async_trait;
 use iota_sdk::types::transaction::ProgrammableTransaction;
 use secret_storage::Signer;
