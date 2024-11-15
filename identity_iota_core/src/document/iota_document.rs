@@ -396,8 +396,8 @@ impl IotaDocument {
 
 #[cfg(feature = "client")]
 mod client_document {
-  use iota_sdk::types::block::address::Hrp;
-  use iota_sdk::types::block::address::ToBech32Ext;
+  use iota_sdk_legacy::types::block::address::Hrp;
+  use iota_sdk_legacy::types::block::address::ToBech32Ext;
 
   use crate::block::address::Address;
   use crate::block::output::AliasId;
