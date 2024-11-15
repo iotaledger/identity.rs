@@ -3,8 +3,10 @@
 
 use std::str::FromStr;
 
+use crate::common;
 use crate::common::get_client as get_test_client;
 use crate::common::get_key_data;
+use crate::common::TEST_COIN_TYPE;
 use crate::common::TEST_DOC;
 use crate::common::TEST_GAS_BUDGET;
 use identity_iota_core::IotaDID;
@@ -13,11 +15,15 @@ use identity_sui_name_tbd::client::get_object_id_from_did;
 use identity_sui_name_tbd::migration::has_previous_version;
 use identity_sui_name_tbd::migration::Identity;
 use identity_sui_name_tbd::proposals::ProposalResult;
+use identity_sui_name_tbd::proposals::ProposalT as _;
 use identity_sui_name_tbd::transaction::Transaction;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::types::base_types::SequenceNumber;
+use iota_sdk::types::TypeTag;
+use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
+use move_core_types::ident_str;
 use move_core_types::language_storage::StructTag;
 
 #[tokio::test]
@@ -29,7 +35,8 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
     .create_identity(TEST_DOC)
     .finish()
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
-    .await?;
+    .await?
+    .output;
 
   let updated_did_doc = {
     let did = IotaDID::parse(format!("did:iota:{}", newly_created_identity.id()))?;
@@ -47,9 +54,11 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
 
   newly_created_identity
     .update_did_document(updated_did_doc)
-    .finish()
+    .finish(&identity_client)
+    .await?
     .execute(&identity_client)
-    .await?;
+    .await?
+    .output;
 
   Ok(())
 }
@@ -67,7 +76,8 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     .threshold(2)
     .finish()
     .execute(&alice_client)
-    .await?;
+    .await?
+    .output;
 
   let did_doc = {
     let did = IotaDID::parse(format!("did:iota:{}", identity.id()))?;
@@ -84,9 +94,11 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
   };
   let ProposalResult::Pending(mut proposal) = identity
     .update_did_document(did_doc)
-    .finish()
+    .finish(&alice_client)
+    .await?
     .execute(&alice_client)
     .await?
+    .output
   else {
     anyhow::bail!("the proposal is executed");
   };
@@ -108,14 +120,16 @@ async fn adding_controller_works() -> anyhow::Result<()> {
     .create_identity(TEST_DOC)
     .finish()
     .execute(&alice_client)
-    .await?;
+    .await?
+    .output;
 
   // Alice proposes to add Bob as a controller. Since Alice has enough voting power the proposal
   // is executed directly after creation.
   identity
     .update_config()
     .add_controller(bob_client.sender_address(), 1)
-    .finish()
+    .finish(&alice_client)
+    .await?
     .execute(&alice_client)
     .await?;
 
@@ -140,7 +154,8 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
     .create_identity(TEST_DOC)
     .finish()
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
-    .await?;
+    .await?
+    .output;
 
   let did = IotaDID::parse(format!("did:iota:{}", newly_created_identity.id()))?;
   let updated_did_doc = {
@@ -155,7 +170,8 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
 
   newly_created_identity
     .update_did_document(updated_did_doc)
-    .finish()
+    .finish(&identity_client)
+    .await?
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
     .await?;
 
@@ -213,6 +229,106 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
       break;
     }
   }
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn send_proposal_works() -> anyhow::Result<()> {
+  let test_client = get_test_client().await?;
+  let identity_client = test_client.new_user_client().await?;
+
+  let mut identity = identity_client
+    .create_identity(TEST_DOC)
+    .finish()
+    .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
+    .await?
+    .output;
+  let identity_address = identity.id().into();
+
+  // Let's give the identity 2 coins in order to have something to move.
+  let coin1 = common::get_test_coin(identity_address, &identity_client).await?;
+  let coin2 = common::get_test_coin(identity_address, &identity_client).await?;
+
+  // Let's propose the send of those two caps to the identity_client's address.
+  let ProposalResult::Pending(send_proposal) = identity
+    .send_assets()
+    .object(coin1, identity_client.sender_address())
+    .object(coin2, identity_client.sender_address())
+    .finish(&identity_client)
+    .await?
+    .execute(&identity_client)
+    .await?
+    .output
+  else {
+    panic!("send proposal cannot be chain-executed!");
+  };
+
+  send_proposal
+    .execute(&mut identity, &identity_client)
+    .await?
+    .execute(&identity_client)
+    .await?;
+
+  // Assert that identity_client's address now owns those coins.
+  identity_client
+    .find_owned_ref(TEST_COIN_TYPE.clone(), |obj| obj.object_id == coin1)
+    .await?
+    .expect("coin1 was transfered to this address");
+
+  identity_client
+    .find_owned_ref(TEST_COIN_TYPE.clone(), |obj| obj.object_id == coin2)
+    .await?
+    .expect("coin2 was transfered to this address");
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn borrow_proposal_works() -> anyhow::Result<()> {
+  let test_client = get_test_client().await?;
+  let identity_client = test_client.new_user_client().await?;
+
+  let mut identity = identity_client
+    .create_identity(TEST_DOC)
+    .finish()
+    .execute(&identity_client)
+    .await?
+    .output;
+  let identity_address = identity.id().into();
+
+  let coin1 = common::get_test_coin(identity_address, &identity_client).await?;
+  let coin2 = common::get_test_coin(identity_address, &identity_client).await?;
+
+  // Let's propose the borrow of those two coins to the identity_client's address.
+  let ProposalResult::Pending(borrow_proposal) = identity
+    .borrow_assets()
+    .borrow(coin1)
+    .borrow(coin2)
+    .finish(&identity_client)
+    .await?
+    .execute(&identity_client)
+    .await?
+    .output
+  else {
+    panic!("borrow proposal cannot be chain-executed!");
+  };
+
+  borrow_proposal
+    // this doesn't really do anything but if it doesn't fail it means coin1 was properly borrowed.
+    .with_intent(move |ptb, objs| {
+      ptb.programmable_move_call(
+        IOTA_FRAMEWORK_PACKAGE_ID,
+        ident_str!("coin").into(),
+        ident_str!("value").into(),
+        vec![TypeTag::Bool],
+        vec![objs.get(&coin1).expect("coin1 data is borrowed").0],
+      );
+    })
+    .execute(&mut identity, &identity_client)
+    .await?
+    .execute(&identity_client)
+    .await?;
 
   Ok(())
 }

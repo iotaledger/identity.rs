@@ -36,12 +36,15 @@ use serde::Serialize;
 use crate::client::IdentityClient;
 use crate::client::IdentityClientReadOnly;
 use crate::client::IotaKeySignature;
+use crate::proposals::BorrowAction;
 use crate::proposals::ConfigChange;
 use crate::proposals::DeactiveDid;
 use crate::proposals::ProposalBuilder;
+use crate::proposals::SendAction;
 use crate::proposals::UpdateDidDocument;
 use crate::sui::move_calls;
 use crate::transaction::Transaction;
+use crate::transaction::TransactionOutput;
 use crate::utils::MoveType;
 use crate::Error;
 
@@ -161,6 +164,19 @@ impl OnChainIdentity {
   /// Deactivates the DID Document represented by this [`OnChainIdentity`].
   pub fn deactivate_did(&mut self) -> ProposalBuilder<'_, DeactiveDid> {
     ProposalBuilder::new(self, DeactiveDid::new())
+  }
+
+  /// Sends assets owned by this [`OnChainIdentity`] to other addresses.
+  pub fn send_assets(&mut self) -> ProposalBuilder<SendAction> {
+    ProposalBuilder::new(self, SendAction::default())
+  }
+
+  /// Borrows assets owned by this [`OnChainIdentity`] to use them in a custom transaction.
+  /// # Notes
+  /// Make sure to call [`super::Proposal::with_intent`] before executing the proposal.
+  /// Failing to do so will make [`crate::proposals::ProposalT::execute`] return an error.
+  pub fn borrow_assets(&mut self) -> ProposalBuilder<BorrowAction> {
+    ProposalBuilder::new(self, BorrowAction::default())
   }
 
   /// Returns historical data for this [`OnChainIdentity`].
@@ -441,7 +457,7 @@ impl<'a> Transaction for CreateIdentityTx<'a> {
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<Self::Output, Error>
+  ) -> Result<TransactionOutput<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -501,5 +517,9 @@ impl<'a> Transaction for CreateIdentityTx<'a> {
     get_identity(client, new_identity_id)
       .await
       .and_then(|identity| identity.ok_or_else(|| Error::ObjectLookup(new_identity_id.to_string())))
+      .map(move |identity| TransactionOutput {
+        output: identity,
+        response,
+      })
   }
 }

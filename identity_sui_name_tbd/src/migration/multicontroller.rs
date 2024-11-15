@@ -26,7 +26,7 @@ pub struct Proposal<T> {
   expiration_epoch: Option<u64>,
   votes: u64,
   voters: HashSet<ObjectID>,
-  action: T,
+  pub(crate) action: T,
 }
 
 impl<T> Proposal<T> {
@@ -47,6 +47,11 @@ impl<T> Proposal<T> {
   /// Returns a reference to the action contained by this [`Proposal`].
   pub fn action(&self) -> &T {
     &self.action
+  }
+
+  /// Consumes the [`Proposal`] returning its action.
+  pub fn into_action(self) -> T {
+    self.action
   }
 }
 

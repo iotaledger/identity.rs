@@ -5,6 +5,7 @@
 use std::io::Write;
 use std::ops::Deref;
 use std::sync::Arc;
+use std::sync::LazyLock;
 
 use anyhow::anyhow;
 use anyhow::Context;
@@ -22,14 +23,23 @@ use identity_storage::Storage;
 use identity_storage::StorageSigner;
 use identity_sui_name_tbd::client::IdentityClient;
 use identity_sui_name_tbd::client::IdentityClientReadOnly;
+use identity_sui_name_tbd::client::IotaKeySignature;
+use identity_sui_name_tbd::transaction::Transaction;
 use identity_sui_name_tbd::utils::request_funds;
 use identity_verification::VerificationMethod;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
+use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use iota_sdk::types::TypeTag;
+use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use iota_sdk::IotaClient;
 use iota_sdk::IotaClientBuilder;
 use jsonpath_rust::JsonPathQuery;
+use move_core_types::ident_str;
+use move_core_types::language_storage::StructTag;
+use secret_storage::Signer;
 use serde_json::Value;
 use tokio::process::Command;
 use tokio::sync::OnceCell;
@@ -60,6 +70,7 @@ pub const TEST_DOC: &[u8] = &[
   50, 50, 84, 49, 50, 58, 49, 52, 58, 51, 50, 90, 34, 44, 34, 117, 112, 100, 97, 116, 101, 100, 34, 58, 34, 50, 48, 50,
   52, 45, 48, 53, 45, 50, 50, 84, 49, 50, 58, 49, 52, 58, 51, 50, 90, 34, 125, 125,
 ];
+pub static TEST_COIN_TYPE: LazyLock<StructTag> = LazyLock::new(|| "0x2::coin::Coin<bool>".parse().unwrap());
 
 pub async fn get_client() -> anyhow::Result<TestClient> {
   let client = IotaClientBuilder::default().build_localnet().await?;
@@ -403,4 +414,30 @@ impl TestClient {
 
     Ok(())
   }
+}
+
+pub async fn get_test_coin<S>(recipient: IotaAddress, client: &IdentityClient<S>) -> anyhow::Result<ObjectID>
+where
+  S: Signer<IotaKeySignature> + Sync,
+{
+  let mut ptb = ProgrammableTransactionBuilder::new();
+  let coin = ptb.programmable_move_call(
+    IOTA_FRAMEWORK_PACKAGE_ID,
+    ident_str!("coin").into(),
+    ident_str!("zero").into(),
+    vec![TypeTag::Bool],
+    vec![],
+  );
+  ptb.transfer_args(recipient, vec![coin]);
+  ptb
+    .finish()
+    .execute(client)
+    .await?
+    .response
+    .effects
+    .expect("tx should have had effects")
+    .created()
+    .first()
+    .map(|obj| obj.object_id())
+    .context("no coins were created")
 }

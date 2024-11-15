@@ -100,8 +100,6 @@ module identity_iota::multicontroller {
         &mut action.inner
     }
 
-    public struct ActionKey has copy, store, drop {}
-
     public(package) fun assert_is_member<V>(multi: &Multicontroller<V>, cap: &ControllerCap) {
         assert!(multi.controllers.contains(&cap.id.to_inner()), EInvalidController);
     }
@@ -222,6 +220,11 @@ module identity_iota::multicontroller {
     public(package) fun unpack_action<T: store>(action: Action<T>): T {
         let Action { inner } = action;
         inner
+    }
+
+    public(package) fun is_proposal_approved<V, A: store>(multi: &Multicontroller<V>, proposal_id: ID): bool {
+        let proposal = multi.proposals.borrow<ID, Proposal<A>>(proposal_id);
+        proposal.votes >= multi.threshold
     }
 
     public(package) fun add_members<V>(multi: &mut Multicontroller<V>, to_add: VecMap<address, u64>, ctx: &mut TxContext) {

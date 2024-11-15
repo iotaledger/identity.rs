@@ -96,7 +96,8 @@ impl PublicAvailableVC {
       .deletable(true)
       .finish()
       .execute_with_opt_gas(gas_budget, client)
-      .await?;
+      .await?
+      .output;
 
     Ok(Self { credential, asset })
   }

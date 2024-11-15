@@ -37,7 +37,8 @@ async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
     .create_authenticated_asset::<u64>(42)
     .finish()
     .execute(&alice_client)
-    .await?;
+    .await?
+    .output;
   assert_eq!(asset.content(), &42);
 
   Ok(())
@@ -55,14 +56,16 @@ async fn transferring_asset_works() -> anyhow::Result<()> {
     .transferable(true)
     .finish()
     .execute(&alice_client)
-    .await?;
+    .await?
+    .output;
   let asset_id = asset.id();
 
   // Alice propose to Bob the transfer of the asset.
   let proposal = asset
     .transfer(bob_client.sender_address())?
     .execute(&alice_client)
-    .await?;
+    .await?
+    .output;
   let proposal_id = proposal.id();
   // Bob accepts the transfer.
   proposal.accept().execute(&bob_client).await?;
@@ -114,13 +117,15 @@ async fn accepting_the_transfer_of_an_asset_requires_capability() -> anyhow::Res
     .transferable(true)
     .finish()
     .execute(&alice_client)
-    .await?;
+    .await?
+    .output;
 
   // Alice propose to Bob the transfer of the asset.
   let proposal = asset
     .transfer(bob_client.sender_address())?
     .execute(&alice_client)
-    .await?;
+    .await?
+    .output;
 
   // Caty attempts to accept the transfer instead of Bob but gets an error
   let error = proposal.accept().execute(&caty_client).await.unwrap_err();
@@ -139,7 +144,8 @@ async fn modifying_mutable_asset_works() -> anyhow::Result<()> {
     .mutable(true)
     .finish()
     .execute(&alice_client)
-    .await?;
+    .await?
+    .output;
 
   asset.set_content(420)?.execute(&alice_client).await?;
   assert_eq!(asset.content(), &420);
@@ -157,7 +163,8 @@ async fn deleting_asset_works() -> anyhow::Result<()> {
     .deletable(true)
     .finish()
     .execute(&alice_client)
-    .await?;
+    .await?
+    .output;
   let asset_id = asset.id();
 
   asset.delete()?.execute(&alice_client).await?;
@@ -183,7 +190,8 @@ async fn hosting_vc_works() -> anyhow::Result<()> {
     .create_identity(TEST_DOC)
     .finish()
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
-    .await?;
+    .await?
+    .output;
   let object_id = newly_created_identity.id();
   let did = { IotaDID::parse(format!("did:iota:{object_id}"))? };
 
