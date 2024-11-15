@@ -7,7 +7,6 @@ use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::ObjectRef;
 use iota_sdk::types::object::Owner;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::Argument;
 use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::transaction::ProgrammableTransaction;
 use iota_sdk::types::TypeTag;
@@ -25,7 +24,7 @@ pub fn propose_config_change<I1, I2>(
   controllers_to_remove: HashSet<ObjectID>,
   controllers_to_update: I2,
   package: ObjectID,
-) -> anyhow::Result<(ProgrammableTransactionBuilder, Argument)>
+) -> anyhow::Result<ProgrammableTransaction>
 where
   I1: IntoIterator<Item = (IotaAddress, u64)>,
   I2: IntoIterator<Item = (ObjectID, u64)>,
@@ -64,7 +63,7 @@ where
   let threshold = utils::option_to_move(threshold, &mut ptb, package)?;
   let controllers_to_remove = ptb.pure(controllers_to_remove)?;
 
-  let proposal_id = ptb.programmable_move_call(
+  let _proposal_id = ptb.programmable_move_call(
     package,
     ident_str!("identity").into(),
     ident_str!("propose_config_change").into(),
@@ -80,18 +79,16 @@ where
     ],
   );
 
-  Ok((ptb, proposal_id))
+  Ok(ptb.finish())
 }
 
 pub fn execute_config_change(
-  ptb: Option<ProgrammableTransactionBuilder>,
-  proposal_id_arg: Option<Argument>,
   identity: OwnedObjectRef,
   controller_cap: ObjectRef,
   proposal_id: ObjectID,
   package: ObjectID,
 ) -> anyhow::Result<ProgrammableTransaction> {
-  let mut ptb = ptb.unwrap_or_default();
+  let mut ptb = ProgrammableTransactionBuilder::new();
 
   let Owner::Shared { initial_shared_version } = identity.owner else {
     anyhow::bail!("identity \"{}\" is a not shared object", identity.reference.object_id);
@@ -102,11 +99,7 @@ pub fn execute_config_change(
     mutable: true,
   })?;
   let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(controller_cap))?;
-  let proposal_id = if let Some(proposal_id) = proposal_id_arg {
-    proposal_id
-  } else {
-    ptb.pure(proposal_id)?
-  };
+  let proposal_id = ptb.pure(proposal_id)?;
   ptb.programmable_move_call(
     package,
     ident_str!("identity").into(),

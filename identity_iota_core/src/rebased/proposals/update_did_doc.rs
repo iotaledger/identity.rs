@@ -1,23 +1,24 @@
-use std::str::FromStr;
+use std::marker::PhantomData;
 
 use crate::IotaDocument;
-use iota_sdk::rpc_types::IotaTransactionBlockEffects;
-use iota_sdk::rpc_types::OwnedObjectRef;
+use crate::rebased::client::IdentityClient;
+use crate::rebased::client::IotaKeySignature;
+use crate::rebased::sui::move_calls;
+use async_trait::async_trait;
+use iota_sdk::rpc_types::IotaTransactionBlockResponse;
 use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::Argument;
-use iota_sdk::types::transaction::ProgrammableTransaction;
 use iota_sdk::types::TypeTag;
+use secret_storage::Signer;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::migration::Proposal;
-use crate::rebased::sui::move_calls;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 
+use super::CreateProposalTx;
+use super::ExecuteProposalTx;
 use super::ProposalT;
 
 /// Proposal's action for updating a DID Document.
@@ -27,6 +28,8 @@ pub struct UpdateDidDocument(Vec<u8>);
 
 impl MoveType for UpdateDidDocument {
   fn move_type(package: ObjectID) -> TypeTag {
+    use std::str::FromStr;
+
     TypeTag::from_str(&format!("{package}::update_value_proposal::UpdateValue<vector<u8>>")).expect("valid TypeTag")
   }
 }
@@ -37,51 +40,72 @@ impl UpdateDidDocument {
   }
 }
 
+#[async_trait]
 impl ProposalT for Proposal<UpdateDidDocument> {
   type Action = UpdateDidDocument;
   type Output = ();
 
-  fn make_create_tx(
+  async fn create<'i, S>(
     action: Self::Action,
     expiration: Option<u64>,
-    identity_ref: OwnedObjectRef,
-    controller_cap: ObjectRef,
-    _identity: &OnChainIdentity,
-    package: ObjectID,
-  ) -> Result<(ProgrammableTransactionBuilder, Argument), Error> {
-    move_calls::identity::propose_update(identity_ref, controller_cap, &action.0, expiration, package)
-      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
-  }
-
-  fn make_chained_execution_tx(
-    ptb: ProgrammableTransactionBuilder,
-    proposal_arg: Argument,
-    identity: OwnedObjectRef,
-    controller_cap: ObjectRef,
-    package: ObjectID,
-  ) -> Result<ProgrammableTransaction, Error> {
-    move_calls::identity::execute_update(
-      Some(ptb),
-      Some(proposal_arg),
-      identity,
-      controller_cap,
-      ObjectID::ZERO,
-      package,
+    identity: &'i mut OnChainIdentity,
+    client: &IdentityClient<S>,
+  ) -> Result<CreateProposalTx<'i, Self::Action>, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let identity_ref = client
+      .get_object_ref_by_id(identity.id())
+      .await?
+      .expect("identity exists on-chain");
+    let controller_cap_ref = identity.get_controller_cap(client).await?;
+    let sender_vp = identity
+      .controller_voting_power(controller_cap_ref.0)
+      .expect("controller exists");
+    let chained_execution = sender_vp >= identity.threshold();
+    let tx = move_calls::identity::propose_update(
+      identity_ref,
+      controller_cap_ref,
+      action.0,
+      expiration,
+      client.package_id(),
     )
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
+    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+
+    Ok(CreateProposalTx {
+      identity,
+      tx,
+      chained_execution,
+      _action: PhantomData,
+    })
   }
 
-  fn make_execute_tx(
-    &self,
-    identity: OwnedObjectRef,
-    controller_cap: ObjectRef,
-    package: ObjectID,
-  ) -> Result<ProgrammableTransaction, Error> {
-    move_calls::identity::execute_update(None, None, identity, controller_cap, self.id(), package)
-      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))
+  async fn into_tx<'i, S>(
+    self,
+    identity: &'i mut OnChainIdentity,
+    client: &IdentityClient<S>,
+  ) -> Result<ExecuteProposalTx<'i, Self::Action>, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let proposal_id = self.id();
+    let identity_ref = client
+      .get_object_ref_by_id(identity.id())
+      .await?
+      .expect("identity exists on-chain");
+    let controller_cap_ref = identity.get_controller_cap(client).await?;
+
+    let tx = move_calls::identity::execute_update(identity_ref, controller_cap_ref, proposal_id, client.package_id())
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+
+    Ok(ExecuteProposalTx {
+      identity,
+      tx,
+      _action: PhantomData,
+    })
   }
 
-  fn parse_tx_effects(_effects: IotaTransactionBlockEffects) -> Result<Self::Output, Error> {
+  fn parse_tx_effects(_tx_response: &IotaTransactionBlockResponse) -> Result<Self::Output, Error> {
     Ok(())
   }
 }

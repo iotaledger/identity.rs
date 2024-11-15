@@ -58,7 +58,7 @@ use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use identity_storage::Storage;
 use identity_iota::iota::rebased::client::{IdentityClient, IotaKeySignature};
-use identity_iota::iota::rebased::transaction::Transaction;
+use identity_iota::iota::rebased::transaction::{Transaction, TransactionOutput};
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use secret_storage::Signer;
 use std::thread;
@@ -134,7 +134,7 @@ where
     return Err(anyhow::Error::msg("You have to pass at least one algorithm"));
   };
 
-  let document = identity_client
+  let TransactionOutput::<IotaDocument> { output: document, .. } = identity_client
     .publish_did_document(unpublished)
     .execute_with_gas(TEST_GAS_BUDGET, identity_client)
     .await?;

@@ -31,7 +31,8 @@ async fn can_resolve_a_new_identity() -> anyhow::Result<()> {
     .create_identity(TEST_DOC)
     .finish()
     .execute(&identity_client)
-    .await?;
+    .await?
+    .output;
 
   let identity = migration::get_identity(&identity_client, new_identity.id()).await?;
 
