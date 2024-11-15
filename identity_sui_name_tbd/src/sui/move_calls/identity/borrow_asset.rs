@@ -1,3 +1,8 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use std::collections::HashMap;
+
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::OwnedObjectRef;
 use iota_sdk::types::base_types::ObjectID;
@@ -37,14 +42,17 @@ pub fn propose_borrow(
   Ok(ptb.finish())
 }
 
-pub fn execute_borrow(
+pub fn execute_borrow<F>(
   identity: OwnedObjectRef,
   capability: ObjectRef,
   proposal_id: ObjectID,
   objects: Vec<IotaObjectData>,
-  intent_fn: IntentFn,
+  intent_fn: F,
   package: ObjectID,
-) -> Result<ProgrammableTransaction, anyhow::Error> {
+) -> Result<ProgrammableTransaction, anyhow::Error>
+where
+  F: FnOnce(&mut ProgrammableTransactionBuilder, &HashMap<ObjectID, (Argument, IotaObjectData)>),
+{
   let mut ptb = ProgrammableTransactionBuilder::new();
   let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
   let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;

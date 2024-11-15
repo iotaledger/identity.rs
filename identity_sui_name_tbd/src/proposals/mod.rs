@@ -15,6 +15,7 @@ use crate::client::IdentityClientReadOnly;
 use crate::client::IotaKeySignature;
 use crate::migration::get_identity;
 use crate::sui::move_calls;
+use crate::transaction::ProtoTransaction;
 use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
@@ -58,11 +59,11 @@ pub trait ProposalT {
   where
     S: Signer<IotaKeySignature> + Sync;
 
-  async fn execute<'i, S>(
+  async fn into_tx<'i, S>(
     self,
     identity: &'i mut OnChainIdentity,
     client: &IdentityClient<S>,
-  ) -> Result<ExecuteProposalTx<'i, Self::Action>, Error>
+  ) -> Result<impl ProtoTransaction, Error>
   where
     S: Signer<IotaKeySignature> + Sync;
 

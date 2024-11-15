@@ -75,3 +75,32 @@ impl Transaction for ProgrammableTransaction {
     Ok(TransactionOutput { output: (), response })
   }
 }
+
+/// Interface to describe an operation that can eventually
+/// be turned into a [`Transaction`], given the right input.
+pub trait ProtoTransaction {
+  /// The input required by this operation.
+  type Input;
+  /// This operation's next state. Can either be another [`ProtoTransaction`]
+  /// or a whole [`Transaction`] ready to be executed.
+  type Tx: ProtoTransaction;
+
+  /// Feed this operation with its required input, advancing its
+  /// state to another [`ProtoTransaction`] that may or may not
+  /// be ready for execution.
+  fn with(self, input: Self::Input) -> Self::Tx; 
+}
+
+// Every Transaction is a QuasiTransaction that requires no input
+// and that has itself as its next state.
+impl<T> ProtoTransaction for T
+where
+  T: Transaction,
+{
+  type Input = ();
+  type Tx = Self;
+
+  fn with(self, _: Self::Input) -> Self::Tx {
+    self
+  }
+}
