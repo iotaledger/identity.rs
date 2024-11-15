@@ -21,12 +21,6 @@ identity_resolver = { version = "=1.2.0", path = "../identity_resolver", default
 identity_storage = { version = "=1.2.0", path = "../identity_storage", default-features = false, features = ["iota-document"] }
 identity_verification = { version = "=1.2.0", path = "../identity_verification", default-features = false }
 
-[dev-dependencies]
-anyhow = "1.0.64"
-iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client"] }
-rand = "0.8.5"
-tokio = { version = "1.29.0", features = ["full"] }
-
 [features]
 default = ["revocation-bitmap", "client", "iota-client", "kinesis-client", "resolver"]
 

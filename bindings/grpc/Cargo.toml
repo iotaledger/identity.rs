@@ -35,7 +35,6 @@ identity_stronghold = { path = "../../identity_stronghold", features = [
 identity_sui_name_tbd = { path = "../../identity_sui_name_tbd" }
 iota-sdk = { version = "1.1.2", features = ["stronghold"] }
 iota-sdk-move = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk" }
-openssl = { version = "0.10", features = ["vendored"] }
 prost = "0.13"
 rand = "0.8.5"
 serde = { version = "1.0", features = ["derive", "alloc"] }

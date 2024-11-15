@@ -12,6 +12,7 @@ rust-version.workspace = true
 description = "An implementation of the Verifiable Credentials standard."
 
 [dependencies]
+bls12_381_plus = { workspace = true, optional = true }
 flate2 = { version = "1.0.28", default-features = false, features = ["rust_backend"], optional = true }
 futures = { version = "0.3", default-features = false, optional = true }
 identity_core = { version = "=1.2.0", path = "../identity_core", default-features = false }
@@ -37,7 +38,6 @@ anyhow = "1.0.62"
 identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 iota-crypto = { version = "0.23", default-features = false, features = ["ed25519", "std", "random"] }
 proptest = { version = "1.4.0", default-features = false, features = ["std"] }
-tokio = { version = "1.35.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [package.metadata.docs.rs]
 # To build locally:
