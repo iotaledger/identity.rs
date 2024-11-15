@@ -114,7 +114,7 @@ impl ProposalT for Proposal<SendAction> {
     })
   }
 
-  async fn execute<'i, S>(
+  async fn into_tx<'i, S>(
     self,
     identity: &'i mut OnChainIdentity,
     client: &IdentityClient<S>,

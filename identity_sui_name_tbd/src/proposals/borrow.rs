@@ -1,12 +1,9 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use crate::client::IdentityClient;
-use crate::client::IotaKeySignature;
-use crate::migration::Proposal;
-use crate::sui::move_calls;
-use crate::utils::MoveType;
-use crate::Error;
+use crate::{
+  client::{IdentityClient, IotaKeySignature}, migration::Proposal, sui::move_calls, transaction::{ProtoTransaction, Transaction, TransactionOutput}, utils::MoveType, Error
+};
 use async_trait::async_trait;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaTransactionBlockResponse;
@@ -32,6 +29,16 @@ pub struct BorrowAction {
   objects: Vec<ObjectID>,
   #[serde(skip)]
   intent: Option<IntentFn>,
+}
+
+/// A [`BorrowAction`] coupled with a user-provided function to describe how
+/// the borrowed assets shall be used.
+pub struct BorrowActionWithIntent<F>
+where
+  F: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>),
+{
+  action: BorrowAction,
+  intent_fn: F,
 }
 
 impl MoveType for BorrowAction {
@@ -121,21 +128,85 @@ impl ProposalT for Proposal<BorrowAction> {
     })
   }
 
-  async fn execute<'i, S>(
+  async fn into_tx<'i, S>(
     self,
     identity: &'i mut OnChainIdentity,
-    client: &IdentityClient<S>,
-  ) -> Result<ExecuteProposalTx<'i, Self::Action>, Error>
+    _: &IdentityClient<S>,
+  ) -> Result<ExecuteBorrowTx<'i, Self::Action>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
     let proposal_id = self.id();
-    let action = self.into_action();
-    let intent_fn = action.intent.ok_or_else(|| {
-      Error::TransactionBuildingFailed(
-        "missing intent; make sure to provide one by calling `Proposal::<BorrowAction>::with_intent`".to_string(),
-      )
-    })?;
+    let borrow_action = self.into_action();
+
+    Ok(ExecuteBorrowTx {
+      identity,
+      proposal_id,
+      borrow_action,
+    })
+  }
+
+  fn parse_tx_effects(_tx_response: &IotaTransactionBlockResponse) -> Result<Self::Output, Error> {
+    Ok(())
+  }
+}
+
+pub struct ExecuteBorrowTx<'i, B> {
+  identity: &'i mut OnChainIdentity,
+  borrow_action: B,
+  proposal_id: ObjectID,
+}
+
+impl<'i> ExecuteBorrowTx<'i, BorrowAction> {
+  /// Defines how the borrowed assets should be used.
+  pub fn with_intent<F>(self, intent_fn: F) -> ExecuteBorrowTx<'i, BorrowActionWithIntent<F>>
+  where
+    F: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>),
+  {
+    let ExecuteBorrowTx {
+      identity,
+      borrow_action,
+      proposal_id,
+    } = self;
+    ExecuteBorrowTx {
+      identity,
+      proposal_id,
+      borrow_action: BorrowActionWithIntent {
+        action: borrow_action,
+        intent_fn,
+      },
+    }
+  }
+}
+
+impl<'i> ProtoTransaction for ExecuteBorrowTx<'i, BorrowAction> {
+  type Input = IntentFn;
+  type Tx = ExecuteBorrowTx<'i, BorrowActionWithIntent<IntentFn>>;
+
+  fn with(self, input: Self::Input) -> Self::Tx {
+    self.with_intent(input)
+  }
+}
+
+#[async_trait]
+impl<'i, F> Transaction for ExecuteBorrowTx<'i, BorrowActionWithIntent<F>>
+where
+  F: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) + Send,
+{
+  type Output = ();
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<TransactionOutput<Self::Output>, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let Self {
+      identity,
+      borrow_action,
+      proposal_id,
+    } = self;
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
       .await?
@@ -145,7 +216,7 @@ impl ProposalT for Proposal<BorrowAction> {
     // Construct a list of `(ObjectRef, TypeTag)` from the list of objects to send.
     let object_data_list = {
       let mut object_data_list = vec![];
-      for obj_id in action.objects {
+      for obj_id in borrow_action.action.objects {
         let object_data = super::obj_data_for_id(client, obj_id)
           .await
           .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
@@ -159,19 +230,17 @@ impl ProposalT for Proposal<BorrowAction> {
       controller_cap_ref,
       proposal_id,
       object_data_list,
-      intent_fn,
+      borrow_action.intent_fn,
       client.package_id(),
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
-    Ok(ExecuteProposalTx {
+    ExecuteProposalTx {
       identity,
       tx,
-      _action: PhantomData,
-    })
-  }
-
-  fn parse_tx_effects(_tx_response: &IotaTransactionBlockResponse) -> Result<Self::Output, Error> {
-    Ok(())
+      _action: PhantomData::<BorrowAction>,
+    }
+    .execute_with_opt_gas(gas_budget, client)
+    .await
   }
 }
