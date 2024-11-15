@@ -338,7 +338,8 @@ where
 
     oci
       .update_did_document(document.clone())
-      .finish()
+      .finish(self)
+      .await?
       .execute_with_gas(gas_budget, self)
       .await?;
 
@@ -353,7 +354,12 @@ where
       return Err(Error::Identity("only new identities can be deactivated".to_string()));
     };
 
-    oci.deactivate_did().finish().execute_with_gas(gas_budget, self).await?;
+    oci
+      .deactivate_did()
+      .finish(self)
+      .await?
+      .execute_with_gas(gas_budget, self)
+      .await?;
 
     Ok(())
   }

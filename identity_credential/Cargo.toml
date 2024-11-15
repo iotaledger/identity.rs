@@ -12,7 +12,6 @@ rust-version.workspace = true
 description = "An implementation of the Verifiable Credentials standard."
 
 [dependencies]
-bls12_381_plus = { workspace = true, optional = true }
 flate2 = { version = "1.0.28", default-features = false, features = ["rust_backend"], optional = true }
 futures = { version = "0.3", default-features = false, optional = true }
 identity_core = { version = "=1.2.0", path = "../identity_core", default-features = false }
