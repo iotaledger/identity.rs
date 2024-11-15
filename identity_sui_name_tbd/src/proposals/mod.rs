@@ -243,8 +243,10 @@ where
         .await?
         .expect("identity exists on-chain");
 
-      Proposal::<A>::parse_tx_effects(&tx_response)
-        .map(move |output| TransactionOutput { output, response: tx_response })
+      Proposal::<A>::parse_tx_effects(&tx_response).map(move |output| TransactionOutput {
+        output,
+        response: tx_response,
+      })
     }
   }
 }

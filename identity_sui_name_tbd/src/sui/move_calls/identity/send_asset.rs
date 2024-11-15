@@ -1,15 +1,16 @@
-use iota_sdk::{
-  rpc_types::OwnedObjectRef,
-  types::{
-    base_types::{IotaAddress, ObjectID, ObjectRef},
-    programmable_transaction_builder::ProgrammableTransactionBuilder,
-    transaction::{ObjectArg, ProgrammableTransaction},
-    TypeTag,
-  },
-};
+use iota_sdk::rpc_types::OwnedObjectRef;
+use iota_sdk::types::base_types::IotaAddress;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::base_types::ObjectRef;
+use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use iota_sdk::types::transaction::ObjectArg;
+use iota_sdk::types::transaction::ProgrammableTransaction;
+use iota_sdk::types::TypeTag;
 use move_core_types::ident_str;
 
-use crate::{proposals::SendAction, sui::move_calls, utils::MoveType};
+use crate::proposals::SendAction;
+use crate::sui::move_calls;
+use crate::utils::MoveType;
 
 pub fn propose_send(
   identity: OwnedObjectRef,
