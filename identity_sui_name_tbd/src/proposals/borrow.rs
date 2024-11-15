@@ -1,24 +1,28 @@
-use std::{collections::HashMap, marker::PhantomData};
+use std::collections::HashMap;
+use std::marker::PhantomData;
 
-use crate::{
-  client::{IdentityClient, IotaKeySignature},
-  migration::Proposal,
-  sui::move_calls,
-  utils::MoveType,
-  Error,
-};
+use crate::client::IdentityClient;
+use crate::client::IotaKeySignature;
+use crate::migration::Proposal;
+use crate::sui::move_calls;
+use crate::utils::MoveType;
+use crate::Error;
 use async_trait::async_trait;
-use iota_sdk::{
-  rpc_types::{IotaObjectData, IotaTransactionBlockResponse},
-  types::{
-    base_types::ObjectID, programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb,
-    transaction::Argument, TypeTag,
-  },
-};
+use iota_sdk::rpc_types::IotaObjectData;
+use iota_sdk::rpc_types::IotaTransactionBlockResponse;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
+use iota_sdk::types::transaction::Argument;
+use iota_sdk::types::TypeTag;
 use secret_storage::Signer;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
-use super::{CreateProposalTx, ExecuteProposalTx, OnChainIdentity, ProposalBuilder, ProposalT};
+use super::CreateProposalTx;
+use super::ExecuteProposalTx;
+use super::OnChainIdentity;
+use super::ProposalBuilder;
+use super::ProposalT;
 
 pub(crate) type IntentFn = Box<dyn FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) + Send>;
 

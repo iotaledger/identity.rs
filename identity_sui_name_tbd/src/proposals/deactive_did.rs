@@ -1,9 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-
 use std::marker::PhantomData;
-use std::str::FromStr;
 
 use crate::client::IdentityClient;
 use crate::client::IotaKeySignature;
