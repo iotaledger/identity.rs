@@ -20,7 +20,6 @@ identity_credential = { version = "=1.4.0", path = "../identity_credential", def
 identity_did = { version = "=1.4.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.4.0", path = "../identity_document", default-features = false }
 identity_sui_name_tbd = { path = "../identity_sui_name_tbd", optional = true }
-serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum.workspace = true
 thiserror = { version = "1.0", default-features = false }
 
