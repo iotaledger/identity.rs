@@ -262,7 +262,7 @@ async fn send_proposal_works() -> anyhow::Result<()> {
   };
 
   send_proposal
-    .execute(&mut identity, &identity_client)
+    .into_tx(&mut identity, &identity_client)
     .await?
     .execute(&identity_client)
     .await?;
@@ -312,6 +312,8 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
   };
 
   borrow_proposal
+    .into_tx(&mut identity, &identity_client)
+    .await?
     // this doesn't really do anything but if it doesn't fail it means coin1 was properly borrowed.
     .with_intent(move |ptb, objs| {
       ptb.programmable_move_call(
@@ -322,8 +324,6 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
         vec![objs.get(&coin1).expect("coin1 data is borrowed").0],
       );
     })
-    .execute(&mut identity, &identity_client)
-    .await?
     .execute(&identity_client)
     .await?;
 

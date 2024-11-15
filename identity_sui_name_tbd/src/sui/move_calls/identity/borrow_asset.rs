@@ -1,18 +1,16 @@
+use std::collections::HashMap;
+
 use iota_sdk::{
   rpc_types::{IotaObjectData, OwnedObjectRef},
   types::{
     base_types::{ObjectID, ObjectRef, ObjectType},
     programmable_transaction_builder::ProgrammableTransactionBuilder,
-    transaction::{ObjectArg, ProgrammableTransaction},
+    transaction::{Argument, ObjectArg, ProgrammableTransaction},
   },
 };
 use move_core_types::ident_str;
 
-use crate::{
-  proposals::{BorrowAction, IntentFn},
-  sui::move_calls::utils,
-  utils::MoveType,
-};
+use crate::{proposals::BorrowAction, sui::move_calls::utils, utils::MoveType};
 
 pub fn propose_borrow(
   identity: OwnedObjectRef,
@@ -38,14 +36,17 @@ pub fn propose_borrow(
   Ok(ptb.finish())
 }
 
-pub fn execute_borrow(
+pub fn execute_borrow<F>(
   identity: OwnedObjectRef,
   capability: ObjectRef,
   proposal_id: ObjectID,
   objects: Vec<IotaObjectData>,
-  intent_fn: IntentFn,
+  intent_fn: F,
   package: ObjectID,
-) -> Result<ProgrammableTransaction, anyhow::Error> {
+) -> Result<ProgrammableTransaction, anyhow::Error>
+where
+  F: FnOnce(&mut ProgrammableTransactionBuilder, &HashMap<ObjectID, (Argument, IotaObjectData)>),
+{
   let mut ptb = ProgrammableTransactionBuilder::new();
   let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
   let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
