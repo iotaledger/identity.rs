@@ -7,9 +7,22 @@ use iota_sdk::types::object::Owner;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
 use iota_sdk::types::transaction::Argument;
 use iota_sdk::types::transaction::ObjectArg;
+use iota_sdk::types::IOTA_CLOCK_OBJECT_ID;
+use iota_sdk::types::IOTA_CLOCK_OBJECT_SHARED_VERSION;
 use iota_sdk::types::MOVE_STDLIB_PACKAGE_ID;
 use move_core_types::ident_str;
 use serde::Serialize;
+
+/// Adds a reference to the on-chain clock to `ptb`'s arguments.
+pub fn get_clock_ref(ptb: &mut Ptb) -> Argument {
+  ptb
+    .obj(ObjectArg::SharedObject {
+      id: IOTA_CLOCK_OBJECT_ID,
+      initial_shared_version: IOTA_CLOCK_OBJECT_SHARED_VERSION,
+      mutable: false,
+    })
+    .expect("network has a singleton clock instantiated")
+}
 
 pub fn owned_ref_to_shared_object_arg(
   owned_ref: OwnedObjectRef,

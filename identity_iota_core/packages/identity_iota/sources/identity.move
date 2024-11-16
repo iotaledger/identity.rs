@@ -1,5 +1,10 @@
 module identity_iota::identity {
-    use iota::{vec_map::{Self, VecMap}, transfer::Receiving};
+    use iota::{
+        transfer::Receiving,
+        vec_map::{Self, VecMap},
+        vec_set::VecSet,
+        clock::Clock,
+    };
     use identity_iota::{
         multicontroller::{Self, ControllerCap, Multicontroller, Action},
         update_value_proposal,
@@ -10,6 +15,7 @@ module identity_iota::identity {
     };
 
     const ENotADidDocument: u64 = 0;
+    const EInvalidTimestamp: u64 = 1;
     /// The threshold specified upon document creation was not valid.
     /// Threshold must be greater than or equal to 1.
     const EInvalidThreshold: u64 = 2;
@@ -19,23 +25,50 @@ module identity_iota::identity {
     /// On-chain Identity.
     public struct Identity has key, store {
         id: UID,
-        /// same as stardust `state_metadata`.
+        /// Same as stardust `state_metadata`.
         did_doc: Multicontroller<vector<u8>>,
+        /// Timestamp of this Identity's creation.
+        created: u64,
+        /// Timestamp of this Identity's last update.
+        updated: u64,
     }
 
     /// Creates a new DID Document with a single controller.
-    public fun new(doc: vector<u8>, ctx: &mut TxContext): Identity {
-        new_with_controller(doc, ctx.sender(), ctx)
+    public fun new(
+        doc: vector<u8>,
+        clock: &Clock,
+        ctx: &mut TxContext
+    ): Identity {
+        new_with_controller(doc, ctx.sender(), clock, ctx)
+    }
+
+    /// Creates an identity specifying its `created` timestamp.
+    /// Should only be used for migration!
+    public(package) fun new_with_creation_timestamp(
+        doc: vector<u8>,
+        creation_timestamp: u64,
+        clock: &Clock,
+        ctx: &mut TxContext
+    ): Identity {
+        let mut identity = new_with_controller(doc, ctx.sender(), clock, ctx);
+        assert!(identity.updated >= creation_timestamp, EInvalidTimestamp);
+        identity.created = creation_timestamp;
+
+        identity
     }
 
     public fun new_with_controller(
         doc: vector<u8>,
         controller: address,
+        clock: &Clock,
         ctx: &mut TxContext,
     ): Identity {
+        let now = clock.timestamp_ms();
         Identity {
             id: object::new(ctx),
-            did_doc: multicontroller::new_with_controller(doc, controller, ctx)
+            did_doc: multicontroller::new_with_controller(doc, controller, ctx),
+            created: now,
+            updated: now,
         }
     }
 
@@ -46,20 +79,32 @@ module identity_iota::identity {
         doc: vector<u8>,
         controllers: VecMap<address, u64>,
         threshold: u64,
+        clock: &Clock,
         ctx: &mut TxContext,
     ): Identity {
         assert!(is_did_output(&doc), ENotADidDocument);
         assert!(threshold >= 1, EInvalidThreshold);
         assert!(controllers.size() > 0, EInvalidControllersList);
 
+        let now = clock.timestamp_ms();
         Identity {
             id: object::new(ctx),
             did_doc: multicontroller::new_with_controllers(doc, controllers, threshold, ctx),
+            created: now,
+            updated: now,
         }
     }
 
     public fun id(self: &Identity): &UID {
         &self.id
+    }
+
+    public fun created(self: &Identity): u64 {
+        self.created
+    }
+
+    public fun updated(self: &Identity): u64 {
+        self.updated
     }
 
     public fun threshold(self: &Identity): u64 {
@@ -78,6 +123,7 @@ module identity_iota::identity {
         self: &mut Identity,
         cap: &ControllerCap,
         expiration: Option<u64>,
+        clock: &Clock,
         ctx: &mut TxContext,
     ): Option<ID> {
         let proposal_id = self.did_doc.create_proposal(
@@ -90,7 +136,7 @@ module identity_iota::identity {
             .did_doc
             .is_proposal_approved<_, did_deactivation_proposal::DidDeactivation>(proposal_id);
         if (is_approved) {
-            self.execute_deactivation(cap, proposal_id, ctx);
+            self.execute_deactivation(cap, proposal_id, clock, ctx);
             option::none()
         } else {
             option::some(proposal_id)
@@ -101,6 +147,7 @@ module identity_iota::identity {
         self: &mut Identity,
         cap: &ControllerCap,
         proposal_id: ID,
+        clock: &Clock,
         ctx: &mut TxContext,
     ) {
         let _ = self.did_doc.execute_proposal<vector<u8>, DidDeactivation>(
@@ -109,6 +156,7 @@ module identity_iota::identity {
             ctx,
         ).unwrap();
         self.did_doc.set_controlled_value(vector[]);
+        self.updated = clock.timestamp_ms();
     }
 
     public fun propose_update(
@@ -116,6 +164,7 @@ module identity_iota::identity {
         cap: &ControllerCap,
         updated_doc: vector<u8>,
         expiration: Option<u64>,
+        clock: &Clock,
         ctx: &mut TxContext,
     ): Option<ID> {
         assert!(is_did_output(&updated_doc), ENotADidDocument);
@@ -131,7 +180,7 @@ module identity_iota::identity {
             .did_doc
             .is_proposal_approved<_, update_value_proposal::UpdateValue<vector<u8>>>(proposal_id);
         if (is_approved) {
-            self.execute_update(cap, proposal_id, ctx);
+            self.execute_update(cap, proposal_id, clock, ctx);
             option::none()
         } else {
             option::some(proposal_id)
@@ -142,6 +191,7 @@ module identity_iota::identity {
         self: &mut Identity,
         cap: &ControllerCap,
         proposal_id: ID,
+        clock: &Clock,
         ctx: &mut TxContext,
     ) {
         update_value_proposal::execute_update(
@@ -150,6 +200,8 @@ module identity_iota::identity {
             proposal_id,
             ctx,
         );
+
+        self.updated = clock.timestamp_ms();
     }
 
     public fun propose_config_change(
@@ -299,16 +351,19 @@ module identity_iota::identity_tests {
     use identity_iota::config_proposal::Modify;
     use identity_iota::multicontroller::{ControllerCap, EExpiredProposal, EThresholdNotReached};
     use iota::vec_map;
+    use iota::clock;
 
     #[test]
     fun adding_a_controller_works() {
         let controller1 = @0x1;
         let controller2 = @0x2;
         let mut scenario = test_scenario::begin(controller1);
+        let clock = clock::create_for_testing(scenario.ctx());
+        
 
         // Create a DID document with no funds and 1 controller with a weight of 1 and a threshold of 1.
         // Share the document and send the controller capability to `controller1`.
-        let identity = new(b"DID", scenario.ctx());
+        let identity = new(b"DID", &clock, scenario.ctx());
         transfer::public_share_object(identity);
 
         scenario.next_tx(controller1);
@@ -331,6 +386,7 @@ module identity_iota::identity_tests {
         test_scenario::return_shared(identity);
 
         let _ = scenario.end();
+        clock::destroy_for_testing(clock);
     }
 
     #[test]
@@ -339,6 +395,7 @@ module identity_iota::identity_tests {
         let controller2 = @0x2;
         let controller3 = @0x3;
         let mut scenario = test_scenario::begin(controller1);
+        let clock = clock::create_for_testing(scenario.ctx());
 
         let mut controllers = vec_map::empty();
         controllers.insert(controller1, 1);
@@ -350,6 +407,7 @@ module identity_iota::identity_tests {
             b"DID",
             controllers,
             2,
+            &clock,
             scenario.ctx(),
         );
         transfer::public_share_object(identity);
@@ -390,6 +448,7 @@ module identity_iota::identity_tests {
         test_scenario::return_shared(identity);
 
         let _ = scenario.end();
+        clock::destroy_for_testing(clock);
     }
 
     #[test, expected_failure(abort_code = EThresholdNotReached)]
@@ -402,6 +461,7 @@ module identity_iota::identity_tests {
         let controller_d = @0x4;
 
         let mut scenario = test_scenario::begin(controller_a);
+        let clock = clock::create_for_testing(scenario.ctx());
 
         let mut controllers = vec_map::empty();
         controllers.insert(controller_a, 10);
@@ -415,6 +475,7 @@ module identity_iota::identity_tests {
                 b"DID",
                 controllers,
                 10,
+                &clock,
                 scenario.ctx(),
             );
             transfer::public_share_object(identity);
@@ -445,6 +506,7 @@ module identity_iota::identity_tests {
             b"DID",
             controllers,
             10,
+            &clock,
             scenario.ctx(),
             );
             transfer::public_share_object(identity);
@@ -467,6 +529,7 @@ module identity_iota::identity_tests {
             test_scenario::return_shared(identity);
         };
         let _ = scenario.end();
+        clock::destroy_for_testing(clock);
     }
 
     #[test]
@@ -479,6 +542,7 @@ module identity_iota::identity_tests {
         let controller_d = @0x4;
 
         let mut scenario = test_scenario::begin(controller_b);
+        let clock = clock::create_for_testing(scenario.ctx());
 
         let mut controllers = vec_map::empty();
         controllers.insert(controller_a, 10);
@@ -491,6 +555,7 @@ module identity_iota::identity_tests {
             b"DID",
             controllers,
             10,
+            &clock,
             scenario.ctx(),
         );
         transfer::public_share_object(identity);
@@ -521,15 +586,16 @@ module identity_iota::identity_tests {
         test_scenario::return_to_address(controller_d, controller_d_cap);
 
         let _ = scenario.end();
-
+        clock::destroy_for_testing(clock);
     }
 
     #[test]
     fun check_identity_can_own_another_identity() {
         let controller_a = @0x1;
         let mut scenario = test_scenario::begin(controller_a);
+        let clock = clock::create_for_testing(scenario.ctx());
 
-        let first_identity = new(b"DID", scenario.ctx());
+        let first_identity = new(b"DID", &clock, scenario.ctx());
         transfer::public_share_object(first_identity);
 
         scenario.next_tx(controller_a);
@@ -543,6 +609,7 @@ module identity_iota::identity_tests {
             b"DID",
             controllers,
             10,
+            &clock,
             scenario.ctx(),
         );
 
@@ -568,14 +635,16 @@ module identity_iota::identity_tests {
         test_scenario::return_shared(first_identity);
 
         let _ = scenario.end();
+        clock::destroy_for_testing(clock);
     }
 
     #[test, expected_failure(abort_code = ENotADidDocument)]
     fun test_update_proposal_cannot_propose_non_did_doc() {
         let controller = @0x1;
         let mut scenario = test_scenario::begin(controller);
+        let clock = clock::create_for_testing(scenario.ctx());
 
-        let identity = new(b"DID", scenario.ctx());
+        let identity = new(b"DID", &clock, scenario.ctx());
         transfer::public_share_object(identity);
 
         scenario.next_tx(controller);
@@ -584,12 +653,13 @@ module identity_iota::identity_tests {
         let mut identity = scenario.take_shared<Identity>();
         let cap = scenario.take_from_address<ControllerCap>(controller);
 
-        let _proposal_id = identity.propose_update(&cap, b"NOT DID", option::none(), scenario.ctx());
+        let _proposal_id = identity.propose_update(&cap, b"NOT DID", option::none(), &clock, scenario.ctx());
 
         test_scenario::return_to_address(controller, cap);
         test_scenario::return_shared(identity);
 
         scenario.end();
+        clock::destroy_for_testing(clock);
     }
 
     #[test, expected_failure(abort_code = EExpiredProposal)]
@@ -599,12 +669,13 @@ module identity_iota::identity_tests {
         let new_controller = @0x3;
         let mut scenario = test_scenario::begin(controller_a);
         let expiration_epoch = scenario.ctx().epoch();
-        
+        let clock = clock::create_for_testing(scenario.ctx());
+
         let mut controllers = vec_map::empty();
         controllers.insert(controller_a, 1);
         controllers.insert(controller_b, 1);
 
-        let identity = new_with_controllers(b"DID", controllers, 2, scenario.ctx());
+        let identity = new_with_controllers(b"DID", controllers, 2, &clock, scenario.ctx());
         transfer::public_share_object(identity);
 
         scenario.next_tx(controller_a);
@@ -626,5 +697,6 @@ module identity_iota::identity_tests {
         test_scenario::return_shared(identity);
 
         scenario.end();
+        clock::destroy_for_testing(clock);
     }
 }
