@@ -14,9 +14,11 @@ use crate::rebased::sui::move_calls::utils;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 
-pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransaction, Error> {
+/// Build a transaction that creates a new on-chain Identity containing `did_doc`.
+pub(crate) fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransaction, Error> {
   let mut ptb = ProgrammableTransactionBuilder::new();
   let doc_arg = utils::ptb_pure(&mut ptb, "did_doc", did_doc)?;
+  let clock = utils::get_clock_ref(&mut ptb);
 
   // Create a new identity, sending its capability to the tx's sender.
   let identity_res = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
@@ -24,7 +26,7 @@ pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransacti
     module: ident_str!("identity").into(),
     function: ident_str!("new").into(),
     type_arguments: vec![],
-    arguments: vec![doc_arg],
+    arguments: vec![doc_arg, clock],
   })));
 
   // Share the resulting identity.
@@ -39,7 +41,7 @@ pub fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransacti
   Ok(ptb.finish())
 }
 
-pub fn new_with_controllers<C>(
+pub(crate) fn new_with_controllers<C>(
   did_doc: &[u8],
   controllers: C,
   threshold: u64,
@@ -64,6 +66,7 @@ where
   };
   let doc_arg = ptb.pure(did_doc).map_err(|e| Error::InvalidArgument(e.to_string()))?;
   let threshold_arg = ptb.pure(threshold).map_err(|e| Error::InvalidArgument(e.to_string()))?;
+  let clock = utils::get_clock_ref(&mut ptb);
 
   // Create a new identity, sending its capabilities to the specified controllers.
   let identity_res = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
@@ -71,7 +74,7 @@ where
     module: ident_str!("identity").into(),
     function: ident_str!("new_with_controllers").into(),
     type_arguments: vec![],
-    arguments: vec![doc_arg, controllers, threshold_arg],
+    arguments: vec![doc_arg, controllers, threshold_arg, clock],
   })));
 
   // Share the resulting identity.
