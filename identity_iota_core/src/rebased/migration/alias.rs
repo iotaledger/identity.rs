@@ -1,18 +1,32 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use async_trait::async_trait;
+use iota_sdk::rpc_types::IotaExecutionStatus;
+use iota_sdk::rpc_types::IotaObjectDataOptions;
+use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::id::UID;
+use iota_sdk::types::transaction::ProgrammableTransaction;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::STARDUST_PACKAGE_ID;
+use secret_storage::Signer;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::client::IotaKeySignature;
+use crate::rebased::sui::move_calls;
+use crate::rebased::transaction::Transaction;
+use crate::rebased::transaction::TransactionOutput;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
+
+use super::get_identity;
+use super::OnChainIdentity;
 
 /// A legacy IOTA Stardust Output type, used to store DID Documents.
 #[derive(Debug, Deserialize, Serialize)]
@@ -52,5 +66,86 @@ pub async fn get_alias(client: &IdentityClientReadOnly, object_id: ObjectID) -> 
     Ok(alias) => Ok(Some(alias)),
     Err(Error::ObjectLookup(err_msg)) if err_msg.contains("missing data") => Ok(None),
     Err(e) => Err(e),
+  }
+}
+
+impl UnmigratedAlias {
+  /// Returns a transaction that when executed migrates a legacy `Alias`
+  /// containing a DID Document to a new [`OnChainIdentity`].
+  pub async fn migrate(
+    self,
+    client: &IdentityClientReadOnly,
+  ) -> Result<impl Transaction<Output = OnChainIdentity>, Error> {
+    // Get the ID of the `AliasOutput` that owns this `Alias`.
+    let alias_output_id = client
+      .read_api()
+      .get_object_with_options(*self.id.object_id(), IotaObjectDataOptions::new().with_owner())
+      .await
+      .map_err(|e| Error::RpcError(e.to_string()))?
+      .owner()
+      .expect("owner was requested")
+      .get_owner_address()
+      .expect("alias is owned by an alias_output")
+      .into();
+    // Get alias_output's ref.
+    let alias_output_ref = client
+      .read_api()
+      .get_object_with_options(alias_output_id, IotaObjectDataOptions::default())
+      .await
+      .map_err(|e| Error::RpcError(e.to_string()))?
+      .object_ref_if_exists()
+      .expect("alias_output exists");
+    // Get migration registry ref.
+    let migration_registry_ref = client
+      .get_object_ref_by_id(client.migration_registry_id())
+      .await?
+      .expect("migration registry exists");
+
+    // Build migration tx.
+    let tx = move_calls::migration::migrate_did_output(alias_output_ref, migration_registry_ref, client.package_id())
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+
+    Ok(MigrateLegacyAliasTx(tx))
+  }
+}
+
+#[derive(Debug)]
+struct MigrateLegacyAliasTx(ProgrammableTransaction);
+
+#[async_trait]
+impl Transaction for MigrateLegacyAliasTx {
+  type Output = OnChainIdentity;
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<TransactionOutput<Self::Output>, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    let response = self.0.execute_with_opt_gas(gas_budget, client).await?.response;
+    // Make sure the tx was successfull.
+    let effects = response
+      .effects
+      .as_ref()
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("transaction had no effects".to_string()))?;
+    if let IotaExecutionStatus::Failure { error } = effects.status() {
+      Err(Error::TransactionUnexpectedResponse(error.to_string()))
+    } else {
+      let identity_ref = effects
+        .created()
+        .iter()
+        .find(|obj_ref| obj_ref.owner.is_shared())
+        .ok_or_else(|| {
+          Error::TransactionUnexpectedResponse("Identity not found in transaction's results".to_string())
+        })?;
+
+      get_identity(client, identity_ref.object_id())
+        .await
+        .map(move |identity| TransactionOutput {
+          output: identity.expect("identity exists on-chain"),
+          response,
+        })
+    }
   }
 }
