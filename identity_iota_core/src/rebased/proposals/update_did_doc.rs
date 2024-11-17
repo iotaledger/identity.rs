@@ -3,10 +3,10 @@
 
 use std::marker::PhantomData;
 
-use crate::IotaDocument;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IotaKeySignature;
 use crate::rebased::sui::move_calls;
+use crate::IotaDocument;
 use async_trait::async_trait;
 use iota_sdk::rpc_types::IotaTransactionBlockResponse;
 use iota_sdk::types::base_types::ObjectID;

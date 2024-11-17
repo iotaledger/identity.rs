@@ -3,12 +3,12 @@
 
 use std::ops::Deref;
 
-use async_trait::async_trait;
-use fastcrypto::ed25519::Ed25519PublicKey;
-use fastcrypto::traits::ToFromBytes;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::StateMetadataDocument;
+use async_trait::async_trait;
+use fastcrypto::ed25519::Ed25519PublicKey;
+use fastcrypto::traits::ToFromBytes;
 use identity_verification::jwk::Jwk;
 use iota_sdk::rpc_types::IotaExecutionStatus;
 use iota_sdk::rpc_types::IotaObjectData;

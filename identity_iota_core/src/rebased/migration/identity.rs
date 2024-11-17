@@ -6,12 +6,12 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::str::FromStr;
 
-use async_trait::async_trait;
-use identity_core::common::Timestamp;
 use crate::rebased::sui::types::Number;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::StateMetadataDocument;
+use async_trait::async_trait;
+use identity_core::common::Timestamp;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
 use iota_sdk::rpc_types::IotaParsedData;
@@ -369,7 +369,7 @@ pub async fn get_identity(
     id,
     did_doc: multi_controller,
     created,
-    updated
+    updated,
   } = serde_json::from_value::<TempOnChainIdentity>(value.fields.to_json_value()).map_err(|err| {
     Error::ObjectLookup(format!(
       "could not parse identity document with object id {object_id}; {err}"
@@ -390,7 +390,7 @@ pub async fn get_identity(
   };
 
   // check if DID has been deactivated
-  let mut did_doc = if controlled_value.len() == 0 {
+  let mut did_doc = if controlled_value.is_empty() {
     // DID has been deactivated by setting controlled value empty, therefore craft an empty document
     let mut empty_document = IotaDocument::new_with_id(original_did.clone());
     empty_document.metadata.deactivated = Some(true);

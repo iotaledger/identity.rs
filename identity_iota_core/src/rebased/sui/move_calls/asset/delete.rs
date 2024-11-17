@@ -12,7 +12,7 @@ use move_core_types::ident_str;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 
-pub fn delete<T>(asset: ObjectRef, package: ObjectID) -> Result<ProgrammableTransaction, Error>
+pub(crate) fn delete<T>(asset: ObjectRef, package: ObjectID) -> Result<ProgrammableTransaction, Error>
 where
   T: MoveType,
 {

@@ -1,7 +1,6 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 use iota_sdk::rpc_types::OwnedObjectRef;
@@ -13,7 +12,7 @@ use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::transaction::ProgrammableTransaction;
 use move_core_types::ident_str;
 
-pub fn approve<T: MoveType>(
+pub(crate) fn approve<T: MoveType>(
   identity: OwnedObjectRef,
   controller_cap: ObjectRef,
   proposal_id: ObjectID,

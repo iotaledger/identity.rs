@@ -1,7 +1,6 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-
 use iota_sdk::rpc_types::OwnedObjectRef;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
@@ -12,9 +11,11 @@ use iota_sdk::types::transaction::ProgrammableTransaction;
 use iota_sdk::types::TypeTag;
 use move_core_types::ident_str;
 
-use crate::rebased::{proposals::SendAction, sui::move_calls, utils::MoveType};
+use crate::rebased::proposals::SendAction;
+use crate::rebased::sui::move_calls;
+use crate::rebased::utils::MoveType;
 
-pub fn propose_send(
+pub(crate) fn propose_send(
   identity: OwnedObjectRef,
   capability: ObjectRef,
   transfer_map: Vec<(ObjectID, IotaAddress)>,
@@ -44,7 +45,7 @@ pub fn propose_send(
   Ok(ptb.finish())
 }
 
-pub fn execute_send(
+pub(crate) fn execute_send(
   identity: OwnedObjectRef,
   capability: ObjectRef,
   proposal_id: ObjectID,

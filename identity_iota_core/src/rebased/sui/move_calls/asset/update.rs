@@ -13,7 +13,7 @@ use serde::Serialize;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 
-pub fn update<T>(asset: ObjectRef, new_content: T, package: ObjectID) -> Result<ProgrammableTransaction, Error>
+pub(crate) fn update<T>(asset: ObjectRef, new_content: T, package: ObjectID) -> Result<ProgrammableTransaction, Error>
 where
   T: MoveType + Serialize,
 {

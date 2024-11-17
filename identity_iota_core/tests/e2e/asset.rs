@@ -15,14 +15,14 @@ use identity_credential::validator::JwtCredentialValidationOptions;
 use identity_credential::validator::JwtCredentialValidator;
 use identity_document::document::CoreDocument;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
-use identity_iota_core::IotaDID;
-use identity_storage::JwkDocumentExt;
-use identity_storage::JwsSignatureOptions;
 use identity_iota_core::rebased::transaction::Transaction;
 use identity_iota_core::rebased::utils::MoveType as _;
 use identity_iota_core::rebased::AuthenticatedAsset;
 use identity_iota_core::rebased::PublicAvailableVC;
 use identity_iota_core::rebased::TransferProposal;
+use identity_iota_core::IotaDID;
+use identity_storage::JwkDocumentExt;
+use identity_storage::JwsSignatureOptions;
 use identity_verification::VerificationMethod;
 use iota_sdk::types::TypeTag;
 use itertools::Itertools as _;
@@ -129,7 +129,10 @@ async fn accepting_the_transfer_of_an_asset_requires_capability() -> anyhow::Res
 
   // Caty attempts to accept the transfer instead of Bob but gets an error
   let error = proposal.accept().execute(&caty_client).await.unwrap_err();
-  assert!(matches!(error, identity_iota_core::rebased::Error::MissingPermission(_)));
+  assert!(matches!(
+    error,
+    identity_iota_core::rebased::Error::MissingPermission(_)
+  ));
 
   Ok(())
 }

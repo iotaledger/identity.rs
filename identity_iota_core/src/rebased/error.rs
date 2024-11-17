@@ -57,6 +57,7 @@ pub enum Error {
   #[error("identity error; {0}")]
   Identity(String),
   #[error("unexpected state when looking up identity history; {0}")]
+  /// Unexpected state when looking up identity history.
   InvalidIdentityHistory(String),
   /// An operation cannot be carried on for a lack of permissions - e.g. missing capability.
   #[error("the requested operation cannot be performed for a lack of permissions; {0}")]
