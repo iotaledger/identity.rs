@@ -27,7 +27,6 @@ use identity_iota_core::rebased::client::IotaKeySignature;
 use identity_iota_core::rebased::transaction::Transaction;
 use identity_iota_core::rebased::utils::request_funds;
 use identity_verification::VerificationMethod;
-use iota_sdk::rpc_types::IotaObjectDataOptions;
 use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
@@ -201,39 +200,6 @@ impl Deref for TestClient {
 }
 
 impl TestClient {
-  /// Creates a new DID document inside a stardust alias output.
-  /// Returns alias's ID.
-  pub async fn create_legacy_did(&self) -> anyhow::Result<ObjectID> {
-    self.switch_address().await?;
-    let output = Command::new("sh")
-      .current_dir(SCRIPT_DIR)
-      .arg("create_test_alias_output.sh")
-      .arg(self.package_id.to_string())
-      .output()
-      .await?;
-
-    if !output.status.success() {
-      anyhow::bail!(
-        "Failed to create alias output: {}",
-        std::str::from_utf8(&output.stderr).unwrap()
-      );
-    }
-
-    let result = {
-      let output_str = std::str::from_utf8(&output.stdout).unwrap();
-      let start_of_json = output_str.find('{').ok_or(anyhow!("No json in output"))?;
-      serde_json::from_str::<Value>(output_str[start_of_json..].trim())?
-    };
-
-    result
-      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*Alias$')].objectId")
-      .map_err(|e| anyhow!("Failed to parse JSONPath: {e}"))
-      .and_then(|value| Ok(serde_json::from_value::<Vec<ObjectID>>(value)?))?
-      .first()
-      .copied()
-      .ok_or_else(|| anyhow!("No `AliasOutput` object was created"))
-  }
-
   // Sets the current address to the address controller by this client.
   async fn switch_address(&self) -> anyhow::Result<()> {
     let output = Command::new("iota")
@@ -252,102 +218,6 @@ impl TestClient {
     }
 
     Ok(())
-  }
-
-  pub async fn create_identity(&self) -> anyhow::Result<ObjectID> {
-    self.switch_address().await?;
-    let output = Command::new("sh")
-      .current_dir(SCRIPT_DIR)
-      .arg("create_test_identity.sh")
-      .arg(self.package_id.to_string())
-      .output()
-      .await?;
-
-    if !output.status.success() {
-      anyhow::bail!(
-        "Failed to create did document: {}",
-        std::str::from_utf8(&output.stderr).unwrap()
-      );
-    }
-
-    let result = {
-      let output_str = std::str::from_utf8(&output.stdout).unwrap();
-      let start_of_json = output_str.find('{').ok_or(anyhow!("No json in output"))?;
-      serde_json::from_str::<Value>(output_str[start_of_json..].trim())?
-    };
-
-    result
-      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*Identity$')].objectId")
-      .map_err(|e| anyhow!("Failed to parse JSONPath: {e}"))
-      .and_then(|value| Ok(serde_json::from_value::<Vec<ObjectID>>(value)?))?
-      .first()
-      .copied()
-      .ok_or_else(|| anyhow!("No `Document` object was created"))
-  }
-
-  /// Migrates a legacy DID document into the new Iota 3.0 DID document format.
-  /// `alias_id` is the ID of the Alias move object - i.e. the same as stardust's AliasID.
-  /// Returns the tuple `(document's ID, ControllerCapability's ID)`.
-  pub async fn migrate_legacy_did(&self, alias_id: ObjectID) -> anyhow::Result<(ObjectID, ObjectID)> {
-    self.switch_address().await?;
-    // Find the ID of the AliasOutput that owns `alias_id`.
-    let alias_output_id = {
-      let dynamic_field_id = self
-        .read_api()
-        .get_object_with_options(alias_id, IotaObjectDataOptions::default().with_owner())
-        .await?
-        .data
-        .context("Failed to read object with ID {alias_id}")?
-        .owner
-        .context("No owner informat provided for object {alias_id}")?
-        .get_owner_address()
-        .map(ObjectID::from)?;
-
-      self
-        .read_api()
-        .get_object_with_options(dynamic_field_id, IotaObjectDataOptions::default().with_owner())
-        .await?
-        .data
-        .context("Failed to read object with ID {alias_id}")?
-        .owner
-        .context("No owner informat provided for object {alias_id}")?
-        .get_owner_address()
-        .map(ObjectID::from)?
-    };
-    let migration_registry_id = self.client.migration_registry_id();
-    // Call migration script.
-    let output = Command::new("sh")
-      .current_dir(SCRIPT_DIR)
-      .arg("migrate_alias_output.sh")
-      .arg(self.package_id.to_string())
-      .arg(alias_output_id.to_string())
-      .arg(migration_registry_id.to_string())
-      .output()
-      .await?;
-
-    let result = {
-      let output_str = std::str::from_utf8(&output.stdout).unwrap();
-      let start_of_json = output_str.find('{').ok_or(anyhow!("No json in output"))?;
-      serde_json::from_str::<Value>(output_str[start_of_json..].trim())?
-    };
-
-    let document_id = result
-      .clone()
-      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*Identity$')].objectId")
-      .map_err(|e| anyhow!("Failed to parse JSONPath: {e}"))
-      .and_then(|value| Ok(serde_json::from_value::<Vec<ObjectID>>(value)?))?
-      .first()
-      .copied()
-      .ok_or_else(|| anyhow!("no Document in transaction's result"))?;
-    let capability_id = result
-      .path("$.objectChanges[?(@.type == 'created' && @.objectType ~= '.*ControllerCap$')].objectId")
-      .map_err(|e| anyhow!("Failed to parse JSONPath: {e}"))
-      .and_then(|value| Ok(serde_json::from_value::<Vec<ObjectID>>(value)?))?
-      .first()
-      .copied()
-      .ok_or_else(|| anyhow!("no ControllerCapability in transaction's result"))?;
-
-    Ok((document_id, capability_id))
   }
 
   pub fn package_id(&self) -> ObjectID {
