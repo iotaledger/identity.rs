@@ -13,9 +13,9 @@ use identity_iota::document::Service;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::verification::MethodRelationship;
-use identity_sui_name_tbd::client::get_object_id_from_did;
-use identity_sui_name_tbd::migration::has_previous_version;
-use identity_sui_name_tbd::migration::Identity;
+use identity_iota::iota::rebased::client::get_object_id_from_did;
+use identity_iota::iota::rebased::migration::has_previous_version;
+use identity_iota::iota::rebased::migration::Identity;
 use iota_sdk::rpc_types::IotaObjectData;
 
 /// Demonstrates how to obtain the alias output history.
@@ -66,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Step 2 - Get history
   let history = onchain_identity.get_history(&identity_client, None, None).await?;
-  println!("Alias History: {history:?}");
+  println!("Alias History has {} entries", history.len());
 
   // Depending on your use case, you can also page through the results
   // Alternative Step 2 - Page by looping until no result is returned (here with page size 1)
@@ -80,7 +80,8 @@ async fn main() -> anyhow::Result<()> {
       break;
     }
     current_item = history.first();
-    println!("Alias History entry: {current_item:?}");
+    let IotaObjectData { object_id, version, .. }  = current_item.unwrap();
+    println!("Alias History entry: object_id: {object_id}, version: {version}");
   }
 
   // Alternative Step 2 - Page by looping with pre-fetch next page check (again with page size 1)
@@ -92,7 +93,8 @@ async fn main() -> anyhow::Result<()> {
       .await?;
 
     current_item = history.first();
-    println!("Alias History entry: {current_item:?}");
+    let IotaObjectData { object_id, version, .. }  = current_item.unwrap();
+    println!("Alias History entry: object_id: {object_id}, version: {version}");
 
     if !has_previous_version(current_item.unwrap())? {
       break;

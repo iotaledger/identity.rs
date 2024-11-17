@@ -360,7 +360,7 @@ mod iota_handler {
   mod kinesis_specific {
     use std::collections::HashMap;
 
-    use identity_sui_name_tbd::client::IdentityClientReadOnly;
+    use identity_iota_core::rebased::client::IdentityClientReadOnly;
 
     use super::*;
 

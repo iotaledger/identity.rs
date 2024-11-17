@@ -3,10 +3,10 @@
 
 use std::ops::Deref;
 
-use iota_sdk::client::api::input_selection::Burn;
-use iota_sdk::client::secret::SecretManager;
-use iota_sdk::client::Client;
-use iota_sdk::types::block::protocol::ProtocolParameters;
+use iota_sdk_legacy::client::api::input_selection::Burn;
+use iota_sdk_legacy::client::secret::SecretManager;
+use iota_sdk_legacy::client::Client;
+use iota_sdk_legacy::types::block::protocol::ProtocolParameters;
 
 use crate::block::address::Address;
 use crate::block::output::unlock_condition::AddressUnlockCondition;
@@ -145,7 +145,7 @@ async fn publish_output(
   client: &Client,
   secret_manager: &SecretManager,
   alias_output: AliasOutput,
-) -> iota_sdk::client::error::Result<Block> {
+) -> iota_sdk_legacy::client::error::Result<Block> {
   let block: Block = client
     .build_block()
     .with_secret_manager(secret_manager)

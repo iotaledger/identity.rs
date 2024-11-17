@@ -26,6 +26,7 @@ use identity_iota::credential::Subject;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 
+use identity_iota::iota::rebased::transaction::TransactionOutput;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
 use identity_iota::storage::JwkMemStore;
@@ -34,9 +35,8 @@ use identity_iota::storage::KeyType;
 use identity_iota::verification::MethodScope;
 
 use identity_storage::Storage;
-use identity_sui_name_tbd::client::IdentityClient;
-use identity_sui_name_tbd::client::IotaKeySignature;
-use identity_sui_name_tbd::transaction::Transaction;
+use identity_iota::iota::rebased::client::{IdentityClient, IotaKeySignature};
+use identity_iota::iota::rebased::transaction::Transaction;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use secret_storage::Signer;
 
@@ -60,7 +60,7 @@ where
     .generate_method_jwp(storage, key_type, alg, None, MethodScope::VerificationMethod)
     .await?;
 
-  let document = identity_client
+  let TransactionOutput::<IotaDocument> { output: document, .. } = identity_client
     .publish_did_document(unpublished)
     .execute_with_gas(TEST_GAS_BUDGET, identity_client)
     .await?;

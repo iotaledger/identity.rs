@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #[cfg(feature = "test")]
-use iota_sdk::client::Client;
+use iota_sdk_legacy::client::Client;
 
 use crate::block::address::Address;
 use crate::block::output::feature::SenderFeature;
@@ -137,7 +137,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// # Errors
   ///
   /// - [`NetworkMismatch`](Error::NetworkMismatch) if the network of the DID and client differ.
-  /// - [`NotFound`](iota_sdk::client::Error::NoOutput) if the associated Alias Output was not found.
+  /// - [`NotFound`](iota_sdk_legacy::client::Error::NoOutput) if the associated Alias Output was not found.
   async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument> {
     validate_network(self, did).await?;
 
@@ -151,7 +151,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// # Errors
   ///
   /// - [`NetworkMismatch`](Error::NetworkMismatch) if the network of the DID and client differ.
-  /// - [`NotFound`](iota_sdk::client::Error::NoOutput) if the associated Alias Output was not found.
+  /// - [`NotFound`](iota_sdk_legacy::client::Error::NoOutput) if the associated Alias Output was not found.
   async fn resolve_did_output(&self, did: &IotaDID) -> Result<AliasOutput> {
     validate_network(self, did).await?;
 

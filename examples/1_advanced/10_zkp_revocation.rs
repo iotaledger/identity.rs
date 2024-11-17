@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use examples::get_client_and_create_account;
-use examples::MemStorage;
-use examples::TEST_GAS_BUDGET;
+use examples::{MemStorage, TEST_GAS_BUDGET};
 
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::json;
@@ -58,9 +57,8 @@ use identity_iota::storage::TimeframeRevocationExtension;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use identity_storage::Storage;
-use identity_sui_name_tbd::client::IdentityClient;
-use identity_sui_name_tbd::client::IotaKeySignature;
-use identity_sui_name_tbd::transaction::Transaction;
+use identity_iota::iota::rebased::client::{IdentityClient, IotaKeySignature};
+use identity_iota::iota::rebased::transaction::{Transaction, TransactionOutput};
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use secret_storage::Signer;
 use std::thread;
@@ -136,7 +134,7 @@ where
     return Err(anyhow::Error::msg("You have to pass at least one algorithm"));
   };
 
-  let document = identity_client
+  let TransactionOutput::<IotaDocument> { output: document, .. } = identity_client
     .publish_did_document(unpublished)
     .execute_with_gas(TEST_GAS_BUDGET, identity_client)
     .await?;

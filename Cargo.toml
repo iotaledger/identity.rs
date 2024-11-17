@@ -22,7 +22,6 @@ members = [
   "identity_jose",
   "identity_ecdsa_verifier",
   "identity_eddsa_verifier",
-  "identity_sui_name_tbd",
   "examples",
 ]
 
