@@ -34,9 +34,10 @@ use identity_iota::storage::JwpDocumentExt;
 use identity_iota::storage::KeyType;
 use identity_iota::verification::MethodScope;
 
-use identity_storage::Storage;
-use identity_iota::iota::rebased::client::{IdentityClient, IotaKeySignature};
+use identity_iota::iota::rebased::client::IdentityClient;
+use identity_iota::iota::rebased::client::IotaKeySignature;
 use identity_iota::iota::rebased::transaction::Transaction;
+use identity_storage::Storage;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use secret_storage::Signer;
 

@@ -20,7 +20,10 @@ pub enum Error {
   #[cfg(feature = "iota-client")]
   /// Caused by a client failure during publishing.
   #[error("DID update: {0}")]
-  DIDUpdateError(&'static str, #[source] Option<Box<iota_sdk_legacy::client::error::Error>>),
+  DIDUpdateError(
+    &'static str,
+    #[source] Option<Box<iota_sdk_legacy::client::error::Error>>,
+  ),
   #[cfg(feature = "iota-client")]
   /// Caused by a client failure during resolution.
   #[error("DID resolution failed")]

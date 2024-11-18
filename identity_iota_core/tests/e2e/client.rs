@@ -11,13 +11,11 @@ async fn can_create_an_identity() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
 
-  let result = identity_client
+  let _identity = identity_client
     .create_identity(TEST_DOC)
     .finish()
     .execute(&identity_client)
-    .await;
-
-  assert!(result.is_ok());
+    .await?;
 
   Ok(())
 }

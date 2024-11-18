@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 mod borrow;
 mod config_change;
 mod deactive_did;
@@ -244,8 +247,10 @@ where
         .await?
         .expect("identity exists on-chain");
 
-      Proposal::<A>::parse_tx_effects(&tx_response)
-        .map(move |output| TransactionOutput { output, response: tx_response })
+      Proposal::<A>::parse_tx_effects(&tx_response).map(move |output| TransactionOutput {
+        output,
+        response: tx_response,
+      })
     }
   }
 }

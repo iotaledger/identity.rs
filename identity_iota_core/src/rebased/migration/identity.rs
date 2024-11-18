@@ -6,10 +6,12 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::str::FromStr;
 
-use async_trait::async_trait;
+use crate::rebased::sui::types::Number;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::StateMetadataDocument;
+use async_trait::async_trait;
+use identity_core::common::Timestamp;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
 use iota_sdk::rpc_types::IotaParsedData;
@@ -91,6 +93,7 @@ impl Identity {
   }
 }
 
+/// An on-chain entity that wraps a DID Document.
 #[derive(Debug, Serialize)]
 pub struct OnChainIdentity {
   id: UID,
@@ -358,11 +361,15 @@ pub async fn get_identity(
   struct TempOnChainIdentity {
     id: UID,
     did_doc: Multicontroller<Vec<u8>>,
+    created: Number<u64>,
+    updated: Number<u64>,
   }
 
   let TempOnChainIdentity {
     id,
     did_doc: multi_controller,
+    created,
+    updated,
   } = serde_json::from_value::<TempOnChainIdentity>(value.fields.to_json_value()).map_err(|err| {
     Error::ObjectLookup(format!(
       "could not parse identity document with object id {object_id}; {err}"
@@ -370,13 +377,22 @@ pub async fn get_identity(
   })?;
   let original_did = IotaDID::from_alias_id(id.object_id().to_string().as_str(), client.network());
   let controlled_value = multi_controller.controlled_value();
+  // Parse DID document timestamps
+  let created = {
+    let timestamp_ms: u64 = created.try_into().expect("Move string-encoded u64 are valid u64");
+    // `Timestamp` requires a timestamp expessed in seconds.
+    Timestamp::from_unix(timestamp_ms as i64 / 1000).expect("On-chain clock produses valid timestamps")
+  };
+  let updated = {
+    let timestamp_ms: u64 = updated.try_into().expect("Move string-encoded u64 are valid u64");
+    // `Timestamp` requires a timestamp expessed in seconds.
+    Timestamp::from_unix(timestamp_ms as i64 / 1000).expect("On-chain clock produses valid timestamps")
+  };
 
   // check if DID has been deactivated
-  let did_doc = if controlled_value.len() == 0 {
+  let mut did_doc = if controlled_value.is_empty() {
     // DID has been deactivated by setting controlled value empty, therefore craft an empty document
     let mut empty_document = IotaDocument::new_with_id(original_did.clone());
-    empty_document.metadata.created = None;
-    empty_document.metadata.updated = None;
     empty_document.metadata.deactivated = Some(true);
 
     empty_document
@@ -386,6 +402,10 @@ pub async fn get_identity(
       .and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(&original_did))
       .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?
   };
+
+  // Overwrite `created` and `updated` with trusted value coming from the on-chain `Identity` object.
+  did_doc.metadata.created = Some(created);
+  did_doc.metadata.updated = Some(updated);
 
   Ok(Some(OnChainIdentity {
     id,

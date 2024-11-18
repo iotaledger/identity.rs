@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::str::FromStr as _;
 
 use crate::rebased::client::IdentityClient;
@@ -30,7 +33,7 @@ use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
 
-// An on-chain asset that carries information about its owned and its creator.
+/// An on-chain asset that carries information about its owned and its creator.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AuthenticatedAsset<T> {
   id: UID,

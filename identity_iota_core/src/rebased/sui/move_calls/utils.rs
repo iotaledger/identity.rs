@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 use iota_sdk::rpc_types::OwnedObjectRef;
@@ -7,11 +10,24 @@ use iota_sdk::types::object::Owner;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
 use iota_sdk::types::transaction::Argument;
 use iota_sdk::types::transaction::ObjectArg;
+use iota_sdk::types::IOTA_CLOCK_OBJECT_ID;
+use iota_sdk::types::IOTA_CLOCK_OBJECT_SHARED_VERSION;
 use iota_sdk::types::MOVE_STDLIB_PACKAGE_ID;
 use move_core_types::ident_str;
 use serde::Serialize;
 
-pub fn owned_ref_to_shared_object_arg(
+/// Adds a reference to the on-chain clock to `ptb`'s arguments.
+pub(crate) fn get_clock_ref(ptb: &mut Ptb) -> Argument {
+  ptb
+    .obj(ObjectArg::SharedObject {
+      id: IOTA_CLOCK_OBJECT_ID,
+      initial_shared_version: IOTA_CLOCK_OBJECT_SHARED_VERSION,
+      mutable: false,
+    })
+    .expect("network has a singleton clock instantiated")
+}
+
+pub(crate) fn owned_ref_to_shared_object_arg(
   owned_ref: OwnedObjectRef,
   ptb: &mut Ptb,
   mutable: bool,
@@ -26,7 +42,7 @@ pub fn owned_ref_to_shared_object_arg(
   })
 }
 
-pub fn option_to_move<T: MoveType + Serialize>(
+pub(crate) fn option_to_move<T: MoveType + Serialize>(
   option: Option<T>,
   ptb: &mut Ptb,
   package: ObjectID,

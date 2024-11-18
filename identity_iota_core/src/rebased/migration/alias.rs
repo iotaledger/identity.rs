@@ -24,8 +24,10 @@ use crate::rebased::transaction::Transaction;
 use crate::rebased::transaction::TransactionOutput;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
+use crate::StateMetadataDocument;
 
 use super::get_identity;
+use super::Identity;
 use super::OnChainIdentity;
 
 /// A legacy IOTA Stardust Output type, used to store DID Documents.
@@ -76,10 +78,16 @@ impl UnmigratedAlias {
     self,
     client: &IdentityClientReadOnly,
   ) -> Result<impl Transaction<Output = OnChainIdentity>, Error> {
+    // Try to parse a StateMetadataDocument out of this alias.
+    let identity = Identity::Legacy(self);
+    let did_doc = identity.did_document(client)?;
+    let Identity::Legacy(alias) = identity else {
+      unreachable!("alias was wrapped by us")
+    };
     // Get the ID of the `AliasOutput` that owns this `Alias`.
     let alias_output_id = client
       .read_api()
-      .get_object_with_options(*self.id.object_id(), IotaObjectDataOptions::new().with_owner())
+      .get_object_with_options(*alias.id.object_id(), IotaObjectDataOptions::new().with_owner())
       .await
       .map_err(|e| Error::RpcError(e.to_string()))?
       .owner()
@@ -101,9 +109,17 @@ impl UnmigratedAlias {
       .await?
       .expect("migration registry exists");
 
+    // Extract creation metadata
+    let created = did_doc
+      .metadata
+      .created
+      // `to_unix` returns the seconds since EPOCH; we need milliseconds.
+      .map(|timestamp| timestamp.to_unix() as u64 * 1000);
+
     // Build migration tx.
-    let tx = move_calls::migration::migrate_did_output(alias_output_ref, migration_registry_ref, client.package_id())
-      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx =
+      move_calls::migration::migrate_did_output(alias_output_ref, created, migration_registry_ref, client.package_id())
+        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(MigrateLegacyAliasTx(tx))
   }

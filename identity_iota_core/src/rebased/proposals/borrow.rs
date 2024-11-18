@@ -1,20 +1,34 @@
-use std::{collections::HashMap, marker::PhantomData};
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
-use crate::rebased::{
-  client::{IdentityClient, IotaKeySignature}, migration::Proposal, sui::move_calls, transaction::{ProtoTransaction, Transaction, TransactionOutput}, utils::MoveType, Error
-};
+use std::collections::HashMap;
+use std::marker::PhantomData;
+
+use crate::rebased::client::IdentityClient;
+use crate::rebased::client::IotaKeySignature;
+use crate::rebased::migration::Proposal;
+use crate::rebased::sui::move_calls;
+use crate::rebased::transaction::ProtoTransaction;
+use crate::rebased::transaction::Transaction;
+use crate::rebased::transaction::TransactionOutput;
+use crate::rebased::utils::MoveType;
+use crate::rebased::Error;
 use async_trait::async_trait;
-use iota_sdk::{
-  rpc_types::{IotaObjectData, IotaTransactionBlockResponse},
-  types::{
-    base_types::ObjectID, programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb,
-    transaction::Argument, TypeTag,
-  },
-};
+use iota_sdk::rpc_types::IotaObjectData;
+use iota_sdk::rpc_types::IotaTransactionBlockResponse;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
+use iota_sdk::types::transaction::Argument;
+use iota_sdk::types::TypeTag;
 use secret_storage::Signer;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
-use super::{CreateProposalTx, ExecuteProposalTx, OnChainIdentity, ProposalBuilder, ProposalT};
+use super::CreateProposalTx;
+use super::ExecuteProposalTx;
+use super::OnChainIdentity;
+use super::ProposalBuilder;
+use super::ProposalT;
 
 pub(crate) type IntentFn = Box<dyn FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) + Send>;
 

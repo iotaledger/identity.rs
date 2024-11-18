@@ -1,9 +1,9 @@
 /// Predefined `AuthenticatedAsset`-related PTBs.
-pub mod asset;
+pub(crate) mod asset;
 /// Predefined `OnChainIdentity`-related PTBs.
-pub mod identity;
+pub(crate) mod identity;
 /// Predefined PTBs used to migrate a legacy Stardust's AliasOutput
 /// to an `OnChainIdentity`.
-pub mod migration;
+pub(crate) mod migration;
 
 mod utils;

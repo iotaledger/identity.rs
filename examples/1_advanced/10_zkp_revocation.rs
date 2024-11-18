@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use examples::get_client_and_create_account;
-use examples::{MemStorage, TEST_GAS_BUDGET};
+use examples::MemStorage;
+use examples::TEST_GAS_BUDGET;
 
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::json;
@@ -44,6 +45,10 @@ use identity_iota::did::DIDUrl;
 use identity_iota::did::DID;
 use identity_iota::document::verifiable::JwsVerificationOptions;
 use identity_iota::document::Service;
+use identity_iota::iota::rebased::client::IdentityClient;
+use identity_iota::iota::rebased::client::IotaKeySignature;
+use identity_iota::iota::rebased::transaction::Transaction;
+use identity_iota::iota::rebased::transaction::TransactionOutput;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::NetworkName;
 use identity_iota::resolver::Resolver;
@@ -57,8 +62,6 @@ use identity_iota::storage::TimeframeRevocationExtension;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use identity_storage::Storage;
-use identity_iota::iota::rebased::client::{IdentityClient, IotaKeySignature};
-use identity_iota::iota::rebased::transaction::{Transaction, TransactionOutput};
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use secret_storage::Signer;
 use std::thread;
