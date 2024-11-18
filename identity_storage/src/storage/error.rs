@@ -13,7 +13,7 @@ pub enum JwkStorageDocumentError {
   #[error("storage operation failed: key storage error")]
   KeyStorageError(KeyStorageError),
   /// Caused by a failure in the key id storage.
-  #[error("storage operation failed: key id storage error")]
+  #[error("storage operation failed: key id storage error: {0}")]
   KeyIdStorageError(KeyIdStorageError),
   /// Caused by an attempt to add a method with a fragment that already exists.
   #[error("could not add method: the fragment already exists")]
@@ -27,6 +27,16 @@ pub enum JwkStorageDocumentError {
   /// Caused by an invalid JWS algorithm.
   #[error("invalid JWS algorithm")]
   InvalidJwsAlgorithm,
+  /// Caused by an invalid JWP algorithm.
+  #[error("invalid JWP algorithm")]
+  InvalidJwpAlgorithm,
+  /// Cannot cunstruct a valid Jwp (issued or presented form)
+  #[error("Not able to construct a valid Jwp")]
+  JwpBuildingError,
+  /// Credential's proof update internal error
+  #[error("Credential's proof internal error")]
+  ProofUpdateError(String),
+
   /// Caused by a failure to construct a verification method.
   #[error("method generation failed: unable to create a valid verification method")]
   VerificationMethodConstructionError(#[source] identity_verification::Error),

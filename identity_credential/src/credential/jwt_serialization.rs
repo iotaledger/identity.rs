@@ -3,6 +3,8 @@
 
 use std::borrow::Cow;
 
+#[cfg(feature = "jpt-bbs-plus")]
+use jsonprooftoken::jpt::claims::JptClaims;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -42,7 +44,7 @@ impl TryFrom<JwtCredential> for Credential {
 /// This type is opinionated in the following ways:
 /// 1. Serialization tries to duplicate as little as possible between the required registered claims and the `vc` entry.
 /// 2. Only allows serializing/deserializing claims "exp, iss, nbf &/or iat, jti, sub and vc". Other custom properties
-/// must be set in the `vc` entry.
+///    must be set in the `vc` entry.
 #[derive(Serialize, Deserialize)]
 pub(crate) struct CredentialJwtClaims<'credential, T = Object>
 where
@@ -370,6 +372,57 @@ where
   /// Proof(s) used to verify a `Credential`
   #[serde(skip_serializing_if = "Option::is_none")]
   proof: Option<Cow<'credential, Proof>>,
+}
+
+#[cfg(feature = "jpt-bbs-plus")]
+impl<'credential, T> From<CredentialJwtClaims<'credential, T>> for JptClaims
+where
+  T: ToOwned + Serialize,
+  <T as ToOwned>::Owned: DeserializeOwned,
+{
+  fn from(item: CredentialJwtClaims<'credential, T>) -> Self {
+    let CredentialJwtClaims {
+      exp,
+      iss,
+      issuance_date,
+      jti,
+      sub,
+      vc,
+      custom,
+    } = item;
+
+    let mut claims = JptClaims::new();
+
+    if let Some(exp) = exp {
+      claims.set_exp(exp);
+    }
+
+    claims.set_iss(iss.url().to_string());
+
+    if let Some(iat) = issuance_date.iat {
+      claims.set_iat(iat);
+    }
+
+    if let Some(nbf) = issuance_date.nbf {
+      claims.set_nbf(nbf);
+    }
+
+    if let Some(jti) = jti {
+      claims.set_jti(jti.to_string());
+    }
+
+    if let Some(sub) = sub {
+      claims.set_sub(sub.to_string());
+    }
+
+    claims.set_claim(Some("vc"), vc, true);
+
+    if let Some(custom) = custom {
+      claims.set_claim(None, custom, true);
+    }
+
+    claims
+  }
 }
 
 #[cfg(test)]

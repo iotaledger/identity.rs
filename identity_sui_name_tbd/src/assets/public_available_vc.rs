@@ -3,6 +3,7 @@ use std::str::FromStr;
 
 use crate::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::iota_sdk_abstraction::types::TypeTag;
+use crate::utils::TypedValue;
 use anyhow::Context as _;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jwt;
@@ -16,7 +17,8 @@ use serde::Serialize;
 
 use crate::client::IdentityClient;
 use crate::client::IdentityClientReadOnly;
-use crate::iota_sdk_abstraction::{AssetMoveCallsCore, IdentityMoveCallsCore};
+use crate::iota_sdk_abstraction::AssetMoveCallsCore;
+use crate::iota_sdk_abstraction::IdentityMoveCallsCore;
 use crate::iota_sdk_abstraction::IotaClientTraitCore;
 use crate::iota_sdk_abstraction::IotaKeySignature;
 use crate::transaction::Transaction;
@@ -26,19 +28,28 @@ use super::AuthenticatedAsset;
 use super::AuthenticatedAssetBuilder;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct IotaVerifiableCredential {
+pub struct IotaVerifiableCredential {
   data: Vec<u8>,
+}
+
+impl IotaVerifiableCredential {
+  pub fn data(&self) -> &Vec<u8> {
+    &self.data
+  }
 }
 
 impl MoveType for IotaVerifiableCredential {
   fn move_type(package: ObjectID) -> TypeTag {
     TypeTag::from_str(&format!("{package}::public_vc::PublicVc")).expect("valid utf8")
   }
+
+  fn get_typed_value(&self, _package: ObjectID) -> TypedValue<Self> where Self: MoveType, Self: Sized {
+    TypedValue::IotaVerifiableCredential(self)
+  }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 pub type PublicAvailableVCCore = PublicAvailableVC<crate::iota_sdk_adapter::AssetMoveCallsAdapter>;
-
 
 #[derive(Debug, Clone)]
 pub struct PublicAvailableVC<M> {

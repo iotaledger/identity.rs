@@ -1,15 +1,19 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::iota_sdk_abstraction::types::base_types::{ObjectID, IotaAddress};
+use serde::Serialize;
+
+use crate::iota_sdk_abstraction::types::base_types::IotaAddress;
+use crate::iota_sdk_abstraction::types::base_types::ObjectID;
 use crate::iota_sdk_abstraction::types::TypeTag;
+use crate::IotaVerifiableCredential;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod not_wasm32 {
   use super::*;
 
-  use tokio::process::Command;
   use anyhow::Context as _;
+  use tokio::process::Command;
 
   use iota_sdk::IotaClientBuilder;
 
@@ -18,31 +22,31 @@ pub mod not_wasm32 {
 
   pub async fn get_client(network: &str) -> Result<IotaClientAdapter, Error> {
     let client = IotaClientBuilder::default()
-        .build(network)
-        .await
-        .map_err(|err| Error::Network(format!("failed to connect to {network}"), err))?;
+      .build(network)
+      .await
+      .map_err(|err| Error::Network(format!("failed to connect to {network}"), err))?;
 
     IotaClientAdapter::new(client)
   }
 
   pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
     let output = Command::new("iota")
-        .arg("client")
-        .arg("faucet")
-        .arg("--address")
-        .arg(address.to_string())
-        .arg("--url")
-        .arg("http://127.0.0.1:9123/gas")
-        .arg("--json")
-        .output()
-        .await
-        .context("Failed to execute command")?;
+      .arg("client")
+      .arg("faucet")
+      .arg("--address")
+      .arg(address.to_string())
+      .arg("--url")
+      .arg("http://127.0.0.1:9123/gas")
+      .arg("--json")
+      .output()
+      .await
+      .context("Failed to execute command")?;
 
     if !output.status.success() {
       anyhow::bail!(
-      "Failed to request funds from faucet: {}",
-      std::str::from_utf8(&output.stderr)?
-    );
+        "Failed to request funds from faucet: {}",
+        std::str::from_utf8(&output.stderr)?
+      );
     }
 
     Ok(())
@@ -54,8 +58,17 @@ pub use not_wasm32::*;
 
 pub const LOCAL_NETWORK: &str = "http://127.0.0.1:9000";
 
-pub trait MoveType {
+pub enum TypedValue<'a, T: MoveType> {
+  IotaVerifiableCredential(&'a IotaVerifiableCredential),
+  Other(&'a T),
+}
+
+pub trait MoveType<T: Serialize = Self>: Serialize {
   fn move_type(package: ObjectID) -> TypeTag;
+
+  fn get_typed_value(&self, _package: ObjectID) -> TypedValue<Self> where Self: MoveType, Self: Sized {
+    TypedValue::Other(self)
+  }
 }
 
 impl MoveType for u8 {

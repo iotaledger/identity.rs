@@ -153,20 +153,20 @@ mod private {
 // copious amounts of repetition.
 // NOTE: If such use of macros becomes very common it is probably better to use the duplicate crate: https://docs.rs/duplicate/latest/duplicate/
 macro_rules! generate_method_for_document_type {
-  ($t:ty, $name:ident) => {
+  ($t:ty, $a:ty, $k:path, $f:path, $name:ident) => {
     async fn $name<K, I>(
       document: &mut $t,
       storage: &Storage<K, I>,
       key_type: KeyType,
-      alg: JwsAlgorithm,
+      alg: $a,
       fragment: Option<&str>,
       scope: MethodScope,
     ) -> StorageResult<String>
     where
-      K: JwkStorage,
+      K: $k,
       I: KeyIdStorage,
     {
-      let JwkGenOutput { key_id, jwk } = <K as JwkStorage>::generate(&storage.key_storage(), key_type, alg)
+      let JwkGenOutput { key_id, jwk } = $f(storage.key_storage(), key_type, alg)
         .await
         .map_err(Error::KeyStorageError)?;
 
@@ -304,7 +304,13 @@ macro_rules! purge_method_for_document_type {
 // CoreDocument
 // ====================================================================================================================
 
-generate_method_for_document_type!(CoreDocument, generate_method_core_document);
+generate_method_for_document_type!(
+  CoreDocument,
+  JwsAlgorithm,
+  JwkStorage,
+  JwkStorage::generate,
+  generate_method_core_document
+);
 purge_method_for_document_type!(CoreDocument, purge_method_core_document);
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
@@ -505,7 +511,7 @@ impl JwkDocumentExt for CoreDocument {
 /// Attempt to revert key generation. If this succeeds the original `source_error` is returned,
 /// otherwise [`JwkStorageDocumentError::UndoOperationFailed`] is returned with the `source_error` attached as
 /// `source`.
-async fn try_undo_key_generation<K, I>(storage: &Storage<K, I>, key_id: &KeyId, source_error: Error) -> Error
+pub(crate) async fn try_undo_key_generation<K, I>(storage: &Storage<K, I>, key_id: &KeyId, source_error: Error) -> Error
 where
   K: JwkStorage,
   I: KeyIdStorage,
@@ -531,7 +537,13 @@ mod iota_document {
   use identity_credential::credential::Jwt;
   use identity_iota_core::IotaDocument;
 
-  generate_method_for_document_type!(IotaDocument, generate_method_iota_document);
+  generate_method_for_document_type!(
+    IotaDocument,
+    JwsAlgorithm,
+    JwkStorage,
+    JwkStorage::generate,
+    generate_method_iota_document
+  );
   purge_method_for_document_type!(IotaDocument, purge_method_iota_document);
 
   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]

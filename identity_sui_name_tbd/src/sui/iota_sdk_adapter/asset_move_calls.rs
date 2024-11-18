@@ -5,9 +5,9 @@ use serde::Serialize;
 
 use bcs;
 
+use iota_sdk::types::transaction::Argument;
 use iota_sdk::types::transaction::ProgrammableMoveCall;
 use crate::iota_sdk_abstraction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-
 use crate::iota_sdk_abstraction::{
     AssetMoveCalls,
     ProgrammableTransactionBcs,
@@ -18,8 +18,33 @@ use crate::iota_sdk_abstraction::{
     },
 };
 use crate::utils::MoveType;
+use crate::utils::TypedValue;
 use crate::Error;
 use crate::ident_str;
+
+fn try_to_argument<T: MoveType + Serialize>(
+    content: &T,
+    ptb: &mut ProgrammableTransactionBuilder,
+    package: ObjectID,
+  ) -> Result<Argument, Error> {
+    match content.get_typed_value(package) {
+        TypedValue::IotaVerifiableCredential(value) => {
+            let values = ptb
+            .pure(value.data())
+            .map_err(|e| Error::InvalidArgument(e.to_string()))?;
+                Ok(ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
+                    package,
+                    module: ident_str!("public_vc").into(),
+                    function: ident_str!("new").into(),
+                    type_arguments: vec![],
+                    arguments: vec![values],
+            }))))
+        },
+        TypedValue::Other(value) => {
+            ptb.pure(value).map_err(|e| Error::InvalidArgument(e.to_string()))
+        },
+    }
+}
 
 pub struct AssetMoveCallsRustSdk {}
 
@@ -34,7 +59,7 @@ impl AssetMoveCalls for AssetMoveCallsRustSdk {
         package: ObjectID,
     ) -> Result<ProgrammableTransactionBcs, Self::Error> {
         let mut ptb = ProgrammableTransactionBuilder::new();
-        let inner = ptb.pure(inner).map_err(|e| Error::InvalidArgument(e.to_string()))?;
+        let inner = try_to_argument(&inner, &mut ptb, package)?;
         let mutable = ptb.pure(mutable).map_err(|e| Error::InvalidArgument(e.to_string()))?;
         let transferable = ptb
             .pure(transferable)
