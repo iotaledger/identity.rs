@@ -26,6 +26,9 @@ pub mod core {
 
   #[doc(inline)]
   pub use identity_core::json;
+
+  #[cfg(feature = "identity-sui-name-tbd")]
+  pub use identity_core::convert;
 }
 
 pub mod credential {

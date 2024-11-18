@@ -67,4 +67,7 @@ pub enum Error {
   /// An error caused by a bcs serialization or deserialization.
   #[error("BCS error: {0}")]
   BcsError(#[from] bcs::Error),
+  /// An error caused by a foreign function interface call.
+  #[error("FFI error: {0}")]
+  FfiError(String),  
 }

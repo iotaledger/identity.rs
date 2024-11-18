@@ -15,9 +15,9 @@ use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::error::Error;
 
 use super::DummySigner;
-use super::Error;
 use super::IdentityClient;
 use super::IotaClientTrait;
 use super::Multicontroller;
@@ -145,7 +145,7 @@ impl IdentityBuilder {
     Ok(OnChainIdentity {
       id: UID::new(
         ObjectID::from_str("did:iota:foobar:0x0000000000000000000000000000000000000000000000000000000000000000")
-            .map_err(|e| Error::Dummy(e.to_string()) )?
+            .map_err(|e| Error::InvalidArgument(e.to_string()) )?
       ),
       did_doc: Multicontroller::new(vec![1u8, 2u8, 3u8]),
       obj_ref: None,

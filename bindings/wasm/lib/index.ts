@@ -6,5 +6,6 @@ export * from "./iota_identity_client.js";
 export * from "./jose";
 export * from "./jwk_storage";
 export * from "./key_id_storage";
+export * from "./kinesis_client_helpers";
 
 export * from "~identity_wasm";

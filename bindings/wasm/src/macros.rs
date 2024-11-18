@@ -1,10 +1,27 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use wasm_bindgen::prelude::wasm_bindgen;
+
 #[macro_export]
 macro_rules! log {
   ($($tt:tt)*) => {
     web_sys::console::log_1(&format!($($tt)*).into());
+  }
+}
+
+/// Log to console utility without the need for web_sys dependency
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(js_namespace = console, js_name = log)]
+  pub fn console_log(s: &str);
+}
+
+/// Logging macro without the need for web_sys dependency
+#[macro_export]
+macro_rules! console_log {
+  ($($tt:tt)*) => {
+    crate::macros::console_log((format!($($tt)*)).as_str())
   }
 }
 

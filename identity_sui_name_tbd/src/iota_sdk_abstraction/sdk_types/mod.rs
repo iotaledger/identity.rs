@@ -7,6 +7,7 @@ pub mod move_core_types;
 pub mod move_command_line_common;
 pub mod shared_crypto;
 pub mod error;
+pub mod generated_types;
 
 pub use iota_types as types;
 pub use iota_json_rpc_types as rpc_types;

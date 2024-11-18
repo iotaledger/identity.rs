@@ -118,3 +118,14 @@ impl<T: MoveType> MoveType for Vec<T> {
     TypeTag::Vector(Box::new(T::move_type(package)))
   }
 }
+
+// Alias name for the Send trait controlled by the "send-sync-transaction" feature
+cfg_if::cfg_if! {
+  if #[cfg(feature = "send-sync-transaction")] {
+    pub trait OptionalSend: Send {}
+    impl<T> OptionalSend for T where T: Send {}
+  } else {
+    pub trait OptionalSend: {}
+    impl<T> OptionalSend for T {}
+  }
+}

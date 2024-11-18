@@ -1,17 +1,18 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
 use identity_iota::iota::iota_sdk_abstraction::IdentityClientBuilder;
-use identity_iota::iota::iota_sdk_abstraction::types::base_types::ObjectID;
+use identity_iota::iota::iota_sdk_abstraction::types::base_types::{IotaAddress};
 
 use crate::error::wasm_error;
 use crate::error::Result;
 
 use super::ts_client_sdk::WasmIotaClient;
 use super::iota_sdk_adapter::IotaClientTsSdk;
-use super::WasmKinesisIdentityClient;
+use super::{WasmIotaAddress, WasmKinesisIdentityClient};
 use super::types::WasmObjectID;
 
 #[derive(Default)]
@@ -22,13 +23,18 @@ pub struct WasmKinesisIdentityClientBuilder(pub(crate) IdentityClientBuilder<Iot
 impl WasmKinesisIdentityClientBuilder {
   #[wasm_bindgen(js_name = identityIotaPackageId)]
   pub fn identity_iota_package_id(self, value: WasmObjectID) -> Self {
-    Self(self.0.identity_iota_package_id(value.parse().expect("failed to parse value into ObjectID")))
+    Self(self.0.identity_iota_package_id(value.parse().expect("failed to parse identity_iota_package_id value into ObjectID")))
   }
 
   #[wasm_bindgen(js_name = senderPublicKey)]
   pub fn sender_public_key(self, value: &[u8]) -> Self {
     Self(self.0.sender_public_key(value))
   }
+
+  #[wasm_bindgen(js_name = senderAddress)]
+  pub fn sender_address(self, value: WasmIotaAddress) -> Self {
+    Self(self.0.sender_address(&IotaAddress::from_str(&value).expect("failed to parse sender_address value into IotaAddress")))
+  }  
 
   #[wasm_bindgen(js_name = iotaClient)]
   pub fn iota_client(self, value: WasmIotaClient) -> Self {

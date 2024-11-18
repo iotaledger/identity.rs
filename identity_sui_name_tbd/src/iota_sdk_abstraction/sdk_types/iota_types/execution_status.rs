@@ -10,6 +10,7 @@ use thiserror::Error;
 
 use super::base_types::{ObjectID, TypeParameterIndex, CodeOffset};
 
+#[serde(rename_all = "lowercase")]
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub enum ExecutionStatus {
     Success,

@@ -38,7 +38,7 @@ use tokio::process::Command;
 use tokio::sync::OnceCell;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
-pub type MemSigner<'s> = StorageSigner<'s, JwkMemStore, KeyIdMemstore>;
+pub type MemSigner = StorageSigner<JwkMemStore, KeyIdMemstore>;
 
 static PACKAGE_ID: OnceCell<ObjectID> = OnceCell::const_new();
 static CLIENT: OnceCell<TestClient<IotaClientAdapter>> = OnceCell::const_new();
@@ -388,7 +388,7 @@ impl<C: IotaClientTraitCore> TestClient<C> {
       .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
       .await?;
     let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
-    let signer = StorageSigner::new(&self.storage, generate.key_id, public_key_jwk);
+    let signer = StorageSigner::new_with_shared_storage(self.storage.clone(), generate.key_id, public_key_jwk);
 
     let user_client = IdentityClient::new(self.client.clone(), signer).await?;
 

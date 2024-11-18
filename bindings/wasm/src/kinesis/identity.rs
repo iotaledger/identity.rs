@@ -6,8 +6,6 @@ use identity_iota::iota::iota_sdk_abstraction::IdentityBuilder;
 use identity_iota::iota::iota_sdk_abstraction::OnChainIdentity;
 use identity_iota::iota::iota_sdk_abstraction::ProposalAction;
 use identity_iota::iota::iota_sdk_abstraction::ProposalBuilder;
-use identity_iota::iota::iota_sdk_abstraction::types::base_types::{ObjectID};
-use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaObjectData;
 use identity_iota::iota::IotaDocument;
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
@@ -76,7 +74,11 @@ impl WasmOnChainIdentity {
   ) -> Result<JsValue> {
     let rs_history = self
       .0
-      .get_history(&client.0, last_version.map(|lv| into_sdk_type(lv)).as_ref(), page_size)
+      .get_history(
+        &client.0,
+        last_version.map(|lv| into_sdk_type(lv).unwrap()).as_ref(),
+        page_size
+      )
       .await
       .map_err(wasm_error)?;
     serde_wasm_bindgen::to_value(&rs_history).map_err(wasm_error)
