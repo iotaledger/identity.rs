@@ -12,29 +12,24 @@ use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use identity_iota_core::NetworkName;
 
-use super::DummySigner;
+use crate::error::Error;
+use crate::iota_sdk_abstraction::rpc_types::IotaTransactionBlockResponseOptions;
+use crate::iota_sdk_abstraction::types::base_types::{IotaAddress, ObjectID};
+use super::{DummySigner, IotaTransactionBlockResponseT, SignatureBcs, TransactionDataBcs};
 use super::Identity;
 use super::IdentityBuilder;
 use super::IdentityClientBuilder;
 use super::IotaClientTrait;
 
-use super::types::base_types::{IotaAddress, ObjectID};
-
 // `IdentityClient` is a dummy placeholder to prepare wasm bindings for the actual one
 // as long as it is not compilable to wasm
-
-#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
-#[non_exhaustive]
-pub enum Error {
-  #[error("identity dummy error was triggered; {0}")]
-  Dummy(String),
-  #[error("function or feature not implemented in dummy: {0}")]
-  NotImplemented(String),
-}
 
 pub struct IdentityClient<T: IotaClientTrait> {
   client: T,
   network_name: NetworkName,
+  identity_iota_package_id: IotaAddress,
+  sender_address: IotaAddress,
+  sender_public_key: Vec<u8>,
 }
 
 // builder related functions
@@ -47,10 +42,18 @@ where
   }
 
   pub(crate) fn from_builder(builder: IdentityClientBuilder<T>) -> Result<Self, Error> {
-    let network_name = NetworkName::try_from("dummy").unwrap();
+    let network_name = NetworkName::try_from(builder.network_name.unwrap_or("dummy".to_string())).unwrap();
+    let sender_address = builder.sender_address.unwrap_or(IotaAddress::default());
     Ok(Self {
       client: builder.iota_client.unwrap(),
       network_name,
+      identity_iota_package_id: IotaAddress::from(
+        builder.identity_iota_package_id.unwrap_or(
+        ObjectID::from_str("0x0101010101010101010101010101010101010101010101010101010101010101")
+          .map_err(|e| Error::InvalidArgument(e.to_string()))?
+      )),
+      sender_public_key:  builder.sender_public_key.unwrap_or(vec![1u8, 2u8, 3u8, 4u8]),
+      sender_address,
     })
   }
 }
@@ -61,14 +64,10 @@ where
   T: IotaClientTrait<Error = Error>,
 {
   pub fn sender_public_key(&self) -> Result<&[u8], Error> {
-    Ok(&([1, 2, 3, 4]))
+    Ok(self.sender_public_key.as_ref())
   }
 
-  pub fn sender_address(&self) -> Result<IotaAddress, Error> {
-    Ok(IotaAddress::from_str("0x0101010101010101010101010101010101010101010101010101010101010101")
-        .map_err(|e| Error::Dummy(e.to_string()))?
-    )
-  }
+  pub fn sender_address(&self) -> Result<IotaAddress, Error> { Ok(self.sender_address.clone()) }
 
   pub fn network_name(&self) -> &NetworkName {
     &self.network_name
@@ -79,11 +78,28 @@ where
   }
 
   pub async fn get_identity(&self, _object_id: ObjectID) -> Result<Identity, Error> {
-    Err(Error::NotImplemented("get_identity".to_string()))
+    unimplemented!("get_identity");
   }
 
+  pub async fn execute_dummy_transaction(
+    &self,
+    tx_data_bcs: TransactionDataBcs,
+    signatures: Vec<SignatureBcs>,
+  ) -> Result<Box<dyn IotaTransactionBlockResponseT<Error=Error>>, Error> {
+    let tx_response = self
+      .client
+      .quorum_driver_api()
+      .execute_transaction_block(
+        &tx_data_bcs,
+        &signatures,
+        Some(IotaTransactionBlockResponseOptions::new().with_effects()),
+        None
+      ).await?;
+    Ok(tx_response)
+  }
+  
   pub async fn resolve_did(&self, _did: &IotaDID) -> Result<IotaDocument, Error> {
-    Err(Error::NotImplemented("resolve_did".to_string()))
+    unimplemented!("resolve_did");
   }
 
   pub async fn publish_did_document(
@@ -92,7 +108,7 @@ where
     _gas_budget: u64,
     _signer: &DummySigner,
   ) -> Result<IotaDocument, Error> {
-    Err(Error::NotImplemented("publish_did_document".to_string()))
+    unimplemented!("publish_did_document");
   }
 
   pub async fn publish_did_document_update(
@@ -101,7 +117,7 @@ where
     _gas_budget: u64,
     _signer: &DummySigner,
   ) -> Result<IotaDocument, Error> {
-    Err(Error::NotImplemented("publish_did_document_update".to_string()))
+    unimplemented!("publish_did_document_update");
   }
 
   pub async fn deactivate_did_output(
@@ -110,7 +126,7 @@ where
     _gas_budget: u64,
     _signer: &DummySigner,
   ) -> Result<(), Error> {
-    Err(Error::NotImplemented("deactivate_did_output".to_string()))
+    unimplemented!("deactivate_did_output");
   }
 }
 
