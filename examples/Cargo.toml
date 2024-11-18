@@ -125,23 +125,23 @@ path = "1_advanced/14_did_web.rs"
 name = "14_did_web"
 
 [[example]]
-path = "demo/traditional.rs"
+path = "2_pqc/0_pq.rs"
+name = "0_pq"
+
+[[example]]
+path = "2_pqc/1_hybrid.rs"
+name = "1_hybrid"
+
+[[example]]
+path = "2_pqc/traditional.rs"
 name = "traditional"
 
 [[example]]
-path = "demo/pq.rs"
-name = "pq"
-
-[[example]]
-path = "demo/hybrid.rs"
-name = "hybrid"
-
-[[example]]
-path = "demo/traditional_zk.rs"
+path = "2_pqc/traditional_zk.rs"
 name = "traditional_zk"
 
 [[example]]
-path = "demo/revocation_zk.rs"
+path = "2_pqc/revocation_zk.rs"
 name = "revocation_zk"
 
 
