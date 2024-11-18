@@ -16,9 +16,15 @@ use crate::storage::WasmStorage;
 use super::CoreDocumentLock;
 use super::WasmCoreDocument;
 use wasm_bindgen::prelude::*;
-
+use identity_iota::storage::storage::JwkDocumentExtHybrid;
 use crate::jpt::WasmProofAlgorithm;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
+use js_sys::Promise;
+use identity_iota::storage::JwsSignatureOptions;
+use crate::did::PromiseJws;
+use crate::storage::WasmJwsSignatureOptions;
+use crate::credential::WasmJws;
+use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_class = CoreDocument)]
 impl WasmCoreDocument {
@@ -91,6 +97,30 @@ impl WasmCoreDocument {
   #[wasm_bindgen(js_name = fragmentJwk)]
   pub fn _fragment(self) -> String {
     "0".to_string()
+  }
+
+  #[wasm_bindgen(js_name = createHybridJws)]
+  pub fn create_hybrid_jws(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    payload: String,
+    options: &WasmJwsSignatureOptions,
+  ) -> Result<PromiseJws> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = options.0.clone();
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .create_jws(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
+        .await
+        .wasm_result()
+        .map(WasmJws::new)
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
   }
 
 }
