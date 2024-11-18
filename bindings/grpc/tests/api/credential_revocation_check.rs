@@ -11,8 +11,9 @@ use identity_stronghold::StrongholdStorage;
 use serde_json::json;
 
 use crate::credential_revocation_check::credentials::RevocationCheckRequest;
+use crate::helpers::make_stronghold;
+use crate::helpers::Entity;
 use crate::helpers::TestServer;
-use crate::helpers::{make_stronghold, Entity};
 
 mod credentials {
   tonic::include_proto!("credentials");

@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use iota_sdk::rpc_types::OwnedObjectRef;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::ObjectRef;
@@ -33,7 +36,7 @@ pub(crate) fn propose_update(
   Ok(ptb.finish())
 }
 
-pub fn execute_update(
+pub(crate) fn execute_update(
   identity: OwnedObjectRef,
   capability: ObjectRef,
   proposal_id: ObjectID,

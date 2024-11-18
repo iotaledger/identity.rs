@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use iota_sdk::rpc_types::OwnedObjectRef;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::ObjectRef;
@@ -31,7 +34,7 @@ pub(crate) fn propose_deactivation(
   Ok(ptb.finish())
 }
 
-pub fn execute_deactivation(
+pub(crate) fn execute_deactivation(
   identity: OwnedObjectRef,
   capability: ObjectRef,
   proposal_id: ObjectID,

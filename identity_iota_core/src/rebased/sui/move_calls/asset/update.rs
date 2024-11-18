@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::ObjectRef;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
@@ -10,7 +13,7 @@ use serde::Serialize;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 
-pub fn update<T>(asset: ObjectRef, new_content: T, package: ObjectID) -> Result<ProgrammableTransaction, Error>
+pub(crate) fn update<T>(asset: ObjectRef, new_content: T, package: ObjectID) -> Result<ProgrammableTransaction, Error>
 where
   T: MoveType + Serialize,
 {

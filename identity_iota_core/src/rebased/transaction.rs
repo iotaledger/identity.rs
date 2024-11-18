@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::ops::Deref;
 
 use async_trait::async_trait;
@@ -85,7 +88,7 @@ pub trait ProtoTransaction {
   /// Feed this operation with its required input, advancing its
   /// state to another [`ProtoTransaction`] that may or may not
   /// be ready for execution.
-  fn with(self, input: Self::Input) -> Self::Tx; 
+  fn with(self, input: Self::Input) -> Self::Tx;
 }
 
 // Every Transaction is a QuasiTransaction that requires no input

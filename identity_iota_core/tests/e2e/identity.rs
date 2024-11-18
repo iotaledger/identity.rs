@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::str::FromStr;
 
 use crate::common;
@@ -6,14 +9,14 @@ use crate::common::get_key_data;
 use crate::common::TEST_COIN_TYPE;
 use crate::common::TEST_DOC;
 use crate::common::TEST_GAS_BUDGET;
-use identity_iota_core::IotaDID;
-use identity_iota_core::IotaDocument;
 use identity_iota_core::rebased::client::get_object_id_from_did;
 use identity_iota_core::rebased::migration::has_previous_version;
 use identity_iota_core::rebased::migration::Identity;
 use identity_iota_core::rebased::proposals::ProposalResult;
 use identity_iota_core::rebased::proposals::ProposalT as _;
 use identity_iota_core::rebased::transaction::Transaction;
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use iota_sdk::rpc_types::IotaObjectData;
@@ -54,8 +57,7 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
     .finish(&identity_client)
     .await?
     .execute(&identity_client)
-    .await?
-    .output;
+    .await?;
 
   Ok(())
 }

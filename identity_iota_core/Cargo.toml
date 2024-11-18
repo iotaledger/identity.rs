@@ -53,10 +53,8 @@ tokio = { version = "1.29.0", default-features = false, optional = true, feature
 ] }
 
 [dev-dependencies]
-anyhow = { version = "1.0.57" }
 iota-crypto = { version = "0.23", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
-tokio = { version = "1.29.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 # for feature kinesis-client tests
 identity_iota_core= { path = ".", features = ["kinesis-client"] } # enable for e2e tests

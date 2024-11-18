@@ -3,17 +3,25 @@ use std::ops::Deref;
 
 use async_trait::async_trait;
 use iota_sdk::rpc_types::IotaTransactionBlockResponse;
-use iota_sdk::types::base_types::{IotaAddress, ObjectID};
+use iota_sdk::types::base_types::IotaAddress;
+use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::TypeTag;
 use secret_storage::Signer;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
-use crate::rebased::client::{IdentityClient, IotaKeySignature};
+use crate::rebased::client::IdentityClient;
+use crate::rebased::client::IotaKeySignature;
+use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::sui::move_calls;
 use crate::rebased::utils::MoveType;
-use crate::rebased::{migration::OnChainIdentity, Error};
+use crate::rebased::Error;
 
-use super::{CreateProposalTx, ExecuteProposalTx, Proposal, ProposalBuilder, ProposalT};
+use super::CreateProposalTx;
+use super::ExecuteProposalTx;
+use super::Proposal;
+use super::ProposalBuilder;
+use super::ProposalT;
 
 /// An action used to transfer [`crate::migration::OnChainIdentity`]-owned assets to other addresses.
 #[derive(Debug, Clone, Deserialize, Default, Serialize)]

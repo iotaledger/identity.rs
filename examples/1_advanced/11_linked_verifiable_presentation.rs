@@ -3,8 +3,11 @@
 
 use anyhow::Context;
 
+use examples::create_kinesis_did_document;
+use examples::get_client_and_create_account;
 use examples::get_memstorage;
-use examples::{create_kinesis_did_document, get_client_and_create_account, MemStorage, TEST_GAS_BUDGET};
+use examples::MemStorage;
+use examples::TEST_GAS_BUDGET;
 
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::FromJson;
