@@ -8,16 +8,16 @@ use identity_iota::iota::iota_sdk_abstraction::{TransactionDataBcs, SignatureBcs
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
-use identity_iota::core::convert::{Base, BaseEncoding};
 use identity_iota::iota::iota_sdk_abstraction::error::{IotaRpcResult, Error as IotaRpcError};
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaTransactionBlockResponseOptions;
 use identity_iota::iota::iota_sdk_abstraction::types::quorum_driver_types::ExecuteTransactionRequestType;
+use identity_iota::iota::iota_sdk_abstraction::generated_types::ExecuteTransactionBlockParams;
+use crate::kinesis::WasmExecuteTransactionBlockParams;
+use crate::console_log;
 use super::wasm_types::{
   PromiseIotaTransactionBlockResponse,
   IotaTransactionBlockResponseAdapter,
-  WasmIotaTransactionBlockResponseOptions
 };
-
 
 // This file contains the wasm-bindgen 'glue code' providing
 // the interface of the TS Iota client to rust code.
@@ -44,9 +44,7 @@ extern "C" {
   #[wasm_bindgen(method, js_name = executeTransactionBlock)]
   pub fn execute_transaction_block(
     this: &WasmIotaClient,
-    transactionBlock: String,
-    signature: String,
-    options: WasmIotaTransactionBlockResponseOptions
+    params: &WasmExecuteTransactionBlockParams
   ) -> PromiseIotaTransactionBlockResponse;
 }
 
@@ -68,18 +66,27 @@ impl ManagedWasmIotaClient {
 
   pub async fn execute_transaction_block(
     &self,
-    tx_data_bcs: TransactionDataBcs,
-    signatures: Vec<SignatureBcs>,
-    options: IotaTransactionBlockResponseOptions,
+    tx_data_bcs: &TransactionDataBcs,
+    signatures: &Vec<SignatureBcs>,
+    options: Option<IotaTransactionBlockResponseOptions>,
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> IotaRpcResult<IotaTransactionBlockResponseAdapter> {
-    let tx_data_bcs_str = BaseEncoding::encode(tx_data_bcs.as_slice(), Base::Base64Url);
-    let signatures_str = signatures.iter().map(|s| BaseEncoding::encode(s.as_slice(), Base::Base64Url)).collect();
-    let wasm32_opt = serde_wasm_bindgen::to_value(&options).unwrap();
+    let ex_tx_params: WasmExecuteTransactionBlockParams = serde_wasm_bindgen::to_value(
+      &ExecuteTransactionBlockParams::new(tx_data_bcs, signatures, options, request_type)
+    )
+    .map_err(|e| {
+      console_log!("Error executing serde_wasm_bindgen::to_value(ExecuteTransactionBlockParams): {:?}", e);
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?
+    .into();
+
     let promise: Promise = Promise::resolve(
-      &WasmIotaClient::execute_transaction_block(&self.0, tx_data_bcs_str, signatures_str, wasm32_opt.into())
+      &WasmIotaClient::execute_transaction_block(&self.0, &ex_tx_params)
     );
-    let result: JsValue = JsFuture::from(promise).await.map_err(|e| { IotaRpcError::FfiError(e.as_string().unwrap()) })?;
+    let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
+      console_log!("Error executing JsFuture::from(promise): {:?}", e);
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?;
     Ok(IotaTransactionBlockResponseAdapter::new(result.into()))
   }
 }

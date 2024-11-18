@@ -9,11 +9,12 @@
 use crate::error::Error;
 use super::IdentityClient;
 use super::IotaClientTrait;
-use super::types::base_types::{ObjectID};
+use super::types::base_types::{IotaAddress, ObjectID};
 
 pub struct IdentityClientBuilder<T: IotaClientTrait> {
   pub(crate) identity_iota_package_id: Option<ObjectID>,
   pub(crate) sender_public_key: Option<Vec<u8>>,
+  pub(crate) sender_address: Option<IotaAddress>,
   pub(crate) iota_client: Option<T>,
   pub(crate) network_name: Option<String>,
 }
@@ -33,6 +34,13 @@ where
   #[must_use]
   pub fn sender_public_key(mut self, value: &[u8]) -> Self {
     self.sender_public_key = Some(value.into());
+    self
+  }
+
+  /// Sets the `sender_address` value.
+  #[must_use]
+  pub fn sender_address(mut self, value: &IotaAddress) -> Self {
+    self.sender_address = Some(value.clone());
     self
   }
 
@@ -64,6 +72,7 @@ where
     Self {
       identity_iota_package_id: None,
       sender_public_key: None,
+      sender_address: None,
       iota_client: None,
       network_name: None,
     }

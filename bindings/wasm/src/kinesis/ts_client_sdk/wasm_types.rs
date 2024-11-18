@@ -1,8 +1,7 @@
 use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::wasm_bindgen;
-use identity_iota::iota::iota_sdk_abstraction::rpc_types::{IotaExecutionStatus, OwnedObjectRef};
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::{OwnedObjectRef};
 use identity_iota::iota::iota_sdk_abstraction::types::execution_status::ExecutionStatus;
-use crate::kinesis::{ManagedWasmIotaClient, WasmIotaClient};
 use super::super::types::into_sdk_type;
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -10,21 +9,26 @@ const TS_SDK_TYPES: &'static str = r#"
   import {
     Balance,
     IotaObjectData,
+    ExecuteTransactionBlockParams,
     IotaTransactionBlockResponseOptions,
     IotaTransactionBlockResponse,
   }
-  from "@iota/iota.js/types";
+  from "@iota/iota.js/client";
   
-  import {IotaTransactionBlockResponseAdapter} from "./wasm_types"
+  import {IotaTransactionBlockResponseAdapter} from "./kinesis_client_helpers"
 "#;
 
-#[wasm_bindgen(module = "@iota/iota.js/types")]
+#[wasm_bindgen(module = "@iota/iota.js/client")]
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Balance>")]
   pub type PromiseBalance;
 
   #[wasm_bindgen(typescript_type = "IotaObjectData")]
   pub type WasmIotaObjectData;
+  
+  #[wasm_bindgen(typescript_type = "ExecuteTransactionBlockParams")]
+  #[derive(Clone)]
+  pub type WasmExecuteTransactionBlockParams;
   
   #[wasm_bindgen(typescript_type = "IotaTransactionBlockResponseOptions")]
   #[derive(Clone)]
@@ -47,7 +51,7 @@ extern "C" {
   pub type WasmOwnedObjectRef;
 }
 
-#[wasm_bindgen(module = "wasm_types")]
+#[wasm_bindgen(module = "/lib/kinesis_client_helpers.ts")]
 extern "C" {
   #[wasm_bindgen(typescript_type = "IotaTransactionBlockResponseAdapter")]
   #[derive(Clone)]
@@ -72,20 +76,28 @@ extern "C" {
   fn effects_created_inner(this: &IotaTransactionBlockResponseAdapter) -> Option<Vec<WasmOwnedObjectRef>>;
 }
 
+#[derive(Deserialize)]
+struct WasmExecutionStatusAdapter {
+  status: ExecutionStatus
+}
 
 impl IotaTransactionBlockResponseAdapter {
   pub fn effects_execution_status(&self) -> Option<ExecutionStatus> {
     self.effects_execution_status_inner()
-      .map(into_sdk_type::<ExecutionStatus, WasmExecutionStatus>)
+      .map(|s| {
+        let state: WasmExecutionStatusAdapter = into_sdk_type(s).unwrap();
+        state.status
+      })
   }
   
-  pub   fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
+  pub fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
     self.effects_created_inner()
       .map(|vex_obj_ref| {
         vex_obj_ref
           .into_iter()
-          .map(into_sdk_type::<OwnedObjectRef, WasmOwnedObjectRef>)
+          .map(|obj| into_sdk_type(obj).unwrap())
           .collect()
       })
   }
 }
+

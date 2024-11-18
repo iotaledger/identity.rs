@@ -4,7 +4,6 @@
 use std::option::Option;
 use std::result::Result;
 use std::boxed::Box;
-use std::marker::Send;
 
 use identity_iota::iota::sui_name_tbd_error::Error;
 
@@ -13,8 +12,7 @@ use identity_iota::iota::iota_sdk_abstraction::types::dynamic_field::DynamicFiel
 use secret_storage::Signer;
 
 use identity_iota::iota::iota_sdk_abstraction::error::IotaRpcResult;
-use identity_iota::iota::iota_sdk_abstraction::{SignatureBcs, TransactionBcs, TransactionDataBcs};
-use identity_iota::iota::iota_sdk_abstraction::shared_crypto::intent::{Intent, IntentMessage};
+use identity_iota::iota::iota_sdk_abstraction::{SignatureBcs, TransactionDataBcs};
 use identity_iota::iota::iota_sdk_abstraction::{
     ProgrammableTransactionBcs,
     IotaClientTrait,
@@ -150,9 +148,9 @@ impl QuorumDriverTrait for QuorumDriverAdapter {
 
     async fn execute_transaction_block(
         &self,
-        tx_data_bcs: TransactionDataBcs,
-        signatures: Vec<SignatureBcs>,
-        options: IotaTransactionBlockResponseOptions,
+        tx_data_bcs: &TransactionDataBcs,
+        signatures: &Vec<SignatureBcs>,
+        options: Option<IotaTransactionBlockResponseOptions>,
         request_type: Option<ExecuteTransactionRequestType>,
     ) -> IotaRpcResult<Box<dyn IotaTransactionBlockResponseT<Error=Self::Error>>> {
         let wasm_response = self
