@@ -10,7 +10,6 @@ use crate::jose::WasmJwk;
 
 use identity_iota::storage::key_storage::JwkGenOutput;
 use identity_iota::storage::key_storage::JwkStorage;
-use identity_iota::storage::key_storage::JwkStoragePQ;
 use identity_iota::storage::key_storage::KeyId;
 use identity_iota::storage::key_storage::KeyStorageError;
 use identity_iota::storage::key_storage::KeyStorageErrorKind;

@@ -11,33 +11,14 @@ use identity_iota::verification::jwk::Jwk;
 use wasm_bindgen::prelude::*;
 use crate::error::JsValueResult;
 use js_sys::Promise;
-use std::str::FromStr;
-
-use crate::error::Result as WasmResult;
-use crate::error::WasmResult as _;
-use crate::jose::WasmJwk;
-use crate::jose::WasmJwsAlgorithm;
-
-use super::WasmJwkGenOutput;
-use super::WasmProofUpdateCtx;
-
-use identity_iota::storage::bls::encode_bls_jwk;
-use identity_iota::storage::bls::expand_bls_jwk;
-use identity_iota::storage::bls::generate_bbs_keypair;
-use identity_iota::storage::bls::sign_bbs;
-use identity_iota::storage::bls::update_bbs_signature;
-use identity_iota::storage::JwkStorage;
-use identity_iota::storage::KeyStorageError;
 use identity_iota::storage::KeyStorageErrorKind;
-use identity_iota::storage::ProofUpdateCtx;
-use jsonprooftoken::jpa::algs::ProofAlgorithm;
-use wasm_bindgen::prelude::*;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
-use js_sys::Array;
-use js_sys::Uint8Array;
-
+use identity_iota::storage::KeyStorageError;
 use wasm_bindgen_futures::JsFuture;
 use super::jwk_storage::PromiseJwkGenOutput;
+use js_sys::Array;
+use crate::jose::WasmJwk;
+use js_sys::Uint8Array;
 
 #[wasm_bindgen]
 extern "C" {
@@ -57,8 +38,17 @@ impl JwkStoragePQ for WasmJwkStorage {
     result.into()
   }
 
-  async fn pq_sign(&self, _key_id: &KeyId, _data: &[u8], _public_key: &Jwk) -> KeyStorageResult<Vec<u8>> {
-    todo!();
+  async fn pq_sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>> {
+    web_sys::console::log_1(&"pq_sign from rust".into());
+    println!("pq_sign from rust");
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::sign(
+      self,
+      key_id.clone().into(),
+      data.to_owned(),
+      WasmJwk(public_key.clone()),
+    ));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    result.to_key_storage_error().map(uint8array_to_bytes)?
   }
 
 }
@@ -72,3 +62,16 @@ interface JwkStoragePQ {
    * It's recommend that the implementer exposes constants for the supported key type string. */
   generatePQKey: (keyType: string, algorithm: JwsAlgorithm) => Promise<JwkGenOutput>;
 }"#;
+
+fn uint8array_to_bytes(value: JsValue) -> KeyStorageResult<Vec<u8>> {
+  if !JsCast::is_instance_of::<Uint8Array>(&value) {
+    return Err(
+      KeyStorageError::new(KeyStorageErrorKind::SerializationError)
+        .with_custom_message("expected Uint8Array".to_owned()),
+    );
+  }
+  let array_js_value = JsValue::from(Array::from(&value));
+  array_js_value
+    .into_serde()
+    .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::SerializationError).with_custom_message(e.to_string()))
+}
