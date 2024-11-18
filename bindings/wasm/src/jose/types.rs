@@ -7,6 +7,7 @@ use identity_iota::verification::jws::JwsAlgorithm;
 use js_sys::JsString;
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
+use identity_iota::verification::jwk::CompositeAlgId;
 
 #[wasm_bindgen]
 extern "C" {
@@ -42,6 +43,18 @@ impl TryFrom<WasmJwsAlgorithm> for JwsAlgorithm {
         .map_err(|err| js_sys::Error::new(&err.to_string()).into())
     } else {
       Err(js_sys::Error::new("invalid JwsAlgorithm").into())
+    }
+  }
+}
+
+impl TryFrom<WasmCompositeAlgId> for CompositeAlgId {
+  type Error = JsValue;
+  fn try_from(value: WasmCompositeAlgId) -> Result<Self, Self::Error> {
+    if let Ok(js_string) = value.dyn_into::<JsString>() {
+      CompositeAlgId::from_str(String::from(js_string).as_ref())
+        .map_err(|err| js_sys::Error::new(&err.to_string()).into())
+    } else {
+      Err(js_sys::Error::new("invalid CompositeAlgId").into())
     }
   }
 }

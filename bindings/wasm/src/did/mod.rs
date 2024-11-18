@@ -4,6 +4,7 @@
  * Modifications Copyright 2024 Fondazione LINKS.
  */
 mod did_jwk;
+mod did_compositejwk;
 mod jws_verification_options;
 mod service;
 mod wasm_core_did;
@@ -24,5 +25,5 @@ pub use self::wasm_core_document::PromiseJwt;
 pub use self::wasm_core_document::WasmCoreDocument;
 pub use self::wasm_did_url::WasmDIDUrl;
 pub use did_jwk::*;
-
+pub use did_compositejwk::*;
 pub use self::jws_verification_options::*;

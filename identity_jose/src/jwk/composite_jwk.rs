@@ -1,6 +1,8 @@
 // Copyright 2024 Fondazione Links
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
+
 use crate::jwk::Jwk;
 
 /// Mame of algorithms used to generate the hybrid signature. Values taken from [here](https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-02#name-domain-separators).
@@ -55,5 +57,18 @@ impl CompositeJwk {
   /// Get the traditional public key in Jwk format.
   pub fn traditional_public_key(&self) -> &Jwk {
     &self.traditional_public_key
+  }
+}
+
+impl FromStr for CompositeAlgId {
+  type Err = crate::error::Error;
+
+  fn from_str(string: &str) -> std::result::Result<Self, Self::Err> {
+    match string {
+      "id-MLDSA44-Ed25519-SHA512" => Ok(Self::IdMldsa44Ed25519Sha512),
+      "id-MLDSA65-Ed25519-SHA512" => Ok(Self::IdMldsa65Ed25519Sha512),
+      #[cfg(not(feature = "custom_alg"))]
+      _ => Err(crate::error::Error::JwsAlgorithmParsingError),
+    }
   }
 }
