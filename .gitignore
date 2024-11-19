@@ -29,5 +29,8 @@ index.html
 
 !/bindings/wasm/static/index.html
 
-# ignore SUI build artifacts
+docs
+# ignore IOTA build artifacts & package locks
 build
+identity_iota_core/packages/*/Move.lock
+
