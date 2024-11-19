@@ -178,6 +178,12 @@ where
       return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
+    // Identity has been changed regardless of whether the proposal has been executed
+    // or simply created. Refetch it, to sync it with its on-chain state.
+    *identity = get_identity(client, identity.id())
+      .await?
+      .expect("identity exists on-chain");
+
     if chained_execution {
       // The proposal has been created and executed right-away. Parse its effects.
       Proposal::<A>::parse_tx_effects(&tx_response).map(ProposalResult::Executed)
@@ -194,10 +200,6 @@ where
         .find(|obj_ref| obj_ref.owner != proposals_bag_id)
         .expect("tx was successful")
         .object_id();
-
-      *identity = get_identity(client, identity.id())
-        .await?
-        .expect("identity exists on-chain");
 
       client.get_object_by_id(proposal_id).await.map(ProposalResult::Pending)
     }

@@ -24,6 +24,30 @@ use move_core_types::ident_str;
 use move_core_types::language_storage::StructTag;
 
 #[tokio::test]
+async fn identity_deactivation_works() -> anyhow::Result<()> {
+  let test_client = get_test_client().await?;
+  let identity_client = test_client.new_user_client().await?;
+
+  let mut identity = identity_client
+    .create_identity(TEST_DOC)
+    .finish()
+    .execute(&identity_client)
+    .await?
+    .output;
+
+  identity
+    .deactivate_did()
+    .finish(&identity_client)
+    .await?
+    .execute(&identity_client)
+    .await?;
+
+  assert!(identity.metadata.deactivated == Some(true));
+
+  Ok(())
+}
+
+#[tokio::test]
 async fn updating_onchain_identity_did_doc_with_single_controller_works() -> anyhow::Result<()> {
   let test_client = get_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
