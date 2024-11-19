@@ -35,7 +35,6 @@ features = [
   "client",
   "domain-linkage",
   "iota-client",
-  "jpt-bbs-plus",
   "kinesis-client",
   "memstore",
   "resolver",

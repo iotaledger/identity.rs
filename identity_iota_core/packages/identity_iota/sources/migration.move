@@ -1,7 +1,7 @@
 module identity_iota::migration {
     use identity_iota::{migration_registry::MigrationRegistry, identity};
-    use stardust::{alias::Alias, alias_output::{AliasOutput, extract_assets}};
-    use iota::{coin, clock::Clock};
+    use stardust::{alias::Alias, alias_output::AliasOutput};
+    use iota::{coin, iota::IOTA, clock::Clock};
 
     const ENotADidOutput: u64 = 1;
 
@@ -12,21 +12,14 @@ module identity_iota::migration {
         clock: &Clock,
         ctx: &mut TxContext,
     ): address {
-        let (
-            alias_id,
-            _,
-            _,
-            mut state_metadata,
-            _,
-            _,
-            _,
-            _,
-        ) = alias.destructure();
+        // Extract needed data from `alias`.
+        let alias_id = object::id(&alias);
+        let mut state_metadata = *alias.state_metadata();
+        // `alias` is not needed anymore, destroy it.
+        alias.destroy();
+
         // Check if `state_metadata` contains a DID document.
         assert!(state_metadata.is_some() && identity::is_did_output(state_metadata.borrow()), ENotADidOutput);
-        let legacy_id = alias_id.to_inner();
-        // Destroy alias.
-        object::delete(alias_id);
 
         let identity = identity::new_with_creation_timestamp(
             state_metadata.extract(),
@@ -37,7 +30,7 @@ module identity_iota::migration {
         let identity_addr = identity.id().to_address();
 
         // Add a migration record.
-        migration_registry.add(legacy_id, identity.id().to_inner());
+        migration_registry.add(alias_id, identity.id().to_inner());
         transfer::public_share_object(identity);
 
         identity_addr
@@ -45,16 +38,16 @@ module identity_iota::migration {
 
     /// Creates a new `Identity` from an Iota 1.0 legacy `AliasOutput` containing a DID Document.
     public fun migrate_alias_output(
-        alias_output: AliasOutput,
+        alias_output: AliasOutput<IOTA>,
         migration_registry: &mut MigrationRegistry,
         creation_timestamp: u64,
         clock: &Clock,
         ctx: &mut TxContext
     ) {
         // Extract required data from output.
-        let (iota, native_tokens, alias_data) = extract_assets(alias_output);
+        let (iota, native_tokens, alias_data) = alias_output.extract_assets();
 
-        let doc_addr = migrate_alias(
+        let identity_addr = migrate_alias(
             alias_data,
             migration_registry,
             creation_timestamp,
@@ -63,62 +56,59 @@ module identity_iota::migration {
         );
 
         let coin = coin::from_balance(iota, ctx);
-        transfer::public_transfer(coin, doc_addr);
-        transfer::public_transfer(native_tokens, doc_addr);
+        transfer::public_transfer(coin, identity_addr);
+        transfer::public_transfer(native_tokens, identity_addr);
     }
 }
 
 
 #[test_only]
 module identity_iota::migration_tests {
-    use iota::{test_scenario, clock};
-    use stardust::alias_output::{create_empty_for_testing, AliasOutput, attach_alias};
+    use iota::{test_scenario, balance, bag, iota::IOTA, clock};
+    use stardust::alias_output::{Self, AliasOutput};
     use identity_iota::identity::{Identity};
     use identity_iota::migration::migrate_alias_output;
-    use stardust::alias::{Alias, create_with_state_metadata_for_testing};
+    use stardust::alias::{Self, Alias};
     use identity_iota::migration_registry::{MigrationRegistry, init_testing};
     use identity_iota::multicontroller::ControllerCap;
+
+    fun create_did_alias(ctx: &mut TxContext): Alias {
+        let sender = ctx.sender();
+        alias::create_for_testing(
+            sender,
+            1,
+            option::some(b"DID"),
+            option::some(sender),
+            option::none(),
+            option::none(),
+            option::none(),
+            ctx
+        )
+    } 
+    
+    fun create_empty_did_output(ctx: &mut TxContext): (AliasOutput<IOTA>, ID) {
+        let mut alias_output = alias_output::create_for_testing(balance::zero(), bag::new(ctx), ctx);
+        let alias = create_did_alias(ctx);
+        let alias_id = object::id(&alias);
+        alias_output.attach_alias(alias);
+
+        (alias_output, alias_id)
+    }
 
     #[test]
     fun test_migration_of_legacy_did_output() {
         let controller_a = @0x1;
         let mut scenario = test_scenario::begin(controller_a);
         let clock = clock::create_for_testing(scenario.ctx());
-
-        let alias_output = create_empty_for_testing(scenario.ctx());
-        transfer::public_transfer(alias_output, controller_a);
-
-        scenario.next_tx(controller_a);
-        let mut alias_output = scenario.take_from_sender<AliasOutput>();
-
-        scenario.next_tx(controller_a);
-
-        let alias: Alias = create_with_state_metadata_for_testing(
-            option::none(),
-            1,
-            b"DID",
-            option::none(),
-            option::none(),
-            option::none(),
-            option::none(),
-            scenario.ctx()
-        );
-
-        let alias_id = object::id(&alias);
-        alias_output.attach_alias(alias);
+        
+        let (did_output, alias_id) = create_empty_did_output(scenario.ctx());
 
         init_testing(scenario.ctx());
 
         scenario.next_tx(controller_a);
         let mut registry = scenario.take_shared<MigrationRegistry>();
 
-        migrate_alias_output(
-            alias_output,
-            &mut registry,
-            0,
-            &clock,
-            scenario.ctx()
-        );
+        migrate_alias_output(did_output, &mut registry, clock.timestamp_ms(), &clock, scenario.ctx());
 
         scenario.next_tx(controller_a);
         let identity = scenario.take_shared<Identity>();
