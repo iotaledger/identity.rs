@@ -49,7 +49,7 @@ pub type MemSigner<'s> = StorageSigner<'s, JwkMemStore, KeyIdMemstore>;
 static PACKAGE_ID: OnceCell<ObjectID> = OnceCell::const_new();
 static CLIENT: OnceCell<TestClient> = OnceCell::const_new();
 const SCRIPT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/scripts/");
-const CACHED_PKG_ID: &str = "/tmp/identity_iota_pkg_id.txt";
+const CACHED_PKG_ID: &str = "/tmp/iota_identity_pkg_id.txt";
 
 pub const TEST_GAS_BUDGET: u64 = 50_000_000;
 pub const TEST_DOC: &[u8] = &[
@@ -93,8 +93,8 @@ async fn init(iota_client: &IotaClient) -> anyhow::Result<ObjectID> {
   let network_id = iota_client.read_api().get_chain_identifier().await?;
   let address = get_active_address().await?;
 
-  if let Ok(id) = std::env::var("IDENTITY_IOTA_PKG_ID").or(get_cached_id(&network_id).await) {
-    std::env::set_var("IDENTITY_IOTA_PKG_ID", id.clone());
+  if let Ok(id) = std::env::var("IOTA_IDENTITY_PKG_ID").or(get_cached_id(&network_id).await) {
+    std::env::set_var("IOTA_IDENTITY_PKG_ID", id.clone());
     id.parse().context("failed to parse object id from str")
   } else {
     publish_package(address).await
