@@ -85,7 +85,7 @@ impl UnmigratedAlias {
       unreachable!("alias was wrapped by us")
     };
     // Get the ID of the `AliasOutput` that owns this `Alias`.
-    let alias_output_id = client
+    let dynamic_field = client
       .read_api()
       .get_object_with_options(*alias.id.object_id(), IotaObjectDataOptions::new().with_owner())
       .await
@@ -93,7 +93,17 @@ impl UnmigratedAlias {
       .owner()
       .expect("owner was requested")
       .get_owner_address()
-      .expect("alias is owned by an alias_output")
+      .expect("alias is a dynamic object field")
+      .into();
+    let alias_output_id = client
+      .read_api()
+      .get_object_with_options(dynamic_field, IotaObjectDataOptions::new().with_owner())
+      .await
+      .map_err(|e| Error::RpcError(e.to_string()))?
+      .owner()
+      .expect("owner was requested")
+      .get_owner_address()
+      .expect("alias is a dynamic object field")
       .into();
     // Get alias_output's ref.
     let alias_output_ref = client
