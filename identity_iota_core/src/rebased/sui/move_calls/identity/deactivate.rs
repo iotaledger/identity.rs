@@ -31,7 +31,7 @@ pub(crate) fn propose_deactivation(
   Ok(ptb.finish())
 }
 
-pub fn execute_deactivation(
+pub(crate) fn execute_deactivation(
   identity: OwnedObjectRef,
   capability: ObjectRef,
   proposal_id: ObjectID,

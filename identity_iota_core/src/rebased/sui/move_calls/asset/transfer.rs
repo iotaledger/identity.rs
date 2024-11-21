@@ -12,7 +12,7 @@ use move_core_types::ident_str;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 
-pub fn transfer<T: MoveType>(
+pub(crate) fn transfer<T: MoveType>(
   asset: ObjectRef,
   recipient: IotaAddress,
   package: ObjectID,
@@ -68,7 +68,7 @@ fn make_tx(
   Ok(ptb.finish())
 }
 
-pub fn accept_proposal(
+pub(crate) fn accept_proposal(
   proposal: (ObjectID, SequenceNumber),
   recipient_cap: ObjectRef,
   asset: ObjectRef,
@@ -78,7 +78,7 @@ pub fn accept_proposal(
   make_tx(proposal, recipient_cap, asset, asset_type_param, package, "accept")
 }
 
-pub fn conclude_or_cancel(
+pub(crate) fn conclude_or_cancel(
   proposal: (ObjectID, SequenceNumber),
   sender_cap: ObjectRef,
   asset: ObjectRef,

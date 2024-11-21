@@ -9,7 +9,7 @@ use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::transaction::ProgrammableTransaction;
 use move_core_types::ident_str;
 
-pub fn approve<T: MoveType>(
+pub(crate) fn approve<T: MoveType>(
   identity: OwnedObjectRef,
   controller_cap: ObjectRef,
   proposal_id: ObjectID,

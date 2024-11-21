@@ -9,7 +9,7 @@ use serde::Serialize;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 
-pub fn new<T: Serialize + MoveType>(
+pub(crate) fn new<T: Serialize + MoveType>(
   inner: T,
   mutable: bool,
   transferable: bool,

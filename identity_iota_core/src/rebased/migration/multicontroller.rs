@@ -121,7 +121,7 @@ impl<T> Multicontroller<T> {
   pub fn controlled_value(&self) -> &T {
     &self.controlled_value
   }
-  
+
   /// Returns this [`Multicontroller`]'s threshold.
   pub fn threshold(&self) -> u64 {
     self.threshold

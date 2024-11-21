@@ -12,7 +12,7 @@ use move_core_types::ident_str;
 
 use crate::rebased::{proposals::BorrowAction, sui::move_calls::utils, utils::MoveType};
 
-pub fn propose_borrow(
+pub(crate) fn propose_borrow(
   identity: OwnedObjectRef,
   capability: ObjectRef,
   objects: Vec<ObjectID>,
@@ -36,7 +36,7 @@ pub fn propose_borrow(
   Ok(ptb.finish())
 }
 
-pub fn execute_borrow<F>(
+pub(crate) fn execute_borrow<F>(
   identity: OwnedObjectRef,
   capability: ObjectRef,
   proposal_id: ObjectID,

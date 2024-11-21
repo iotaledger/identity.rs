@@ -36,7 +36,7 @@ pub(crate) fn propose_update(
   Ok(ptb.finish())
 }
 
-pub fn execute_update(
+pub(crate) fn execute_update(
   identity: OwnedObjectRef,
   capability: ObjectRef,
   proposal_id: ObjectID,

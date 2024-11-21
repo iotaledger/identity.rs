@@ -12,7 +12,7 @@ use crate::rebased::proposals::SendAction;
 use crate::rebased::sui::move_calls;
 use crate::rebased::utils::MoveType;
 
-pub fn propose_send(
+pub(crate) fn propose_send(
   identity: OwnedObjectRef,
   capability: ObjectRef,
   transfer_map: Vec<(ObjectID, IotaAddress)>,
@@ -42,7 +42,7 @@ pub fn propose_send(
   Ok(ptb.finish())
 }
 
-pub fn execute_send(
+pub(crate) fn execute_send(
   identity: OwnedObjectRef,
   capability: ObjectRef,
   proposal_id: ObjectID,

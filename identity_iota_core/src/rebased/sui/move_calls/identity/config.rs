@@ -15,7 +15,7 @@ use move_core_types::ident_str;
 use super::super::utils;
 
 #[allow(clippy::too_many_arguments)]
-pub fn propose_config_change<I1, I2>(
+pub(crate) fn propose_config_change<I1, I2>(
   identity: OwnedObjectRef,
   controller_cap: ObjectRef,
   expiration: Option<u64>,
@@ -82,7 +82,7 @@ where
   Ok(ptb.finish())
 }
 
-pub fn execute_config_change(
+pub(crate) fn execute_config_change(
   identity: OwnedObjectRef,
   controller_cap: ObjectRef,
   proposal_id: ObjectID,

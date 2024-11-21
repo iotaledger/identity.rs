@@ -10,12 +10,12 @@ use identity_iota::core::FromJson;
 use identity_iota::core::Timestamp;
 use identity_iota::did::DID;
 use identity_iota::document::Service;
-use identity_iota::iota::IotaDID;
-use identity_iota::iota::IotaDocument;
-use identity_iota::verification::MethodRelationship;
 use identity_iota::iota::rebased::client::get_object_id_from_did;
 use identity_iota::iota::rebased::migration::has_previous_version;
 use identity_iota::iota::rebased::migration::Identity;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::verification::MethodRelationship;
 use iota_sdk::rpc_types::IotaObjectData;
 
 /// Demonstrates how to obtain the alias output history.
@@ -80,7 +80,7 @@ async fn main() -> anyhow::Result<()> {
       break;
     }
     current_item = history.first();
-    let IotaObjectData { object_id, version, .. }  = current_item.unwrap();
+    let IotaObjectData { object_id, version, .. } = current_item.unwrap();
     println!("Alias History entry: object_id: {object_id}, version: {version}");
   }
 
@@ -93,7 +93,7 @@ async fn main() -> anyhow::Result<()> {
       .await?;
 
     current_item = history.first();
-    let IotaObjectData { object_id, version, .. }  = current_item.unwrap();
+    let IotaObjectData { object_id, version, .. } = current_item.unwrap();
     println!("Alias History entry: object_id: {object_id}, version: {version}");
 
     if !has_previous_version(current_item.unwrap())? {

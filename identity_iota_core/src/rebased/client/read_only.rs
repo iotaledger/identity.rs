@@ -3,12 +3,12 @@ use std::ops::Deref;
 use std::pin::Pin;
 use std::str::FromStr;
 
-use anyhow::Context as _;
-use futures::stream::FuturesUnordered;
-use futures::TryStreamExt as _;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::NetworkName;
+use anyhow::Context as _;
+use futures::stream::FuturesUnordered;
+use futures::TryStreamExt as _;
 use iota_sdk::rpc_types::EventFilter;
 use iota_sdk::rpc_types::IotaData as _;
 use iota_sdk::rpc_types::IotaObjectData;
@@ -173,7 +173,7 @@ impl IdentityClientReadOnly {
       .await?
       .ok_or_else(|| Error::DIDResolutionError(format!("call succeeded but could not resolve {did} to object")))?;
 
-      Ok(identity.clone())
+    Ok(identity.clone())
   }
 
   /// Resolves an [`Identity`] from its ID `object_id`.
@@ -298,6 +298,6 @@ async fn resolve_unmigrated(client: &IdentityClientReadOnly, object_id: ObjectID
 }
 
 pub fn get_object_id_from_did(did: &IotaDID) -> Result<ObjectID, Error> {
-  ObjectID::from_str(&did.tag_str())
+  ObjectID::from_str(did.tag_str())
     .map_err(|err| Error::DIDResolutionError(format!("could not parse object id from did {did}; {err}")))
 }
