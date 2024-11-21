@@ -24,6 +24,24 @@ module iota_identity::identity {
     /// The controller list must contain at least 1 element.
     const EInvalidControllersList: u64 = 3;
 
+    // ===== Events ======
+    /// Event emitted when a `identity`'s `Proposal` with `ID` `proposal` is created or executed by `controller`.
+    public struct ProposalEvent has copy, drop {
+        identity: ID,
+        controller: ID,
+        proposal: ID,
+        // Set to `true` if `proposal` has been executed.
+        executed: bool,
+    }
+
+    /// Event emitted when a `Proposal` with `ID` `proposal` has reached the AC threshold and
+    /// can now be executed.
+    /// `T` is the proposal's action type.
+    public struct ProposalApproved has copy, drop {
+        identity: ID,
+        proposal: ID,
+    }
+
     /// On-chain Identity.
     public struct Identity has key, store {
         id: UID,
@@ -127,7 +145,14 @@ module iota_identity::identity {
         cap: &ControllerCap,
         proposal_id: ID,
     ) {
-        self.did_doc.approve_proposal<vector<u8>, T>(cap, proposal_id);
+        self.did_doc.approve_proposal<_, T>(cap, proposal_id);
+        // If proposal is ready to be executed send an event.
+        if (self.did_doc.is_proposal_approved<_, T>(proposal_id)) {
+            iota::event::emit(ProposalApproved {
+                identity: self.id().to_inner(),
+                proposal: proposal_id,
+            })
+        }
     }
 
     /// Proposes the deativates the DID Document contained in this `Identity`.
@@ -149,10 +174,12 @@ module iota_identity::identity {
         let is_approved = self
             .did_doc
             .is_proposal_approved<_, did_deactivation_proposal::DidDeactivation>(proposal_id);
+ 
         if (is_approved) {
             self.execute_deactivation(cap, proposal_id, clock, ctx);
             option::none()
         } else {
+            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
             option::some(proposal_id)
         }
     }
@@ -172,6 +199,8 @@ module iota_identity::identity {
         ).unwrap();
         self.did_doc.set_controlled_value(vector[]);
         self.updated = clock.timestamp_ms();
+
+        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
     }
 
     /// Proposes an update to the DID Document contained in this `Identity`.
@@ -201,6 +230,7 @@ module iota_identity::identity {
             self.execute_update(cap, proposal_id, clock, ctx);
             option::none()
         } else {
+            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
             option::some(proposal_id)
         }
     }
@@ -221,6 +251,7 @@ module iota_identity::identity {
         );
 
         self.updated = clock.timestamp_ms();
+        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
     }
 
     /// Proposes to update this `Identity`'s AC.
@@ -254,6 +285,7 @@ module iota_identity::identity {
             self.execute_config_change(cap, proposal_id, ctx);
             option::none()
         } else {
+            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
             option::some(proposal_id)
         }
     }
@@ -270,7 +302,8 @@ module iota_identity::identity {
             cap,
             proposal_id,
             ctx,
-        )
+        );
+        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
     }
 
     /// Proposes the transfer of a set of objects owned by this `Identity`.
@@ -282,7 +315,7 @@ module iota_identity::identity {
         recipients: vector<address>,
         ctx: &mut TxContext,
     ) {
-        transfer_proposal::propose_send(
+        let proposal_id = transfer_proposal::propose_send(
             &mut self.did_doc,
             cap,
             expiration,
@@ -290,6 +323,7 @@ module iota_identity::identity {
             recipients,
             ctx
         );
+        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
     }
 
     /// Sends one object among the one specified in a `Send` proposal.
@@ -310,15 +344,16 @@ module iota_identity::identity {
         objects: vector<ID>,
         ctx: &mut TxContext,
     ) {
-      let identity_address = self.id().to_address();
-      borrow_proposal::propose_borrow(
-        &mut self.did_doc,
-        cap,
-        expiration,
-        objects,
-        identity_address,
-        ctx,
-      );
+        let identity_address = self.id().to_address();
+        let proposal_id = borrow_proposal::propose_borrow(
+            &mut self.did_doc,
+            cap,
+            expiration,
+            objects,
+            identity_address,
+            ctx,
+        );
+        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
     }
 
     /// Takes one of the borrowed assets.
@@ -353,6 +388,7 @@ module iota_identity::identity {
         proposal_id: ID,
         ctx: &mut TxContext,
     ): Action<T> {
+        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
         self.did_doc.execute_proposal(cap, proposal_id, ctx)
     }
 
@@ -371,6 +407,20 @@ module iota_identity::identity {
     #[test_only]
     public(package) fun to_address(self: &Identity): address {
         self.id().to_inner().id_to_address()
+    }
+
+    public(package) fun emit_proposal_event(
+        identity: ID,
+        controller: ID,
+        proposal: ID,
+        executed: bool,
+    ) {
+        iota::event::emit(ProposalEvent {
+            identity,
+            controller,
+            proposal,
+            executed,
+        })
     }
 }
 

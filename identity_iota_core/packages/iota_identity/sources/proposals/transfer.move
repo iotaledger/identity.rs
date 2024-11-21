@@ -21,11 +21,11 @@ module iota_identity::transfer_proposal {
         objects: vector<ID>,
         recipients: vector<address>,
         ctx: &mut TxContext,
-    ) {
+    ): ID {
         assert!(objects.length() == recipients.length(), EDifferentLength);
         let action = Send { objects, recipients };
 
-        multi.create_proposal(cap, action,expiration, ctx);
+        multi.create_proposal(cap, action,expiration, ctx)
     }
 
     public fun send<T: key + store>(
