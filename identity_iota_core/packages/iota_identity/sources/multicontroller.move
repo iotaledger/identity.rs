@@ -1,4 +1,7 @@
-module identity_iota::multicontroller {
+// Copyright (c) 2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+module iota_identity::multicontroller {
     use iota::{object_bag::{Self, ObjectBag}, vec_map::{Self, VecMap}, vec_set::{Self, VecSet}};
 
     const EInvalidController: u64 = 0;
@@ -9,6 +12,7 @@ module identity_iota::multicontroller {
     const ENotVotedYet: u64 = 5;
     const EProposalNotFound: u64 = 6;
 
+    /// Capability that allows to access mutative APIs of a `Multicontroller`.
     public struct ControllerCap has key {
         id: UID,
     }
@@ -17,6 +21,7 @@ module identity_iota::multicontroller {
         &self.id
     }
 
+    /// Shares control of a value `V` with multiple entities called controllers.
     public struct Multicontroller<V> has store {
         threshold: u64,
         controllers: VecMap<ID, u64>,
@@ -25,10 +30,13 @@ module identity_iota::multicontroller {
         proposals: ObjectBag,
     }
 
+    /// Wraps a `V` in `Multicontroller`, making the tx's sender a controller with
+    /// voting power 1.
     public fun new<V>(controlled_value: V, ctx: &mut TxContext): Multicontroller<V> {
         new_with_controller(controlled_value, ctx.sender(), ctx)
     }
 
+    /// Wraps a `V` in `Multicontroller` and sends `controller` a `ControllerCap`.
     public fun new_with_controller<V>(
         controlled_value: V,
         controller: address,
@@ -40,6 +48,10 @@ module identity_iota::multicontroller {
         new_with_controllers(controlled_value, controllers, 1, ctx)
     }
 
+    /// Wraps a `V` in `Multicontroller`, settings `threshold` as the threshold,
+    /// and using `controllers` to set controllers: i.e. each `(recipient, voting power)`
+    /// in `controllers` results in `recipient` obtaining a `ControllerCap` with the
+    /// specified voting power.
     public fun new_with_controllers<V>(
         controlled_value: V,
         controllers: VecMap<address, u64>,
@@ -70,6 +82,8 @@ module identity_iota::multicontroller {
         multi
     }
 
+    /// Structure that encapsulates the logic required to make changes
+    /// to a multicontrolled value.
     public struct Proposal<T: store> has key, store {
         id: UID,
         votes: u64,
@@ -78,6 +92,7 @@ module identity_iota::multicontroller {
         action: T,
     }
 
+    /// Returns `true` if `Proposal` `self` is expired.
     public fun is_expired<T: store>(self: &Proposal<T>, ctx: &mut TxContext): bool {
         if (self.expiration_epoch.is_some()) {
             let expiration = *self.expiration_epoch.borrow();
@@ -87,15 +102,24 @@ module identity_iota::multicontroller {
         }
     }
 
+    /// Strucure that encapsulate the kind of change that will be performed
+    /// when a proposal is carried out.
     public struct Action<T: store> {
         inner: T,
     }
 
+    /// Consumes `Action` returning the inner value.
     public fun unwrap<T: store>(action: Action<T>): T {
         let Action { inner } = action;
         inner
     }
 
+    /// Borrows the content of `action`.
+    public fun borrow<T: store>(action: &Action<T>): &T {
+        &action.inner
+    }
+
+    /// Mutably borrows the content of `action`.
     public fun borrow_mut<T: store>(action: &mut Action<T>): &mut T {
         &mut action.inner
     }
@@ -104,6 +128,7 @@ module identity_iota::multicontroller {
         assert!(multi.controllers.contains(&cap.id.to_inner()), EInvalidController);
     }
 
+    /// Creates a new proposal for `Multicontroller` `multi`.
     public fun create_proposal<V, T: store>(
         multi: &mut Multicontroller<V>,
         cap: &ControllerCap,
@@ -129,6 +154,7 @@ module identity_iota::multicontroller {
         proposal_id
     }
 
+    /// Approves an active `Proposal` in `multi`.
     public fun approve_proposal<V, T: store>(
         multi: &mut Multicontroller<V>,
         cap: &ControllerCap,
@@ -145,6 +171,9 @@ module identity_iota::multicontroller {
         proposal.voters.insert(cap_id);
     }
 
+    /// Consumes the `multi`'s active `Proposal` with id `proposal_id`,
+    /// returning its inner `Action`.
+    /// This call fails if `multi`'s threshold has not been reached.
     public fun execute_proposal<V, T: store>(
         multi: &mut Multicontroller<V>,
         cap: &ControllerCap,
@@ -175,6 +204,8 @@ module identity_iota::multicontroller {
         Action { inner }
     }
 
+    /// Removes the approval given by the controller owning `cap` on `Proposal`
+    /// `proposal_id`.
     public fun remove_approval<V, T: store>(
         multi: &mut Multicontroller<V>,
         cap: &ControllerCap,
@@ -190,14 +221,22 @@ module identity_iota::multicontroller {
         proposal.votes = proposal.votes - vp;
     }
 
+    /// Returns a reference to `multi`'s value.
+    public fun value<V: store>(multi: &Multicontroller<V>): &V {
+        &multi.controlled_value
+    }
+
+    /// Returns the list of `multi`'s controllers - i.e. the `ID` of its `ControllerCap`s.
     public fun controllers<V>(multi: &Multicontroller<V>): vector<ID> {
         multi.controllers.keys()
     }
 
+    /// Returns `multi`'s threshold.
     public fun threshold<V>(multi: &Multicontroller<V>): u64 {
         multi.threshold
     }
 
+    /// Returns the voting power of a given controller, identified by its `ID`.
     public fun voting_power<V>(multi: &Multicontroller<V>, controller_id: ID): u64 {
         *multi.controllers.get(&controller_id)
     }
@@ -207,6 +246,7 @@ module identity_iota::multicontroller {
         *multi.controllers.get_mut(&controller_id) = vp;
     }
 
+    /// Returns the sum of all controllers voting powers.
     public fun max_votes<V>(multi: &Multicontroller<V>): u64 {
         let (_, mut values) = multi.controllers.into_keys_values();
         let mut sum = 0;
@@ -260,8 +300,5 @@ module identity_iota::multicontroller {
 
     public(package) fun set_controlled_value<V: store + drop>(multi: &mut Multicontroller<V>, controlled_value: V) {
         multi.controlled_value = controlled_value;
-    }
-    public fun value<V: store>(multi: &Multicontroller<V>): &V {
-        &multi.controlled_value
     }
 }

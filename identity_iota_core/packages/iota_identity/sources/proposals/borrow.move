@@ -1,5 +1,8 @@
-module identity_iota::borrow_proposal {
-  use identity_iota::{multicontroller::{Multicontroller, Action, ControllerCap}};
+// Copyright (c) 2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+module iota_identity::borrow_proposal {
+  use iota_identity::{multicontroller::{Multicontroller, Action, ControllerCap}};
   use iota::transfer::Receiving;
 
   const EInvalidObject: u64 = 0;

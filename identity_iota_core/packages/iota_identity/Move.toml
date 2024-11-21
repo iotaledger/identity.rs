@@ -1,5 +1,8 @@
+# Copyright (c) 2024 IOTA Stiftung
+# SPDX-License-Identifier: Apache-2.0
+
 [package]
-name = "IdentityIota"
+name = "IotaIdentity"
 edition = "2024.beta"
 
 [dependencies]
@@ -8,7 +11,7 @@ Iota = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-f
 Stardust = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/stardust", rev = "ead968e573d8feaa1aa78dddadb8b18a8a99870d" }
 
 [addresses]
-identity_iota = "0x0"
+iota_identity = "0x0"
 
 [dev-dependencies]
 

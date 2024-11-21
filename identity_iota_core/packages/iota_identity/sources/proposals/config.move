@@ -1,5 +1,8 @@
-module identity_iota::config_proposal {
-    use identity_iota::multicontroller::{ControllerCap, Multicontroller};
+// Copyright (c) 2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+module iota_identity::config_proposal {
+    use iota_identity::multicontroller::{ControllerCap, Multicontroller};
     use iota::vec_map::VecMap;
 
     const ENotMember: u64 = 0;
