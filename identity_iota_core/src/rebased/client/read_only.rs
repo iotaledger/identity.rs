@@ -37,7 +37,7 @@ const UNKNOWN_NETWORK_HRP: &str = "unknwn";
 #[derive(Clone)]
 pub struct IdentityClientReadOnly {
   iota_client: IotaClient,
-  identity_iota_pkg_id: ObjectID,
+  iota_identity_pkg_id: ObjectID,
   migration_registry_id: ObjectID,
   network: NetworkName,
 }
@@ -50,11 +50,11 @@ impl Deref for IdentityClientReadOnly {
 }
 
 impl IdentityClientReadOnly {
-  /// Returns `identity_iota`'s package ID.
+  /// Returns `iota_identity`'s package ID.
   /// The ID of the packages depends on the network
   /// the client is connected to.
   pub const fn package_id(&self) -> ObjectID {
-    self.identity_iota_pkg_id
+    self.iota_identity_pkg_id
   }
 
   /// Returns the name of the network the client is
@@ -70,14 +70,14 @@ impl IdentityClientReadOnly {
 
   /// Attempts to create a new [`IdentityClientReadOnly`] from
   /// the given [`IotaClient`].
-  pub async fn new(iota_client: IotaClient, identity_iota_pkg_id: ObjectID) -> Result<Self, Error> {
+  pub async fn new(iota_client: IotaClient, iota_identity_pkg_id: ObjectID) -> Result<Self, Error> {
     let IdentityPkgMetadata {
       migration_registry_id, ..
-    } = identity_pkg_metadata(&iota_client, identity_iota_pkg_id).await?;
+    } = identity_pkg_metadata(&iota_client, iota_identity_pkg_id).await?;
     let network = get_client_network(&iota_client).await?;
     Ok(Self {
       iota_client,
-      identity_iota_pkg_id,
+      iota_identity_pkg_id,
       migration_registry_id,
       network,
     })
@@ -87,10 +87,10 @@ impl IdentityClientReadOnly {
   /// the provided `network_name` will be used.
   pub async fn new_with_network_name(
     iota_client: IotaClient,
-    identity_iota_pkg_id: ObjectID,
+    iota_identity_pkg_id: ObjectID,
     network_name: NetworkName,
   ) -> Result<Self, Error> {
-    let mut identity_client = Self::new(iota_client, identity_iota_pkg_id).await?;
+    let mut identity_client = Self::new(iota_client, iota_identity_pkg_id).await?;
     if identity_client.network.as_ref() == UNKNOWN_NETWORK_HRP {
       identity_client.network = network_name;
     }
@@ -218,7 +218,7 @@ async fn get_client_network(client: &IotaClient) -> Result<NetworkName, Error> {
     .await
     .map_err(|e| Error::RpcError(e.to_string()))?;
 
-  // TODO: add entries when identity_iota package is published to well-known networks.
+  // TODO: add entries when iota_identity package is published to well-known networks.
   #[allow(clippy::match_single_binding)]
   let network_hrp = match &network_id {
     // "89c3eeec" => NetworkName::try_from("iota").unwrap(),
@@ -253,7 +253,7 @@ async fn identity_pkg_metadata(iota_client: &IotaClient, package_id: ObjectID) -
     returned_events.swap_remove(0)
   } else {
     return Err(Error::InvalidConfig(
-      "no \"identity_iota\" package found on the provided network".to_string(),
+      "no \"iota_identity\" package found on the provided network".to_string(),
     ));
   };
 

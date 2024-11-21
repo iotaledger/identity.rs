@@ -1,11 +1,13 @@
-module identity_iota::migration_registry {
+// Copyright (c) 2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+module iota_identity::migration_registry {
     use iota::{dynamic_field as field, transfer::share_object, event};
 
     const BEACON_BYTES: vector<u8> = b"identity.rs_pkg";
 
-    /// One time witness needed to construct a singleton migration registry.
+    /// One time witness needed to construct a singleton `MigrationRegistry`.
     public struct MIGRATION_REGISTRY has drop {}
-
 
     /// Event type that is fired upon creation of a `MigrationRegistry`.
     public struct MigrationRegistryCreated has copy, drop {
@@ -45,7 +47,6 @@ module identity_iota::migration_registry {
         field::add(&mut self.id, alias_id, identity_id);
     }
 
-    //= Test Functions
     #[test_only]
     public fun init_testing(ctx: &mut TxContext) {
         init(MIGRATION_REGISTRY {}, ctx);

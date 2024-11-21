@@ -1,4 +1,7 @@
-module identity_iota::utils {
+// Copyright (c) 2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+module iota_identity::utils {
     use iota::vec_map::{Self, VecMap};
 
     const ELengthMismatch: u64 = 0;

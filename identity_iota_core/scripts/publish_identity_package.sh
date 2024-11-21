@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 script_dir=$(dirname $0)
-package_dir=$script_dir/../packages/identity_iota
+package_dir=$script_dir/../packages/iota_identity
 
 # echo "publishing package from $package_dir"
 cd $package_dir

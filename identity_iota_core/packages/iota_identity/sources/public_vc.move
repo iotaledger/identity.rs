@@ -1,4 +1,7 @@
-module identity_iota::public_vc {
+// Copyright (c) 2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+module iota_identity::public_vc {
     public struct PublicVc has store {
         data: vector<u8>,
     }

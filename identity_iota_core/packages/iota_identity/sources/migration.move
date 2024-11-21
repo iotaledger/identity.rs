@@ -1,5 +1,8 @@
-module identity_iota::migration {
-    use identity_iota::{migration_registry::MigrationRegistry, identity};
+// Copyright (c) 2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+module iota_identity::migration {
+    use iota_identity::{migration_registry::MigrationRegistry, identity};
     use stardust::{alias::Alias, alias_output::AliasOutput};
     use iota::{coin, iota::IOTA, clock::Clock};
 
@@ -63,14 +66,14 @@ module identity_iota::migration {
 
 
 #[test_only]
-module identity_iota::migration_tests {
+module iota_identity::migration_tests {
     use iota::{test_scenario, balance, bag, iota::IOTA, clock};
     use stardust::alias_output::{Self, AliasOutput};
-    use identity_iota::identity::{Identity};
-    use identity_iota::migration::migrate_alias_output;
+    use iota_identity::identity::{Identity};
+    use iota_identity::migration::migrate_alias_output;
     use stardust::alias::{Self, Alias};
-    use identity_iota::migration_registry::{MigrationRegistry, init_testing};
-    use identity_iota::multicontroller::ControllerCap;
+    use iota_identity::migration_registry::{MigrationRegistry, init_testing};
+    use iota_identity::multicontroller::ControllerCap;
 
     fun create_did_alias(ctx: &mut TxContext): Alias {
         let sender = ctx.sender();

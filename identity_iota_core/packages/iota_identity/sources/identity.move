@@ -1,11 +1,13 @@
-module identity_iota::identity {
+// Copyright (c) 2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+module iota_identity::identity {
     use iota::{
         transfer::Receiving,
         vec_map::{Self, VecMap},
-        vec_set::VecSet,
         clock::Clock,
     };
-    use identity_iota::{
+    use iota_identity::{
         multicontroller::{Self, ControllerCap, Multicontroller, Action},
         update_value_proposal,
         config_proposal,
@@ -57,6 +59,8 @@ module identity_iota::identity {
         identity
     }
 
+    /// Creates a new `Identity` wrapping DID DOC `doc` and controller by
+    /// a single address `controller`.
     public fun new_with_controller(
         doc: vector<u8>,
         controller: address,
@@ -95,22 +99,29 @@ module identity_iota::identity {
         }
     }
 
+    /// Returns a reference to the `UID` of an `Identity`.
     public fun id(self: &Identity): &UID {
         &self.id
     }
 
+    /// Returns the unsigned amount of milliseconds
+    /// that passed from the UNIX epoch to the creation of this `Identity`.
     public fun created(self: &Identity): u64 {
         self.created
     }
 
+    /// Returns the unsigned amount of milliseconds
+    /// that passed from the UNIX epoch to the last update on this `Identity`.
     public fun updated(self: &Identity): u64 {
         self.updated
     }
 
+    /// Returns this `Identity`'s threshold.
     public fun threshold(self: &Identity): u64 {
         self.did_doc.threshold()
     }
 
+    /// Approve an `Identity`'s `Proposal`.
     public fun approve_proposal<T: store>(
         self: &mut Identity,
         cap: &ControllerCap,
@@ -119,6 +130,9 @@ module identity_iota::identity {
         self.did_doc.approve_proposal<vector<u8>, T>(cap, proposal_id);
     }
 
+    /// Proposes the deativates the DID Document contained in this `Identity`.
+    /// This function can deactivate the DID Document right away if `cap` has
+    /// enough voting power.
     public fun propose_deactivation(
         self: &mut Identity,
         cap: &ControllerCap,
@@ -143,6 +157,7 @@ module identity_iota::identity {
         }
     }
 
+    /// Executes a proposal to deactivate this `Identity`'s DID document.
     public fun execute_deactivation(
         self: &mut Identity,
         cap: &ControllerCap,
@@ -159,6 +174,9 @@ module identity_iota::identity {
         self.updated = clock.timestamp_ms();
     }
 
+    /// Proposes an update to the DID Document contained in this `Identity`.
+    /// This function can update the DID Document right away if `cap` has
+    /// enough voting power.
     public fun propose_update(
         self: &mut Identity,
         cap: &ControllerCap,
@@ -187,6 +205,7 @@ module identity_iota::identity {
         }
     }
 
+    /// Executes a proposal to update the DID Document contained in this `Identity`.
     public fun execute_update(
         self: &mut Identity,
         cap: &ControllerCap,
@@ -204,6 +223,9 @@ module identity_iota::identity {
         self.updated = clock.timestamp_ms();
     }
 
+    /// Proposes to update this `Identity`'s AC.
+    /// This operation might be carried out right away if `cap`
+    /// has enough voting power.
     public fun propose_config_change(
         self: &mut Identity,
         cap: &ControllerCap,
@@ -236,6 +258,7 @@ module identity_iota::identity {
         }
     }
 
+    /// Execute a proposal to change this `Identity`'s AC.
     public fun execute_config_change(
         self: &mut Identity,
         cap: &ControllerCap,
@@ -250,6 +273,7 @@ module identity_iota::identity {
         )
     }
 
+    /// Proposes the transfer of a set of objects owned by this `Identity`.
     public fun propose_send(
         self: &mut Identity,
         cap: &ControllerCap,
@@ -268,6 +292,7 @@ module identity_iota::identity {
         );
     }
 
+    /// Sends one object among the one specified in a `Send` proposal.
     public fun execute_send<T: key + store>(
         self: &mut Identity,
         send_action: &mut Action<Send>,
@@ -276,6 +301,8 @@ module identity_iota::identity {
         transfer_proposal::send(send_action, &mut self.id, receiving);
     }
 
+    /// Requests the borrowing of a set of assets
+    /// in order to use them in a transaction. Borrowed assets must be returned.
     public fun propose_borrow(
         self: &mut Identity,
         cap: &ControllerCap,
@@ -294,6 +321,7 @@ module identity_iota::identity {
       );
     }
 
+    /// Takes one of the borrowed assets.
     public fun execute_borrow<T: key + store>(
         self: &mut Identity,
         borrow_action: &mut Action<Borrow>,
@@ -302,6 +330,8 @@ module identity_iota::identity {
         borrow_proposal::borrow(borrow_action, &mut self.id, receiving)
     }
 
+    /// Simplified version of `Identity::propose_config_change` that allows
+    /// to add a new controller.
     public fun propose_new_controller(
         self: &mut Identity,
         cap: &ControllerCap,
@@ -316,6 +346,7 @@ module identity_iota::identity {
         self.propose_config_change(cap, expiration, option::none(), new_controllers, vector[], vec_map::empty(), ctx)
     }
 
+    /// Executes an `Identity`'s proposal.
     public fun execute_proposal<T: store>(
         self: &mut Identity,
         cap: &ControllerCap,
@@ -345,11 +376,11 @@ module identity_iota::identity {
 
 
 #[test_only]
-module identity_iota::identity_tests {
+module iota_identity::identity_tests {
     use iota::test_scenario;
-    use identity_iota::identity::{new, ENotADidDocument, Identity, new_with_controllers};
-    use identity_iota::config_proposal::Modify;
-    use identity_iota::multicontroller::{ControllerCap, EExpiredProposal, EThresholdNotReached};
+    use iota_identity::identity::{new, ENotADidDocument, Identity, new_with_controllers};
+    use iota_identity::config_proposal::Modify;
+    use iota_identity::multicontroller::{ControllerCap, EExpiredProposal, EThresholdNotReached};
     use iota::vec_map;
     use iota::clock;
 

@@ -1,5 +1,8 @@
-module identity_iota::update_value_proposal {
-    use identity_iota::multicontroller::{Multicontroller, ControllerCap};
+// Copyright (c) 2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+module iota_identity::update_value_proposal {
+    use iota_identity::multicontroller::{Multicontroller, ControllerCap};
 
     public struct UpdateValue<V: store> has store {
         new_value: V,

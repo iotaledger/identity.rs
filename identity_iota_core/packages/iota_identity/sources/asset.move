@@ -1,4 +1,7 @@
-module identity_iota::asset {
+// Copyright (c) 2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+module iota_identity::asset {
     public use fun delete_recipient_cap as RecipientCap.delete;
 
     const EImmutable: u64 = 0;
@@ -9,6 +12,9 @@ module identity_iota::asset {
     const EInvalidAsset: u64 = 5;
 
 
+    /// Structures that couples some data `T` with well known
+    /// ownership and origin, along configurable abilities e.g.
+    /// transferability, mutability and deletability.
     public struct AuthenticatedAsset<T: store> has key {
         id: UID,
         inner: T,
@@ -36,6 +42,7 @@ module identity_iota::asset {
         new_with_address(inner, ctx.sender(), mutable, transferable, deletable, ctx);
     }
 
+    /// Returns the address that created this `AuthenticatedAsset`.
     public fun origin<T: store>(self: &AuthenticatedAsset<T>): address {
         self.origin
     }
@@ -117,6 +124,8 @@ module identity_iota::asset {
         transfer::share_object(proposal);
     }
 
+    /// Strucure that encodes the logic required to transfer an `AuthenticatedAsset`
+    /// from one address to another. The transfer can be refused by the recipient.
     public struct TransferProposal has key {
         id: UID,
         asset_id: ID,
@@ -152,6 +161,8 @@ module identity_iota::asset {
         self.done = true;
     }
 
+    /// The sender of the asset consumes the `TransferProposal` to either
+    /// cancel it or to conclude it.
     public fun conclude_or_cancel<T: store>(
         mut proposal: TransferProposal,
         cap: SenderCap,
@@ -197,8 +208,8 @@ module identity_iota::asset {
 }
 
 #[test_only]
-module identity_iota::asset_tests {
-    use identity_iota::asset::{Self, AuthenticatedAsset, EImmutable, ENonTransferable, ENonDeletable};
+module iota_identity::asset_tests {
+    use iota_identity::asset::{Self, AuthenticatedAsset, EImmutable, ENonTransferable, ENonDeletable};
     use iota::test_scenario;
 
     const ALICE: address = @0x471c3;
