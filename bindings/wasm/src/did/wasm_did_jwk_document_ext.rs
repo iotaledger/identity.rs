@@ -16,6 +16,7 @@ use crate::storage::WasmStorage;
 use super::CoreDocumentLock;
 use super::WasmCoreDocument;
 use wasm_bindgen::prelude::*;
+use identity_iota::storage::storage::JwsDocumentExtPQC;
 use identity_iota::storage::storage::JwkDocumentExtHybrid;
 use crate::jpt::WasmProofAlgorithm;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
@@ -115,6 +116,30 @@ impl WasmCoreDocument {
         .read()
         .await
         .create_jws(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
+        .await
+        .wasm_result()
+        .map(WasmJws::new)
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  #[wasm_bindgen(js_name = createPqJws)]
+  pub fn _create_pq_jws(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    payload: String,
+    options: &WasmJwsSignatureOptions,
+  ) -> Result<PromiseJws> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = options.0.clone();
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .create_jws_pqc(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
         .await
         .wasm_result()
         .map(WasmJws::new)
