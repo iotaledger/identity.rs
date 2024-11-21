@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 use iota_sdk::rpc_types::OwnedObjectRef;

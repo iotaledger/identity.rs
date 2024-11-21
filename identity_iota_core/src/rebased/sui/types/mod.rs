@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 mod number;
 
 use iota_sdk::types::base_types::ObjectID;
