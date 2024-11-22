@@ -34,11 +34,12 @@ module iota_identity::identity {
         executed: bool,
     }
 
-    /// Event emitted when a `Proposal` with `ID` `proposal` has reached the AC threshold and
+    /// Event emitted when a `Proposal` has reached the AC threshold and
     /// can now be executed.
-    /// `T` is the proposal's action type.
     public struct ProposalApproved has copy, drop {
+        /// ID of the `Identity` owning the proposal.
         identity: ID,
+        /// ID of the created `Proposal`.
         proposal: ID,
     }
 
