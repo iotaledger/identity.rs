@@ -13,7 +13,7 @@ module iota_identity::asset {
 
     // ===== Events =====
 
-    /// Event emitted when the owner of an `AuthenticatedAssets`
+    /// Event emitted when the owner of an `AuthenticatedAsset`
     /// proposes its transfer to a new address.
     public struct AssetTransferCreated has copy, drop {
         asset: ID,
