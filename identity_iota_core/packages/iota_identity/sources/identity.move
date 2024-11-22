@@ -201,7 +201,7 @@ module iota_identity::identity {
             .did_doc
             .is_proposal_approved<_, Upgrade>(proposal_id);
         if (is_approved) {
-            
+            self.execute_upgrade(cap, proposal_id, ctx); 
             option::none()
         } else {
             option::some(proposal_id)

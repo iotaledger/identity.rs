@@ -6,6 +6,7 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::str::FromStr;
 
+use crate::rebased::proposals::Upgrade;
 use crate::rebased::sui::types::Number;
 use crate::IotaDID;
 use crate::IotaDocument;
@@ -99,6 +100,7 @@ pub struct OnChainIdentity {
   id: UID,
   multi_controller: Multicontroller<Vec<u8>>,
   did_doc: IotaDocument,
+  version: u64,
 }
 
 impl Deref for OnChainIdentity {
@@ -169,8 +171,13 @@ impl OnChainIdentity {
     ProposalBuilder::new(self, DeactiveDid::new())
   }
 
+  /// Upgrades this [`OnChainIdentity`]'s version to match the package's.
+  pub fn upgrade_version(&mut self) -> ProposalBuilder<'_, Upgrade> {
+    ProposalBuilder::new(self, Upgrade::default())
+  }
+
   /// Sends assets owned by this [`OnChainIdentity`] to other addresses.
-  pub fn send_assets(&mut self) -> ProposalBuilder<SendAction> {
+  pub fn send_assets(&mut self) -> ProposalBuilder<'_, SendAction> {
     ProposalBuilder::new(self, SendAction::default())
   }
 
@@ -178,7 +185,7 @@ impl OnChainIdentity {
   /// # Notes
   /// Make sure to call [`super::Proposal::with_intent`] before executing the proposal.
   /// Failing to do so will make [`crate::proposals::ProposalT::execute`] return an error.
-  pub fn borrow_assets(&mut self) -> ProposalBuilder<BorrowAction> {
+  pub fn borrow_assets(&mut self) -> ProposalBuilder<'_, BorrowAction> {
     ProposalBuilder::new(self, BorrowAction::default())
   }
 
@@ -363,6 +370,7 @@ pub async fn get_identity(
     did_doc: Multicontroller<Vec<u8>>,
     created: Number<u64>,
     updated: Number<u64>,
+    version: Number<u64>,
   }
 
   let TempOnChainIdentity {
@@ -370,6 +378,7 @@ pub async fn get_identity(
     did_doc: multi_controller,
     created,
     updated,
+    version
   } = serde_json::from_value::<TempOnChainIdentity>(value.fields.to_json_value()).map_err(|err| {
     Error::ObjectLookup(format!(
       "could not parse identity document with object id {object_id}; {err}"
@@ -377,6 +386,7 @@ pub async fn get_identity(
   })?;
   let original_did = IotaDID::from_alias_id(id.object_id().to_string().as_str(), client.network());
   let controlled_value = multi_controller.controlled_value();
+  let version = version.try_into().expect("Move string-encoded u64 are valid u64");
   // Parse DID document timestamps
   let created = {
     let timestamp_ms: u64 = created.try_into().expect("Move string-encoded u64 are valid u64");
@@ -411,6 +421,7 @@ pub async fn get_identity(
     id,
     multi_controller,
     did_doc,
+    version,
   }))
 }
 
