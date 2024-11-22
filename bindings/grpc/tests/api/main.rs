@@ -19,3 +19,4 @@ mod jwt;
 mod sd_jwt_validation;
 #[cfg(test)]
 mod status_list_2021;
+mod utils;

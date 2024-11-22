@@ -53,10 +53,10 @@ impl<V: JwsVerifier> SdJwtCredentialValidator<V> {
   ///
   /// # Warning
   /// * The key binding JWT is not validated. If needed, it must be validated separately using
-  /// `SdJwtValidator::validate_key_binding_jwt`.
+  ///   `SdJwtValidator::validate_key_binding_jwt`.
   /// * The lack of an error returned from this method is in of itself not enough to conclude that the credential can be
-  /// trusted. This section contains more information on additional checks that should be carried out before and after
-  /// calling this method.
+  ///   trusted. This section contains more information on additional checks that should be carried out before and after
+  ///   calling this method.
   ///
   /// ## The state of the issuer's DID Document
   /// The caller must ensure that `issuer` represents an up-to-date DID Document.

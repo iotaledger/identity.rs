@@ -1,6 +1,6 @@
 [package]
 name = "identity_iota_core"
-version = "1.2.0"
+version = "1.4.0"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -15,11 +15,11 @@ description = "An IOTA Ledger integration for the IOTA DID Method."
 anyhow = "1.0.75"
 async-trait = { version = "0.1.81", default-features = false, optional = true }
 futures = { version = "0.3", default-features = false }
-identity_core = { version = "=1.2.0", path = "../identity_core", default-features = false }
-identity_credential = { version = "=1.2.0", path = "../identity_credential", default-features = false, features = ["validator"] }
-identity_did = { version = "=1.2.0", path = "../identity_did", default-features = false }
-identity_document = { version = "=1.2.0", path = "../identity_document", default-features = false }
-identity_verification = { version = "=1.2.0", path = "../identity_verification", default-features = false }
+identity_core = { version = "=1.4.0", path = "../identity_core", default-features = false }
+identity_credential = { version = "=1.4.0", path = "../identity_credential", default-features = false, features = ["validator"] }
+identity_did = { version = "=1.4.0", path = "../identity_did", default-features = false }
+identity_document = { version = "=1.4.0", path = "../identity_document", default-features = false }
+identity_verification = { version = "=1.4.0", path = "../identity_verification", default-features = false }
 iota_sdk_legacy = { version = "1.1.5", default-features = false, features = ["serde", "std"], optional = true, package = "iota-sdk" }
 num-derive = { version = "0.4", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
@@ -34,8 +34,8 @@ thiserror.workspace = true
 # for feature `kinesis-client`
 bcs = { version = "0.1.4", optional = true }
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "5f2c63266a065996d53f98156f0412782b468597", package = "fastcrypto", optional = true }
-identity_eddsa_verifier = { version = "=1.2.0", path = "../identity_eddsa_verifier", optional = true }
-identity_jose = { version = "=1.2.0", path = "../identity_jose", optional = true }
+identity_eddsa_verifier = { version = "=1.4.0", path = "../identity_eddsa_verifier", optional = true }
+identity_jose = { version = "=1.4.0", path = "../identity_jose", optional = true }
 iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config", tag = "v0.7.0-alpha", optional = true }
 iota-crypto = { version = "0.23", optional = true }
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.0-alpha", optional = true }

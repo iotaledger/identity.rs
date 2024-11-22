@@ -3,17 +3,20 @@
 
 use std::collections::HashMap;
 
-use iota_sdk::{
-  rpc_types::{IotaObjectData, OwnedObjectRef},
-  types::{
-    base_types::{ObjectID, ObjectRef, ObjectType},
-    programmable_transaction_builder::ProgrammableTransactionBuilder,
-    transaction::{Argument, ObjectArg, ProgrammableTransaction},
-  },
-};
+use iota_sdk::rpc_types::IotaObjectData;
+use iota_sdk::rpc_types::OwnedObjectRef;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::base_types::ObjectRef;
+use iota_sdk::types::base_types::ObjectType;
+use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use iota_sdk::types::transaction::Argument;
+use iota_sdk::types::transaction::ObjectArg;
+use iota_sdk::types::transaction::ProgrammableTransaction;
 use move_core_types::ident_str;
 
-use crate::rebased::{proposals::BorrowAction, sui::move_calls::utils, utils::MoveType};
+use crate::rebased::proposals::BorrowAction;
+use crate::rebased::sui::move_calls::utils;
+use crate::rebased::utils::MoveType;
 
 pub(crate) fn propose_borrow(
   identity: OwnedObjectRef,

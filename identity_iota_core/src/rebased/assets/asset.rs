@@ -33,7 +33,7 @@ use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
 
-// An on-chain asset that carries information about its owned and its creator.
+/// An on-chain asset that carries information about its owned and its creator.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AuthenticatedAsset<T> {
   id: UID,
@@ -229,12 +229,12 @@ impl<T> AuthenticatedAssetBuilder<T> {
 /// A [`TransferProposal`] is a **shared** _Move_ object that represents a request to transfer ownership
 /// of an [`AuthenticatedAsset`] to a new owner.
 ///
-/// When a [`TransferProposal`] is created, it will seize the asset and send a `SenderCap` token to the current asset's owner
-/// and a `RecipientCap` to the specified `recipient` address.
-/// `recipient` can accept the transfer by presenting its `RecipientCap` (this prevents other users from claiming the asset
-/// for themselves).
-/// The current owner can cancel the proposal at any time - given the transfer hasn't been conclued yet - by presenting its
-/// `SenderCap`.
+/// When a [`TransferProposal`] is created, it will seize the asset and send a `SenderCap` token to the current asset's
+/// owner and a `RecipientCap` to the specified `recipient` address.
+/// `recipient` can accept the transfer by presenting its `RecipientCap` (this prevents other users from claiming the
+/// asset for themselves).
+/// The current owner can cancel the proposal at any time - given the transfer hasn't been conclued yet - by presenting
+/// its `SenderCap`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransferProposal {
   id: UID,
@@ -341,8 +341,8 @@ impl TransferProposal {
   /// Concludes or cancels this [`TransferProposal`].
   /// # Warning
   /// * This operation only has an effects when it's invoked by this [`TransferProposal`]'s `sender`.
-  /// * Accepting a [`TransferProposal`] **doesn't** consume it from the ledger. This function must be used
-  ///   to correctly consume both [`TransferProposal`] and `SenderCap`.
+  /// * Accepting a [`TransferProposal`] **doesn't** consume it from the ledger. This function must be used to correctly
+  ///   consume both [`TransferProposal`] and `SenderCap`.
   pub fn conclude_or_cancel(self) -> ConcludeTransferTx {
     ConcludeTransferTx(self)
   }

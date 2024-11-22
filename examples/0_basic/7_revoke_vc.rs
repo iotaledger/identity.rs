@@ -74,6 +74,8 @@ async fn main() -> anyhow::Result<()> {
     .publish_did_document_update(issuer_document.clone(), TEST_GAS_BUDGET)
     .await?;
 
+  println!("DID Document > {issuer_document:#}");
+
   // Create a credential subject indicating the degree earned by Alice.
   let subject: Subject = Subject::from_json_value(json!({
     "id": holder_document.id().as_str(),

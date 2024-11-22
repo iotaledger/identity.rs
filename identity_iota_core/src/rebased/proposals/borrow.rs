@@ -4,14 +4,15 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use crate::rebased::{
-  client::{IdentityClient, IotaKeySignature},
-  migration::Proposal,
-  sui::move_calls,
-  transaction::{ProtoTransaction, Transaction, TransactionOutput},
-  utils::MoveType,
-  Error,
-};
+use crate::rebased::client::IdentityClient;
+use crate::rebased::client::IotaKeySignature;
+use crate::rebased::migration::Proposal;
+use crate::rebased::sui::move_calls;
+use crate::rebased::transaction::ProtoTransaction;
+use crate::rebased::transaction::Transaction;
+use crate::rebased::transaction::TransactionOutput;
+use crate::rebased::utils::MoveType;
+use crate::rebased::Error;
 use async_trait::async_trait;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaTransactionBlockResponse;
