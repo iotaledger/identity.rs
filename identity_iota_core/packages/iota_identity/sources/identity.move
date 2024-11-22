@@ -25,7 +25,7 @@ module iota_identity::identity {
     const EInvalidControllersList: u64 = 3;
 
     // ===== Events ======
-    /// Event emitted when a `identity`'s `Proposal` with `ID` `proposal` is created or executed by `controller`.
+    /// Event emitted when an `identity`'s `Proposal` with `ID` `proposal` is created or executed by `controller`.
     public struct ProposalEvent has copy, drop {
         identity: ID,
         controller: ID,
