@@ -102,7 +102,7 @@ impl<S> Deref for IdentityClient<S> {
 
 impl<S> IdentityClient<S>
 where
-  S: Signer<IotaKeySignature>,
+  S: Signer<IotaKeySignature> + Sync,
 {
   pub async fn new(client: IdentityClientReadOnly, signer: S) -> Result<Self, Error> {
     let public_key = signer
