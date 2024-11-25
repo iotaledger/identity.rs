@@ -173,7 +173,7 @@ async fn main() -> anyhow::Result<()> {
 
   // We expect the verifiable credential to be revoked.
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_kinesis_iota_handler((*holder_identity_client).clone());
+  resolver.attach_iota_handler((*holder_identity_client).clone());
   let resolved_issuer_did: IotaDID = JwtCredentialValidatorUtils::extract_issuer_from_jwt(&credential_jwt)?;
   let resolved_issuer_doc: IotaDocument = resolver.resolve(&resolved_issuer_did).await?;
 

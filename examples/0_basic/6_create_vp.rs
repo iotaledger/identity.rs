@@ -174,7 +174,7 @@ async fn main() -> anyhow::Result<()> {
     JwsVerificationOptions::default().nonce(challenge.to_owned());
 
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_kinesis_iota_handler((*verifier_client).clone());
+  resolver.attach_iota_handler((*verifier_client).clone());
 
   // Resolve the holder's document.
   let holder_did: CoreDID = JwtPresentationValidatorUtils::extract_holder(&presentation_jwt)?;

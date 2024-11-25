@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
   let mut resolver: Resolver<Document> = Resolver::new();
 
   // This is a convenience method for attaching a handler for the "iota" method by providing just a client.
-  resolver.attach_kinesis_iota_handler((*identity_client).clone());
+  resolver.attach_iota_handler((*identity_client).clone());
   resolver.attach_handler("foo".to_owned(), resolve_did_foo);
 
   // A fake did:foo DID for demonstration purposes.

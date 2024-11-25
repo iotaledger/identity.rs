@@ -68,6 +68,14 @@ async fn main() -> anyhow::Result<()> {
   let history = onchain_identity.get_history(&identity_client, None, None).await?;
   println!("Alias History has {} entries", history.len());
 
+  // Optional step - Parse to documents
+  let documents: Vec<IotaDocument> = history
+    .into_iter()
+    .map(|data| IotaDocument::unpack_from_iota_object_data(&did, &data, true))
+    .collect::<Result<_, _>>()?;
+  println!("Current version: {}", documents[0].to_string());
+  println!("Previous version: {}", documents[1].to_string());
+
   // Depending on your use case, you can also page through the results
   // Alternative Step 2 - Page by looping until no result is returned (here with page size 1)
   let mut current_item: Option<&IotaObjectData> = None;
