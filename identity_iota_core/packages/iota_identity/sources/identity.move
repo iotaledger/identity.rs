@@ -8,7 +8,8 @@ module iota_identity::identity {
         clock::Clock,
     };
     use iota_identity::{
-        multicontroller::{Self, ControllerCap, Multicontroller, Action},
+        multicontroller::{Self, Multicontroller, Action},
+        controller::{DelegationToken, ControllerCap},
         update_value_proposal,
         config_proposal,
         transfer_proposal::{Self, Send},
@@ -41,7 +42,7 @@ module iota_identity::identity {
         clock: &Clock,
         ctx: &mut TxContext
     ): Identity {
-        new_with_controller(doc, ctx.sender(), clock, ctx)
+        new_with_controller(doc, ctx.sender(), false, clock, ctx)
     }
 
     /// Creates an identity specifying its `created` timestamp.
@@ -52,7 +53,7 @@ module iota_identity::identity {
         clock: &Clock,
         ctx: &mut TxContext
     ): Identity {
-        let mut identity = new_with_controller(doc, ctx.sender(), clock, ctx);
+        let mut identity = new_with_controller(doc, ctx.sender(), false, clock, ctx);
         assert!(identity.updated >= creation_timestamp, EInvalidTimestamp);
         identity.created = creation_timestamp;
 
@@ -64,13 +65,14 @@ module iota_identity::identity {
     public fun new_with_controller(
         doc: vector<u8>,
         controller: address,
+        can_delegate: bool,
         clock: &Clock,
         ctx: &mut TxContext,
     ): Identity {
         let now = clock.timestamp_ms();
         Identity {
             id: object::new(ctx),
-            did_doc: multicontroller::new_with_controller(doc, controller, ctx),
+            did_doc: multicontroller::new_with_controller(doc, controller, can_delegate, ctx),
             created: now,
             updated: now,
         }
@@ -82,6 +84,7 @@ module iota_identity::identity {
     public fun new_with_controllers(
         doc: vector<u8>,
         controllers: VecMap<address, u64>,
+        controllers_that_can_delegate: VecMap<address, u64>,
         threshold: u64,
         clock: &Clock,
         ctx: &mut TxContext,
@@ -93,7 +96,7 @@ module iota_identity::identity {
         let now = clock.timestamp_ms();
         Identity {
             id: object::new(ctx),
-            did_doc: multicontroller::new_with_controllers(doc, controllers, threshold, ctx),
+            did_doc: multicontroller::new_with_controllers(doc, controllers, controllers_that_can_delegate, threshold, ctx),
             created: now,
             updated: now,
         }
@@ -124,18 +127,16 @@ module iota_identity::identity {
     /// Approve an `Identity`'s `Proposal`.
     public fun approve_proposal<T: store>(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         proposal_id: ID,
     ) {
         self.did_doc.approve_proposal<vector<u8>, T>(cap, proposal_id);
     }
 
-    /// Proposes the deativates the DID Document contained in this `Identity`.
-    /// This function can deactivate the DID Document right away if `cap` has
-    /// enough voting power.
+    /// Proposes the deativation of the DID Document contained in this `Identity`.
     public fun propose_deactivation(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         expiration: Option<u64>,
         clock: &Clock,
         ctx: &mut TxContext,
@@ -160,7 +161,7 @@ module iota_identity::identity {
     /// Executes a proposal to deactivate this `Identity`'s DID document.
     public fun execute_deactivation(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         proposal_id: ID,
         clock: &Clock,
         ctx: &mut TxContext,
@@ -179,7 +180,7 @@ module iota_identity::identity {
     /// enough voting power.
     public fun propose_update(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         updated_doc: vector<u8>,
         expiration: Option<u64>,
         clock: &Clock,
@@ -208,7 +209,7 @@ module iota_identity::identity {
     /// Executes a proposal to update the DID Document contained in this `Identity`.
     public fun execute_update(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         proposal_id: ID,
         clock: &Clock,
         ctx: &mut TxContext,
@@ -228,7 +229,7 @@ module iota_identity::identity {
     /// has enough voting power.
     public fun propose_config_change(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         expiration: Option<u64>,
         threshold: Option<u64>,
         controllers_to_add: VecMap<address, u64>,
@@ -261,7 +262,7 @@ module iota_identity::identity {
     /// Execute a proposal to change this `Identity`'s AC.
     public fun execute_config_change(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         proposal_id: ID,
         ctx: &mut TxContext
     ) {
@@ -276,7 +277,7 @@ module iota_identity::identity {
     /// Proposes the transfer of a set of objects owned by this `Identity`.
     public fun propose_send(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         expiration: Option<u64>,
         objects: vector<ID>,
         recipients: vector<address>,
@@ -305,7 +306,7 @@ module iota_identity::identity {
     /// in order to use them in a transaction. Borrowed assets must be returned.
     public fun propose_borrow(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         expiration: Option<u64>,
         objects: vector<ID>,
         ctx: &mut TxContext,
@@ -334,7 +335,7 @@ module iota_identity::identity {
     /// to add a new controller.
     public fun propose_new_controller(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         expiration: Option<u64>,
         new_controller_addr: address,
         voting_power: u64,
@@ -349,14 +350,35 @@ module iota_identity::identity {
     /// Executes an `Identity`'s proposal.
     public fun execute_proposal<T: store>(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         proposal_id: ID,
         ctx: &mut TxContext,
     ): Action<T> {
         self.did_doc.execute_proposal(cap, proposal_id, ctx)
     }
 
-    /// Checks if `data` is a state matadata representing a DID.
+    /// revoke the `DelegationToken` with `ID` `deny_id`. Only controllers can perform this operation.
+    public fun revoke_token(self: &mut Identity, cap: &ControllerCap, deny_id: ID) {
+        self.did_doc.revoke_token(cap, deny_id);
+    }
+
+    /// Un-revoke a `DelegationToken`.
+    public fun unrevoke_token(self: &mut Identity, cap: &ControllerCap, token_id: ID) {
+        self.did_doc.unrevoke_token(cap, token_id);
+    }
+
+    /// Destroys a `ControllerCap`. Can only be used after a controller has been removed from
+    /// the controller committee.
+    public fun destroy_controller_cap(self: &Identity, cap: ControllerCap) {
+        self.did_doc.destroy_controller_cap(cap);
+    }
+
+    /// Destroys a `DelegationToken`.
+    public fun destroy_delegation_token(self: &mut Identity, token: DelegationToken) {
+        self.did_doc.destroy_delegation_token(token);
+    }
+
+    /// Checks if `data` is a state metadata representing a DID.
     /// i.e. starts with the bytes b"DID".
     public(package) fun is_did_output(data: &vector<u8>): bool {
         data[0] == 0x44 &&      // b'D'
@@ -380,7 +402,8 @@ module iota_identity::identity_tests {
     use iota::test_scenario;
     use iota_identity::identity::{new, ENotADidDocument, Identity, new_with_controllers};
     use iota_identity::config_proposal::Modify;
-    use iota_identity::multicontroller::{ControllerCap, EExpiredProposal, EThresholdNotReached};
+    use iota_identity::multicontroller::{EExpiredProposal, EThresholdNotReached};
+    use iota_identity::controller::ControllerCap;
     use iota::vec_map;
     use iota::clock;
 
@@ -401,16 +424,19 @@ module iota_identity::identity_tests {
 
         // Create a request to add a second controller.
         let mut identity = scenario.take_shared<Identity>();
-        let controller1_cap = scenario.take_from_address<ControllerCap>(controller1);
+        let mut controller1_cap = scenario.take_from_address<ControllerCap>(controller1);
+        let (token, borrow) = controller1_cap.borrow();
         // This is carried out immediately.
-        identity.propose_new_controller(&controller1_cap, option::none(), controller2, 1, scenario.ctx());
+        identity.propose_new_controller(&token, option::none(), controller2, 1, scenario.ctx());
+        controller1_cap.put_back(token, borrow);
 
         scenario.next_tx(controller2);
 
-        let controller2_cap = scenario.take_from_address<ControllerCap>(controller2);
+        let mut controller2_cap = scenario.take_from_address<ControllerCap>(controller2);
+        let (token, borrow) = controller2_cap.borrow();
 
-        identity.did_doc().assert_is_member(&controller2_cap);
-
+        identity.did_doc().assert_is_member(&token);
+        controller2_cap.put_back(token, borrow);
         // Cleanup
         test_scenario::return_to_address(controller1, controller1_cap);
         test_scenario::return_to_address(controller2, controller2_cap);
@@ -437,6 +463,7 @@ module iota_identity::identity_tests {
         let identity = new_with_controllers(
             b"DID",
             controllers,
+            vec_map::empty(),
             2,
             &clock,
             scenario.ctx(),
@@ -447,11 +474,12 @@ module iota_identity::identity_tests {
 
         // `controller1` creates a request to remove `controller3`.
         let mut identity = scenario.take_shared<Identity>();
-        let controller1_cap = scenario.take_from_address<ControllerCap>(controller1);
+        let mut controller1_cap = scenario.take_from_address<ControllerCap>(controller1);
         let controller3_cap = scenario.take_from_address<ControllerCap>(controller3);
 
+        let (token, borrow) = controller1_cap.borrow();
         let proposal_id = identity.propose_config_change(
-            &controller1_cap,
+            &token,
             option::none(),
             option::none(),
             vec_map::empty(),
@@ -459,17 +487,22 @@ module iota_identity::identity_tests {
             vec_map::empty(),
             scenario.ctx()
         ).destroy_some();
+        controller1_cap.put_back(token, borrow);
 
         scenario.next_tx(controller2);
 
         // `controller2` also approves the removal of `controller3`.
-        let controller2_cap = scenario.take_from_address<ControllerCap>(controller2);
-        identity.approve_proposal<Modify>(&controller2_cap, proposal_id);
+        let mut controller2_cap = scenario.take_from_address<ControllerCap>(controller2);
+        let (token, borrow) = controller2_cap.borrow();
+        identity.approve_proposal<Modify>(&token, proposal_id);
+        controller2_cap.put_back(token, borrow);
 
         scenario.next_tx(controller2);
 
         // `controller3` is removed.
-        identity.execute_config_change(&controller2_cap, proposal_id, scenario.ctx());
+        let (token, borrow) = controller2_cap.borrow();
+        identity.execute_config_change(&token, proposal_id, scenario.ctx());
+        controller2_cap.put_back(token, borrow);
         assert!(!identity.did_doc().controllers().contains(&controller3_cap.id().to_inner()), 0);
 
         // cleanup.
@@ -505,6 +538,7 @@ module iota_identity::identity_tests {
             let identity = new_with_controllers(
                 b"DID",
                 controllers,
+                vec_map::empty(),
                 10,
                 &clock,
                 scenario.ctx(),
@@ -514,16 +548,20 @@ module iota_identity::identity_tests {
 
             // Controller A alone should be able to do anything.
             let mut identity = scenario.take_shared<Identity>();
-            let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
+            let mut controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
+            let (token, borrow) = controller_a_cap.borrow();
 
             // Create a request to add a new controller. This is carried out immediately as controller_a has enough voting power
-            identity.propose_new_controller(&controller_a_cap, option::none(), controller_d, 1, scenario.ctx());
+            identity.propose_new_controller(&token, option::none(), controller_d, 1, scenario.ctx());
+            controller_a_cap.put_back(token, borrow);
 
             scenario.next_tx(controller_d);
 
-            let controller_d_cap = scenario.take_from_address<ControllerCap>(controller_d);
+            let mut controller_d_cap = scenario.take_from_address<ControllerCap>(controller_d);
+            let (token, borrow) = controller_d_cap.borrow();
 
-            identity.did_doc().assert_is_member(&controller_d_cap);
+            identity.did_doc().assert_is_member(&token);
+            controller_d_cap.put_back(token, borrow);
 
             test_scenario::return_shared(identity);
             test_scenario::return_to_address(controller_a, controller_a_cap);
@@ -536,6 +574,7 @@ module iota_identity::identity_tests {
             let identity = new_with_controllers(
             b"DID",
             controllers,
+            vec_map::empty(),
             10,
             &clock,
             scenario.ctx(),
@@ -544,12 +583,14 @@ module iota_identity::identity_tests {
             scenario.next_tx(controller_a);
 
             let mut identity = scenario.take_shared<Identity>();
-            let controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
+            let mut controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
+            let (token, borrow) = controller_b_cap.borrow();
 
-            let proposal_id = identity.propose_new_controller(&controller_b_cap, option::none(), controller_d, 1, scenario.ctx()).destroy_some();
+            let proposal_id = identity.propose_new_controller(&token, option::none(), controller_d, 1, scenario.ctx()).destroy_some();
 
             scenario.next_tx(controller_b);
-            identity.execute_config_change(&controller_b_cap, proposal_id, scenario.ctx());
+            identity.execute_config_change(&token, proposal_id, scenario.ctx());
+            controller_b_cap.put_back(token, borrow);
             scenario.next_tx(controller_d);
 
             let controller_d_cap = scenario.take_from_address<ControllerCap>(controller_d);
@@ -585,6 +626,7 @@ module iota_identity::identity_tests {
         let identity = new_with_controllers(
             b"DID",
             controllers,
+            vec_map::empty(),
             10,
             &clock,
             scenario.ctx(),
@@ -593,23 +635,28 @@ module iota_identity::identity_tests {
         scenario.next_tx(controller_b);
 
         let mut identity = scenario.take_shared<Identity>();
-        let controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
+        let mut controller_b_cap = scenario.take_from_address<ControllerCap>(controller_b);
+        let (token, borrow) = controller_b_cap.borrow();
 
         // Create a request to add a new controller.
-        let proposal_id = identity.propose_new_controller(&controller_b_cap, option::none(), controller_d, 10, scenario.ctx()).destroy_some();
+        let proposal_id = identity.propose_new_controller(&token, option::none(), controller_d, 10, scenario.ctx()).destroy_some();
+        controller_b_cap.put_back(token, borrow);
 
         scenario.next_tx(controller_b);
-        let controller_c_cap = scenario.take_from_address<ControllerCap>(controller_c);
-        identity.approve_proposal<Modify>(&controller_c_cap, proposal_id);
+        let mut controller_c_cap = scenario.take_from_address<ControllerCap>(controller_c);
+        let (token, borrow) = controller_c_cap.borrow();
+        identity.approve_proposal<Modify>(&token, proposal_id);
 
         scenario.next_tx(controller_a);
-        identity.execute_config_change(&controller_c_cap, proposal_id, scenario.ctx());
+        identity.execute_config_change(&token, proposal_id, scenario.ctx());
+        controller_c_cap.put_back(token, borrow);
 
         scenario.next_tx(controller_d);
 
-        let controller_d_cap = scenario.take_from_address<ControllerCap>(controller_d);
-
-        identity.did_doc().assert_is_member(&controller_d_cap);
+        let mut controller_d_cap = scenario.take_from_address<ControllerCap>(controller_d);
+        let (token, borrow) = controller_d_cap.borrow();
+        identity.did_doc().assert_is_member(&token);
+        controller_d_cap.put_back(token, borrow);
 
         test_scenario::return_shared(identity);
         test_scenario::return_to_address(controller_b, controller_b_cap);
@@ -639,6 +686,7 @@ module iota_identity::identity_tests {
         let second_identity = new_with_controllers(
             b"DID",
             controllers,
+            vec_map::empty(),
             10,
             &clock,
             scenario.ctx(),
@@ -647,18 +695,22 @@ module iota_identity::identity_tests {
         transfer::public_share_object(second_identity);
 
         scenario.next_tx(first_identity.to_address());
-        let first_identity_cap = scenario.take_from_address<ControllerCap>(first_identity.to_address());
+        let mut first_identity_cap = scenario.take_from_address<ControllerCap>(first_identity.to_address());
+        let (token, borrow) = first_identity_cap.borrow();
 
         let mut second_identity = scenario.take_shared<Identity>();
 
         assert!(second_identity.did_doc().controllers().contains(&first_identity_cap.id().to_inner()), 0);
         
-        second_identity.propose_new_controller(&first_identity_cap, option::none(), controller_a, 10, scenario.ctx()).destroy_none();
+        second_identity.propose_new_controller(&token, option::none(), controller_a, 10, scenario.ctx()).destroy_none();
+        first_identity_cap.put_back(token, borrow);
 
         scenario.next_tx(controller_a);
-        let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
+        let mut controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
+        let (token, borrow) = controller_a_cap.borrow();
 
-        second_identity.did_doc().assert_is_member(&controller_a_cap);
+        second_identity.did_doc().assert_is_member(&token);
+        controller_a_cap.put_back(token, borrow);
 
         test_scenario::return_shared(second_identity);
         test_scenario::return_to_address(controller_a, controller_a_cap);
@@ -682,9 +734,11 @@ module iota_identity::identity_tests {
 
         // Propose a change for updating the did document
         let mut identity = scenario.take_shared<Identity>();
-        let cap = scenario.take_from_address<ControllerCap>(controller);
+        let mut cap = scenario.take_from_address<ControllerCap>(controller);
+        let (token, borrow) = cap.borrow();
 
-        let _proposal_id = identity.propose_update(&cap, b"NOT DID", option::none(), &clock, scenario.ctx());
+        let _proposal_id = identity.propose_update(&token, b"NOT DID", option::none(), &clock, scenario.ctx());
+        cap.put_back(token, borrow);
 
         test_scenario::return_to_address(controller, cap);
         test_scenario::return_shared(identity);
@@ -706,22 +760,28 @@ module iota_identity::identity_tests {
         controllers.insert(controller_a, 1);
         controllers.insert(controller_b, 1);
 
-        let identity = new_with_controllers(b"DID", controllers, 2, &clock, scenario.ctx());
+        let identity = new_with_controllers(b"DID", controllers, vec_map::empty(), 2, &clock, scenario.ctx());
         transfer::public_share_object(identity);
 
         scenario.next_tx(controller_a);
 
         let mut identity = scenario.take_shared<Identity>();
-        let cap = scenario.take_from_address<ControllerCap>(controller_a);
-        let proposal_id = identity.propose_new_controller(&cap, option::some(expiration_epoch), new_controller, 1, scenario.ctx()).destroy_some();
+        let mut cap = scenario.take_from_address<ControllerCap>(controller_a);
+        let (token, borrow) = cap.borrow();
+        let proposal_id = identity.propose_new_controller(&token, option::some(expiration_epoch), new_controller, 1, scenario.ctx()).destroy_some();
+        cap.put_back(token, borrow);
 
         scenario.next_tx(controller_b);
-        let cap_b = scenario.take_from_address<ControllerCap>(controller_b);
-        identity.approve_proposal<Modify>(&cap_b, proposal_id);
+        let mut cap_b = scenario.take_from_address<ControllerCap>(controller_b);
+        let (token, borrow) = cap_b.borrow();
+        identity.approve_proposal<Modify>(&token, proposal_id);
+        cap_b.put_back(token, borrow);
 
         scenario.later_epoch(100, controller_a);
         // this should fail!
-        identity.execute_config_change(&cap, proposal_id, scenario.ctx());
+        let (token, borrow) = cap.borrow();
+        identity.execute_config_change(&token, proposal_id, scenario.ctx());
+        cap.put_back(token, borrow);
 
         test_scenario::return_to_address(controller_a, cap);
         test_scenario::return_to_address(controller_b, cap_b);

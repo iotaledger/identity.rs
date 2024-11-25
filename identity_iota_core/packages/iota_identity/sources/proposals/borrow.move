@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 module iota_identity::borrow_proposal {
-  use iota_identity::{multicontroller::{Multicontroller, Action, ControllerCap}};
+  use iota_identity::multicontroller::{Multicontroller, Action};
+  use iota_identity::controller::DelegationToken;
   use iota::transfer::Receiving;
 
   const EInvalidObject: u64 = 0;
@@ -19,7 +20,7 @@ module iota_identity::borrow_proposal {
   /// Propose the borrowing of a set of assets owned by this multicontroller.
   public fun propose_borrow<V>(
     multi: &mut Multicontroller<V>,
-    cap: &ControllerCap,
+    cap: &DelegationToken,
     expiration: Option<u64>,
     objects: vector<ID>,
     owner: address,

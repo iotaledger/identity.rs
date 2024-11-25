@@ -124,7 +124,7 @@ module iota_identity::asset {
         transfer::share_object(proposal);
     }
 
-    /// Strucure that encodes the logic required to transfer an `AuthenticatedAsset`
+    /// Structure that encodes the logic required to transfer an `AuthenticatedAsset`
     /// from one address to another. The transfer can be refused by the recipient.
     public struct TransferProposal has key {
         id: UID,

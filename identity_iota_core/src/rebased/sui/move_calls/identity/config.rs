@@ -8,7 +8,6 @@ use iota_sdk::rpc_types::OwnedObjectRef;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::object::Owner;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::transaction::ProgrammableTransaction;
@@ -62,6 +61,7 @@ where
   };
   let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
   let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(controller_cap))?;
+  let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, controller_cap, package);
   let expiration = utils::option_to_move(expiration, &mut ptb, package)?;
   let threshold = utils::option_to_move(threshold, &mut ptb, package)?;
   let controllers_to_remove = ptb.pure(controllers_to_remove)?;
@@ -73,7 +73,7 @@ where
     vec![],
     vec![
       identity,
-      controller_cap,
+      delegation_token,
       expiration,
       threshold,
       controllers_to_add,
@@ -81,6 +81,8 @@ where
       controllers_to_update,
     ],
   );
+
+  utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package);
 
   Ok(ptb.finish())
 }
@@ -93,23 +95,19 @@ pub(crate) fn execute_config_change(
 ) -> anyhow::Result<ProgrammableTransaction> {
   let mut ptb = ProgrammableTransactionBuilder::new();
 
-  let Owner::Shared { initial_shared_version } = identity.owner else {
-    anyhow::bail!("identity \"{}\" is a not shared object", identity.reference.object_id);
-  };
-  let identity = ptb.obj(ObjectArg::SharedObject {
-    id: identity.reference.object_id,
-    initial_shared_version,
-    mutable: true,
-  })?;
+  let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
   let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(controller_cap))?;
+  let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, controller_cap, package);
   let proposal_id = ptb.pure(proposal_id)?;
   ptb.programmable_move_call(
     package,
     ident_str!("identity").into(),
     ident_str!("execute_config_change").into(),
     vec![],
-    vec![identity, controller_cap, proposal_id],
+    vec![identity, delegation_token, proposal_id],
   );
+
+  utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package);
 
   Ok(ptb.finish())
 }

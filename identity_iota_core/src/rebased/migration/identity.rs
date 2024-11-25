@@ -144,7 +144,7 @@ impl OnChainIdentity {
   }
 
   pub(crate) async fn get_controller_cap<S>(&self, client: &IdentityClient<S>) -> Result<ObjectRef, Error> {
-    let controller_cap_tag = StructTag::from_str(&format!("{}::multicontroller::ControllerCap", client.package_id()))
+    let controller_cap_tag = StructTag::from_str(&format!("{}::controller::ControllerCap", client.package_id()))
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
     client
       .find_owned_ref(controller_cap_tag, |obj_data| {
@@ -170,7 +170,7 @@ impl OnChainIdentity {
   }
 
   /// Sends assets owned by this [`OnChainIdentity`] to other addresses.
-  pub fn send_assets(&mut self) -> ProposalBuilder<SendAction> {
+  pub fn send_assets(&mut self) -> ProposalBuilder<'_, SendAction> {
     ProposalBuilder::new(self, SendAction::default())
   }
 
@@ -178,7 +178,7 @@ impl OnChainIdentity {
   /// # Notes
   /// Make sure to call [`super::Proposal::with_intent`] before executing the proposal.
   /// Failing to do so will make [`crate::proposals::ProposalT::execute`] return an error.
-  pub fn borrow_assets(&mut self) -> ProposalBuilder<BorrowAction> {
+  pub fn borrow_assets(&mut self) -> ProposalBuilder<'_, BorrowAction> {
     ProposalBuilder::new(self, BorrowAction::default())
   }
 

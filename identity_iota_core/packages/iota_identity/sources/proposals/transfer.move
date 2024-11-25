@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 module iota_identity::transfer_proposal {
-    use iota_identity::{multicontroller::{Multicontroller, Action, ControllerCap}};
+    use iota_identity::multicontroller::{Multicontroller, Action};
+    use iota_identity::controller::DelegationToken;
     use iota::transfer::Receiving;
 
     const EDifferentLength: u64 = 0;
@@ -16,7 +17,7 @@ module iota_identity::transfer_proposal {
 
     public fun propose_send<V>(
         multi: &mut Multicontroller<V>,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         expiration: Option<u64>,
         objects: vector<ID>,
         recipients: vector<address>,
