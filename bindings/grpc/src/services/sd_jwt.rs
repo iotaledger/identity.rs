@@ -20,7 +20,7 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
 use identity_iota::sd_jwt_payload::SdJwt;
 use identity_iota::sd_jwt_payload::SdObjectDecoder;
-use identity_sui_name_tbd::client::IdentityClientReadOnly;
+use identity_iota::iota::rebased::client::IdentityClientReadOnly;
 use serde::Deserialize;
 use serde::Serialize;
 use thiserror::Error;
@@ -93,7 +93,7 @@ pub struct SdJwtService {
 impl SdJwtService {
   pub fn new(client: &IdentityClientReadOnly) -> Self {
     let mut resolver = Resolver::new();
-    resolver.attach_kinesis_iota_handler(client.clone());
+    resolver.attach_iota_handler(client.clone());
     Self { resolver }
   }
 }

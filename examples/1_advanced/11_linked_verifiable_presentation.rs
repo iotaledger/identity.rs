@@ -83,7 +83,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Init a resolver for resolving DID Documents.
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_kinesis_iota_handler((*identity_client).clone());
+  resolver.attach_iota_handler((*identity_client).clone());
 
   // Resolve the DID Document of the DID that issued the credential.
   let did_document: IotaDocument = resolver.resolve(&did).await?;

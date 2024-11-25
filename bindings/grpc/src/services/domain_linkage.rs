@@ -29,7 +29,7 @@ use identity_iota::did::CoreDID;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
-use identity_sui_name_tbd::client::IdentityClientReadOnly;
+use identity_iota::iota::rebased::client::IdentityClientReadOnly;
 use serde::Deserialize;
 use serde::Serialize;
 use thiserror::Error;
@@ -111,7 +111,7 @@ pub struct DomainLinkageService {
 impl DomainLinkageService {
   pub fn new(client: &IdentityClientReadOnly) -> Self {
     let mut resolver = Resolver::new();
-    resolver.attach_kinesis_iota_handler(client.clone());
+    resolver.attach_iota_handler(client.clone());
     Self { resolver }
   }
 

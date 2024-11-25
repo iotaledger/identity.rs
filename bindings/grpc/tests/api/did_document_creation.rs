@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_stronghold::StrongholdStorage;
-use identity_sui_name_tbd::utils::request_funds;
+use identity_iota::iota::rebased::utils::request_funds;
 
 use tonic::Request;
 

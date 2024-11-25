@@ -16,7 +16,7 @@ use identity_iota::credential::StatusCheck;
 use identity_iota::iota::IotaDID;
 use identity_iota::resolver;
 use identity_iota::resolver::Resolver;
-use identity_sui_name_tbd::client::IdentityClientReadOnly;
+use identity_iota::iota::rebased::client::IdentityClientReadOnly;
 
 use _credentials::vc_validation_server::VcValidation;
 use _credentials::vc_validation_server::VcValidationServer;
@@ -65,7 +65,7 @@ pub struct VcValidator {
 impl VcValidator {
   pub fn new(client: &IdentityClientReadOnly) -> Self {
     let mut resolver = Resolver::new();
-    resolver.attach_kinesis_iota_handler(client.clone());
+    resolver.attach_iota_handler(client.clone());
     Self { resolver }
   }
 }

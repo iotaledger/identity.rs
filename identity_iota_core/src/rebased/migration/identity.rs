@@ -343,16 +343,46 @@ pub async fn get_identity(
     return Ok(None);
   };
 
-  let content = data
-    .content
-    .ok_or_else(|| Error::ObjectLookup(format!("no content in retrieved object in object id {object_id}")))?;
-
-  let IotaParsedData::MoveObject(value) = content else {
-    return Err(Error::ObjectLookup(format!(
-      "found data at object id {object_id} is not an object"
-    )));
+  let did = IotaDID::from_alias_id(&object_id.to_string(), client.network());
+  let Some((id, multi_controller, created, updated)) = unpack_identity_data(&did, &data)? else {
+    return Ok(None);
   };
 
+  let did_doc =
+    IotaDocument::from_iota_document_data(multi_controller.controlled_value(), true, &did, created, updated)
+      .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?;
+
+  Ok(Some(OnChainIdentity {
+    id,
+    multi_controller,
+    did_doc,
+  }))
+}
+
+fn is_identity(value: &IotaParsedMoveObject) -> bool {
+  // if available we might also check if object stems from expected module
+  // but how would this act upon package updates?
+  value.type_.module.as_ident_str().as_str() == MODULE && value.type_.name.as_ident_str().as_str() == NAME
+}
+
+/// Unpack identity data from given `IotaObjectData`
+///
+/// # Errors:
+/// * in case given data for DID is not an object
+/// * parsing identity data from object fails
+pub(crate) fn unpack_identity_data(
+  did: &IotaDID,
+  data: &IotaObjectData,
+) -> Result<Option<(UID, Multicontroller<Vec<u8>>, Timestamp, Timestamp)>, Error> {
+  let content = data
+    .clone()
+    .content
+    .ok_or_else(|| Error::ObjectLookup(format!("no content in retrieved object in object id {did}")))?;
+  let IotaParsedData::MoveObject(value) = content else {
+    return Err(Error::ObjectLookup(format!(
+      "given data for DID {did} is not an object"
+    )));
+  };
   if !is_identity(&value) {
     return Ok(None);
   }
@@ -370,54 +400,22 @@ pub async fn get_identity(
     did_doc: multi_controller,
     created,
     updated,
-  } = serde_json::from_value::<TempOnChainIdentity>(value.fields.to_json_value()).map_err(|err| {
-    Error::ObjectLookup(format!(
-      "could not parse identity document with object id {object_id}; {err}"
-    ))
-  })?;
-  let original_did = IotaDID::from_alias_id(id.object_id().to_string().as_str(), client.network());
-  let controlled_value = multi_controller.controlled_value();
+  } = serde_json::from_value::<TempOnChainIdentity>(value.fields.to_json_value())
+    .map_err(|err| Error::ObjectLookup(format!("could not parse identity document with DID {did}; {err}")))?;
+
   // Parse DID document timestamps
   let created = {
     let timestamp_ms: u64 = created.try_into().expect("Move string-encoded u64 are valid u64");
-    // `Timestamp` requires a timestamp expessed in seconds.
-    Timestamp::from_unix(timestamp_ms as i64 / 1000).expect("On-chain clock produses valid timestamps")
+    // `Timestamp` requires a timestamp expressed in seconds.
+    Timestamp::from_unix(timestamp_ms as i64 / 1000).expect("On-chain clock produces valid timestamps")
   };
   let updated = {
     let timestamp_ms: u64 = updated.try_into().expect("Move string-encoded u64 are valid u64");
-    // `Timestamp` requires a timestamp expessed in seconds.
-    Timestamp::from_unix(timestamp_ms as i64 / 1000).expect("On-chain clock produses valid timestamps")
+    // `Timestamp` requires a timestamp expressed in seconds.
+    Timestamp::from_unix(timestamp_ms as i64 / 1000).expect("On-chain clock produces valid timestamps")
   };
 
-  // check if DID has been deactivated
-  let mut did_doc = if controlled_value.is_empty() {
-    // DID has been deactivated by setting controlled value empty, therefore craft an empty document
-    let mut empty_document = IotaDocument::new_with_id(original_did.clone());
-    empty_document.metadata.deactivated = Some(true);
-
-    empty_document
-  } else {
-    // we have a value, therefore unpack it
-    StateMetadataDocument::unpack(controlled_value)
-      .and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(&original_did))
-      .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?
-  };
-
-  // Overwrite `created` and `updated` with trusted value coming from the on-chain `Identity` object.
-  did_doc.metadata.created = Some(created);
-  did_doc.metadata.updated = Some(updated);
-
-  Ok(Some(OnChainIdentity {
-    id,
-    multi_controller,
-    did_doc,
-  }))
-}
-
-fn is_identity(value: &IotaParsedMoveObject) -> bool {
-  // if available we might also check if object stems from expected module
-  // but how would this act upon package updates?
-  value.type_.module.as_ident_str().as_str() == MODULE && value.type_.name.as_ident_str().as_str() == NAME
+  Ok(Some((id, multi_controller, created, updated)))
 }
 
 /// Builder-style struct to create a new [`OnChainIdentity`].
