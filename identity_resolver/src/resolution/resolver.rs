@@ -264,7 +264,7 @@ impl<DOC: From<CoreDocument> + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   }
 }
 
-#[cfg(all(feature = "iota", feature = "kinesis"))]
+#[cfg(feature = "iota")]
 mod iota_handler {
   use crate::ErrorCause;
 
@@ -399,7 +399,7 @@ mod tests {
     }
   }
 
-  #[cfg(all(feature = "iota", feature = "kinesis"))]
+  #[cfg(feature = "iota")]
   #[tokio::test]
   async fn test_multiple_handlers() {
     let did1 =

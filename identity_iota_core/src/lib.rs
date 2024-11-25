@@ -15,7 +15,7 @@
 #![allow(clippy::upper_case_acronyms)]
 
 pub use did::IotaDID;
-#[cfg(feature = "kinesis-client")]
+#[cfg(feature = "iota-client")]
 pub use did_resolution::DidResolutionHandler;
 pub use document::*;
 pub use network::NetworkName;
@@ -25,11 +25,11 @@ pub use self::error::Error;
 pub use self::error::Result;
 
 mod did;
-#[cfg(feature = "kinesis-client")]
+#[cfg(feature = "iota-client")]
 mod did_resolution;
 mod document;
 mod error;
 mod network;
-#[cfg(feature = "kinesis-client")]
+#[cfg(feature = "iota-client")]
 pub mod rebased;
 mod state_metadata;

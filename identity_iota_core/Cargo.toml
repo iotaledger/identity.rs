@@ -30,7 +30,7 @@ serde_json.workspace = true
 strum.workspace = true
 thiserror.workspace = true
 
-# for feature `kinesis-client`
+# for feature `iota-client`
 bcs = { version = "0.1.4", optional = true }
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "5f2c63266a065996d53f98156f0412782b468597", package = "fastcrypto", optional = true }
 identity_eddsa_verifier = { version = "=1.4.0", path = "../identity_eddsa_verifier", optional = true }
@@ -50,8 +50,8 @@ tokio = { version = "1.29.0", default-features = false, optional = true, feature
 iota-crypto = { version = "0.23", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 
-# for feature kinesis-client tests
-identity_iota_core = { path = ".", features = ["kinesis-client"] } # enable for e2e tests
+# for feature iota-client tests
+identity_iota_core= { path = ".", features = ["iota-client"] } # enable for e2e tests
 identity_storage = { path = "../identity_storage", features = ["send-sync-storage", "storage-signer"] }
 jsonpath-rust = "0.5.1"
 serial_test = "3.1.1"
@@ -63,12 +63,9 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["client", "iota-client", "kinesis-client", "revocation-bitmap", "send-sync-client-ext"]
-# Exposes the IotaIdentityClient and IotaIdentityClientExt traits.
-client = ["dep:async-trait"]
-# client = ["dep:async-trait"]
-# Client for rebased.
-kinesis-client = [
+default = ["iota-client", "revocation-bitmap", "send-sync-client-ext"]
+# Enables the IOTA Client related components, and dependencies.
+iota-client = [
   "dep:async-trait",
   "dep:bcs",
   "dep:fastcrypto",
@@ -85,14 +82,10 @@ kinesis-client = [
   "dep:shared-crypto",
   "dep:tokio",
 ]
-# Enables the IOTA Client related components.
-iota-client = ["client"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_credential/revocation-bitmap"]
 # Adds Send bounds on the futures produces by the client extension traits.
 send-sync-client-ext = []
-# Disables the blanket implementation of `IotaIdentityClientExt`.
-test = ["client"]
 
 [lints]
 workspace = true

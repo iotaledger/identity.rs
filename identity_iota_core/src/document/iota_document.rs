@@ -394,7 +394,7 @@ impl IotaDocument {
   }
 }
 
-#[cfg(all(feature = "client", feature = "kinesis-client"))]
+#[cfg(feature = "iota-client")]
 pub mod client_document {
   use identity_core::common::Timestamp;
   use iota_sdk::rpc_types::IotaObjectData;
@@ -427,11 +427,14 @@ pub mod client_document {
           None,
         ))
       })?;
-      let Some((_, multi_controller, created, updated)) = unpacked else {
-        return Err(Error::InvalidDoc(identity_document::Error::InvalidDocument(
-          "given IotaObjectData did not contain a document",
-          None,
-        )));
+      let (_, multi_controller, created, updated) = match unpacked {
+        Some(data) => data,
+        None => {
+          return Err(Error::InvalidDoc(identity_document::Error::InvalidDocument(
+            "given IotaObjectData did not contain a document",
+            None,
+          )));
+        }
       };
       let did_doc =
         Self::from_iota_document_data(multi_controller.controlled_value(), allow_empty, &did, created, updated)?;

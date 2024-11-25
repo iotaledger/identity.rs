@@ -29,6 +29,9 @@ pub trait DidResolutionHandler {
 #[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 impl DidResolutionHandler for IdentityClientReadOnly {
   async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument> {
-    self.resolve_did(did).await.map_err(|err| Error::DIDResolutionError(err.to_string()))
+    self
+      .resolve_did(did)
+      .await
+      .map_err(|err| Error::DIDResolutionError(err.to_string()))
   }
 }
