@@ -40,7 +40,7 @@ use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::client::IotaKeySignature;
 use crate::rebased::proposals::BorrowAction;
 use crate::rebased::proposals::ConfigChange;
-use crate::rebased::proposals::DeactiveDid;
+use crate::rebased::proposals::DeactivateDid;
 use crate::rebased::proposals::ProposalBuilder;
 use crate::rebased::proposals::SendAction;
 use crate::rebased::proposals::UpdateDidDocument;
@@ -165,8 +165,8 @@ impl OnChainIdentity {
   }
 
   /// Deactivates the DID Document represented by this [`OnChainIdentity`].
-  pub fn deactivate_did(&mut self) -> ProposalBuilder<'_, DeactiveDid> {
-    ProposalBuilder::new(self, DeactiveDid::new())
+  pub fn deactivate_did(&mut self) -> ProposalBuilder<'_, DeactivateDid> {
+    ProposalBuilder::new(self, DeactivateDid::new())
   }
 
   /// Sends assets owned by this [`OnChainIdentity`] to other addresses.

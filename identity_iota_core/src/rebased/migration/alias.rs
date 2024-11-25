@@ -149,7 +149,7 @@ impl Transaction for MigrateLegacyAliasTx {
     S: Signer<IotaKeySignature> + Sync,
   {
     let response = self.0.execute_with_opt_gas(gas_budget, client).await?.response;
-    // Make sure the tx was successfull.
+    // Make sure the tx was successful.
     let effects = response
       .effects
       .as_ref()

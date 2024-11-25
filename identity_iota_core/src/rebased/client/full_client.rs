@@ -281,7 +281,7 @@ impl<S> IdentityClient<S> {
   }
 
   /// Query the objects owned by the address wrapped by this client to find the object of type `tag`
-  /// and that satifies `predicate`.
+  /// and that satisfies `predicate`.
   pub async fn find_owned_ref<P>(&self, tag: StructTag, predicate: P) -> Result<Option<ObjectRef>, Error>
   where
     P: Fn(&IotaObjectData) -> bool,
