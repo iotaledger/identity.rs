@@ -24,7 +24,6 @@ use crate::rebased::transaction::Transaction;
 use crate::rebased::transaction::TransactionOutput;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
-use crate::StateMetadataDocument;
 
 use super::get_identity;
 use super::Identity;
