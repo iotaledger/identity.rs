@@ -80,7 +80,7 @@ Test this example using https://github.com/anko/txm: `txm README.md`
 !test program
 cd ../..
 mkdir tmp
-cat | sed -e 's#identity_iota = { version = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
+cat | sed -e 's#identity_iota = { git = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
 echo '[workspace]' >>tmp/Cargo.toml
 -->
 <!-- !test check Cargo Example -->
@@ -92,7 +92,7 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { version = "1.4.0", features = ["memstore"] }
+identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha", features = ["memstore"] }
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.0-alpha" }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.62"
