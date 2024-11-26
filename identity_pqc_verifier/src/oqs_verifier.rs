@@ -52,3 +52,31 @@ impl OQSVerifier {
     )
   }
 }
+
+#[cfg(test)]
+mod tests {
+    use oqs::sig::{Algorithm, Sig};
+ 
+ 
+  #[test]
+  fn sig_and_verify(){
+    // generate random keypair
+ 
+    oqs::init();
+    let scheme = Sig::new(Algorithm::Dilithium2).unwrap();
+ 
+    let (pk, sk) = scheme.keypair().unwrap();
+    
+    println!("Public key: {:?}", pk);
+
+    let message = b"prova";
+ 
+    let signature = scheme.sign(message, &sk).unwrap();
+    println!("Signature: {:?}", signature);
+    
+    scheme.verify(message, &signature, &pk).unwrap();
+   
+    assert!(true)
+  }
+}
+ 
