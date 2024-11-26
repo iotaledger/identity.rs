@@ -31,15 +31,13 @@ features = ["send-sync-client-ext", "iota-client"]
 optional = true
 
 [dev-dependencies]
-identity_iota_core = { path = "../identity_iota_core", features = ["test"] }
 tokio = { version = "1.29.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [features]
 default = ["revocation-bitmap", "iota"]
 revocation-bitmap = ["identity_credential/revocation-bitmap", "identity_iota_core?/revocation-bitmap"]
 # Enables the IOTA integration for the resolver.
-iota = ["dep:identity_iota_core"]
-kinesis = ["identity_iota_core/kinesis-client"]
+iota = ["dep:identity_iota_core", "identity_iota_core/iota-client"]
 
 [lints]
 workspace = true

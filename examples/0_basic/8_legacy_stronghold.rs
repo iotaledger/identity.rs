@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_kinesis_did_document;
+use examples::create_did_document;
 use examples::get_client_and_create_account;
 use examples::get_stronghold_storage;
 use examples::random_stronghold_path;
@@ -27,7 +27,7 @@ async fn main() -> anyhow::Result<()> {
   // use stronghold storage to create new client to interact with chain and get funded account with keys
   let identity_client = get_client_and_create_account(&storage).await?;
   // create and publish document with stronghold storage
-  let (document, vm_fragment) = create_kinesis_did_document(&identity_client, &storage).await?;
+  let (document, vm_fragment) = create_did_document(&identity_client, &storage).await?;
 
   // Resolve the published DID Document.
   let mut resolver = Resolver::<IotaDocument>::new();
