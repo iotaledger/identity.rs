@@ -8,7 +8,7 @@ use examples::TEST_GAS_BUDGET;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 
-/// Demonstrates how to deactivate a DID in an Alias Output.
+/// Demonstrates how to deactivate a DID in an identity.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // create new client to interact with chain and get funded account with keys
@@ -23,8 +23,8 @@ async fn main() -> anyhow::Result<()> {
   let did: IotaDID = document.id().clone();
 
   // Deactivate the DID by publishing an empty document.
-  // This process can be reversed since the Alias Output is not destroyed.
-  // Deactivation may only be performed by the state controller of the Alias Output.
+  // This process can be reversed since the identity is not destroyed.
+  // Deactivation may only be performed by a controller of the identity.
   identity_client.deactivate_did_output(&did, TEST_GAS_BUDGET).await?;
 
   // Resolving a deactivated DID returns an empty DID document

@@ -18,7 +18,7 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::verification::MethodRelationship;
 use iota_sdk::rpc_types::IotaObjectData;
 
-/// Demonstrates how to obtain the alias output history.
+/// Demonstrates how to obtain the identity history.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
@@ -53,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
   }
 
   // ====================================
-  // Retrieving the Alias Output History
+  // Retrieving the identity History
   // ====================================
 
   // Step 1 - Get the latest identity
