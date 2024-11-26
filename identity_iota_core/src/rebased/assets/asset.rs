@@ -126,7 +126,7 @@ impl<T> AuthenticatedAsset<T> {
   /// Destroys this [`AuthenticatedAsset`].
   /// # Notes
   /// This function doesn't delete the asset right away, but instead creates a [`Transaction`] that
-  /// can be executed in order to destory the asset.
+  /// can be executed in order to destroy the asset.
   /// # Failures
   /// * Returns an [`Error::InvalidConfig`] if this asset cannot be deleted.
   pub fn delete(self) -> Result<DeleteAssetTx<T>, Error> {
@@ -202,7 +202,7 @@ impl<T> AuthenticatedAssetBuilder<T> {
 
   /// Sets whether the new asset allows the transfer of its ownership.
   ///
-  /// By default an [`AuthenticatedAsset`] **cannot** be transfered.
+  /// By default an [`AuthenticatedAsset`] **cannot** be transferred.
   pub fn transferable(mut self, transferable: bool) -> Self {
     self.transferable = transferable;
     self
@@ -232,7 +232,7 @@ impl<T> AuthenticatedAssetBuilder<T> {
 /// owner and a `RecipientCap` to the specified `recipient` address.
 /// `recipient` can accept the transfer by presenting its `RecipientCap` (this prevents other users from claiming the
 /// asset for themselves).
-/// The current owner can cancel the proposal at any time - given the transfer hasn't been conclued yet - by presenting
+/// The current owner can cancel the proposal at any time - given the transfer hasn't been concluded yet - by presenting
 /// its `SenderCap`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransferProposal {
