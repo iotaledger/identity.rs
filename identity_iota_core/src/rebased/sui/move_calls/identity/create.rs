@@ -67,6 +67,14 @@ where
       vec![ids, vps],
     )
   };
+  
+  let controllers_that_can_delegate = ptb.programmable_move_call(
+    IOTA_FRAMEWORK_PACKAGE_ID,
+    ident_str!("vec_map").into(),
+    ident_str!("empty").into(),
+    vec![TypeTag::Address, TypeTag::U64],
+    vec![],
+  );
   let doc_arg = ptb.pure(did_doc).map_err(|e| Error::InvalidArgument(e.to_string()))?;
   let threshold_arg = ptb.pure(threshold).map_err(|e| Error::InvalidArgument(e.to_string()))?;
   let clock = utils::get_clock_ref(&mut ptb);
@@ -77,7 +85,7 @@ where
     module: ident_str!("identity").into(),
     function: ident_str!("new_with_controllers").into(),
     type_arguments: vec![],
-    arguments: vec![doc_arg, controllers, threshold_arg, clock],
+    arguments: vec![doc_arg, controllers, controllers_that_can_delegate, threshold_arg, clock],
   })));
 
   // Share the resulting identity.

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 module iota_identity::update_value_proposal {
-    use iota_identity::multicontroller::{Multicontroller, ControllerCap};
+    use iota_identity::multicontroller::Multicontroller;
+    use iota_identity::controller::DelegationToken;
 
     public struct UpdateValue<V: store> has store {
         new_value: V,
@@ -10,7 +11,7 @@ module iota_identity::update_value_proposal {
 
     public fun propose_update<V: store>(
         multi: &mut Multicontroller<V>,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         new_value: V,
         expiration: Option<u64>,
         ctx: &mut TxContext,
@@ -21,10 +22,12 @@ module iota_identity::update_value_proposal {
 
     public fun execute_update<V: store + drop>(
         multi: &mut Multicontroller<V>,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         proposal_id: ID,
         ctx: &mut TxContext,
     ) {
+
+
         let action = multi.execute_proposal(cap, proposal_id, ctx);
         let UpdateValue { new_value } = action.unpack_action();
 

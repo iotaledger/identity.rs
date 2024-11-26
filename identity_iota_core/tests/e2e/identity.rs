@@ -158,7 +158,7 @@ async fn adding_controller_works() -> anyhow::Result<()> {
 
   let cap = bob_client
     .find_owned_ref(
-      StructTag::from_str(&format!("{}::multicontroller::ControllerCap", test_client.package_id())).unwrap(),
+      StructTag::from_str(&format!("{}::controller::ControllerCap", test_client.package_id())).unwrap(),
       |_| true,
     )
     .await?;

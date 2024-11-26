@@ -27,6 +27,36 @@ pub(crate) fn get_clock_ref(ptb: &mut Ptb) -> Argument {
     .expect("network has a singleton clock instantiated")
 }
 
+pub(crate) fn get_controller_delegation(ptb: &mut Ptb, controller_cap: Argument, package: ObjectID) -> (Argument, Argument) {
+  let Argument::Result(idx) = ptb.programmable_move_call(
+    package,
+    ident_str!("controller").into(),
+    ident_str!("borrow").into(),
+    vec![],
+    vec![controller_cap],
+  ) else {
+    unreachable!("making move calls always return a result variant");
+  };
+
+  (Argument::NestedResult(idx, 0), Argument::NestedResult(idx, 1))
+}
+
+pub(crate) fn put_back_delegation_token(
+  ptb: &mut Ptb,
+  controller_cap: Argument,
+  delegation_token: Argument,
+  borrow: Argument,
+  package: ObjectID,
+) {
+  ptb.programmable_move_call(
+    package,
+    ident_str!("controller").into(),
+    ident_str!("put_back").into(),
+    vec![],
+    vec![controller_cap, delegation_token, borrow]
+  );
+}
+
 pub(crate) fn owned_ref_to_shared_object_arg(
   owned_ref: OwnedObjectRef,
   ptb: &mut Ptb,

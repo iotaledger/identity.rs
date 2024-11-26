@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 module iota_identity::config_proposal {
-    use iota_identity::multicontroller::{ControllerCap, Multicontroller};
+    use iota_identity::multicontroller::Multicontroller;
+    use iota_identity::controller::DelegationToken;
     use iota::vec_map::VecMap;
 
     const ENotMember: u64 = 0;
@@ -17,7 +18,7 @@ module iota_identity::config_proposal {
 
     public fun propose_modify<V>(
         multi: &mut Multicontroller<V>,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         expiration: Option<u64>,
         mut threshold: Option<u64>,
         controllers_to_add: VecMap<address, u64>,
@@ -87,7 +88,7 @@ module iota_identity::config_proposal {
 
     public fun execute_modify<V>(
         multi: &mut Multicontroller<V>,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         proposal_id: ID,
         ctx: &mut TxContext,
     ) {
