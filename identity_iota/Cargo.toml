@@ -22,18 +22,12 @@ identity_storage = { version = "=1.4.0", path = "../identity_storage", default-f
 identity_verification = { version = "=1.4.0", path = "../identity_verification", default-features = false }
 
 [features]
-default = ["revocation-bitmap", "client", "iota-client", "kinesis-client", "resolver"]
+default = ["revocation-bitmap", "iota-client", "resolver"]
 
-# Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
-client = ["identity_iota_core/client"]
-
-# Enables the iota-client integration, the client trait implementations for it, and the `IotaClientExt` trait.
-iota-client = ["identity_iota_core/iota-client", "identity_resolver?/iota"]
-
-# Enables the kinesis client integration.
-kinesis-client = [
-  "identity_iota_core/kinesis-client",
-  "identity_resolver/kinesis",
+# Enables the IOTA client integration, and the `DidResolutionHandler` trait.
+iota-client = [
+  "identity_iota_core/iota-client",
+  "identity_resolver/iota",
   "identity_storage/send-sync-storage",
   "identity_storage/storage-signer",
 ]

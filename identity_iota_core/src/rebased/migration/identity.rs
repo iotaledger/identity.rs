@@ -344,8 +344,11 @@ pub async fn get_identity(
   };
 
   let did = IotaDID::from_alias_id(&object_id.to_string(), client.network());
-  let Some((id, multi_controller, created, updated)) = unpack_identity_data(&did, &data)? else {
-    return Ok(None);
+  let (id, multi_controller, created, updated) = match unpack_identity_data(&did, &data)? {
+    Some(data) => data,
+    None => {
+      return Ok(None);
+    }
   };
 
   let did_doc =

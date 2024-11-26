@@ -35,7 +35,7 @@ pub const TEST_GAS_BUDGET: u64 = 50_000_000;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
-pub async fn create_kinesis_did_document<K, I, S>(
+pub async fn create_did_document<K, I, S>(
   identity_client: &IdentityClient<S>,
   storage: &Storage<K, I>,
 ) -> anyhow::Result<(IotaDocument, String)>

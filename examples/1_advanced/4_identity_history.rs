@@ -1,7 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_kinesis_did_document;
+use examples::create_did_document;
 use examples::get_client_and_create_account;
 use examples::get_memstorage;
 use examples::TEST_GAS_BUDGET;
@@ -26,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
   let storage = get_memstorage()?;
   let identity_client = get_client_and_create_account(&storage).await?;
   // create new DID document and publish it
-  let (document, vm_fragment_1) = create_kinesis_did_document(&identity_client, &storage).await?;
+  let (document, vm_fragment_1) = create_did_document(&identity_client, &storage).await?;
   let did: IotaDID = document.id().clone();
 
   // Resolve the latest state of the document.
