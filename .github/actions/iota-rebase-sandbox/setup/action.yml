@@ -1,0 +1,37 @@
+name: "iota-private-network setup"
+description: "Setup IOTA Sandbox"
+
+inputs:
+  platform:
+    description: "Platform to download binary for (linux or macos)"
+    required: true
+    default: "linux"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up IOTA Node
+      shell: bash
+      run: |
+        mkdir -p iota
+        cd iota
+
+        # Select platform-specific asset pattern
+        if [ "${{ inputs.platform }}" = "linux" ]; then
+          PLATFORM="linux"
+        else
+          PLATFORM="macos"
+        fi
+
+        # Get download URL with simpler jq filter
+        DOWNLOAD_URL=$(curl "https://api.github.com/repos/iotaledger/iota/releases/latest" | \
+          jq -r --arg p "$PLATFORM" '.assets[] | select(.name | contains($p)) | .browser_download_url')
+
+        # Download and extract
+        curl -L -o iota.tar.gz $DOWNLOAD_URL
+        tar -xzf iota.tar.gz
+
+    - name: Start the Network
+      shell: bash
+      working-directory: iota
+      run: ./iota start --with-faucet --force-regenesis &
