@@ -204,6 +204,7 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
   };
 
   let history = updated_identity.get_history(&identity_client, None, None).await?;
+  let versions: Vec<SequenceNumber> = history.iter().map(|elem| elem.version).collect();
 
   // test check for previous version
   let has_previous_version_responses: Vec<bool> = history
@@ -212,11 +213,12 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
     .collect::<Result<Vec<bool>, identity_iota_core::rebased::Error>>()?;
   assert_eq!(has_previous_version_responses, vec![true, false]);
 
-  let versions: Vec<SequenceNumber> = history.iter().map(|elem| elem.version).collect();
-  let version_numbers: Vec<usize> = versions.iter().map(|v| (*v).into()).collect();
-  let oldest_version: usize = *version_numbers.last().unwrap();
-  let version_diffs: Vec<usize> = version_numbers.iter().map(|v| v - oldest_version).collect();
-  assert_eq!(version_diffs, vec![1, 0],);
+  // compare changes
+  let documents: Vec<IotaDocument> = history
+    .into_iter()
+    .map(|data| IotaDocument::unpack_from_iota_object_data(&did, &data, true))
+    .collect::<Result<_, _>>()?;
+  assert_ne!(documents[0].to_string(), documents[1].to_string());
 
   // paging:
   //   you can either loop until no result is returned

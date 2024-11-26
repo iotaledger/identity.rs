@@ -14,18 +14,9 @@
 )]
 #![allow(clippy::upper_case_acronyms)]
 
-// Re-export the `iota_types::block` module for implementer convenience.
-#[cfg(any(feature = "client", feature = "iota-client"))]
-pub mod block {
-  //! See [iota_sdk::types::block].
-
-  pub use iota_sdk_legacy::types::block::*;
-  pub use iota_sdk_legacy::types::TryFromDto;
-}
-
-#[cfg(feature = "client")]
-pub use client::*;
 pub use did::IotaDID;
+#[cfg(feature = "kinesis-client")]
+pub use did_resolution::DidResolutionHandler;
 pub use document::*;
 pub use network::NetworkName;
 pub use state_metadata::*;
@@ -33,9 +24,9 @@ pub use state_metadata::*;
 pub use self::error::Error;
 pub use self::error::Result;
 
-#[cfg(feature = "client")]
-mod client;
 mod did;
+#[cfg(feature = "kinesis-client")]
+mod did_resolution;
 mod document;
 mod error;
 mod network;

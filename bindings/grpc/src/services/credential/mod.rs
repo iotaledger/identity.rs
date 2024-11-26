@@ -6,7 +6,7 @@ pub mod revocation;
 pub mod validation;
 
 use identity_stronghold::StrongholdStorage;
-use identity_sui_name_tbd::client::IdentityClientReadOnly;
+use identity_iota::iota::rebased::client::IdentityClientReadOnly;
 use tonic::service::RoutesBuilder;
 
 pub fn init_services(routes: &mut RoutesBuilder, client: &IdentityClientReadOnly, stronghold: &StrongholdStorage) {

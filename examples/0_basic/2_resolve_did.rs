@@ -30,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
 
   // We need to register a handler that can resolve IOTA DIDs.
   // This convenience method only requires us to provide a client.
-  resolver.attach_kinesis_iota_handler((*identity_client).clone());
+  resolver.attach_iota_handler((*identity_client).clone());
 
   let resolver_document: IotaDocument = resolver.resolve(&did).await.unwrap();
 
