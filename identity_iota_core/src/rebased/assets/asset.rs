@@ -24,7 +24,6 @@ use iota_sdk::types::base_types::SequenceNumber;
 use iota_sdk::types::id::UID;
 use iota_sdk::types::object::Owner;
 use iota_sdk::types::TypeTag;
-use iota_sdk::IotaClient;
 use move_core_types::ident_str;
 use move_core_types::language_storage::StructTag;
 use secret_storage::Signer;
@@ -69,7 +68,7 @@ where
   T: DeserializeOwned,
 {
   /// Resolves an [`AuthenticatedAsset`] by its ID `id`.
-  pub async fn get_by_id(id: ObjectID, client: &IotaClient) -> Result<Self, Error> {
+  pub async fn get_by_id<S>(id: ObjectID, client: &IdentityClient<S>) -> Result<Self, Error> {
     let res = client
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
@@ -89,7 +88,7 @@ where
 }
 
 impl<T> AuthenticatedAsset<T> {
-  async fn object_ref(&self, client: &IotaClient) -> Result<ObjectRef, Error> {
+  async fn object_ref<S>(&self, client: &IdentityClient<S>) -> Result<ObjectRef, Error> {
     client
       .read_api()
       .get_object_with_options(self.id(), IotaObjectDataOptions::default())
@@ -127,7 +126,7 @@ impl<T> AuthenticatedAsset<T> {
   /// Destroys this [`AuthenticatedAsset`].
   /// # Notes
   /// This function doesn't delete the asset right away, but instead creates a [`Transaction`] that
-  /// can be executed in order to destory the asset.
+  /// can be executed in order to destroy the asset.
   /// # Failures
   /// * Returns an [`Error::InvalidConfig`] if this asset cannot be deleted.
   pub fn delete(self) -> Result<DeleteAssetTx<T>, Error> {
@@ -203,7 +202,7 @@ impl<T> AuthenticatedAssetBuilder<T> {
 
   /// Sets whether the new asset allows the transfer of its ownership.
   ///
-  /// By default an [`AuthenticatedAsset`] **cannot** be transfered.
+  /// By default an [`AuthenticatedAsset`] **cannot** be transferred.
   pub fn transferable(mut self, transferable: bool) -> Self {
     self.transferable = transferable;
     self
@@ -233,7 +232,7 @@ impl<T> AuthenticatedAssetBuilder<T> {
 /// owner and a `RecipientCap` to the specified `recipient` address.
 /// `recipient` can accept the transfer by presenting its `RecipientCap` (this prevents other users from claiming the
 /// asset for themselves).
-/// The current owner can cancel the proposal at any time - given the transfer hasn't been conclued yet - by presenting
+/// The current owner can cancel the proposal at any time - given the transfer hasn't been concluded yet - by presenting
 /// its `SenderCap`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransferProposal {
@@ -259,7 +258,7 @@ impl MoveType for TransferProposal {
 
 impl TransferProposal {
   /// Resolves a [`TransferProposal`] by its ID `id`.
-  pub async fn get_by_id(id: ObjectID, client: &IotaClient) -> Result<Self, Error> {
+  pub async fn get_by_id<S>(id: ObjectID, client: &IdentityClient<S>) -> Result<Self, Error> {
     let res = client
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
@@ -294,7 +293,7 @@ impl TransferProposal {
       })
   }
 
-  async fn asset_metadata(&self, client: &IotaClient) -> anyhow::Result<(ObjectRef, TypeTag)> {
+  async fn asset_metadata<S>(&self, client: &IdentityClient<S>) -> anyhow::Result<(ObjectRef, TypeTag)> {
     let res = client
       .read_api()
       .get_object_with_options(self.asset_id, IotaObjectDataOptions::default().with_type())
@@ -318,7 +317,7 @@ impl TransferProposal {
     Ok((asset_ref, param_type))
   }
 
-  async fn initial_shared_version(&self, client: &IotaClient) -> anyhow::Result<SequenceNumber> {
+  async fn initial_shared_version<S>(&self, client: &IdentityClient<S>) -> anyhow::Result<SequenceNumber> {
     let owner = client
       .read_api()
       .get_object_with_options(*self.id.object_id(), IotaObjectDataOptions::default().with_owner())

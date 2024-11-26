@@ -12,7 +12,7 @@ use identity_iota::credential::RevocationBitmapStatus;
 use identity_iota::credential::{self};
 use identity_iota::prelude::IotaDocument;
 use identity_iota::prelude::Resolver;
-use identity_sui_name_tbd::client::IdentityClientReadOnly;
+use identity_iota::iota::rebased::client::IdentityClientReadOnly;
 use prost::bytes::Bytes;
 use serde::Deserialize;
 use serde::Serialize;
@@ -109,7 +109,7 @@ pub struct CredentialVerifier {
 impl CredentialVerifier {
   pub fn new(client: &IdentityClientReadOnly) -> Self {
     let mut resolver = Resolver::new();
-    resolver.attach_kinesis_iota_handler(client.clone());
+    resolver.attach_iota_handler(client.clone());
     Self { resolver }
   }
 }

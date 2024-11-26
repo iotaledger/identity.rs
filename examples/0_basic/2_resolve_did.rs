@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_kinesis_did_document;
+use examples::create_did_document;
 use examples::get_client_and_create_account;
 
 use examples::get_memstorage;
@@ -15,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
   let storage = get_memstorage()?;
   let identity_client = get_client_and_create_account(&storage).await?;
   // create new DID document and publish it
-  let (document, _) = create_kinesis_did_document(&identity_client, &storage).await?;
+  let (document, _) = create_did_document(&identity_client, &storage).await?;
 
   let did = document.id().clone();
 
@@ -30,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
 
   // We need to register a handler that can resolve IOTA DIDs.
   // This convenience method only requires us to provide a client.
-  resolver.attach_kinesis_iota_handler((*identity_client).clone());
+  resolver.attach_iota_handler((*identity_client).clone());
 
   let resolver_document: IotaDocument = resolver.resolve(&did).await.unwrap();
 

@@ -146,7 +146,7 @@ async fn main() -> anyhow::Result<()> {
   // ============================================================================================
 
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_kinesis_iota_handler((*identity_client).clone());
+  resolver.attach_iota_handler((*identity_client).clone());
 
   // Holder resolves issuer's DID
   let issuer: CoreDID = JptCredentialValidatorUtils::extract_issuer_from_issued_jpt(&credential_jpt).unwrap();

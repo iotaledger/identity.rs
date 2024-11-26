@@ -3,7 +3,7 @@
 
 use anyhow::Context;
 
-use examples::create_kinesis_did_document;
+use examples::create_did_document;
 use examples::get_client_and_create_account;
 use examples::get_memstorage;
 use examples::MemStorage;
@@ -46,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
   let identity_client = get_client_and_create_account(&storage).await?;
 
   // create new DID document and publish it
-  let (mut did_document, fragment) = create_kinesis_did_document(&identity_client, &storage).await?;
+  let (mut did_document, fragment) = create_did_document(&identity_client, &storage).await?;
 
   println!("Published DID document: {did_document:#}");
 
@@ -83,7 +83,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Init a resolver for resolving DID Documents.
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_kinesis_iota_handler((*identity_client).clone());
+  resolver.attach_iota_handler((*identity_client).clone());
 
   // Resolve the DID Document of the DID that issued the credential.
   let did_document: IotaDocument = resolver.resolve(&did).await?;

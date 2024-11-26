@@ -23,11 +23,9 @@ tokio = { version = "1.29", default-features = false, features = ["rt"] }
 path = "../identity_iota"
 default-features = false
 features = [
-  "client",
   "domain-linkage",
-  "iota-client",
   "jpt-bbs-plus",
-  "kinesis-client",
+  "iota-client",
   "memstore",
   "resolver",
   "revocation-bitmap",
@@ -67,12 +65,12 @@ path = "0_basic/7_revoke_vc.rs"
 name = "7_revoke_vc"
 
 [[example]]
-path = "0_basic/8_stronghold.rs"
-name = "8_stronghold"
+path = "0_basic/8_legacy_stronghold.rs"
+name = "8_legacy_stronghold"
 
 [[example]]
-path = "1_advanced/4_alias_output_history.rs"
-name = "4_alias_output_history"
+path = "1_advanced/4_identity_history.rs"
+name = "4_identity_history"
 
 [[example]]
 path = "1_advanced/5_custom_resolution.rs"

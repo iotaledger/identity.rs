@@ -25,15 +25,15 @@ use super::ProposalT;
 
 /// Action for deactivating a DID Document inside an Identity.
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-pub struct DeactiveDid;
+pub struct DeactivateDid;
 
-impl DeactiveDid {
+impl DeactivateDid {
   pub const fn new() -> Self {
     Self
   }
 }
 
-impl MoveType for DeactiveDid {
+impl MoveType for DeactivateDid {
   fn move_type(package: ObjectID) -> TypeTag {
     use std::str::FromStr;
 
@@ -42,8 +42,8 @@ impl MoveType for DeactiveDid {
 }
 
 #[async_trait]
-impl ProposalT for Proposal<DeactiveDid> {
-  type Action = DeactiveDid;
+impl ProposalT for Proposal<DeactivateDid> {
+  type Action = DeactivateDid;
   type Output = ();
 
   async fn create<'i, S>(

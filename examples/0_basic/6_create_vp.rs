@@ -9,7 +9,7 @@
 
 use std::collections::HashMap;
 
-use examples::create_kinesis_did_document;
+use examples::create_did_document;
 use examples::get_client_and_create_account;
 use examples::get_memstorage;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
@@ -55,13 +55,13 @@ async fn main() -> anyhow::Result<()> {
   let issuer_storage = get_memstorage()?;
   let issuer_identity_client = get_client_and_create_account(&issuer_storage).await?;
   let (issuer_document, issuer_vm_fragment) =
-    create_kinesis_did_document(&issuer_identity_client, &issuer_storage).await?;
+    create_did_document(&issuer_identity_client, &issuer_storage).await?;
 
   // create new holder account with did document
   let holder_storage = get_memstorage()?;
   let holder_identity_client = get_client_and_create_account(&holder_storage).await?;
   let (holder_document, holder_vm_fragment) =
-    create_kinesis_did_document(&holder_identity_client, &holder_storage).await?;
+    create_did_document(&holder_identity_client, &holder_storage).await?;
 
   // create new client for verifier
   // new client actually not necessary, but shows, that client is independent from issuer and holder
@@ -174,7 +174,7 @@ async fn main() -> anyhow::Result<()> {
     JwsVerificationOptions::default().nonce(challenge.to_owned());
 
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_kinesis_iota_handler((*verifier_client).clone());
+  resolver.attach_iota_handler((*verifier_client).clone());
 
   // Resolve the holder's document.
   let holder_did: CoreDID = JwtPresentationValidatorUtils::extract_holder(&presentation_jwt)?;

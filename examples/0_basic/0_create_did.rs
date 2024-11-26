@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_kinesis_did_document;
+use examples::create_did_document;
 use examples::get_client_and_create_account;
 
 use examples::get_memstorage;
@@ -20,7 +20,7 @@ async fn main() -> anyhow::Result<()> {
   let identity_client = get_client_and_create_account(&storage).await?;
 
   // create new DID document and publish it
-  let (document, _) = create_kinesis_did_document(&identity_client, &storage).await?;
+  let (document, _) = create_did_document(&identity_client, &storage).await?;
   println!("Published DID document: {document:#}");
 
   // check if we can resolve it via client

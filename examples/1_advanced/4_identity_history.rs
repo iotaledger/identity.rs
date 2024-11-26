@@ -1,7 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_kinesis_did_document;
+use examples::create_did_document;
 use examples::get_client_and_create_account;
 use examples::get_memstorage;
 use examples::TEST_GAS_BUDGET;
@@ -26,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
   let storage = get_memstorage()?;
   let identity_client = get_client_and_create_account(&storage).await?;
   // create new DID document and publish it
-  let (document, vm_fragment_1) = create_kinesis_did_document(&identity_client, &storage).await?;
+  let (document, vm_fragment_1) = create_did_document(&identity_client, &storage).await?;
   let did: IotaDID = document.id().clone();
 
   // Resolve the latest state of the document.
@@ -67,6 +67,14 @@ async fn main() -> anyhow::Result<()> {
   // Step 2 - Get history
   let history = onchain_identity.get_history(&identity_client, None, None).await?;
   println!("Alias History has {} entries", history.len());
+
+  // Optional step - Parse to documents
+  let documents: Vec<IotaDocument> = history
+    .into_iter()
+    .map(|data| IotaDocument::unpack_from_iota_object_data(&did, &data, true))
+    .collect::<Result<_, _>>()?;
+  println!("Current version: {}", documents[0].to_string());
+  println!("Previous version: {}", documents[1].to_string());
 
   // Depending on your use case, you can also page through the results
   // Alternative Step 2 - Page by looping until no result is returned (here with page size 1)
