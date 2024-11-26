@@ -55,7 +55,7 @@ jobs:
               CORE_MODIFIED=true
           else
               # unmodified
-             CORE_MODIFIED=false
+              CORE_MODIFIED=false
           fi
           echo CORE_MODIFIED=$CORE_MODIFIED
           echo "core-modified=$CORE_MODIFIED" >> $GITHUB_OUTPUT
