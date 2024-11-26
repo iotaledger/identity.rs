@@ -20,9 +20,9 @@ use identity_storage::KeyStorageErrorKind;
 use identity_storage::StorageSigner;
 use identity_stronghold::StrongholdStorage;
 use identity_stronghold::ED25519_KEY_TYPE;
-use identity_sui_name_tbd::client::IdentityClient;
-use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use identity_sui_name_tbd::transaction::Transaction;
+use identity_iota::iota::rebased::client::IdentityClient;
+use identity_iota::iota::rebased::client::IdentityClientReadOnly;
+use identity_iota::iota::rebased::transaction::Transaction;
 use tonic::Code;
 use tonic::Request;
 use tonic::Response;
@@ -41,7 +41,7 @@ pub enum Error {
   #[error(transparent)]
   StrongholdError(identity_iota::core::SingleStructError<KeyStorageErrorKind>),
   #[error(transparent)]
-  IdentityClientError(identity_sui_name_tbd::Error),
+  IdentityClientError(identity_iota::iota::rebased::Error),
   #[error("did error : {0}")]
   DIDError(String),
 }
@@ -107,7 +107,8 @@ impl DocumentService for DocumentSvc {
       .finish()
       .execute(&identity_client)
       .await
-      .map_err(Error::IdentityClientError)?;
+      .map_err(Error::IdentityClientError)?
+      .output;
 
     let did =
       IotaDID::parse(format!("did:iota:{}", created_identity.id())).map_err(|e| Error::DIDError(e.to_string()))?;
@@ -126,7 +127,9 @@ impl DocumentService for DocumentSvc {
 
     created_identity
       .update_did_document(document.clone())
-      .finish()
+      .finish(&identity_client)
+      .await
+      .map_err(Error::IdentityClientError)?
       .execute(&identity_client)
       .await
       .map_err(Error::IdentityClientError)?;

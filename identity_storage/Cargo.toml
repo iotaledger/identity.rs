@@ -12,7 +12,7 @@ rust-version.workspace = true
 description = "Abstractions over storage for cryptographic keys used in DID Documents"
 
 [dependencies]
-anyhow = "1.0.82"
+anyhow = { version = "1.0.82" }
 async-trait = { version = "0.1.64", default-features = false }
 bls12_381_plus = { workspace = true, optional = true }
 futures = { version = "0.3.27", default-features = false, features = ["async-await"] }

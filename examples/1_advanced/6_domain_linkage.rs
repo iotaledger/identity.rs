@@ -114,7 +114,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Init a resolver for resolving DID Documents.
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_kinesis_iota_handler((*identity_client).clone());
+  resolver.attach_iota_handler((*identity_client).clone());
 
   // =====================================================
   // → Case 1: starting from domain

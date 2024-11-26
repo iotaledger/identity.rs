@@ -204,6 +204,7 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
   };
 
   let history = updated_identity.get_history(&identity_client, None, None).await?;
+  let versions: Vec<SequenceNumber> = history.iter().map(|elem| elem.version).collect();
 
   // test check for previous version
   let has_previous_version_responses: Vec<bool> = history

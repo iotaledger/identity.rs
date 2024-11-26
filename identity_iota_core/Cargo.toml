@@ -20,7 +20,6 @@ identity_credential = { version = "=1.4.0", path = "../identity_credential", def
 identity_did = { version = "=1.4.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.4.0", path = "../identity_document", default-features = false }
 identity_verification = { version = "=1.4.0", path = "../identity_verification", default-features = false }
-iota_sdk_legacy = { version = "1.1.5", default-features = false, features = ["serde", "std"], optional = true, package = "iota-sdk" }
 num-derive = { version = "0.4", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
@@ -66,7 +65,8 @@ rustdoc-args = ["--cfg", "docsrs"]
 [features]
 default = ["client", "iota-client", "kinesis-client", "revocation-bitmap", "send-sync-client-ext"]
 # Exposes the IotaIdentityClient and IotaIdentityClientExt traits.
-client = ["dep:async-trait", "iota_sdk_legacy"]
+client = ["dep:async-trait"]
+# client = ["dep:async-trait"]
 # Client for rebased.
 kinesis-client = [
   "dep:async-trait",
@@ -85,8 +85,8 @@ kinesis-client = [
   "dep:shared-crypto",
   "dep:tokio",
 ]
-# Enables the implementation of the extension traits on the iota_sdk_legacy's Client.
-iota-client = ["client", "iota_sdk_legacy/client", "iota_sdk_legacy/tls"]
+# Enables the IOTA Client related components.
+iota-client = ["client"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_credential/revocation-bitmap"]
 # Adds Send bounds on the futures produces by the client extension traits.

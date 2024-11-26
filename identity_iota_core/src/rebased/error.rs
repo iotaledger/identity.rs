@@ -65,4 +65,7 @@ pub enum Error {
   /// An error caused by either a connection issue or an invalid RPC call.
   #[error("RPC error: {0}")]
   RpcError(String),
+  /// An error caused by a bcs serialization or deserialization.
+  #[error("BCS error: {0}")]
+  BcsError(#[from] bcs::Error),
 }

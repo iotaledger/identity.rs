@@ -6,10 +6,10 @@ use std::str::FromStr;
 use anyhow::Context;
 use identity_grpc::server::GRpcServer;
 use identity_stronghold::StrongholdStorage;
-use iota_sdk::client::stronghold::StrongholdAdapter;
+use iota_sdk_legacy::client::stronghold::StrongholdAdapter;
 
-use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use iota_sdk_move::types::base_types::ObjectID;
+use identity_iota::iota::rebased::client::IdentityClientReadOnly;
+use iota_sdk::types::base_types::ObjectID;
 
 #[tokio::main]
 #[tracing::instrument(err)]
@@ -23,7 +23,7 @@ async fn main() -> anyhow::Result<()> {
 
   let identity_pkg_id = ObjectID::from_str(&identity_iota_pkg_id)?;
 
-  let iota_client = iota_sdk_move::IotaClientBuilder::default().build(api_endpoint).await?;
+  let iota_client = iota_sdk::IotaClientBuilder::default().build(api_endpoint).await?;
 
   let read_only_client = IdentityClientReadOnly::new(iota_client, identity_pkg_id).await?;
 
