@@ -19,7 +19,7 @@ on:
 
 jobs:
   check-for-run-condition:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       should-run: ${{ !github.event.pull_request || github.event.pull_request.draft == false }}
     steps:
@@ -27,7 +27,7 @@ jobs:
           # this run step does nothing, but is needed to get the job output
 
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: Check out the repo
       uses: actions/checkout@v4
