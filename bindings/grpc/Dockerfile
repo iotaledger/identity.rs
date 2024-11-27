@@ -1,7 +1,11 @@
 FROM rust:bookworm as builder
 
+# update packages
+RUN apt-get update
 # install protobuf
-RUN apt-get update && apt-get install -y protobuf-compiler libprotobuf-dev musl-tools
+RUN apt-get install -y protobuf-compiler libprotobuf-dev musl-tools
+# install openssl dev dependencies
+RUN apt-get install -y libssl-dev
 
 COPY . /usr/src/app/
 WORKDIR /usr/src/app/bindings/grpc
