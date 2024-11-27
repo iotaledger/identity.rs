@@ -6,6 +6,7 @@ mod config_change;
 mod deactive_did;
 mod send;
 mod update_did_doc;
+mod controller;
 
 use std::marker::PhantomData;
 use std::ops::Deref;
@@ -20,6 +21,7 @@ use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
 pub use deactive_did::*;
+pub use controller::*;
 use iota_sdk::rpc_types::IotaExecutionStatus;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
@@ -330,4 +332,11 @@ async fn obj_ref_and_type_for_id(
   };
 
   Ok((obj_ref, obj_type))
+}
+
+/// A transaction that requires user input in order to be executed.
+pub struct UserDrivenTx<'i, A> {
+  identity: &'i mut OnChainIdentity,
+  action: A,
+  proposal_id: ObjectID,
 }

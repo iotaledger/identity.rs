@@ -15,6 +15,7 @@ module iota_identity::identity {
         transfer_proposal::{Self, Send},
         borrow_proposal::{Self, Borrow},
         did_deactivation_proposal::{Self, DidDeactivation},
+        controller_proposal::{Self, ControllerExecution},
     };
 
     const ENotADidDocument: u64 = 0;
@@ -175,6 +176,33 @@ module iota_identity::identity {
         self.updated = clock.timestamp_ms();
     }
 
+    /// Creates a new `ControllerExecution` proposal.
+    public fun propose_controller_execution(
+        self: &mut Identity,
+        cap: &DelegationToken,
+        controller_cap_id: ID,
+        expiration: Option<u64>,
+        ctx: &mut TxContext,
+    ): ID {
+        let identity_address = self.id().to_address();
+        self.did_doc.create_proposal(
+            cap,
+            controller_proposal::new(controller_cap_id, identity_address),
+            expiration,
+            ctx,
+        )
+    }
+
+    /// Borrow the identity-owned controller cap specified in `ControllerExecution`.
+    /// The borrowed cap must be put back by calling `controller_proposal::put_back`.
+    public fun borrow_controller_cap(
+        self: &mut Identity,
+        action: &mut Action<ControllerExecution>,
+        receiving: Receiving<ControllerCap>,
+    ): ControllerCap {
+        controller_proposal::receive(action, &mut self.id, receiving)
+    }
+
     /// Proposes an update to the DID Document contained in this `Identity`.
     /// This function can update the DID Document right away if `cap` has
     /// enough voting power.
@@ -282,7 +310,7 @@ module iota_identity::identity {
         objects: vector<ID>,
         recipients: vector<address>,
         ctx: &mut TxContext,
-    ) {
+    ): ID {
         transfer_proposal::propose_send(
             &mut self.did_doc,
             cap,
@@ -290,7 +318,7 @@ module iota_identity::identity {
             objects,
             recipients,
             ctx
-        );
+        )
     }
 
     /// Sends one object among the one specified in a `Send` proposal.
@@ -310,7 +338,7 @@ module iota_identity::identity {
         expiration: Option<u64>,
         objects: vector<ID>,
         ctx: &mut TxContext,
-    ) {
+    ): ID {
       let identity_address = self.id().to_address();
       borrow_proposal::propose_borrow(
         &mut self.did_doc,
@@ -319,7 +347,7 @@ module iota_identity::identity {
         objects,
         identity_address,
         ctx,
-      );
+      )
     }
 
     /// Takes one of the borrowed assets.
