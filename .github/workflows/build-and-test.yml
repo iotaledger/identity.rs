@@ -55,7 +55,7 @@ jobs:
               CORE_MODIFIED=true
           else
               # unmodified
-             CORE_MODIFIED=false
+              CORE_MODIFIED=false
           fi
           echo CORE_MODIFIED=$CORE_MODIFIED
           echo "core-modified=$CORE_MODIFIED" >> $GITHUB_OUTPUT
@@ -130,10 +130,13 @@ jobs:
         run: cargo build --workspace --tests --examples --release
 
       - name: Start iota sandbox
-        if: matrix.os == 'ubuntu-latest'
-        uses: './.github/actions/iota-sandbox/setup'
+        if: matrix.os != 'windows-latest'
+        uses: './.github/actions/iota-rebase-sandbox/setup'
+        with:
+          platform: ${{ matrix.os == 'ubuntu-latest' && 'linux' || 'macos' }}
 
       - name: Run tests excluding `custom_time` feature
+        if: matrix.os != 'windows-latest'
         run: cargo test --workspace --release
 
       - name: Run tests with `custom_time` feature
@@ -156,10 +159,6 @@ jobs:
           cd bindings/wasm
           npm ci
           npm run test:readme:rust
-
-      - name: Tear down iota sandbox
-        if: matrix.os == 'ubuntu-latest' && always()
-        uses: './.github/actions/iota-sandbox/tear-down'
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
@@ -204,15 +203,11 @@ jobs:
           path: bindings/wasm
 
       - name: Start iota sandbox
-        uses: './.github/actions/iota-sandbox/setup'
+        uses: './.github/actions/iota-rebase-sandbox/setup'
 
       - name: Run Wasm examples
         run: npm run test:readme && npm run test:node
         working-directory: bindings/wasm
-
-      - name: Tear down iota sandbox
-        if: always()
-        uses: './.github/actions/iota-sandbox/tear-down'
 
   test-wasm-firefox:
     needs: build-wasm
@@ -232,7 +227,7 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 16.x
-  
+
       - name: Install JS dependencies
         run: npm ci
         working-directory: bindings/wasm
@@ -244,7 +239,7 @@ jobs:
           path: bindings/wasm
 
       - name: Start iota sandbox
-        uses: './.github/actions/iota-sandbox/setup'
+        uses: './.github/actions/iota-rebase-sandbox/setup'
 
       - name: Build Docker image
         uses: docker/build-push-action@v6.2.0
@@ -257,10 +252,6 @@ jobs:
 
       - name: Run cypress
         run: docker run --network host cypress-test test:browser:parallel:firefox
-
-      - name: Tear down iota sandbox
-        if: always()
-        uses: './.github/actions/iota-sandbox/tear-down'
 
   test-wasm-chrome:
     needs: build-wasm
@@ -292,7 +283,7 @@ jobs:
           path: bindings/wasm
 
       - name: Start iota sandbox
-        uses: './.github/actions/iota-sandbox/setup'
+        uses: './.github/actions/iota-rebase-sandbox/setup'
 
       - name: Build Docker image
         uses: docker/build-push-action@v6.2.0
@@ -305,7 +296,3 @@ jobs:
 
       - name: Run cypress
         run: docker run --network host cypress-test test:browser:parallel:chrome
-
-      - name: Tear down iota sandbox
-        if: always()
-        uses: './.github/actions/iota-sandbox/tear-down'

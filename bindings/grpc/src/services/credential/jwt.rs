@@ -12,7 +12,7 @@ use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwsSignatureOptions;
 use identity_iota::storage::Storage;
 use identity_stronghold::StrongholdStorage;
-use identity_sui_name_tbd::client::IdentityClientReadOnly;
+use identity_iota::iota::rebased::client::IdentityClientReadOnly;
 use tonic::Request;
 use tonic::Response;
 use tonic::Status;
@@ -33,7 +33,7 @@ pub struct JwtService {
 impl JwtService {
   pub fn new(client: &IdentityClientReadOnly, stronghold: &StrongholdStorage) -> Self {
     let mut resolver = Resolver::new();
-    resolver.attach_kinesis_iota_handler(client.clone());
+    resolver.attach_iota_handler(client.clone());
     Self {
       resolver,
       storage: Storage::new(stronghold.clone(), stronghold.clone()),

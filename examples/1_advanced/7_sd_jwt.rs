@@ -6,7 +6,7 @@
 //!
 //! cargo run --release --example 7_sd_jwt
 
-use examples::create_kinesis_did_document;
+use examples::create_did_document;
 use examples::get_client_and_create_account;
 use examples::get_memstorage;
 use examples::pretty_print_json;
@@ -44,13 +44,13 @@ async fn main() -> anyhow::Result<()> {
   let issuer_storage = get_memstorage()?;
   let issuer_identity_client = get_client_and_create_account(&issuer_storage).await?;
   let (issuer_document, issuer_vm_fragment) =
-    create_kinesis_did_document(&issuer_identity_client, &issuer_storage).await?;
+    create_did_document(&issuer_identity_client, &issuer_storage).await?;
 
   // Create an identity for the holder, in this case also the subject.
   let holder_storage = get_memstorage()?;
   let holder_identity_client = get_client_and_create_account(&holder_storage).await?;
   let (holder_document, holder_vm_fragment) =
-    create_kinesis_did_document(&holder_identity_client, &holder_storage).await?;
+    create_did_document(&holder_identity_client, &holder_storage).await?;
 
   // ===========================================================================
   // Step 2: Issuer creates and signs a selectively disclosable JWT verifiable credential.

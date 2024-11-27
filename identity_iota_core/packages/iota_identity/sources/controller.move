@@ -5,6 +5,7 @@ module iota_identity::controller {
 
   public use fun delete_controller_cap as ControllerCap.delete;
   public use fun delete_delegation_token as DelegationToken.delete;
+  public use fun delegation_token_id as DelegationToken.id;
 
   /// This `ControllerCap` cannot delegate access.
   const ECannotDelegate: u64 = 0;
@@ -59,6 +60,11 @@ module iota_identity::controller {
     id: UID,
     permissions: u32,
     controller: ID,
+  }
+
+  /// Returns the ID of this `DelegationToken`.
+  public fun delegation_token_id(self: &DelegationToken): ID {
+    self.id.to_inner()
   }
 
   /// Returns the controller's ID of this `DelegationToken`.

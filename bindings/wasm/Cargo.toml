@@ -17,9 +17,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
-bls12_381_plus = "0.8.17"
 console_error_panic_hook = { version = "0.1" }
-futures = { version = "0.3" }
 identity_ecdsa_verifier = { path = "../../identity_ecdsa_verifier", default-features = false, features = ["es256", "es256k"] }
 identity_eddsa_verifier = { path = "../../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 js-sys = { version = "0.3.61" }
@@ -32,19 +30,22 @@ serde_repr = { version = "0.1", default-features = false }
 tokio = { version = "1.29", default-features = false, features = ["sync"] }
 wasm-bindgen = { version = "0.2.85", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
-zkryptium = "0.2.2"
 
 [dependencies.identity_iota]
 path = "../../identity_iota"
 default-features = false
-features = ["client", "revocation-bitmap", "resolver", "domain-linkage", "sd-jwt", "status-list-2021", "jpt-bbs-plus"]
-
-[dev-dependencies]
-rand = "0.8.5"
+features = [
+  "client",
+  "revocation-bitmap",
+  "resolver",
+  "domain-linkage",
+  "sd-jwt",
+  "status-list-2021",
+  "jpt-bbs-plus",
+]
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 getrandom = { version = "0.2", default-features = false, features = ["js"] }
-instant = { version = "0.1", default-features = false, features = ["wasm-bindgen"] }
 
 [profile.release]
 opt-level = 's'
