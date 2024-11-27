@@ -24,7 +24,7 @@ module iota_identity::identity {
     const EInvalidThreshold: u64 = 2;
     /// The controller list must contain at least 1 element.
     const EInvalidControllersList: u64 = 3;
-    /// Idenity cannot does not need an upgrade.
+    /// There's no upgrade available for this identity.
     const ENoUpgrade: u64 = 4;
 
     const PACKAGE_VERSION: u64 = 0;
