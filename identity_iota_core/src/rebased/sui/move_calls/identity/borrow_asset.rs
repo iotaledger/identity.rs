@@ -59,7 +59,7 @@ where
   let mut ptb = ProgrammableTransactionBuilder::new();
   let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
   let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
-  let (delegation_token, borrow)= utils::get_controller_delegation(&mut ptb, controller_cap, package);
+  let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, controller_cap, package);
   let proposal_id = ptb.pure(proposal_id)?;
 
   // Get the proposal's action as argument.

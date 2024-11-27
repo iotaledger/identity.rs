@@ -31,5 +31,6 @@ mod document;
 mod error;
 mod network;
 #[cfg(feature = "iota-client")]
+/// Contains the rebased Identity and the interaction with the IOTA Client.
 pub mod rebased;
 mod state_metadata;

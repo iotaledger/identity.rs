@@ -38,6 +38,7 @@ impl MoveType for UpdateDidDocument {
 }
 
 impl UpdateDidDocument {
+  /// Creates a new [`UpdateDidDocument`] action.
   pub fn new(document: IotaDocument) -> Self {
     Self(document.pack().expect("a valid IotaDocument is packable"))
   }

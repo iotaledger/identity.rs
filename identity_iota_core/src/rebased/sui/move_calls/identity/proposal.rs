@@ -24,7 +24,7 @@ pub(crate) fn approve<T: MoveType>(
   let controller_cap = ptb
     .obj(ObjectArg::ImmOrOwnedObject(controller_cap))
     .map_err(|e| Error::InvalidArgument(e.to_string()))?;
-  let (delegation_token, borrow)  = utils::get_controller_delegation(&mut ptb, controller_cap, package);
+  let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, controller_cap, package);
   let proposal_id = ptb
     .pure(proposal_id)
     .map_err(|e| Error::InvalidArgument(e.to_string()))?;

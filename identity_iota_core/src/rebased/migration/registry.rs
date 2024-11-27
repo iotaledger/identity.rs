@@ -10,12 +10,16 @@ use crate::rebased::client::IdentityClientReadOnly;
 use super::get_identity;
 use super::OnChainIdentity;
 
+/// Errors that can occur during migration registry operations.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+  /// An error occurred while interacting with the IOTA Client.
   #[error(transparent)]
-  ClientError(anyhow::Error),
+  Client(anyhow::Error),
+  /// The MigrationRegistry object was not found.
   #[error("could not locate MigrationRegistry object: {0}")]
   NotFound(String),
+  /// The MigrationRegistry object is malformed.
   #[error("malformed MigrationRegistry's entry: {0}")]
   Malformed(String),
 }
@@ -36,7 +40,7 @@ pub async fn lookup(
     .read_api()
     .get_dynamic_field_object(iota_client.migration_registry_id(), dynamic_field_name)
     .await
-    .map_err(|e| Error::ClientError(e.into()))?
+    .map_err(|e| Error::Client(e.into()))?
     .data
     .map(|data| {
       data
@@ -51,9 +55,7 @@ pub async fn lookup(
     .transpose()?;
 
   if let Some(id) = identity_id {
-    get_identity(iota_client, id)
-      .await
-      .map_err(|e| Error::ClientError(e.into()))
+    get_identity(iota_client, id).await.map_err(|e| Error::Client(e.into()))
   } else {
     Ok(None)
   }

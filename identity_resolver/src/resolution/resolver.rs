@@ -20,7 +20,7 @@ use super::commands::Command;
 use super::commands::SendSyncCommand;
 use super::commands::SingleThreadedCommand;
 
-/// Convenience type for resolving DID documents from different DID methods.   
+/// Convenience type for resolving DID documents from different DID methods.
 ///
 /// # Configuration
 ///
@@ -394,7 +394,9 @@ mod tests {
       if self.0.id().as_str() == did.as_str() {
         Ok(self.0.clone())
       } else {
-        Err(identity_iota_core::Error::DIDResolutionError("DID not found".to_string()))
+        Err(identity_iota_core::Error::DIDResolutionError(
+          "DID not found".to_string(),
+        ))
       }
     }
   }

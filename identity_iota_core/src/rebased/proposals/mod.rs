@@ -48,8 +48,10 @@ use crate::rebased::Error;
 pub trait ProposalT {
   /// The [`Proposal`] action's type.
   type Action;
+  /// The output of the [`Proposal`]
   type Output;
 
+  /// Creates a new [`Proposal`] with the provided action and expiration.
   async fn create<'i, S>(
     action: Self::Action,
     expiration: Option<u64>,
@@ -59,6 +61,7 @@ pub trait ProposalT {
   where
     S: Signer<IotaKeySignature> + Sync;
 
+  /// Converts the [`Proposal`] into a transaction that can be executed.
   async fn into_tx<'i, S>(
     self,
     identity: &'i mut OnChainIdentity,
@@ -67,10 +70,12 @@ pub trait ProposalT {
   where
     S: Signer<IotaKeySignature> + Sync;
 
+  /// Parses the transaction's effects and returns the output of the [`Proposal`].
   fn parse_tx_effects(tx_response: &IotaTransactionBlockResponse) -> Result<Self::Output, Error>;
 }
 
 impl<A> Proposal<A> {
+  /// Creates a new [`ApproveProposalTx`] for the provided [`Proposal`]
   pub fn approve<'i>(&mut self, identity: &'i OnChainIdentity) -> ApproveProposalTx<'_, 'i, A> {
     ApproveProposalTx {
       proposal: self,
@@ -79,6 +84,7 @@ impl<A> Proposal<A> {
   }
 }
 
+/// A builder for creating a [`Proposal`].
 #[derive(Debug)]
 pub struct ProposalBuilder<'i, A> {
   identity: &'i mut OnChainIdentity,
@@ -108,6 +114,7 @@ impl<'i, A> ProposalBuilder<'i, A> {
     }
   }
 
+  /// Sets the expiration epoch for the [`Proposal`].
   pub fn expiration_epoch(mut self, exp: u64) -> Self {
     self.expiration = Some(exp);
     self
@@ -140,6 +147,7 @@ pub enum ProposalResult<P: ProposalT> {
   Executed(P::Output),
 }
 
+/// A transaction to create a [`Proposal`].
 #[derive(Debug)]
 pub struct CreateProposalTx<'i, A> {
   identity: &'i mut OnChainIdentity,
@@ -213,6 +221,7 @@ where
   }
 }
 
+/// A transaction to execute a [`Proposal`].
 #[derive(Debug)]
 pub struct ExecuteProposalTx<'i, A> {
   tx: ProgrammableTransaction,
@@ -257,6 +266,7 @@ where
   }
 }
 
+/// A transaction to approve a [`Proposal`].
 #[derive(Debug)]
 pub struct ApproveProposalTx<'p, 'i, A> {
   proposal: &'p mut Proposal<A>,

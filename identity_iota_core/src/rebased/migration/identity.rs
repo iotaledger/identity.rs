@@ -57,6 +57,9 @@ const MODULE: &str = "identity";
 const NAME: &str = "Identity";
 const HISTORY_DEFAULT_PAGE_SIZE: usize = 10;
 
+/// The data stored in an on-chain identity.
+pub type IdentityData = (UID, Multicontroller<Vec<u8>>, Timestamp, Timestamp);
+
 /// An on-chain object holding a DID Document.
 pub enum Identity {
   /// A legacy IOTA Stardust's Identity.
@@ -230,6 +233,7 @@ impl OnChainIdentity {
   }
 }
 
+/// Returns the previous version of the given `history_item`.
 pub fn has_previous_version(history_item: &IotaObjectData) -> Result<bool, Error> {
   if let Some(Owner::Shared { initial_shared_version }) = history_item.owner {
     Ok(history_item.version != initial_shared_version)
@@ -373,10 +377,7 @@ fn is_identity(value: &IotaParsedMoveObject) -> bool {
 /// # Errors:
 /// * in case given data for DID is not an object
 /// * parsing identity data from object fails
-pub(crate) fn unpack_identity_data(
-  did: &IotaDID,
-  data: &IotaObjectData,
-) -> Result<Option<(UID, Multicontroller<Vec<u8>>, Timestamp, Timestamp)>, Error> {
+pub(crate) fn unpack_identity_data(did: &IotaDID, data: &IotaObjectData) -> Result<Option<IdentityData>, Error> {
   let content = data
     .clone()
     .content

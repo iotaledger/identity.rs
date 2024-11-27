@@ -15,8 +15,10 @@ use iota_sdk::IotaClientBuilder;
 
 use crate::rebased::Error;
 
+/// The local `IOTA` network.
 pub const LOCAL_NETWORK: &str = "http://127.0.0.1:9000";
 
+/// Builds an `IOTA` client for the given network.
 pub async fn get_client(network: &str) -> Result<IotaClient, Error> {
   let client = IotaClientBuilder::default()
     .build(network)
@@ -26,6 +28,7 @@ pub async fn get_client(network: &str) -> Result<IotaClient, Error> {
   Ok(client)
 }
 
+/// Requests funds from the local `IOTA` faucet.
 pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
   let output = Command::new("iota")
     .arg("client")
@@ -49,9 +52,12 @@ pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
   Ok(())
 }
 
+/// Trait for types that can be converted to a Move type.
 pub trait MoveType<T: Serialize = Self>: Serialize {
+  /// Returns the Move type for this type.
   fn move_type(package: ObjectID) -> TypeTag;
 
+  /// Tries to convert this type to a Move argument.
   fn try_to_argument(
     &self,
     ptb: &mut ProgrammableTransactionBuilder,

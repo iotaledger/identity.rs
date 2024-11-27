@@ -147,6 +147,7 @@ impl ProposalT for Proposal<BorrowAction> {
   }
 }
 
+/// A transaction to execute a borrow proposal.
 pub struct ExecuteBorrowTx<'i, B> {
   identity: &'i mut OnChainIdentity,
   borrow_action: B,

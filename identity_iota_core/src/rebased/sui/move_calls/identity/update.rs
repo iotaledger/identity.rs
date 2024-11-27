@@ -20,7 +20,7 @@ pub(crate) fn propose_update(
 ) -> Result<ProgrammableTransaction, anyhow::Error> {
   let mut ptb = ProgrammableTransactionBuilder::new();
   let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
-  let (delegation_token , borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
+  let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
   let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
   let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id)?;
   let doc_arg = ptb.pure(did_doc.as_ref())?;
@@ -47,7 +47,7 @@ pub(crate) fn execute_update(
 ) -> Result<ProgrammableTransaction, anyhow::Error> {
   let mut ptb = ProgrammableTransactionBuilder::new();
   let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
-  let (delegation_token, borrow)= utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
+  let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
   let proposal_id = ptb.pure(proposal_id)?;
   let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
   let clock = utils::get_clock_ref(&mut ptb);

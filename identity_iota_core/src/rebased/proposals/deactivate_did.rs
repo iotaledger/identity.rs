@@ -28,6 +28,7 @@ use super::ProposalT;
 pub struct DeactivateDid;
 
 impl DeactivateDid {
+  /// Creates a new [`DeactivateDid`] action.
   pub const fn new() -> Self {
     Self
   }
