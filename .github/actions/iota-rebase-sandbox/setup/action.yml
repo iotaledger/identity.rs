@@ -38,4 +38,8 @@ runs:
     - name: Start the Network
       shell: bash
       working-directory: iota
-      run: iota start --with-faucet --force-regenesis &
+      run: |
+        # Clear previous configuration
+        rm -rf ~/.iota || true 
+        # Start the network
+        iota start --with-faucet &
