@@ -426,7 +426,7 @@ async fn controller_execution_works() -> anyhow::Result<()> {
         .unwrap();
 
       let token_to_revoke = ptb.pure(ObjectID::ZERO).unwrap();
-      
+
       ptb.programmable_move_call(
         identity_client.package_id(),
         ident_str!("identity").into(),

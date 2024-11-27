@@ -3,10 +3,10 @@
 
 mod borrow;
 mod config_change;
+mod controller;
 mod deactivate_did;
 mod send;
 mod update_did_doc;
-mod controller;
 mod upgrade;
 
 use std::marker::PhantomData;
@@ -21,9 +21,8 @@ use crate::rebased::transaction::ProtoTransaction;
 use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
-pub use upgrade::*;
-pub use deactivate_did::*;
 pub use controller::*;
+pub use deactivate_did::*;
 use iota_sdk::rpc_types::IotaExecutionStatus;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaObjectDataOptions;
@@ -38,6 +37,7 @@ use secret_storage::Signer;
 pub use send::*;
 use serde::de::DeserializeOwned;
 pub use update_did_doc::*;
+pub use upgrade::*;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::migration::OnChainIdentity;

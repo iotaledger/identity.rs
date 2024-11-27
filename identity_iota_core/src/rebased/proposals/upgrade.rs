@@ -65,9 +65,8 @@ impl ProposalT for Proposal<Upgrade> {
       .controller_voting_power(controller_cap_ref.0)
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
-    let tx =
-      move_calls::identity::propose_upgrade(identity_ref, controller_cap_ref, expiration, client.package_id())
-        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = move_calls::identity::propose_upgrade(identity_ref, controller_cap_ref, expiration, client.package_id())
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(CreateProposalTx {
       identity,
@@ -92,9 +91,8 @@ impl ProposalT for Proposal<Upgrade> {
       .expect("identity exists on-chain");
     let controller_cap_ref = identity.get_controller_cap(client).await?;
 
-    let tx =
-      move_calls::identity::execute_upgrade(identity_ref, controller_cap_ref, proposal_id, client.package_id())
-        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = move_calls::identity::execute_upgrade(identity_ref, controller_cap_ref, proposal_id, client.package_id())
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(ExecuteProposalTx {
       identity,

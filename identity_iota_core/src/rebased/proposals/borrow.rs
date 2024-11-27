@@ -162,10 +162,7 @@ impl<'i> UserDrivenTx<'i, BorrowAction> {
     UserDrivenTx {
       identity,
       proposal_id,
-      action: BorrowActionWithIntent {
-        action,
-        intent_fn,
-      },
+      action: BorrowActionWithIntent { action, intent_fn },
     }
   }
 }
