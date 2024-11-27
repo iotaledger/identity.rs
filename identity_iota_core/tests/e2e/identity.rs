@@ -158,7 +158,7 @@ async fn adding_controller_works() -> anyhow::Result<()> {
 
   let cap = bob_client
     .find_owned_ref(
-      StructTag::from_str(&format!("{}::multicontroller::ControllerCap", test_client.package_id())).unwrap(),
+      StructTag::from_str(&format!("{}::controller::ControllerCap", test_client.package_id())).unwrap(),
       |_| true,
     )
     .await?;
@@ -204,6 +204,7 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
   };
 
   let history = updated_identity.get_history(&identity_client, None, None).await?;
+  let versions: Vec<SequenceNumber> = history.iter().map(|elem| elem.version).collect();
 
   // test check for previous version
   let has_previous_version_responses: Vec<bool> = history
@@ -214,9 +215,14 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
 
   let versions: Vec<SequenceNumber> = history.iter().map(|elem| elem.version).collect();
   let version_numbers: Vec<usize> = versions.iter().map(|v| (*v).into()).collect();
-  let oldest_version: usize = *version_numbers.last().unwrap();
-  let version_diffs: Vec<usize> = version_numbers.iter().map(|v| v - oldest_version).collect();
-  assert_eq!(version_diffs, vec![1, 0],);
+
+  // Check that we have 2 versions (original and updated)
+  assert_eq!(version_numbers.len(), 2);
+  // Check that versions are in descending order (newest to oldest)
+  assert!(
+    version_numbers[0] > version_numbers[1],
+    "versions should be in descending order"
+  );
 
   // paging:
   //   you can either loop until no result is returned

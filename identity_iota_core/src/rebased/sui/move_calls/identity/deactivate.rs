@@ -19,6 +19,7 @@ pub(crate) fn propose_deactivation(
 ) -> Result<ProgrammableTransaction, anyhow::Error> {
   let mut ptb = ProgrammableTransactionBuilder::new();
   let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
+  let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
   let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
   let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id)?;
   let clock = utils::get_clock_ref(&mut ptb);
@@ -28,8 +29,10 @@ pub(crate) fn propose_deactivation(
     ident_str!("identity").into(),
     ident_str!("propose_deactivation").into(),
     vec![],
-    vec![identity_arg, cap_arg, exp_arg, clock],
+    vec![identity_arg, delegation_token, exp_arg, clock],
   );
+
+  utils::put_back_delegation_token(&mut ptb, cap_arg, delegation_token, borrow, package_id);
 
   Ok(ptb.finish())
 }
@@ -42,6 +45,7 @@ pub(crate) fn execute_deactivation(
 ) -> Result<ProgrammableTransaction, anyhow::Error> {
   let mut ptb = ProgrammableTransactionBuilder::new();
   let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
+  let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
   let proposal_id = ptb.pure(proposal_id)?;
   let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
   let clock = utils::get_clock_ref(&mut ptb);
@@ -51,8 +55,10 @@ pub(crate) fn execute_deactivation(
     ident_str!("identity").into(),
     ident_str!("execute_deactivation").into(),
     vec![],
-    vec![identity_arg, cap_arg, proposal_id, clock],
+    vec![identity_arg, delegation_token, proposal_id, clock],
   );
+
+  utils::put_back_delegation_token(&mut ptb, cap_arg, delegation_token, borrow, package_id);
 
   Ok(ptb.finish())
 }

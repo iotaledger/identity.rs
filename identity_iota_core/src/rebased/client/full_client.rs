@@ -102,7 +102,7 @@ impl<S> Deref for IdentityClient<S> {
 
 impl<S> IdentityClient<S>
 where
-  S: Signer<IotaKeySignature>,
+  S: Signer<IotaKeySignature> + Sync,
 {
   pub async fn new(client: IdentityClientReadOnly, signer: S) -> Result<Self, Error> {
     let public_key = signer
@@ -281,7 +281,7 @@ impl<S> IdentityClient<S> {
   }
 
   /// Query the objects owned by the address wrapped by this client to find the object of type `tag`
-  /// and that satifies `predicate`.
+  /// and that satisfies `predicate`.
   pub async fn find_owned_ref<P>(&self, tag: StructTag, predicate: P) -> Result<Option<ObjectRef>, Error>
   where
     P: Fn(&IotaObjectData) -> bool,

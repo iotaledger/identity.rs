@@ -11,6 +11,26 @@ module iota_identity::asset {
     const EInvalidSender: u64 = 4;
     const EInvalidAsset: u64 = 5;
 
+    // ===== Events =====
+
+    /// Event emitted when the owner of an `AuthenticatedAsset`
+    /// proposes its transfer to a new address.
+    public struct AssetTransferCreated has copy, drop {
+        asset: ID,
+        proposal: ID,
+        sender: address,
+        recipient: address,
+    }
+
+    /// Event emitted when an active transfer is concluded,
+    /// either canceled or completed.
+    public struct AssetTransferConcluded has copy, drop {
+        asset: ID,
+        proposal: ID,
+        sender: address,
+        recipient: address,
+        concluded: bool,
+    }
 
     /// Structures that couples some data `T` with well known
     /// ownership and origin, along configurable abilities e.g.
@@ -105,10 +125,17 @@ module iota_identity::asset {
         ctx: &mut TxContext,
     ) {
         assert!(asset.transferable, ENonTransferable);
-        let sender_cap = SenderCap { id: object::new(ctx) };
-        let recipient_cap = RecipientCap { id: object::new(ctx) };
-        let proposal = TransferProposal {
+        let proposal_id = object::new(ctx);
+        let sender_cap = SenderCap {
             id: object::new(ctx),
+            transfer_id: proposal_id.to_inner(),
+        };
+        let recipient_cap = RecipientCap {
+            id: object::new(ctx),
+            transfer_id: proposal_id.to_inner(),
+        };
+        let proposal = TransferProposal {
+            id: proposal_id,
             asset_id: object::id(&asset),
             sender_cap_id: object::id(&sender_cap),
             sender_address: asset.owner,
@@ -117,6 +144,13 @@ module iota_identity::asset {
             done: false,
         };
 
+        iota::event::emit(AssetTransferCreated {
+            proposal: object::id(&proposal),
+            asset: object::id(&asset),
+            sender: asset.owner,
+            recipient,
+        });
+
         transfer::transfer(sender_cap, asset.owner);
         transfer::transfer(recipient_cap, recipient);
         transfer::transfer(asset, proposal.id.to_address());
@@ -124,7 +158,7 @@ module iota_identity::asset {
         transfer::share_object(proposal);
     }
 
-    /// Strucure that encodes the logic required to transfer an `AuthenticatedAsset`
+    /// Structure that encodes the logic required to transfer an `AuthenticatedAsset`
     /// from one address to another. The transfer can be refused by the recipient.
     public struct TransferProposal has key {
         id: UID,
@@ -138,10 +172,12 @@ module iota_identity::asset {
 
     public struct SenderCap has key {
         id: UID,
+        transfer_id: ID,
     }
 
     public struct RecipientCap has key {
         id: UID,
+        transfer_id: ID,
     }
 
     /// Accept the transfer of the asset.
@@ -159,6 +195,14 @@ module iota_identity::asset {
         cap.delete();
 
         self.done = true;
+
+        iota::event::emit(AssetTransferConcluded {
+            proposal: self.id.to_inner(),
+            asset: self.asset_id,
+            sender: self.sender_address,
+            recipient: self.recipient_address,
+            concluded: true,
+        })
     }
 
     /// The sender of the asset consumes the `TransferProposal` to either
@@ -173,6 +217,14 @@ module iota_identity::asset {
             let asset = transfer::receive(&mut proposal.id, asset);
             assert!(proposal.asset_id == object::id(&asset), EInvalidAsset);
             transfer::transfer(asset, proposal.sender_address);
+
+            iota::event::emit(AssetTransferConcluded {
+                proposal: proposal.id.to_inner(),
+                asset: proposal.asset_id,
+                sender: proposal.sender_address,
+                recipient: proposal.recipient_address,
+                concluded: false,
+            })
         };
 
         delete_transfer(proposal);
@@ -182,6 +234,7 @@ module iota_identity::asset {
     public(package) fun delete_sender_cap(cap: SenderCap) {
         let SenderCap {
             id,
+            ..
         } = cap;
         object::delete(id);
     }
@@ -189,6 +242,7 @@ module iota_identity::asset {
     public fun delete_recipient_cap(cap: RecipientCap) {
         let RecipientCap {
             id,
+            ..
         } = cap;
         object::delete(id);
     }

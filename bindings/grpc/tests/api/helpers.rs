@@ -20,16 +20,16 @@ use identity_storage::KeyType;
 use identity_storage::Storage;
 use identity_storage::StorageSigner;
 use identity_stronghold::StrongholdStorage;
-use identity_sui_name_tbd::client::IdentityClient;
-use identity_sui_name_tbd::client::IdentityClientReadOnly;
-use identity_sui_name_tbd::transaction::Transaction;
-use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
-use iota_sdk::client::stronghold::StrongholdAdapter;
-use iota_sdk::client::Password;
-use iota_sdk_move::types::base_types::IotaAddress;
-use iota_sdk_move::types::base_types::ObjectID;
-use iota_sdk_move::IotaClient;
-use iota_sdk_move::IotaClientBuilder;
+use identity_iota::iota::rebased::client::IdentityClient;
+use identity_iota::iota::rebased::client::IdentityClientReadOnly;
+use identity_iota::iota::rebased::transaction::Transaction;
+use iota_sdk_legacy::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk_legacy::client::stronghold::StrongholdAdapter;
+use iota_sdk_legacy::client::Password;
+use iota_sdk::types::base_types::IotaAddress;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::IotaClient;
+use iota_sdk::IotaClientBuilder;
 use jsonpath_rust::JsonPathQuery;
 use rand::distributions::Alphanumeric;
 use rand::distributions::DistString;
@@ -55,7 +55,7 @@ static PACKAGE_ID: OnceCell<ObjectID> = OnceCell::const_new();
 const SCRIPT_DIR: &str = concat!(
   env!("CARGO_MANIFEST_DIR"),
   "/../../",
-  "identity_sui_name_tbd",
+  "identity_iota_core",
   "/scripts"
 );
 const CACHED_PKG_ID: &str = "/tmp/identity_iota_pkg_id.txt";
@@ -144,7 +144,8 @@ where
   let document = identity_client
     .publish_did_document(document)
     .execute(&identity_client)
-    .await?;
+    .await?
+    .output;
 
   Ok((address, document, key_id, fragment))
 }

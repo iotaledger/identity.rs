@@ -27,6 +27,7 @@ pub(crate) fn propose_borrow(
 ) -> Result<ProgrammableTransaction, anyhow::Error> {
   let mut ptb = ProgrammableTransactionBuilder::new();
   let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
+  let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
   let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
   let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id)?;
   let objects_arg = ptb.pure(objects)?;
@@ -36,8 +37,10 @@ pub(crate) fn propose_borrow(
     ident_str!("identity").into(),
     ident_str!("propose_borrow").into(),
     vec![],
-    vec![identity_arg, cap_arg, exp_arg, objects_arg],
+    vec![identity_arg, delegation_token, exp_arg, objects_arg],
   );
+
+  utils::put_back_delegation_token(&mut ptb, cap_arg, delegation_token, borrow, package_id);
 
   Ok(ptb.finish())
 }
@@ -56,6 +59,7 @@ where
   let mut ptb = ProgrammableTransactionBuilder::new();
   let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
   let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
+  let (delegation_token, borrow)= utils::get_controller_delegation(&mut ptb, controller_cap, package);
   let proposal_id = ptb.pure(proposal_id)?;
 
   // Get the proposal's action as argument.
@@ -64,8 +68,10 @@ where
     ident_str!("identity").into(),
     ident_str!("execute_proposal").into(),
     vec![BorrowAction::move_type(package)],
-    vec![identity, controller_cap, proposal_id],
+    vec![identity, delegation_token, proposal_id],
   );
+
+  utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package);
 
   // Borrow all the objects specified in the action.
   let obj_arg_map = objects

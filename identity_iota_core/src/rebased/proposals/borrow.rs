@@ -36,8 +36,6 @@ pub(crate) type IntentFn = Box<dyn FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument
 #[derive(Default, Deserialize, Serialize)]
 pub struct BorrowAction {
   objects: Vec<ObjectID>,
-  #[serde(skip)]
-  intent: Option<IntentFn>,
 }
 
 /// A [`BorrowAction`] coupled with a user-provided function to describe how
@@ -86,17 +84,6 @@ impl<'i> ProposalBuilder<'i, BorrowAction> {
     I: IntoIterator<Item = ObjectID>,
   {
     objects.into_iter().fold(self, |builder, obj| builder.borrow(obj))
-  }
-}
-
-impl Proposal<BorrowAction> {
-  /// Defines how the borrowed assets should be used.
-  pub fn with_intent<F>(mut self, intent_fn: F) -> Self
-  where
-    F: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) + Send + 'static,
-  {
-    self.action.intent = Some(Box::new(intent_fn));
-    self
   }
 }
 

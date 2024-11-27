@@ -326,21 +326,6 @@ impl KeyComparable for IotaDID {
   }
 }
 
-#[cfg(feature = "client")]
-mod __iota_did_client {
-  use crate::block::output::AliasId;
-  use crate::IotaDID;
-
-  impl From<&IotaDID> for AliasId {
-    /// Creates an [`AliasId`] from the DID tag.
-    fn from(did: &IotaDID) -> Self {
-      let tag_bytes: [u8; IotaDID::TAG_BYTES_LEN] = prefix_hex::decode(did.tag_str())
-        .expect("being able to successfully decode the tag should be checked during DID creation");
-      AliasId::new(tag_bytes)
-    }
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use identity_did::DIDUrl;
@@ -612,47 +597,12 @@ mod tests {
   // ===========================================================================================================================
 
   #[cfg(feature = "iota-client")]
-  fn arbitrary_alias_id() -> impl Strategy<Value = iota_sdk_legacy::types::block::output::AliasId> {
-    (
-      proptest::prelude::any::<[u8; 32]>(),
-      iota_sdk_legacy::types::block::output::OUTPUT_INDEX_RANGE,
-    )
-      .prop_map(|(bytes, idx)| {
-        let transaction_id = iota_sdk_legacy::types::block::payload::transaction::TransactionId::new(bytes);
-        let output_id = iota_sdk_legacy::types::block::output::OutputId::new(transaction_id, idx).unwrap();
-        iota_sdk_legacy::types::block::output::AliasId::from(&output_id)
-      })
-  }
-
-  #[cfg(feature = "iota-client")]
-  proptest! {
-    #[test]
-    fn property_based_valid_parse(alias_id in arbitrary_alias_id()) {
-      let did: String = format!("did:{}:{}",IotaDID::METHOD, alias_id);
-      assert!(IotaDID::parse(did).is_ok());
-    }
-  }
-
-  #[cfg(feature = "iota-client")]
   proptest! {
     #[test]
     fn property_based_new(bytes in proptest::prelude::any::<[u8;32]>()) {
       for network_name in VALID_NETWORK_NAMES.iter().map(|name| NetworkName::try_from(*name).unwrap()) {
         // check that this does not panic
         IotaDID::new(&bytes, &network_name);
-      }
-    }
-  }
-
-  #[cfg(feature = "iota-client")]
-  proptest! {
-    #[test]
-    fn property_based_alias_id_string_representation_roundtrip(alias_id in arbitrary_alias_id()) {
-      for network_name in VALID_NETWORK_NAMES.iter().map(|name| NetworkName::try_from(*name).unwrap()) {
-        assert_eq!(
-          iota_sdk_legacy::types::block::output::AliasId::from_str(IotaDID::new(&alias_id, &network_name).tag_str()).unwrap(),
-          alias_id
-        );
       }
     }
   }

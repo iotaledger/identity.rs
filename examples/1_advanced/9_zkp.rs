@@ -54,7 +54,6 @@ where
   S: Signer<IotaKeySignature> + Sync,
 {
   // Create a new DID document with a placeholder DID.
-  // The DID will be derived from the Alias Id of the Alias Output after publishing.
   let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network());
 
   let verification_method_fragment = unpublished
@@ -146,7 +145,7 @@ async fn main() -> anyhow::Result<()> {
   // ============================================================================================
 
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_kinesis_iota_handler((*identity_client).clone());
+  resolver.attach_iota_handler((*identity_client).clone());
 
   // Holder resolves issuer's DID
   let issuer: CoreDID = JptCredentialValidatorUtils::extract_issuer_from_issued_jpt(&credential_jpt).unwrap();

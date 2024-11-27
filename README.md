@@ -60,8 +60,12 @@ identity_iota = { version = "1.4.0" }
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
 
 1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs`
-2. Start IOTA Sandbox as described in the [next section](#example-creating-an-identity)
-3. Run the example to create a DID using `cargo run --release --example 0_create_did`
+2. Get the [IOTA binaries](https://github.com/iotaledger/iota/releases).
+3. Start a local network for testing with `iota start --force-regenesis --with-faucet`.
+4. Request funds with `iota client faucet`.
+5. Publish a test identity package to your local network: `./identity_iota_core/scripts/publish_identity_package.sh`.
+6. Get the `packageId` value from the output (the entry with `"type": "published"`) and pass this as `IDENTITY_IOTA_PKG_ID` env value.
+7. Run the example to create a DID using `IDENTITY_IOTA_PKG_ID=(the value from previous step)  run --release --example 0_create_did`
 
 ## Example: Creating an Identity
 
@@ -76,7 +80,7 @@ Test this example using https://github.com/anko/txm: `txm README.md`
 !test program
 cd ../..
 mkdir tmp
-cat | sed -e 's#identity_iota = { version = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
+cat | sed -e 's#identity_iota = { git = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
 echo '[workspace]' >>tmp/Cargo.toml
 -->
 <!-- !test check Cargo Example -->
@@ -88,8 +92,8 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { version = "1.4.0", features = ["memstore"] }
-iota-sdk = { version = "1.0.2", default-features = true, features = ["tls", "client", "stronghold"] }
+identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha", features = ["memstore"] }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.0-alpha" }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.62"
 rand = "0.8.5"
@@ -111,76 +115,67 @@ timeout 360 cargo build || (echo "Process timed out after 360 seconds" && exit 1
 
 
 ```rust,no_run
-use identity_iota::core::ToJson;
-use identity_iota::iota::IotaClientExt;
+use anyhow::Context;
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::iota::NetworkName;
+use identity_iota::iota::rebased::client::convert_to_address;
+use identity_iota::iota::rebased::client::get_sender_public_key;
+use identity_iota::iota::rebased::client::IdentityClient;
+use identity_iota::iota::rebased::client::IdentityClientReadOnly;
+use identity_iota::iota::rebased::transaction::Transaction;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::JwkStorage;
 use identity_iota::storage::KeyIdMemstore;
+use identity_iota::storage::KeyType;
 use identity_iota::storage::Storage;
+use identity_iota::storage::StorageSigner;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
-use iota_sdk::client::api::GetAddressesOptions;
-use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
-use iota_sdk::client::secret::SecretManager;
-use iota_sdk::client::Client;
-use iota_sdk::crypto::keys::bip39;
-use iota_sdk::types::block::address::Bech32Address;
-use iota_sdk::types::block::output::AliasOutput;
-use iota_sdk::types::block::output::dto::AliasOutputDto;
+use iota_sdk::IotaClientBuilder;
 use tokio::io::AsyncReadExt;
 
 // The endpoint of the IOTA node to use.
 static API_ENDPOINT: &str = "http://localhost";
 
-/// Demonstrates how to create a DID Document and publish it in a new Alias Output.
+// Test budget for transactions.
+const TEST_GAS_BUDGET: u64 = 50_000_000;
+
+/// Demonstrates how to create a DID Document and publish it in a new identity.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder()
-    .with_primary_node(API_ENDPOINT, None)?
-    .finish()
+  let iota_client = IotaClientBuilder::default()
+    .build(API_ENDPOINT)
+    .await
+    .map_err(|err| anyhow::anyhow!(format!("failed to connect to network; {}", err)))?;
+
+  // Create new storage and generate new key.
+  let storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let generate = storage
+    .key_storage()
+    .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
     .await?;
+  let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
+  let public_key_bytes = get_sender_public_key(&public_key_jwk)?;
+  let sender_address = convert_to_address(&public_key_bytes)?;
+  let package_id = std::env::var("IDENTITY_IOTA_PKG_ID")
+    .map_err(|e| {
+      anyhow::anyhow!("env variable IDENTITY_IOTA_PKG_ID must be set in order to run the examples").context(e)
+    })
+    .and_then(|pkg_str| pkg_str.parse().context("invalid package id"))?;
 
-  // Create a new Stronghold.
-  let stronghold = StrongholdSecretManager::builder()
-    .password("secure_password".to_owned())
-    .build("./example-strong.hodl")?;
+  // Create identity client with signing capabilities.
+  let read_only_client = IdentityClientReadOnly::new(iota_client, package_id).await?;
+  let signer = StorageSigner::new(&storage, generate.key_id, public_key_jwk);
+  let identity_client = IdentityClient::new(read_only_client, signer).await?;
 
-  // Generate a mnemonic and store it in the Stronghold.
-  let random: [u8; 32] = rand::random();
-  let mnemonic =
-    bip39::wordlist::encode(random.as_ref(), &bip39::wordlist::ENGLISH).map_err(|err| anyhow::anyhow!("{err:?}"))?;
-  stronghold.store_mnemonic(mnemonic).await?;
-
-  // Create a new secret manager backed by the Stronghold.
-  let secret_manager: SecretManager = SecretManager::Stronghold(stronghold);
-
-  // Get the Bech32 human-readable part (HRP) of the network.
-  let network_name: NetworkName = client.network_name().await?;
-
-  // Get an address from the secret manager.
-  let address: Bech32Address = secret_manager
-  .generate_ed25519_addresses(
-    GetAddressesOptions::default()
-      .with_range(0..1)
-      .with_bech32_hrp((&network_name).try_into()?),
-  )
-  .await?[0];
-
-  println!("Your wallet address is: {}", address);
+  println!("Your wallet address is: {}", sender_address);
   println!("Please request funds from http://localhost/faucet/, wait for a couple of seconds and then press Enter.");
   tokio::io::stdin().read_u8().await?;
 
   // Create a new DID document with a placeholder DID.
-  // The DID will be derived from the Alias Id of the Alias Output after publishing.
-  let mut document: IotaDocument = IotaDocument::new(&network_name);
-
-  // Insert a new Ed25519 verification method in the DID document.
-  let storage: Storage<JwkMemStore, KeyIdMemstore> = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
-  document
+  let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network());
+  let verification_method_fragment = unpublished
     .generate_method(
       &storage,
       JwkMemStore::ED25519_KEY_TYPE,
@@ -190,13 +185,13 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-  // Construct an Alias Output containing the DID document, with the wallet address
-  // set as both the state controller and governor.
-  let alias_output: AliasOutput = client.new_did_output(address.into(), document, None).await?;
-  println!("Alias Output: {}", AliasOutputDto::from(&alias_output).to_json_pretty()?);
+  // Publish new DID document.
+  let document = identity_client
+    .publish_did_document(unpublished)
+    .execute(&identity_client)
+    .await?
+    .output;
 
-  // Publish the Alias Output and get the published DID document.
-  let document: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
   println!("Published DID document: {:#}", document);
 
   Ok(())

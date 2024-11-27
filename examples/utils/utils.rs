@@ -35,7 +35,7 @@ pub const TEST_GAS_BUDGET: u64 = 50_000_000;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
-pub async fn create_kinesis_did_document<K, I, S>(
+pub async fn create_did_document<K, I, S>(
   identity_client: &IdentityClient<S>,
   storage: &Storage<K, I>,
 ) -> anyhow::Result<(IotaDocument, String)>
@@ -45,7 +45,6 @@ where
   S: Signer<IotaKeySignature> + Sync,
 {
   // Create a new DID document with a placeholder DID.
-  // The DID will be derived from the Alias Id of the Alias Output after publishing.
   let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network());
   let verification_method_fragment = unpublished
     .generate_method(

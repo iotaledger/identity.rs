@@ -67,33 +67,6 @@ use secret_storage::Signer;
 use std::thread;
 use std::time::Duration as SleepDuration;
 
-// // Creates a DID with a JWP verification method.
-// pub async fn create_did<K, I, S>(
-//   identity_client: &IdentityClient<S>,
-//   storage: &Storage<K, I>,
-//   key_type: KeyType,
-//   alg: ProofAlgorithm,
-// ) -> anyhow::Result<(IotaDocument, String)>
-// where
-//   K: identity_storage::JwkStorage + identity_storage::JwkStorageBbsPlusExt,
-//   I: identity_storage::KeyIdStorage,
-//   S: Signer<IotaKeySignature> + Sync,
-// {
-//   // Create a new DID document with a placeholder DID.
-//   // The DID will be derived from the Alias Id of the Alias Output after publishing.
-//   let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network());
-
-//   let verification_method_fragment = unpublished
-//     .generate_method_jwp(storage, key_type, alg, None, MethodScope::VerificationMethod)
-//     .await?;
-
-//   let document = identity_client
-//     .publish_did_document(unpublished)
-//     .execute_with_gas(TEST_GAS_BUDGET, identity_client)
-//     .await?;
-
-//   Ok((document, verification_method_fragment))
-// }
 async fn create_did<K, I, S>(
   identity_client: &IdentityClient<S>,
   storage: &Storage<K, I>,
@@ -110,7 +83,6 @@ where
   let network_name: &NetworkName = identity_client.network();
 
   // Create a new DID document with a placeholder DID.
-  // The DID will be derived from the Alias Id of the Alias Output after publishing.
   let mut unpublished: IotaDocument = IotaDocument::new(network_name);
 
   // New Verification Method containing a BBS+ key
@@ -147,7 +119,7 @@ where
   Ok((document, fragment))
 }
 
-/// Demonstrates how to create an Anonymous Credential with BBS+.
+/// Demonstrates how to revoke a credential.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // ===========================================================================
@@ -423,7 +395,7 @@ async fn main() -> anyhow::Result<()> {
     JwsVerificationOptions::default().nonce(challenge.to_owned());
 
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
-  resolver.attach_kinesis_iota_handler((*holder_identity_client).clone());
+  resolver.attach_iota_handler((*holder_identity_client).clone());
 
   // Resolve the holder's document.
   let holder_did: CoreDID = JwtPresentationValidatorUtils::extract_holder(&presentation_jwt)?;

@@ -3,7 +3,7 @@
 
 mod borrow;
 mod config_change;
-mod deactive_did;
+mod deactivate_did;
 mod send;
 mod update_did_doc;
 mod upgrade;
@@ -20,8 +20,8 @@ use crate::rebased::transaction::ProtoTransaction;
 use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
-pub use deactive_did::*;
 pub use upgrade::*;
+pub use deactivate_did::*;
 use iota_sdk::rpc_types::IotaExecutionStatus;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaObjectDataOptions;

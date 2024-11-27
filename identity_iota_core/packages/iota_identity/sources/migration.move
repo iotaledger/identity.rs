@@ -73,7 +73,7 @@ module iota_identity::migration_tests {
     use iota_identity::migration::migrate_alias_output;
     use stardust::alias::{Self, Alias};
     use iota_identity::migration_registry::{MigrationRegistry, init_testing};
-    use iota_identity::multicontroller::ControllerCap;
+    use iota_identity::controller::ControllerCap;
 
     fun create_did_alias(ctx: &mut TxContext): Alias {
         let sender = ctx.sender();
@@ -115,13 +115,15 @@ module iota_identity::migration_tests {
 
         scenario.next_tx(controller_a);
         let identity = scenario.take_shared<Identity>();
-        let controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
+        let mut controller_a_cap = scenario.take_from_address<ControllerCap>(controller_a);
+        let (token, borrow) = controller_a_cap.borrow();
 
-        // Assert correct binding in migration regitry
+        // Assert correct binding in migration registry
         assert!(registry.lookup(alias_id) == identity.id().to_inner(), 0);
 
         // Assert the sender is controller
-        identity.did_doc().assert_is_member(&controller_a_cap);
+        identity.did_doc().assert_is_member(&token);
+        controller_a_cap.put_back(token, borrow);
 
         // assert the metadata is b"DID"
         let did = identity.did_doc().value();
