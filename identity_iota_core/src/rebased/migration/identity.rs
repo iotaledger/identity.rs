@@ -60,7 +60,7 @@ const NAME: &str = "Identity";
 const HISTORY_DEFAULT_PAGE_SIZE: usize = 10;
 
 /// The data stored in an on-chain identity.
-pub type IdentityData = (UID, Multicontroller<Vec<u8>>, Timestamp, Timestamp);
+pub type IdentityData = (UID, Multicontroller<Vec<u8>>, Timestamp, Timestamp, u64);
 
 /// An on-chain object holding a DID Document.
 pub enum Identity {
@@ -177,7 +177,7 @@ impl OnChainIdentity {
 
   /// Upgrades this [`OnChainIdentity`]'s version to match the package's.
   pub fn upgrade_version(&mut self) -> ProposalBuilder<'_, Upgrade> {
-    ProposalBuilder::new(self, Upgrade::default())
+    ProposalBuilder::new(self, Upgrade)
   }
 
   /// Sends assets owned by this [`OnChainIdentity`] to other addresses.
@@ -388,10 +388,7 @@ fn is_identity(value: &IotaParsedMoveObject) -> bool {
 /// # Errors:
 /// * in case given data for DID is not an object
 /// * parsing identity data from object fails
-pub(crate) fn unpack_identity_data(
-  did: &IotaDID,
-  data: &IotaObjectData,
-) -> Result<Option<(UID, Multicontroller<Vec<u8>>, Timestamp, Timestamp, u64)>, Error> {
+pub(crate) fn unpack_identity_data(did: &IotaDID, data: &IotaObjectData) -> Result<Option<IdentityData>, Error> {
   let content = data
     .clone()
     .content
