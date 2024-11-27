@@ -66,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Step 2 - Get history
   let history = onchain_identity.get_history(&identity_client, None, None).await?;
-  println!("Alias History has {} entries", history.len());
+  println!("Identity History has {} entries", history.len());
 
   // Optional step - Parse to documents
   let documents: Vec<IotaDocument> = history
@@ -89,7 +89,7 @@ async fn main() -> anyhow::Result<()> {
     }
     current_item = history.first();
     let IotaObjectData { object_id, version, .. } = current_item.unwrap();
-    println!("Alias History entry: object_id: {object_id}, version: {version}");
+    println!("Identity History entry: object_id: {object_id}, version: {version}");
   }
 
   // Alternative Step 2 - Page by looping with pre-fetch next page check (again with page size 1)
@@ -102,7 +102,7 @@ async fn main() -> anyhow::Result<()> {
 
     current_item = history.first();
     let IotaObjectData { object_id, version, .. } = current_item.unwrap();
-    println!("Alias History entry: object_id: {object_id}, version: {version}");
+    println!("Identity ty History entry: object_id: {object_id}, version: {version}");
 
     if !has_previous_version(current_item.unwrap())? {
       break;

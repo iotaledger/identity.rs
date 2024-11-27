@@ -44,7 +44,7 @@ impl IotaDID {
   /// The tag of the placeholder DID.
   pub const PLACEHOLDER_TAG: &'static str = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-  /// The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
+  /// The length of an identities object id, which is a BLAKE2b-256 hash (32-bytes).
   pub(crate) const TAG_BYTES_LEN: usize = 32;
 
   /// Convert a `CoreDID` reference to an `IotaDID` reference without checking the referenced value.
@@ -84,10 +84,9 @@ impl IotaDID {
     Self::parse(did).expect("DIDs constructed with new should be valid")
   }
 
-  /// Constructs a new [`IotaDID`] from a hex representation of an Alias Id and the given
-  /// `network_name`.
-  pub fn from_alias_id(alias_id: &str, network_name: &NetworkName) -> Self {
-    let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name, alias_id);
+  /// Constructs a new [`IotaDID`] from an identities object id and the given `network_name`.
+  pub fn from_object_id(object_id: &str, network_name: &NetworkName) -> Self {
+    let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name, object_id);
     Self::parse(did).expect("DIDs constructed with new should be valid")
   }
 
@@ -151,7 +150,7 @@ impl IotaDID {
     Self::denormalized_components(self.method_id()).0
   }
 
-  /// Returns the tag of the `DID`, which is a hex-encoded Alias ID.
+  /// Returns the tag of the `DID`, which is an identities object id.
   pub fn tag_str(&self) -> &str {
     Self::denormalized_components(self.method_id()).1
   }
@@ -339,14 +338,11 @@ mod tests {
   // Reusable constants and statics
   // ===========================================================================================================================
 
-  // obtained AliasID from a valid OutputID string
-  // output_id copied from https://github.com/iotaledger/bee/blob/30cab4f02e9f5d72ffe137fd9eb09723b4f0fdb6/bee-block/tests/output_id.rs
-  // value of AliasID computed from AliasId::from(OutputId).to_string()
-  const VALID_ALIAS_ID_STR: &str = "0xf29dd16310c2100fd1bf568b345fb1cc14d71caa3bd9b5ad735d2bd6d455ca3b";
+  const VALID_OBJECT_ID_STR: &str = "0xf29dd16310c2100fd1bf568b345fb1cc14d71caa3bd9b5ad735d2bd6d455ca3b";
 
-  const LEN_VALID_ALIAS_STR: usize = VALID_ALIAS_ID_STR.len();
+  const LEN_VALID_OBJECT_ID_STR: usize = VALID_OBJECT_ID_STR.len();
 
-  static VALID_IOTA_DID_STRING: Lazy<String> = Lazy::new(|| format!("did:{}:{}", IotaDID::METHOD, VALID_ALIAS_ID_STR));
+  static VALID_IOTA_DID_STRING: Lazy<String> = Lazy::new(|| format!("did:{}:{}", IotaDID::METHOD, VALID_OBJECT_ID_STR));
 
   // Rules are: at least one character, at most six characters and may only contain digits and/or lowercase ascii
   // characters.
@@ -372,7 +368,7 @@ mod tests {
     let valid_strings: Vec<String> = VALID_NETWORK_NAMES
       .iter()
       .flat_map(|network| {
-        [VALID_ALIAS_ID_STR, IotaDID::PLACEHOLDER_TAG]
+        [VALID_OBJECT_ID_STR, IotaDID::PLACEHOLDER_TAG]
           .iter()
           .map(move |tag| network_tag_to_did(network, tag))
       })
@@ -466,9 +462,9 @@ mod tests {
     }
 
     // Should also work for DID's of the form: did:<method_name>:<valid_iota_network (or
-    // nothing/normalized)>:<alias_id>
-    let did_other_string: String = format!("did:method:{VALID_ALIAS_ID_STR}");
-    let did_other_with_network: String = format!("did:method:test:{VALID_ALIAS_ID_STR}");
+    // nothing/normalized)>:<object_id>
+    let did_other_string: String = format!("did:method:{VALID_OBJECT_ID_STR}");
+    let did_other_with_network: String = format!("did:method:test:{VALID_OBJECT_ID_STR}");
     let did_other_core: CoreDID = CoreDID::parse(did_other_string).unwrap();
     let did_other_with_network_core: CoreDID = CoreDID::parse(did_other_with_network).unwrap();
 
@@ -480,16 +476,16 @@ mod tests {
   fn invalid_check_tag() {
     let invalid_method_id_strings = [
       // Too many segments
-      format!("did:method:main:test:{VALID_ALIAS_ID_STR}"),
+      format!("did:method:main:test:{VALID_OBJECT_ID_STR}"),
       // Tag is not prefixed
-      format!("did:method:{}", &VALID_ALIAS_ID_STR.strip_prefix("0x").unwrap()),
+      format!("did:method:{}", &VALID_OBJECT_ID_STR.strip_prefix("0x").unwrap()),
       // Tag is too long
       format!(
         "did:method:{}",
-        &VALID_ALIAS_ID_STR.chars().chain("a".chars()).collect::<String>()
+        &VALID_OBJECT_ID_STR.chars().chain("a".chars()).collect::<String>()
       ),
       // Tag is too short (omit last character)
-      format!("did:method:main:{}", &VALID_ALIAS_ID_STR[..65]),
+      format!("did:method:main:{}", &VALID_OBJECT_ID_STR[..65]),
     ];
 
     for input in invalid_method_id_strings {
@@ -532,10 +528,10 @@ mod tests {
       "did:{}:{}:{}",
       IotaDID::METHOD,
       IotaDID::DEFAULT_NETWORK,
-      VALID_ALIAS_ID_STR
+      VALID_OBJECT_ID_STR
     );
     let expected_normalization_string_representation: String =
-      format!("did:{}:{}", IotaDID::METHOD, VALID_ALIAS_ID_STR);
+      format!("did:{}:{}", IotaDID::METHOD, VALID_OBJECT_ID_STR);
 
     assert_eq!(
       IotaDID::parse(did_with_default_network_string).unwrap().as_str(),
@@ -552,26 +548,26 @@ mod tests {
 
   #[test]
   fn parse_invalid() {
-    let execute_assertions = |valid_alias_id: &str| {
+    let execute_assertions = |valid_object_id: &str| {
       assert!(matches!(
-        IotaDID::parse(format!("dod:{}:{}", IotaDID::METHOD, valid_alias_id)),
+        IotaDID::parse(format!("dod:{}:{}", IotaDID::METHOD, valid_object_id)),
         Err(DIDError::InvalidScheme)
       ));
 
       assert!(matches!(
-        IotaDID::parse(format!("did:key:{valid_alias_id}")),
+        IotaDID::parse(format!("did:key:{valid_object_id}")),
         Err(DIDError::InvalidMethodName)
       ));
 
       // invalid network name (exceeded six characters)
       assert!(matches!(
-        IotaDID::parse(format!("did:{}:1234567:{}", IotaDID::METHOD, valid_alias_id)),
+        IotaDID::parse(format!("did:{}:1234567:{}", IotaDID::METHOD, valid_object_id)),
         Err(DIDError::Other(_))
       ));
 
       // invalid network name (contains non ascii character é)
       assert!(matches!(
-        IotaDID::parse(format!("did:{}:féta:{}", IotaDID::METHOD, valid_alias_id)),
+        IotaDID::parse(format!("did:{}:féta:{}", IotaDID::METHOD, valid_object_id)),
         Err(DIDError::InvalidMethodId)
       ));
 
@@ -583,13 +579,13 @@ mod tests {
 
       // too many segments in method_id
       assert!(matches!(
-        IotaDID::parse(format!("did:{}:test:foo:{}", IotaDID::METHOD, valid_alias_id)),
+        IotaDID::parse(format!("did:{}:test:foo:{}", IotaDID::METHOD, valid_object_id)),
         Err(DIDError::InvalidMethodId)
       ));
     };
 
     execute_assertions(IotaDID::PLACEHOLDER_TAG);
-    execute_assertions(VALID_ALIAS_ID_STR);
+    execute_assertions(VALID_OBJECT_ID_STR);
   }
 
   // ===========================================================================================================================
@@ -607,14 +603,14 @@ mod tests {
     }
   }
 
-  fn arbitrary_alias_id_string_replica() -> impl Strategy<Value = String> {
-    proptest::string::string_regex(&format!("0x([a-f]|[0-9]){{{}}}", (LEN_VALID_ALIAS_STR - 2)))
+  fn arbitrary_object_id_string_replica() -> impl Strategy<Value = String> {
+    proptest::string::string_regex(&format!("0x([a-f]|[0-9]){{{}}}", (LEN_VALID_OBJECT_ID_STR - 2)))
       .expect("regex should be ok")
   }
 
   proptest! {
     #[test]
-    fn valid_alias_id_string_replicas(tag in arbitrary_alias_id_string_replica()) {
+    fn valid_object_id_string_replicas(tag in arbitrary_object_id_string_replica()) {
       let did : String = format!("did:{}:{}", IotaDID::METHOD, tag);
       assert!(
         IotaDID::parse(did).is_ok()
@@ -629,7 +625,7 @@ mod tests {
         if arb_string
           .chars()
           .all(|c| c.is_ascii_hexdigit() && c.is_ascii_lowercase())
-          && arb_string.len() == LEN_VALID_ALIAS_STR
+          && arb_string.len() == LEN_VALID_OBJECT_ID_STR
           && arb_string.starts_with("0x")
         {
           // this means we are in the rare case of generating a valid string hence we replace the last 0 with the non
@@ -680,58 +676,58 @@ mod tests {
   // ===========================================================================================================================
   #[test]
   fn test_network() {
-    let execute_assertions = |valid_alias_id: &str| {
-      let did: IotaDID = format!("did:{}:{}", IotaDID::METHOD, valid_alias_id).parse().unwrap();
+    let execute_assertions = |valid_object_id: &str| {
+      let did: IotaDID = format!("did:{}:{}", IotaDID::METHOD, valid_object_id).parse().unwrap();
       assert_eq!(did.network_str(), IotaDID::DEFAULT_NETWORK);
 
-      let did: IotaDID = format!("did:{}:dev:{}", IotaDID::METHOD, valid_alias_id)
+      let did: IotaDID = format!("did:{}:dev:{}", IotaDID::METHOD, valid_object_id)
         .parse()
         .unwrap();
       assert_eq!(did.network_str(), "dev");
 
-      let did: IotaDID = format!("did:{}:test:{}", IotaDID::METHOD, valid_alias_id)
+      let did: IotaDID = format!("did:{}:test:{}", IotaDID::METHOD, valid_object_id)
         .parse()
         .unwrap();
       assert_eq!(did.network_str(), "test");
 
-      let did: IotaDID = format!("did:{}:custom:{}", IotaDID::METHOD, valid_alias_id)
+      let did: IotaDID = format!("did:{}:custom:{}", IotaDID::METHOD, valid_object_id)
         .parse()
         .unwrap();
       assert_eq!(did.network_str(), "custom");
     };
 
     execute_assertions(IotaDID::PLACEHOLDER_TAG);
-    execute_assertions(VALID_ALIAS_ID_STR);
+    execute_assertions(VALID_OBJECT_ID_STR);
   }
 
   #[test]
   fn test_tag() {
-    let execute_assertions = |valid_alias_id: &str| {
-      let did: IotaDID = format!("did:{}:{}", IotaDID::METHOD, valid_alias_id).parse().unwrap();
-      assert_eq!(did.tag_str(), valid_alias_id);
+    let execute_assertions = |valid_object_id: &str| {
+      let did: IotaDID = format!("did:{}:{}", IotaDID::METHOD, valid_object_id).parse().unwrap();
+      assert_eq!(did.tag_str(), valid_object_id);
 
       let did: IotaDID = format!(
         "did:{}:{}:{}",
         IotaDID::METHOD,
         IotaDID::DEFAULT_NETWORK,
-        valid_alias_id
+        valid_object_id
       )
       .parse()
       .unwrap();
-      assert_eq!(did.tag_str(), valid_alias_id);
+      assert_eq!(did.tag_str(), valid_object_id);
 
-      let did: IotaDID = format!("did:{}:dev:{}", IotaDID::METHOD, valid_alias_id)
+      let did: IotaDID = format!("did:{}:dev:{}", IotaDID::METHOD, valid_object_id)
         .parse()
         .unwrap();
-      assert_eq!(did.tag_str(), valid_alias_id);
+      assert_eq!(did.tag_str(), valid_object_id);
 
-      let did: IotaDID = format!("did:{}:custom:{}", IotaDID::METHOD, valid_alias_id)
+      let did: IotaDID = format!("did:{}:custom:{}", IotaDID::METHOD, valid_object_id)
         .parse()
         .unwrap();
-      assert_eq!(did.tag_str(), valid_alias_id);
+      assert_eq!(did.tag_str(), valid_object_id);
     };
     execute_assertions(IotaDID::PLACEHOLDER_TAG);
-    execute_assertions(VALID_ALIAS_ID_STR);
+    execute_assertions(VALID_OBJECT_ID_STR);
   }
 
   // ===========================================================================================================================
@@ -740,75 +736,75 @@ mod tests {
 
   #[test]
   fn test_parse_did_url_valid() {
-    let execute_assertions = |valid_alias_id: &str| {
-      assert!(DIDUrl::parse(format!("did:{}:{}", IotaDID::METHOD, valid_alias_id)).is_ok());
-      assert!(DIDUrl::parse(format!("did:{}:{}#fragment", IotaDID::METHOD, valid_alias_id)).is_ok());
+    let execute_assertions = |valid_object_id: &str| {
+      assert!(DIDUrl::parse(format!("did:{}:{}", IotaDID::METHOD, valid_object_id)).is_ok());
+      assert!(DIDUrl::parse(format!("did:{}:{}#fragment", IotaDID::METHOD, valid_object_id)).is_ok());
       assert!(DIDUrl::parse(format!(
         "did:{}:{}?somequery=somevalue",
         IotaDID::METHOD,
-        valid_alias_id
+        valid_object_id
       ))
       .is_ok());
       assert!(DIDUrl::parse(format!(
         "did:{}:{}?somequery=somevalue#fragment",
         IotaDID::METHOD,
-        valid_alias_id
+        valid_object_id
       ))
       .is_ok());
 
-      assert!(DIDUrl::parse(format!("did:{}:main:{}", IotaDID::METHOD, valid_alias_id)).is_ok());
-      assert!(DIDUrl::parse(format!("did:{}:main:{}#fragment", IotaDID::METHOD, valid_alias_id)).is_ok());
+      assert!(DIDUrl::parse(format!("did:{}:main:{}", IotaDID::METHOD, valid_object_id)).is_ok());
+      assert!(DIDUrl::parse(format!("did:{}:main:{}#fragment", IotaDID::METHOD, valid_object_id)).is_ok());
       assert!(DIDUrl::parse(format!(
         "did:{}:main:{}?somequery=somevalue",
         IotaDID::METHOD,
-        valid_alias_id
+        valid_object_id
       ))
       .is_ok());
       assert!(DIDUrl::parse(format!(
         "did:{}:main:{}?somequery=somevalue#fragment",
         IotaDID::METHOD,
-        valid_alias_id
+        valid_object_id
       ))
       .is_ok());
 
-      assert!(DIDUrl::parse(format!("did:{}:dev:{}", IotaDID::METHOD, valid_alias_id)).is_ok());
-      assert!(DIDUrl::parse(format!("did:{}:dev:{}#fragment", IotaDID::METHOD, valid_alias_id)).is_ok());
+      assert!(DIDUrl::parse(format!("did:{}:dev:{}", IotaDID::METHOD, valid_object_id)).is_ok());
+      assert!(DIDUrl::parse(format!("did:{}:dev:{}#fragment", IotaDID::METHOD, valid_object_id)).is_ok());
       assert!(DIDUrl::parse(format!(
         "did:{}:dev:{}?somequery=somevalue",
         IotaDID::METHOD,
-        valid_alias_id
+        valid_object_id
       ))
       .is_ok());
       assert!(DIDUrl::parse(format!(
         "did:{}:dev:{}?somequery=somevalue#fragment",
         IotaDID::METHOD,
-        valid_alias_id
+        valid_object_id
       ))
       .is_ok());
 
-      assert!(DIDUrl::parse(format!("did:{}:custom:{}", IotaDID::METHOD, valid_alias_id)).is_ok());
-      assert!(DIDUrl::parse(format!("did:{}:custom:{}#fragment", IotaDID::METHOD, valid_alias_id)).is_ok());
+      assert!(DIDUrl::parse(format!("did:{}:custom:{}", IotaDID::METHOD, valid_object_id)).is_ok());
+      assert!(DIDUrl::parse(format!("did:{}:custom:{}#fragment", IotaDID::METHOD, valid_object_id)).is_ok());
       assert!(DIDUrl::parse(format!(
         "did:{}:custom:{}?somequery=somevalue",
         IotaDID::METHOD,
-        valid_alias_id
+        valid_object_id
       ))
       .is_ok());
       assert!(DIDUrl::parse(format!(
         "did:{}:custom:{}?somequery=somevalue#fragment",
         IotaDID::METHOD,
-        valid_alias_id
+        valid_object_id
       ))
       .is_ok());
     };
     execute_assertions(IotaDID::PLACEHOLDER_TAG);
-    execute_assertions(VALID_ALIAS_ID_STR);
+    execute_assertions(VALID_OBJECT_ID_STR);
   }
 
   #[test]
   fn valid_url_setters() {
-    let execute_assertions = |valid_alias_id: &str| {
-      let mut did_url: DIDUrl = IotaDID::parse(format!("did:{}:{}", IotaDID::METHOD, valid_alias_id))
+    let execute_assertions = |valid_object_id: &str| {
+      let mut did_url: DIDUrl = IotaDID::parse(format!("did:{}:{}", IotaDID::METHOD, valid_object_id))
         .unwrap()
         .into_url();
 
@@ -821,6 +817,6 @@ mod tests {
       assert_eq!(did_url.fragment(), Some("foo"));
     };
     execute_assertions(IotaDID::PLACEHOLDER_TAG);
-    execute_assertions(VALID_ALIAS_ID_STR);
+    execute_assertions(VALID_OBJECT_ID_STR);
   }
 }
