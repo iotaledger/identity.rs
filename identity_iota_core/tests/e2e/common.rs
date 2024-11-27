@@ -122,7 +122,7 @@ async fn get_active_address() -> anyhow::Result<IotaAddress> {
     .output()
     .await
     .context("Failed to execute command")
-    .and_then(|output| Ok(serde_json::from_slice::<IotaAddress>(&output.stdout)?))
+    .and_then(|output| Ok(serde_json::from_slice::<IotaAddress>(dbg!(&output.stdout))?))
 }
 
 async fn publish_package(active_address: IotaAddress) -> anyhow::Result<ObjectID> {
