@@ -426,6 +426,59 @@ fn is_identity(value: &IotaParsedMoveObject) -> bool {
   value.type_.module.as_ident_str().as_str() == MODULE && value.type_.name.as_ident_str().as_str() == NAME
 }
 
+/// Unpack identity data from given `IotaObjectData`
+///
+/// # Errors:
+/// * in case given data for DID is not an object
+/// * parsing identity data from object fails
+pub(crate) fn unpack_identity_data(
+  did: &IotaDID,
+  data: &IotaObjectData,
+) -> Result<Option<(UID, Multicontroller<Vec<u8>>, Timestamp, Timestamp)>, Error> {
+  let content = data
+    .clone()
+    .content
+    .ok_or_else(|| Error::ObjectLookup(format!("no content in retrieved object in object id {did}")))?;
+  let IotaParsedData::MoveObject(value) = content else {
+    return Err(Error::ObjectLookup(format!(
+      "given data for DID {did} is not an object"
+    )));
+  };
+  if !is_identity(&value) {
+    return Ok(None);
+  }
+
+  #[derive(Deserialize)]
+  struct TempOnChainIdentity {
+    id: UID,
+    did_doc: Multicontroller<Vec<u8>>,
+    created: Number<u64>,
+    updated: Number<u64>,
+  }
+
+  let TempOnChainIdentity {
+    id,
+    did_doc: multi_controller,
+    created,
+    updated,
+  } = serde_json::from_value::<TempOnChainIdentity>(value.fields.to_json_value())
+    .map_err(|err| Error::ObjectLookup(format!("could not parse identity document with DID {did}; {err}")))?;
+
+  // Parse DID document timestamps
+  let created = {
+    let timestamp_ms: u64 = created.try_into().expect("Move string-encoded u64 are valid u64");
+    // `Timestamp` requires a timestamp expressed in seconds.
+    Timestamp::from_unix(timestamp_ms as i64 / 1000).expect("On-chain clock produces valid timestamps")
+  };
+  let updated = {
+    let timestamp_ms: u64 = updated.try_into().expect("Move string-encoded u64 are valid u64");
+    // `Timestamp` requires a timestamp expressed in seconds.
+    Timestamp::from_unix(timestamp_ms as i64 / 1000).expect("On-chain clock produces valid timestamps")
+  };
+
+  Ok(Some((id, multi_controller, created, updated)))
+}
+
 /// Builder-style struct to create a new [`OnChainIdentity`].
 #[derive(Debug)]
 pub struct IdentityBuilder<'a> {
