@@ -118,8 +118,8 @@ impl IdentityClientReadOnly {
       .map_err(|e| Error::ObjectLookup(e.to_string()))
   }
 
-  #[allow(dead_code)]
-  pub(crate) async fn get_object_ref_by_id(&self, obj: ObjectID) -> Result<Option<OwnedObjectRef>, Error> {
+  /// Returns an object's [`OwnedObjectRef`], if any.
+  pub async fn get_object_ref_by_id(&self, obj: ObjectID) -> Result<Option<OwnedObjectRef>, Error> {
     self
       .read_api()
       .get_object_with_options(obj, IotaObjectDataOptions::default().with_owner())

@@ -41,6 +41,7 @@ use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::client::IotaKeySignature;
 use crate::rebased::proposals::BorrowAction;
 use crate::rebased::proposals::ConfigChange;
+use crate::rebased::proposals::ControllerExecution;
 use crate::rebased::proposals::DeactivateDid;
 use crate::rebased::proposals::ProposalBuilder;
 use crate::rebased::proposals::SendAction;
@@ -182,11 +183,16 @@ impl OnChainIdentity {
   }
 
   /// Borrows assets owned by this [`OnChainIdentity`] to use them in a custom transaction.
-  /// # Notes
-  /// Make sure to call [`super::Proposal::with_intent`] before executing the proposal.
-  /// Failing to do so will make [`crate::proposals::ProposalT::execute`] return an error.
   pub fn borrow_assets(&mut self) -> ProposalBuilder<'_, BorrowAction> {
     ProposalBuilder::new(self, BorrowAction::default())
+  }
+
+  /// Borrows a `ControllerCap` with ID `controller_cap` owned by this identity in a transaction.
+  /// This proposal is used to perform operation on a sub-identity controlled
+  /// by this one.
+  pub fn controller_execution(&mut self, controller_cap: ObjectID) -> ProposalBuilder<'_, ControllerExecution> {
+    let action = ControllerExecution::new(controller_cap, self);
+    ProposalBuilder::new(self, action)
   }
 
   /// Returns historical data for this [`OnChainIdentity`].
@@ -409,7 +415,7 @@ pub(crate) fn unpack_identity_data(
     did_doc: multi_controller,
     created,
     updated,
-    version
+    version,
   } = serde_json::from_value::<TempOnChainIdentity>(value.fields.to_json_value())
     .map_err(|err| Error::ObjectLookup(format!("could not parse identity document with DID {did}; {err}")))?;
 

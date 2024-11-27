@@ -15,6 +15,7 @@ module iota_identity::identity {
         transfer_proposal::{Self, Send},
         borrow_proposal::{Self, Borrow},
         did_deactivation_proposal::{Self, DidDeactivation},
+        controller_proposal::{Self, ControllerExecution},
         upgrade_proposal::{Self, Upgrade},
     };
 
@@ -190,7 +191,7 @@ module iota_identity::identity {
             self.execute_deactivation(cap, proposal_id, clock, ctx);
             option::none()
         } else {
-            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+            emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, false);
             option::some(proposal_id)
         }
     }
@@ -211,13 +212,43 @@ module iota_identity::identity {
         self.did_doc.set_controlled_value(vector[]);
         self.updated = clock.timestamp_ms();
 
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
+        emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
+    }
+
+    /// Creates a new `ControllerExecution` proposal.
+    public fun propose_controller_execution(
+        self: &mut Identity,
+        cap: &DelegationToken,
+        controller_cap_id: ID,
+        expiration: Option<u64>,
+        ctx: &mut TxContext,
+    ): ID {
+        let identity_address = self.id().to_address();
+        let proposal_id = self.did_doc.create_proposal(
+            cap,
+            controller_proposal::new(controller_cap_id, identity_address),
+            expiration,
+            ctx,
+        );
+
+        emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, false);
+        proposal_id
+    }
+
+    /// Borrow the identity-owned controller cap specified in `ControllerExecution`.
+    /// The borrowed cap must be put back by calling `controller_proposal::put_back`.
+    public fun borrow_controller_cap(
+        self: &mut Identity,
+        action: &mut Action<ControllerExecution>,
+        receiving: Receiving<ControllerCap>,
+    ): ControllerCap {
+        controller_proposal::receive(action, &mut self.id, receiving)
     }
 
     /// Proposes to upgrade this `Identity` to this package's version.
     public fun propose_upgrade(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         expiration: Option<u64>,
         ctx: &mut TxContext,
     ): Option<ID> {
@@ -235,7 +266,7 @@ module iota_identity::identity {
             self.execute_upgrade(cap, proposal_id, ctx); 
             option::none()
         } else {
-            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+            emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, false);
             option::some(proposal_id)
         }
     }
@@ -244,13 +275,13 @@ module iota_identity::identity {
     /// package's version.
     public fun execute_upgrade(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         proposal_id: ID,
         ctx: &mut TxContext,
     ) {
         self.execute_proposal<Upgrade>(cap, proposal_id, ctx).unwrap();
         self.migrate();
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
+        emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
     }
 
     /// Migrates this `Identity` to this package's version.
@@ -286,7 +317,7 @@ module iota_identity::identity {
             self.execute_update(cap, proposal_id, clock, ctx);
             option::none()
         } else {
-            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+            emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, false);
             option::some(proposal_id)
         }
     }
@@ -307,7 +338,7 @@ module iota_identity::identity {
         );
 
         self.updated = clock.timestamp_ms();
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
+        emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
     }
 
     /// Proposes to update this `Identity`'s AC.
@@ -341,7 +372,7 @@ module iota_identity::identity {
             self.execute_config_change(cap, proposal_id, ctx);
             option::none()
         } else {
-            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+            emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, false);
             option::some(proposal_id)
         }
     }
@@ -359,7 +390,7 @@ module iota_identity::identity {
             proposal_id,
             ctx,
         );
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
+        emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
     }
 
     /// Proposes the transfer of a set of objects owned by this `Identity`.
@@ -370,7 +401,7 @@ module iota_identity::identity {
         objects: vector<ID>,
         recipients: vector<address>,
         ctx: &mut TxContext,
-    ) {
+    ): ID {
         let proposal_id = transfer_proposal::propose_send(
             &mut self.did_doc,
             cap,
@@ -379,7 +410,8 @@ module iota_identity::identity {
             recipients,
             ctx
         );
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+        emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, false);
+        proposal_id
     }
 
     /// Sends one object among the one specified in a `Send` proposal.
@@ -399,7 +431,7 @@ module iota_identity::identity {
         expiration: Option<u64>,
         objects: vector<ID>,
         ctx: &mut TxContext,
-    ) {
+    ): ID {
         let identity_address = self.id().to_address();
         let proposal_id = borrow_proposal::propose_borrow(
             &mut self.did_doc,
@@ -409,7 +441,8 @@ module iota_identity::identity {
             identity_address,
             ctx,
         );
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+        emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, false);
+        proposal_id
     }
 
     /// Takes one of the borrowed assets.
@@ -444,7 +477,7 @@ module iota_identity::identity {
         proposal_id: ID,
         ctx: &mut TxContext,
     ): Action<T> {
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
+        emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
         self.did_doc.execute_proposal(cap, proposal_id, ctx)
     }
 

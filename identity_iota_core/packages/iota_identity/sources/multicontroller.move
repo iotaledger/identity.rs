@@ -293,7 +293,7 @@ module iota_identity::multicontroller {
     /// Destroys a `ControllerCap`. Can only be used after a controller has been removed from
     /// the controller committee.
     public fun destroy_controller_cap<V>(self: &Multicontroller<V>, cap: ControllerCap) {
-        assert!(self.controllers.contains(&cap.id().to_inner()), EInvalidController);
+        assert!(!self.controllers.contains(&cap.id().to_inner()), EInvalidController);
 
         cap.delete();
     }
