@@ -20,7 +20,10 @@ use identity_iota_core::IotaDocument;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use iota_sdk::rpc_types::IotaObjectData;
+use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::SequenceNumber;
+use iota_sdk::types::object::Owner;
+use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use move_core_types::ident_str;
@@ -352,6 +355,85 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
     })
     .execute(&identity_client)
     .await?;
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn controller_execution_works() -> anyhow::Result<()> {
+  let test_client = get_test_client().await?;
+  let identity_client = test_client.new_user_client().await?;
+
+  let mut identity = identity_client
+    .create_identity(TEST_DOC)
+    .finish()
+    .execute(&identity_client)
+    .await?
+    .output;
+  let identity_address = identity.id().into();
+
+  // Create a second identity owned by the first.
+  let identity2 = identity_client
+    .create_identity(TEST_DOC)
+    .controller(identity_address, 1)
+    .threshold(1)
+    .finish()
+    .execute(&identity_client)
+    .await?
+    .output;
+
+  // Let's find identity's controller cap for identity2.
+  let controller_cap = identity_client
+    .find_owned_ref_for_address(
+      identity_address,
+      format!("{}::controller::ControllerCap", identity_client.package_id()).parse()?,
+      |_| true,
+    )
+    .await?
+    .expect("identity is a controller of identity2");
+
+  // Perform an action on `identity2` as a controller of `identity`.
+  let ProposalResult::Pending(controller_execution) = identity
+    .controller_execution(controller_cap.0)
+    .finish(&identity_client)
+    .await?
+    .execute(&identity_client)
+    .await?
+    .output
+  else {
+    panic!("controller execution proposals cannot be executed without being driven by the user")
+  };
+  let identity2_ref = identity_client.get_object_ref_by_id(identity2.id()).await?.unwrap();
+  let Owner::Shared { initial_shared_version } = identity2_ref.owner else {
+    panic!("identity2 is shared")
+  };
+  let tx_output = controller_execution
+    .into_tx(&mut identity, &identity_client)
+    .await?
+    // specify the operation to perform with the borrowed identity's controller_cap
+    .with_intent(|ptb, controller_cap| {
+      let identity2 = ptb
+        .obj(ObjectArg::SharedObject {
+          id: identity2_ref.object_id(),
+          initial_shared_version,
+          mutable: true,
+        })
+        .unwrap();
+
+      let token_to_revoke = ptb.pure(ObjectID::ZERO).unwrap();
+      
+      ptb.programmable_move_call(
+        identity_client.package_id(),
+        ident_str!("identity").into(),
+        ident_str!("revoke_token").into(),
+        vec![],
+        vec![identity2, *controller_cap, token_to_revoke],
+      );
+    })
+    .execute(&identity_client)
+    .await?;
+
+  assert!(tx_output.response.status_ok().unwrap());
 
   Ok(())
 }

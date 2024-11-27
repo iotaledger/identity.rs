@@ -6,6 +6,7 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::str::FromStr;
 
+use crate::rebased::proposals::ControllerExecution;
 use crate::rebased::sui::types::Number;
 use crate::IotaDID;
 use crate::IotaDocument;
@@ -175,11 +176,16 @@ impl OnChainIdentity {
   }
 
   /// Borrows assets owned by this [`OnChainIdentity`] to use them in a custom transaction.
-  /// # Notes
-  /// Make sure to call [`super::Proposal::with_intent`] before executing the proposal.
-  /// Failing to do so will make [`crate::proposals::ProposalT::execute`] return an error.
   pub fn borrow_assets(&mut self) -> ProposalBuilder<'_, BorrowAction> {
     ProposalBuilder::new(self, BorrowAction::default())
+  }
+
+  /// Borrows a `ControllerCap` with ID `controller_cap` owned by this identity in a transaction.
+  /// This proposal is used to perform operation on a sub-identity controlled
+  /// by this one.
+  pub fn controller_execution(&mut self, controller_cap: ObjectID) -> ProposalBuilder<'_, ControllerExecution> {
+    let action = ControllerExecution::new(controller_cap, self);
+    ProposalBuilder::new(self, action)
   }
 
   /// Returns historical data for this [`OnChainIdentity`].

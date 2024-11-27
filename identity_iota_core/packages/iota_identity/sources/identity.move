@@ -397,7 +397,7 @@ module iota_identity::identity {
 
     /// Destroys a `ControllerCap`. Can only be used after a controller has been removed from
     /// the controller committee.
-    public fun destroy_controller_cap(self: &Identity, cap: ControllerCap) {
+    public(package) fun destroy_controller_cap(self: &Identity, cap: ControllerCap) {
         self.did_doc.destroy_controller_cap(cap);
     }
 
