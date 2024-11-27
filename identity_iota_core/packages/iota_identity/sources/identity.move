@@ -248,7 +248,7 @@ module iota_identity::identity {
     /// Proposes to upgrade this `Identity` to this package's version.
     public fun propose_upgrade(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         expiration: Option<u64>,
         ctx: &mut TxContext,
     ): Option<ID> {
@@ -266,7 +266,7 @@ module iota_identity::identity {
             self.execute_upgrade(cap, proposal_id, ctx); 
             option::none()
         } else {
-            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+            emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, false);
             option::some(proposal_id)
         }
     }
@@ -275,13 +275,13 @@ module iota_identity::identity {
     /// package's version.
     public fun execute_upgrade(
         self: &mut Identity,
-        cap: &ControllerCap,
+        cap: &DelegationToken,
         proposal_id: ID,
         ctx: &mut TxContext,
     ) {
         self.execute_proposal<Upgrade>(cap, proposal_id, ctx).unwrap();
         self.migrate();
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
+        emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
     }
 
     /// Migrates this `Identity` to this package's version.
