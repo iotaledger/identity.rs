@@ -71,6 +71,11 @@ module iota_identity::controller {
     self.permissions
   }
 
+  /// Returns the ID of this `DelegationToken`.
+  public fun delegation_token_id(self: &DelegationToken): &UID {
+    &self.id
+  }
+
   /// Returns true if this `DelegationToken` has permission `permission`.
   public fun has_permission(self: &DelegationToken, permission: u32): bool {
     self.permissions & permission != 0

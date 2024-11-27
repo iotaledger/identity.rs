@@ -181,7 +181,7 @@ module iota_identity::identity {
             self.execute_deactivation(cap, proposal_id, clock, ctx);
             option::none()
         } else {
-            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+            emit_proposal_event(self.id().to_inner(), cap.delegation_token_id().to_inner(), proposal_id, false);
             option::some(proposal_id)
         }
     }
@@ -202,7 +202,7 @@ module iota_identity::identity {
         self.did_doc.set_controlled_value(vector[]);
         self.updated = clock.timestamp_ms();
 
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
+        emit_proposal_event(self.id().to_inner(), cap.delegation_token_id().to_inner(), proposal_id, true);
     }
 
     /// Proposes an update to the DID Document contained in this `Identity`.
@@ -232,7 +232,7 @@ module iota_identity::identity {
             self.execute_update(cap, proposal_id, clock, ctx);
             option::none()
         } else {
-            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+            emit_proposal_event(self.id().to_inner(), cap.delegation_token_id().to_inner(), proposal_id, false);
             option::some(proposal_id)
         }
     }
@@ -253,7 +253,7 @@ module iota_identity::identity {
         );
 
         self.updated = clock.timestamp_ms();
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
+        emit_proposal_event(self.id().to_inner(), cap.delegation_token_id().to_inner(), proposal_id, true);
     }
 
     /// Proposes to update this `Identity`'s AC.
@@ -287,7 +287,7 @@ module iota_identity::identity {
             self.execute_config_change(cap, proposal_id, ctx);
             option::none()
         } else {
-            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+            emit_proposal_event(self.id().to_inner(), cap.delegation_token_id().to_inner(), proposal_id, false);
             option::some(proposal_id)
         }
     }
@@ -305,7 +305,7 @@ module iota_identity::identity {
             proposal_id,
             ctx,
         );
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
+        emit_proposal_event(self.id().to_inner(), cap.delegation_token_id().to_inner(), proposal_id, true);
     }
 
     /// Proposes the transfer of a set of objects owned by this `Identity`.
@@ -325,7 +325,7 @@ module iota_identity::identity {
             recipients,
             ctx
         );
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+        emit_proposal_event(self.id().to_inner(), cap.delegation_token_id().to_inner(), proposal_id, false);
     }
 
     /// Sends one object among the one specified in a `Send` proposal.
@@ -355,7 +355,7 @@ module iota_identity::identity {
             identity_address,
             ctx,
         );
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+        emit_proposal_event(self.id().to_inner(), cap.delegation_token_id().to_inner(), proposal_id, false);
     }
 
     /// Takes one of the borrowed assets.
@@ -375,7 +375,7 @@ module iota_identity::identity {
         expiration: Option<u64>,
         new_controller_addr: address,
         voting_power: u64,
-        ctx: &mut TxContext, 
+        ctx: &mut TxContext,
     ): Option<ID> {
         let mut new_controllers = vec_map::empty();
         new_controllers.insert(new_controller_addr, voting_power);
@@ -390,7 +390,7 @@ module iota_identity::identity {
         proposal_id: ID,
         ctx: &mut TxContext,
     ): Action<T> {
-        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
+        emit_proposal_event(self.id().to_inner(), cap.delegation_token_id().to_inner(), proposal_id, true);
         self.did_doc.execute_proposal(cap, proposal_id, ctx)
     }
 
