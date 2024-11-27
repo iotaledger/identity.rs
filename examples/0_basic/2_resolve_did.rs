@@ -8,7 +8,7 @@ use examples::get_memstorage;
 use identity_iota::iota::IotaDocument;
 use identity_iota::prelude::Resolver;
 
-/// Demonstrates how to resolve an existing DID in an Alias Output.
+/// Demonstrates how to resolve an existing DID in an identity.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // create new client to interact with chain and get funded account with keys
@@ -20,7 +20,7 @@ async fn main() -> anyhow::Result<()> {
   let did = document.id().clone();
 
   // We can resolve a `IotaDID` to bytes via client.
-  // Resolve the associated Alias Output and extract the DID document from it.
+  // Resolve the associated identity and extract the DID document from it.
   let client_document: IotaDocument = identity_client.resolve_did(&did).await?;
   println!("Client resolved DID Document: {client_document:#}");
 

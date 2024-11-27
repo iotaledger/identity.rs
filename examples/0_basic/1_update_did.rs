@@ -19,7 +19,7 @@ use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodRelationship;
 use identity_iota::verification::MethodScope;
 
-/// Demonstrates how to update a DID document in an existing Alias Output.
+/// Demonstrates how to update a DID document in an existing identity.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // create new client to interact with chain and get funded account with keys

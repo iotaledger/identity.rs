@@ -382,13 +382,13 @@ impl IotaDocument {
   // Packing
   // ===========================================================================
 
-  /// Serializes the document for inclusion in an Alias Output's state metadata
+  /// Serializes the document storing it in an identity.
   /// with the default [`StateMetadataEncoding`].
   pub fn pack(self) -> Result<Vec<u8>> {
     self.pack_with_encoding(StateMetadataEncoding::default())
   }
 
-  /// Serializes the document for inclusion in an Alias Output's state metadata.
+  /// Serializes the document for storing it in an identity.
   pub fn pack_with_encoding(self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
     StateMetadataDocument::from(self).pack(encoding)
   }
@@ -427,7 +427,7 @@ pub mod client_document {
           None,
         ))
       })?;
-      let (_, multi_controller, created, updated) = match unpacked {
+      let (_, multi_controller, created, updated, _) = match unpacked {
         Some(data) => data,
         None => {
           return Err(Error::InvalidDoc(identity_document::Error::InvalidDocument(
