@@ -52,8 +52,7 @@ async fn main() -> anyhow::Result<()> {
   // create new issuer account with did document
   let issuer_storage = get_memstorage()?;
   let issuer_identity_client = get_client_and_create_account(&issuer_storage).await?;
-  let (mut issuer_document, issuer_vm_fragment) =
-    create_did_document(&issuer_identity_client, &issuer_storage).await?;
+  let (mut issuer_document, issuer_vm_fragment) = create_did_document(&issuer_identity_client, &issuer_storage).await?;
 
   // create new holder account with did document
   let holder_storage = get_memstorage()?;

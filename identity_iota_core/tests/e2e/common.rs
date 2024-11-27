@@ -2,11 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #![allow(dead_code)]
 
-use std::io::Write;
-use std::ops::Deref;
-use std::sync::Arc;
-use std::sync::LazyLock;
-
 use anyhow::anyhow;
 use anyhow::Context;
 use identity_iota_core::rebased::client::IdentityClient;
@@ -36,10 +31,14 @@ use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use iota_sdk::IotaClient;
 use iota_sdk::IotaClientBuilder;
 use jsonpath_rust::JsonPathQuery;
+use lazy_static::lazy_static;
 use move_core_types::ident_str;
 use move_core_types::language_storage::StructTag;
 use secret_storage::Signer;
 use serde_json::Value;
+use std::io::Write;
+use std::ops::Deref;
+use std::sync::Arc;
 use tokio::process::Command;
 use tokio::sync::OnceCell;
 
@@ -69,7 +68,10 @@ pub const TEST_DOC: &[u8] = &[
   50, 50, 84, 49, 50, 58, 49, 52, 58, 51, 50, 90, 34, 44, 34, 117, 112, 100, 97, 116, 101, 100, 34, 58, 34, 50, 48, 50,
   52, 45, 48, 53, 45, 50, 50, 84, 49, 50, 58, 49, 52, 58, 51, 50, 90, 34, 125, 125,
 ];
-pub static TEST_COIN_TYPE: LazyLock<StructTag> = LazyLock::new(|| "0x2::coin::Coin<bool>".parse().unwrap());
+
+lazy_static! {
+  pub static ref TEST_COIN_TYPE: StructTag = "0x2::coin::Coin<bool>".parse().unwrap();
+}
 
 pub async fn get_client() -> anyhow::Result<TestClient> {
   let client = IotaClientBuilder::default().build_localnet().await?;

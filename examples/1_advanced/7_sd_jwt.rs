@@ -43,14 +43,12 @@ async fn main() -> anyhow::Result<()> {
   // Create an identity for the issuer with one verification method `key-1`.
   let issuer_storage = get_memstorage()?;
   let issuer_identity_client = get_client_and_create_account(&issuer_storage).await?;
-  let (issuer_document, issuer_vm_fragment) =
-    create_did_document(&issuer_identity_client, &issuer_storage).await?;
+  let (issuer_document, issuer_vm_fragment) = create_did_document(&issuer_identity_client, &issuer_storage).await?;
 
   // Create an identity for the holder, in this case also the subject.
   let holder_storage = get_memstorage()?;
   let holder_identity_client = get_client_and_create_account(&holder_storage).await?;
-  let (holder_document, holder_vm_fragment) =
-    create_did_document(&holder_identity_client, &holder_storage).await?;
+  let (holder_document, holder_vm_fragment) = create_did_document(&holder_identity_client, &holder_storage).await?;
 
   // ===========================================================================
   // Step 2: Issuer creates and signs a selectively disclosable JWT verifiable credential.

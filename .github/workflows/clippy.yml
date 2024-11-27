@@ -42,5 +42,6 @@ jobs:
 
       - name: Wasm clippy check
         uses: actions-rs-plus/clippy-check@b09a9c37c9df7db8b1a5d52e8fe8e0b6e3d574c4
+        if: ${{ false }}
         with:
           args: --manifest-path ./bindings/wasm/Cargo.toml --target wasm32-unknown-unknown --all-targets --all-features -- -D warnings

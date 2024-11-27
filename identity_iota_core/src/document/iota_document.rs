@@ -395,7 +395,7 @@ impl IotaDocument {
 }
 
 #[cfg(feature = "iota-client")]
-pub mod client_document {
+mod client_document {
   use identity_core::common::Timestamp;
   use iota_sdk::rpc_types::IotaObjectData;
 
@@ -421,7 +421,7 @@ pub mod client_document {
       data: &IotaObjectData,
       allow_empty: bool,
     ) -> Result<IotaDocument> {
-      let unpacked = unpack_identity_data(&did, data).map_err(|_| {
+      let unpacked = unpack_identity_data(did, data).map_err(|_| {
         Error::InvalidDoc(identity_document::Error::InvalidDocument(
           "could not unpack identity data from IotaObjectData",
           None,
@@ -437,7 +437,7 @@ pub mod client_document {
         }
       };
       let did_doc =
-        Self::from_iota_document_data(multi_controller.controlled_value(), allow_empty, &did, created, updated)?;
+        Self::from_iota_document_data(multi_controller.controlled_value(), allow_empty, did, created, updated)?;
 
       Ok(did_doc)
     }
@@ -451,7 +451,7 @@ pub mod client_document {
     /// * document related parsing Errors from `StateMetadataDocument::unpack`
     /// * possible parsing errors when trying to parse `created` and `updated` to a `Timestamp`
     pub fn from_iota_document_data(
-      data: &Vec<u8>,
+      data: &[u8],
       allow_empty: bool,
       did: &IotaDID,
       created: Timestamp,
@@ -465,8 +465,7 @@ pub mod client_document {
         empty_document
       } else {
         // we have a value, therefore unpack it
-        StateMetadataDocument::unpack(data)
-          .and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(&did))?
+        StateMetadataDocument::unpack(data).and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(did))?
       };
 
       // Overwrite `created` and `updated` with given timestamps
@@ -732,7 +731,7 @@ mod tests {
       .parse()
       .unwrap();
     let document = IotaDocument::from_iota_document_data(
-      &vec![],
+      &[],
       true,
       &did,
       Timestamp::from_unix(12).unwrap(),
@@ -750,7 +749,7 @@ mod tests {
 
     // INVALID: reject empty document.
     assert!(IotaDocument::from_iota_document_data(
-      &vec![],
+      &[],
       false,
       &did,
       Timestamp::from_unix(12).unwrap(),

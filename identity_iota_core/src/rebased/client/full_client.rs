@@ -47,8 +47,11 @@ use crate::rebased::Error;
 use super::get_object_id_from_did;
 use super::IdentityClientReadOnly;
 
+/// A signature which is used to sign transactions.
 pub struct IotaKeySignature {
+  /// The public key of the signature.
   pub public_key: Vec<u8>,
+  /// The signature of the transaction.
   pub signature: Vec<u8>,
 }
 
@@ -85,11 +88,16 @@ impl From<KeyId> for String {
   }
 }
 
+/// A client for interacting with the IOTA network.
 #[derive(Clone)]
 pub struct IdentityClient<S> {
+  /// [`IdentityClientReadOnly`] instance, used for read-only operations.
   read_client: IdentityClientReadOnly,
+  /// The address of the client.
   address: IotaAddress,
+  /// The public key of the client.
   public_key: Vec<u8>,
+  /// The signer of the client.
   signer: S,
 }
 
@@ -104,6 +112,7 @@ impl<S> IdentityClient<S>
 where
   S: Signer<IotaKeySignature> + Sync,
 {
+  /// Create a new [`IdentityClient`].
   pub async fn new(client: IdentityClientReadOnly, signer: S) -> Result<Self, Error> {
     let public_key = signer
       .public_key()

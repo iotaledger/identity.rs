@@ -73,8 +73,8 @@ async fn main() -> anyhow::Result<()> {
     .into_iter()
     .map(|data| IotaDocument::unpack_from_iota_object_data(&did, &data, true))
     .collect::<Result<_, _>>()?;
-  println!("Current version: {}", documents[0].to_string());
-  println!("Previous version: {}", documents[1].to_string());
+  println!("Current version: {}", documents[0]);
+  println!("Previous version: {}", documents[1]);
 
   // Depending on your use case, you can also page through the results
   // Alternative Step 2 - Page by looping until no result is returned (here with page size 1)

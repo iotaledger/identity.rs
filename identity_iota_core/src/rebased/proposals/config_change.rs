@@ -91,6 +91,7 @@ impl<'i> ProposalBuilder<'i, ConfigChange> {
 }
 
 impl ConfigChange {
+  /// Creates a new [`ConfigChange`] proposal action.
   pub fn new() -> Self {
     Self::default()
   }

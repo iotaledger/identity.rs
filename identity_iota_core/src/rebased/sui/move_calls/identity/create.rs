@@ -67,7 +67,7 @@ where
       vec![ids, vps],
     )
   };
-  
+
   let controllers_that_can_delegate = ptb.programmable_move_call(
     IOTA_FRAMEWORK_PACKAGE_ID,
     ident_str!("vec_map").into(),
@@ -85,7 +85,13 @@ where
     module: ident_str!("identity").into(),
     function: ident_str!("new_with_controllers").into(),
     type_arguments: vec![],
-    arguments: vec![doc_arg, controllers, controllers_that_can_delegate, threshold_arg, clock],
+    arguments: vec![
+      doc_arg,
+      controllers,
+      controllers_that_can_delegate,
+      threshold_arg,
+      clock,
+    ],
   })));
 
   // Share the resulting identity.

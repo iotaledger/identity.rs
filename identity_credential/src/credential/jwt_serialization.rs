@@ -32,6 +32,7 @@ use crate::Result;
 #[serde(transparent)]
 pub struct JwtCredential(CredentialJwtClaims<'static>);
 
+#[cfg(feature = "validator")]
 impl TryFrom<JwtCredential> for Credential {
   type Error = Error;
   fn try_from(value: JwtCredential) -> std::result::Result<Self, Self::Error> {

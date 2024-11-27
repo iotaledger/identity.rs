@@ -300,6 +300,11 @@ async fn resolve_unmigrated(client: &IdentityClientReadOnly, object_id: ObjectID
   Ok(unmigrated_alias.map(Identity::Legacy))
 }
 
+/// Extracts the object ID from the given `IotaDID`.
+///
+/// # Arguments
+///
+/// * `did` - A reference to the `IotaDID` to be converted.
 pub fn get_object_id_from_did(did: &IotaDID) -> Result<ObjectID, Error> {
   ObjectID::from_str(did.tag_str())
     .map_err(|err| Error::DIDResolutionError(format!("could not parse object id from did {did}; {err}")))
