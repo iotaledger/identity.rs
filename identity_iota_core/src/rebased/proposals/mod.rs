@@ -6,6 +6,7 @@ mod config_change;
 mod deactivate_did;
 mod send;
 mod update_did_doc;
+mod upgrade;
 
 use std::marker::PhantomData;
 use std::ops::Deref;
@@ -19,6 +20,7 @@ use crate::rebased::transaction::ProtoTransaction;
 use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
+pub use upgrade::*;
 pub use deactivate_did::*;
 use iota_sdk::rpc_types::IotaExecutionStatus;
 use iota_sdk::rpc_types::IotaObjectData;

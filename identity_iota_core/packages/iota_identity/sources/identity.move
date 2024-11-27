@@ -15,6 +15,7 @@ module iota_identity::identity {
         transfer_proposal::{Self, Send},
         borrow_proposal::{Self, Borrow},
         did_deactivation_proposal::{Self, DidDeactivation},
+        upgrade_proposal::{Self, Upgrade},
     };
 
     const ENotADidDocument: u64 = 0;
@@ -24,6 +25,10 @@ module iota_identity::identity {
     const EInvalidThreshold: u64 = 2;
     /// The controller list must contain at least 1 element.
     const EInvalidControllersList: u64 = 3;
+    /// There's no upgrade available for this identity.
+    const ENoUpgrade: u64 = 4;
+
+    const PACKAGE_VERSION: u64 = 0;
 
     // ===== Events ======
     /// Event emitted when an `identity`'s `Proposal` with `ID` `proposal` is created or executed by `controller`.
@@ -53,6 +58,8 @@ module iota_identity::identity {
         created: u64,
         /// Timestamp of this Identity's last update.
         updated: u64,
+        /// Package version used by this object.
+        version: u64,
     }
 
     /// Creates a new DID Document with a single controller.
@@ -94,6 +101,7 @@ module iota_identity::identity {
             did_doc: multicontroller::new_with_controller(doc, controller, can_delegate, ctx),
             created: now,
             updated: now,
+            version: PACKAGE_VERSION,
         }
     }
 
@@ -118,6 +126,7 @@ module iota_identity::identity {
             did_doc: multicontroller::new_with_controllers(doc, controllers, controllers_that_can_delegate, threshold, ctx),
             created: now,
             updated: now,
+            version: PACKAGE_VERSION,
         }
     }
 
@@ -203,6 +212,51 @@ module iota_identity::identity {
         self.updated = clock.timestamp_ms();
 
         emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
+    }
+
+    /// Proposes to upgrade this `Identity` to this package's version.
+    public fun propose_upgrade(
+        self: &mut Identity,
+        cap: &ControllerCap,
+        expiration: Option<u64>,
+        ctx: &mut TxContext,
+    ): Option<ID> {
+        assert!(self.version < PACKAGE_VERSION, ENoUpgrade);
+        let proposal_id = self.did_doc.create_proposal(
+            cap, 
+            upgrade_proposal::new(),
+            expiration,
+            ctx
+        );
+        let is_approved = self
+            .did_doc
+            .is_proposal_approved<_, Upgrade>(proposal_id);
+        if (is_approved) {
+            self.execute_upgrade(cap, proposal_id, ctx); 
+            option::none()
+        } else {
+            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
+            option::some(proposal_id)
+        }
+    }
+    
+    /// Consumes a `Proposal<Upgrade>` that migrates `Identity` to this
+    /// package's version.
+    public fun execute_upgrade(
+        self: &mut Identity,
+        cap: &ControllerCap,
+        proposal_id: ID,
+        ctx: &mut TxContext,
+    ) {
+        self.execute_proposal<Upgrade>(cap, proposal_id, ctx).unwrap();
+        self.migrate();
+        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
+    }
+
+    /// Migrates this `Identity` to this package's version.
+    fun migrate(self: &mut Identity) {
+        // ADD migration logic when needed!
+        self.version = PACKAGE_VERSION;
     }
 
     /// Proposes an update to the DID Document contained in this `Identity`.

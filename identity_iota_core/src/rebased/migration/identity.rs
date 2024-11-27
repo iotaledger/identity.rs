@@ -6,6 +6,7 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::str::FromStr;
 
+use crate::rebased::proposals::Upgrade;
 use crate::rebased::sui::types::Number;
 use crate::IotaDID;
 use crate::IotaDocument;
@@ -99,6 +100,7 @@ pub struct OnChainIdentity {
   id: UID,
   multi_controller: Multicontroller<Vec<u8>>,
   did_doc: IotaDocument,
+  version: u64,
 }
 
 impl Deref for OnChainIdentity {
@@ -167,6 +169,11 @@ impl OnChainIdentity {
   /// Deactivates the DID Document represented by this [`OnChainIdentity`].
   pub fn deactivate_did(&mut self) -> ProposalBuilder<'_, DeactivateDid> {
     ProposalBuilder::new(self, DeactivateDid::new())
+  }
+
+  /// Upgrades this [`OnChainIdentity`]'s version to match the package's.
+  pub fn upgrade_version(&mut self) -> ProposalBuilder<'_, Upgrade> {
+    ProposalBuilder::new(self, Upgrade::default())
   }
 
   /// Sends assets owned by this [`OnChainIdentity`] to other addresses.
@@ -339,16 +346,13 @@ pub async fn get_identity(
 
   // no issues with call but
   let Some(data) = response.data else {
-    // call was successful but not data for alias id
+    // call was successful but no data for alias id
     return Ok(None);
   };
 
   let did = IotaDID::from_alias_id(&object_id.to_string(), client.network());
-  let (id, multi_controller, created, updated) = match unpack_identity_data(&did, &data)? {
-    Some(data) => data,
-    None => {
-      return Ok(None);
-    }
+  let Some((id, multi_controller, created, updated, version)) = unpack_identity_data(&did, &data)? else {
+    return Ok(None);
   };
 
   let did_doc =
@@ -359,6 +363,7 @@ pub async fn get_identity(
     id,
     multi_controller,
     did_doc,
+    version,
   }))
 }
 
@@ -376,7 +381,7 @@ fn is_identity(value: &IotaParsedMoveObject) -> bool {
 pub(crate) fn unpack_identity_data(
   did: &IotaDID,
   data: &IotaObjectData,
-) -> Result<Option<(UID, Multicontroller<Vec<u8>>, Timestamp, Timestamp)>, Error> {
+) -> Result<Option<(UID, Multicontroller<Vec<u8>>, Timestamp, Timestamp, u64)>, Error> {
   let content = data
     .clone()
     .content
@@ -396,6 +401,7 @@ pub(crate) fn unpack_identity_data(
     did_doc: Multicontroller<Vec<u8>>,
     created: Number<u64>,
     updated: Number<u64>,
+    version: Number<u64>,
   }
 
   let TempOnChainIdentity {
@@ -403,6 +409,7 @@ pub(crate) fn unpack_identity_data(
     did_doc: multi_controller,
     created,
     updated,
+    version
   } = serde_json::from_value::<TempOnChainIdentity>(value.fields.to_json_value())
     .map_err(|err| Error::ObjectLookup(format!("could not parse identity document with DID {did}; {err}")))?;
 
@@ -417,8 +424,9 @@ pub(crate) fn unpack_identity_data(
     // `Timestamp` requires a timestamp expressed in seconds.
     Timestamp::from_unix(timestamp_ms as i64 / 1000).expect("On-chain clock produces valid timestamps")
   };
+  let version = version.try_into().expect("Move string-encoded u64 are valid u64");
 
-  Ok(Some((id, multi_controller, created, updated)))
+  Ok(Some((id, multi_controller, created, updated, version)))
 }
 
 /// Builder-style struct to create a new [`OnChainIdentity`].
