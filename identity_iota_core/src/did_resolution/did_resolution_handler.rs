@@ -7,9 +7,8 @@ use crate::IotaDID;
 use crate::IotaDocument;
 use crate::Result;
 
-// TODO: rename to reflect role as DID resolver
 /// An extension trait that provides helper functions for publication
-/// and resolution of DID documents in Alias Outputs.
+/// and resolution of DID documents in identities.
 ///
 /// This trait is not intended to be implemented directly, a blanket implementation is
 /// provided for [`IotaIdentityClient`] implementers.
@@ -17,7 +16,7 @@ use crate::Result;
 #[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 pub trait DidResolutionHandler {
   /// Resolve a [`IotaDocument`]. Returns an empty, deactivated document if the state metadata
-  /// of the Alias Output is empty.
+  /// of the identity is empty.
   ///
   /// # Errors
   ///

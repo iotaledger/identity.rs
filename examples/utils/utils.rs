@@ -45,7 +45,6 @@ where
   S: Signer<IotaKeySignature> + Sync,
 {
   // Create a new DID document with a placeholder DID.
-  // The DID will be derived from the Alias Id of the Alias Output after publishing.
   let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network());
   let verification_method_fragment = unpublished
     .generate_method(
