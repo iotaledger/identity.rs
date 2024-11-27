@@ -1,7 +1,6 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::HashMap;
 use std::marker::PhantomData;
 
 use crate::rebased::client::IdentityClient;
@@ -14,8 +13,10 @@ use crate::rebased::transaction::TransactionOutput;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 use async_trait::async_trait;
-use iota_sdk::rpc_types::IotaObjectData;
+use iota_sdk::rpc_types::IotaObjectRef;
 use iota_sdk::rpc_types::IotaTransactionBlockResponse;
+use iota_sdk::rpc_types::OwnedObjectRef;
+use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
 use iota_sdk::types::transaction::Argument;
@@ -27,70 +28,51 @@ use serde::Serialize;
 use super::CreateProposalTx;
 use super::ExecuteProposalTx;
 use super::OnChainIdentity;
-use super::ProposalBuilder;
 use super::ProposalT;
 use super::UserDrivenTx;
 
-pub(crate) type IntentFn = Box<dyn FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) + Send>;
+pub(crate) type IntentFn = Box<dyn FnOnce(&mut Ptb, &Argument) + Send>;
 
-/// Action used to borrow in transaction [OnChainIdentity]'s assets.
-#[derive(Default, Deserialize, Serialize)]
-pub struct BorrowAction {
-  objects: Vec<ObjectID>,
+/// Borrow an [`OnChainIdentity`]'s controller capability to exert control on
+/// a sub-owned identity.
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ControllerExecution {
+  controller_cap: ObjectID,
+  identity: IotaAddress,
 }
 
-/// A [`BorrowAction`] coupled with a user-provided function to describe how
-/// the borrowed assets shall be used.
-pub struct BorrowActionWithIntent<F>
+/// A [`ControllerExecution`] action coupled with a user-provided function to describe how
+/// the borrowed identity's controller capability will be used.
+pub struct ControllerExecutionWithIntent<F>
 where
-  F: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>),
+  F: FnOnce(&mut Ptb, &Argument),
 {
-  action: BorrowAction,
+  action: ControllerExecution,
   intent_fn: F,
 }
 
-impl MoveType for BorrowAction {
+impl ControllerExecution {
+  /// Creates a new [`ControllerExecution`] action, allowing a controller of `identity` to
+  /// borrow `identity`'s controller cap for a transaction.
+  pub fn new(controller_cap: ObjectID, identity: &OnChainIdentity) -> Self {
+    Self {
+      controller_cap,
+      identity: identity.id().into(),
+    }
+  }
+}
+
+impl MoveType for ControllerExecution {
   fn move_type(package: ObjectID) -> TypeTag {
     use std::str::FromStr;
 
-    TypeTag::from_str(&format!("{package}::borrow_proposal::Borrow")).expect("valid move type")
-  }
-}
-
-impl BorrowAction {
-  /// Adds an object to the lists of objects that will be borrowed when executing
-  /// this action in a proposal.
-  pub fn borrow_object(&mut self, object_id: ObjectID) {
-    self.objects.push(object_id);
-  }
-
-  /// Adds many objects. See [`BorrowAction::borrow_object`] for more details.
-  pub fn borrow_objects<I>(&mut self, objects: I)
-  where
-    I: IntoIterator<Item = ObjectID>,
-  {
-    objects.into_iter().for_each(|obj_id| self.borrow_object(obj_id));
-  }
-}
-
-impl<'i> ProposalBuilder<'i, BorrowAction> {
-  /// Adds an object to the list of objects that will be borrowed when executing this action.
-  pub fn borrow(mut self, object_id: ObjectID) -> Self {
-    self.borrow_object(object_id);
-    self
-  }
-  /// Adds many objects. See [`BorrowAction::borrow_object`] for more details.
-  pub fn borrow_objects<I>(self, objects: I) -> Self
-  where
-    I: IntoIterator<Item = ObjectID>,
-  {
-    objects.into_iter().fold(self, |builder, obj| builder.borrow(obj))
+    TypeTag::from_str(&format!("{package}::controller_proposal::ControllerExecution")).expect("valid move type")
   }
 }
 
 #[async_trait]
-impl ProposalT for Proposal<BorrowAction> {
-  type Action = BorrowAction;
+impl ProposalT for Proposal<ControllerExecution> {
+  type Action = ControllerExecution;
   type Output = ();
 
   async fn create<'i, S>(
@@ -107,10 +89,11 @@ impl ProposalT for Proposal<BorrowAction> {
       .await?
       .expect("identity exists on-chain");
     let controller_cap_ref = identity.get_controller_cap(client).await?;
-    let tx = move_calls::identity::propose_borrow(
+
+    let tx = move_calls::identity::propose_controller_execution(
       identity_ref,
       controller_cap_ref,
-      action.objects,
+      action.controller_cap,
       expiration,
       client.package_id(),
     )
@@ -134,12 +117,12 @@ impl ProposalT for Proposal<BorrowAction> {
     S: Signer<IotaKeySignature> + Sync,
   {
     let proposal_id = self.id();
-    let borrow_action = self.into_action();
+    let controller_execution_action = self.into_action();
 
     Ok(UserDrivenTx {
       identity,
       proposal_id,
-      action: borrow_action,
+      action: controller_execution_action,
     })
   }
 
@@ -148,11 +131,11 @@ impl ProposalT for Proposal<BorrowAction> {
   }
 }
 
-impl<'i> UserDrivenTx<'i, BorrowAction> {
+impl<'i> UserDrivenTx<'i, ControllerExecution> {
   /// Defines how the borrowed assets should be used.
-  pub fn with_intent<F>(self, intent_fn: F) -> UserDrivenTx<'i, BorrowActionWithIntent<F>>
+  pub fn with_intent<F>(self, intent_fn: F) -> UserDrivenTx<'i, ControllerExecutionWithIntent<F>>
   where
-    F: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>),
+    F: FnOnce(&mut Ptb, &Argument),
   {
     let UserDrivenTx {
       identity,
@@ -162,17 +145,14 @@ impl<'i> UserDrivenTx<'i, BorrowAction> {
     UserDrivenTx {
       identity,
       proposal_id,
-      action: BorrowActionWithIntent {
-        action,
-        intent_fn,
-      },
+      action: ControllerExecutionWithIntent { action, intent_fn },
     }
   }
 }
 
-impl<'i> ProtoTransaction for UserDrivenTx<'i, BorrowAction> {
+impl<'i> ProtoTransaction for UserDrivenTx<'i, ControllerExecution> {
   type Input = IntentFn;
-  type Tx = UserDrivenTx<'i, BorrowActionWithIntent<IntentFn>>;
+  type Tx = UserDrivenTx<'i, ControllerExecutionWithIntent<IntentFn>>;
 
   fn with(self, input: Self::Input) -> Self::Tx {
     self.with_intent(input)
@@ -180,9 +160,9 @@ impl<'i> ProtoTransaction for UserDrivenTx<'i, BorrowAction> {
 }
 
 #[async_trait]
-impl<'i, F> Transaction for UserDrivenTx<'i, BorrowActionWithIntent<F>>
+impl<'i, F> Transaction for UserDrivenTx<'i, ControllerExecutionWithIntent<F>>
 where
-  F: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) + Send,
+  F: FnOnce(&mut Ptb, &Argument) + Send,
 {
   type Output = ();
   async fn execute_with_opt_gas<S>(
@@ -195,7 +175,7 @@ where
   {
     let Self {
       identity,
-      action: borrow_action,
+      action,
       proposal_id,
     } = self;
     let identity_ref = client
@@ -204,24 +184,26 @@ where
       .expect("identity exists on-chain");
     let controller_cap_ref = identity.get_controller_cap(client).await?;
 
-    // Construct a list of `(ObjectRef, TypeTag)` from the list of objects to send.
-    let object_data_list = {
-      let mut object_data_list = vec![];
-      for obj_id in borrow_action.action.objects {
-        let object_data = super::obj_data_for_id(client, obj_id)
-          .await
-          .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
-        object_data_list.push(object_data);
-      }
-      object_data_list
-    };
+    let borrowing_cap_id = action.action.controller_cap;
+    let borrowing_controller_cap_ref = client
+      .get_object_ref_by_id(borrowing_cap_id)
+      .await?
+      .map(|OwnedObjectRef { reference, .. }| {
+        let IotaObjectRef {
+          object_id,
+          version,
+          digest,
+        } = reference;
+        (object_id, version, digest)
+      })
+      .ok_or_else(|| Error::ObjectLookup(format!("object {borrowing_cap_id} doesn't exist")))?;
 
-    let tx = move_calls::identity::execute_borrow(
+    let tx = move_calls::identity::execute_controller_execution(
       identity_ref,
       controller_cap_ref,
       proposal_id,
-      object_data_list,
-      borrow_action.intent_fn,
+      borrowing_controller_cap_ref,
+      action.intent_fn,
       client.package_id(),
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
@@ -229,7 +211,7 @@ where
     ExecuteProposalTx {
       identity,
       tx,
-      _action: PhantomData::<BorrowAction>,
+      _action: PhantomData::<ControllerExecution>,
     }
     .execute_with_opt_gas(gas_budget, client)
     .await

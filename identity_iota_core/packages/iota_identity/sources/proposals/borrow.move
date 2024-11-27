@@ -28,7 +28,7 @@ module iota_identity::borrow_proposal {
   ): ID {
     let action = Borrow { objects, objects_to_return: vector::empty(), owner };
 
-    multi.create_proposal(cap, action,expiration, ctx)
+    multi.create_proposal(cap, action, expiration, ctx)
   }
 
   /// Borrows an asset from this action. This function will fail if:

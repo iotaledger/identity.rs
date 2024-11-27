@@ -8,6 +8,8 @@ mod deactivate;
 pub(crate) mod proposal;
 mod send_asset;
 mod update;
+mod controller_execution;
+mod upgrade;
 
 pub(crate) use borrow_asset::*;
 pub(crate) use config::*;
@@ -15,3 +17,5 @@ pub(crate) use create::*;
 pub(crate) use deactivate::*;
 pub(crate) use send_asset::*;
 pub(crate) use update::*;
+pub(crate) use controller_execution::*;
+pub(crate) use upgrade::*;
