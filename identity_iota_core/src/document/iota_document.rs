@@ -427,7 +427,7 @@ pub mod client_document {
           None,
         ))
       })?;
-      let (_, multi_controller, created, updated) = match unpacked {
+      let (_, multi_controller, created, updated, _) = match unpacked {
         Some(data) => data,
         None => {
           return Err(Error::InvalidDoc(identity_document::Error::InvalidDocument(

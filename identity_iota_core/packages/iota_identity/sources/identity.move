@@ -235,6 +235,7 @@ module iota_identity::identity {
             self.execute_upgrade(cap, proposal_id, ctx); 
             option::none()
         } else {
+            emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, false);
             option::some(proposal_id)
         }
     }
@@ -249,6 +250,7 @@ module iota_identity::identity {
     ) {
         self.execute_proposal<Upgrade>(cap, proposal_id, ctx).unwrap();
         self.migrate();
+        emit_proposal_event(self.id().to_inner(), cap.id().to_inner(), proposal_id, true);
     }
 
     /// Migrates this `Identity` to this package's version.
