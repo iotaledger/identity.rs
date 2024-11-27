@@ -102,7 +102,7 @@ async fn main() -> anyhow::Result<()> {
 
     current_item = history.first();
     let IotaObjectData { object_id, version, .. } = current_item.unwrap();
-    println!("Identity ty History entry: object_id: {object_id}, version: {version}");
+    println!("Identity History entry: object_id: {object_id}, version: {version}");
 
     if !has_previous_version(current_item.unwrap())? {
       break;

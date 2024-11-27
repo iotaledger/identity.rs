@@ -44,7 +44,7 @@ impl IotaDID {
   /// The tag of the placeholder DID.
   pub const PLACEHOLDER_TAG: &'static str = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-  /// The length of an identities object id, which is a BLAKE2b-256 hash (32-bytes).
+  /// The length of an identity's object id, which is a BLAKE2b-256 hash (32-bytes).
   pub(crate) const TAG_BYTES_LEN: usize = 32;
 
   /// Convert a `CoreDID` reference to an `IotaDID` reference without checking the referenced value.
@@ -84,7 +84,7 @@ impl IotaDID {
     Self::parse(did).expect("DIDs constructed with new should be valid")
   }
 
-  /// Constructs a new [`IotaDID`] from an identities object id and the given `network_name`.
+  /// Constructs a new [`IotaDID`] from an identity's object id and the given `network_name`.
   pub fn from_object_id(object_id: &str, network_name: &NetworkName) -> Self {
     let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name, object_id);
     Self::parse(did).expect("DIDs constructed with new should be valid")
@@ -150,7 +150,7 @@ impl IotaDID {
     Self::denormalized_components(self.method_id()).0
   }
 
-  /// Returns the tag of the `DID`, which is an identities object id.
+  /// Returns the tag of the `DID`, which is an identity's object id.
   pub fn tag_str(&self) -> &str {
     Self::denormalized_components(self.method_id()).1
   }
