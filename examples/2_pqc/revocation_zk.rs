@@ -119,7 +119,7 @@ async fn main() -> anyhow::Result<()> {
     None,
   ).await?;
 
-  println!("{} {} {} {}", "[Issuer]".red(), " -> [Holder]".blue(), ": Sending VC (as JPT):", credential_jpt.as_str());
+  println!("{} {} {} {} {}", "[Issuer]".red(), " -> ", "[Holder]".blue(), ": Sending VC (as JPT):", credential_jpt.as_str());
 
   println!("{} {} {}", "[Holder]".blue(), ": Resolve Issuer's DID:", issuer_document.id().as_str());
 
@@ -205,7 +205,7 @@ async fn main() -> anyhow::Result<()> {
     StatusCheck::Strict,
   ).unwrap();
 
-  println!("{}: JPT successfully verified, access granted", "[Verifier]".green());
+  println!("{} : JPT successfully verified, access granted", "[Verifier]".green());
 
   println!("");
 
