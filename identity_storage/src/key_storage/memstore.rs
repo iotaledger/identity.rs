@@ -325,7 +325,7 @@ fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: &JwsAlgorithm) ->
 mod pqc_liboqs {
   use std::str::FromStr;
   use async_trait::async_trait;
-  use crypto::signatures::ed25519::SecretKey;
+  //use crypto::signatures::ed25519::SecretKey;
   use identity_verification::jose::jwk::Jwk;
   use identity_verification::jose::jwk::JwkType;
   use identity_verification::jose::jws::JwsAlgorithm;
@@ -346,6 +346,10 @@ mod pqc_liboqs {
   use super::KeyType;
   use crate::key_storage::jwk_storage_pqc::JwkStoragePQ;
   use crate::JwkGenOutput;
+
+  //TODO mod pqcrypto
+  use pqcrypto::sign::mldsa44::{SecretKey, DetachedSignature, detached_sign, PublicKey, keypair};
+  use pqcrypto::traits::sign::{SecretKey as SKTrait, DetachedSignature as DTSTrait, PublicKey as PKTrait};
 
   fn check_pq_alg_compatibility(alg: JwsAlgorithm) -> KeyStorageResult<Algorithm> {
     match alg {
@@ -377,7 +381,6 @@ mod pqc_liboqs {
     }
   }
 
-  //TODO: PQ - JwkStoragePQ
   /// JwkStoragePQ implementation for JwkMemStore
   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
   #[cfg_attr(feature = "send-sync-storage", async_trait)]
@@ -393,10 +396,10 @@ mod pqc_liboqs {
         );
       }
 
-      let oqs_alg = check_pq_alg_compatibility(alg)?;
-      oqs::init(); //TODO: check what this function does
+      //let oqs_alg = check_pq_alg_compatibility(alg)?;
+     // oqs::init(); //TODO: check what this function does
 
-      let scheme = Sig::new(oqs_alg).map_err(|err| {
+/*       let scheme = Sig::new(oqs_alg).map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
           .with_custom_message(format!("signature scheme init failed"))
           .with_source(err)
@@ -405,12 +408,14 @@ mod pqc_liboqs {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
           .with_custom_message(format!("keypair generation failed!"))
           .with_source(err)
-      })?;
+      })?; */
+
+      let (pk, sk) = keypair();
 
       let kid: KeyId = random_key_id();
 
-      let public = jwu::encode_b64(pk.into_vec());
-      let private = jwu::encode_b64(sk.into_vec());
+      let public = jwu::encode_b64(pk.as_bytes());
+      let private = jwu::encode_b64(sk.as_bytes());
 
       let mut jwk_params = match alg {
         JwsAlgorithm::ML_DSA_44 => JwkParams::new(JwkType::MLDSA),
@@ -477,7 +482,7 @@ mod pqc_liboqs {
           JwsAlgorithm::from_str(alg_str).map_err(|_| KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
         })?;
 
-      let oqs_alg = check_pq_alg_compatibility(alg)?;
+     // let oqs_alg = check_pq_alg_compatibility(alg)?;
 
       // Check that `kty` is `ML-DSA`or `SLH-DSA` or `FALCON`.
       match alg {
@@ -517,7 +522,7 @@ mod pqc_liboqs {
 
       let params = jwk.try_pq_params().unwrap();
 
-      let sk = params
+      let sk_bytes = params
         .private
         .as_deref()
         .map(jwu::decode_b64)
@@ -530,27 +535,15 @@ mod pqc_liboqs {
             .with_custom_message("unable to decode `d` param")
             .with_source(err)
         })?;
+        println!("1111111111111111111111111111111111111111111111111111111111111111111");
+        
+      let sk = SecretKey::from_bytes(&sk_bytes)
+      .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified))?;
+    println!("22222222222222222222222222222222222222222222222222222222222222222222222222222222");
 
-      oqs::init(); //TODO: check what this function does
-
-      let scheme = Sig::new(oqs_alg).map_err(|err| {
-        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("signature scheme init failed"))
-          .with_source(err)
-      })?;
-
-      let secret_key = scheme.secret_key_from_bytes(&sk).ok_or(
-        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("expected key of length {}", SecretKey::LENGTH)),
-      )?;
-
-      let signature = scheme.sign(&data, secret_key).map_err(|err| {
-        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("signature computation failed"))
-          .with_source(err)
-      })?;
-
-      Ok(signature.into_vec())
+      let signature: DetachedSignature = detached_sign(&data, &sk);
+      println!("3333333333333333333333333333333333333333333333333333333333");
+      Ok(signature.as_bytes().to_vec())
     }
   }
 }
