@@ -74,6 +74,7 @@ lazy_static! {
 }
 
 pub async fn get_client() -> anyhow::Result<TestClient> {
+  {
   let client = IotaClientBuilder::default().build_localnet().await?;
   let package_id = PACKAGE_ID.get_or_try_init(|| init(&client)).await.copied()?;
   let address = get_active_address().await?;
@@ -89,6 +90,7 @@ pub async fn get_client() -> anyhow::Result<TestClient> {
     address,
     storage,
   })
+  }.inspect_err(|e: &anyhow::Error| {dbg!(e); dbg!(e.source());})
 }
 
 async fn init(iota_client: &IotaClient) -> anyhow::Result<ObjectID> {

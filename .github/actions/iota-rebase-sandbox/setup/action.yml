@@ -43,3 +43,5 @@ runs:
         rm -rf ~/.iota || true 
         # Start the network
         iota start --with-faucet &
+        # Request more funds just in case
+        iota client faucet
