@@ -90,7 +90,7 @@ pub async fn get_client() -> anyhow::Result<TestClient> {
     address,
     storage,
   })
-  }.inspect_err(|e: &anyhow::Error| {dbg!(e); dbg!(e.source());})
+  }.inspect_err(|e: &anyhow::Error| {println!("{e}"); println!("{:?}", e.source());})
 }
 
 async fn init(iota_client: &IotaClient) -> anyhow::Result<ObjectID> {
