@@ -75,7 +75,6 @@ lazy_static! {
 }
 
 pub async fn get_client() -> anyhow::Result<TestClient> {
-  {
   let client = IotaClientBuilder::default().build_localnet().await?;
   let package_id = PACKAGE_ID.get_or_try_init(|| init(&client)).await.copied()?;
   let address = get_active_address().await?;
@@ -91,7 +90,6 @@ pub async fn get_client() -> anyhow::Result<TestClient> {
     address,
     storage,
   })
-  }.inspect_err(|e: &anyhow::Error| {println!("{e}"); println!("{:?}", e.source());})
 }
 
 async fn init(iota_client: &IotaClient) -> anyhow::Result<ObjectID> {
@@ -232,7 +230,9 @@ impl TestClient {
       .await?;
     let new_address = {
       let output_str = std::str::from_utf8(&output.stdout).unwrap();
-      let start_of_json = output_str.find('{').ok_or(anyhow!("No json in output: {}", output_str))?;
+      let start_of_json = output_str
+        .find('{')
+        .ok_or(anyhow!("No json in output: {}", output_str))?;
       let json_result = serde_json::from_str::<Value>(output_str[start_of_json..].trim())?;
       let address_json = json_result
         .path("$.address")

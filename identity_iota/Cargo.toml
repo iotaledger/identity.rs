@@ -21,6 +21,12 @@ identity_resolver = { version = "=1.4.0", path = "../identity_resolver", default
 identity_storage = { version = "=1.4.0", path = "../identity_storage", default-features = false, features = ["iota-document"] }
 identity_verification = { version = "=1.4.0", path = "../identity_verification", default-features = false }
 
+[dev-dependencies]
+anyhow = "1.0.64"
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", rev = "39c83ddcf07894cdee2abd146381d8704205e6e9" }
+rand = "0.8.5"
+tokio = { version = "1.29.0", features = ["full"] }
+
 [features]
 default = ["revocation-bitmap", "iota-client", "resolver"]
 
