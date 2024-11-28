@@ -139,15 +139,9 @@ jobs:
         if: matrix.os != 'windows-latest'
         # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
         run: |
-          export IOTA_IDENTITY_PKG_ID=$( \
-            iota client publish \
-              --skip-dependency-verification \
-              --json \
-              --gas-budget 500000000 \
-              . \
-            | \
-            jq --raw-output '.objectChanges[] | select(.type | contains("published")) | .packageId' \
-          )
+          json_output=$(iota client publish --skip-dependency-verification --with-unpublished-dependencies --json --gas-budget 500000000 .)
+          package_id=$(echo $json_output | jq --raw-output '.objectChanges[] | select(.type | contains("published")) | .packageId')
+          echo "IOTA_IDENTITY_PKG_ID=$package_id" >> "$GITHUB_ENV"
         working-directory: ./identity_iota_core/packages/iota_identity
 
       - name: Run tests excluding `custom_time` feature
