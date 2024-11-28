@@ -138,7 +138,17 @@ jobs:
       - name: publish IotaIdentity package
         if: matrix.os != 'windows-latest'
         # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
-        run: source ./identity_iota_core/scripts/publish_identity_package.sh
+        run: |
+          export IOTA_IDENTITY_PKG_ID=$( \
+            iota client publish \
+              --skip-dependency-verification \
+              --json \
+              --gas-budget 500000000 \
+              . \
+            | \
+            jq --raw-output '.objectChanges[] | select(.type | contains("published")) | .packageId' \
+          )
+        working-directory: ./identity_iota_core/package/iota_identity
 
       - name: Run tests excluding `custom_time` feature
         if: matrix.os != 'windows-latest'
