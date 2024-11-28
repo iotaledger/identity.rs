@@ -73,7 +73,7 @@ pub enum Identity {
 impl Identity {
   /// Returns the [`IotaDocument`] DID Document stored inside this [`Identity`].
   pub fn did_document(&self, client: &IdentityClientReadOnly) -> Result<IotaDocument, Error> {
-    let original_did = IotaDID::from_alias_id(self.id().to_string().as_str(), client.network());
+    let original_did = IotaDID::from_object_id(self.id().to_string().as_str(), client.network());
     let doc_bytes = self.doc_bytes().ok_or(Error::DidDocParsingFailed(
       "legacy alias output does not encode a DID document".to_owned(),
     ))?;
@@ -360,7 +360,7 @@ pub async fn get_identity(
     return Ok(None);
   };
 
-  let did = IotaDID::from_alias_id(&object_id.to_string(), client.network());
+  let did = IotaDID::from_object_id(&object_id.to_string(), client.network());
   let Some((id, multi_controller, created, updated, version)) = unpack_identity_data(&did, &data)? else {
     return Ok(None);
   };
