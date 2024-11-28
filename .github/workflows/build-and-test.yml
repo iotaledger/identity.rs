@@ -148,7 +148,7 @@ jobs:
             | \
             jq --raw-output '.objectChanges[] | select(.type | contains("published")) | .packageId' \
           )
-        working-directory: ./identity_iota_core/package/iota_identity
+        working-directory: ./identity_iota_core/packages/iota_identity
 
       - name: Run tests excluding `custom_time` feature
         if: matrix.os != 'windows-latest'
