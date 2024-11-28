@@ -135,6 +135,13 @@ jobs:
         with:
           platform: ${{ matrix.os == 'ubuntu-24.04' && 'linux' || 'macos' }}
 
+      - name: publish IotaIdentity package
+        if: matrix.os != 'windows-latest'
+        with:
+          platform: ${{ matrix.os == 'ubuntu-24.04' && 'linux' || 'macos' }}
+        # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
+        run: source ./identity_iota_core/scripts/publish_identity_package.sh
+
       - name: Run tests excluding `custom_time` feature
         if: matrix.os != 'windows-latest'
         run: cargo test --workspace --release

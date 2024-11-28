@@ -98,9 +98,9 @@ where
   let public_key_bytes = get_sender_public_key(&public_key_jwk)?;
   let sender_address = convert_to_address(&public_key_bytes)?;
   request_funds(&sender_address).await?;
-  let package_id = std::env::var("IDENTITY_IOTA_PKG_ID")
+  let package_id = std::env::var("IOTA_IDENTITY_PKG_ID")
     .map_err(|e| {
-      anyhow::anyhow!("env variable IDENTITY_IOTA_PKG_ID must be set in order to run the examples").context(e)
+      anyhow::anyhow!("env variable IOTA_IDENTITY_PKG_ID must be set in order to run the examples").context(e)
     })
     .and_then(|pkg_str| pkg_str.parse().context("invalid package id"))?;
 
