@@ -92,7 +92,7 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha" }
+identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha", features = ["memstore"] }
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.0-alpha" }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.62"
