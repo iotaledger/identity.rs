@@ -144,7 +144,7 @@ async fn publish_package(active_address: IotaAddress) -> anyhow::Result<ObjectID
 
   let publish_result = {
     let output_str = std::str::from_utf8(&output.stdout).unwrap();
-    let start_of_json = output_str.find('{').ok_or(anyhow!("No json in output"))?;
+    let start_of_json = output_str.find('{').ok_or(anyhow!("No json in output: {}", output_str))?;
     serde_json::from_str::<Value>(output_str[start_of_json..].trim())?
   };
 
@@ -238,7 +238,7 @@ impl TestClient {
       .await?;
     let new_address = {
       let output_str = std::str::from_utf8(&output.stdout).unwrap();
-      let start_of_json = output_str.find('{').ok_or(anyhow!("No json in output"))?;
+      let start_of_json = output_str.find('{').ok_or(anyhow!("No json in output: {}", output_str))?;
       let json_result = serde_json::from_str::<Value>(output_str[start_of_json..].trim())?;
       let address_json = json_result
         .path("$.address")
