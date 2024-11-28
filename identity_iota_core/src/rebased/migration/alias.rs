@@ -45,7 +45,6 @@ pub struct UnmigratedAlias {
 
   /// The sender feature.
   pub sender: Option<IotaAddress>,
-  /// The metadata feature.  pub metadata: Option<Vec<u8>>,
 
   /// The immutable issuer feature.
   pub immutable_issuer: Option<IotaAddress>,

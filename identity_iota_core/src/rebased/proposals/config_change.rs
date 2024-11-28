@@ -52,7 +52,7 @@ impl MoveType for ConfigChange {
   }
 }
 
-impl<'i> ProposalBuilder<'i, ConfigChange> {
+impl ProposalBuilder<'_, ConfigChange> {
   /// Sets a new value for the identity's threshold.
   pub fn threshold(mut self, threshold: u64) -> Self {
     self.set_threshold(threshold);

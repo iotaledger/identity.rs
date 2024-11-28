@@ -501,7 +501,7 @@ impl MoveType for OnChainIdentity {
 pub struct CreateIdentityTx<'a>(IdentityBuilder<'a>);
 
 #[async_trait]
-impl<'a> Transaction for CreateIdentityTx<'a> {
+impl Transaction for CreateIdentityTx<'_> {
   type Output = OnChainIdentity;
   async fn execute_with_opt_gas<S>(
     self,

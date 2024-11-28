@@ -63,7 +63,7 @@ impl SendAction {
   }
 }
 
-impl<'i> ProposalBuilder<'i, SendAction> {
+impl ProposalBuilder<'_, SendAction> {
   /// Adds one object to the list of objects to send.
   pub fn object(mut self, object_id: ObjectID, recipient: IotaAddress) -> Self {
     self.send_object(object_id, recipient);
