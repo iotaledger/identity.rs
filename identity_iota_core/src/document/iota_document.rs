@@ -415,7 +415,7 @@ mod client_document {
     ///
     /// NOTE: `did` is required since it is omitted from the serialized DID Document and
     /// cannot be inferred from the state metadata. It also indicates the network, which is not
-    /// encoded in the `AliasId` alone.
+    /// encoded in the object id alone.
     pub fn unpack_from_iota_object_data(
       did: &IotaDID,
       data: &IotaObjectData,
