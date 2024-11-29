@@ -21,9 +21,25 @@ runs:
         PLATFORM="${{ inputs.platform }}"
         echo "Looking for platform: $PLATFORM"
 
-        # Get download URL
-        DOWNLOAD_URL=$(curl "https://api.github.com/repos/iotaledger/iota/releases/latest" | \
-          jq -r --arg p "$PLATFORM" '.assets[] | select(.name | contains($p)) | .browser_download_url')
+        # Try to get latest releases with action's auth token (-> increased request limit)
+        CODE_AND_BODY=$(curl \
+          "https://api.github.com/repos/iotaledger/iota/releases/latest" \
+          -s \
+          -w "\n%{http_code}" \
+          --header "authorization: Bearer ${{ secrets.GITHUB_TOKEN }}")
+        CODE=$(tail -n1 <<< "$CODE_AND_BODY")
+        BODY=$(sed '$ d' <<< "$CODE_AND_BODY")
+
+        # Check response status
+        if [[ "$CODE" != 2** ]]
+        then
+          echo "IOTA release check failed with status $CODE"
+          echo "$BODY"
+          exit 1
+        fi
+
+        # Get download link for platform
+        DOWNLOAD_URL=$(jq -r --arg p "$PLATFORM" '.assets[] | select(.name | contains($p)) | .browser_download_url' <<< "$BODY")
 
         # Download and extract
         echo "Downloading from: $DOWNLOAD_URL"
