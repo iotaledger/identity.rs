@@ -243,7 +243,7 @@ module iota_identity::multicontroller {
         proposal.votes = proposal.votes - vp;
     }
 
-    /// Removes a proposal no one has voted.
+    /// Removes a proposal no one has voted for.
     public fun delete_proposal<V, T: store + drop>(
         multi: &mut Multicontroller<V>,
         cap: &DelegationToken,

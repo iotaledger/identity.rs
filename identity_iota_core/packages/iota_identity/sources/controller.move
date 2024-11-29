@@ -185,7 +185,6 @@ module iota_identity::controller_tests {
 
     scenario.next_tx(controller);
 
-    // This must fail!
     multicontroller.create_proposal<_, u64>(
       &delegation_token,
       0,
@@ -219,7 +218,6 @@ module iota_identity::controller_tests {
       scenario.ctx(),
     );
 
-    // This should fail!!!
     multicontroller.execute_proposal<_, u64>(
       &delegation_token,
       proposal_id,
@@ -252,7 +250,6 @@ module iota_identity::controller_tests {
       scenario.ctx(),
     );
 
-    // This should fail
     multicontroller.approve_proposal<_, u64>(
       &delegation_token,
       proposal_id,
@@ -284,7 +281,6 @@ module iota_identity::controller_tests {
       scenario.ctx(),
     );
 
-    // This should fail!
     multicontroller.remove_approval<_, u64>(
       &delegation_token,
       proposal_id,
@@ -321,7 +317,6 @@ module iota_identity::controller_tests {
       proposal_id,
     );
 
-    // This should fail!
     multicontroller.delete_proposal<_, u64>(
       &delegation_token,
       proposal_id,
