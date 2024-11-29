@@ -10,7 +10,7 @@ use std::str::FromStr as _;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IotaKeySignature;
 use crate::rebased::migration::Proposal;
-use crate::rebased::sui::move_calls;
+use crate::rebased::iota::move_calls;
 use async_trait::async_trait;
 use iota_sdk::rpc_types::IotaTransactionBlockResponse;
 use iota_sdk::types::base_types::IotaAddress;
@@ -23,7 +23,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::rebased::migration::OnChainIdentity;
-use crate::rebased::sui::types::Number;
+use crate::rebased::iota::types::Number;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 

@@ -16,7 +16,7 @@ use serde::Serialize;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IotaKeySignature;
 use crate::rebased::migration::OnChainIdentity;
-use crate::rebased::sui::move_calls;
+use crate::rebased::iota::move_calls;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 

@@ -7,7 +7,7 @@ use std::marker::PhantomData;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IotaKeySignature;
 use crate::rebased::migration::Proposal;
-use crate::rebased::sui::move_calls;
+use crate::rebased::iota::move_calls;
 use crate::rebased::transaction::ProtoTransaction;
 use crate::rebased::transaction::Transaction;
 use crate::rebased::transaction::TransactionOutput;

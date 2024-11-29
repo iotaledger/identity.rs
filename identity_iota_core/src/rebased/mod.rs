@@ -10,7 +10,7 @@ mod error;
 pub mod migration;
 /// Contains the operations of proposals.
 pub mod proposals;
-mod sui;
+mod iota;
 /// Module for handling transactions.
 pub mod transaction;
 /// Contains utility functions.

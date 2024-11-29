@@ -7,7 +7,7 @@ use std::ops::Deref;
 use std::str::FromStr;
 
 use crate::rebased::proposals::Upgrade;
-use crate::rebased::sui::types::Number;
+use crate::rebased::iota::types::Number;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::StateMetadataDocument;
@@ -46,7 +46,7 @@ use crate::rebased::proposals::DeactivateDid;
 use crate::rebased::proposals::ProposalBuilder;
 use crate::rebased::proposals::SendAction;
 use crate::rebased::proposals::UpdateDidDocument;
-use crate::rebased::sui::move_calls;
+use crate::rebased::iota::move_calls;
 use crate::rebased::transaction::Transaction;
 use crate::rebased::transaction::TransactionOutput;
 use crate::rebased::utils::MoveType;

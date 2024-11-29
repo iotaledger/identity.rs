@@ -11,7 +11,7 @@ use iota_sdk::types::transaction::ProgrammableTransaction;
 use move_core_types::ident_str;
 
 use crate::rebased::proposals::ControllerExecution;
-use crate::rebased::sui::move_calls::utils;
+use crate::rebased::iota::move_calls::utils;
 use crate::rebased::utils::MoveType;
 
 pub(crate) fn propose_controller_execution(

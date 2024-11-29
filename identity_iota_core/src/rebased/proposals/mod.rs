@@ -16,7 +16,7 @@ use std::ops::DerefMut;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::client::IotaKeySignature;
 use crate::rebased::migration::get_identity;
-use crate::rebased::sui::move_calls;
+use crate::rebased::iota::move_calls;
 use crate::rebased::transaction::ProtoTransaction;
 use async_trait::async_trait;
 pub use borrow::*;

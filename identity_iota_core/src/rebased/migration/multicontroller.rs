@@ -4,8 +4,8 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use crate::rebased::sui::types::Bag;
-use crate::rebased::sui::types::Number;
+use crate::rebased::iota::types::Bag;
+use crate::rebased::iota::types::Number;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::collection_types::Entry;
 use iota_sdk::types::collection_types::VecMap;
