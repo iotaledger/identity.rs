@@ -17,4 +17,8 @@ module iota_identity::permissions {
   public fun can_delete_proposal(): u32 { CAN_DELETE_PROPOSAL }
   public fun can_remove_approval(): u32 { CAN_REMOVE_APPROVAL }
   public fun all(): u32 { ALL_PERMISSIONS }
+  /// Negate a permission
+  public fun not(permission: u32): u32 {
+    permission ^ all()
+  }
 }
