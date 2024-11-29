@@ -148,3 +148,44 @@ module iota_identity::controller {
     object::delete(id);
   }
 }
+
+#[test_only]
+module iota_identity::controller_tests {
+    use iota::test_scenario;
+    use iota_identity::controller::{Self, ControllerCap};
+    use iota_identity::permissions;
+    use iota_identity::controller::ECannotDelegate;
+
+    #[test]
+    fun test_only_delegatable_controllers_can_create_delegation_tokens() {
+        let owner = @0x1;
+        let mut scenario = test_scenario::begin(owner);
+
+
+        // Create a delegatable controller
+        let delegatable = controller::new(true, scenario.ctx());
+
+        let delegation_token = delegatable.delegate(scenario.ctx());
+
+        assert!(delegation_token.permissions() == permissions::all(), 1);
+
+        delegation_token.delete();
+        delegatable.delete();
+
+        scenario.end();
+    }
+
+    #[test, expected_failure(abort_code = ECannotDelegate)]
+    fun test_only_delegatable_controllers_can_create_delegation_tokens_2() {
+        let owner = @0x1;
+        let mut scenario = test_scenario::begin(owner);
+
+        let non_delegatable = controller::new(false, scenario.ctx());
+        let delegation_token = non_delegatable.delegate(scenario.ctx());
+
+        delegation_token.delete();
+        non_delegatable.delete();
+        scenario.end();
+    }
+
+}

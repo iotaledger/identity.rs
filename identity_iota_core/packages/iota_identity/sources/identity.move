@@ -169,7 +169,7 @@ module iota_identity::identity {
         }
     }
 
-    /// Proposes the deativation of the DID Document contained in this `Identity`.
+    /// Proposes the deactivation of the DID Document contained in this `Identity`.
     public fun propose_deactivation(
         self: &mut Identity,
         cap: &DelegationToken,
@@ -544,6 +544,9 @@ module iota_identity::identity_tests {
     use iota_identity::controller::ControllerCap;
     use iota::vec_map;
     use iota::clock;
+    use iota_identity::permissions;
+    use iota_identity::controller::{assert_has_permission, delegate, delegate_with_permissions,delegation_token_id};
+    use iota_identity::permissions::{all, can_approve_proposal, can_create_proposal, can_execute_proposal};
 
     #[test]
     fun adding_a_controller_works() {
@@ -924,6 +927,82 @@ module iota_identity::identity_tests {
         test_scenario::return_to_address(controller_a, cap);
         test_scenario::return_to_address(controller_b, cap_b);
         test_scenario::return_shared(identity);
+
+        scenario.end();
+        clock::destroy_for_testing(clock);
+    }
+
+    #[test]
+    fun test_permission_checks_for_identity_operations() {
+        let owner = @0x1;
+        let execute_only_controller = @0x2;
+        let approve_only_controller = @0x3;
+        let create_only_controller = @0x4;
+
+        let mut scenario = test_scenario::begin(owner);
+        let clock = clock::create_for_testing(scenario.ctx());
+
+        // Setup controllers
+        let mut controllers = vec_map::empty();
+        controllers.insert(owner, 1);
+
+        let mut controllers_that_can_delegate = vec_map::empty();
+        controllers_that_can_delegate.insert(owner, permissions::all() as u64);
+        // controllers_that_can_delegate.insert(execute_only_controller, permissions::can_execute_proposal() as u64);
+        // controllers_that_can_delegate.insert(approve_only_controller, permissions::can_approve_proposal() as u64);
+        // controllers_that_can_delegate.insert(create_only_controller, permissions::can_create_proposal() as u64);
+
+        // Create an identity with a delegatable controller
+        let identity = new_with_controllers(b"DID", controllers, controllers_that_can_delegate, 1, &clock, scenario.ctx());
+        transfer::public_share_object(identity);
+        scenario.next_tx(owner);
+        let mut identity = scenario.take_shared<Identity>();
+        scenario.next_tx(owner);
+
+        scenario.next_tx(create_only_controller);
+        // Test proposal creation permission
+        let mut create_only_cap = scenario.take_from_address<ControllerCap>(create_only_controller);
+        scenario.next_tx(create_only_controller);
+
+        let proposal_id = {
+            let (token, borrow) = create_only_cap.borrow();
+            let proposal_id = identity.propose_update(&token, b"DID", option::none(), &clock, scenario.ctx());
+
+            assert!(proposal_id.is_some(), 0);
+            create_only_cap.put_back(token, borrow);
+            proposal_id.destroy_some()
+        };
+
+        scenario.next_tx(approve_only_controller);
+
+        // Test proposal approval permission
+        let mut approve_only_cap = scenario.take_from_address<ControllerCap>(approve_only_controller);
+        scenario.next_tx(approve_only_controller);
+
+        {
+            let (token, borrow) = approve_only_cap.borrow();
+            identity.approve_proposal<Modify>(&token, proposal_id);
+
+            approve_only_cap.put_back(token, borrow);
+        };
+
+        // Test proposal execution permission
+        scenario.next_tx(execute_only_controller);
+        let mut execute_only_cap = scenario.take_from_address<ControllerCap>(execute_only_controller);
+
+        {
+            let (token, borrow) = execute_only_cap.borrow();
+            identity.execute_update(&token, proposal_id, &clock, scenario.ctx());
+            execute_only_cap.put_back(token, borrow);
+        };
+
+        // Cleanup
+        scenario.next_tx(owner);
+        test_scenario::return_to_address(owner, execute_only_cap);
+        test_scenario::return_to_address(approve_only_controller, approve_only_cap);
+        test_scenario::return_to_address(create_only_controller, create_only_cap);
+        test_scenario::return_shared(identity);
+
 
         scenario.end();
         clock::destroy_for_testing(clock);
