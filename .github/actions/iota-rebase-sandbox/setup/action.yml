@@ -40,6 +40,11 @@ runs:
 
         # Get download link for platform
         DOWNLOAD_URL=$(jq -r --arg p "$PLATFORM" '.assets[] | select(.name | contains($p)) | .browser_download_url' <<< "$BODY")
+        if [ -z "$DOWNLOAD_URL" ]
+        then
+          echo "Could not find download url in response body: $BODY"
+          exit 1
+        fi
 
         # Download and extract
         echo "Downloading from: $DOWNLOAD_URL"
