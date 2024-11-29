@@ -14,8 +14,8 @@ use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::transaction::ProgrammableTransaction;
 use move_core_types::ident_str;
 
-use crate::rebased::proposals::BorrowAction;
 use crate::rebased::iota::move_calls::utils;
+use crate::rebased::proposals::BorrowAction;
 use crate::rebased::utils::MoveType;
 
 pub(crate) fn propose_borrow(

@@ -11,8 +11,8 @@ use iota_sdk::types::transaction::ProgrammableTransaction;
 use iota_sdk::types::TypeTag;
 use move_core_types::ident_str;
 
-use crate::rebased::proposals::SendAction;
 use crate::rebased::iota::move_calls;
+use crate::rebased::proposals::SendAction;
 use crate::rebased::utils::MoveType;
 
 use self::move_calls::utils;
