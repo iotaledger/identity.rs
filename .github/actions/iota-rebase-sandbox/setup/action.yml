@@ -21,28 +21,15 @@ runs:
         PLATFORM="${{ inputs.platform }}"
         echo "Looking for platform: $PLATFORM"
 
-        # Try to get latest releases with action's auth token (-> increased request limit)
-        CODE_AND_BODY=$(curl \
-          "https://api.github.com/repos/iotaledger/iota/releases/latest" \
-          -s \
-          -w "\n%{http_code}" \
-          --header "authorization: Bearer ${{ github.token }}")
-        CODE=$(tail -n1 <<< "$CODE_AND_BODY")
-        BODY=$(sed '$ d' <<< "$CODE_AND_BODY")
-
-        # Check response status
-        if [[ "$CODE" != 2** ]]
-        then
-          echo "IOTA release check failed with status $CODE"
-          echo "$BODY"
-          exit 1
-        fi
-
-        # Get download link for platform
-        DOWNLOAD_URL=$(jq -r --arg p "$PLATFORM" '.assets[] | select(.name | contains($p)) | .browser_download_url' <<< "$BODY")
-        if [ -z "$DOWNLOAD_URL" ]
-        then
-          echo "Could not find download url in response body: $BODY"
+        # pinned releases from:
+        # url = https://api.github.com/repos/iotaledger/iota/releases/latest
+        # releases might be visible before all binaries are available, so refer to fixed binaries here
+        if [ "$PLATFORM" = "linux" ]; then
+          DOWNLOAD_URL="https://github.com/iotaledger/iota/releases/download/v0.7.3-rc/iota-v0.7.3-rc-linux-x86_64.tgz"
+        elif [ "$PLATFORM" = "macos" ]; then
+          DOWNLOAD_URL="https://github.com/iotaledger/iota/releases/download/v0.7.3-rc/iota-v0.7.3-rc-macos-arm64.tgz"
+        else
+          echo "not binaries for platform: $PLATFORM"
           exit 1
         fi
 
