@@ -223,7 +223,7 @@ impl<T> AuthenticatedAssetBuilder<T> {
 }
 
 /// Proposal for the transfer of an [`AuthenticatedAsset`]'s ownership from one [`IotaAddress`] to another.
-
+///
 /// # Detailed Workflow
 /// A [`TransferProposal`] is a **shared** _Move_ object that represents a request to transfer ownership
 /// of an [`AuthenticatedAsset`] to a new owner.
@@ -375,7 +375,7 @@ pub struct UpdateContentTx<'a, T> {
 }
 
 #[async_trait]
-impl<'a, T> Transaction for UpdateContentTx<'a, T>
+impl<T> Transaction for UpdateContentTx<'_, T>
 where
   T: MoveType + Serialize + Clone + Send + Sync,
 {

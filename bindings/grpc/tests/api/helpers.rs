@@ -38,6 +38,7 @@ use serde_json::Value;
 use std::io::Write;
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use tokio::net::TcpListener;
 use tokio::process::Command;
@@ -375,19 +376,12 @@ async fn publish_package(active_address: IotaAddress) -> anyhow::Result<ObjectID
     );
   }
 
-  let publish_result = {
-    let output_str = std::str::from_utf8(&output.stdout).unwrap();
-    let start_of_json = output_str.find('{').ok_or(anyhow!("No json in output"))?;
-    serde_json::from_str::<Value>(output_str[start_of_json..].trim())?
+  let package_id: ObjectID = {
+    let output_str = std::str::from_utf8(&output.stdout).unwrap().trim();
+    ObjectID::from_str(output_str).context(format!(
+      "failed to find IDENTITY_IOTA_PKG_ID in response from: {output_str}"
+    ))?
   };
-
-  let package_id = publish_result
-    .path("$.objectChanges[?(@.type == 'published')].packageId")
-    .map_err(|e| anyhow!("Failed to parse JSONPath: {e}"))
-    .and_then(|value| Ok(serde_json::from_value::<Vec<ObjectID>>(value)?))?
-    .first()
-    .copied()
-    .ok_or_else(|| anyhow!("Failed to parse package ID after publishing"))?;
 
   // Persist package ID in order to avoid publishing the package for every test.
   let package_id_str = package_id.to_string();

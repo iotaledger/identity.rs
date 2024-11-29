@@ -160,7 +160,7 @@ impl<'i> ProtoTransaction for UserDrivenTx<'i, ControllerExecution> {
 }
 
 #[async_trait]
-impl<'i, F> Transaction for UserDrivenTx<'i, ControllerExecutionWithIntent<F>>
+impl<F> Transaction for UserDrivenTx<'_, ControllerExecutionWithIntent<F>>
 where
   F: FnOnce(&mut Ptb, &Argument) + Send,
 {

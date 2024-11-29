@@ -35,15 +35,15 @@ bcs = { version = "0.1.4", optional = true }
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "5f2c63266a065996d53f98156f0412782b468597", package = "fastcrypto", optional = true }
 identity_eddsa_verifier = { version = "=1.4.0", path = "../identity_eddsa_verifier", optional = true }
 identity_jose = { version = "=1.4.0", path = "../identity_jose", optional = true }
-iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config", rev = "39c83ddcf07894cdee2abd146381d8704205e6e9", optional = true }
+iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config", tag = "v0.7.3-rc", optional = true }
 iota-crypto = { version = "0.23", optional = true }
-iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", rev = "39c83ddcf07894cdee2abd146381d8704205e6e9", optional = true }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.3-rc", optional = true }
 itertools = { version = "0.13.0", optional = true }
-move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", rev = "39c83ddcf07894cdee2abd146381d8704205e6e9", optional = true }
+move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.7.3-rc", optional = true }
 rand = { version = "0.8.5", optional = true }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.1.0", optional = true }
 serde-aux = { version = "4.5.0", optional = true }
-shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", rev = "39c83ddcf07894cdee2abd146381d8704205e6e9", optional = true }
+shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.7.3-rc", optional = true }
 tokio = { version = "1.29.0", default-features = false, optional = true, features = ["macros", "sync", "rt", "process"] }
 
 [dev-dependencies]

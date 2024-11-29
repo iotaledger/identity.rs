@@ -96,14 +96,14 @@ pub struct ProposalBuilder<'i, A> {
   action: A,
 }
 
-impl<'i, A> Deref for ProposalBuilder<'i, A> {
+impl<A> Deref for ProposalBuilder<'_, A> {
   type Target = A;
   fn deref(&self) -> &Self::Target {
     &self.action
   }
 }
 
-impl<'i, A> DerefMut for ProposalBuilder<'i, A> {
+impl<A> DerefMut for ProposalBuilder<'_, A> {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.action
   }
@@ -161,7 +161,7 @@ pub struct CreateProposalTx<'i, A> {
 }
 
 #[async_trait]
-impl<'i, A> Transaction for CreateProposalTx<'i, A>
+impl<A> Transaction for CreateProposalTx<'_, A>
 where
   Proposal<A>: ProposalT<Action = A> + DeserializeOwned,
   A: Send,
@@ -234,7 +234,7 @@ pub struct ExecuteProposalTx<'i, A> {
 }
 
 #[async_trait]
-impl<'i, A> Transaction for ExecuteProposalTx<'i, A>
+impl<A> Transaction for ExecuteProposalTx<'_, A>
 where
   Proposal<A>: ProposalT<Action = A>,
   A: Send,
@@ -278,7 +278,7 @@ pub struct ApproveProposalTx<'p, 'i, A> {
 }
 
 #[async_trait]
-impl<'p, 'i, A> Transaction for ApproveProposalTx<'p, 'i, A>
+impl<A> Transaction for ApproveProposalTx<'_, '_, A>
 where
   Proposal<A>: ProposalT<Action = A>,
   A: MoveType + Send,

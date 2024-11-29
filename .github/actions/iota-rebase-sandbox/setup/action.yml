@@ -21,9 +21,17 @@ runs:
         PLATFORM="${{ inputs.platform }}"
         echo "Looking for platform: $PLATFORM"
 
-        # Get download URL
-        DOWNLOAD_URL=$(curl "https://api.github.com/repos/iotaledger/iota/releases/latest" | \
-          jq -r --arg p "$PLATFORM" '.assets[] | select(.name | contains($p)) | .browser_download_url')
+        # pinned releases from:
+        # url = https://api.github.com/repos/iotaledger/iota/releases/latest
+        # releases might be visible before all binaries are available, so refer to fixed binaries here
+        if [ "$PLATFORM" = "linux" ]; then
+          DOWNLOAD_URL="https://github.com/iotaledger/iota/releases/download/v0.7.3-rc/iota-v0.7.3-rc-linux-x86_64.tgz"
+        elif [ "$PLATFORM" = "macos" ]; then
+          DOWNLOAD_URL="https://github.com/iotaledger/iota/releases/download/v0.7.3-rc/iota-v0.7.3-rc-macos-arm64.tgz"
+        else
+          echo "not binaries for platform: $PLATFORM"
+          exit 1
+        fi
 
         # Download and extract
         echo "Downloading from: $DOWNLOAD_URL"
@@ -38,4 +46,8 @@ runs:
     - name: Start the Network
       shell: bash
       working-directory: iota
-      run: iota start --with-faucet --force-regenesis &
+      run: |
+        # Clear previous configuration
+        rm -rf ~/.iota || true 
+        # Start the network
+        iota start --with-faucet &

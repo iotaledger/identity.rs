@@ -73,7 +73,7 @@ impl BorrowAction {
   }
 }
 
-impl<'i> ProposalBuilder<'i, BorrowAction> {
+impl ProposalBuilder<'_, BorrowAction> {
   /// Adds an object to the list of objects that will be borrowed when executing this action.
   pub fn borrow(mut self, object_id: ObjectID) -> Self {
     self.borrow_object(object_id);
@@ -177,7 +177,7 @@ impl<'i> ProtoTransaction for UserDrivenTx<'i, BorrowAction> {
 }
 
 #[async_trait]
-impl<'i, F> Transaction for UserDrivenTx<'i, BorrowActionWithIntent<F>>
+impl<F> Transaction for UserDrivenTx<'_, BorrowActionWithIntent<F>>
 where
   F: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) + Send,
 {

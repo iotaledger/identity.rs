@@ -80,7 +80,7 @@ Test this example using https://github.com/anko/txm: `txm README.md`
 !test program
 cd ../..
 mkdir tmp
-cat | sed -e 's#identity_iota = { git = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
+cat | sed -e 's#identity_iota = { git = "[^"]*", tag = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
 echo '[workspace]' >>tmp/Cargo.toml
 -->
 <!-- !test check Cargo Example -->
@@ -92,11 +92,11 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha", features = ["memstore"] }
-iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.0-alpha" }
-tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.62"
+identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha", features = ["memstore"] }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.3-rc" }
 rand = "0.8.5"
+tokio = { version = "1", features = ["full"] }
 ```
 
 _main._<span></span>_rs_
@@ -112,7 +112,6 @@ cd tmp
 timeout 360 cargo build || (echo "Process timed out after 360 seconds" && exit 1)
 -->
 <!-- !test check Rust Example -->
-
 
 ```rust,no_run
 use anyhow::Context;
@@ -134,18 +133,12 @@ use identity_iota::verification::MethodScope;
 use iota_sdk::IotaClientBuilder;
 use tokio::io::AsyncReadExt;
 
-// The endpoint of the IOTA node to use.
-static API_ENDPOINT: &str = "http://localhost";
-
-// Test budget for transactions.
-const TEST_GAS_BUDGET: u64 = 50_000_000;
-
 /// Demonstrates how to create a DID Document and publish it in a new identity.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
   let iota_client = IotaClientBuilder::default()
-    .build(API_ENDPOINT)
+    .build_localnet()
     .await
     .map_err(|err| anyhow::anyhow!(format!("failed to connect to network; {}", err)))?;
 
@@ -170,12 +163,12 @@ async fn main() -> anyhow::Result<()> {
   let identity_client = IdentityClient::new(read_only_client, signer).await?;
 
   println!("Your wallet address is: {}", sender_address);
-  println!("Please request funds from http://localhost/faucet/, wait for a couple of seconds and then press Enter.");
+  println!("Please request funds from http://127.0.0.1:9123/gas, wait for a couple of seconds and then press Enter.");
   tokio::io::stdin().read_u8().await?;
 
   // Create a new DID document with a placeholder DID.
   let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network());
-  let verification_method_fragment = unpublished
+  unpublished
     .generate_method(
       &storage,
       JwkMemStore::ED25519_KEY_TYPE,
