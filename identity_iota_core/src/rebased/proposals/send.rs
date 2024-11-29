@@ -15,8 +15,8 @@ use serde::Serialize;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IotaKeySignature;
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::OnChainIdentity;
-use crate::rebased::sui::move_calls;
 use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 
@@ -63,7 +63,7 @@ impl SendAction {
   }
 }
 
-impl<'i> ProposalBuilder<'i, SendAction> {
+impl ProposalBuilder<'_, SendAction> {
   /// Adds one object to the list of objects to send.
   pub fn object(mut self, object_id: ObjectID, recipient: IotaAddress) -> Self {
     self.send_object(object_id, recipient);

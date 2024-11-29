@@ -24,7 +24,7 @@ pub struct StorageSigner<'a, K, I> {
   storage: &'a Storage<K, I>,
 }
 
-impl<'a, K, I> Clone for StorageSigner<'a, K, I> {
+impl<K, I> Clone for StorageSigner<'_, K, I> {
   fn clone(&self) -> Self {
     StorageSigner {
       key_id: self.key_id.clone(),
@@ -62,7 +62,7 @@ impl<'a, K, I> StorageSigner<'a, K, I> {
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-impl<'a, K, I> Signer<IotaKeySignature> for StorageSigner<'a, K, I>
+impl<K, I> Signer<IotaKeySignature> for StorageSigner<'_, K, I>
 where
   K: JwkStorage + Sync,
   I: KeyIdStorage + Sync,

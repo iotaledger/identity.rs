@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IotaKeySignature;
-use crate::rebased::sui::move_calls;
+use crate::rebased::iota::move_calls;
 use crate::IotaDocument;
 use async_trait::async_trait;
 use iota_sdk::rpc_types::IotaTransactionBlockResponse;
