@@ -25,7 +25,7 @@ identity_verification = { version = "=1.4.0", path = "../identity_verification",
 # required for doc test
 anyhow = "1.0.64"
 identity_iota = { version = "=1.4.0", path = "./", features = ["memstore"] }
-iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", rev = "39c83ddcf07894cdee2abd146381d8704205e6e9" }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.3-rc" }
 rand = "0.8.5"
 tokio = { version = "1.29.0", features = ["full"] }
 

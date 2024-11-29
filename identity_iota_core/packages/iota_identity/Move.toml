@@ -6,9 +6,11 @@ name = "IotaIdentity"
 edition = "2024.beta"
 
 [dependencies]
-MoveStdlib = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/move-stdlib", rev = "ead968e573d8feaa1aa78dddadb8b18a8a99870d" }
-Iota = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/iota-framework", rev = "ead968e573d8feaa1aa78dddadb8b18a8a99870d" }
-Stardust = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/stardust", rev = "ead968e573d8feaa1aa78dddadb8b18a8a99870d" }
+# 'tag' keyword not supported here, therefore use rev instead
+# 'tag = "v0.7.3-rc"' equals 'rev = "34da09d2684e7e3356bc457b5e412405357f9972"', which we use here
+MoveStdlib = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/move-stdlib", rev = "34da09d2684e7e3356bc457b5e412405357f9972" }
+Iota = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/iota-framework", rev = "34da09d2684e7e3356bc457b5e412405357f9972" }
+Stardust = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/stardust", rev = "34da09d2684e7e3356bc457b5e412405357f9972" }
 
 [addresses]
 iota_identity = "0x0"
