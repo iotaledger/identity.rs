@@ -85,7 +85,7 @@ async fn main() -> anyhow::Result<()> {
     None,
   ).await?;
 
-  println!("{} {} {} {}", "[Issuer]".red(), " -> [Holder]".blue(), ": Sending VC (as JPT):", credential_jpt.as_str());
+  println!("{} {} {} {} {}", "[Issuer]".red(), " -> ", "[Holder]".blue(), ": Sending VC (as JPT):", credential_jpt.as_str());
 
   println!("{} {} {}", "[Holder]".blue(), ": Resolve Issuer's DID:", issuer_document.id().as_str());
 
@@ -116,7 +116,7 @@ async fn main() -> anyhow::Result<()> {
   .kid()
   .unwrap();
 
-  println!("{} : Engages in the Selective Disclosure of credential's attributes", "[Holder]".blue());
+  println!("{} : Engages in the Selective Disclosure of credential's attributes (Name and GPA)", "[Holder]".blue());
 
   let mut selective_disclosure_presentation = SelectiveDisclosurePresentation::new(&decoded_jpt.decoded_jwp);
   selective_disclosure_presentation

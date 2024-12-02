@@ -67,7 +67,7 @@ async fn main() -> anyhow::Result<()> {
 
   alice_document.insert_service(service).unwrap();
 
-  println!("{} {} {}", "[Holder]".blue(), ": Create DID Jwk with the Revocationbitmap:", alice_document.id().as_str());
+  println!("{} {} {}", "[Holder]".blue(), ": Create DID Jwk:", alice_document.id().as_str());
 
   let subject: Subject = Subject::from_json_value(json!({
     "id": alice_document.id().as_str(),
@@ -119,7 +119,7 @@ async fn main() -> anyhow::Result<()> {
     None,
   ).await?;
 
-  println!("{} {} {} {} {}", "[Issuer]".red(), " -> ", "[Holder]".blue(), ": Sending VC (as JPT):", credential_jpt.as_str());
+  println!("{} {} {} {} {}", "[Issuer]".red(), "->", "[Holder]".blue(), ": Sending VC (as JPT):", credential_jpt.as_str());
 
   println!("{} {} {}", "[Holder]".blue(), ": Resolve Issuer's DID:", issuer_document.id().as_str());
 
@@ -225,6 +225,8 @@ async fn main() -> anyhow::Result<()> {
 
   println!("{} {} {}", "[Verifier]".green(), ": Verify the validity of timeframe :", timeframe_result.unwrap_err());
 
+  println!("{} : Access denied", "[Verifier]".green());
+
   println!("{} {} {} {}", "[Holder]".blue(), "->", "[Issuer]".red(), ": Request update Timeframe");
 
   println!("{} {} {} {}", "[Issuer]".red(), "->", "[Holder]".blue(), ": Sending a challenge");
@@ -245,11 +247,11 @@ async fn main() -> anyhow::Result<()> {
     &JwtPresentationOptions::default().expiration_date(expires),
   ).await?;
 
-  println!("{} {} ","[Issuer]".red(), ": Generate a Verifiable Presentation (VP) from the expired VC including the challenge and a new expiry timestamp");
+  println!("{} {} ","[Holder]".blue(), ": Generate a Verifiable Presentation (VP) from the expired VC including the challenge and a new expiry timestamp");
 
-  println!("{} {} {} {} {}", "[Holder]".blue(), "->", "[Issuer]".red(), ": Sending VP (as JWT):", presentation_jwt.as_str());
+  println!("{} {} {} {}", "[Holder]".blue(), "->", "[Issuer]".red(), ": Sending VP (as JWT)");
 
-  println!("{} {} ","[Issuer]".red(), ": Resolve Issuer's DID and verify the VP");
+  println!("{} {} ","[Issuer]".red(), ": Resolve Holder's DID and verify the VP");
 
   let presentation_verifier_options: JwsVerificationOptions =
   JwsVerificationOptions::default().nonce(challenge.to_owned());
@@ -266,7 +268,7 @@ async fn main() -> anyhow::Result<()> {
     EdDSAJwsVerifier::default(),
   ).validate(&presentation_jwt, &holder, &presentation_validation_options)?;
 
-  println!("{} {} ","[Issuer]".red(), ": Verify the ZK VC inside the VP");
+  println!("{} {} ","[Issuer]".red(), ": Verify the VC inside the VP");
 
   let validation_options: JptCredentialValidationOptions = JptCredentialValidationOptions::default()
   .subject_holder_relationship(holder_did.to_url().into(), SubjectHolderRelationship::AlwaysSubject);
@@ -370,15 +372,13 @@ async fn main() -> anyhow::Result<()> {
 
   println!("{} {} ","[Issuer]".red(), ": Decide to revoke the Holder's Credential");
 
-  println!("{} {} {}", "[Issuer]".red(), ": Update the Bitmap and publish the DID Document (with did:web method) at", did_url);
+  println!("{} {} {}", "[Issuer]".red(), ": Update the Bitmap and publish the updated DID Document (with did:web method) at", did_url);
   
   issuer_document.revoke_credentials("my-revocation-service", &[credential_index])?;
 
   write_to_file(&issuer_document, Some(path_did_file))?;
 
-  println!("{} {} {} {}", "[Holder]".blue(), "->", "[Verifier]".green(), ": Request access (after Issuer revoke)");
-
-  println!("{} {} {} {}", "[Verifier]".green(),  "->",  "[Holder]".blue(), ": Resolve Issuer's DID and verifies the Presentation");
+  println!("{} {}", "[Holder]".blue(), ": Check the revocations status of his credentias");
 
   let client= ClientBuilder::new()
   .danger_accept_invalid_certs(true)
@@ -403,7 +403,7 @@ async fn main() -> anyhow::Result<()> {
     StatusCheck::Strict,
   );
 
-  println!("{} {} {}", "[Verifier]".green(), " : Error ", revocation_result.unwrap_err());
+  println!("{} {} {}", "[Holder]".blue(), ": Revocation status:", revocation_result.unwrap_err());
 
   Ok(())
 }
