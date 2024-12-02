@@ -104,7 +104,7 @@ where
     })
     .and_then(|pkg_str| pkg_str.parse().context("invalid package id"))?;
 
-  let read_only_client = IdentityClientReadOnly::new(iota_client, package_id).await?;
+  let read_only_client = IdentityClientReadOnly::new_with_pkg_id(iota_client, package_id).await?;
 
   let signer = StorageSigner::new(storage, generate.key_id, public_key_jwk);
 

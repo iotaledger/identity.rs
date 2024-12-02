@@ -82,7 +82,7 @@ pub async fn get_client() -> anyhow::Result<TestClient> {
   request_funds(&address).await?;
 
   let storage = Arc::new(Storage::new(JwkMemStore::new(), KeyIdMemstore::new()));
-  let identity_client = IdentityClientReadOnly::new(client, package_id).await?;
+  let identity_client = IdentityClientReadOnly::new_with_pkg_id(client, package_id).await?;
 
   Ok(TestClient {
     client: identity_client,
