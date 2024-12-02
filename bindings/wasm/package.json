@@ -74,7 +74,7 @@
     "txm": "^8.1.0",
     "typedoc": "^0.24.6",
     "typedoc-plugin-markdown": "^3.14.0",
-    "typescript": "^5.3.3",
+    "typescript": "=5.3.3",
     "wasm-opt": "^1.3.0"
   },
   "dependencies": {
