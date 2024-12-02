@@ -871,7 +871,7 @@ impl WasmIotaDocument {
     scope: WasmMethodScope,
   ) -> Result<PromiseString> {
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let promise: Promise = future_to_promise(async move {
       let method_fragment: String = document_lock_clone
         .write()
@@ -901,7 +901,7 @@ impl WasmIotaDocument {
   ) -> Result<PromiseString> {
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let jpt_claims = jpt_claims.into_serde().wasm_result()?;
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let options = options.into();
     let promise: Promise = future_to_promise(async move {
       let jwp: String = document_lock_clone
@@ -949,7 +949,7 @@ impl WasmIotaDocument {
     custom_claims: Option<MapStringAny>,
   ) -> Result<PromiseJpt> {
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let options = options.into();
     let custom_claims = custom_claims.and_then(|claims| claims.into_serde().ok());
     let promise: Promise = future_to_promise(async move {
