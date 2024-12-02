@@ -63,12 +63,12 @@ module iota_identity::identity {
         version: u64,
     }
 
-    /// Creates a new DID Document with a single controller.
+    /// Creates a [`Identity`] with a single controller.
     public fun new(
         doc: vector<u8>,
         clock: &Clock,
         ctx: &mut TxContext
-    ): Identity {
+    ): ID {
         new_with_controller(doc, ctx.sender(), false, clock, ctx)
     }
 
@@ -79,12 +79,20 @@ module iota_identity::identity {
         creation_timestamp: u64,
         clock: &Clock,
         ctx: &mut TxContext
-    ): Identity {
-        let mut identity = new_with_controller(doc, ctx.sender(), false, clock, ctx);
-        assert!(identity.updated >= creation_timestamp, EInvalidTimestamp);
-        identity.created = creation_timestamp;
+    ): ID {
+        let now = clock.timestamp_ms();
+        assert!(now >= creation_timestamp, EInvalidTimestamp);
+        let identity = Identity {
+            id: object::new(ctx),
+            did_doc: multicontroller::new_with_controller(doc, ctx.sender(), false, ctx),
+            created: creation_timestamp,
+            updated: now,
+            version: PACKAGE_VERSION,
+        };
+        let id = object::id(&identity);
+        transfer::share_object(identity);
 
-        identity
+        id
     }
 
     /// Creates a new `Identity` wrapping DID DOC `doc` and controller by
@@ -95,15 +103,19 @@ module iota_identity::identity {
         can_delegate: bool,
         clock: &Clock,
         ctx: &mut TxContext,
-    ): Identity {
+    ): ID {
         let now = clock.timestamp_ms();
-        Identity {
+        let identity = Identity {
             id: object::new(ctx),
             did_doc: multicontroller::new_with_controller(doc, controller, can_delegate, ctx),
             created: now,
             updated: now,
             version: PACKAGE_VERSION,
-        }
+        };
+        let id = object::id(&identity);
+        transfer::share_object(identity);
+
+        id
     }
 
     /// Creates a new DID Document controlled by multiple controllers.
@@ -116,19 +128,23 @@ module iota_identity::identity {
         threshold: u64,
         clock: &Clock,
         ctx: &mut TxContext,
-    ): Identity {
+    ): ID {
         assert!(is_did_output(&doc), ENotADidDocument);
         assert!(threshold >= 1, EInvalidThreshold);
         assert!(controllers.size() > 0, EInvalidControllersList);
 
         let now = clock.timestamp_ms();
-        Identity {
+        let identity = Identity {
             id: object::new(ctx),
             did_doc: multicontroller::new_with_controllers(doc, controllers, controllers_that_can_delegate, threshold, ctx),
             created: now,
             updated: now,
             version: PACKAGE_VERSION,
-        }
+        };
+        let id = object::id(&identity);
+
+        transfer::share_object(identity);
+        id
     }
 
     /// Returns a reference to the `UID` of an `Identity`.
@@ -564,8 +580,7 @@ module iota_identity::identity_tests {
 
         // Create a DID document with no funds and 1 controller with a weight of 1 and a threshold of 1.
         // Share the document and send the controller capability to `controller1`.
-        let identity = new(b"DID", &clock, scenario.ctx());
-        transfer::public_share_object(identity);
+        let _identity_id = new(b"DID", &clock, scenario.ctx());
 
         scenario.next_tx(controller1);
 
@@ -607,7 +622,7 @@ module iota_identity::identity_tests {
         controllers.insert(controller3, 1);
 
         // Create an identity shared by `controller1`, `controller2`, `controller3`.
-        let identity = new_with_controllers(
+        let _identity_id = new_with_controllers(
             b"DID",
             controllers,
             vec_map::empty(),
@@ -615,7 +630,6 @@ module iota_identity::identity_tests {
             &clock,
             scenario.ctx(),
         );
-        transfer::public_share_object(identity);
 
         scenario.next_tx(controller1);
 
@@ -682,7 +696,7 @@ module iota_identity::identity_tests {
         // === First transaction ===
         // Controller A can execute config changes
         {
-            let identity = new_with_controllers(
+            let _ = new_with_controllers(
                 b"DID",
                 controllers,
                 vec_map::empty(),
@@ -690,7 +704,6 @@ module iota_identity::identity_tests {
                 &clock,
                 scenario.ctx(),
             );
-            transfer::public_share_object(identity);
             scenario.next_tx(controller_a);
 
             // Controller A alone should be able to do anything.
@@ -718,7 +731,7 @@ module iota_identity::identity_tests {
 
         // Controller B alone should not be able to make changes.
         {
-            let identity = new_with_controllers(
+            let _ = new_with_controllers(
             b"DID",
             controllers,
             vec_map::empty(),
@@ -726,7 +739,6 @@ module iota_identity::identity_tests {
             &clock,
             scenario.ctx(),
             );
-            transfer::public_share_object(identity);
             scenario.next_tx(controller_a);
 
             let mut identity = scenario.take_shared<Identity>();
@@ -770,7 +782,7 @@ module iota_identity::identity_tests {
 
         // === First transaction ===
         // Controller B & C can execute config changes
-        let identity = new_with_controllers(
+        let _ = new_with_controllers(
             b"DID",
             controllers,
             vec_map::empty(),
@@ -778,7 +790,6 @@ module iota_identity::identity_tests {
             &clock,
             scenario.ctx(),
         );
-        transfer::public_share_object(identity);
         scenario.next_tx(controller_b);
 
         let mut identity = scenario.take_shared<Identity>();
@@ -820,8 +831,7 @@ module iota_identity::identity_tests {
         let mut scenario = test_scenario::begin(controller_a);
         let clock = clock::create_for_testing(scenario.ctx());
 
-        let first_identity = new(b"DID", &clock, scenario.ctx());
-        transfer::public_share_object(first_identity);
+        let _ = new(b"DID", &clock, scenario.ctx());
 
         scenario.next_tx(controller_a);
         let first_identity = scenario.take_shared<Identity>();
@@ -830,7 +840,7 @@ module iota_identity::identity_tests {
         controllers.insert(first_identity.to_address(), 10);
 
         // Create a second identity.
-        let second_identity = new_with_controllers(
+        let _ = new_with_controllers(
             b"DID",
             controllers,
             vec_map::empty(),
@@ -838,8 +848,6 @@ module iota_identity::identity_tests {
             &clock,
             scenario.ctx(),
         );
-
-        transfer::public_share_object(second_identity);
 
         scenario.next_tx(first_identity.to_address());
         let mut first_identity_cap = scenario.take_from_address<ControllerCap>(first_identity.to_address());
@@ -874,8 +882,7 @@ module iota_identity::identity_tests {
         let mut scenario = test_scenario::begin(controller);
         let clock = clock::create_for_testing(scenario.ctx());
 
-        let identity = new(b"DID", &clock, scenario.ctx());
-        transfer::public_share_object(identity);
+        let _ = new(b"DID", &clock, scenario.ctx());
 
         scenario.next_tx(controller);
 
@@ -907,8 +914,7 @@ module iota_identity::identity_tests {
         controllers.insert(controller_a, 1);
         controllers.insert(controller_b, 1);
 
-        let identity = new_with_controllers(b"DID", controllers, vec_map::empty(), 2, &clock, scenario.ctx());
-        transfer::public_share_object(identity);
+        let _ = new_with_controllers(b"DID", controllers, vec_map::empty(), 2, &clock, scenario.ctx());
 
         scenario.next_tx(controller_a);
 

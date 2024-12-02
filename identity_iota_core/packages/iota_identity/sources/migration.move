@@ -8,6 +8,7 @@ module iota_identity::migration {
 
     const ENotADidOutput: u64 = 1;
 
+    #[allow(lint(share_owned))]
     public fun migrate_alias(
         alias: Alias,
         migration_registry: &mut MigrationRegistry,
@@ -24,19 +25,17 @@ module iota_identity::migration {
         // Check if `state_metadata` contains a DID document.
         assert!(state_metadata.is_some() && identity::is_did_output(state_metadata.borrow()), ENotADidOutput);
 
-        let identity = identity::new_with_creation_timestamp(
+        let identity_id = identity::new_with_creation_timestamp(
             state_metadata.extract(),
             creation_timestamp,
             clock,
             ctx
         );
-        let identity_addr = identity.id().to_address();
 
         // Add a migration record.
-        migration_registry.add(alias_id, identity.id().to_inner());
-        transfer::public_share_object(identity);
+        migration_registry.add(alias_id, identity_id);
 
-        identity_addr
+        identity_id.to_address()
     }
 
     /// Creates a new `Identity` from an Iota 1.0 legacy `AliasOutput` containing a DID Document.
