@@ -4,17 +4,12 @@
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::Command;
-use iota_sdk::types::transaction::ProgrammableMoveCall;
 use iota_sdk::types::transaction::ProgrammableTransaction;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use move_core_types::ident_str;
 
 use crate::rebased::iota::move_calls::utils;
-use crate::rebased::migration::OnChainIdentity;
-
-use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
 
 /// Build a transaction that creates a new on-chain Identity containing `did_doc`.
@@ -24,22 +19,13 @@ pub(crate) fn new(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTr
   let clock = utils::get_clock_ref(&mut ptb);
 
   // Create a new identity, sending its capability to the tx's sender.
-  let identity_res = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-    package: package_id,
-    module: ident_str!("identity").into(),
-    function: ident_str!("new").into(),
-    type_arguments: vec![],
-    arguments: vec![doc_arg, clock],
-  })));
-
-  // Share the resulting identity.
-  ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-    package: IOTA_FRAMEWORK_PACKAGE_ID,
-    module: ident_str!("transfer").into(),
-    function: ident_str!("public_share_object").into(),
-    type_arguments: vec![OnChainIdentity::move_type(package_id)],
-    arguments: vec![identity_res],
-  })));
+  let _identity_id = ptb.programmable_move_call(
+    package_id,
+    ident_str!("identity").into(),
+    ident_str!("new").into(),
+    vec![],
+    vec![doc_arg, clock],
+  );
 
   Ok(ptb.finish())
 }
@@ -80,28 +66,19 @@ where
   let clock = utils::get_clock_ref(&mut ptb);
 
   // Create a new identity, sending its capabilities to the specified controllers.
-  let identity_res = ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-    package: package_id,
-    module: ident_str!("identity").into(),
-    function: ident_str!("new_with_controllers").into(),
-    type_arguments: vec![],
-    arguments: vec![
+  let _identity_id = ptb.programmable_move_call(
+    package_id,
+    ident_str!("identity").into(),
+    ident_str!("new_with_controllers").into(),
+    vec![],
+    vec![
       doc_arg,
       controllers,
       controllers_that_can_delegate,
       threshold_arg,
       clock,
     ],
-  })));
-
-  // Share the resulting identity.
-  ptb.command(Command::MoveCall(Box::new(ProgrammableMoveCall {
-    package: IOTA_FRAMEWORK_PACKAGE_ID,
-    module: ident_str!("transfer").into(),
-    function: ident_str!("public_share_object").into(),
-    type_arguments: vec![OnChainIdentity::move_type(package_id)],
-    arguments: vec![identity_res],
-  })));
+  );
 
   Ok(ptb.finish())
 }
