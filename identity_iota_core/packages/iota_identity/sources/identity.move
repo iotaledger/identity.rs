@@ -63,7 +63,7 @@ module iota_identity::identity {
         version: u64,
     }
 
-    /// Creates a [`Identity`] with a single controller.
+    /// Creates an [`Identity`] with a single controller.
     public fun new(
         doc: vector<u8>,
         clock: &Clock,
