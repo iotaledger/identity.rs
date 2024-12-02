@@ -13,6 +13,7 @@ module iota_identity::multicontroller {
     const EExpiredProposal: u64 = 4;
     const ENotVotedYet: u64 = 5;
     const EProposalNotFound: u64 = 6;
+    const ECannotDelete: u64 = 7;
 
     /// Shares control of a value `V` with multiple entities called controllers.
     public struct Multicontroller<V> has store {
@@ -240,6 +241,33 @@ module iota_identity::multicontroller {
 
         proposal.voters.remove(&cap_id);
         proposal.votes = proposal.votes - vp;
+    }
+
+    /// Removes a proposal no one has voted for.
+    public fun delete_proposal<V, T: store + drop>(
+        multi: &mut Multicontroller<V>,
+        cap: &DelegationToken,
+        proposal_id: ID,
+    ) {
+        cap.assert_has_permission(permissions::can_delete_proposal());
+
+        let proposal = multi.proposals.remove<ID, Proposal<T>>(proposal_id);
+        assert!(proposal.votes == 0, ECannotDelete);
+
+        let Proposal {
+            id,
+            votes: _,
+            voters: _,
+            expiration_epoch: _,
+            action: _,
+        } = proposal;
+
+        id.delete();
+
+        let (present, i) = multi.active_proposals.index_of(&proposal_id);
+        assert!(present, EProposalNotFound);
+
+        multi.active_proposals.remove(i);
     }
 
     /// Returns a reference to `multi`'s value.

@@ -169,7 +169,7 @@ module iota_identity::identity {
         }
     }
 
-    /// Proposes the deativation of the DID Document contained in this `Identity`.
+    /// Proposes the deactivation of the DID Document contained in this `Identity`.
     public fun propose_deactivation(
         self: &mut Identity,
         cap: &DelegationToken,
@@ -479,6 +479,15 @@ module iota_identity::identity {
     ): Action<T> {
         emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
         self.did_doc.execute_proposal(cap, proposal_id, ctx)
+    }
+
+    /// Deletes an `Identity`'s proposal. Only proposals with no votes can be deleted.
+    public fun delete_proposal<T: store + drop>(
+        self: &mut Identity,
+        cap: &DelegationToken,
+        proposal_id: ID,
+    ) {
+        self.did_doc.delete_proposal<_, T>(cap, proposal_id);
     }
 
     /// revoke the `DelegationToken` with `ID` `deny_id`. Only controllers can perform this operation.

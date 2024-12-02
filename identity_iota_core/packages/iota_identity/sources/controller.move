@@ -148,3 +148,180 @@ module iota_identity::controller {
     object::delete(id);
   }
 }
+
+#[test_only]
+module iota_identity::controller_tests {
+  use iota::test_scenario;
+  use iota_identity::controller::{Self, ControllerCap, ECannotDelegate, EInvalidPermissions};
+  use iota_identity::permissions;
+  use iota_identity::multicontroller::{Self, Multicontroller};
+
+  #[test, expected_failure(abort_code = ECannotDelegate)]
+  fun test_only_delegatable_controllers_can_create_delegation_tokens() {
+    let owner = @0x1;
+    let mut scenario = test_scenario::begin(owner);
+
+    let non_delegatable = controller::new(false, scenario.ctx());
+    let delegation_token = non_delegatable.delegate(scenario.ctx());
+
+    delegation_token.delete();
+    non_delegatable.delete();
+    scenario.end();
+  }
+  
+  #[test, expected_failure(abort_code = EInvalidPermissions)]
+  fun delegate_cannot_create_proposal_when_missing_permission() {
+    let controller = @0x1;
+    let mut scenario = test_scenario::begin(controller);
+
+    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, scenario.ctx());
+    scenario.next_tx(controller);
+
+    let controller_cap = scenario.take_from_address<ControllerCap>(controller);
+    let delegation_token = controller_cap.delegate_with_permissions(
+      permissions::all() & permissions::not(permissions::can_create_proposal()),
+      scenario.ctx(),
+    );
+
+    scenario.next_tx(controller);
+
+    multicontroller.create_proposal<_, u64>(
+      &delegation_token,
+      0,
+      option::none(),
+      scenario.ctx(),
+    );
+
+    abort(0)
+  }
+
+  #[test, expected_failure(abort_code = EInvalidPermissions)]
+  fun delegate_cannot_execute_proposal_when_missing_permission() {
+    let controller = @0x1;
+    let mut scenario = test_scenario::begin(controller);
+
+    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, scenario.ctx());
+    scenario.next_tx(controller);
+
+    let controller_cap = scenario.take_from_address<ControllerCap>(controller);
+    let delegation_token = controller_cap.delegate_with_permissions(
+      permissions::all() & permissions::not(permissions::can_execute_proposal()),
+      scenario.ctx(),
+    );
+
+    scenario.next_tx(controller);
+
+    let proposal_id = multicontroller.create_proposal<_, u64>(
+      &delegation_token,
+      0,
+      option::none(),
+      scenario.ctx(),
+    );
+
+    multicontroller.execute_proposal<_, u64>(
+      &delegation_token,
+      proposal_id,
+      scenario.ctx(),
+    ).unwrap();
+
+    abort(0)
+  }
+
+  #[test, expected_failure(abort_code = EInvalidPermissions)]
+  fun delegate_cannot_approve_proposal_when_missing_permission() {
+    let controller = @0x1;
+    let mut scenario = test_scenario::begin(controller);
+
+    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, scenario.ctx());
+    scenario.next_tx(controller);
+
+    let controller_cap = scenario.take_from_address<ControllerCap>(controller);
+    let delegation_token = controller_cap.delegate_with_permissions(
+      permissions::all() & permissions::not(permissions::can_approve_proposal()),
+      scenario.ctx(),
+    );
+
+    scenario.next_tx(controller);
+
+    let proposal_id = multicontroller.create_proposal<_, u64>(
+      &delegation_token,
+      0,
+      option::none(),
+      scenario.ctx(),
+    );
+
+    multicontroller.approve_proposal<_, u64>(
+      &delegation_token,
+      proposal_id,
+    );
+
+    abort(0)
+  }
+
+  #[test, expected_failure(abort_code = EInvalidPermissions)]
+  fun delegate_cannot_remove_approval_when_missing_permission() {
+    let controller = @0x1;
+    let mut scenario = test_scenario::begin(controller);
+
+    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, scenario.ctx());
+    scenario.next_tx(controller);
+
+    let controller_cap = scenario.take_from_address<ControllerCap>(controller);
+    let delegation_token = controller_cap.delegate_with_permissions(
+      permissions::all() & permissions::not(permissions::can_remove_approval()),
+      scenario.ctx(),
+    );
+
+    scenario.next_tx(controller);
+
+    let proposal_id = multicontroller.create_proposal<_, u64>(
+      &delegation_token,
+      0,
+      option::none(),
+      scenario.ctx(),
+    );
+
+    multicontroller.remove_approval<_, u64>(
+      &delegation_token,
+      proposal_id,
+    );
+
+    abort(0)
+  }
+
+  #[test, expected_failure(abort_code = EInvalidPermissions)]
+  fun delegate_cannot_delete_proposal_when_missing_permission() {
+    let controller = @0x1;
+    let mut scenario = test_scenario::begin(controller);
+
+    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, scenario.ctx());
+    scenario.next_tx(controller);
+
+    let controller_cap = scenario.take_from_address<ControllerCap>(controller);
+    let delegation_token = controller_cap.delegate_with_permissions(
+      permissions::all() & permissions::not(permissions::can_remove_approval()),
+      scenario.ctx(),
+    );
+
+    scenario.next_tx(controller);
+
+    let proposal_id = multicontroller.create_proposal<_, u64>(
+      &delegation_token,
+      0,
+      option::none(),
+      scenario.ctx(),
+    );
+
+    multicontroller.remove_approval<_, u64>(
+      &delegation_token,
+      proposal_id,
+    );
+
+    multicontroller.delete_proposal<_, u64>(
+      &delegation_token,
+      proposal_id,
+    );
+
+    abort(0)
+  }
+}
