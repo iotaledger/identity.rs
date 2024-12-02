@@ -118,7 +118,7 @@ module iota_identity::identity {
         id
     }
 
-    /// Creates a new DID Document controlled by multiple controllers.
+    /// Creates an [`Identity`] controlled by multiple controllers.
     /// The `weights` vectors is used to create a vector of `ControllerCap`s `controller_caps`,
     /// where `controller_caps[i].weight = weights[i]` for all `i`s in `[0, weights.length())`.
     public fun new_with_controllers(
