@@ -9,9 +9,10 @@ use std::str::FromStr;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::NetworkName;
+use anyhow::anyhow;
 use anyhow::Context as _;
 use futures::stream::FuturesUnordered;
-use futures::TryStreamExt as _;
+use futures::StreamExt as _;
 use iota_sdk::rpc_types::EventFilter;
 use iota_sdk::rpc_types::IotaData as _;
 use iota_sdk::rpc_types::IotaObjectData;
@@ -114,7 +115,10 @@ impl IdentityClientReadOnly {
       .and_then(|res| res.data.context("missing data in response"))
       .and_then(|data| data.content.context("missing object content in data"))
       .and_then(|content| content.try_into_move().context("not a move object"))
-      .and_then(|obj| serde_json::from_value(obj.fields.to_json_value()).context("failed to deserialize move object"))
+      .and_then(|obj| {
+        serde_json::from_value(obj.fields.to_json_value())
+          .map_err(|err| anyhow!("failed to deserialize move object; {err}"))
+      })
       .map_err(|e| Error::ObjectLookup(e.to_string()))
   }
 
@@ -190,9 +194,9 @@ impl IdentityClientReadOnly {
 
     // use first non-None value as result
     let mut identity_outcome: Option<Identity> = None;
-    while let Some(result) = all_futures.try_next().await? {
-      if result.is_some() {
-        identity_outcome = result;
+    while let Some(result) = all_futures.next().await {
+      if let Ok(Some(value)) = result {
+        identity_outcome = Some(value);
         all_futures.clear();
         break;
       }
