@@ -10,6 +10,7 @@ use crate::rebased::iota::types::Number;
 use crate::rebased::proposals::Upgrade;
 use crate::IotaDID;
 use crate::IotaDocument;
+use crate::NetworkName;
 use crate::StateMetadataDocument;
 use async_trait::async_trait;
 use identity_core::common::Timestamp;
@@ -60,7 +61,14 @@ const NAME: &str = "Identity";
 const HISTORY_DEFAULT_PAGE_SIZE: usize = 10;
 
 /// The data stored in an on-chain identity.
-pub type IdentityData = (UID, Multicontroller<Vec<u8>>, Timestamp, Timestamp, u64);
+pub type IdentityData = (
+  UID,
+  Multicontroller<Vec<u8>>,
+  Option<ObjectID>,
+  Timestamp,
+  Timestamp,
+  u64,
+);
 
 /// An on-chain object holding a DID Document.
 pub enum Identity {
@@ -72,28 +80,18 @@ pub enum Identity {
 
 impl Identity {
   /// Returns the [`IotaDocument`] DID Document stored inside this [`Identity`].
-  pub fn did_document(&self, client: &IdentityClientReadOnly) -> Result<IotaDocument, Error> {
-    let original_did = IotaDID::from_object_id(self.id().to_string().as_str(), client.network());
-    let doc_bytes = self.doc_bytes().ok_or(Error::DidDocParsingFailed(
-      "legacy alias output does not encode a DID document".to_owned(),
-    ))?;
-
-    StateMetadataDocument::unpack(doc_bytes)
-      .and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(&original_did))
-      .map_err(|e| Error::DidDocParsingFailed(e.to_string()))
-  }
-
-  fn id(&self) -> ObjectID {
+  pub fn did_document(&self, network: &NetworkName) -> Result<IotaDocument, Error> {
     match self {
-      Self::Legacy(alias) => *alias.id.object_id(),
-      Self::FullFledged(identity) => identity.id(),
-    }
-  }
-
-  fn doc_bytes(&self) -> Option<&[u8]> {
-    match self {
-      Self::FullFledged(identity) => Some(identity.multi_controller.controlled_value().as_ref()),
-      Self::Legacy(alias) => alias.state_metadata.as_deref(),
+      Self::FullFledged(onchain_identity) => Ok(onchain_identity.did_doc.clone()),
+      Self::Legacy(alias) => {
+        let state_metadata = alias.state_metadata.as_deref().ok_or_else(|| {
+          Error::DidDocParsingFailed("legacy stardust alias doesn't contain a DID Document".to_string())
+        })?;
+        let did = IotaDID::from_object_id(&alias.id.object_id().to_string(), network);
+        StateMetadataDocument::unpack(state_metadata)
+          .and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(&did))
+          .map_err(|e| Error::DidDocParsingFailed(e.to_string()))
+      }
     }
   }
 }
@@ -118,6 +116,15 @@ impl OnChainIdentity {
   /// Returns the [`ObjectID`] of this [`OnChainIdentity`].
   pub fn id(&self) -> ObjectID {
     *self.id.object_id()
+  }
+
+  /// Returns the [`IotaDocument`] contained in this [`OnChainIdentity`].
+  pub fn did_document(&self) -> &IotaDocument {
+    self
+  }
+
+  pub(crate) fn did_document_mut(&mut self) -> &mut IotaDocument {
+    &mut self.did_doc
   }
 
   /// Returns true if this [`OnChainIdentity`] is shared between multiple controllers.
@@ -361,13 +368,20 @@ pub async fn get_identity(
   };
 
   let did = IotaDID::from_object_id(&object_id.to_string(), client.network());
-  let Some((id, multi_controller, created, updated, version)) = unpack_identity_data(&did, &data)? else {
+  let Some((id, multi_controller, legacy_id, created, updated, version)) = unpack_identity_data(&did, &data)? else {
     return Ok(None);
   };
+  let legacy_did = legacy_id.map(|legacy_id| IotaDID::from_object_id(&legacy_id.to_string(), client.network()));
 
-  let did_doc =
-    IotaDocument::from_iota_document_data(multi_controller.controlled_value(), true, &did, created, updated)
-      .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?;
+  let did_doc = IotaDocument::from_iota_document_data(
+    multi_controller.controlled_value(),
+    true,
+    &did,
+    legacy_did,
+    created,
+    updated,
+  )
+  .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?;
 
   Ok(Some(OnChainIdentity {
     id,
@@ -406,6 +420,7 @@ pub(crate) fn unpack_identity_data(did: &IotaDID, data: &IotaObjectData) -> Resu
   struct TempOnChainIdentity {
     id: UID,
     did_doc: Multicontroller<Vec<u8>>,
+    legacy_id: Option<ObjectID>,
     created: Number<u64>,
     updated: Number<u64>,
     version: Number<u64>,
@@ -414,6 +429,7 @@ pub(crate) fn unpack_identity_data(did: &IotaDID, data: &IotaObjectData) -> Resu
   let TempOnChainIdentity {
     id,
     did_doc: multi_controller,
+    legacy_id,
     created,
     updated,
     version,
@@ -433,7 +449,7 @@ pub(crate) fn unpack_identity_data(did: &IotaDID, data: &IotaObjectData) -> Resu
   };
   let version = version.try_into().expect("Move string-encoded u64 are valid u64");
 
-  Ok(Some((id, multi_controller, created, updated, version)))
+  Ok(Some((id, multi_controller, legacy_id, created, updated, version)))
 }
 
 /// Builder-style struct to create a new [`OnChainIdentity`].
