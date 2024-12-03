@@ -25,6 +25,7 @@ use identity_storage::KeyType;
 use identity_storage::StorageSigner;
 use identity_stronghold::StrongholdStorage;
 use iota_sdk::IotaClientBuilder;
+use iota_sdk::IOTA_LOCAL_NETWORK_URL;
 use iota_sdk_legacy::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk_legacy::client::Password;
 use rand::distributions::DistString;
@@ -32,7 +33,6 @@ use secret_storage::Signer;
 use serde_json::Value;
 
 pub const TEST_GAS_BUDGET: u64 = 50_000_000;
-const DEFAULT_API_ENDPOINT: &str = "http://127.0.0.1:9000";
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
@@ -82,7 +82,7 @@ where
   K: JwkStorage,
   I: KeyIdStorage,
 {
-  let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| DEFAULT_API_ENDPOINT.to_string());
+  let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| IOTA_LOCAL_NETWORK_URL.to_string());
   let iota_client = IotaClientBuilder::default()
     .build(&api_endpoint)
     .await
