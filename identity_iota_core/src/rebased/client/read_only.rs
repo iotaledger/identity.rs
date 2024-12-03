@@ -186,23 +186,17 @@ impl IdentityClientReadOnly {
   /// Resolves an [`Identity`] from its ID `object_id`.
   pub async fn get_identity(&self, object_id: ObjectID) -> Result<Identity, Error> {
     // spawn all checks
-    let mut all_futures =
+    let all_futures =
       FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
     all_futures.push(Box::pin(resolve_new(self, object_id)));
     all_futures.push(Box::pin(resolve_migrated(self, object_id)));
     all_futures.push(Box::pin(resolve_unmigrated(self, object_id)));
 
-    // use first non-None value as result
-    let mut identity_outcome: Option<Identity> = None;
-    while let Some(result) = all_futures.next().await {
-      if let Ok(Some(value)) = result {
-        identity_outcome = Some(value);
-        all_futures.clear();
-        break;
-      }
-    }
-
-    identity_outcome.ok_or_else(|| Error::DIDResolutionError(format!("could not find DID document for {object_id}")))
+    all_futures
+      .filter_map(|res| Box::pin(async move { res.ok().flatten() }))
+      .next()
+      .await
+      .ok_or_else(|| Error::DIDResolutionError(format!("could not find DID document for {object_id}")))
   }
 }
 
