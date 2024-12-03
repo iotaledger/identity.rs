@@ -263,7 +263,6 @@ impl<S> IdentityClient<S> {
     const LIMIT: usize = 10;
     let mut cursor = None;
 
-    // Keep track of the highest balance coin found
     let mut best_coin: Option<Coin> = None;
 
     loop {
@@ -280,7 +279,6 @@ impl<S> IdentityClient<S> {
         };
       }
 
-      // Find the coin with the highest balance in this page
       let page_best_coin = coins.data.into_iter().max_by_key(|coin| coin.balance);
 
       if let Some(coin) = page_best_coin {
@@ -288,7 +286,6 @@ impl<S> IdentityClient<S> {
           return Ok(coin);
         }
 
-        // Update best_coin if this coin has a higher balance
         if best_coin.as_ref().map_or(true, |best| coin.balance > best.balance) {
           best_coin = Some(coin);
         }
@@ -301,7 +298,6 @@ impl<S> IdentityClient<S> {
       cursor = coins.next_cursor;
     }
 
-    // We've searched all pages and found no coin with sufficient balance
     Err(Error::GasIssue(format!(
       "no coin found with minimum required balance of {}",
       MINIMUM_BALANCE
