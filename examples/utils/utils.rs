@@ -32,6 +32,7 @@ use secret_storage::Signer;
 use serde_json::Value;
 
 pub const TEST_GAS_BUDGET: u64 = 50_000_000;
+const DEFAULT_API_ENDPOINT: &str = "http://127.0.0.1:9000";
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
@@ -81,11 +82,9 @@ where
   K: JwkStorage,
   I: KeyIdStorage,
 {
-  // The API endpoint of an IOTA node
-  let api_endpoint: &str = "http://127.0.0.1:9000";
-
+  let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| DEFAULT_API_ENDPOINT.to_string());
   let iota_client = IotaClientBuilder::default()
-    .build(api_endpoint)
+    .build(&api_endpoint)
     .await
     .map_err(|err| anyhow::anyhow!(format!("failed to connect to network; {}", err)))?;
 

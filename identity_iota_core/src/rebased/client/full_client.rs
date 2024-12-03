@@ -234,7 +234,7 @@ impl<S> IdentityClient<S> {
       self.sender_address(),
       vec![gas_coin.object_ref()],
       tx.clone(),
-      50_000_000_000,
+      50_000_000,
       gas_price,
     );
     let dry_run_gas_result = self.read_api().dry_run_transaction_block(tx_data).await?.effects;

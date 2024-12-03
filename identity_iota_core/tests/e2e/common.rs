@@ -50,6 +50,7 @@ static PACKAGE_ID: OnceCell<ObjectID> = OnceCell::const_new();
 static CLIENT: OnceCell<TestClient> = OnceCell::const_new();
 const SCRIPT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/scripts/");
 const CACHED_PKG_ID: &str = "/tmp/iota_identity_pkg_id.txt";
+const DEFAULT_API_ENDPOINT: &str = "http://127.0.0.1:9000";
 
 pub const TEST_GAS_BUDGET: u64 = 50_000_000;
 pub const TEST_DOC: &[u8] = &[
@@ -75,7 +76,8 @@ lazy_static! {
 }
 
 pub async fn get_client() -> anyhow::Result<TestClient> {
-  let client = IotaClientBuilder::default().build_localnet().await?;
+  let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| DEFAULT_API_ENDPOINT.to_string());
+  let client = IotaClientBuilder::default().build(&api_endpoint).await?;
   let package_id = PACKAGE_ID.get_or_try_init(|| init(&client)).await.copied()?;
   let address = get_active_address().await?;
 
