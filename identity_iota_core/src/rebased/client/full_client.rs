@@ -10,6 +10,7 @@ use async_trait::async_trait;
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::ToFromBytes;
 use identity_verification::jwk::Jwk;
+use iota_sdk::rpc_types::Coin;
 use iota_sdk::rpc_types::IotaExecutionStatus;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaObjectDataFilter;
@@ -46,6 +47,11 @@ use crate::rebased::Error;
 
 use super::get_object_id_from_did;
 use super::IdentityClientReadOnly;
+
+/// The minimum balance required to execute a transaction.
+///
+/// TBD: A temporary value,
+pub(crate) const MINIMUM_BALANCE: u64 = 100_000_000;
 
 /// A signature which is used to sign transactions.
 pub struct IotaKeySignature {
@@ -253,18 +259,53 @@ impl<S> IdentityClient<S> {
     Ok(budget)
   }
 
-  async fn get_coin_for_transaction(&self) -> Result<iota_sdk::rpc_types::Coin, Error> {
-    let coins = self
-      .coin_read_api()
-      .get_coins(self.sender_address(), None, None, None)
-      .await
-      .map_err(|err| Error::GasIssue(format!("could not get coins; {err}")))?;
+  async fn get_coin_for_transaction(&self) -> Result<Coin, Error> {
+    const LIMIT: usize = 10;
+    let mut cursor = None;
 
-    coins
-      .data
-      .into_iter()
-      .next()
-      .ok_or_else(|| Error::GasIssue("could not find coins".to_string()))
+    // Keep track of the highest balance coin found
+    let mut best_coin: Option<Coin> = None;
+
+    loop {
+      let coins = self
+        .coin_read_api()
+        .get_coins(self.sender_address(), None, cursor, Some(LIMIT))
+        .await?;
+
+      if coins.data.is_empty() {
+        return if let Some(coin) = best_coin {
+          Ok(coin)
+        } else {
+          Err(Error::GasIssue("no coins found for address".to_string()))
+        };
+      }
+
+      // Find the coin with the highest balance in this page
+      let page_best_coin = coins.data.into_iter().max_by_key(|coin| coin.balance);
+
+      if let Some(coin) = page_best_coin {
+        if coin.balance >= MINIMUM_BALANCE {
+          return Ok(coin);
+        }
+
+        // Update best_coin if this coin has a higher balance
+        if best_coin.as_ref().map_or(true, |best| coin.balance > best.balance) {
+          best_coin = Some(coin);
+        }
+      }
+
+      if !coins.has_next_page {
+        break;
+      }
+
+      cursor = coins.next_cursor;
+    }
+
+    // We've searched all pages and found no coin with sufficient balance
+    Err(Error::GasIssue(format!(
+      "no coin found with minimum required balance of {}",
+      MINIMUM_BALANCE
+    )))
   }
 
   async fn get_transaction_data(
