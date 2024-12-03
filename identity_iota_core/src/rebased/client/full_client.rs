@@ -263,8 +263,6 @@ impl<S> IdentityClient<S> {
     const LIMIT: usize = 10;
     let mut cursor = None;
 
-    let mut best_coin: Option<Coin> = None;
-
     loop {
       let coins = self
         .coin_read_api()
@@ -272,23 +270,18 @@ impl<S> IdentityClient<S> {
         .await?;
 
       if coins.data.is_empty() {
-        return if let Some(coin) = best_coin {
-          Ok(coin)
-        } else {
-          Err(Error::GasIssue("no coins found for address".to_string()))
-        };
+        return Err(Error::GasIssue("no coins found for address".to_string()));
       }
 
-      let page_best_coin = coins.data.into_iter().max_by_key(|coin| coin.balance);
-
-      if let Some(coin) = page_best_coin {
+      if let Some(coin) = coins.data.into_iter().max_by_key(|coin| coin.balance) {
         if coin.balance >= MINIMUM_BALANCE {
           return Ok(coin);
         }
 
-        if best_coin.as_ref().map_or(true, |best| coin.balance > best.balance) {
-          best_coin = Some(coin);
-        }
+        return Err(Error::GasIssue(format!(
+          "highest balance coin ({}) is below minimum required balance of {}",
+          coin.balance, MINIMUM_BALANCE
+        )));
       }
 
       if !coins.has_next_page {
