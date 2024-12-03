@@ -48,7 +48,12 @@ fn unpack_command_output(output: &Output, task: &str) -> anyhow::Result<String> 
   Ok(stdout.to_string())
 }
 
-/// Requests funds from the local `IOTA` faucet.
+/// Requests funds from the local IOTA client's configured faucet.
+///
+/// This behavior can be changed to send funds with local IOTA client's active address to the given address.
+/// For that the env variable `IOTA_IDENTITY_FUND_WITH_ACTIVE_ADDRESS` must be set to `true`.
+/// Notice, that this is a setting mostly intended for internal test use and must be used with care.
+/// For details refer to to `identity_iota_core`'s README.md.
 pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
   let fund_with_active_address = std::env::var("IOTA_IDENTITY_FUND_WITH_ACTIVE_ADDRESS")
     .map(|v| !v.is_empty() && v.to_lowercase() == "true")
