@@ -25,6 +25,7 @@ use identity_storage::KeyType;
 use identity_storage::StorageSigner;
 use identity_stronghold::StrongholdStorage;
 use iota_sdk::IotaClientBuilder;
+use iota_sdk::IOTA_LOCAL_NETWORK_URL;
 use iota_sdk_legacy::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk_legacy::client::Password;
 use rand::distributions::DistString;
@@ -81,11 +82,9 @@ where
   K: JwkStorage,
   I: KeyIdStorage,
 {
-  // The API endpoint of an IOTA node
-  let api_endpoint: &str = "http://127.0.0.1:9000";
-
+  let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| IOTA_LOCAL_NETWORK_URL.to_string());
   let iota_client = IotaClientBuilder::default()
-    .build(api_endpoint)
+    .build(&api_endpoint)
     .await
     .map_err(|err| anyhow::anyhow!(format!("failed to connect to network; {}", err)))?;
 

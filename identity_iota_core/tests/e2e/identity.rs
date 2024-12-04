@@ -7,7 +7,6 @@ use crate::common;
 use crate::common::get_client as get_test_client;
 use crate::common::get_key_data;
 use crate::common::TEST_COIN_TYPE;
-use crate::common::TEST_DOC;
 use crate::common::TEST_GAS_BUDGET;
 use identity_iota_core::rebased::client::get_object_id_from_did;
 use identity_iota_core::rebased::migration::has_previous_version;
@@ -35,7 +34,7 @@ async fn identity_deactivation_works() -> anyhow::Result<()> {
   let identity_client = test_client.new_user_client().await?;
 
   let mut identity = identity_client
-    .create_identity(TEST_DOC)
+    .create_identity(IotaDocument::new(identity_client.network()))
     .finish()
     .execute(&identity_client)
     .await?
@@ -59,7 +58,7 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
   let identity_client = test_client.new_user_client().await?;
 
   let mut newly_created_identity = identity_client
-    .create_identity(TEST_DOC)
+    .create_identity(IotaDocument::new(identity_client.network()))
     .finish()
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
     .await?
@@ -96,7 +95,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
   let bob_client = test_client.new_user_client().await?;
 
   let mut identity = alice_client
-    .create_identity(TEST_DOC)
+    .create_identity(IotaDocument::new(alice_client.network()))
     .controller(alice_client.sender_address(), 1)
     .controller(bob_client.sender_address(), 1)
     .threshold(2)
@@ -143,7 +142,7 @@ async fn adding_controller_works() -> anyhow::Result<()> {
   let bob_client = test_client.new_user_client().await?;
 
   let mut identity = alice_client
-    .create_identity(TEST_DOC)
+    .create_identity(IotaDocument::new(alice_client.network()))
     .finish()
     .execute(&alice_client)
     .await?
@@ -177,7 +176,7 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
   let identity_client = test_client.new_user_client().await?;
 
   let mut newly_created_identity = identity_client
-    .create_identity(TEST_DOC)
+    .create_identity(IotaDocument::new(identity_client.network()))
     .finish()
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
     .await?
@@ -270,7 +269,7 @@ async fn send_proposal_works() -> anyhow::Result<()> {
   let identity_client = test_client.new_user_client().await?;
 
   let mut identity = identity_client
-    .create_identity(TEST_DOC)
+    .create_identity(IotaDocument::new(identity_client.network()))
     .finish()
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
     .await?
@@ -321,7 +320,7 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
   let identity_client = test_client.new_user_client().await?;
 
   let mut identity = identity_client
-    .create_identity(TEST_DOC)
+    .create_identity(IotaDocument::new(identity_client.network()))
     .finish()
     .execute(&identity_client)
     .await?
@@ -370,7 +369,7 @@ async fn controller_execution_works() -> anyhow::Result<()> {
   let identity_client = test_client.new_user_client().await?;
 
   let mut identity = identity_client
-    .create_identity(TEST_DOC)
+    .create_identity(IotaDocument::new(identity_client.network()))
     .finish()
     .execute(&identity_client)
     .await?
@@ -379,7 +378,7 @@ async fn controller_execution_works() -> anyhow::Result<()> {
 
   // Create a second identity owned by the first.
   let identity2 = identity_client
-    .create_identity(TEST_DOC)
+    .create_identity(IotaDocument::new(identity_client.network()))
     .controller(identity_address, 1)
     .threshold(1)
     .finish()

@@ -397,6 +397,7 @@ impl IotaDocument {
 #[cfg(feature = "iota-client")]
 mod client_document {
   use identity_core::common::Timestamp;
+  use identity_did::DID;
   use iota_sdk::rpc_types::IotaObjectData;
 
   use crate::rebased::migration::unpack_identity_data;
@@ -427,7 +428,7 @@ mod client_document {
           None,
         ))
       })?;
-      let (_, multi_controller, created, updated, _) = match unpacked {
+      let (_, multi_controller, legacy_id, created, updated, _) = match unpacked {
         Some(data) => data,
         None => {
           return Err(Error::InvalidDoc(identity_document::Error::InvalidDocument(
@@ -436,8 +437,20 @@ mod client_document {
           )));
         }
       };
-      let did_doc =
-        Self::from_iota_document_data(multi_controller.controlled_value(), allow_empty, did, created, updated)?;
+      let did_network = did
+        .network_str()
+        .to_string()
+        .try_into()
+        .expect("did's network is a valid NetworkName");
+      let legacy_did = legacy_id.map(|id| IotaDID::new(&id.into_bytes(), &did_network));
+      let did_doc = Self::from_iota_document_data(
+        multi_controller.controlled_value(),
+        allow_empty,
+        did,
+        legacy_did,
+        created,
+        updated,
+      )?;
 
       Ok(did_doc)
     }
@@ -454,6 +467,7 @@ mod client_document {
       data: &[u8],
       allow_empty: bool,
       did: &IotaDID,
+      alternative_did: Option<IotaDID>,
       created: Timestamp,
       updated: Timestamp,
     ) -> Result<Self> {
@@ -467,6 +481,11 @@ mod client_document {
         // we have a value, therefore unpack it
         StateMetadataDocument::unpack(data).and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(did))?
       };
+
+      // Set the `alsoKnownAs` property if a legacy DID is present.
+      if let Some(alternative_did) = alternative_did {
+        did_doc.also_known_as_mut().prepend(alternative_did.into_url().into());
+      }
 
       // Overwrite `created` and `updated` with given timestamps
       did_doc.metadata.created = Some(created);
@@ -734,6 +753,7 @@ mod tests {
       &[],
       true,
       &did,
+      None,
       Timestamp::from_unix(12).unwrap(),
       Timestamp::from_unix(34).unwrap(),
     )
@@ -752,6 +772,7 @@ mod tests {
       &[],
       false,
       &did,
+      None,
       Timestamp::from_unix(12).unwrap(),
       Timestamp::from_unix(34).unwrap()
     )

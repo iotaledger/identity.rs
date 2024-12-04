@@ -55,6 +55,9 @@ module iota_identity::identity {
         id: UID,
         /// Same as stardust `state_metadata`.
         did_doc: Multicontroller<vector<u8>>,
+        /// If this `Identity` has been migrated from a Stardust
+        /// AliasOutput, this field must be set with its AliasID.
+        legacy_id: Option<ID>,
         /// Timestamp of this Identity's creation.
         created: u64,
         /// Timestamp of this Identity's last update.
@@ -63,7 +66,7 @@ module iota_identity::identity {
         version: u64,
     }
 
-    /// Creates an [`Identity`] with a single controller.
+    /// Creates an `Identity` with a single controller.
     public fun new(
         doc: vector<u8>,
         clock: &Clock,
@@ -74,9 +77,10 @@ module iota_identity::identity {
 
     /// Creates an identity specifying its `created` timestamp.
     /// Should only be used for migration!
-    public(package) fun new_with_creation_timestamp(
+    public(package) fun new_with_migration_data(
         doc: vector<u8>,
         creation_timestamp: u64,
+        legacy_id: ID,
         clock: &Clock,
         ctx: &mut TxContext
     ): ID {
@@ -85,6 +89,7 @@ module iota_identity::identity {
         let identity = Identity {
             id: object::new(ctx),
             did_doc: multicontroller::new_with_controller(doc, ctx.sender(), false, ctx),
+            legacy_id: option::some(legacy_id),
             created: creation_timestamp,
             updated: now,
             version: PACKAGE_VERSION,
@@ -108,6 +113,7 @@ module iota_identity::identity {
         let identity = Identity {
             id: object::new(ctx),
             did_doc: multicontroller::new_with_controller(doc, controller, can_delegate, ctx),
+            legacy_id: option::none(),
             created: now,
             updated: now,
             version: PACKAGE_VERSION,
@@ -137,6 +143,7 @@ module iota_identity::identity {
         let identity = Identity {
             id: object::new(ctx),
             did_doc: multicontroller::new_with_controllers(doc, controllers, controllers_that_can_delegate, threshold, ctx),
+            legacy_id: option::none(),
             created: now,
             updated: now,
             version: PACKAGE_VERSION,
@@ -150,6 +157,13 @@ module iota_identity::identity {
     /// Returns a reference to the `UID` of an `Identity`.
     public fun id(self: &Identity): &UID {
         &self.id
+    }
+
+    /// Returns a reference to the optional legacy ID of this `Identity`.
+    /// Only `Identity`s that had been migrated from Stardust AliasOutputs
+    /// will have `legacy_id` set.
+    public fun legacy_id(self: &Identity): &Option<ID> {
+        &self.legacy_id
     }
 
     /// Returns the unsigned amount of milliseconds

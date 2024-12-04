@@ -5,11 +5,11 @@ use std::ops::Deref;
 
 use crate::IotaDID;
 use crate::IotaDocument;
-use crate::StateMetadataDocument;
 use async_trait::async_trait;
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::ToFromBytes;
 use identity_verification::jwk::Jwk;
+use iota_sdk::rpc_types::Coin;
 use iota_sdk::rpc_types::IotaExecutionStatus;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaObjectDataFilter;
@@ -46,6 +46,9 @@ use crate::rebased::Error;
 
 use super::get_object_id_from_did;
 use super::IdentityClientReadOnly;
+
+/// The minimum balance required to execute a transaction.
+pub(crate) const MINIMUM_BALANCE: u64 = 1_000_000_000;
 
 /// A signature which is used to sign transactions.
 pub struct IotaKeySignature {
@@ -211,7 +214,7 @@ impl<S> IdentityClient<S> {
   }
 
   /// Returns a new [`IdentityBuilder`] in order to build a new [`crate::rebased::migration::OnChainIdentity`].
-  pub fn create_identity<'a>(&self, iota_document: &'a [u8]) -> IdentityBuilder<'a> {
+  pub fn create_identity(&self, iota_document: IotaDocument) -> IdentityBuilder {
     IdentityBuilder::new(iota_document)
   }
 
@@ -234,7 +237,7 @@ impl<S> IdentityClient<S> {
       self.sender_address(),
       vec![gas_coin.object_ref()],
       tx.clone(),
-      50_000_000_000,
+      50_000_000,
       gas_price,
     );
     let dry_run_gas_result = self.read_api().dry_run_transaction_block(tx_data).await?.effects;
@@ -253,18 +256,39 @@ impl<S> IdentityClient<S> {
     Ok(budget)
   }
 
-  async fn get_coin_for_transaction(&self) -> Result<iota_sdk::rpc_types::Coin, Error> {
-    let coins = self
-      .coin_read_api()
-      .get_coins(self.sender_address(), None, None, None)
-      .await
-      .map_err(|err| Error::GasIssue(format!("could not get coins; {err}")))?;
+  async fn get_coin_for_transaction(&self) -> Result<Coin, Error> {
+    const LIMIT: usize = 10;
+    let mut cursor = None;
 
-    coins
-      .data
-      .into_iter()
-      .next()
-      .ok_or_else(|| Error::GasIssue("could not find coins".to_string()))
+    loop {
+      let coins = self
+        .coin_read_api()
+        .get_coins(self.sender_address(), None, cursor, Some(LIMIT))
+        .await?;
+
+      let Some(coin) = coins.data.into_iter().max_by_key(|coin| coin.balance) else {
+        return Err(Error::GasIssue(format!(
+          "no coins found for address {}",
+          self.sender_address()
+        )));
+      };
+
+      if coin.balance >= MINIMUM_BALANCE {
+        return Ok(coin);
+      }
+
+      if !coins.has_next_page {
+        break;
+      }
+
+      cursor = coins.next_cursor;
+    }
+
+    Err(Error::GasIssue(format!(
+      "no coin found with minimum required balance of {} for address {}",
+      MINIMUM_BALANCE,
+      self.sender_address()
+    )))
   }
 
   async fn get_transaction_data(
@@ -409,32 +433,17 @@ impl TransactionT for PublishDidTx {
   where
     S: Signer<IotaKeySignature> + Sync,
   {
-    let packed = self
-      .0
-      .clone()
-      .pack()
-      .map_err(|err| Error::DidDocSerialization(format!("could not pack DID document: {err}")))?;
-
     let TransactionOutput {
       output: identity,
       response,
     } = client
-      .create_identity(&packed)
+      .create_identity(self.0)
       .finish()
       .execute_with_opt_gas(gas_budget, client)
       .await?;
 
-    // replace placeholders in document
-    let did: IotaDID = IotaDID::new(&identity.id(), client.network());
-    let metadata_document: StateMetadataDocument = self.0.into();
-    let document_without_placeholders = metadata_document.into_iota_document(&did).map_err(|err| {
-      Error::DidDocParsingFailed(format!(
-        "could not replace placeholders in published DID document {did}; {err}"
-      ))
-    })?;
-
     Ok(TransactionOutput {
-      output: document_without_placeholders,
+      output: identity.did_doc,
       response,
     })
   }
