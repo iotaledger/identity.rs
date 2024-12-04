@@ -30,6 +30,7 @@ use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use iota_sdk::IotaClient;
 use iota_sdk::IotaClientBuilder;
+use iota_sdk::IOTA_LOCAL_NETWORK_URL;
 use jsonpath_rust::JsonPathQuery;
 use lazy_static::lazy_static;
 use move_core_types::ident_str;
@@ -75,7 +76,8 @@ lazy_static! {
 }
 
 pub async fn get_client() -> anyhow::Result<TestClient> {
-  let client = IotaClientBuilder::default().build_localnet().await?;
+  let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| IOTA_LOCAL_NETWORK_URL.to_string());
+  let client = IotaClientBuilder::default().build(&api_endpoint).await?;
   let package_id = PACKAGE_ID.get_or_try_init(|| init(&client)).await.copied()?;
   let address = get_active_address().await?;
 
