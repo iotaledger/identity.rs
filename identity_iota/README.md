@@ -54,7 +54,7 @@ If you want to include IOTA Identity in your project, simply add it as a depende
 
 ```toml
 [dependencies]
-identity_iota = { version = "1.4.0" }
+identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha" }
 ```
 
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
