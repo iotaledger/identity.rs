@@ -40,12 +40,12 @@ iota-crypto = { version = "0.23", optional = true }
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.3-rc", optional = true }
 itertools = { version = "0.13.0", optional = true }
 move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.7.3-rc", optional = true }
+phf = { version = "0.11.2", features = ["macros"] }
 rand = { version = "0.8.5", optional = true }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.1.0", optional = true }
 serde-aux = { version = "4.5.0", optional = true }
 shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.7.3-rc", optional = true }
 tokio = { version = "1.29.0", default-features = false, optional = true, features = ["macros", "sync", "rt", "process"] }
-phf = { version = "0.11.2", features = ["macros"] }
 
 [dev-dependencies]
 iota-crypto = { version = "0.23", default-features = false, features = ["bip39", "bip39-en"] }
