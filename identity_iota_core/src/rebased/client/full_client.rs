@@ -270,18 +270,16 @@ impl<S> IdentityClient<S> {
         .await?;
 
       if coins.data.is_empty() {
-        return Err(Error::GasIssue("no coins found for address".to_string()));
+        return Err(Error::GasIssue(format!(
+          "no coins found for address {}",
+          self.sender_address()
+        )));
       }
 
       if let Some(coin) = coins.data.into_iter().max_by_key(|coin| coin.balance) {
         if coin.balance >= MINIMUM_BALANCE {
           return Ok(coin);
         }
-
-        return Err(Error::GasIssue(format!(
-          "highest balance coin ({}) is below minimum required balance of {}",
-          coin.balance, MINIMUM_BALANCE
-        )));
       }
 
       if !coins.has_next_page {
@@ -292,8 +290,9 @@ impl<S> IdentityClient<S> {
     }
 
     Err(Error::GasIssue(format!(
-      "no coin found with minimum required balance of {}",
-      MINIMUM_BALANCE
+      "no coin found with minimum required balance of {} for address {}",
+      MINIMUM_BALANCE,
+      self.sender_address()
     )))
   }
 
