@@ -12,6 +12,9 @@ use crate::NetworkName;
 use anyhow::anyhow;
 use anyhow::Context as _;
 use futures::stream::FuturesUnordered;
+
+use identity_core::common::Url;
+use identity_did::DID;
 use futures::StreamExt as _;
 use iota_sdk::rpc_types::EventFilter;
 use iota_sdk::rpc_types::IotaData as _;
@@ -176,11 +179,10 @@ impl IdentityClientReadOnly {
 
   /// Queries an [`IotaDocument`] DID Document through its `did`.
   pub async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument, Error> {
-    let identity = get_identity(self, get_object_id_from_did(did)?)
+    self
+      .get_identity(get_object_id_from_did(did)?)
       .await?
-      .ok_or_else(|| Error::DIDResolutionError(format!("call succeeded but could not resolve {did} to object")))?;
-
-    Ok(identity.clone())
+      .did_document(self.network())
   }
 
   /// Resolves an [`Identity`] from its ID `object_id`.
@@ -288,7 +290,25 @@ async fn resolve_migrated(client: &IdentityClientReadOnly, object_id: ObjectID) 
       "failed to look up object_id {object_id} in migration registry; {err}"
     ))
   })?;
-  Ok(onchain_identity.map(Identity::FullFledged))
+  let Some(mut onchain_identity) = onchain_identity else {
+    return Ok(None);
+  };
+  let object_id_str = object_id.to_string();
+  let queried_did = IotaDID::from_object_id(&object_id_str, &client.network);
+  let identity_did = onchain_identity.did_document().id().clone();
+  let doc = onchain_identity.did_document_mut();
+
+  // When querying a migrated identity we obtain a DID document with DID `identity_did` and the `alsoKnownAs`
+  // property containing `queried_did`. Since we are resolving `queried_did`, lets replace in the document these values.
+  // `queried_id` becomes the DID Document ID.
+  *doc.core_document_mut().id_mut_unchecked() = queried_did.clone().into();
+  // The DID Document `alsoKnownAs` property is cleaned of its `queried_did` entry,
+  // which gets replaced by `identity_did`.
+  doc
+    .also_known_as_mut()
+    .replace::<Url>(&queried_did.into_url().into(), identity_did.into_url().into());
+
+  Ok(Some(Identity::FullFledged(onchain_identity)))
 }
 
 async fn resolve_unmigrated(client: &IdentityClientReadOnly, object_id: ObjectID) -> Result<Option<Identity>, Error> {

@@ -25,9 +25,10 @@ module iota_identity::migration {
         // Check if `state_metadata` contains a DID document.
         assert!(state_metadata.is_some() && identity::is_did_output(state_metadata.borrow()), ENotADidOutput);
 
-        let identity_id = identity::new_with_creation_timestamp(
+        let identity_id = identity::new_with_migration_data(
             state_metadata.extract(),
             creation_timestamp,
+            alias_id,
             clock,
             ctx
         );
@@ -119,6 +120,8 @@ module iota_identity::migration_tests {
 
         // Assert correct binding in migration registry
         assert!(registry.lookup(alias_id) == identity.id().to_inner(), 0);
+        // Assert correct backward-binding in Identity
+        assert!(*identity.legacy_id().borrow() == alias_id, 0);
 
         // Assert the sender is controller
         identity.did_doc().assert_is_member(&token);

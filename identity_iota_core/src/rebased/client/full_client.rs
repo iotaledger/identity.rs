@@ -5,7 +5,6 @@ use std::ops::Deref;
 
 use crate::IotaDID;
 use crate::IotaDocument;
-use crate::StateMetadataDocument;
 use async_trait::async_trait;
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::ToFromBytes;
@@ -215,7 +214,7 @@ impl<S> IdentityClient<S> {
   }
 
   /// Returns a new [`IdentityBuilder`] in order to build a new [`crate::rebased::migration::OnChainIdentity`].
-  pub fn create_identity<'a>(&self, iota_document: &'a [u8]) -> IdentityBuilder<'a> {
+  pub fn create_identity(&self, iota_document: IotaDocument) -> IdentityBuilder {
     IdentityBuilder::new(iota_document)
   }
 
@@ -434,32 +433,17 @@ impl TransactionT for PublishDidTx {
   where
     S: Signer<IotaKeySignature> + Sync,
   {
-    let packed = self
-      .0
-      .clone()
-      .pack()
-      .map_err(|err| Error::DidDocSerialization(format!("could not pack DID document: {err}")))?;
-
     let TransactionOutput {
       output: identity,
       response,
     } = client
-      .create_identity(&packed)
+      .create_identity(self.0)
       .finish()
       .execute_with_opt_gas(gas_budget, client)
       .await?;
 
-    // replace placeholders in document
-    let did: IotaDID = IotaDID::new(&identity.id(), client.network());
-    let metadata_document: StateMetadataDocument = self.0.into();
-    let document_without_placeholders = metadata_document.into_iota_document(&did).map_err(|err| {
-      Error::DidDocParsingFailed(format!(
-        "could not replace placeholders in published DID document {did}; {err}"
-      ))
-    })?;
-
     Ok(TransactionOutput {
-      output: document_without_placeholders,
+      output: identity.did_doc,
       response,
     })
   }

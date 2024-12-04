@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::common::get_client as get_test_client;
-use crate::common::TEST_DOC;
 use identity_iota_core::rebased::migration;
 use identity_iota_core::rebased::transaction::Transaction;
+use identity_iota_core::IotaDocument;
 
 #[tokio::test]
 async fn can_create_an_identity() -> anyhow::Result<()> {
@@ -12,7 +12,7 @@ async fn can_create_an_identity() -> anyhow::Result<()> {
   let identity_client = test_client.new_user_client().await?;
 
   let _identity = identity_client
-    .create_identity(TEST_DOC)
+    .create_identity(IotaDocument::new(identity_client.network()))
     .finish()
     .execute(&identity_client)
     .await?;
@@ -26,7 +26,7 @@ async fn can_resolve_a_new_identity() -> anyhow::Result<()> {
   let identity_client = test_client.new_user_client().await?;
 
   let new_identity = identity_client
-    .create_identity(TEST_DOC)
+    .create_identity(IotaDocument::new(identity_client.network()))
     .finish()
     .execute(&identity_client)
     .await?
