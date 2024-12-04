@@ -4,7 +4,6 @@
 use std::str::FromStr;
 
 use crate::common::get_client as get_test_client;
-use crate::common::TEST_DOC;
 use crate::common::TEST_GAS_BUDGET;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
@@ -21,6 +20,7 @@ use identity_iota_core::rebased::AuthenticatedAsset;
 use identity_iota_core::rebased::PublicAvailableVC;
 use identity_iota_core::rebased::TransferProposal;
 use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
 use identity_storage::JwkDocumentExt;
 use identity_storage::JwsSignatureOptions;
 use identity_verification::VerificationMethod;
@@ -190,7 +190,7 @@ async fn hosting_vc_works() -> anyhow::Result<()> {
   let identity_client = test_client.new_user_client().await?;
 
   let newly_created_identity = identity_client
-    .create_identity(TEST_DOC)
+    .create_identity(IotaDocument::new(identity_client.network()))
     .finish()
     .execute_with_gas(TEST_GAS_BUDGET, &identity_client)
     .await?
