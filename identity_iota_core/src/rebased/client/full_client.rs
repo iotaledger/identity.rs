@@ -269,17 +269,15 @@ impl<S> IdentityClient<S> {
         .get_coins(self.sender_address(), None, cursor, Some(LIMIT))
         .await?;
 
-      if coins.data.is_empty() {
+      let Some(coin) = coins.data.into_iter().max_by_key(|coin| coin.balance) else {
         return Err(Error::GasIssue(format!(
           "no coins found for address {}",
           self.sender_address()
         )));
-      }
-
-      if let Some(coin) = coins.data.into_iter().max_by_key(|coin| coin.balance) {
-        if coin.balance >= MINIMUM_BALANCE {
-          return Ok(coin);
-        }
+      };
+      
+      if coin.balance >= MINIMUM_BALANCE {
+        return Ok(coin);
       }
 
       if !coins.has_next_page {
