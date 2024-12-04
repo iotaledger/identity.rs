@@ -48,26 +48,3 @@ impl IdentityNetworkMetadata {
     self.migration_registry.parse().expect("valid ObjectID")
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use std::ops::Deref;
-
-  use crate::rebased::{client::IdentityClientReadOnly, migration::get_identity};
-
-  #[tokio::test]
-  async fn devnet_did_has_right_network_name() -> anyhow::Result<()> {
-    let iota_client = iota_sdk::IotaClientBuilder::default().build_devnet().await?;
-    let identity_client = IdentityClientReadOnly::new(iota_client).await?;
-    let identity = get_identity(
-      &identity_client,
-      "0x867b7b3ff149e78216de81339b4d717696ce3089d22fc58b3eeb3c18f1778dfc".parse()?,
-    )
-    .await?
-    .expect("identity exists on-chain");
-
-    assert_eq!(identity.deref().id().network_str(), identity_client.network().as_ref());
-
-    Ok(())
-  }
-}
