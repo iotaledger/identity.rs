@@ -49,9 +49,7 @@ use super::get_object_id_from_did;
 use super::IdentityClientReadOnly;
 
 /// The minimum balance required to execute a transaction.
-///
-/// TBD: A temporary value,
-pub(crate) const MINIMUM_BALANCE: u64 = 100_000_000;
+pub(crate) const MINIMUM_BALANCE: u64 = 1_000_000_000;
 
 /// A signature which is used to sign transactions.
 pub struct IotaKeySignature {
@@ -275,7 +273,7 @@ impl<S> IdentityClient<S> {
           self.sender_address()
         )));
       };
-      
+
       if coin.balance >= MINIMUM_BALANCE {
         return Ok(coin);
       }
