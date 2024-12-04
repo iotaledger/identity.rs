@@ -64,8 +64,8 @@ To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/ex
 3. Start a local network for testing with `iota start --force-regenesis --with-faucet`.
 4. Request funds with `iota client faucet`.
 5. Publish a test identity package to your local network: `./identity_iota_core/scripts/publish_identity_package.sh`.
-6. Get the `packageId` value from the output (the entry with `"type": "published"`) and pass this as `IDENTITY_IOTA_PKG_ID` env value.
-7. Run the example to create a DID using `IDENTITY_IOTA_PKG_ID=(the value from previous step)  run --release --example 0_create_did`
+6. Get the `packageId` value from the output (the entry with `"type": "published"`) and pass this as `IOTA_IDENTITY_PKG_ID` env value.
+7. Run the example to create a DID using `IOTA_IDENTITY_PKG_ID=(the value from previous step)  run --release --example 0_create_did`
 
 ## Example: Creating an Identity
 
@@ -151,14 +151,14 @@ async fn main() -> anyhow::Result<()> {
   let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
   let public_key_bytes = get_sender_public_key(&public_key_jwk)?;
   let sender_address = convert_to_address(&public_key_bytes)?;
-  let package_id = std::env::var("IDENTITY_IOTA_PKG_ID")
+  let package_id = std::env::var("IOTA_IDENTITY_PKG_ID")
     .map_err(|e| {
-      anyhow::anyhow!("env variable IDENTITY_IOTA_PKG_ID must be set in order to run the examples").context(e)
+      anyhow::anyhow!("env variable IOTA_IDENTITY_PKG_ID must be set in order to run the examples").context(e)
     })
     .and_then(|pkg_str| pkg_str.parse().context("invalid package id"))?;
 
   // Create identity client with signing capabilities.
-  let read_only_client = IdentityClientReadOnly::new(iota_client, package_id).await?;
+  let read_only_client = IdentityClientReadOnly::new_with_pkg_id(iota_client, package_id).await?;
   let signer = StorageSigner::new(&storage, generate.key_id, public_key_jwk);
   let identity_client = IdentityClient::new(read_only_client, signer).await?;
 
@@ -215,8 +215,6 @@ _Example output_
   "meta": {
     "created": "2023-08-29T14:47:26Z",
     "updated": "2023-08-29T14:47:26Z",
-    "governorAddress": "tst1qqd7kyu8xadzx9vutznu72336npqpj92jtp27uyu2tj2sa5hx6n3k0vrzwv",
-    "stateControllerAddress": "tst1qqd7kyu8xadzx9vutznu72336npqpj92jtp27uyu2tj2sa5hx6n3k0vrzwv"
   }
 }
 ```
