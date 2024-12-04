@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.6.0-alpha.1](https://github.com/iotaledger/identity.rs/tree/v1.6.0-alpha.1) (2024-14-04)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v1.4.0...v1.6.0-alpha.1)
+
+This release is targeting IOTA Rebased networks and is meant for early testing. We still expect minor changes in the API and potentially in the on-chain objects.
+
+Identities created on IOTA Stardust networks can be migrated via the [Stardust package](https://docs.iota.org/developer/stardust/stardust-migration)
+
 ## [v1.4.0](https://github.com/iotaledger/identity.rs/tree/v1.4.0) (2024-09-23)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v1.3.1...v1.4.0)
