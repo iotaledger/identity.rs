@@ -1,7 +1,7 @@
 use iota_sdk::types::base_types::ObjectID;
 use phf::{phf_map, Map};
 
-/// A Mapping `NetworkID` -> metadata needed by the library.
+/// A Mapping `network_id` -> metadata needed by the library.
 pub(crate) static IOTA_NETWORKS: Map<&str, IdentityNetworkMetadata> = phf_map! {
   // devnet
   "e678123a" => IdentityNetworkMetadata::new(
