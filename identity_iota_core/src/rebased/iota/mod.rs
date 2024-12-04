@@ -3,3 +3,4 @@
 
 pub(crate) mod move_calls;
 pub(crate) mod types;
+pub(crate) mod well_known_networks;
