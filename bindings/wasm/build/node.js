@@ -3,9 +3,12 @@ const fs = require("fs");
 const { lintAll } = require("./lints");
 const generatePackage = require("./utils/generatePackage");
 
-const RELEASE_FOLDER = path.join(__dirname, "../node/");
-const entryFilePathNode = path.join(RELEASE_FOLDER, "identity_wasm.js");
+const artifact = process.argv[2];
+
+const RELEASE_FOLDER = path.join(__dirname, "..", artifact, "node");
+const entryFilePathNode = path.join(RELEASE_FOLDER, `${artifact}.js`);
 const entryFileNode = fs.readFileSync(entryFilePathNode).toString();
+console.log(`Processing entryFile '${entryFilePathNode}' for artifact '${artifact}'`, )
 
 lintAll(entryFileNode);
 
@@ -31,5 +34,6 @@ fs.writeFileSync(
 const newPackage = generatePackage({
     main: "index.js",
     types: "index.d.ts",
+    artifact,
 });
 fs.writeFileSync(path.join(RELEASE_FOLDER, "package.json"), JSON.stringify(newPackage, null, 2));

@@ -4,9 +4,12 @@ const fse = require("fs-extra");
 const { lintAll } = require("./lints");
 const generatePackage = require("./utils/generatePackage");
 
-const RELEASE_FOLDER = path.join(__dirname, "../web/");
-const entryFilePath = path.join(RELEASE_FOLDER, "identity_wasm.js");
+const artifact = process.argv[2];
+
+const RELEASE_FOLDER = path.join(__dirname, "..", artifact, "web");
+const entryFilePath = path.join(RELEASE_FOLDER, `${artifact}.js`);
 const entryFile = fs.readFileSync(entryFilePath).toString();
+console.log(`Processing entryFile '${entryFilePath}' for artifact '${artifact}'`, )
 
 lintAll(entryFile);
 
@@ -27,7 +30,7 @@ fs.writeFileSync(
     changedFile,
 );
 
-const entryFilePathTs = path.join(RELEASE_FOLDER, "identity_wasm.d.ts");
+const entryFilePathTs = path.join(RELEASE_FOLDER, `${artifact}.d.ts`);
 const entryFileTs = fs.readFileSync(entryFilePathTs).toString();
 
 let changedFileTs = entryFileTs.concat(
@@ -47,5 +50,6 @@ fs.writeFileSync(
 const newPackage = generatePackage({
     module: "index.js",
     types: "index.d.ts",
+    artifact,
 });
 fs.writeFileSync(path.join(RELEASE_FOLDER, "package.json"), JSON.stringify(newPackage, null, 2));
