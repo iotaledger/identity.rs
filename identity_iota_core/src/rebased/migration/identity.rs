@@ -533,7 +533,9 @@ impl Transaction for CreateIdentityTx {
       threshold,
       controllers,
     } = self.0;
-    let did_doc = StateMetadataDocument::from(did_doc).pack(StateMetadataEncoding::default()).map_err(|e| Error::DidDocSerialization(e.to_string()))?;
+    let did_doc = StateMetadataDocument::from(did_doc)
+      .pack(StateMetadataEncoding::default())
+      .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
     let programmable_transaction = if controllers.is_empty() {
       move_calls::identity::new(&did_doc, client.package_id())?
     } else {

@@ -6,6 +6,7 @@ use std::ops::Deref;
 use std::pin::Pin;
 use std::str::FromStr;
 
+use crate::rebased::iota;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::NetworkName;
@@ -13,9 +14,9 @@ use anyhow::anyhow;
 use anyhow::Context as _;
 use futures::stream::FuturesUnordered;
 
+use futures::StreamExt as _;
 use identity_core::common::Url;
 use identity_did::DID;
-use futures::StreamExt as _;
 use iota_sdk::rpc_types::EventFilter;
 use iota_sdk::rpc_types::IotaData as _;
 use iota_sdk::rpc_types::IotaObjectData;
@@ -36,8 +37,6 @@ use crate::rebased::migration::get_identity;
 use crate::rebased::migration::lookup;
 use crate::rebased::migration::Identity;
 use crate::rebased::Error;
-
-const UNKNOWN_NETWORK_HRP: &str = "unknwn";
 
 /// An [`IotaClient`] enriched with identity-related
 /// functionalities.
@@ -75,34 +74,46 @@ impl IdentityClientReadOnly {
     self.migration_registry_id
   }
 
+  /// Attempts to create a new [`IdentityClientReadOnly`] from a given [`IotaClient`].
+
+  /// # Failures
+  /// This function fails if the provided `iota_client` is connected to an unrecognized
+  /// network.
+  ///
+  /// # Notes
+  /// When trying to connect to a local or unofficial network prefer using
+  /// [`IdentityClientReadOnly::new_with_pkg_id`].
+  pub async fn new(iota_client: IotaClient) -> Result<Self, Error> {
+    let network = network_id(&iota_client).await?;
+    let metadata = iota::well_known_networks::network_metadata(&network).ok_or_else(|| {
+      Error::InvalidConfig(format!(
+        "unrecognized network \"{network}\". Use `new_with_pkg_id` instead."
+      ))
+    })?;
+
+    let pkg_id = metadata.latest_pkg_id();
+
+    Ok(IdentityClientReadOnly {
+      iota_client,
+      iota_identity_pkg_id: pkg_id,
+      migration_registry_id: metadata.migration_registry(),
+      network,
+    })
+  }
+
   /// Attempts to create a new [`IdentityClientReadOnly`] from
   /// the given [`IotaClient`].
-  pub async fn new(iota_client: IotaClient, iota_identity_pkg_id: ObjectID) -> Result<Self, Error> {
+  pub async fn new_with_pkg_id(iota_client: IotaClient, iota_identity_pkg_id: ObjectID) -> Result<Self, Error> {
     let IdentityPkgMetadata {
       migration_registry_id, ..
     } = identity_pkg_metadata(&iota_client, iota_identity_pkg_id).await?;
-    let network = get_client_network(&iota_client).await?;
+    let network = network_id(&iota_client).await?;
     Ok(Self {
       iota_client,
       iota_identity_pkg_id,
       migration_registry_id,
       network,
     })
-  }
-
-  /// Same as [`Self::new`], but if the network isn't recognized among IOTA's official networks,
-  /// the provided `network_name` will be used.
-  pub async fn new_with_network_name(
-    iota_client: IotaClient,
-    iota_identity_pkg_id: ObjectID,
-    network_name: NetworkName,
-  ) -> Result<Self, Error> {
-    let mut identity_client = Self::new(iota_client, iota_identity_pkg_id).await?;
-    if identity_client.network.as_ref() == UNKNOWN_NETWORK_HRP {
-      identity_client.network = network_name;
-    }
-
-    Ok(identity_client)
   }
 
   /// Resolves a _Move_ Object of ID `id` and parses it to a value of type `T`.
@@ -188,8 +199,7 @@ impl IdentityClientReadOnly {
   /// Resolves an [`Identity`] from its ID `object_id`.
   pub async fn get_identity(&self, object_id: ObjectID) -> Result<Identity, Error> {
     // spawn all checks
-    let all_futures =
-      FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
+    let all_futures = FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
     all_futures.push(Box::pin(resolve_new(self, object_id)));
     all_futures.push(Box::pin(resolve_migrated(self, object_id)));
     all_futures.push(Box::pin(resolve_unmigrated(self, object_id)));
@@ -202,9 +212,17 @@ impl IdentityClientReadOnly {
   }
 }
 
+async fn network_id(iota_client: &IotaClient) -> Result<NetworkName, Error> {
+  let network_id = iota_client
+    .read_api()
+    .get_chain_identifier()
+    .await
+    .map_err(|e| Error::RpcError(e.to_string()))?;
+  Ok(network_id.try_into().expect("chain ID is a valid network name"))
+}
+
 #[derive(Debug)]
 struct IdentityPkgMetadata {
-  _package_id: ObjectID,
   migration_registry_id: ObjectID,
 }
 
@@ -212,24 +230,6 @@ struct IdentityPkgMetadata {
 struct MigrationRegistryCreatedEvent {
   #[allow(dead_code)]
   id: ObjectID,
-}
-
-async fn get_client_network(client: &IotaClient) -> Result<NetworkName, Error> {
-  let network_id = client
-    .read_api()
-    .get_chain_identifier()
-    .await
-    .map_err(|e| Error::RpcError(e.to_string()))?;
-
-  // TODO: add entries when iota_identity package is published to well-known networks.
-  #[allow(clippy::match_single_binding)]
-  let network_hrp = match &network_id {
-    // "89c3eeec" => NetworkName::try_from("iota").unwrap(),
-    // "fe12a865" => NetworkName::try_from("atoi").unwrap(),
-    _ => NetworkName::try_from(UNKNOWN_NETWORK_HRP).unwrap(), // Unrecognized network
-  };
-
-  Ok(network_hrp)
 }
 
 // TODO: remove argument `package_id` and use `EventFilter::MoveEventField` to find the beacon event and thus the
@@ -271,7 +271,6 @@ async fn identity_pkg_metadata(iota_client: &IotaClient, package_id: ObjectID) -
 
   Ok(IdentityPkgMetadata {
     migration_registry_id: registry_id,
-    _package_id: package_id,
   })
 }
 
