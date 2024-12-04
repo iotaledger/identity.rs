@@ -48,3 +48,16 @@ impl IdentityNetworkMetadata {
     self.migration_registry.parse().expect("valid ObjectID")
   }
 }
+
+#[cfg(test)]
+mod test {
+  use iota_sdk::IotaClientBuilder;
+
+  use crate::rebased::client::IdentityClientReadOnly;
+
+  #[tokio::test]
+  async fn identity_client_connection_to_devnet_works() -> anyhow::Result<()> {
+    IdentityClientReadOnly::new(IotaClientBuilder::default().build_devnet().await?).await?;
+    Ok(())
+  }
+}
