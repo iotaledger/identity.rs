@@ -77,13 +77,15 @@ mod test {
 
   #[tokio::test]
   async fn identity_client_connection_to_devnet_works() -> anyhow::Result<()> {
-    IdentityClientReadOnly::new(IotaClientBuilder::default().build_devnet().await?).await?;
+    let client = IdentityClientReadOnly::new(IotaClientBuilder::default().build_devnet().await?).await?;
+    assert_eq!(client.network().as_ref(), "devnet");
     Ok(())
   }
 
   #[tokio::test]
   async fn identity_client_connection_to_testnet_works() -> anyhow::Result<()> {
-    IdentityClientReadOnly::new(IotaClientBuilder::default().build_testnet().await?).await?;
+    let client = IdentityClientReadOnly::new(IotaClientBuilder::default().build_testnet().await?).await?;
+    assert_eq!(client.network().as_ref(), "testnet");
     Ok(())
   }
 }
