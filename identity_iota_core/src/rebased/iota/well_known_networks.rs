@@ -9,6 +9,11 @@ pub(crate) static IOTA_NETWORKS: Map<&str, IdentityNetworkMetadata> = phf_map! {
     &["0x156dfa0c4d4e576f5675de7d4bbe161c767947ffceefd7498cb39c406bc1cb67"],
     "0x0247da7f3b8708fc1d326f70153c01b7caf52a19a6f42dd3b868ac8777486b11",
   ),
+  // testnet
+  "2304aa97" => IdentityNetworkMetadata::new(
+    &["0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818"],
+    "0xf1e20e6e3fa4de99ca269a0168f431dc459bc3a1ee5b76b426d5cf3094680483",
+  ),
 };
 
 /// `iota_identity` package information for a given network.
@@ -59,6 +64,12 @@ mod test {
   #[tokio::test]
   async fn identity_client_connection_to_devnet_works() -> anyhow::Result<()> {
     IdentityClientReadOnly::new(IotaClientBuilder::default().build_devnet().await?).await?;
+    Ok(())
+  }
+
+  #[tokio::test]
+  async fn identity_client_connection_to_testnet_works() -> anyhow::Result<()> {
+    IdentityClientReadOnly::new(IotaClientBuilder::default().build_testnet().await?).await?;
     Ok(())
   }
 }
