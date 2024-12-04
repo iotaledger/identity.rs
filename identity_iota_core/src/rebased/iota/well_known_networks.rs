@@ -5,8 +5,8 @@ use phf::{phf_map, Map};
 pub(crate) static IOTA_NETWORKS: Map<&str, IdentityNetworkMetadata> = phf_map! {
   // devnet
   "e678123a" => IdentityNetworkMetadata::new(
-    &["0xf4e01655b0906ecd3d2bbf3dab03a77acdc13662d07edabce502a9087c122a39"],
-    "0x816420bd276f9d89ac77bbefa40ba78552760115f1644d84f870db7612088ca8",
+    &["0x156dfa0c4d4e576f5675de7d4bbe161c767947ffceefd7498cb39c406bc1cb67"],
+    "0x0247da7f3b8708fc1d326f70153c01b7caf52a19a6f42dd3b868ac8777486b11",
   ),
 };
 
