@@ -186,8 +186,7 @@ impl IdentityClientReadOnly {
   /// Resolves an [`Identity`] from its ID `object_id`.
   pub async fn get_identity(&self, object_id: ObjectID) -> Result<Identity, Error> {
     // spawn all checks
-    let all_futures =
-      FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
+    let all_futures = FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
     all_futures.push(Box::pin(resolve_new(self, object_id)));
     all_futures.push(Box::pin(resolve_migrated(self, object_id)));
     all_futures.push(Box::pin(resolve_unmigrated(self, object_id)));
