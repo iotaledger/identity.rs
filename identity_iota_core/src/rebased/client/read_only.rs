@@ -9,9 +9,10 @@ use std::str::FromStr;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::NetworkName;
+use anyhow::anyhow;
 use anyhow::Context as _;
 use futures::stream::FuturesUnordered;
-use futures::TryStreamExt as _;
+use futures::StreamExt as _;
 use iota_sdk::rpc_types::EventFilter;
 use iota_sdk::rpc_types::IotaData as _;
 use iota_sdk::rpc_types::IotaObjectData;
@@ -114,7 +115,10 @@ impl IdentityClientReadOnly {
       .and_then(|res| res.data.context("missing data in response"))
       .and_then(|data| data.content.context("missing object content in data"))
       .and_then(|content| content.try_into_move().context("not a move object"))
-      .and_then(|obj| serde_json::from_value(obj.fields.to_json_value()).context("failed to deserialize move object"))
+      .and_then(|obj| {
+        serde_json::from_value(obj.fields.to_json_value())
+          .map_err(|err| anyhow!("failed to deserialize move object; {err}"))
+      })
       .map_err(|e| Error::ObjectLookup(e.to_string()))
   }
 
@@ -182,23 +186,17 @@ impl IdentityClientReadOnly {
   /// Resolves an [`Identity`] from its ID `object_id`.
   pub async fn get_identity(&self, object_id: ObjectID) -> Result<Identity, Error> {
     // spawn all checks
-    let mut all_futures =
+    let all_futures =
       FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
     all_futures.push(Box::pin(resolve_new(self, object_id)));
     all_futures.push(Box::pin(resolve_migrated(self, object_id)));
     all_futures.push(Box::pin(resolve_unmigrated(self, object_id)));
 
-    // use first non-None value as result
-    let mut identity_outcome: Option<Identity> = None;
-    while let Some(result) = all_futures.try_next().await? {
-      if result.is_some() {
-        identity_outcome = result;
-        all_futures.clear();
-        break;
-      }
-    }
-
-    identity_outcome.ok_or_else(|| Error::DIDResolutionError(format!("could not find DID document for {object_id}")))
+    all_futures
+      .filter_map(|res| Box::pin(async move { res.ok().flatten() }))
+      .next()
+      .await
+      .ok_or_else(|| Error::DIDResolutionError(format!("could not find DID document for {object_id}")))
   }
 }
 
