@@ -12,6 +12,7 @@ use crate::IotaDID;
 use crate::IotaDocument;
 use crate::NetworkName;
 use crate::StateMetadataDocument;
+use crate::StateMetadataEncoding;
 use async_trait::async_trait;
 use identity_core::common::Timestamp;
 use iota_sdk::rpc_types::IotaObjectData;
@@ -101,7 +102,7 @@ impl Identity {
 pub struct OnChainIdentity {
   id: UID,
   multi_controller: Multicontroller<Vec<u8>>,
-  did_doc: IotaDocument,
+  pub(crate) did_doc: IotaDocument,
   version: u64,
 }
 
@@ -454,18 +455,18 @@ pub(crate) fn unpack_identity_data(did: &IotaDID, data: &IotaObjectData) -> Resu
 
 /// Builder-style struct to create a new [`OnChainIdentity`].
 #[derive(Debug)]
-pub struct IdentityBuilder<'a> {
-  did_doc: &'a [u8],
+pub struct IdentityBuilder {
+  did_doc: IotaDocument,
   threshold: Option<u64>,
   controllers: HashMap<IotaAddress, u64>,
 }
 
-impl<'a> IdentityBuilder<'a> {
+impl IdentityBuilder {
   /// Initializes a new builder for an [`OnChainIdentity`], where the passed `did_doc` will be
   /// used as the identity's DID Document.
   /// ## Warning
   /// Validation of `did_doc` is deferred to [`CreateIdentityTx`].
-  pub fn new(did_doc: &'a [u8]) -> Self {
+  pub fn new(did_doc: IotaDocument) -> Self {
     Self {
       did_doc,
       threshold: None,
@@ -496,7 +497,7 @@ impl<'a> IdentityBuilder<'a> {
   }
 
   /// Turns this builder into a [`Transaction`], ready to be executed.
-  pub fn finish(self) -> CreateIdentityTx<'a> {
+  pub fn finish(self) -> CreateIdentityTx {
     CreateIdentityTx(self)
   }
 }
@@ -514,10 +515,10 @@ impl MoveType for OnChainIdentity {
 
 /// A [`Transaction`] for creating a new [`OnChainIdentity`] from an [`IdentityBuilder`].
 #[derive(Debug)]
-pub struct CreateIdentityTx<'a>(IdentityBuilder<'a>);
+pub struct CreateIdentityTx(IdentityBuilder);
 
 #[async_trait]
-impl Transaction for CreateIdentityTx<'_> {
+impl Transaction for CreateIdentityTx {
   type Output = OnChainIdentity;
   async fn execute_with_opt_gas<S>(
     self,
@@ -532,8 +533,9 @@ impl Transaction for CreateIdentityTx<'_> {
       threshold,
       controllers,
     } = self.0;
+    let did_doc = StateMetadataDocument::from(did_doc).pack(StateMetadataEncoding::default()).map_err(|e| Error::DidDocSerialization(e.to_string()))?;
     let programmable_transaction = if controllers.is_empty() {
-      move_calls::identity::new(did_doc, client.package_id())?
+      move_calls::identity::new(&did_doc, client.package_id())?
     } else {
       let threshold = match threshold {
         Some(t) => t,
@@ -547,7 +549,7 @@ impl Transaction for CreateIdentityTx<'_> {
           ))
         }
       };
-      move_calls::identity::new_with_controllers(did_doc, controllers, threshold, client.package_id())?
+      move_calls::identity::new_with_controllers(&did_doc, controllers, threshold, client.package_id())?
     };
 
     let response = client.execute_transaction(programmable_transaction, gas_budget).await?;
