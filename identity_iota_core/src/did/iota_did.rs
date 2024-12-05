@@ -39,6 +39,8 @@ impl IotaDID {
   pub const METHOD: &'static str = "iota";
 
   /// The default network name (`"iota"`).
+  // TODO: replace this with main net chain ID
+  // as soon as IOTA rebased lands on mainnet.
   pub const DEFAULT_NETWORK: &'static str = "iota";
 
   /// The tag of the placeholder DID.
@@ -431,7 +433,16 @@ mod tests {
     let mut check_network_executed: bool = false;
 
     const INVALID_NETWORK_NAMES: [&str; 10] = [
-      "Main", "fOo", "deV", "féta", "", "  ", "foo ", " foo", "1234567", "foobar0",
+      "Main",
+      "fOo",
+      "deV",
+      "féta",
+      "",
+      "  ",
+      "foo ",
+      " foo",
+      "123456789",
+      "foobar123",
     ];
     for network_name in INVALID_NETWORK_NAMES {
       let did_string: String = format!("did:method:{network_name}:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK");
@@ -559,9 +570,9 @@ mod tests {
         Err(DIDError::InvalidMethodName)
       ));
 
-      // invalid network name (exceeded six characters)
+      // invalid network name (exceeded eight characters)
       assert!(matches!(
-        IotaDID::parse(format!("did:{}:1234567:{}", IotaDID::METHOD, valid_object_id)),
+        IotaDID::parse(format!("did:{}:123456789:{}", IotaDID::METHOD, valid_object_id)),
         Err(DIDError::Other(_))
       ));
 
