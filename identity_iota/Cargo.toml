@@ -20,6 +20,7 @@ identity_iota_core = { version = "=1.4.0", path = "../identity_iota_core", defau
 identity_resolver = { version = "=1.4.0", path = "../identity_resolver", default-features = false, optional = true }
 identity_storage = { version = "=1.4.0", path = "../identity_storage", default-features = false, features = ["iota-document"] }
 identity_verification = { version = "=1.4.0", path = "../identity_verification", default-features = false }
+identity_iota_interaction = { version = "=1.4.0", path = "../identity_iota_interaction" }
 
 [dev-dependencies]
 # required for doc test
