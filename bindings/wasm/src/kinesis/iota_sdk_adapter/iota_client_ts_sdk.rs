@@ -118,7 +118,7 @@ impl ReadTrait for ReadAdapter {
     }
 
     async fn get_reference_gas_price(&self) -> IotaRpcResult<u64> {
-        unimplemented!("get_reference_gas_price");
+        self.client.get_reference_gas_price().await
     }
 
     async fn get_transaction_with_options(

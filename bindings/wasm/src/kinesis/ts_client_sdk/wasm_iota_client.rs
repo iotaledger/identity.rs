@@ -1,7 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::PromiseString;
+use crate::common::{PromiseBigint, PromiseString};
 use crate::error::JsValueResult;
 use identity_iota::iota::iota_sdk_abstraction::types::base_types::ObjectID;
 use identity_iota::iota::iota_sdk_abstraction::types::dynamic_field::DynamicFieldName;
@@ -56,10 +56,10 @@ extern "C" {
   ) -> PromiseIotaObjectResponse;
 
   #[wasm_bindgen(method, js_name = getObject)]
-  pub fn get_object(
-    this: &WasmIotaClient,
-    input: &WasmGetObjectParams,
-  ) -> PromiseIotaObjectResponse;
+  pub fn get_object(this: &WasmIotaClient, input: &WasmGetObjectParams) -> PromiseIotaObjectResponse;
+
+  #[wasm_bindgen(method, js_name = getReferenceGasPrice)]
+  pub fn get_reference_gas_price(this: &WasmIotaClient) -> PromiseBigint;
 }
 
 // Helper struct used to convert TYPESCRIPT types to RUST types
@@ -156,5 +156,14 @@ impl ManagedWasmIotaClient {
 
     Ok(result.into_serde()?)
   }
-}
 
+  pub async fn get_reference_gas_price(&self) -> IotaRpcResult<u64> {
+    let promise: Promise = Promise::resolve(&WasmIotaClient::get_reference_gas_price(&self.0));
+    let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
+      console_log!("Error executing JsFuture::from(promise): {:?}", e);
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?;
+
+    Ok(result.into_serde()?)
+  }
+}
