@@ -3,16 +3,18 @@
 
 use crate::common::PromiseString;
 use crate::error::JsValueResult;
+use identity_iota::iota::iota_sdk_abstraction::types::base_types::ObjectID;
+use identity_iota::iota::iota_sdk_abstraction::types::dynamic_field::DynamicFieldName;
 use identity_iota::iota::sui_name_tbd_error::Error;
 use identity_iota::iota::iota_sdk_abstraction::{TransactionDataBcs, SignatureBcs};
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 use identity_iota::iota::iota_sdk_abstraction::error::{IotaRpcResult, Error as IotaRpcError};
-use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaTransactionBlockResponseOptions;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::{IotaObjectResponse, IotaTransactionBlockResponseOptions};
 use identity_iota::iota::iota_sdk_abstraction::types::quorum_driver_types::ExecuteTransactionRequestType;
-use identity_iota::iota::iota_sdk_abstraction::generated_types::ExecuteTransactionBlockParams;
-use crate::kinesis::WasmExecuteTransactionBlockParams;
+use identity_iota::iota::iota_sdk_abstraction::generated_types::{ExecuteTransactionBlockParams, GetDynamicFieldObjectParams};
+use crate::kinesis::{PromiseIotaObjectResponse, WasmExecuteTransactionBlockParams, WasmGetDynamicFieldObjectParams};
 use crate::console_log;
 use super::wasm_types::{
   PromiseIotaTransactionBlockResponse,
@@ -46,6 +48,12 @@ extern "C" {
     this: &WasmIotaClient,
     params: &WasmExecuteTransactionBlockParams
   ) -> PromiseIotaTransactionBlockResponse;
+
+  #[wasm_bindgen(method, js_name = getDynamicFieldObject)]
+  pub fn get_dynamic_field_object(
+    this: &WasmIotaClient,
+    input: &WasmGetDynamicFieldObjectParams,
+  ) -> PromiseIotaObjectResponse;
 }
 
 // Helper struct used to convert TYPESCRIPT types to RUST types
@@ -88,5 +96,33 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
     Ok(IotaTransactionBlockResponseAdapter::new(result.into()))
+  }
+
+  /**
+   * Return the dynamic field object information for a specified object
+   */
+  pub async fn get_dynamic_field_object(
+    &self,
+    parent_object_id: ObjectID,
+    name: DynamicFieldName,
+  ) -> IotaRpcResult<IotaObjectResponse> {
+    let params: WasmGetDynamicFieldObjectParams =
+      serde_wasm_bindgen::to_value(&GetDynamicFieldObjectParams::new(parent_object_id.to_string(), name))
+        .map_err(|e| {
+          console_log!(
+            "Error executing serde_wasm_bindgen::to_value(WasmGetDynamicFieldObjectParams): {:?}",
+            e
+          );
+          IotaRpcError::FfiError(format!("{:?}", e))
+        })?
+        .into();
+
+    let promise: Promise = Promise::resolve(&WasmIotaClient::get_dynamic_field_object(&self.0, &params));
+    let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
+      console_log!("Error executing JsFuture::from(promise): {:?}", e);
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?;
+
+    Ok(result.into_serde()?)
   }
 }

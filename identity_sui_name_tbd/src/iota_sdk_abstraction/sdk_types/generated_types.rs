@@ -6,6 +6,7 @@ use fastcrypto::encoding::Base64;
 use serde::{Deserialize, Serialize};
 use crate::iota_sdk_abstraction::{SignatureBcs, TransactionDataBcs};
 use super::iota_json_rpc_types::iota_transaction::IotaTransactionBlockResponseOptions;
+use super::iota_types::dynamic_field::DynamicFieldName;
 use super::iota_types::quorum_driver_types::ExecuteTransactionRequestType;
 
 // The types defined in this file:
@@ -38,5 +39,21 @@ impl ExecuteTransactionBlockParams {
       options,
       request_type,
     }
+  }
+}
+
+/// Return the dynamic field object information for a specified object
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetDynamicFieldObjectParams {
+  /// The ID of the queried parent object
+  parent_id: String,
+  /// The Name of the dynamic field
+  name: DynamicFieldName,
+}
+
+impl GetDynamicFieldObjectParams {
+  pub fn new(parent_id: String, name: DynamicFieldName) -> Self {
+    GetDynamicFieldObjectParams { parent_id, name }
   }
 }

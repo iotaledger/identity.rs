@@ -42,6 +42,7 @@ use identity_iota::iota::iota_sdk_abstraction::rpc_types::{
     IotaObjectData,
     OwnedObjectRef
 };
+
 use super::super::ts_client_sdk::{WasmIotaClient, ManagedWasmIotaClient};
 use super::super::types::IotaTransactionBlockResponseAdapter;
 
@@ -95,7 +96,7 @@ impl ReadTrait for ReadAdapter {
         parent_object_id: ObjectID,
         name: DynamicFieldName,
     ) -> IotaRpcResult<IotaObjectResponse> {
-        unimplemented!("get_dynamic_field_object");
+        self.client.get_dynamic_field_object(parent_object_id, name).await
     }
 
     async fn get_object_with_options(

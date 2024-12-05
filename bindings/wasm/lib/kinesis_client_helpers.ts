@@ -1,7 +1,12 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IotaTransactionBlockResponse, ExecutionStatus, OwnedObjectRef} from "@iota/iota.js/client";
+import {
+    IotaObjectResponse,
+    IotaTransactionBlockResponse,
+    ExecutionStatus,
+    OwnedObjectRef,
+} from "@iota/iota.js/client";
 
 export class IotaTransactionBlockResponseAdapter {
     response: IotaTransactionBlockResponse;

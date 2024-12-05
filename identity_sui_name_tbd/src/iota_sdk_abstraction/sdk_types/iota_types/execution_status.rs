@@ -10,8 +10,8 @@ use thiserror::Error;
 
 use super::base_types::{ObjectID, TypeParameterIndex, CodeOffset};
 
-#[serde(rename_all = "lowercase")]
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum ExecutionStatus {
     Success,
     /// Gas used in the failed case, and the error.
