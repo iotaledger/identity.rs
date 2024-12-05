@@ -23,9 +23,10 @@ members = [
   "identity_ecdsa_verifier",
   "identity_eddsa_verifier",
   "examples",
+  "identity_iota_interaction",
 ]
 
-exclude = ["bindings/wasm", "bindings/grpc"]
+exclude = ["bindings/wasm/identity_wasm", "bindings/grpc"]
 
 [workspace.dependencies]
 bls12_381_plus = { version = "0.8.17" }
