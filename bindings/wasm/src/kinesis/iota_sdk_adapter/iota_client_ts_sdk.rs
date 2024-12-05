@@ -104,7 +104,7 @@ impl ReadTrait for ReadAdapter {
         object_id: ObjectID,
         options: IotaObjectDataOptions,
     ) -> IotaRpcResult<IotaObjectResponse> {
-        unimplemented!("get_object_with_options");
+        self.client.get_object_with_options(object_id, options).await
     }
 
     async fn get_owned_objects(

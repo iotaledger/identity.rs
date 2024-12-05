@@ -8,11 +8,13 @@ use super::super::types::into_sdk_type;
 const TS_SDK_TYPES: &'static str = r#"
   import {
     Balance,
-    IotaObjectData,
     ExecuteTransactionBlockParams,
-    IotaTransactionBlockResponseOptions,
-    IotaTransactionBlockResponse,
+    GetDynamicFieldObjectParams,
+    GetObjectParams,
+    IotaObjectData,
     IotaObjectResponse,
+    IotaTransactionBlockResponse,
+    IotaTransactionBlockResponseOptions,
   }
   from "@iota/iota.js/client";
   
@@ -42,6 +44,10 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "GetDynamicFieldObjectParams")]
   #[derive(Clone)]
   pub type WasmGetDynamicFieldObjectParams;
+
+  #[wasm_bindgen(typescript_type = "GetObjectParams")]
+  #[derive(Clone)]
+  pub type WasmGetObjectParams;
 
   #[wasm_bindgen(typescript_type = "Promise<IotaTransactionBlockResponse>")]
   #[derive(Clone)]

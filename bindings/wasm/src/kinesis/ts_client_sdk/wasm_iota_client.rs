@@ -11,10 +11,10 @@ use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 use identity_iota::iota::iota_sdk_abstraction::error::{IotaRpcResult, Error as IotaRpcError};
-use identity_iota::iota::iota_sdk_abstraction::rpc_types::{IotaObjectResponse, IotaTransactionBlockResponseOptions};
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::{IotaObjectDataOptions, IotaObjectResponse, IotaTransactionBlockResponseOptions};
 use identity_iota::iota::iota_sdk_abstraction::types::quorum_driver_types::ExecuteTransactionRequestType;
-use identity_iota::iota::iota_sdk_abstraction::generated_types::{ExecuteTransactionBlockParams, GetDynamicFieldObjectParams};
-use crate::kinesis::{PromiseIotaObjectResponse, WasmExecuteTransactionBlockParams, WasmGetDynamicFieldObjectParams};
+use identity_iota::iota::iota_sdk_abstraction::generated_types::{ExecuteTransactionBlockParams, GetDynamicFieldObjectParams, GetObjectParams};
+use crate::kinesis::{PromiseIotaObjectResponse, WasmExecuteTransactionBlockParams, WasmGetDynamicFieldObjectParams, WasmGetObjectParams};
 use crate::console_log;
 use super::wasm_types::{
   PromiseIotaTransactionBlockResponse,
@@ -53,6 +53,12 @@ extern "C" {
   pub fn get_dynamic_field_object(
     this: &WasmIotaClient,
     input: &WasmGetDynamicFieldObjectParams,
+  ) -> PromiseIotaObjectResponse;
+
+  #[wasm_bindgen(method, js_name = getObject)]
+  pub fn get_object(
+    this: &WasmIotaClient,
+    input: &WasmGetObjectParams,
   ) -> PromiseIotaObjectResponse;
 }
 
@@ -125,4 +131,30 @@ impl ManagedWasmIotaClient {
 
     Ok(result.into_serde()?)
   }
+
+  pub async fn get_object_with_options(
+    &self,
+    object_id: ObjectID,
+    options: IotaObjectDataOptions,
+  ) -> IotaRpcResult<IotaObjectResponse> {
+    let params: WasmGetObjectParams =
+      serde_wasm_bindgen::to_value(&GetObjectParams::new(object_id.to_string(), Some(options)))
+        .map_err(|e| {
+          console_log!(
+            "Error executing serde_wasm_bindgen::to_value(WasmIotaObjectDataOptions): {:?}",
+            e
+          );
+          IotaRpcError::FfiError(format!("{:?}", e))
+        })?
+        .into();
+
+    let promise: Promise = Promise::resolve(&WasmIotaClient::get_object(&self.0, &params));
+    let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
+      console_log!("Error executing JsFuture::from(promise): {:?}", e);
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?;
+
+    Ok(result.into_serde()?)
+  }
 }
+

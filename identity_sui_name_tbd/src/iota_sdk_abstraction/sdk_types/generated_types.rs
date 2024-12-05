@@ -6,6 +6,7 @@ use fastcrypto::encoding::Base64;
 use serde::{Deserialize, Serialize};
 use crate::iota_sdk_abstraction::{SignatureBcs, TransactionDataBcs};
 use super::iota_json_rpc_types::iota_transaction::IotaTransactionBlockResponseOptions;
+use super::iota_json_rpc_types::IotaObjectDataOptions;
 use super::iota_types::dynamic_field::DynamicFieldName;
 use super::iota_types::quorum_driver_types::ExecuteTransactionRequestType;
 
@@ -55,5 +56,21 @@ pub struct GetDynamicFieldObjectParams {
 impl GetDynamicFieldObjectParams {
   pub fn new(parent_id: String, name: DynamicFieldName) -> Self {
     GetDynamicFieldObjectParams { parent_id, name }
+  }
+}
+
+/// Return the object information for a specified object
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetObjectParams {
+  /// the ID of the queried object
+  id: String,
+  /// options for specifying the content to be returned
+  options: Option<IotaObjectDataOptions>,
+}
+
+impl GetObjectParams {
+  pub fn new(id: String, options: Option<IotaObjectDataOptions>) -> Self {
+    GetObjectParams { id, options }
   }
 }
