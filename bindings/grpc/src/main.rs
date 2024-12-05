@@ -25,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
 
   let iota_client = iota_sdk::IotaClientBuilder::default().build(api_endpoint).await?;
 
-  let read_only_client = IdentityClientReadOnly::new(iota_client, identity_pkg_id).await?;
+  let read_only_client = IdentityClientReadOnly::new_with_pkg_id(iota_client, identity_pkg_id).await?;
 
   let stronghold = init_stronghold()?;
 
