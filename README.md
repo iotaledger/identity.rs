@@ -22,31 +22,34 @@
 
 ---
 
+> [!NOTE]
+> This version of the library is compatible with IOTA Rebase networks and in active development, for a version of the library compatible with IOTA Stardust networks check [here](https://github.com/iotaledger/identity.rs/)
+
 ## Introduction
 
-IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) specifications. This library can be used to create, resolve and authenticate digital identities and to create verifiable credentials and presentations in order to share information in a verifiable manner and establish trust in the digital world. It does so while supporting secure storage of cryptographic keys, which can be implemented for your preferred key management system. Many of the individual libraries (Rust crates) are agnostic over the concrete DID method, with the exception of some libraries dedicated to implement the [IOTA DID method](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec/), which is an implementation of decentralized digital identity on the IOTA and Shimmer networks. Written in stable Rust, IOTA Identity has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
+IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) specifications. This library can be used to create, resolve and authenticate digital identities and to create verifiable credentials and presentations in order to share information in a verifiable manner and establish trust in the digital world. It does so while supporting secure storage of cryptographic keys, which can be implemented for your preferred key management system. Many of the individual libraries (Rust crates) are agnostic over the concrete DID method, with the exception of some libraries dedicated to implement the [IOTA DID method](https://docs.iota.org/references/iota-identity/iota-did-method-spec/), which is an implementation of decentralized digital identity on IOTA Rebased networks. Written in stable Rust, IOTA Identity has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
-## Bindings
+<!-- ## Bindings
 
 [Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages:
 
-- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm/) (JavaScript/TypeScript)
+- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/identity-rebased-alpha/bindings/wasm/) (JavaScript/TypeScript) -->
 
 ## gRPC
 
-We provide a collection of experimental [gRPC services](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/grpc/)
+We provide a collection of experimental [gRPC services](https://github.com/iotaledger/identity.rs/blob/identity-rebased-alpha/bindings/grpc/)
 ## Documentation and Resources
 
 - API References:
-  - [Rust API Reference](https://docs.rs/identity_iota/latest/identity_iota/): Package documentation (cargo docs).
-  - [Wasm API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation.
-- [Identity Documentation Pages](https://wiki.iota.org/identity.rs/introduction): Supplementing documentation with context around identity and simple examples on library usage.
-- [Examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples): Practical code snippets to get you started with the library.
+  - Rust API Reference: Package documentation, build with `RUSTDOCFLAGS='--cfg docsrs' cargo +nightly doc -p identity_iota --all-features --no-deps --open`.
+  <!-- - [Wasm API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation. -->
+- [Identity Documentation Pages](https://docs.iota.org/iota-identity): Supplementing documentation with context around identity and simple examples on library usage.
+- [Examples](https://github.com/iotaledger/identity.rs/blob/identity-rebased-alpha/examples): Practical code snippets to get you started with the library.
 
 ## Prerequisites
 
-- [Rust](https://www.rust-lang.org/) (>= 1.65)
-- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.65)
+- [Rust](https://www.rust-lang.org/) (>= 1.83)
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.83)
 
 ## Getting Started
 
@@ -57,7 +60,7 @@ If you want to include IOTA Identity in your project, simply add it as a depende
 identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha" }
 ```
 
-To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
+To try out the [examples](https://github.com/iotaledger/identity.rs/blob/identity-rebased-alpha/examples), you can also do this:
 
 1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs`
 2. Get the [IOTA binaries](https://github.com/iotaledger/iota/releases).
