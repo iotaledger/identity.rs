@@ -34,4 +34,10 @@ pub enum Error {
     Json(#[from] serde_json::Error),
     #[error("Error caused by a foreign function interface call: {0}")]
     FfiError(String),
+    /// Unsupported arg in ffi call, argument meaning:
+    /// - 0: function identifier
+    /// - 1: argument name
+    /// - 2: hint for workaround / alternative solution
+    #[error("`{0}` does not support argument `{1}`, {2}")]
+    FfiUnsupportedArgument(String, String, String),
 }

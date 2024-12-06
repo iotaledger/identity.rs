@@ -11,10 +11,12 @@ const TS_SDK_TYPES: &'static str = r#"
     ExecuteTransactionBlockParams,
     GetDynamicFieldObjectParams,
     GetObjectParams,
+    GetOwnedObjectsParams,
     IotaObjectData,
     IotaObjectResponse,
     IotaTransactionBlockResponse,
     IotaTransactionBlockResponseOptions,
+    PaginatedObjectsResponse,
   }
   from "@iota/iota.js/client";
   
@@ -56,6 +58,14 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<IotaObjectResponse>")]
   #[derive(Clone)]
   pub type PromiseIotaObjectResponse;
+  
+  #[wasm_bindgen(typescript_type = "GetOwnedObjectsParams")]
+  #[derive(Clone)]
+  pub type WasmGetOwnedObjectsParams;
+
+  #[wasm_bindgen(typescript_type = "Promise<PaginatedObjectsResponse>")]
+  #[derive(Clone)]
+  pub type PromisePaginatedObjectsResponse;
 
   #[wasm_bindgen(typescript_type = "ExecutionStatus")]
   #[derive(Clone)]

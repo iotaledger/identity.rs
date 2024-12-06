@@ -114,7 +114,7 @@ impl ReadTrait for ReadAdapter {
         cursor: Option<ObjectID>,
         limit: Option<usize>,
     ) -> IotaRpcResult<ObjectsPage> {
-        unimplemented!("get_owned_objects");
+        self.client.get_owned_objects(address, query, cursor, limit).await
     }
 
     async fn get_reference_gas_price(&self) -> IotaRpcResult<u64> {

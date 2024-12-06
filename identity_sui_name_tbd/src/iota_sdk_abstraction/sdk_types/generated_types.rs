@@ -74,3 +74,24 @@ impl GetObjectParams {
     GetObjectParams { id, options }
   }
 }
+
+/// Return the list of objects owned by an address. Note that if the address owns more than
+/// `QUERY_MAX_RESULT_LIMIT` objects, the pagination is not accurate, because previous page may have
+/// been updated when the next page is fetched. Please use iotax_queryObjects if this is a concern.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetOwnedObjectsParams {
+    /// the owner's Iota address
+    owner: String,
+    /// An optional paging cursor. If provided, the query will start from the next item after the specified
+    /// cursor. Default to start from the first item if not specified.
+    cursor: Option<String>,
+    /// Max number of items returned per page, default to [QUERY_MAX_RESULT_LIMIT] if not specified.
+    limit: Option<usize>,
+}
+
+impl GetOwnedObjectsParams {
+  pub fn new(owner: String, cursor: Option<String>, limit: Option<usize>) -> Self {
+    GetOwnedObjectsParams { owner, cursor, limit }
+  }
+}
