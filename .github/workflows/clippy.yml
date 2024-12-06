@@ -7,7 +7,7 @@ on:
   pull_request:
     branches:
       - main
-      - 'epic/**'
+      - 'feat/**'
       - 'support/**'
     paths:
       - '.github/workflows/clippy.yml'
