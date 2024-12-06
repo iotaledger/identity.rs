@@ -23,8 +23,7 @@ pub(crate) static PLACEHOLDER_DID: Lazy<CoreDID> = Lazy::new(|| CoreDID::parse("
 /// Magic bytes used to mark DID documents.
 const DID_MARKER: &[u8] = b"DID";
 
-/// Intermediate representation of the DID document as it is contained in the state metadata of
-/// an Alias Output.
+/// Intermediate representation of the DID document as it is contained in the identity.
 ///
 /// DID instances in the document are replaced by the `PLACEHOLDER_DID`.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -73,8 +72,8 @@ impl StateMetadataDocument {
     Ok(IotaDocument { document, metadata })
   }
 
-  /// Pack a [`StateMetadataDocument`] into bytes, suitable for inclusion in
-  /// an Alias Output's state metadata, according to the given `encoding`.
+  /// Pack a [`StateMetadataDocument`] into bytes, suitable for storing in an identity,
+  /// according to the given `encoding`.
   pub fn pack(mut self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
     // Unset Governor and State Controller Addresses to avoid bloating the payload
     self.metadata.governor_address = None;

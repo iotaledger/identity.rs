@@ -22,19 +22,23 @@ identity_storage = { version = "=1.4.0", path = "../identity_storage", default-f
 identity_verification = { version = "=1.4.0", path = "../identity_verification", default-features = false }
 
 [dev-dependencies]
+# required for doc test
 anyhow = "1.0.64"
-iota-sdk = { version = "1.1.5", default-features = false, features = ["tls", "client"] }
+identity_iota = { version = "=1.4.0", path = "./", features = ["memstore"] }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.3-rc" }
 rand = "0.8.5"
 tokio = { version = "1.29.0", features = ["full"] }
 
 [features]
-default = ["revocation-bitmap", "client", "iota-client", "resolver"]
+default = ["revocation-bitmap", "iota-client", "resolver"]
 
-# Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
-client = ["identity_iota_core/client"]
-
-# Enables the iota-client integration, the client trait implementations for it, and the `IotaClientExt` trait.
-iota-client = ["identity_iota_core/iota-client", "identity_resolver?/iota"]
+# Enables the IOTA client integration, and the `DidResolutionHandler` trait.
+iota-client = [
+  "identity_iota_core/iota-client",
+  "identity_resolver/iota",
+  "identity_storage/send-sync-storage",
+  "identity_storage/storage-signer",
+]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [

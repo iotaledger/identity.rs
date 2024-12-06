@@ -15,8 +15,8 @@ runs:
         brew update --preinstall
         brew install sccache
 
-    - name: Install sccache (ubuntu-latest)
-      if: inputs.os == 'ubuntu-latest'
+    - name: Install sccache (ubuntu-24.04)
+      if: inputs.os == 'ubuntu-24.04'
       shell: bash
       run: |
         SCCACHE_DOWNLOAD_LINK=https://github.com/mozilla/sccache/releases/download
