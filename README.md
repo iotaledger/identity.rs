@@ -23,7 +23,7 @@
 ---
 
 > [!NOTE]
-> This version of the library is compatible with IOTA Rebase networks and in active development, for a version of the library compatible with IOTA Stardust networks check [here](https://github.com/iotaledger/identity.rs/)
+> This version of the library is compatible with IOTA Rebased networks and in active development, for a version of the library compatible with IOTA Stardust networks check [here](https://github.com/iotaledger/identity.rs/)
 
 ## Introduction
 
@@ -33,18 +33,18 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 [Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages:
 
-- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/identity-rebased-alpha/bindings/wasm/) (JavaScript/TypeScript) -->
+- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/bindings/wasm/) (JavaScript/TypeScript) -->
 
 ## gRPC
 
-We provide a collection of experimental [gRPC services](https://github.com/iotaledger/identity.rs/blob/identity-rebased-alpha/bindings/grpc/)
+We provide a collection of experimental [gRPC services](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/bindings/grpc/)
 ## Documentation and Resources
 
 - API References:
   - Rust API Reference: Package documentation, build with `RUSTDOCFLAGS='--cfg docsrs' cargo +nightly doc -p identity_iota --all-features --no-deps --open`.
   <!-- - [Wasm API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation. -->
 - [Identity Documentation Pages](https://docs.iota.org/iota-identity): Supplementing documentation with context around identity and simple examples on library usage.
-- [Examples](https://github.com/iotaledger/identity.rs/blob/identity-rebased-alpha/examples): Practical code snippets to get you started with the library.
+- [Examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples): Practical code snippets to get you started with the library.
 
 ## Prerequisites
 
@@ -60,7 +60,7 @@ If you want to include IOTA Identity in your project, simply add it as a depende
 identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha" }
 ```
 
-To try out the [examples](https://github.com/iotaledger/identity.rs/blob/identity-rebased-alpha/examples), you can also do this:
+To try out the [examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples), you can also do this:
 
 1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs`
 2. Get the [IOTA binaries](https://github.com/iotaledger/iota/releases).
