@@ -1,7 +1,11 @@
-use wasm_bindgen::JsValue;
-use wasm_bindgen::prelude::wasm_bindgen;
-use identity_iota::iota::iota_sdk_abstraction::rpc_types::{OwnedObjectRef};
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
 use identity_iota::iota::iota_sdk_abstraction::types::execution_status::ExecutionStatus;
+use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::JsValue;
+
 use super::super::types::into_sdk_type;
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -30,11 +34,11 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "IotaObjectData")]
   pub type WasmIotaObjectData;
-  
+
   #[wasm_bindgen(typescript_type = "ExecuteTransactionBlockParams")]
   #[derive(Clone)]
   pub type WasmExecuteTransactionBlockParams;
-  
+
   #[wasm_bindgen(typescript_type = "IotaTransactionBlockResponseOptions")]
   #[derive(Clone)]
   pub type WasmIotaTransactionBlockResponseOptions;
@@ -58,7 +62,7 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<IotaObjectResponse>")]
   #[derive(Clone)]
   pub type PromiseIotaObjectResponse;
-  
+
   #[wasm_bindgen(typescript_type = "GetOwnedObjectsParams")]
   #[derive(Clone)]
   pub type WasmGetOwnedObjectsParams;
@@ -87,7 +91,7 @@ extern "C" {
 
   #[wasm_bindgen(method)]
   pub fn effects_is_none(this: &IotaTransactionBlockResponseAdapter) -> bool;
-  
+
   #[wasm_bindgen(method)]
   pub fn effects_is_some(this: &IotaTransactionBlockResponseAdapter) -> bool;
 
@@ -103,25 +107,20 @@ extern "C" {
 
 #[derive(Deserialize)]
 struct WasmExecutionStatusAdapter {
-  status: ExecutionStatus
+  status: ExecutionStatus,
 }
 
 impl IotaTransactionBlockResponseAdapter {
   pub fn effects_execution_status(&self) -> Option<ExecutionStatus> {
-    self.effects_execution_status_inner()
-      .map(|s| {
-        let state: WasmExecutionStatusAdapter = into_sdk_type(s).unwrap();
-        state.status
-      })
+    self.effects_execution_status_inner().map(|s| {
+      let state: WasmExecutionStatusAdapter = into_sdk_type(s).unwrap();
+      state.status
+    })
   }
-  
+
   pub fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
-    self.effects_created_inner()
-      .map(|vex_obj_ref| {
-        vex_obj_ref
-          .into_iter()
-          .map(|obj| into_sdk_type(obj).unwrap())
-          .collect()
-      })
+    self
+      .effects_created_inner()
+      .map(|vex_obj_ref| vex_obj_ref.into_iter().map(|obj| into_sdk_type(obj).unwrap()).collect())
   }
 }

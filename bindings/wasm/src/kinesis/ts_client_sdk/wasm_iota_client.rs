@@ -1,25 +1,41 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::{PromiseBigint, PromiseString};
-use crate::error::JsValueResult;
-use identity_iota::iota::iota_sdk_abstraction::types::base_types::{IotaAddress, ObjectID};
+use identity_iota::iota::iota_sdk_abstraction::error::Error as IotaRpcError;
+use identity_iota::iota::iota_sdk_abstraction::error::IotaRpcResult;
+use identity_iota::iota::iota_sdk_abstraction::generated_types::ExecuteTransactionBlockParams;
+use identity_iota::iota::iota_sdk_abstraction::generated_types::GetDynamicFieldObjectParams;
+use identity_iota::iota::iota_sdk_abstraction::generated_types::GetObjectParams;
+use identity_iota::iota::iota_sdk_abstraction::generated_types::GetOwnedObjectsParams;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaObjectResponse;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaObjectResponseQuery;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaTransactionBlockResponseOptions;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::ObjectsPage;
+use identity_iota::iota::iota_sdk_abstraction::types::base_types::IotaAddress;
+use identity_iota::iota::iota_sdk_abstraction::types::base_types::ObjectID;
 use identity_iota::iota::iota_sdk_abstraction::types::dynamic_field::DynamicFieldName;
+use identity_iota::iota::iota_sdk_abstraction::types::quorum_driver_types::ExecuteTransactionRequestType;
+use identity_iota::iota::iota_sdk_abstraction::SignatureBcs;
+use identity_iota::iota::iota_sdk_abstraction::TransactionDataBcs;
 use identity_iota::iota::sui_name_tbd_error::Error;
-use identity_iota::iota::iota_sdk_abstraction::{TransactionDataBcs, SignatureBcs};
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
-use identity_iota::iota::iota_sdk_abstraction::error::{IotaRpcResult, Error as IotaRpcError};
-use identity_iota::iota::iota_sdk_abstraction::rpc_types::{IotaObjectDataOptions, IotaObjectResponse, IotaObjectResponseQuery, IotaTransactionBlockResponseOptions, ObjectsPage};
-use identity_iota::iota::iota_sdk_abstraction::types::quorum_driver_types::ExecuteTransactionRequestType;
-use identity_iota::iota::iota_sdk_abstraction::generated_types::{ExecuteTransactionBlockParams, GetDynamicFieldObjectParams, GetObjectParams, GetOwnedObjectsParams};
-use crate::kinesis::{PromiseIotaObjectResponse, PromisePaginatedObjectsResponse, WasmExecuteTransactionBlockParams, WasmGetDynamicFieldObjectParams, WasmGetObjectParams, WasmGetOwnedObjectsParams};
+
+use crate::common::PromiseBigint;
+use crate::common::PromiseString;
 use crate::console_log;
-use super::wasm_types::{
-  PromiseIotaTransactionBlockResponse,
-  IotaTransactionBlockResponseAdapter,
-};
+use crate::error::JsValueResult;
+use crate::kinesis::PromiseIotaObjectResponse;
+use crate::kinesis::PromisePaginatedObjectsResponse;
+use crate::kinesis::WasmExecuteTransactionBlockParams;
+use crate::kinesis::WasmGetDynamicFieldObjectParams;
+use crate::kinesis::WasmGetObjectParams;
+use crate::kinesis::WasmGetOwnedObjectsParams;
+
+use super::wasm_types::IotaTransactionBlockResponseAdapter;
+use super::wasm_types::PromiseIotaTransactionBlockResponse;
 
 // This file contains the wasm-bindgen 'glue code' providing
 // the interface of the TS Iota client to rust code.
@@ -46,7 +62,7 @@ extern "C" {
   #[wasm_bindgen(method, js_name = executeTransactionBlock)]
   pub fn execute_transaction_block(
     this: &WasmIotaClient,
-    params: &WasmExecuteTransactionBlockParams
+    params: &WasmExecuteTransactionBlockParams,
   ) -> PromiseIotaTransactionBlockResponse;
 
   #[wasm_bindgen(method, js_name = getDynamicFieldObject)]
@@ -58,9 +74,9 @@ extern "C" {
   #[wasm_bindgen(method, js_name = getObject)]
   pub fn get_object(this: &WasmIotaClient, input: &WasmGetObjectParams) -> PromiseIotaObjectResponse;
 
-  // get_owned_objects?
   #[wasm_bindgen(method, js_name = getOwnedObjects)]
-  pub fn get_owned_objects(this: &WasmIotaClient, input: &WasmGetOwnedObjectsParams) -> PromisePaginatedObjectsResponse;
+  pub fn get_owned_objects(this: &WasmIotaClient, input: &WasmGetOwnedObjectsParams)
+    -> PromisePaginatedObjectsResponse;
 
   #[wasm_bindgen(method, js_name = getReferenceGasPrice)]
   pub fn get_reference_gas_price(this: &WasmIotaClient) -> PromiseBigint;
@@ -72,10 +88,10 @@ pub struct ManagedWasmIotaClient(WasmIotaClient);
 
 // convert TYPESCRIPT types to RUST types
 impl ManagedWasmIotaClient {
-  pub fn new (iota_client: WasmIotaClient) -> Self {
+  pub fn new(iota_client: WasmIotaClient) -> Self {
     ManagedWasmIotaClient(iota_client)
   }
-  
+
   pub async fn get_chain_identifier(&self) -> Result<String, Error> {
     let promise: Promise = Promise::resolve(&WasmIotaClient::get_chain_identifier(&self.0));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -90,17 +106,18 @@ impl ManagedWasmIotaClient {
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> IotaRpcResult<IotaTransactionBlockResponseAdapter> {
     let ex_tx_params: WasmExecuteTransactionBlockParams = serde_wasm_bindgen::to_value(
-      &ExecuteTransactionBlockParams::new(tx_data_bcs, signatures, options, request_type)
+      &ExecuteTransactionBlockParams::new(tx_data_bcs, signatures, options, request_type),
     )
     .map_err(|e| {
-      console_log!("Error executing serde_wasm_bindgen::to_value(ExecuteTransactionBlockParams): {:?}", e);
+      console_log!(
+        "Error executing serde_wasm_bindgen::to_value(ExecuteTransactionBlockParams): {:?}",
+        e
+      );
       IotaRpcError::FfiError(format!("{:?}", e))
     })?
     .into();
 
-    let promise: Promise = Promise::resolve(
-      &WasmIotaClient::execute_transaction_block(&self.0, &ex_tx_params)
-    );
+    let promise: Promise = Promise::resolve(&WasmIotaClient::execute_transaction_block(&self.0, &ex_tx_params));
     let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
       console_log!("Error executing JsFuture::from(promise): {:?}", e);
       IotaRpcError::FfiError(format!("{:?}", e))
@@ -175,20 +192,19 @@ impl ManagedWasmIotaClient {
         "filtering must be done client side".to_string(),
       ));
     }
-    let params: WasmGetOwnedObjectsParams =
-      serde_wasm_bindgen::to_value(&GetOwnedObjectsParams::new(
-        address.to_string(),
-        cursor.map(|v| v.to_string()),
-        limit,
-      ))
-        .map_err(|e| {
-          console_log!(
-            "Error executing serde_wasm_bindgen::to_value(WasmIotaObjectDataOptions): {:?}",
-            e
-          );
-          IotaRpcError::FfiError(format!("{:?}", e))
-        })?
-        .into();
+    let params: WasmGetOwnedObjectsParams = serde_wasm_bindgen::to_value(&GetOwnedObjectsParams::new(
+      address.to_string(),
+      cursor.map(|v| v.to_string()),
+      limit,
+    ))
+    .map_err(|e| {
+      console_log!(
+        "Error executing serde_wasm_bindgen::to_value(WasmIotaObjectDataOptions): {:?}",
+        e
+      );
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?
+    .into();
 
     let promise: Promise = Promise::resolve(&WasmIotaClient::get_owned_objects(&self.0, &params));
     let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
