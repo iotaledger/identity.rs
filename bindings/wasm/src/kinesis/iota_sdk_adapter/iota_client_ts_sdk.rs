@@ -139,7 +139,10 @@ impl ReadTrait for ReadAdapter {
     version: SequenceNumber,
     options: IotaObjectDataOptions,
   ) -> IotaRpcResult<IotaPastObjectResponse> {
-    unimplemented!("try_get_parsed_past_object");
+    self
+      .client
+      .try_get_parsed_past_object(object_id, version, options)
+      .await
   }
 }
 

@@ -7,13 +7,16 @@ use identity_iota::iota::iota_sdk_abstraction::generated_types::ExecuteTransacti
 use identity_iota::iota::iota_sdk_abstraction::generated_types::GetDynamicFieldObjectParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::GetObjectParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::GetOwnedObjectsParams;
+use identity_iota::iota::iota_sdk_abstraction::generated_types::TryGetPastObjectParams;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaObjectResponse;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaObjectResponseQuery;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaPastObjectResponse;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaTransactionBlockResponseOptions;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::ObjectsPage;
 use identity_iota::iota::iota_sdk_abstraction::types::base_types::IotaAddress;
 use identity_iota::iota::iota_sdk_abstraction::types::base_types::ObjectID;
+use identity_iota::iota::iota_sdk_abstraction::types::base_types::SequenceNumber;
 use identity_iota::iota::iota_sdk_abstraction::types::dynamic_field::DynamicFieldName;
 use identity_iota::iota::iota_sdk_abstraction::types::quorum_driver_types::ExecuteTransactionRequestType;
 use identity_iota::iota::iota_sdk_abstraction::SignatureBcs;
@@ -28,11 +31,13 @@ use crate::common::PromiseString;
 use crate::console_log;
 use crate::error::JsValueResult;
 use crate::kinesis::PromiseIotaObjectResponse;
+use crate::kinesis::PromiseObjectRead;
 use crate::kinesis::PromisePaginatedObjectsResponse;
 use crate::kinesis::WasmExecuteTransactionBlockParams;
 use crate::kinesis::WasmGetDynamicFieldObjectParams;
 use crate::kinesis::WasmGetObjectParams;
 use crate::kinesis::WasmGetOwnedObjectsParams;
+use crate::kinesis::WasmTryGetPastObjectParams;
 
 use super::wasm_types::IotaTransactionBlockResponseAdapter;
 use super::wasm_types::PromiseIotaTransactionBlockResponse;
@@ -80,6 +85,9 @@ extern "C" {
 
   #[wasm_bindgen(method, js_name = getReferenceGasPrice)]
   pub fn get_reference_gas_price(this: &WasmIotaClient) -> PromiseBigint;
+
+  #[wasm_bindgen(method, js_name = tryGetPastObject)]
+  pub fn try_get_past_object(this: &WasmIotaClient, input: &WasmTryGetPastObjectParams) -> PromiseObjectRead;
 }
 
 // Helper struct used to convert TYPESCRIPT types to RUST types
@@ -217,6 +225,35 @@ impl ManagedWasmIotaClient {
 
   pub async fn get_reference_gas_price(&self) -> IotaRpcResult<u64> {
     let promise: Promise = Promise::resolve(&WasmIotaClient::get_reference_gas_price(&self.0));
+    let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
+      console_log!("Error executing JsFuture::from(promise): {:?}", e);
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?;
+
+    Ok(result.into_serde()?)
+  }
+
+  pub async fn try_get_parsed_past_object(
+    &self,
+    object_id: ObjectID,
+    version: SequenceNumber,
+    options: IotaObjectDataOptions,
+  ) -> IotaRpcResult<IotaPastObjectResponse> {
+    let params: WasmTryGetPastObjectParams = serde_wasm_bindgen::to_value(&TryGetPastObjectParams::new(
+      object_id.to_string(),
+      version,
+      Some(options),
+    ))
+    .map_err(|e| {
+      console_log!(
+        "Error executing serde_wasm_bindgen::to_value(WasmIotaObjectDataOptions): {:?}",
+        e
+      );
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?
+    .into();
+
+    let promise: Promise = Promise::resolve(&WasmIotaClient::try_get_past_object(&self.0, &params));
     let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
       console_log!("Error executing JsFuture::from(promise): {:?}", e);
       IotaRpcError::FfiError(format!("{:?}", e))

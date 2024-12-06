@@ -10,6 +10,7 @@ use crate::iota_sdk_abstraction::TransactionDataBcs;
 
 use super::iota_json_rpc_types::iota_transaction::IotaTransactionBlockResponseOptions;
 use super::iota_json_rpc_types::IotaObjectDataOptions;
+use super::iota_types::base_types::SequenceNumber;
 use super::iota_types::dynamic_field::DynamicFieldName;
 use super::iota_types::quorum_driver_types::ExecuteTransactionRequestType;
 
@@ -102,5 +103,25 @@ pub struct GetOwnedObjectsParams {
 impl GetOwnedObjectsParams {
   pub fn new(owner: String, cursor: Option<String>, limit: Option<usize>) -> Self {
     GetOwnedObjectsParams { owner, cursor, limit }
+  }
+}
+
+/// Note there is no software-level guarantee/SLA that objects with past versions can be retrieved by
+/// this API, even if the object and version exists/existed. The result may vary across nodes depending
+/// on their pruning policies. Return the object information for a specified version
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TryGetPastObjectParams {
+  /// the ID of the queried object
+  id: String,
+  /// the version of the queried object. If None, default to the latest known version
+  version: SequenceNumber,
+  //// options for specifying the content to be returned
+  options: Option<IotaObjectDataOptions>,
+}
+
+impl TryGetPastObjectParams {
+  pub fn new(id: String, version: SequenceNumber, options: Option<IotaObjectDataOptions>) -> Self {
+    TryGetPastObjectParams { id, version, options }
   }
 }

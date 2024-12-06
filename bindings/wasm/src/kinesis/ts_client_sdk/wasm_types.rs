@@ -20,7 +20,9 @@ const TS_SDK_TYPES: &'static str = r#"
     IotaObjectResponse,
     IotaTransactionBlockResponse,
     IotaTransactionBlockResponseOptions,
+    ObjectRead,
     PaginatedObjectsResponse,
+    TryGetPastObjectParams,
   }
   from "@iota/iota.js/client";
   
@@ -70,6 +72,14 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<PaginatedObjectsResponse>")]
   #[derive(Clone)]
   pub type PromisePaginatedObjectsResponse;
+
+  #[wasm_bindgen(typescript_type = "TryGetPastObjectParams")]
+  #[derive(Clone)]
+  pub type WasmTryGetPastObjectParams;
+
+  #[wasm_bindgen(typescript_type = "Promise<ObjectRead>")]
+  #[derive(Clone)]
+  pub type PromiseObjectRead;
 
   #[wasm_bindgen(typescript_type = "ExecutionStatus")]
   #[derive(Clone)]
