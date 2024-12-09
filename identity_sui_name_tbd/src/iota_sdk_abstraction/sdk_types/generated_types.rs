@@ -4,14 +4,17 @@
 use fastcrypto::encoding::Base64;
 use serde::Deserialize;
 use serde::Serialize;
+use serde_json::Value;
 
 use crate::iota_sdk_abstraction::SignatureBcs;
 use crate::iota_sdk_abstraction::TransactionDataBcs;
 
 use super::iota_json_rpc_types::iota_transaction::IotaTransactionBlockResponseOptions;
+use super::iota_json_rpc_types::EventFilter;
 use super::iota_json_rpc_types::IotaObjectDataOptions;
 use super::iota_types::base_types::SequenceNumber;
 use super::iota_types::dynamic_field::DynamicFieldName;
+use super::iota_types::event::EventID;
 use super::iota_types::quorum_driver_types::ExecuteTransactionRequestType;
 
 // The types defined in this file:
@@ -110,7 +113,6 @@ impl GetOwnedObjectsParams {
 /// this API, even if the object and version exists/existed. The result may vary across nodes depending
 /// on their pruning policies. Return the object information for a specified version
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct TryGetPastObjectParams {
   /// the ID of the queried object
   id: String,
@@ -123,5 +125,48 @@ pub struct TryGetPastObjectParams {
 impl TryGetPastObjectParams {
   pub fn new(id: String, version: SequenceNumber, options: Option<IotaObjectDataOptions>) -> Self {
     TryGetPastObjectParams { id, version, options }
+  }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SortOrder {
+  Ascending,
+  Descending,
+}
+
+impl SortOrder {
+  pub fn new(descending_order: bool) -> Self {
+    return if descending_order {
+      SortOrder::Descending
+    } else {
+      SortOrder::Ascending
+    };
+  }
+}
+
+/// Return list of events for a specified query criteria.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueryEventsParams {
+  /// The event query criteria. See [Event filter](https://docs.iota.io/build/event_api#event-filters)
+  /// documentation for examples.
+  query: EventFilter,
+  /// optional paging cursor
+  cursor: Option<EventID>,
+  /// maximum number of items per page, default to [QUERY_MAX_RESULT_LIMIT] if not specified.
+  limit: Option<usize>,
+  /// query result ordering, default to false (ascending order), oldest record first.
+  order: Option<SortOrder>,
+}
+
+impl QueryEventsParams {
+  pub fn new(query: EventFilter, cursor: Option<EventID>, limit: Option<usize>, order: Option<SortOrder>) -> Self {
+    QueryEventsParams {
+      query,
+      cursor,
+      limit,
+      order,
+    }
   }
 }

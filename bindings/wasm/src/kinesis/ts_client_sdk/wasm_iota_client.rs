@@ -7,7 +7,11 @@ use identity_iota::iota::iota_sdk_abstraction::generated_types::ExecuteTransacti
 use identity_iota::iota::iota_sdk_abstraction::generated_types::GetDynamicFieldObjectParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::GetObjectParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::GetOwnedObjectsParams;
+use identity_iota::iota::iota_sdk_abstraction::generated_types::QueryEventsParams;
+use identity_iota::iota::iota_sdk_abstraction::generated_types::SortOrder;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::TryGetPastObjectParams;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::EventFilter;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::EventPage;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaObjectResponse;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaObjectResponseQuery;
@@ -18,6 +22,7 @@ use identity_iota::iota::iota_sdk_abstraction::types::base_types::IotaAddress;
 use identity_iota::iota::iota_sdk_abstraction::types::base_types::ObjectID;
 use identity_iota::iota::iota_sdk_abstraction::types::base_types::SequenceNumber;
 use identity_iota::iota::iota_sdk_abstraction::types::dynamic_field::DynamicFieldName;
+use identity_iota::iota::iota_sdk_abstraction::types::event::EventID;
 use identity_iota::iota::iota_sdk_abstraction::types::quorum_driver_types::ExecuteTransactionRequestType;
 use identity_iota::iota::iota_sdk_abstraction::SignatureBcs;
 use identity_iota::iota::iota_sdk_abstraction::TransactionDataBcs;
@@ -32,11 +37,13 @@ use crate::console_log;
 use crate::error::JsValueResult;
 use crate::kinesis::PromiseIotaObjectResponse;
 use crate::kinesis::PromiseObjectRead;
+use crate::kinesis::PromisePaginatedEvents;
 use crate::kinesis::PromisePaginatedObjectsResponse;
 use crate::kinesis::WasmExecuteTransactionBlockParams;
 use crate::kinesis::WasmGetDynamicFieldObjectParams;
 use crate::kinesis::WasmGetObjectParams;
 use crate::kinesis::WasmGetOwnedObjectsParams;
+use crate::kinesis::WasmQueryEventsParams;
 use crate::kinesis::WasmTryGetPastObjectParams;
 
 use super::wasm_types::IotaTransactionBlockResponseAdapter;
@@ -88,6 +95,9 @@ extern "C" {
 
   #[wasm_bindgen(method, js_name = tryGetPastObject)]
   pub fn try_get_past_object(this: &WasmIotaClient, input: &WasmTryGetPastObjectParams) -> PromiseObjectRead;
+
+  #[wasm_bindgen(method, js_name = queryEvents)]
+  pub fn queryEvents(this: &WasmIotaClient, input: &WasmQueryEventsParams) -> PromisePaginatedEvents;
 }
 
 // Helper struct used to convert TYPESCRIPT types to RUST types
@@ -194,6 +204,7 @@ impl ManagedWasmIotaClient {
     limit: Option<usize>,
   ) -> IotaRpcResult<ObjectsPage> {
     if query.is_some() {
+      // allow query, see `} & RpcTypes.IotaObjectResponseQuery;`
       return Err(IotaRpcError::FfiUnsupportedArgument(
         "IotaClient.getOwnedObjects".to_string(),
         "query".to_string(),
@@ -254,6 +265,37 @@ impl ManagedWasmIotaClient {
     .into();
 
     let promise: Promise = Promise::resolve(&WasmIotaClient::try_get_past_object(&self.0, &params));
+    let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
+      console_log!("Error executing JsFuture::from(promise): {:?}", e);
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?;
+
+    Ok(result.into_serde()?)
+  }
+
+  pub async fn query_events(
+    &self,
+    query: EventFilter,
+    cursor: Option<EventID>,
+    limit: Option<usize>,
+    descending_order: bool,
+  ) -> IotaRpcResult<EventPage> {
+    let params: WasmQueryEventsParams = serde_wasm_bindgen::to_value(&QueryEventsParams::new(
+      query,
+      cursor,
+      limit,
+      Some(SortOrder::new(descending_order)),
+    ))
+    .map_err(|e| {
+      console_log!(
+        "Error executing serde_wasm_bindgen::to_value(WasmIotaObjectDataOptions): {:?}",
+        e
+      );
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?
+    .into();
+
+    let promise: Promise = Promise::resolve(&WasmIotaClient::queryEvents(&self.0, &params));
     let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
       console_log!("Error executing JsFuture::from(promise): {:?}", e);
       IotaRpcError::FfiError(format!("{:?}", e))

@@ -21,7 +21,9 @@ const TS_SDK_TYPES: &'static str = r#"
     IotaTransactionBlockResponse,
     IotaTransactionBlockResponseOptions,
     ObjectRead,
+    PaginatedEvents,
     PaginatedObjectsResponse,
+    QueryEventsParams,
     TryGetPastObjectParams,
   }
   from "@iota/iota.js/client";
@@ -88,6 +90,14 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "OwnedObjectRef")]
   #[derive(Clone)]
   pub type WasmOwnedObjectRef;
+
+  #[wasm_bindgen(typescript_type = "QueryEventsParams")]
+  #[derive(Clone)]
+  pub type WasmQueryEventsParams;
+
+  #[wasm_bindgen(typescript_type = "Promise<PaginatedEvents>")]
+  #[derive(Clone)]
+  pub type PromisePaginatedEvents;
 }
 
 #[wasm_bindgen(module = "/lib/kinesis_client_helpers.ts")]

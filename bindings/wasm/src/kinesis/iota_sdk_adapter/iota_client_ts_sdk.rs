@@ -184,7 +184,7 @@ impl EventTrait for EventAdapter {
     limit: Option<usize>,
     descending_order: bool,
   ) -> IotaRpcResult<EventPage> {
-    todo!()
+    self.client.query_events(query, cursor, limit, descending_order).await
   }
 }
 
