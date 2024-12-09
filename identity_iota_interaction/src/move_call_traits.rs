@@ -1,17 +1,10 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::iter::IntoIterator;
 
-use crate::{
-  rpc_types::OwnedObjectRef,
-  types::base_types::{IotaAddress, ObjectID, ObjectRef, SequenceNumber},
-  types::transaction::Argument,
-  types::TypeTag,
-  ProgrammableTransactionBcs, TransactionBuilderT,
-};
-use crate::MoveType;
+use crate::{rpc_types::{OwnedObjectRef, IotaObjectData}, types::base_types::{IotaAddress, ObjectID, ObjectRef, SequenceNumber}, types::transaction::{Argument, ProgrammableTransaction}, types::TypeTag, ProgrammableTransactionBcs, TransactionBuilderT, MoveType, IotaTransactionBlockResponseT};
 use serde::Serialize;
 
 pub trait AssetMoveCalls {
@@ -69,6 +62,25 @@ pub trait IdentityMoveCalls {
   type Error;
   type TxBuilder: TransactionBuilderT;
 
+  fn propose_borrow(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    objects: Vec<ObjectID>,
+    expiration: Option<u64>,
+    package_id: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  fn execute_borrow<F>(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    proposal_id: ObjectID,
+    objects: Vec<IotaObjectData>,
+    intent_fn: F,
+    package: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>
+  where
+      F: FnOnce(&mut dyn TransactionBuilderT, &HashMap<ObjectID, (Argument, IotaObjectData)>);
+
   fn propose_config_change<I1, I2>(
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
@@ -78,19 +90,36 @@ pub trait IdentityMoveCalls {
     controllers_to_remove: HashSet<ObjectID>,
     controllers_to_update: I2,
     package: ObjectID,
-  ) -> anyhow::Result<ProgrammableTransactionBcs>
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
   where
     I1: IntoIterator<Item = (IotaAddress, u64)>,
     I2: IntoIterator<Item = (ObjectID, u64)>;
 
   fn execute_config_change(
-    ptb: Option<Self::TxBuilder>,
-    proposal_id_arg: Option<Argument>,
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
     proposal_id: ObjectID,
     package: ObjectID,
-  ) -> anyhow::Result<ProgrammableTransactionBcs>;
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  fn propose_controller_execution(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    controller_cap_id: ObjectID,
+    expiration: Option<u64>,
+    package_id: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  fn execute_controller_execution<F>(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    proposal_id: ObjectID,
+    borrowing_controller_cap_ref: ObjectRef,
+    intent_fn: F,
+    package: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>
+  where
+      F: FnOnce(&mut dyn TransactionBuilderT, &Argument);
 
   fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
@@ -106,21 +135,35 @@ pub trait IdentityMoveCalls {
     capability: ObjectRef,
     expiration: Option<u64>,
     package_id: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, anyhow::Error>;
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
   fn execute_deactivation(
-    ptb: Option<Self::TxBuilder>,
-    proposal_arg: Option<Argument>,
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,
     package_id: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, anyhow::Error>;
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
   fn approve_proposal<T: MoveType>(
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
     proposal_id: ObjectID,
+    package: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  fn propose_send(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    transfer_map: Vec<(ObjectID, IotaAddress)>,
+    expiration: Option<u64>,
+    package_id: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  fn execute_send(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    proposal_id: ObjectID,
+    objects: Vec<(ObjectRef, TypeTag)>,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
@@ -130,14 +173,26 @@ pub trait IdentityMoveCalls {
     did_doc: impl AsRef<[u8]>,
     expiration: Option<u64>,
     package_id: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, anyhow::Error>;
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
   fn execute_update(
-    ptb: Option<Self::TxBuilder>,
-    proposal_arg: Option<Argument>,
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,
     package_id: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, anyhow::Error>;
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  fn propose_upgrade(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    expiration: Option<u64>,
+    package_id: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  fn execute_upgrade(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    proposal_id: ObjectID,
+    package_id: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 }
