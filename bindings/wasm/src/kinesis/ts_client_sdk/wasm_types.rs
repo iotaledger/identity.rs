@@ -17,6 +17,7 @@ const TS_SDK_TYPES: &'static str = r#"
     GetDynamicFieldObjectParams,
     GetObjectParams,
     GetOwnedObjectsParams,
+    GetTransactionBlockParams,
     IotaObjectData,
     IotaObjectResponse,
     IotaTransactionBlockResponse,
@@ -72,6 +73,10 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "GetOwnedObjectsParams")]
   #[derive(Clone)]
   pub type WasmGetOwnedObjectsParams;
+
+  #[wasm_bindgen(typescript_type = "GetTransactionBlockParams")]
+  #[derive(Clone)]
+  pub type WasmGetTransactionBlockParams;
 
   #[wasm_bindgen(typescript_type = "Promise<PaginatedObjectsResponse>")]
   #[derive(Clone)]

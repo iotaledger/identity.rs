@@ -126,6 +126,22 @@ impl GetOwnedObjectsParams {
   }
 }
 
+/// Return the transaction response object.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetTransactionBlockParams {
+  /// the digest of the queried transaction
+  digest: String,
+  /// options for specifying the content to be returned
+  options: Option<IotaTransactionBlockResponseOptions>,
+}
+
+impl GetTransactionBlockParams {
+  pub fn new(digest: String, options: Option<IotaTransactionBlockResponseOptions>) -> Self {
+    GetTransactionBlockParams { digest, options }
+  }
+}
+
 /// Note there is no software-level guarantee/SLA that objects with past versions can be retrieved by
 /// this API, even if the object and version exists/existed. The result may vary across nodes depending
 /// on their pruning policies. Return the object information for a specified version

@@ -8,6 +8,7 @@ use identity_iota::iota::iota_sdk_abstraction::generated_types::GetCoinsParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::GetDynamicFieldObjectParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::GetObjectParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::GetOwnedObjectsParams;
+use identity_iota::iota::iota_sdk_abstraction::generated_types::GetTransactionBlockParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::QueryEventsParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::SortOrder;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::TryGetPastObjectParams;
@@ -23,9 +24,11 @@ use identity_iota::iota::iota_sdk_abstraction::rpc_types::ObjectsPage;
 use identity_iota::iota::iota_sdk_abstraction::types::base_types::IotaAddress;
 use identity_iota::iota::iota_sdk_abstraction::types::base_types::ObjectID;
 use identity_iota::iota::iota_sdk_abstraction::types::base_types::SequenceNumber;
+use identity_iota::iota::iota_sdk_abstraction::types::digests::TransactionDigest;
 use identity_iota::iota::iota_sdk_abstraction::types::dynamic_field::DynamicFieldName;
 use identity_iota::iota::iota_sdk_abstraction::types::event::EventID;
 use identity_iota::iota::iota_sdk_abstraction::types::quorum_driver_types::ExecuteTransactionRequestType;
+use identity_iota::iota::iota_sdk_abstraction::IotaTransactionBlockResponseT;
 use identity_iota::iota::iota_sdk_abstraction::SignatureBcs;
 use identity_iota::iota::iota_sdk_abstraction::TransactionDataBcs;
 use identity_iota::iota::sui_name_tbd_error::Error;
@@ -47,6 +50,7 @@ use crate::kinesis::WasmGetCoinsParams;
 use crate::kinesis::WasmGetDynamicFieldObjectParams;
 use crate::kinesis::WasmGetObjectParams;
 use crate::kinesis::WasmGetOwnedObjectsParams;
+use crate::kinesis::WasmGetTransactionBlockParams;
 use crate::kinesis::WasmQueryEventsParams;
 use crate::kinesis::WasmTryGetPastObjectParams;
 
@@ -93,6 +97,12 @@ extern "C" {
   #[wasm_bindgen(method, js_name = getOwnedObjects)]
   pub fn get_owned_objects(this: &WasmIotaClient, input: &WasmGetOwnedObjectsParams)
     -> PromisePaginatedObjectsResponse;
+
+  #[wasm_bindgen(method, js_name = getTransactionBlock)]
+  pub fn get_transaction_block(
+    this: &WasmIotaClient,
+    input: &WasmGetTransactionBlockParams,
+  ) -> PromiseIotaTransactionBlockResponse;
 
   #[wasm_bindgen(method, js_name = getReferenceGasPrice)]
   pub fn get_reference_gas_price(this: &WasmIotaClient) -> PromiseBigint;
@@ -233,6 +243,33 @@ impl ManagedWasmIotaClient {
     })?;
 
     Ok(result.into_serde()?)
+  }
+
+  pub async fn get_transaction_with_options(
+    &self,
+    digest: TransactionDigest,
+    options: IotaTransactionBlockResponseOptions,
+  ) -> IotaRpcResult<IotaTransactionBlockResponseAdapter> {
+    let params: WasmGetTransactionBlockParams =
+      serde_wasm_bindgen::to_value(&GetTransactionBlockParams::new(digest.to_string(), Some(options)))
+        .map_err(|e| {
+          console_log!(
+            "Error executing serde_wasm_bindgen::to_value(WasmIotaObjectDataOptions): {:?}",
+            e
+          );
+          IotaRpcError::FfiError(format!("{:?}", e))
+        })?
+        .into();
+
+    // Rust `ReadApi::get_transaction_with_options` calls `get_transaction_block` via http while
+    // TypeScript uses the name `getTransactionBlock` directly, so we have to call this function
+    let promise: Promise = Promise::resolve(&WasmIotaClient::get_transaction_block(&self.0, &params));
+    let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
+      console_log!("Error executing JsFuture::from(promise): {:?}", e);
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?;
+
+    Ok(IotaTransactionBlockResponseAdapter::new(result.into()))
   }
 
   pub async fn get_reference_gas_price(&self) -> IotaRpcResult<u64> {

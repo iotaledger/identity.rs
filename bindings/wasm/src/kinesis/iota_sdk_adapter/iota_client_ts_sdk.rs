@@ -131,7 +131,9 @@ impl ReadTrait for ReadAdapter {
     digest: TransactionDigest,
     options: IotaTransactionBlockResponseOptions,
   ) -> IotaRpcResult<Box<dyn IotaTransactionBlockResponseT<Error = Self::Error>>> {
-    unimplemented!("get_transaction_with_options");
+    let wasm_response = self.client.get_transaction_with_options(digest, options).await?;
+
+    Ok(Box::new(IotaTransactionBlockResponseProvider::new(wasm_response)))
   }
 
   async fn try_get_parsed_past_object(
