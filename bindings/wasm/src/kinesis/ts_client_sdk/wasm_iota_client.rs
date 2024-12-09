@@ -203,18 +203,12 @@ impl ManagedWasmIotaClient {
     cursor: Option<ObjectID>,
     limit: Option<usize>,
   ) -> IotaRpcResult<ObjectsPage> {
-    if query.is_some() {
-      // allow query, see `} & RpcTypes.IotaObjectResponseQuery;`
-      return Err(IotaRpcError::FfiUnsupportedArgument(
-        "IotaClient.getOwnedObjects".to_string(),
-        "query".to_string(),
-        "filtering must be done client side".to_string(),
-      ));
-    }
     let params: WasmGetOwnedObjectsParams = serde_wasm_bindgen::to_value(&GetOwnedObjectsParams::new(
       address.to_string(),
       cursor.map(|v| v.to_string()),
       limit,
+      query.clone().map(|v| v.filter).flatten(),
+      query.clone().map(|v| v.options).flatten(),
     ))
     .map_err(|e| {
       console_log!(

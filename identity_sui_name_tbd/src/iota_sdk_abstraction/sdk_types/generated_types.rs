@@ -11,6 +11,7 @@ use crate::iota_sdk_abstraction::TransactionDataBcs;
 
 use super::iota_json_rpc_types::iota_transaction::IotaTransactionBlockResponseOptions;
 use super::iota_json_rpc_types::EventFilter;
+use super::iota_json_rpc_types::IotaObjectDataFilter;
 use super::iota_json_rpc_types::IotaObjectDataOptions;
 use super::iota_types::base_types::SequenceNumber;
 use super::iota_types::dynamic_field::DynamicFieldName;
@@ -101,11 +102,27 @@ pub struct GetOwnedObjectsParams {
   cursor: Option<String>,
   /// Max number of items returned per page, default to [QUERY_MAX_RESULT_LIMIT] if not specified.
   limit: Option<usize>,
+  /// If None, no filter will be applied
+  filter: Option<IotaObjectDataFilter>,
+  /// config which fields to include in the response, by default only digest is included
+  options: Option<IotaObjectDataOptions>,
 }
 
 impl GetOwnedObjectsParams {
-  pub fn new(owner: String, cursor: Option<String>, limit: Option<usize>) -> Self {
-    GetOwnedObjectsParams { owner, cursor, limit }
+  pub fn new(
+    owner: String,
+    cursor: Option<String>,
+    limit: Option<usize>,
+    filter: Option<IotaObjectDataFilter>,
+    options: Option<IotaObjectDataOptions>,
+  ) -> Self {
+    GetOwnedObjectsParams {
+      owner,
+      cursor,
+      limit,
+      filter,
+      options,
+    }
   }
 }
 
