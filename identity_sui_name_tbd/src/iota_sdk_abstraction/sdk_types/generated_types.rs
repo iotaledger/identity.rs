@@ -187,3 +187,29 @@ impl QueryEventsParams {
     }
   }
 }
+
+/// Return all Coin<`coin_type`> objects owned by an address.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetCoinsParams {
+  /// the owner's Iota address
+  owner: String,
+  /// optional type name for the coin (e.g., 0x168da5bf1f48dafc111b0a488fa454aca95e0b5e::usdc::USDC),
+  /// default to 0x2::iota::IOTA if not specified.
+  coin_type: Option<String>,
+  /// optional paging cursor
+  cursor: Option<String>,
+  /// maximum number of items per page
+  limit: Option<usize>,
+}
+
+impl GetCoinsParams {
+  pub fn new(owner: String, coin_type: Option<String>, cursor: Option<String>, limit: Option<usize>) -> Self {
+    GetCoinsParams {
+      owner,
+      coin_type,
+      cursor,
+      limit,
+    }
+  }
+}

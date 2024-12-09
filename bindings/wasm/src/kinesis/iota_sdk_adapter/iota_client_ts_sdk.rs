@@ -21,6 +21,7 @@ use identity_iota::iota::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
 use identity_iota::iota::iota_sdk_abstraction::types::base_types::IotaAddress;
 use identity_iota::iota::iota_sdk_abstraction::types::base_types::ObjectID;
 use identity_iota::iota::iota_sdk_abstraction::types::base_types::SequenceNumber;
+use identity_iota::iota::iota_sdk_abstraction::types::coin;
 use identity_iota::iota::iota_sdk_abstraction::types::digests::TransactionDigest;
 use identity_iota::iota::iota_sdk_abstraction::types::dynamic_field::DynamicFieldName;
 use identity_iota::iota::iota_sdk_abstraction::types::event::EventID;
@@ -203,7 +204,7 @@ impl CoinReadTrait for CoinReadAdapter {
     cursor: Option<ObjectID>,
     limit: Option<usize>,
   ) -> IotaRpcResult<CoinPage> {
-    todo!()
+    self.client.get_coins(owner, coin_type, cursor, limit).await
   }
 }
 

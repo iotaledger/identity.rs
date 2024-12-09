@@ -4,12 +4,14 @@
 use identity_iota::iota::iota_sdk_abstraction::error::Error as IotaRpcError;
 use identity_iota::iota::iota_sdk_abstraction::error::IotaRpcResult;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::ExecuteTransactionBlockParams;
+use identity_iota::iota::iota_sdk_abstraction::generated_types::GetCoinsParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::GetDynamicFieldObjectParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::GetObjectParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::GetOwnedObjectsParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::QueryEventsParams;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::SortOrder;
 use identity_iota::iota::iota_sdk_abstraction::generated_types::TryGetPastObjectParams;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::CoinPage;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::EventFilter;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::EventPage;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::IotaObjectDataOptions;
@@ -37,9 +39,11 @@ use crate::console_log;
 use crate::error::JsValueResult;
 use crate::kinesis::PromiseIotaObjectResponse;
 use crate::kinesis::PromiseObjectRead;
+use crate::kinesis::PromisePaginatedCoins;
 use crate::kinesis::PromisePaginatedEvents;
 use crate::kinesis::PromisePaginatedObjectsResponse;
 use crate::kinesis::WasmExecuteTransactionBlockParams;
+use crate::kinesis::WasmGetCoinsParams;
 use crate::kinesis::WasmGetDynamicFieldObjectParams;
 use crate::kinesis::WasmGetObjectParams;
 use crate::kinesis::WasmGetOwnedObjectsParams;
@@ -97,7 +101,10 @@ extern "C" {
   pub fn try_get_past_object(this: &WasmIotaClient, input: &WasmTryGetPastObjectParams) -> PromiseObjectRead;
 
   #[wasm_bindgen(method, js_name = queryEvents)]
-  pub fn queryEvents(this: &WasmIotaClient, input: &WasmQueryEventsParams) -> PromisePaginatedEvents;
+  pub fn query_events(this: &WasmIotaClient, input: &WasmQueryEventsParams) -> PromisePaginatedEvents;
+
+  #[wasm_bindgen(method, js_name = getCoins)]
+  pub fn get_coins(this: &WasmIotaClient, input: &WasmGetCoinsParams) -> PromisePaginatedCoins;
 }
 
 // Helper struct used to convert TYPESCRIPT types to RUST types
@@ -289,7 +296,38 @@ impl ManagedWasmIotaClient {
     })?
     .into();
 
-    let promise: Promise = Promise::resolve(&WasmIotaClient::queryEvents(&self.0, &params));
+    let promise: Promise = Promise::resolve(&WasmIotaClient::query_events(&self.0, &params));
+    let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
+      console_log!("Error executing JsFuture::from(promise): {:?}", e);
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?;
+
+    Ok(result.into_serde()?)
+  }
+
+  pub async fn get_coins(
+    &self,
+    owner: IotaAddress,
+    coin_type: Option<String>,
+    cursor: Option<ObjectID>,
+    limit: Option<usize>,
+  ) -> IotaRpcResult<CoinPage> {
+    let params: WasmGetCoinsParams = serde_wasm_bindgen::to_value(&GetCoinsParams::new(
+      owner.to_string(),
+      coin_type.map(|v| v.to_string()),
+      cursor.map(|v| v.to_string()),
+      limit,
+    ))
+    .map_err(|e| {
+      console_log!(
+        "Error executing serde_wasm_bindgen::to_value(WasmIotaObjectDataOptions): {:?}",
+        e
+      );
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?
+    .into();
+
+    let promise: Promise = Promise::resolve(&WasmIotaClient::get_coins(&self.0, &params));
     let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
       console_log!("Error executing JsFuture::from(promise): {:?}", e);
       IotaRpcError::FfiError(format!("{:?}", e))

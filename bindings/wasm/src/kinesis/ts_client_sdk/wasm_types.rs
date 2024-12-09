@@ -13,6 +13,7 @@ const TS_SDK_TYPES: &'static str = r#"
   import {
     Balance,
     ExecuteTransactionBlockParams,
+    GetCoinsParams,
     GetDynamicFieldObjectParams,
     GetObjectParams,
     GetOwnedObjectsParams,
@@ -21,6 +22,7 @@ const TS_SDK_TYPES: &'static str = r#"
     IotaTransactionBlockResponse,
     IotaTransactionBlockResponseOptions,
     ObjectRead,
+    PaginatedCoins,
     PaginatedEvents,
     PaginatedObjectsResponse,
     QueryEventsParams,
@@ -98,6 +100,14 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<PaginatedEvents>")]
   #[derive(Clone)]
   pub type PromisePaginatedEvents;
+
+  #[wasm_bindgen(typescript_type = "GetCoinsParams")]
+  #[derive(Clone)]
+  pub type WasmGetCoinsParams;
+
+  #[wasm_bindgen(typescript_type = "Promise<PaginatedCoins>")]
+  #[derive(Clone)]
+  pub type PromisePaginatedCoins;
 }
 
 #[wasm_bindgen(module = "/lib/kinesis_client_helpers.ts")]
