@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::utils;
-use iota_sdk::rpc_types::OwnedObjectRef;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
-use iota_sdk::types::transaction::ObjectArg;
-use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
+use identity_iota_interaction::rpc_types::OwnedObjectRef;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::ObjectRef;
+use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
+use identity_iota_interaction::types::transaction::ObjectArg;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
+use identity_iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use move_core_types::ident_str;
 
 pub(crate) fn migrate_did_output(

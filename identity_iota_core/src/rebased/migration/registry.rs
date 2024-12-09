@@ -1,9 +1,9 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_sdk::rpc_types::IotaData;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::id::ID;
+use identity_iota_interaction::rpc_types::IotaData;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::id::ID;
 
 use crate::rebased::client::IdentityClientReadOnly;
 

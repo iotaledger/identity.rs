@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use iota_sdk::rpc_types::IotaExecutionStatus;
-use iota_sdk::rpc_types::IotaObjectDataOptions;
-use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::id::UID;
-use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::TypeTag;
-use iota_sdk::types::STARDUST_PACKAGE_ID;
+use identity_iota_interaction::rpc_types::IotaExecutionStatus;
+use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
+use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::id::UID;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
+use identity_iota_interaction::types::TypeTag;
+use identity_iota_interaction::types::STARDUST_PACKAGE_ID;
 use secret_storage::Signer;
 use serde;
 use serde::Deserialize;
@@ -22,7 +22,7 @@ use crate::rebased::client::IotaKeySignature;
 use crate::rebased::iota::move_calls;
 use crate::rebased::transaction::Transaction;
 use crate::rebased::transaction::TransactionOutput;
-use crate::rebased::utils::MoveType;
+use identity_iota_interaction::MoveType;
 use crate::rebased::Error;
 
 use super::get_identity;

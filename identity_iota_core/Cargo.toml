@@ -4,7 +4,7 @@ version = "1.4.0"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
-keywords = ["iota", "tangle", "utxo", "shimmer", "identity"]
+keywords = ["iota", "tangle", "utxo", "identity"]
 license.workspace = true
 readme = "./README.md"
 repository.workspace = true
@@ -14,6 +14,7 @@ description = "An IOTA Ledger integration for the IOTA DID Method."
 [dependencies]
 anyhow = "1.0.75"
 async-trait = { version = "0.1.81", default-features = false, optional = true }
+cfg-if = "1.0.0"
 futures = { version = "0.3", default-features = false }
 identity_core = { version = "=1.4.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=1.4.0", path = "../identity_credential", default-features = false, features = ["validator"] }
@@ -34,18 +35,27 @@ thiserror.workspace = true
 bcs = { version = "0.1.4", optional = true }
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "5f2c63266a065996d53f98156f0412782b468597", package = "fastcrypto", optional = true }
 identity_eddsa_verifier = { version = "=1.4.0", path = "../identity_eddsa_verifier", optional = true }
+identity_iota_interaction = { version = "=1.4.0", path = "../identity_iota_interaction", optional = true }
 identity_jose = { version = "=1.4.0", path = "../identity_jose", optional = true }
-iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config", tag = "v0.7.3-rc", optional = true }
 iota-crypto = { version = "0.23", optional = true }
-iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.3-rc", optional = true }
 itertools = { version = "0.13.0", optional = true }
-move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.7.3-rc", optional = true }
 rand = { version = "0.8.5", optional = true }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.1.0", optional = true }
 serde-aux = { version = "4.5.0", optional = true }
+phf = { version = "0.11.2", features = ["macros"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config", tag = "v0.7.3-rc", optional = true }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.7.3-rc", optional = true }
+move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.7.3-rc", optional = true }
 shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.7.3-rc", optional = true }
 tokio = { version = "1.29.0", default-features = false, optional = true, features = ["macros", "sync", "rt", "process"] }
-phf = { version = "0.11.2", features = ["macros"] }
+
+# Dependency iota_interaction_ts is allways used on wasm32 platform. It is not controlled by the "iota-client" feature
+# because ut's unclear how to implement this. wasm32 build will most probably always use the "iota-client" feature
+# so this seems to be tolerable for now.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+iota_interaction_ts = { version = "=1.4.0", path = "../bindings/wasm/iota_interaction_ts" }
 
 [dev-dependencies]
 iota-crypto = { version = "0.23", default-features = false, features = ["bip39", "bip39-en"] }
@@ -72,6 +82,7 @@ iota-client = [
   "dep:bcs",
   "dep:fastcrypto",
   "dep:identity_eddsa_verifier",
+  "dep:identity_iota_interaction",
   "dep:identity_jose",
   "dep:iota-config",
   "dep:iota-crypto",
@@ -84,6 +95,7 @@ iota-client = [
   "dep:shared-crypto",
   "dep:tokio",
 ]
+
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_credential/revocation-bitmap"]
 # Adds Send bounds on the futures produces by the client extension traits.

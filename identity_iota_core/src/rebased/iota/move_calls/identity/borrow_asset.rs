@@ -3,20 +3,20 @@
 
 use std::collections::HashMap;
 
-use iota_sdk::rpc_types::IotaObjectData;
-use iota_sdk::rpc_types::OwnedObjectRef;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::base_types::ObjectType;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::Argument;
-use iota_sdk::types::transaction::ObjectArg;
-use iota_sdk::types::transaction::ProgrammableTransaction;
+use identity_iota_interaction::rpc_types::IotaObjectData;
+use identity_iota_interaction::rpc_types::OwnedObjectRef;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::ObjectRef;
+use identity_iota_interaction::types::base_types::ObjectType;
+use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use identity_iota_interaction::types::transaction::Argument;
+use identity_iota_interaction::types::transaction::ObjectArg;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use move_core_types::ident_str;
 
 use crate::rebased::iota::move_calls::utils;
 use crate::rebased::proposals::BorrowAction;
-use crate::rebased::utils::MoveType;
+use identity_iota_interaction::MoveType;
 
 pub(crate) fn propose_borrow(
   identity: OwnedObjectRef,

@@ -1,4 +1,4 @@
-use iota_sdk::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::ObjectID;
 use phf::{phf_map, Map};
 
 /// A Mapping `network_id` -> metadata needed by the library.
@@ -51,7 +51,7 @@ impl IdentityNetworkMetadata {
 
 #[cfg(test)]
 mod test {
-  use iota_sdk::IotaClientBuilder;
+  use identity_iota_interaction::IotaClientBuilder;
 
   use crate::rebased::client::IdentityClientReadOnly;
 

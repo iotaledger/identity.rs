@@ -7,16 +7,16 @@ use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IotaKeySignature;
 use crate::rebased::iota::move_calls;
 use async_trait::async_trait;
-use iota_sdk::rpc_types::IotaTransactionBlockResponse;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::TypeTag;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::TypeTag;
 use secret_storage::Signer;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::migration::Proposal;
-use crate::rebased::utils::MoveType;
+use identity_iota_interaction::MoveType;
 use crate::rebased::Error;
 
 use super::CreateProposalTx;

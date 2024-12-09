@@ -9,7 +9,7 @@
 pub enum Error {
   /// failed to connect to network.
   #[error("failed to connect to iota network node; {0:?}")]
-  Network(String, #[source] iota_sdk::error::Error),
+  Network(String, #[source] identity_iota_interaction::error::Error),
   /// could not lookup an object ID.
   #[error("failed to lookup an object; {0}")]
   ObjectLookup(String),
@@ -39,7 +39,7 @@ pub enum Error {
   TransactionSigningFailed(String),
   /// Could not execute transaction.
   #[error("transaction execution failed; {0}")]
-  TransactionExecutionFailed(#[from] iota_sdk::error::Error),
+  TransactionExecutionFailed(#[from] identity_iota_interaction::error::Error),
   /// Transaction yielded invalid response. This usually means that the transaction was executed but did not produce
   /// the expected result.
   #[error("transaction returned an unexpected response; {0}")]

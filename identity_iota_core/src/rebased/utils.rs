@@ -4,17 +4,17 @@
 use std::process::Output;
 
 use anyhow::Context as _;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::Argument;
-use iota_sdk::types::TypeTag;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use identity_iota_interaction::types::transaction::Argument;
+use identity_iota_interaction::types::TypeTag;
 use serde::Deserialize;
 use serde::Serialize;
 use tokio::process::Command;
 
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::IotaClient;
-use iota_sdk::IotaClientBuilder;
+use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::IotaClient;
+use identity_iota_interaction::IotaClientBuilder;
 
 use crate::rebased::Error;
 

@@ -1,12 +1,12 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::TypeTag;
-use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
+use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
+use identity_iota_interaction::types::TypeTag;
+use identity_iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use move_core_types::ident_str;
 
 use crate::rebased::iota::move_calls::utils;

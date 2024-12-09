@@ -4,8 +4,8 @@
 use std::ops::Deref;
 
 use async_trait::async_trait;
-use iota_sdk::rpc_types::IotaTransactionBlockResponse;
-use iota_sdk::types::transaction::ProgrammableTransaction;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use secret_storage::Signer;
 
 use crate::rebased::client::IdentityClient;

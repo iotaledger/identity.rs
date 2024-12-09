@@ -34,3 +34,7 @@ mod network;
 /// Contains the rebased Identity and the interaction with the IOTA Client.
 pub mod rebased;
 mod state_metadata;
+mod iota_interaction_adapter;
+
+#[cfg(not(target_arch = "wasm32"))]
+mod iota_interaction_rust;
