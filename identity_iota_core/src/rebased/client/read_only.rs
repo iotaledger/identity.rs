@@ -75,7 +75,7 @@ impl IdentityClientReadOnly {
   }
 
   /// Attempts to create a new [`IdentityClientReadOnly`] from a given [`IotaClient`].
-
+  ///
   /// # Failures
   /// This function fails if the provided `iota_client` is connected to an unrecognized
   /// network.
@@ -90,6 +90,8 @@ impl IdentityClientReadOnly {
         "unrecognized network \"{network}\". Use `new_with_pkg_id` instead."
       ))
     })?;
+    // If the network has a well known alias use it otherwise default to the network's chain ID.
+    let network = metadata.network_alias().unwrap_or(network);
 
     let pkg_id = metadata.latest_pkg_id();
 

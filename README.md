@@ -22,31 +22,34 @@
 
 ---
 
+> [!NOTE]
+> This version of the library is compatible with IOTA Rebased networks and in active development, for a version of the library compatible with IOTA Stardust networks check [here](https://github.com/iotaledger/identity.rs/)
+
 ## Introduction
 
-IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) specifications. This library can be used to create, resolve and authenticate digital identities and to create verifiable credentials and presentations in order to share information in a verifiable manner and establish trust in the digital world. It does so while supporting secure storage of cryptographic keys, which can be implemented for your preferred key management system. Many of the individual libraries (Rust crates) are agnostic over the concrete DID method, with the exception of some libraries dedicated to implement the [IOTA DID method](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec/), which is an implementation of decentralized digital identity on the IOTA and Shimmer networks. Written in stable Rust, IOTA Identity has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
+IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) specifications. This library can be used to create, resolve and authenticate digital identities and to create verifiable credentials and presentations in order to share information in a verifiable manner and establish trust in the digital world. It does so while supporting secure storage of cryptographic keys, which can be implemented for your preferred key management system. Many of the individual libraries (Rust crates) are agnostic over the concrete DID method, with the exception of some libraries dedicated to implement the [IOTA DID method](https://docs.iota.org/references/iota-identity/iota-did-method-spec/), which is an implementation of decentralized digital identity on IOTA Rebased networks. Written in stable Rust, IOTA Identity has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
-## Bindings
+<!-- ## Bindings
 
 [Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages:
 
-- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm/) (JavaScript/TypeScript)
+- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/bindings/wasm/) (JavaScript/TypeScript) -->
 
 ## gRPC
 
-We provide a collection of experimental [gRPC services](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/grpc/)
+We provide a collection of experimental [gRPC services](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/bindings/grpc/)
 ## Documentation and Resources
 
 - API References:
-  - [Rust API Reference](https://docs.rs/identity_iota/latest/identity_iota/): Package documentation (cargo docs).
-  - [Wasm API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation.
-- [Identity Documentation Pages](https://wiki.iota.org/identity.rs/introduction): Supplementing documentation with context around identity and simple examples on library usage.
-- [Examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples): Practical code snippets to get you started with the library.
+  - Rust API Reference: Package documentation, build with `RUSTDOCFLAGS='--cfg docsrs' cargo +nightly doc -p identity_iota --all-features --no-deps --open`.
+  <!-- - [Wasm API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation. -->
+- [Identity Documentation Pages](https://docs.iota.org/iota-identity): Supplementing documentation with context around identity and simple examples on library usage.
+- [Examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples): Practical code snippets to get you started with the library.
 
 ## Prerequisites
 
-- [Rust](https://www.rust-lang.org/) (>= 1.65)
-- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.65)
+- [Rust](https://www.rust-lang.org/) (>= 1.83)
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.83)
 
 ## Getting Started
 
@@ -54,23 +57,23 @@ If you want to include IOTA Identity in your project, simply add it as a depende
 
 ```toml
 [dependencies]
-identity_iota = { version = "1.4.0" }
+identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha" }
 ```
 
-To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
+To try out the [examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples), you can also do this:
 
 1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs`
 2. Get the [IOTA binaries](https://github.com/iotaledger/iota/releases).
 3. Start a local network for testing with `iota start --force-regenesis --with-faucet`.
 4. Request funds with `iota client faucet`.
 5. Publish a test identity package to your local network: `./identity_iota_core/scripts/publish_identity_package.sh`.
-6. Get the `packageId` value from the output (the entry with `"type": "published"`) and pass this as `IDENTITY_IOTA_PKG_ID` env value.
-7. Run the example to create a DID using `IDENTITY_IOTA_PKG_ID=(the value from previous step)  run --release --example 0_create_did`
+6. Get the `packageId` value from the output (the entry with `"type": "published"`) and pass this as `IOTA_IDENTITY_PKG_ID` env value.
+7. Run the example to create a DID using `IOTA_IDENTITY_PKG_ID=(the value from previous step)  run --release --example 0_create_did`
 
 ## Example: Creating an Identity
 
 The following code creates and publishes a new IOTA DID Document to a locally running private network.
-See the [instructions](https://github.com/iotaledger/iota-sandbox) on running your own private network for development.
+See the [instructions](https://github.com/iotaledger/iota/docker/iota-private-network) on running your own private network for development.
 
 _Cargo.toml_
 
@@ -151,14 +154,14 @@ async fn main() -> anyhow::Result<()> {
   let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
   let public_key_bytes = get_sender_public_key(&public_key_jwk)?;
   let sender_address = convert_to_address(&public_key_bytes)?;
-  let package_id = std::env::var("IDENTITY_IOTA_PKG_ID")
+  let package_id = std::env::var("IOTA_IDENTITY_PKG_ID")
     .map_err(|e| {
-      anyhow::anyhow!("env variable IDENTITY_IOTA_PKG_ID must be set in order to run the examples").context(e)
+      anyhow::anyhow!("env variable IOTA_IDENTITY_PKG_ID must be set in order to run the examples").context(e)
     })
     .and_then(|pkg_str| pkg_str.parse().context("invalid package id"))?;
 
   // Create identity client with signing capabilities.
-  let read_only_client = IdentityClientReadOnly::new(iota_client, package_id).await?;
+  let read_only_client = IdentityClientReadOnly::new_with_pkg_id(iota_client, package_id).await?;
   let signer = StorageSigner::new(&storage, generate.key_id, public_key_jwk);
   let identity_client = IdentityClient::new(read_only_client, signer).await?;
 
@@ -215,8 +218,6 @@ _Example output_
   "meta": {
     "created": "2023-08-29T14:47:26Z",
     "updated": "2023-08-29T14:47:26Z",
-    "governorAddress": "tst1qqd7kyu8xadzx9vutznu72336npqpj92jtp27uyu2tj2sa5hx6n3k0vrzwv",
-    "stateControllerAddress": "tst1qqd7kyu8xadzx9vutznu72336npqpj92jtp27uyu2tj2sa5hx6n3k0vrzwv"
   }
 }
 ```

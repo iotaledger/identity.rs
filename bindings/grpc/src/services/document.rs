@@ -6,10 +6,11 @@ use _document::document_service_server::DocumentServiceServer;
 use _document::CreateDidRequest;
 use _document::CreateDidResponse;
 use identity_iota::core::ToJson;
+use identity_iota::iota::rebased::client::IdentityClient;
+use identity_iota::iota::rebased::client::IdentityClientReadOnly;
+use identity_iota::iota::rebased::transaction::Transaction;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::StateMetadataDocument;
-use identity_iota::iota::StateMetadataEncoding;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkStorageDocumentError;
 use identity_iota::storage::Storage;
@@ -18,11 +19,9 @@ use identity_iota::verification::MethodScope;
 use identity_storage::KeyId;
 use identity_storage::KeyStorageErrorKind;
 use identity_storage::StorageSigner;
+use identity_stronghold::StrongholdKeyType;
 use identity_stronghold::StrongholdStorage;
 use identity_stronghold::ED25519_KEY_TYPE;
-use identity_iota::iota::rebased::client::IdentityClient;
-use identity_iota::iota::rebased::client::IdentityClientReadOnly;
-use identity_iota::iota::rebased::transaction::Transaction;
 use tonic::Code;
 use tonic::Request;
 use tonic::Response;
@@ -82,7 +81,7 @@ impl DocumentService for DocumentSvc {
     let pub_key = self
       .storage
       .key_id_storage()
-      .get_public_key(&key_id)
+      .get_public_key_with_type(&key_id, StrongholdKeyType::Ed25519)
       .await
       .map_err(Error::StrongholdError)?;
 
@@ -94,16 +93,8 @@ impl DocumentService for DocumentSvc {
       .await
       .map_err(Error::IdentityClientError)?;
 
-    let iota_doc = {
-      let doc = IotaDocument::new(network_name);
-
-      let iota_doc_md = StateMetadataDocument::from(doc);
-
-      iota_doc_md.pack(StateMetadataEncoding::Json).expect("shouldn't fail")
-    };
-
     let mut created_identity = identity_client
-      .create_identity(&iota_doc)
+      .create_identity(IotaDocument::new(network_name))
       .finish()
       .execute(&identity_client)
       .await

@@ -39,10 +39,10 @@ identity_iota_interaction = { version = "=1.4.0", path = "../identity_iota_inter
 identity_jose = { version = "=1.4.0", path = "../identity_jose", optional = true }
 iota-crypto = { version = "0.23", optional = true }
 itertools = { version = "0.13.0", optional = true }
+phf = { version = "0.11.2", features = ["macros"] }
 rand = { version = "0.8.5", optional = true }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.1.0", optional = true }
 serde-aux = { version = "4.5.0", optional = true }
-phf = { version = "0.11.2", features = ["macros"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config", tag = "v0.7.3-rc", optional = true }
