@@ -183,6 +183,16 @@ pub trait IotaClientTrait {
   #[cfg(feature = "send-sync-transaction")]
   fn event_api(&self) -> Box<dyn EventTrait<Error = Self::Error> + Send + '_>;
 
+  #[cfg(not(feature = "send-sync-transaction"))]
+  async fn execute_transaction<S: Signer<IotaKeySignature>>(
+    &self,
+    sender_address: IotaAddress,
+    sender_public_key: &[u8],
+    tx_bcs: ProgrammableTransactionBcs,
+    gas_budget: Option<u64>,
+    signer: &S
+  ) -> Result<Box<dyn IotaTransactionBlockResponseT<Error=Self::Error>>, Self::Error>;
+  #[cfg(feature = "send-sync-transaction")]
   async fn execute_transaction<S: Signer<IotaKeySignature> + Sync>(
     &self,
     sender_address: IotaAddress,

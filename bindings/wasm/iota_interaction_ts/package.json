@@ -1,7 +1,7 @@
 {
-  "name": "@iota/identity-wasm",
+  "name": "@iota/iota-interaction-ts",
   "version": "1.4.0",
-  "description": "WASM bindings for IOTA Identity - A Self Sovereign Identity Framework implementing the DID and VC standards from W3C. To be used in Javascript/Typescript",
+  "description": "WASM bindings importing types from the IOTA Client typescript SDK to be used in Rust",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/iotaledger/identity.rs.git"
@@ -11,12 +11,12 @@
   },
   "scripts": {
     "build:src": "cargo build --lib --release --target wasm32-unknown-unknown",
-    "bundle:nodejs": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target nodejs --out-dir node && node ../build/node identity_wasm && tsc --project ./lib/tsconfig.json && node ../build/replace_paths ./lib/tsconfig.json node identity_wasm",
-    "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --target web --out-dir web && node ../build/web identity_wasm && tsc --project ./lib/tsconfig.web.json && node ../build/replace_paths ./lib/tsconfig.web.json web identity_wasm",
-    "build:nodejs": "npm run build:src && npm run bundle:nodejs && wasm-opt -O node/identity_wasm_bg.wasm -o node/identity_wasm_bg.wasm",
-    "build:web": "npm run build:src && npm run bundle:web && wasm-opt -O web/identity_wasm_bg.wasm -o web/identity_wasm_bg.wasm",
+    "bundle:nodejs": "wasm-bindgen target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --weak-refs --target nodejs --out-dir node && node ../build/node iota_interaction_ts && tsc --project ./lib/tsconfig.json && node ../build/replace_paths ./lib/tsconfig.json node iota_interaction_ts",
+    "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --target web --out-dir web && node ../build/web iota_interaction_ts && tsc --project ./lib/tsconfig.web.json && node ../build/replace_paths ./lib/tsconfig.web.json web iota_interaction_ts",
+    "build:nodejs": "npm run build:src && npm run bundle:nodejs && wasm-opt -O node/iota_interaction_ts_bg.wasm -o node/iota_interaction_ts_bg.wasm",
+    "build:web": "npm run build:src && npm run bundle:web && wasm-opt -O web/iota_interaction_ts_bg.wasm -o web/iota_interaction_ts_bg.wasm",
     "build:docs": "typedoc && npm run fix_docs",
-    "build:examples:web": "tsc --project ./examples/tsconfig.web.json && node ../build/replace_paths ./examples/tsconfig.web.json ./examples/dist identity_wasm resolve",
+    "build:examples:web": "tsc --project ./examples/tsconfig.web.json && node ../build/replace_paths ./examples/tsconfig.web.json ./examples/dist iota_interaction_ts resolve",
     "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
     "example:node": "ts-node --project tsconfig.node.json -r tsconfig-paths/register ./examples/src/main.ts",
     "test": "npm run test:unit:node && npm run test:readme && npm run test:node && test:browser:parallel",
@@ -38,11 +38,6 @@
     "CYPRESS_VERIFY_TIMEOUT": 100000
   },
   "contributors": [
-    "Jelle Millenaar <jelle.millenaar@iota.org>",
-    "Devin Turner <devin.turner@iota.org>",
-    "Tensor <tensordeveloper@gmail.com>",
-    "Thoralf Müller <thoralf.mue@gmail.com>",
-    "Sebastian Heusser <huhn.dev@gmail.com>"
   ],
   "license": "Apache-2.0",
   "bugs": {
@@ -74,11 +69,11 @@
     "txm": "^8.1.0",
     "typedoc": "^0.24.6",
     "typedoc-plugin-markdown": "^3.14.0",
-    "typescript": "=5.3.3",
+    "typescript": "=5.1",
     "wasm-opt": "^1.3.0"
   },
   "dependencies": {
-    "@iota/iota.js": "file:../../../../iotaledger/iota/sdk/typescript",
+    "@iota/iota.js": "file:../../../../iota/sdk/typescript",
     "@noble/ed25519": "^1.7.3",
     "@types/node-fetch": "^2.6.2",
     "base64-arraybuffer": "^1.0.2",

@@ -24,6 +24,7 @@ members = [
   "identity_eddsa_verifier",
   "examples",
   "identity_iota_interaction",
+  "bindings/wasm/iota_interaction_ts",
 ]
 
 exclude = ["bindings/wasm/identity_wasm", "bindings/grpc"]
