@@ -94,7 +94,7 @@ impl ProposalT for Proposal<SendAction> {
     let can_execute = identity
       .controller_voting_power(controller_cap_ref.0)
       .expect("controller_cap is for this identity")
-      > identity.threshold();
+      >= identity.threshold();
     let tx = if can_execute {
       // Construct a list of `(ObjectRef, TypeTag)` from the list of objects to send.
       let object_type_list = {
@@ -129,8 +129,7 @@ impl ProposalT for Proposal<SendAction> {
     Ok(CreateProposalTx {
       identity,
       tx,
-      // Send proposals cannot be chain-executed as they have to be driven.
-      chained_execution: false,
+      chained_execution: can_execute,
       _action: PhantomData,
     })
   }

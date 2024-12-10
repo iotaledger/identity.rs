@@ -280,8 +280,8 @@ async fn send_proposal_works() -> anyhow::Result<()> {
   let coin1 = common::get_test_coin(identity_address, &identity_client).await?;
   let coin2 = common::get_test_coin(identity_address, &identity_client).await?;
 
-  // Let's propose the send of those two caps to the identity_client's address.
-  let ProposalResult::Pending(send_proposal) = identity
+  // Let's propose the send of those two coins to the identity_client's address.
+  let ProposalResult::Executed(_) = identity
     .send_assets()
     .object(coin1, identity_client.sender_address())
     .object(coin2, identity_client.sender_address())
@@ -291,14 +291,8 @@ async fn send_proposal_works() -> anyhow::Result<()> {
     .await?
     .output
   else {
-    panic!("send proposal cannot be chain-executed!");
+    panic!("the controller has enough voting power and the proposal should have been executed");
   };
-
-  send_proposal
-    .into_tx(&mut identity, &identity_client)
-    .await?
-    .execute(&identity_client)
-    .await?;
 
   // Assert that identity_client's address now owns those coins.
   identity_client
@@ -331,23 +325,10 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
   let coin2 = common::get_test_coin(identity_address, &identity_client).await?;
 
   // Let's propose the borrow of those two coins to the identity_client's address.
-  let ProposalResult::Pending(borrow_proposal) = identity
+  let ProposalResult::Executed(_) = identity
     .borrow_assets()
     .borrow(coin1)
     .borrow(coin2)
-    .finish(&identity_client)
-    .await?
-    .execute(&identity_client)
-    .await?
-    .output
-  else {
-    panic!("borrow proposal cannot be chain-executed!");
-  };
-
-  borrow_proposal
-    .into_tx(&mut identity, &identity_client)
-    .await?
-    // this doesn't really do anything but if it doesn't fail it means coin1 was properly borrowed.
     .with_intent(move |ptb, objs| {
       ptb.programmable_move_call(
         IOTA_FRAMEWORK_PACKAGE_ID,
@@ -357,8 +338,14 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
         vec![objs.get(&coin1).expect("coin1 data is borrowed").0],
       );
     })
+    .finish(&identity_client)
+    .await?
     .execute(&identity_client)
-    .await?;
+    .await?
+    .output
+  else {
+    panic!("controller has enough voting power and proposal should have been executed");
+  };
 
   Ok(())
 }

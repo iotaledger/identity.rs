@@ -17,15 +17,7 @@ use crate::rebased::proposals::SendAction;
 use crate::rebased::utils::MoveType;
 
 use self::move_calls::utils;
-
-struct SendProposalContext {
-  ptb: ProgrammableTransactionBuilder,
-  controller_cap: Argument,
-  delegation_token: Argument,
-  borrow: Argument,
-  identity: Argument,
-  proposal_id: Argument,
-}
+use super::ProposalContext;
 
 fn send_proposal_impl(
   identity: OwnedObjectRef,
@@ -33,7 +25,7 @@ fn send_proposal_impl(
   transfer_map: Vec<(ObjectID, IotaAddress)>,
   expiration: Option<u64>,
   package_id: ObjectID,
-) -> anyhow::Result<SendProposalContext> {
+) -> anyhow::Result<ProposalContext> {
   let mut ptb = ProgrammableTransactionBuilder::new();
   let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
   let (delegation_token, borrow) = move_calls::utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
@@ -55,7 +47,7 @@ fn send_proposal_impl(
     vec![identity_arg, delegation_token, exp_arg, objects, recipients],
   );
 
-  Ok(SendProposalContext {
+  Ok(ProposalContext {
     ptb,
     identity: identity_arg,
     controller_cap: cap_arg,
@@ -72,7 +64,7 @@ pub(crate) fn propose_send(
   expiration: Option<u64>,
   package_id: ObjectID,
 ) -> Result<ProgrammableTransaction, anyhow::Error> {
-  let SendProposalContext {
+  let ProposalContext {
     mut ptb,
     controller_cap,
     delegation_token,
@@ -156,7 +148,7 @@ pub(crate) fn create_and_execute_send(
   objects: Vec<(ObjectRef, TypeTag)>,
   package: ObjectID,
 ) -> anyhow::Result<ProgrammableTransaction> {
-  let SendProposalContext {
+  let ProposalContext {
     mut ptb,
     identity,
     controller_cap,
