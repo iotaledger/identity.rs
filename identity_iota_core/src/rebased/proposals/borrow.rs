@@ -35,10 +35,9 @@ pub(crate) type IntentFn = Box<dyn FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument
 
 /// Action used to borrow in transaction [OnChainIdentity]'s assets.
 #[derive(Deserialize, Serialize)]
-#[serde(bound(deserialize = ""))]
 pub struct BorrowAction<F = IntentFn> {
   objects: Vec<ObjectID>,
-  #[serde(skip)]
+  #[serde(skip, default = "Option::default")]
   intent_fn: Option<F>,
 }
 

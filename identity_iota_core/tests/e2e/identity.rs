@@ -12,7 +12,6 @@ use identity_iota_core::rebased::client::get_object_id_from_did;
 use identity_iota_core::rebased::migration::has_previous_version;
 use identity_iota_core::rebased::migration::Identity;
 use identity_iota_core::rebased::proposals::ProposalResult;
-use identity_iota_core::rebased::proposals::ProposalT as _;
 use identity_iota_core::rebased::transaction::Transaction;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
@@ -383,25 +382,13 @@ async fn controller_execution_works() -> anyhow::Result<()> {
     .await?
     .expect("identity is a controller of identity2");
 
-  // Perform an action on `identity2` as a controller of `identity`.
-  let ProposalResult::Pending(controller_execution) = identity
-    .controller_execution(controller_cap.0)
-    .finish(&identity_client)
-    .await?
-    .execute(&identity_client)
-    .await?
-    .output
-  else {
-    panic!("controller execution proposals cannot be executed without being driven by the user")
-  };
   let identity2_ref = identity_client.get_object_ref_by_id(identity2.id()).await?.unwrap();
   let Owner::Shared { initial_shared_version } = identity2_ref.owner else {
     panic!("identity2 is shared")
   };
-  let tx_output = controller_execution
-    .into_tx(&mut identity, &identity_client)
-    .await?
-    // specify the operation to perform with the borrowed identity's controller_cap
+  // Perform an action on `identity2` as a controller of `identity`.
+  let result = identity
+    .controller_execution(controller_cap.0)
     .with_intent(|ptb, controller_cap| {
       let identity2 = ptb
         .obj(ObjectArg::SharedObject {
@@ -421,10 +408,13 @@ async fn controller_execution_works() -> anyhow::Result<()> {
         vec![identity2, *controller_cap, token_to_revoke],
       );
     })
+    .finish(&identity_client)
+    .await?
     .execute(&identity_client)
     .await?;
 
-  assert!(tx_output.response.status_ok().unwrap());
+  assert!(result.response.status_ok().unwrap());
+  assert!(matches!(result.output, ProposalResult::Executed(_)));
 
   Ok(())
 }
