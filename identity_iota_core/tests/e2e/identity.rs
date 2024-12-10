@@ -12,7 +12,6 @@ use identity_iota_core::rebased::client::get_object_id_from_did;
 use identity_iota_core::rebased::migration::has_previous_version;
 use identity_iota_core::rebased::migration::Identity;
 use identity_iota_core::rebased::proposals::ProposalResult;
-use identity_iota_core::rebased::proposals::ProposalT as _;
 use identity_iota_core::rebased::transaction::Transaction;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
@@ -280,8 +279,8 @@ async fn send_proposal_works() -> anyhow::Result<()> {
   let coin1 = common::get_test_coin(identity_address, &identity_client).await?;
   let coin2 = common::get_test_coin(identity_address, &identity_client).await?;
 
-  // Let's propose the send of those two caps to the identity_client's address.
-  let ProposalResult::Pending(send_proposal) = identity
+  // Let's propose the send of those two coins to the identity_client's address.
+  let ProposalResult::Executed(_) = identity
     .send_assets()
     .object(coin1, identity_client.sender_address())
     .object(coin2, identity_client.sender_address())
@@ -291,14 +290,8 @@ async fn send_proposal_works() -> anyhow::Result<()> {
     .await?
     .output
   else {
-    panic!("send proposal cannot be chain-executed!");
+    panic!("the controller has enough voting power and the proposal should have been executed");
   };
-
-  send_proposal
-    .into_tx(&mut identity, &identity_client)
-    .await?
-    .execute(&identity_client)
-    .await?;
 
   // Assert that identity_client's address now owns those coins.
   identity_client
@@ -331,23 +324,10 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
   let coin2 = common::get_test_coin(identity_address, &identity_client).await?;
 
   // Let's propose the borrow of those two coins to the identity_client's address.
-  let ProposalResult::Pending(borrow_proposal) = identity
+  let ProposalResult::Executed(_) = identity
     .borrow_assets()
     .borrow(coin1)
     .borrow(coin2)
-    .finish(&identity_client)
-    .await?
-    .execute(&identity_client)
-    .await?
-    .output
-  else {
-    panic!("borrow proposal cannot be chain-executed!");
-  };
-
-  borrow_proposal
-    .into_tx(&mut identity, &identity_client)
-    .await?
-    // this doesn't really do anything but if it doesn't fail it means coin1 was properly borrowed.
     .with_intent(move |ptb, objs| {
       ptb.programmable_move_call(
         IOTA_FRAMEWORK_PACKAGE_ID,
@@ -357,8 +337,14 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
         vec![objs.get(&coin1).expect("coin1 data is borrowed").0],
       );
     })
+    .finish(&identity_client)
+    .await?
     .execute(&identity_client)
-    .await?;
+    .await?
+    .output
+  else {
+    panic!("controller has enough voting power and proposal should have been executed");
+  };
 
   Ok(())
 }
@@ -396,25 +382,13 @@ async fn controller_execution_works() -> anyhow::Result<()> {
     .await?
     .expect("identity is a controller of identity2");
 
-  // Perform an action on `identity2` as a controller of `identity`.
-  let ProposalResult::Pending(controller_execution) = identity
-    .controller_execution(controller_cap.0)
-    .finish(&identity_client)
-    .await?
-    .execute(&identity_client)
-    .await?
-    .output
-  else {
-    panic!("controller execution proposals cannot be executed without being driven by the user")
-  };
   let identity2_ref = identity_client.get_object_ref_by_id(identity2.id()).await?.unwrap();
   let Owner::Shared { initial_shared_version } = identity2_ref.owner else {
     panic!("identity2 is shared")
   };
-  let tx_output = controller_execution
-    .into_tx(&mut identity, &identity_client)
-    .await?
-    // specify the operation to perform with the borrowed identity's controller_cap
+  // Perform an action on `identity2` as a controller of `identity`.
+  let result = identity
+    .controller_execution(controller_cap.0)
     .with_intent(|ptb, controller_cap| {
       let identity2 = ptb
         .obj(ObjectArg::SharedObject {
@@ -434,10 +408,13 @@ async fn controller_execution_works() -> anyhow::Result<()> {
         vec![identity2, *controller_cap, token_to_revoke],
       );
     })
+    .finish(&identity_client)
+    .await?
     .execute(&identity_client)
     .await?;
 
-  assert!(tx_output.response.status_ok().unwrap());
+  assert!(result.response.status_ok().unwrap());
+  assert!(matches!(result.output, ProposalResult::Executed(_)));
 
   Ok(())
 }
