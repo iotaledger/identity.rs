@@ -185,7 +185,7 @@ pub enum TypeSchema {
 
 #[cfg(test)]
 mod tests {
-  use std::cell::LazyCell;
+  use std::sync::LazyLock;
 
   use async_trait::async_trait;
   use serde_json::json;
@@ -194,7 +194,7 @@ mod tests {
 
   use super::*;
 
-  const IMMEDIATE_TYPE_METADATA: LazyCell<TypeMetadata> = LazyCell::new(|| TypeMetadata {
+  static IMMEDIATE_TYPE_METADATA: LazyLock<TypeMetadata> = LazyLock::new(|| TypeMetadata {
     name: Some("immediate credential".to_string()),
     description: None,
     extends: None,
@@ -218,7 +218,7 @@ mod tests {
       schema_integrity: None,
     }),
   });
-  const REFERENCED_TYPE_METADATA: LazyCell<TypeMetadata> = LazyCell::new(|| TypeMetadata {
+  static REFERENCED_TYPE_METADATA: LazyLock<TypeMetadata> = LazyLock::new(|| TypeMetadata {
     name: Some("immediate credential".to_string()),
     description: None,
     extends: None,

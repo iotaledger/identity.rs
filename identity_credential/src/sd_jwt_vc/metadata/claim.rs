@@ -231,13 +231,11 @@ fn index_value<'v>(value: &'v Value, segment: &ClaimPathSegment) -> anyhow::Resu
 
 #[cfg(test)]
 mod tests {
-  use std::cell::LazyCell;
-
   use serde_json::json;
 
   use super::*;
 
-  const SAMPLE_OBJ: LazyCell<Value> = LazyCell::new(|| {
+  fn sample_obj() -> Value {
     json!({
       "vct": "https://betelgeuse.example.com/education_credential",
       "name": "Arthur Dent",
@@ -258,7 +256,7 @@ mod tests {
       ],
       "nationalities": ["British", "Betelgeusian"]
     })
-  });
+  }
 
   #[test]
   fn claim_path_works() {
@@ -268,18 +266,18 @@ mod tests {
     let degrees_types_path = serde_json::from_value::<ClaimPath>(json!(["degrees", null, "type"])).unwrap();
 
     assert!(matches!(
-      name_path.reverse_index(&SAMPLE_OBJ).unwrap(),
+      name_path.reverse_index(&sample_obj()).unwrap(),
       OneOrManyValue::One(&Value::String(_))
     ));
     assert!(matches!(
-      city_path.reverse_index(&SAMPLE_OBJ).unwrap(),
+      city_path.reverse_index(&sample_obj()).unwrap(),
       OneOrManyValue::One(&Value::String(_))
     ));
     assert!(matches!(
-      first_degree_path.reverse_index(&SAMPLE_OBJ).unwrap(),
+      first_degree_path.reverse_index(&sample_obj()).unwrap(),
       OneOrManyValue::One(&Value::Object(_))
     ));
-    let obj = &*SAMPLE_OBJ;
+    let obj = &sample_obj();
     let mut degree_types = degrees_types_path.reverse_index(obj).unwrap().into_iter();
     assert_eq!(degree_types.next().unwrap().as_str(), Some("Bachelor of Science"));
     assert_eq!(degree_types.next().unwrap().as_str(), Some("Master of Science"));
