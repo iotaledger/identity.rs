@@ -24,7 +24,7 @@ pub fn random_key_id() -> KeyId {
 }
 
 /// Check that the key type can be used with the algorithm.
-pub fn check_key_alg_compatibility(key_type: StrongholdKeyType, alg: JwsAlgorithm) -> KeyStorageResult<()> {
+pub fn check_key_alg_compatibility(key_type: StrongholdKeyType, alg: &JwsAlgorithm) -> KeyStorageResult<()> {
   match (key_type, alg) {
     (StrongholdKeyType::Ed25519, JwsAlgorithm::EdDSA) => Ok(()),
     (key_type, alg) => Err(

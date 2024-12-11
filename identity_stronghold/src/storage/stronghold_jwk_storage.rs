@@ -36,7 +36,7 @@ impl JwkStorage for StrongholdStorage {
 
     let client = get_client(&stronghold)?;
     let key_type = StrongholdKeyType::try_from(&key_type)?;
-    check_key_alg_compatibility(key_type, alg)?;
+    check_key_alg_compatibility(key_type, &alg)?;
 
     let keytype: ProceduresKeyType = match key_type {
       StrongholdKeyType::Ed25519 => ProceduresKeyType::Ed25519,
@@ -106,7 +106,7 @@ impl JwkStorage for StrongholdStorage {
       Some(alg) => {
         let alg: JwsAlgorithm = JwsAlgorithm::from_str(alg)
           .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm).with_source(err))?;
-        check_key_alg_compatibility(key_type, alg)?;
+        check_key_alg_compatibility(key_type, &alg)?;
       }
       None => {
         return Err(

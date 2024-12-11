@@ -395,9 +395,9 @@ impl Jwk {
   // ===========================================================================
 
   /// Checks if the `alg` claim of the JWK is equal to `expected`.
-  pub fn check_alg(&self, expected: &str) -> Result<()> {
+  pub fn check_alg(&self, expected: impl AsRef<str>) -> Result<()> {
     match self.alg() {
-      Some(value) if value == expected => Ok(()),
+      Some(value) if value == expected.as_ref() => Ok(()),
       Some(_) => Err(Error::InvalidClaim("alg")),
       None => Ok(()),
     }
