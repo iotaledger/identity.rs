@@ -16,6 +16,9 @@ pub enum StatusMechanism {
   /// Reference to a status list containing this token's status.
   #[serde(rename = "status_list")]
   StatusList(StatusListRef),
+  /// A non-standard status mechanism.
+  #[serde(untagged)]
+  Custom(serde_json::Value),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

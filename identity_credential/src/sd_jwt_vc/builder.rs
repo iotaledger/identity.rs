@@ -7,6 +7,7 @@ use std::sync::LazyLock;
 use identity_core::common::StringOrUrl;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_core::convert::ToJson;
 use sd_jwt_payload_rework::Hasher;
 use sd_jwt_payload_rework::JsonObject;
 use sd_jwt_payload_rework::JwsSigner;
@@ -15,6 +16,10 @@ use sd_jwt_payload_rework::SdJwtBuilder;
 use sd_jwt_payload_rework::Sha256Hasher;
 use serde::Serialize;
 use serde_json::json;
+use serde_json::Value;
+
+use crate::credential::Credential;
+use crate::credential::CredentialJwtClaims;
 
 use super::Error;
 use super::Result;
@@ -99,6 +104,25 @@ impl<H: Hasher> SdJwtVcBuilder<H> {
       sub: None,
       status: None,
     })
+  }
+
+  /// Creates a new [`SdJwtVcBuilder`] starting from a [`Credential`] that is converted to a JWT claim set.
+  pub fn new_from_credential(credential: Credential, hasher: H) -> std::result::Result<Self, crate::Error> {
+    let mut vc_jwt_claims = CredentialJwtClaims::new(&credential, None)?
+      .to_json_value()
+      .map_err(|e| crate::Error::JwtClaimsSetSerializationError(Box::new(e)))?;
+    // When converting a VC to its JWT claims representation, some VC specific claims are putted into a `vc` object
+    // property. Flatten out `vc`, keeping the other JWT claims intact.
+    {
+      let claims = vc_jwt_claims.as_object_mut().expect("serialized VC is a JSON object");
+      let Value::Object(vc_properties) = claims.remove("vc").expect("serialized VC has `vc` property") else {
+        unreachable!("`vc` property's value is a JSON object");
+      };
+      for (key, value) in vc_properties {
+        claims.insert(key, value);
+      }
+    }
+    Ok(Self::new_with_hasher(vc_jwt_claims, hasher)?)
   }
 
   /// Substitutes a value with the digest of its disclosure.
@@ -244,7 +268,10 @@ impl<H: Hasher> SdJwtVcBuilder<H> {
 
 #[cfg(test)]
 mod tests {
+
   use super::*;
+  use crate::credential::CredentialBuilder;
+  use crate::credential::Subject;
   use crate::sd_jwt_vc::tests::TestSigner;
 
   #[tokio::test]
@@ -324,6 +351,35 @@ mod tests {
       .unwrap_err();
 
     assert!(matches!(err, Error::DisclosedClaim("vct")));
+
+    Ok(())
+  }
+
+  #[tokio::test]
+  async fn building_sd_jwt_vc_from_credential_works() -> anyhow::Result<()> {
+    let credential = CredentialBuilder::default()
+      .id(Url::parse("https://example.com/credentials/42")?)
+      .issuance_date(Timestamp::now_utc())
+      .issuer(Url::parse("https://example.com/issuers/42")?)
+      .subject(Subject::with_id(Url::parse("https://example.com/subjects/42")?))
+      .build()?;
+
+    let sd_jwt_vc = SdJwtVcBuilder::new_from_credential(credential.clone(), Sha256Hasher::default())?
+      .vct(Url::parse("https://example.com/types/0")?)
+      .finish(&TestSigner, "HS256")
+      .await?;
+
+    assert_eq!(sd_jwt_vc.claims().nbf.as_ref().unwrap(), &credential.issuance_date);
+    assert_eq!(&sd_jwt_vc.claims().iss, credential.issuer.url());
+    assert_eq!(
+      sd_jwt_vc.claims().sub.as_ref().unwrap().as_url(),
+      credential.credential_subject.first().unwrap().id.as_ref()
+    );
+    assert_eq!(
+      sd_jwt_vc.claims().get("jti"),
+      Some(&json!(credential.id.as_ref().unwrap()))
+    );
+    assert_eq!(sd_jwt_vc.claims().get("type"), Some(&json!("VerifiableCredential")));
 
     Ok(())
   }

@@ -3,6 +3,8 @@
 
 //! Errors that may occur when working with Verifiable Credentials.
 
+use crate::sd_jwt_vc;
+
 /// Alias for a `Result` with the error type [`Error`].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
@@ -79,4 +81,9 @@ pub enum Error {
   /// Cause by an invalid attribute path
   #[error("Attribute Not found")]
   SelectiveDisclosureError,
+
+  /// Failure of an SD-JWT VC operation.
+  #[cfg(feature = "sd-jwt-vc")]
+  #[error(transparent)]
+  SdJwtVc(#[from] sd_jwt_vc::Error),
 }
