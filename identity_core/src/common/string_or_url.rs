@@ -1,6 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::convert::Infallible;
 use std::fmt::Display;
 use std::str::FromStr;
 
@@ -21,7 +22,7 @@ pub enum StringOrUrl {
 
 impl StringOrUrl {
   /// Parses a [`StringOrUrl`] from a string.
-  pub fn parse(s: &str) -> Result<Self, ()> {
+  pub fn parse(s: &str) -> Result<Self, Infallible> {
     s.parse()
   }
   /// Returns a [`Url`] reference if `self` is [`StringOrUrl::Url`].
@@ -68,7 +69,7 @@ impl Display for StringOrUrl {
 
 impl FromStr for StringOrUrl {
   // Cannot fail.
-  type Err = ();
+  type Err = Infallible;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     Ok(
       s.parse::<Url>()
