@@ -94,9 +94,6 @@ pub mod prelude {
 #[cfg_attr(docsrs, doc(cfg(feature = "resolver")))]
 pub mod resolver {
   //! DID resolution utilities
-
-  #[cfg(feature = "resolver-v2")]
-  pub use compound_resolver::CompoundResolver;
   pub use identity_resolver::*;
 }
 

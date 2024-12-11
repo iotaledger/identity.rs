@@ -230,7 +230,9 @@ impl<H: Hasher> SdJwtVcBuilder<H> {
     let builder = claim_to_key_value_pair![iss, nbf, exp, iat, vct, sub, status]
       .into_iter()
       .filter(|(_, value)| !value.is_null())
-      .fold(builder, |builder, (key, value)| builder.insert_claim(key, value));
+      .fold(builder, |builder, (key, value)| {
+        builder.insert_claim(key, value).expect("value is a JSON Value")
+      });
 
     let sd_jwt = builder.finish(signer, alg).await?;
     SdJwtVc::try_from(sd_jwt)

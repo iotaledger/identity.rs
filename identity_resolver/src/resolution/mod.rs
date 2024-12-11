@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod commands;
-mod error;
 mod resolver;
+#[cfg(test)]
+mod tests;
 
 use self::commands::SingleThreadedCommand;
 use identity_document::document::CoreDocument;
@@ -11,5 +12,3 @@ use identity_document::document::CoreDocument;
 pub use resolver::Resolver;
 /// Alias for a [`Resolver`] that is not [`Send`] + [`Sync`].
 pub type SingleThreadedResolver<DOC = CoreDocument> = Resolver<DOC, SingleThreadedCommand<DOC>>;
-pub use error::Error;
-pub use error::Result;

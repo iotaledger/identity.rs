@@ -12,7 +12,9 @@ use identity_document::document::CoreDocument;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use super::error::*;
+use crate::Error;
+use crate::ErrorCause;
+use crate::Result;
 
 use super::commands::Command;
 use super::commands::SendSyncCommand;
@@ -264,7 +266,8 @@ impl<DOC: From<CoreDocument> + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
 
 #[cfg(feature = "iota")]
 mod iota_handler {
-  use super::ErrorCause;
+  use crate::ErrorCause;
+
   use super::Resolver;
   use identity_document::document::CoreDocument;
   use identity_iota_core::IotaDID;
@@ -333,13 +336,13 @@ mod iota_handler {
           let client: &CLI =
             future_client
               .get(did_network)
-              .ok_or(super::Error::new(ErrorCause::UnsupportedNetwork(
+              .ok_or(crate::Error::new(ErrorCause::UnsupportedNetwork(
                 did_network.to_string(),
               )))?;
           client
             .resolve_did(&did)
             .await
-            .map_err(|err| super::Error::new(ErrorCause::HandlerError { source: Box::new(err) }))
+            .map_err(|err| crate::Error::new(ErrorCause::HandlerError { source: Box::new(err) }))
         }
       };
 
