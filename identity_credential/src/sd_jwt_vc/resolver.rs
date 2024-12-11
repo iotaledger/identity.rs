@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 #![allow(async_fn_in_trait)]
 
 use async_trait::async_trait;

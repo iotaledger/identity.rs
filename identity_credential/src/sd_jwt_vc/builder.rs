@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 #![allow(clippy::vec_init_then_push)]
 use std::sync::LazyLock;
 
