@@ -8,7 +8,6 @@ keywords = ["iota", "storage", "identity", "kms", "stronghold"]
 license.workspace = true
 readme = "./README.md"
 repository.workspace = true
-rust-version.workspace = true
 description = "Secure JWK storage with Stronghold for IOTA Identity"
 
 [dependencies]

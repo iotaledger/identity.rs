@@ -297,7 +297,7 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
   }
 
   /// Verify the signature using the given `public_key` and `signature_verifier`.
-  fn verify_decoded_signature<S: JwsVerifier, T>(
+  pub(crate) fn verify_decoded_signature<S: JwsVerifier, T>(
     decoded: JwsValidationItem<'_>,
     public_key: &Jwk,
     signature_verifier: &S,

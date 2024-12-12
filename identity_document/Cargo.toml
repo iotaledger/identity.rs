@@ -8,7 +8,6 @@ keywords = ["iota", "tangle", "identity", "did"]
 license.workspace = true
 readme = "./README.md"
 repository.workspace = true
-rust-version.workspace = true
 description = "Method-agnostic implementation of the Decentralized Identifiers (DID) standard."
 
 [dependencies]
