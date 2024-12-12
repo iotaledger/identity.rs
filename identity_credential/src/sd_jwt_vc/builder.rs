@@ -364,7 +364,7 @@ mod tests {
       .subject(Subject::with_id(Url::parse("https://example.com/subjects/42")?))
       .build()?;
 
-    let sd_jwt_vc = SdJwtVcBuilder::new_from_credential(credential.clone(), Sha256Hasher::default())?
+    let sd_jwt_vc = SdJwtVcBuilder::new_from_credential(credential.clone(), Sha256Hasher)?
       .vct(Url::parse("https://example.com/types/0")?)
       .finish(&TestSigner, "HS256")
       .await?;
