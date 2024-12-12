@@ -1,12 +1,20 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::iota::iota_sdk_abstraction::error::Error;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::OwnedObjectRef;
+use identity_iota::iota::iota_sdk_abstraction::types::base_types::IotaAddress;
 use identity_iota::iota::iota_sdk_abstraction::types::execution_status::ExecutionStatus;
+use identity_iota::iota::iota_sdk_abstraction::ProgrammableTransactionBcs;
+use js_sys::Promise;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
+use wasm_bindgen_futures::JsFuture;
+
+use crate::storage::WasmStorageSigner;
 
 use super::super::types::into_sdk_type;
+use super::WasmIotaClient;
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_SDK_TYPES: &'static str = r#"
@@ -31,7 +39,10 @@ const TS_SDK_TYPES: &'static str = r#"
   }
   from "@iota/iota.js/client";
   
-  import {IotaTransactionBlockResponseAdapter} from "./kinesis_client_helpers"
+  import {
+    executeTransaction,
+    IotaTransactionBlockResponseAdapter,
+  } from "./kinesis_client_helpers"
 "#;
 
 #[wasm_bindgen(module = "@iota/iota.js/client")]
@@ -113,6 +124,10 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<PaginatedCoins>")]
   #[derive(Clone)]
   pub type PromisePaginatedCoins;
+
+  #[wasm_bindgen(typescript_type = "Promise<IotaTransactionBlockResponseAdapter>")]
+  #[derive(Clone)]
+  pub type PromiseIotaTransactionBlockResponseAdapter;
 }
 
 #[wasm_bindgen(module = "/lib/kinesis_client_helpers.ts")]
@@ -138,8 +153,21 @@ extern "C" {
 
   #[wasm_bindgen(method)]
   fn effects_created_inner(this: &IotaTransactionBlockResponseAdapter) -> Option<Vec<WasmOwnedObjectRef>>;
+
+  #[wasm_bindgen(js_name = executeTransaction)]
+  fn execute_transaction_inner(
+    iotaClient: &WasmIotaClient, // --> TypeScript: IotaClient
+    sender_address: String,      // --> TypeScript: string
+    sender_public_key: Vec<u8>,  // --> TypeScript: Uint8Array
+    tx_bcs: Vec<u8>,             // --> TypeScript: Uint8Array,
+    signer: WasmStorageSigner,   // --> TypeScript: Signer (kinesis_client_helpers module)
+    gas_budget: Option<u64>,     // --> TypeScript: optional bigint
+  ) -> PromiseIotaTransactionBlockResponseAdapter;
 }
 
+/// Note that Rust and TypeScript have a different structure for the status:
+/// - TypeScript's version is an object with two properties (`status`: string union and error, string)
+/// - Rust's version is an enum with success and error variant
 #[derive(Deserialize)]
 struct WasmExecutionStatusAdapter {
   status: ExecutionStatus,
@@ -158,4 +186,28 @@ impl IotaTransactionBlockResponseAdapter {
       .effects_created_inner()
       .map(|vex_obj_ref| vex_obj_ref.into_iter().map(|obj| into_sdk_type(obj).unwrap()).collect())
   }
+}
+
+pub async fn execute_transaction(
+  iota_client: &WasmIotaClient,       // --> Binding: WasmIotaClient
+  sender_address: IotaAddress,        // --> Binding: String
+  sender_public_key: &[u8],           // --> Binding: Vec<u8>
+  tx_bcs: ProgrammableTransactionBcs, // --> Binding: Vec<u8>
+  signer: WasmStorageSigner,          // --> Binding: WasmStorageSigner
+  gas_budget: Option<u64>,            // --> Binding: Option<u64>,
+) -> Result<IotaTransactionBlockResponseAdapter, Error> {
+  let promise: Promise = Promise::resolve(&execute_transaction_inner(
+    iota_client,
+    sender_address.to_string(),
+    sender_public_key.to_vec(),
+    tx_bcs,
+    signer,
+    gas_budget,
+  ));
+  let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
+    console_log!("Error executing JsFuture::from(promise): {:?}", e);
+    Error::FfiError(format!("{:?}", e))
+  })?;
+
+  Ok(IotaTransactionBlockResponseAdapter::new(result.into()))
 }

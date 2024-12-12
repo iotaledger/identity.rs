@@ -3,20 +3,29 @@
 
 use std::rc::Rc;
 
-use identity_iota::iota::iota_sdk_abstraction::{DummySigner, SignatureBcs};
-use identity_iota::iota::iota_sdk_abstraction::Identity;
-use identity_iota::iota::iota_sdk_abstraction::IdentityClient;
-use identity_iota::iota::IotaDocument;
-use wasm_bindgen::prelude::*;
-use identity_iota::core::{Base, BaseEncoding};
 use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
+use fastcrypto::ed25519::Ed25519PublicKey;
+use fastcrypto::traits::ToFromBytes;
+use identity_iota::core::Base;
+use identity_iota::core::BaseEncoding;
+use identity_iota::iota::iota_sdk_abstraction::types::base_types::IotaAddress;
+use identity_iota::iota::iota_sdk_abstraction::DummySigner;
+use identity_iota::iota::iota_sdk_abstraction::Identity;
+use identity_iota::iota::iota_sdk_abstraction::IdentityClient;
+use identity_iota::iota::iota_sdk_abstraction::SignatureBcs;
+use identity_iota::iota::sui_name_tbd_error::Error as TbdError;
+use identity_iota::iota::IotaDocument;
+use wasm_bindgen::prelude::*;
 
-use super::wasm_identity_client_builder::WasmKinesisIdentityClientBuilder;
-use super::{WasmExecutionStatus, WasmIdentityBuilder, WasmOwnedObjectRef};
 use super::iota_sdk_adapter::IotaClientTsSdk;
-use super::types::{WasmIotaAddress, WasmObjectID};
+use super::types::WasmIotaAddress;
+use super::types::WasmObjectID;
+use super::wasm_identity_client_builder::WasmKinesisIdentityClientBuilder;
+use super::WasmExecutionStatus;
+use super::WasmIdentityBuilder;
+use super::WasmOwnedObjectRef;
 
 #[wasm_bindgen(getter_with_clone, inspectable, js_name = IotaTransactionBlockResponseEssence)]
 pub struct WasmIotaTransactionBlockResponseEssence {
@@ -50,10 +59,7 @@ impl WasmKinesisIdentityClient {
 
   #[wasm_bindgen(js_name = senderAddress)]
   pub fn sender_address(&self) -> Result<WasmIotaAddress, JsError> {
-    self.0
-        .sender_address()
-        .map(|a| a.to_string())
-        .map_err(|e| e.into())
+    self.0.sender_address().map(|a| a.to_string()).map_err(|e| e.into())
   }
 
   #[wasm_bindgen(js_name = networkName)]
@@ -72,40 +78,40 @@ impl WasmKinesisIdentityClient {
   }
 
   #[wasm_bindgen(js_name = executeDummyTransaction)]
-  pub async fn execute_dummy_transaction(&self, tx_data_bcs_str: String, signatures_str: Vec<String> )
-    -> Result<WasmIotaTransactionBlockResponseEssence, JsError>
-  {
+  pub async fn execute_dummy_transaction(
+    &self,
+    tx_data_bcs_str: String,
+    signatures_str: Vec<String>,
+  ) -> Result<WasmIotaTransactionBlockResponseEssence, JsError> {
     let dummy = 1;
     let tx_data_bcs = BaseEncoding::decode(tx_data_bcs_str.as_str(), Base::Base64Pad)?;
     let signatures = signatures_str
       .iter()
       .map(|s| BaseEncoding::decode(s, Base::Base64Pad))
       .collect::<std::result::Result<Vec<SignatureBcs>, _>>()?;
-    
-    let response = self.0
+
+    let response = self
+      .0
       .execute_dummy_transaction(tx_data_bcs, signatures)
       .await
       .map_err(<identity_iota::iota::sui_name_tbd_error::Error as Into<JsError>>::into)?;
 
-    let effects_execution_status: Option<WasmExecutionStatus> = response.effects_execution_status().map(
-      |status| serde_wasm_bindgen::to_value(&status).unwrap().into()
-    );
+    let effects_execution_status: Option<WasmExecutionStatus> = response
+      .effects_execution_status()
+      .map(|status| serde_wasm_bindgen::to_value(&status).unwrap().into());
 
-    let effects_created: Option<Vec<WasmOwnedObjectRef>> = response.effects_created().map(
-      |effects| effects
+    let effects_created: Option<Vec<WasmOwnedObjectRef>> = response.effects_created().map(|effects| {
+      effects
         .into_iter()
-        .map(
-          |efct| serde_wasm_bindgen::to_value(&efct).unwrap().into()
-        )
+        .map(|efct| serde_wasm_bindgen::to_value(&efct).unwrap().into())
         .collect()
-    );
-      
-    Ok(
-      WasmIotaTransactionBlockResponseEssence {
-        effects_exist: response.effects_is_some(),
-        effects: response.to_string(),
-        effects_execution_status,
-        effects_created,
+    });
+
+    Ok(WasmIotaTransactionBlockResponseEssence {
+      effects_exist: response.effects_is_some(),
+      effects: response.to_string(),
+      effects_execution_status,
+      effects_created,
     })
   }
 
@@ -186,4 +192,19 @@ impl WasmKinesisIdentityClient {
       .await
       .map_err(|err| JsError::new(&format!("could not get balance; {err}")))
   }
+}
+
+/// TODO: consider importing function from rebased later on, if possible
+pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, TbdError> {
+  let public_key = Ed25519PublicKey::from_bytes(sender_public_key)
+    .map_err(|err| TbdError::InvalidKey(format!("could not parse public key to Ed25519 public key; {err}")))?;
+
+  Ok(IotaAddress::from(&public_key))
+}
+
+#[wasm_bindgen(js_name = convertToAddress)]
+pub fn wasm_convert_to_address(sender_public_key: &[u8]) -> Result<String, JsError> {
+  convert_to_address(sender_public_key)
+    .map(|v| v.to_string())
+    .map_err(|err| JsError::new(&format!("could not derive address from public key; {err}")))
 }

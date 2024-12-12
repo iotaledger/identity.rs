@@ -6,6 +6,7 @@ use std::option::Option;
 use std::result::Result;
 
 use identity_iota::iota::iota_sdk_abstraction::error::IotaRpcResult;
+use identity_iota::iota::iota_sdk_abstraction::rpc_types::Coin;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::CoinPage;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::EventFilter;
 use identity_iota::iota::iota_sdk_abstraction::rpc_types::EventPage;
@@ -38,6 +39,8 @@ use identity_iota::iota::iota_sdk_abstraction::SignatureBcs;
 use identity_iota::iota::iota_sdk_abstraction::TransactionDataBcs;
 use identity_iota::iota::sui_name_tbd_error::Error;
 use secret_storage::Signer;
+
+use crate::kinesis::execute_transaction;
 
 use super::super::ts_client_sdk::ManagedWasmIotaClient;
 use super::super::ts_client_sdk::WasmIotaClient;
@@ -251,7 +254,17 @@ impl IotaClientTrait for IotaClientTsSdk {
     gas_budget: Option<u64>,
     signer: &S,
   ) -> Result<Box<dyn IotaTransactionBlockResponseT<Error = Self::Error>>, Self::Error> {
-    unimplemented!();
+    todo!();
+    // let wasm_response = execute_transaction(
+    //   &self.iota_client.clone().0,
+    //   sender_address,
+    //   sender_public_key,
+    //   tx_bcs,
+    //   *signer.clone(),
+    //   gas_budget,
+    // )
+    // .await?;
+    // Ok(Box::new(IotaTransactionBlockResponseProvider::new(wasm_response)))
   }
 
   async fn default_gas_budget(
@@ -271,7 +284,13 @@ impl IotaClientTrait for IotaClientTsSdk {
     object_id: ObjectID,
     version: SequenceNumber,
   ) -> Result<IotaPastObjectResponse, Self::Error> {
-    unimplemented!();
+    self
+      .iota_client
+      .try_get_parsed_past_object(object_id, version, IotaObjectDataOptions::full_content())
+      .await
+      .map_err(|err| {
+        Error::InvalidIdentityHistory(format!("could not look up object {object_id} version {version}; {err}"))
+      })
   }
 }
 
