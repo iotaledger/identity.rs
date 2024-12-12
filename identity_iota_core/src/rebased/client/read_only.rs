@@ -27,29 +27,32 @@ use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::IotaClient;
-use move_core_types::language_storage::StructTag;
+use identity_iota_interaction::IotaClientTrait;
+use crate::iota_interaction_adapter::IotaClientAdapter;
+use identity_iota_interaction::move_types::language_storage::StructTag;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
-
 use crate::rebased::migration::get_alias;
 use crate::rebased::migration::get_identity;
 use crate::rebased::migration::lookup;
 use crate::rebased::migration::Identity;
 use crate::rebased::Error;
 
+#[cfg(not(target_arch = "wasm32"))]
+use identity_iota_interaction::IotaClient;
+
 /// An [`IotaClient`] enriched with identity-related
 /// functionalities.
 #[derive(Clone)]
 pub struct IdentityClientReadOnly {
-  iota_client: IotaClient,
+  iota_client: IotaClientAdapter,
   iota_identity_pkg_id: ObjectID,
   migration_registry_id: ObjectID,
   network: NetworkName,
 }
 
 impl Deref for IdentityClientReadOnly {
-  type Target = IotaClient;
+  type Target = IotaClientAdapter;
   fn deref(&self) -> &Self::Target {
     &self.iota_client
   }
@@ -74,16 +77,26 @@ impl IdentityClientReadOnly {
     self.migration_registry_id
   }
 
-  /// Attempts to create a new [`IdentityClientReadOnly`] from a given [`IotaClient`].
-  ///
-  /// # Failures
-  /// This function fails if the provided `iota_client` is connected to an unrecognized
-  /// network.
-  ///
-  /// # Notes
-  /// When trying to connect to a local or unofficial network prefer using
-  /// [`IdentityClientReadOnly::new_with_pkg_id`].
-  pub async fn new(iota_client: IotaClient) -> Result<Self, Error> {
+  cfg_if::cfg_if! {
+    if #[cfg(target_arch = "wasm32")] {
+      //TODO: Define fn new() for wasm32 platforms
+    } else {
+      /// Attempts to create a new [`IdentityClientReadOnly`] from a given [`IotaClient`].
+      ///
+      /// # Failures
+      /// This function fails if the provided `iota_client` is connected to an unrecognized
+      /// network.
+      ///
+      /// # Notes
+      /// When trying to connect to a local or unofficial network prefer using
+      /// [`IdentityClientReadOnly::new_with_pkg_id`].
+      pub async fn new(iota_client: IotaClient) -> Result<Self, Error> {
+        Self::new_internal(IotaClientAdapter::new(iota_client)?).await
+      }
+    }
+  }
+
+  async fn new_internal(iota_client: IotaClientAdapter) -> Result<Self, Error> {
     let network = network_id(&iota_client).await?;
     let metadata = iota::well_known_networks::network_metadata(&network).ok_or_else(|| {
       Error::InvalidConfig(format!(
@@ -103,9 +116,22 @@ impl IdentityClientReadOnly {
     })
   }
 
-  /// Attempts to create a new [`IdentityClientReadOnly`] from
-  /// the given [`IotaClient`].
-  pub async fn new_with_pkg_id(iota_client: IotaClient, iota_identity_pkg_id: ObjectID) -> Result<Self, Error> {
+  cfg_if::cfg_if! {
+    if #[cfg(target_arch = "wasm32")] {
+      //TODO: Define fn new() for wasm32 platforms
+    } else {
+      /// Attempts to create a new [`IdentityClientReadOnly`] from
+      /// the given [`IotaClient`].
+      pub async fn new_with_pkg_id(iota_client: IotaClient, iota_identity_pkg_id: ObjectID) -> Result<Self, Error> {
+        Self::new_with_pkg_id_internal(
+          IotaClientAdapter::new(iota_client)?,
+          iota_identity_pkg_id
+        ).await
+      }
+    }
+  }
+
+  async fn new_with_pkg_id_internal(iota_client: IotaClientAdapter, iota_identity_pkg_id: ObjectID) -> Result<Self, Error> {
     let IdentityPkgMetadata {
       migration_registry_id, ..
     } = identity_pkg_metadata(&iota_client, iota_identity_pkg_id).await?;
@@ -201,7 +227,15 @@ impl IdentityClientReadOnly {
   /// Resolves an [`Identity`] from its ID `object_id`.
   pub async fn get_identity(&self, object_id: ObjectID) -> Result<Identity, Error> {
     // spawn all checks
-    let all_futures = FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
+    cfg_if::cfg_if! {
+      // Unfortunately the compiler runs into lifetime problems if we try to use a 'type ='
+      // instead of the below ugly platform specific code
+      if #[cfg(target_arch = "wasm32")] {
+        let all_futures = FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>>>>>::new();
+      } else {
+        let all_futures = FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
+      }
+    }
     all_futures.push(Box::pin(resolve_new(self, object_id)));
     all_futures.push(Box::pin(resolve_migrated(self, object_id)));
     all_futures.push(Box::pin(resolve_unmigrated(self, object_id)));
@@ -214,7 +248,7 @@ impl IdentityClientReadOnly {
   }
 }
 
-async fn network_id(iota_client: &IotaClient) -> Result<NetworkName, Error> {
+async fn network_id(iota_client: &IotaClientAdapter) -> Result<NetworkName, Error> {
   let network_id = iota_client
     .read_api()
     .get_chain_identifier()
@@ -237,7 +271,7 @@ struct MigrationRegistryCreatedEvent {
 // TODO: remove argument `package_id` and use `EventFilter::MoveEventField` to find the beacon event and thus the
 // package id.
 // TODO: authenticate the beacon event with though sender's ID.
-async fn identity_pkg_metadata(iota_client: &IotaClient, package_id: ObjectID) -> Result<IdentityPkgMetadata, Error> {
+async fn identity_pkg_metadata(iota_client: &IotaClientAdapter, package_id: ObjectID) -> Result<IdentityPkgMetadata, Error> {
   // const EVENT_BEACON_PATH: &str = "/beacon";
   // const EVENT_BEACON_VALUE: &[u8] = b"identity.rs_pkg";
 

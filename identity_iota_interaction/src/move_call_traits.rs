@@ -4,7 +4,11 @@
 use std::collections::{HashMap, HashSet};
 use std::iter::IntoIterator;
 
-use crate::{rpc_types::{OwnedObjectRef, IotaObjectData}, types::base_types::{IotaAddress, ObjectID, ObjectRef, SequenceNumber}, types::transaction::{Argument, ProgrammableTransaction}, types::TypeTag, ProgrammableTransactionBcs, TransactionBuilderT, MoveType, IotaTransactionBlockResponseT};
+use crate::rpc_types::{OwnedObjectRef, IotaObjectData};
+use crate::types::base_types::{IotaAddress, ObjectID, ObjectRef, SequenceNumber};
+use crate::types::transaction::{Argument};
+use crate::types::TypeTag;
+use crate::{ProgrammableTransactionBcs, TransactionBuilderT, MoveType};
 use serde::Serialize;
 
 pub trait AssetMoveCalls {
@@ -58,9 +62,32 @@ pub trait AssetMoveCalls {
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 }
 
+pub trait MigrationMoveCalls {
+  type Error;
+
+  fn migrate_did_output(
+    did_output: ObjectRef,
+    creation_timestamp: Option<u64>,
+    migration_registry: OwnedObjectRef,
+    package: ObjectID,
+  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error>;
+}
+
+pub trait BorrowIntentFnT<E, B>: FnOnce(
+  &mut dyn TransactionBuilderT<Error=E, NativeTxBuilder=B>,
+  &HashMap<ObjectID,(Argument, IotaObjectData)>)
+{}
+impl<T, E, B> BorrowIntentFnT<E, B> for T where T: FnOnce(
+  &mut dyn TransactionBuilderT<Error=E, NativeTxBuilder=B>,
+  &HashMap<ObjectID, (Argument, IotaObjectData)>)
+{}
+
+pub trait ControllerIntentFnT<E, B>: FnOnce(&mut dyn TransactionBuilderT<Error=E, NativeTxBuilder=B>, &Argument) {}
+impl<T, E, B> ControllerIntentFnT<E, B> for T where T: FnOnce(&mut dyn TransactionBuilderT<Error=E, NativeTxBuilder=B>, &Argument) {}
+
 pub trait IdentityMoveCalls {
   type Error;
-  type TxBuilder: TransactionBuilderT;
+  type NativeTxBuilder;
 
   fn propose_borrow(
     identity: OwnedObjectRef,
@@ -70,16 +97,14 @@ pub trait IdentityMoveCalls {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-  fn execute_borrow<F>(
+  fn execute_borrow<F: BorrowIntentFnT<Self::Error, Self::NativeTxBuilder>>(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,
     objects: Vec<IotaObjectData>,
     intent_fn: F,
     package: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, Self::Error>
-  where
-      F: FnOnce(&mut dyn TransactionBuilderT, &HashMap<ObjectID, (Argument, IotaObjectData)>);
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
   fn propose_config_change<I1, I2>(
     identity: OwnedObjectRef,
@@ -90,7 +115,7 @@ pub trait IdentityMoveCalls {
     controllers_to_remove: HashSet<ObjectID>,
     controllers_to_update: I2,
     package: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>
   where
     I1: IntoIterator<Item = (IotaAddress, u64)>,
     I2: IntoIterator<Item = (ObjectID, u64)>;
@@ -110,16 +135,14 @@ pub trait IdentityMoveCalls {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-  fn execute_controller_execution<F>(
+  fn execute_controller_execution<F: ControllerIntentFnT<Self::Error, Self::NativeTxBuilder>>(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,
     borrowing_controller_cap_ref: ObjectRef,
     intent_fn: F,
     package: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, Self::Error>
-  where
-      F: FnOnce(&mut dyn TransactionBuilderT, &Argument);
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
   fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error>;
 

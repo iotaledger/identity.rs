@@ -5,17 +5,11 @@ use std::process::Output;
 
 use anyhow::Context as _;
 use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use identity_iota_interaction::types::transaction::Argument;
-use identity_iota_interaction::types::TypeTag;
 use serde::Deserialize;
-use serde::Serialize;
+#[cfg(not(target_arch = "wasm32"))]
 use tokio::process::Command;
 
 use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::IotaClient;
-use identity_iota_interaction::IotaClientBuilder;
-
 use crate::rebased::Error;
 
 const FUND_WITH_ACTIVE_ADDRESS_FUNDING_TX_BUDGET: u64 = 5_000_000;
@@ -28,14 +22,20 @@ struct CoinOutput {
   nanos_balance: u64,
 }
 
-/// Builds an `IOTA` client for the given network.
-pub async fn get_client(network: &str) -> Result<IotaClient, Error> {
-  let client = IotaClientBuilder::default()
-    .build(network)
-    .await
-    .map_err(|err| Error::Network(format!("failed to connect to {network}"), err))?;
+cfg_if::cfg_if! {
+    if #[cfg(not(target_arch = "wasm32"))] {
+      use iota_sdk::{IotaClientBuilder, IotaClient};
 
-  Ok(client)
+      /// Builds an `IOTA` client for the given network.
+      pub async fn get_client(network: &str) -> Result<IotaClient, Error> {
+        let client = IotaClientBuilder::default()
+          .build(network)
+          .await
+          .map_err(|err| Error::Network(format!("failed to connect to {network}"), err))?;
+
+        Ok(client)
+      }
+  }
 }
 
 fn unpack_command_output(output: &Output, task: &str) -> anyhow::Result<String> {
@@ -54,6 +54,7 @@ fn unpack_command_output(output: &Output, task: &str) -> anyhow::Result<String> 
 /// For that the env variable `IOTA_IDENTITY_FUND_WITH_ACTIVE_ADDRESS` must be set to `true`.
 /// Notice, that this is a setting mostly intended for internal test use and must be used with care.
 /// For details refer to to `identity_iota_core`'s README.md.
+#[cfg(not(target_arch = "wasm32"))]
 pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
   let fund_with_active_address = std::env::var("IOTA_IDENTITY_FUND_WITH_ACTIVE_ADDRESS")
     .map(|v| !v.is_empty() && v.to_lowercase() == "true")

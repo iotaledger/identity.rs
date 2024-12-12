@@ -1,6 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::rpc_types::IotaData;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::id::ID;
@@ -27,7 +28,7 @@ pub enum Error {
 /// Lookup a legacy `alias_id` into the migration registry
 /// to get the UID of the corresponding migrated DID document if any.
 pub async fn lookup(
-  iota_client: &IdentityClientReadOnly,
+  id_client: &IdentityClientReadOnly,
   alias_id: ObjectID,
 ) -> Result<Option<OnChainIdentity>, Error> {
   let dynamic_field_name = serde_json::from_value(serde_json::json!({
@@ -36,9 +37,9 @@ pub async fn lookup(
   }))
   .expect("valid move value");
 
-  let identity_id = iota_client
+  let identity_id = id_client
     .read_api()
-    .get_dynamic_field_object(iota_client.migration_registry_id(), dynamic_field_name)
+    .get_dynamic_field_object(id_client.migration_registry_id(), dynamic_field_name)
     .await
     .map_err(|e| Error::Client(e.into()))?
     .data
@@ -55,7 +56,7 @@ pub async fn lookup(
     .transpose()?;
 
   if let Some(id) = identity_id {
-    get_identity(iota_client, id).await.map_err(|e| Error::Client(e.into()))
+    get_identity(id_client, id).await.map_err(|e| Error::Client(e.into()))
   } else {
     Ok(None)
   }

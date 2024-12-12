@@ -9,7 +9,7 @@ use identity_iota_interaction::types::programmable_transaction_builder::Programm
 use identity_iota_interaction::types::transaction::ObjectArg;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::types::TypeTag;
-use move_core_types::ident_str;
+use identity_iota_interaction::ident_str;
 
 use crate::rebased::iota::move_calls;
 use crate::rebased::proposals::SendAction;

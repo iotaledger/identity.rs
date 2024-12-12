@@ -1,15 +1,12 @@
-use cfg_if::cfg_if;
+// The following platform compile switch provides all the
+// ...Adapter types from iota_interaction_rust or iota_interaction_ts
+// like IotaClientAdapter, AssetMoveCallsAdapter, IdentityMoveCallsAdapter,
+// TransactionBuilderAdapter, MigrationMoveCallsAdapter, ... and so on
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-        pub use iota_interaction_ts::IotaClientAdapter;
-        pub use iota_interaction_ts::AssetMoveCallsAdapter;
-        pub use iota_interaction_ts::IdentityMoveCallsAdapter;
-        pub use iota_interaction_ts::TransactionBuilderAdapter;
+        pub(crate) use iota_interaction_ts::*;
     } else {
-        pub use crate::iota_interaction_rust::IotaClientAdapter;
-        pub use crate::iota_interaction_rust::AssetMoveCallsAdapter;
-        pub use crate::iota_interaction_rust::IdentityMoveCallsAdapter;
-        pub use crate::iota_interaction_rust::TransactionBuilderAdapter;
+        pub(crate) use crate::iota_interaction_rust::*;
     }
 }

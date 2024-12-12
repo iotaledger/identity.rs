@@ -7,7 +7,7 @@ use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::TransactionBuilderT;
 use crate::error::TsSdkError;
 
-type NativeTsCodeBindingWrapper = ();
+pub type NativeTsCodeBindingWrapper = ();
 
 pub struct TransactionBuilderTsSdk {
     pub(crate) builder: NativeTsCodeBindingWrapper
@@ -21,9 +21,18 @@ impl TransactionBuilderTsSdk {
 
 impl TransactionBuilderT for TransactionBuilderTsSdk {
     type Error = TsSdkError;
+    type NativeTxBuilder = NativeTsCodeBindingWrapper;
 
     fn finish(self) -> Result<ProgrammableTransactionBcs, TsSdkError> {
         unimplemented!();
+    }
+
+    fn as_native_tx_builder(&mut self) -> &mut Self::NativeTxBuilder {
+        todo!()
+    }
+
+    fn into_native_tx_builder(self) -> Self::NativeTxBuilder {
+        todo!()
     }
 }
 

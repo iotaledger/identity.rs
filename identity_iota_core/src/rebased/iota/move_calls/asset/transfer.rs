@@ -10,7 +10,7 @@ use identity_iota_interaction::types::transaction::Command;
 use identity_iota_interaction::types::transaction::ObjectArg;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::types::TypeTag;
-use move_core_types::ident_str;
+use identity_iota_interaction::ident_str;
 
 use identity_iota_interaction::MoveType;
 use crate::rebased::Error;

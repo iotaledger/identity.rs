@@ -19,6 +19,7 @@ crate-type = ["cdylib", "rlib"]
 anyhow = "1.0.75"
 async-trait = { version = "0.1", default-features = false }
 bls12_381_plus = "0.8.17"
+cfg-if = "1.0.0"
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
 js-sys = { version = "0.3.61" }

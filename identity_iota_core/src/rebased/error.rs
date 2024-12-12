@@ -3,6 +3,9 @@
 
 //! Errors that may occur for the rebased logic.
 
+#[cfg(target_arch = "wasm32")]
+use iota_interaction_ts::error::TsSdkError;
+
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
@@ -68,4 +71,17 @@ pub enum Error {
   /// An error caused by a bcs serialization or deserialization.
   #[error("BCS error: {0}")]
   BcsError(#[from] bcs::Error),
+  /// An anyhow::error.
+  #[error("Any error: {0}")]
+  AnyError(#[from] anyhow::Error),
+  #[cfg(target_arch = "wasm32")]
+  /// An error originating from IOTA typescript SDK import bindings
+  #[error("TsSdkError: {0}")]
+  TsSdkError(#[from] TsSdkError),
+}
+
+/// Can be used for example like `map_err(rebased_err)` to convert other error
+///  types to identity_iota_core::rebased::Error.
+pub fn rebased_err<T>(error: T) -> Error where Error: From<T> {
+  error.into()
 }

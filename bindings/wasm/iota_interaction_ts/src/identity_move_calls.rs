@@ -5,16 +5,12 @@ use serde::Serialize;
 use std::collections::HashSet;
 
 use super::TransactionBuilderAdapter;
-use identity_iota_interaction::{
-    IdentityMoveCalls,
-    ProgrammableTransactionBcs,
-    types::{
-        TypeTag,
-        base_types::{SequenceNumber, ObjectID, ObjectRef, IotaAddress},
-        transaction::Argument,
-    }
-};
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
+use identity_iota_interaction::{IdentityMoveCalls, ProgrammableTransactionBcs, types::{
+    TypeTag,
+    base_types::{SequenceNumber, ObjectID, ObjectRef, IotaAddress},
+    transaction::Argument,
+}, BorrowIntentFnT, ControllerIntentFnT};
+use identity_iota_interaction::rpc_types::{IotaObjectData, OwnedObjectRef};
 use identity_iota_interaction::MoveType;
 use crate::error::TsSdkError;
 
@@ -22,7 +18,28 @@ pub struct IdentityMoveCallsTsSdk {}
 
 impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     type Error = TsSdkError;
-    type TxBuilder = TransactionBuilderAdapter;
+    type NativeTxBuilder = ();  // TODO: Set this to the wasm32... type that is wrapped by IdentityMoveCallsTsSdk
+
+    fn propose_borrow(
+        identity: OwnedObjectRef,
+        capability: ObjectRef,
+        objects: Vec<ObjectID>,
+        expiration: Option<u64>,
+        package_id: ObjectID
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
+        todo!()
+    }
+
+    fn execute_borrow<F: BorrowIntentFnT<Self::Error, Self::NativeTxBuilder>>(
+        identity: OwnedObjectRef,
+        capability: ObjectRef,
+        proposal_id: ObjectID,
+        objects: Vec<IotaObjectData>,
+        intent_fn: F,
+        package: ObjectID
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
+        todo!()
+    }
 
     fn propose_config_change<I1, I2>(
         identity: OwnedObjectRef,
@@ -33,7 +50,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
         controllers_to_remove: HashSet<ObjectID>,
         controllers_to_update: I2,
         package: ObjectID,
-    ) -> anyhow::Result<ProgrammableTransactionBcs>
+    ) -> Result<ProgrammableTransactionBcs, Self::Error>
         where
             I1: IntoIterator<Item = (IotaAddress, u64)>,
             I2: IntoIterator<Item = (ObjectID, u64)>,
@@ -42,14 +59,33 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     }
 
     fn execute_config_change(
-        ptb: Option<Self::TxBuilder>,
-        proposal_id_arg: Option<Argument>,
         identity: OwnedObjectRef,
         controller_cap: ObjectRef,
         proposal_id: ObjectID,
         package: ObjectID,
-    ) -> anyhow::Result<ProgrammableTransactionBcs> {
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
         unimplemented!();
+    }
+
+    fn propose_controller_execution(
+        identity: OwnedObjectRef,
+        capability: ObjectRef,
+        controller_cap_id: ObjectID,
+        expiration: Option<u64>,
+        package_id: ObjectID
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
+        todo!()
+    }
+
+    fn execute_controller_execution<F: ControllerIntentFnT<Self::Error, Self::NativeTxBuilder>>(
+        identity: OwnedObjectRef,
+        capability: ObjectRef,
+        proposal_id: ObjectID,
+        borrowing_controller_cap_ref: ObjectRef,
+        intent_fn: F,
+        package: ObjectID
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
+        todo!()
     }
 
     fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
@@ -70,18 +106,16 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
         capability: ObjectRef,
         expiration: Option<u64>,
         package_id: ObjectID,
-    ) -> Result<ProgrammableTransactionBcs, anyhow::Error> {
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
         unimplemented!();
     }
 
     fn execute_deactivation(
-        ptb: Option<Self::TxBuilder>,
-        proposal_arg: Option<Argument>,
         identity: OwnedObjectRef,
         capability: ObjectRef,
         proposal_id: ObjectID,
         package_id: ObjectID,
-    ) -> Result<ProgrammableTransactionBcs, anyhow::Error> {
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
         unimplemented!();
     }
 
@@ -94,24 +128,60 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
         unimplemented!();
     }
 
+    fn propose_send(
+        identity: OwnedObjectRef,
+        capability: ObjectRef,
+        transfer_map: Vec<(ObjectID, IotaAddress)>,
+        expiration: Option<u64>,
+        package_id: ObjectID
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
+        todo!()
+    }
+
+    fn execute_send(
+        identity: OwnedObjectRef,
+        capability: ObjectRef,
+        proposal_id: ObjectID,
+        objects: Vec<(ObjectRef, TypeTag)>,
+        package: ObjectID
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
+        todo!()
+    }
+
     fn propose_update(
         identity: OwnedObjectRef,
         capability: ObjectRef,
         did_doc: impl AsRef<[u8]>,
         expiration: Option<u64>,
         package_id: ObjectID,
-    ) -> Result<ProgrammableTransactionBcs, anyhow::Error> {
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
         unimplemented!();
     }
 
     fn execute_update(
-        ptb: Option<Self::TxBuilder>,
-        proposal_arg: Option<Argument>,
         identity: OwnedObjectRef,
         capability: ObjectRef,
         proposal_id: ObjectID,
         package_id: ObjectID,
-    ) -> Result<ProgrammableTransactionBcs, anyhow::Error> {
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
         unimplemented!();
+    }
+
+    fn propose_upgrade(
+        identity: OwnedObjectRef,
+        capability: ObjectRef,
+        expiration: Option<u64>,
+        package_id: ObjectID
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
+        todo!()
+    }
+
+    fn execute_upgrade(
+        identity: OwnedObjectRef,
+        capability: ObjectRef,
+        proposal_id: ObjectID,
+        package_id: ObjectID
+    ) -> Result<ProgrammableTransactionBcs, Self::Error> {
+        todo!()
     }
 }

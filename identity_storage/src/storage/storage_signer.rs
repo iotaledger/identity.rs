@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use identity_iota_core::rebased::client::IotaKeySignature;
+use identity_iota_interaction::IotaKeySignature;
 use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkParams;
 use identity_verification::jwu;

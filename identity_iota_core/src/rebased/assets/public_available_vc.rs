@@ -12,6 +12,7 @@ use identity_jose::jwt::JwtHeader;
 use identity_jose::jwu;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::TypeTag;
+use identity_iota_interaction::IotaKeySignature;
 use itertools::Itertools;
 use secret_storage::Signer;
 use serde::Deserialize;
@@ -19,8 +20,7 @@ use serde::Serialize;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::client::IotaKeySignature;
-use crate::rebased::transaction::Transaction;
+use crate::rebased::transaction::TransactionInternal;
 use identity_iota_interaction::MoveType;
 
 use super::AuthenticatedAsset;
@@ -79,7 +79,7 @@ impl PublicAvailableVC {
       .mutable(true)
       .deletable(true)
       .finish()
-      .execute_with_opt_gas(gas_budget, client)
+      .execute_with_opt_gas_internal(gas_budget, client)
       .await?
       .output;
 

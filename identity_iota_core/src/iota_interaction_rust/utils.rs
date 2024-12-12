@@ -13,7 +13,7 @@ use identity_iota_interaction::types::transaction::ObjectArg;
 use identity_iota_interaction::types::IOTA_CLOCK_OBJECT_ID;
 use identity_iota_interaction::types::IOTA_CLOCK_OBJECT_SHARED_VERSION;
 use identity_iota_interaction::types::MOVE_STDLIB_PACKAGE_ID;
-use identity_iota_interaction::{MoveType, ProgrammableTransactionBcs};
+use identity_iota_interaction::MoveType;
 use serde::Serialize;
 
 /// Adds a reference to the on-chain clock to `ptb`'s arguments.

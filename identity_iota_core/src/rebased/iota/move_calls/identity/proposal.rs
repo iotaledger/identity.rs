@@ -10,7 +10,7 @@ use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use identity_iota_interaction::types::transaction::ObjectArg;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use move_core_types::ident_str;
+use identity_iota_interaction::ident_str;
 
 pub(crate) fn approve<T: MoveType>(
   identity: OwnedObjectRef,

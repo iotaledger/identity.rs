@@ -3,12 +3,11 @@
 
 use std::str::FromStr as _;
 
+use crate::iota_interaction_adapter::AssetMoveCallsAdapter;
+use identity_iota_interaction::IotaKeySignature;
 use crate::rebased::client::IdentityClient;
-use crate::rebased::client::IotaKeySignature;
-use crate::rebased::iota::move_calls;
-use crate::rebased::transaction::Transaction;
-use crate::rebased::transaction::TransactionOutput;
-use identity_iota_interaction::MoveType;
+use crate::rebased::transaction::{TransactionInternal, TransactionOutputInternal};
+use identity_iota_interaction::{AssetMoveCalls, IotaClientTrait, MoveType};
 use crate::rebased::Error;
 use anyhow::anyhow;
 use anyhow::Context;
@@ -16,7 +15,6 @@ use async_trait::async_trait;
 use identity_iota_interaction::rpc_types::IotaData as _;
 use identity_iota_interaction::rpc_types::IotaExecutionStatus;
 use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
@@ -24,8 +22,8 @@ use identity_iota_interaction::types::base_types::SequenceNumber;
 use identity_iota_interaction::types::id::UID;
 use identity_iota_interaction::types::object::Owner;
 use identity_iota_interaction::types::TypeTag;
-use move_core_types::ident_str;
-use move_core_types::language_storage::StructTag;
+use identity_iota_interaction::ident_str;
+use identity_iota_interaction::move_types::language_storage::StructTag;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -51,7 +49,7 @@ pub struct AuthenticatedAsset<T> {
 fn deserialize_inner<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
   D: Deserializer<'de>,
-  T: DeserializeOwned,
+  T: for<'a> Deserialize<'a>,
 {
   use serde::de::Error as _;
 
@@ -65,7 +63,7 @@ where
 
 impl<T> AuthenticatedAsset<T>
 where
-  T: DeserializeOwned,
+    T: for<'a> Deserialize<'a>,
 {
   /// Resolves an [`AuthenticatedAsset`] by its ID `id`.
   pub async fn get_by_id<S>(id: ObjectID, client: &IdentityClient<S>) -> Result<Self, Error> {
@@ -374,32 +372,31 @@ pub struct UpdateContentTx<'a, T> {
   new_content: T,
 }
 
-#[async_trait]
-impl<T> Transaction for UpdateContentTx<'_, T>
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl<T> TransactionInternal for UpdateContentTx<'_, T>
 where
   T: MoveType + Serialize + Clone + Send + Sync,
 {
   type Output = ();
 
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas_internal<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<Self::Output>, Error>
+  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
-    let tx = move_calls::asset::update(
+    let tx = AssetMoveCallsAdapter::update(
       self.asset.object_ref(client).await?,
       self.new_content.clone(),
       client.package_id(),
     )?;
     let response = client.execute_transaction(tx, gas_budget).await?;
     let tx_status = response
-      .effects
-      .as_ref()
+      .effects_execution_status()
       .context("transaction had no effects")
-      .map(|effects| effects.status())
       .map_err(|e| Error::TransactionUnexpectedResponse(e.to_string()))?;
 
     if let IotaExecutionStatus::Failure { error } = tx_status {
@@ -408,7 +405,7 @@ where
 
     self.asset.inner = self.new_content;
 
-    Ok(TransactionOutput { output: (), response })
+    Ok(TransactionOutputInternal { output: (), response })
   }
 }
 
@@ -416,44 +413,46 @@ where
 #[derive(Debug)]
 pub struct DeleteAssetTx<T>(AuthenticatedAsset<T>);
 
-#[async_trait]
-impl<T> Transaction for DeleteAssetTx<T>
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl<T> TransactionInternal for DeleteAssetTx<T>
 where
   T: MoveType + Send + Sync,
 {
   type Output = ();
 
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas_internal<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<Self::Output>, Error>
+  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
     let asset_ref = self.0.object_ref(client).await?;
-    let tx = move_calls::asset::delete::<T>(asset_ref, client.package_id())?;
+    let tx = AssetMoveCallsAdapter::delete::<T>(asset_ref, client.package_id())?;
 
     let response = client.execute_transaction(tx, gas_budget).await?;
-    Ok(TransactionOutput { output: (), response })
+    Ok(TransactionOutputInternal { output: (), response })
   }
 }
 /// A [`Transaction`] that creates a new [`AuthenticatedAsset`].
 #[derive(Debug)]
 pub struct CreateAssetTx<T>(AuthenticatedAssetBuilder<T>);
 
-#[async_trait]
-impl<T> Transaction for CreateAssetTx<T>
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl<T> TransactionInternal for CreateAssetTx<T>
 where
   T: MoveType + Serialize + DeserializeOwned + Send,
 {
   type Output = AuthenticatedAsset<T>;
 
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas_internal<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<Self::Output>, Error>
+  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -463,22 +462,20 @@ where
       transferable,
       deletable,
     } = self.0;
-    let tx = move_calls::asset::new(inner, mutable, transferable, deletable, client.package_id())?;
+    let tx = AssetMoveCallsAdapter::new_asset(inner, mutable, transferable, deletable, client.package_id())?;
 
     let response = client.execute_transaction(tx, gas_budget).await?;
 
     let created_asset_id = response
-      .effects
-      .as_ref()
+      .effects_created()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?
-      .created()
       .first()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("no object was created in this transaction".to_owned()))?
       .object_id();
 
     AuthenticatedAsset::get_by_id(created_asset_id, client)
       .await
-      .map(move |output| TransactionOutput { output, response })
+      .map(move |output| TransactionOutputInternal { output, response })
   }
 }
 
@@ -489,33 +486,33 @@ pub struct TransferAssetTx<T> {
   recipient: IotaAddress,
 }
 
-#[async_trait]
-impl<T> Transaction for TransferAssetTx<T>
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl<T> TransactionInternal for TransferAssetTx<T>
 where
   T: MoveType + Send + Sync,
 {
   type Output = TransferProposal;
 
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas_internal<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<Self::Output>, Error>
+  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
-    let tx = move_calls::asset::transfer::<T>(
+    let tx = AssetMoveCallsAdapter::transfer::<T>(
       self.asset.object_ref(client).await?,
       self.recipient,
       client.package_id(),
     )?;
 
     let tx_result = client.execute_transaction(tx, gas_budget).await?;
-    let created_obj_ids = tx_result
-      .effects
-      .as_ref()
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?
-      .created()
+    let effects_created = tx_result
+      .effects_created()
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?;
+    let created_obj_ids = effects_created
       .iter()
       .map(|obj| obj.reference.object_id);
     for id in created_obj_ids {
@@ -531,7 +528,7 @@ where
       if object_type == TransferProposal::move_type(client.package_id()).to_string() {
         return TransferProposal::get_by_id(id, client)
           .await
-          .map(move |proposal| TransactionOutput {
+          .map(move |proposal| TransactionOutputInternal {
             output: proposal,
             response: tx_result,
           });
@@ -548,14 +545,15 @@ where
 #[derive(Debug)]
 pub struct AcceptTransferTx(TransferProposal);
 
-#[async_trait]
-impl Transaction for AcceptTransferTx {
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl TransactionInternal for AcceptTransferTx {
   type Output = ();
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas_internal<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<Self::Output>, Error>
+  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -576,7 +574,7 @@ impl Transaction for AcceptTransferTx {
       .initial_shared_version(client)
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
-    let tx = move_calls::asset::accept_proposal(
+    let tx = AssetMoveCallsAdapter::accept_proposal(
       (self.0.id(), initial_shared_version),
       cap,
       asset_ref,
@@ -585,7 +583,7 @@ impl Transaction for AcceptTransferTx {
     )?;
 
     let response = client.execute_transaction(tx, gas_budget).await?;
-    Ok(TransactionOutput { output: (), response })
+    Ok(TransactionOutputInternal { output: (), response })
   }
 }
 
@@ -593,14 +591,15 @@ impl Transaction for AcceptTransferTx {
 #[derive(Debug)]
 pub struct ConcludeTransferTx(TransferProposal);
 
-#[async_trait]
-impl Transaction for ConcludeTransferTx {
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl TransactionInternal for ConcludeTransferTx {
   type Output = ();
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas_internal<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<Self::Output>, Error>
+  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -616,7 +615,7 @@ impl Transaction for ConcludeTransferTx {
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
 
-    let tx = move_calls::asset::conclude_or_cancel(
+    let tx = AssetMoveCallsAdapter::conclude_or_cancel(
       (self.0.id(), initial_shared_version),
       cap,
       asset_ref,
@@ -625,6 +624,6 @@ impl Transaction for ConcludeTransferTx {
     )?;
 
     let response = client.execute_transaction(tx, gas_budget).await?;
-    Ok(TransactionOutput { output: (), response })
+    Ok(TransactionOutputInternal { output: (), response })
   }
 }

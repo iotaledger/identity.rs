@@ -6,7 +6,7 @@ use anyhow::anyhow;
 use anyhow::Context;
 use identity_iota_core::rebased::client::IdentityClient;
 use identity_iota_core::rebased::client::IdentityClientReadOnly;
-use identity_iota_core::rebased::client::IotaKeySignature;
+use identity_iota_interaction::IotaKeySignature;
 use identity_iota_core::rebased::transaction::Transaction;
 use identity_iota_core::rebased::utils::request_funds;
 use identity_iota_core::IotaDID;

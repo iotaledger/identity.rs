@@ -7,12 +7,13 @@ use std::marker::PhantomData;
 use std::ops::DerefMut as _;
 use std::str::FromStr as _;
 
+use crate::iota_interaction_adapter::{AdapterError, AdapterNativeResponse, IdentityMoveCallsAdapter, IotaTransactionBlockResponseAdapter};
+use identity_iota_interaction::{IdentityMoveCalls, IotaTransactionBlockResponseT, OptionalSync};
+use identity_iota_interaction::IotaKeySignature;
+
 use crate::rebased::client::IdentityClient;
-use crate::rebased::client::IotaKeySignature;
-use crate::rebased::iota::move_calls;
 use crate::rebased::migration::Proposal;
 use async_trait::async_trait;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::collection_types::Entry;
@@ -174,10 +175,12 @@ impl ConfigChange {
   }
 }
 
-#[async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl ProposalT for Proposal<ConfigChange> {
   type Action = ConfigChange;
   type Output = ();
+  type Response = IotaTransactionBlockResponseAdapter;
 
   async fn create<'i, S>(
     action: Self::Action,
@@ -186,7 +189,7 @@ impl ProposalT for Proposal<ConfigChange> {
     client: &IdentityClient<S>,
   ) -> Result<CreateProposalTx<'i, Self::Action>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     // Check the validity of the proposed changes.
     action.validate(identity)?;
@@ -200,7 +203,7 @@ impl ProposalT for Proposal<ConfigChange> {
       .controller_voting_power(controller_cap_ref.0)
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
-    let tx = move_calls::identity::propose_config_change(
+    let tx = IdentityMoveCallsAdapter::propose_config_change(
       identity_ref,
       controller_cap_ref,
       expiration,
@@ -226,7 +229,7 @@ impl ProposalT for Proposal<ConfigChange> {
     client: &IdentityClient<S>,
   ) -> Result<ExecuteProposalTx<'i, Self::Action>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let proposal_id = self.id();
     let identity_ref = client
@@ -236,7 +239,7 @@ impl ProposalT for Proposal<ConfigChange> {
     let controller_cap_ref = identity.get_controller_cap(client).await?;
 
     let tx =
-      move_calls::identity::execute_config_change(identity_ref, controller_cap_ref, proposal_id, client.package_id())
+        IdentityMoveCallsAdapter::execute_config_change(identity_ref, controller_cap_ref, proposal_id, client.package_id())
         .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(ExecuteProposalTx {
@@ -246,7 +249,7 @@ impl ProposalT for Proposal<ConfigChange> {
     })
   }
 
-  fn parse_tx_effects(_tx_response: &IotaTransactionBlockResponse) -> Result<Self::Output, Error> {
+  fn parse_tx_effects_internal(_tx_response: &dyn IotaTransactionBlockResponseT<Error=AdapterError, NativeResponse=AdapterNativeResponse>) -> Result<Self::Output, Error> {
     Ok(())
   }
 }

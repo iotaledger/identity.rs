@@ -6,7 +6,7 @@ use identity_iota_interaction::types::programmable_transaction_builder::Programm
 use identity_iota_interaction::types::transaction::Command;
 use identity_iota_interaction::types::transaction::ProgrammableMoveCall;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use move_core_types::ident_str;
+use identity_iota_interaction::ident_str;
 use serde::Serialize;
 
 use identity_iota_interaction::MoveType;

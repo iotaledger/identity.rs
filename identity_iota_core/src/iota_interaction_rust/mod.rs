@@ -1,13 +1,33 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod asset_move_calls;
-pub mod identity_move_calls;
-pub mod iota_client_rust_sdk;
-pub mod transaction_builder;
-pub mod utils;
+mod utils;
+pub(crate) mod asset_move_calls;
+pub(crate) mod identity_move_calls;
+pub(crate) mod iota_client_rust_sdk;
+pub(crate) mod transaction_builder;
+pub(crate) mod migration_move_calls;
 
-pub use asset_move_calls::AssetMoveCallsRustSdk as AssetMoveCallsAdapter;
-pub use identity_move_calls::IdentityMoveCallsRustSdk as IdentityMoveCallsAdapter;
-pub use iota_client_rust_sdk::IotaClientRustSdk as IotaClientAdapter;
-pub use transaction_builder::TransactionBuilderRustSdk as TransactionBuilderAdapter;
+pub(crate) use iota_client_rust_sdk::IotaClientRustSdk as IotaClientAdapter;
+pub(crate) use iota_client_rust_sdk::IotaTransactionBlockResponseProvider as IotaTransactionBlockResponseAdapter;
+pub(crate) use asset_move_calls::AssetMoveCallsRustSdk as AssetMoveCallsAdapter;
+pub(crate) use identity_move_calls::IdentityMoveCallsRustSdk as IdentityMoveCallsAdapter;
+pub(crate) use transaction_builder::TransactionBuilderRustSdk as TransactionBuilderAdapter;
+pub(crate) use migration_move_calls::MigrationMoveCallsRustSdk as MigrationMoveCallsAdapter;
+
+#[allow(unused_imports)] pub(crate) use iota_client_rust_sdk::IotaTransactionBlockResponseAdaptedT;
+#[allow(unused_imports)] pub(crate) use iota_client_rust_sdk::IotaTransactionBlockResponseAdaptedTraitObj;
+#[allow(unused_imports)] pub(crate) use iota_client_rust_sdk::QuorumDriverApiAdaptedT;
+#[allow(unused_imports)] pub(crate) use iota_client_rust_sdk::QuorumDriverApiAdaptedTraitObj;
+#[allow(unused_imports)] pub(crate) use iota_client_rust_sdk::ReadApiAdaptedT;
+#[allow(unused_imports)] pub(crate) use iota_client_rust_sdk::ReadApiAdaptedTraitObj;
+#[allow(unused_imports)] pub(crate) use iota_client_rust_sdk::CoinReadApiAdaptedT;
+#[allow(unused_imports)] pub(crate) use iota_client_rust_sdk::CoinReadApiAdaptedTraitObj;
+#[allow(unused_imports)] pub(crate) use iota_client_rust_sdk::EventApiAdaptedT;
+#[allow(unused_imports)] pub(crate) use iota_client_rust_sdk::EventApiAdaptedTraitObj;
+#[allow(unused_imports)] pub(crate) use iota_client_rust_sdk::IotaClientAdaptedT;
+#[allow(unused_imports)] pub(crate) use iota_client_rust_sdk::IotaClientAdaptedTraitObj;
+
+#[allow(unused_imports)] pub(crate) use super::rebased::Error as AdapterError;
+#[allow(unused_imports)] pub(crate) use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse as AdapterNativeResponse;
+

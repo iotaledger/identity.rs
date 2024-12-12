@@ -37,6 +37,8 @@ pub type TransactionDataBcs = Vec<u8>;
 pub type SignatureBcs = Vec<u8>;
 /// BCS serialized ProgrammableTransaction
 pub type ProgrammableTransactionBcs = Vec<u8>;
+/// BCS serialized IotaTransactionBlockResponse
+pub type IotaTransactionBlockResponseBcs = Vec<u8>;
 
 // dummy types, have to be replaced with actual types later on
 pub type DummySigner = str;
@@ -103,8 +105,14 @@ cfg_if::cfg_if! {
   if #[cfg(feature = "send-sync-transaction")] {
     pub trait OptionalSend: Send {}
     impl<T> OptionalSend for T where T: Send {}
+
+    pub trait OptionalSync: Sync {}
+    impl<T> OptionalSync for T where T: Sync {}
   } else {
     pub trait OptionalSend: {}
     impl<T> OptionalSend for T {}
+
+    pub trait OptionalSync: {}
+    impl<T> OptionalSync for T where T: {}
   }
 }

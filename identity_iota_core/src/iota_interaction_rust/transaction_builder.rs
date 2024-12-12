@@ -8,22 +8,31 @@ use identity_iota_interaction::types::programmable_transaction_builder::Programm
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::TransactionBuilderT;
 
-pub struct TransactionBuilderRustSdk {
+pub(crate) struct TransactionBuilderRustSdk {
   pub(crate) builder: ProgrammableTransactionBuilder,
 }
 
 impl TransactionBuilderRustSdk {
-  pub fn new(builder: ProgrammableTransactionBuilder) -> Self {
+  pub(crate) fn new(builder: ProgrammableTransactionBuilder) -> Self {
     TransactionBuilderRustSdk { builder }
   }
 }
 
 impl TransactionBuilderT for TransactionBuilderRustSdk {
   type Error = Error;
+  type NativeTxBuilder = ProgrammableTransactionBuilder;
 
   fn finish(self) -> Result<ProgrammableTransactionBcs, Error> {
     let tx = self.builder.finish();
     Ok(bcs::to_bytes(&tx)?)
+  }
+
+  fn as_native_tx_builder(&mut self) -> &mut Self::NativeTxBuilder {
+    &mut self.builder
+  }
+
+  fn into_native_tx_builder(self) -> Self::NativeTxBuilder {
+    self.builder
   }
 }
 
