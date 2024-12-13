@@ -13,10 +13,13 @@ const TS_SDK_TYPES: &'static str = r#"
     ExecuteTransactionBlockParams,
     IotaTransactionBlockResponseOptions,
     IotaTransactionBlockResponse,
-  }
-  from "@iota/iota.js/client";
+  } from "@iota/iota.js/client";
+  import {bcs} from "@iota/iota.js/bcs";
   
-  import {IotaTransactionBlockResponseAdapter} from "./kinesis_client_helpers"
+  import {IotaTransactionBlockResponseAdapter} from "./kinesis_client_helpers";
+
+  // TODO: decide if we use this or replace it with an adapter written in TypeScript type if needed
+  type ProgrammableTransaction = ReturnType<typeof bcs.ProgrammableTransaction.parse>;
 "#;
 
 #[wasm_bindgen(module = "@iota/iota.js/client")]
@@ -77,6 +80,12 @@ extern "C" {
   fn effects_created_inner(this: &IotaTransactionBlockResponseAdapter) -> Option<Vec<WasmOwnedObjectRef>>;
 }
 
+#[wasm_bindgen] // no module here, as imported via custom section above
+extern "C" {
+  #[wasm_bindgen(typescript_type = "ProgrammableTransaction")]
+  pub type WasmProgrammableTransaction;
+}
+
 #[derive(Deserialize)]
 struct WasmExecutionStatusAdapter {
   status: ExecutionStatus
@@ -104,3 +113,10 @@ impl IotaTransactionBlockResponseAdapter {
   }
 }
 
+#[derive(Deserialize)]
+// TODO: add manual deserialization later on (must be deserializable, but WasmPT is not)
+// pub struct ProgrammableTransaction(WasmProgrammableTransaction);
+pub struct ProgrammableTransaction(());
+
+// TODO: fill in required functions and data handling here
+impl ProgrammableTransaction {}

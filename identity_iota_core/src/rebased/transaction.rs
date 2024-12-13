@@ -7,6 +7,8 @@ use std::ops::Deref;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
 #[cfg(not(target_arch = "wasm32"))]
 use identity_iota_interaction::types::transaction::{ProgrammableTransaction};
+#[cfg(target_arch = "wasm32")]
+use iota_interaction_ts::ProgrammableTransaction;
 
 use async_trait::async_trait;
 use identity_iota_interaction::{IotaKeySignature, ProgrammableTransactionBcs};
@@ -157,6 +159,23 @@ impl TransactionInternal for ProgrammableTransaction {
     let tx_bcs = bcs::to_bytes(&self)?;
     let response = client.execute_transaction(tx_bcs, gas_budget).await?;
     Ok(TransactionOutputInternal { output: (), response })
+  }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl TransactionInternal for ProgrammableTransaction {
+  type Output = ();
+  async fn execute_with_opt_gas_internal<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    unimplemented!("TransactionInternal::execute_with_opt_gas_internal for ProgrammableTransaction");
   }
 }
 
