@@ -1,22 +1,53 @@
-use serde::Deserialize;
-use wasm_bindgen::JsValue;
-use wasm_bindgen::prelude::wasm_bindgen;
-use identity_iota_interaction::rpc_types::{OwnedObjectRef};
+use identity_iota_interaction::rpc_types::OwnedObjectRef;
+use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::execution_status::ExecutionStatus;
+use identity_iota_interaction::ProgrammableTransactionBcs;
+use js_sys::Promise;
+use serde::Deserialize;
+use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::JsValue;
+use wasm_bindgen_futures::JsFuture;
+
+use crate::bindings::WasmIotaClient;
 use crate::common::into_sdk_type;
+use crate::console_log;
+
+// TODO: fix/add
+// not available anymore
+// use crate::storage::WasmStorageSigner;
+type WasmStorageSigner = ();
+// not available anymore
+// use identity_iota::iota::iota_sdk_abstraction::error::Error;
+enum Error {
+  FfiError(String),
+}
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_SDK_TYPES: &'static str = r#"
   import {
     Balance,
-    IotaObjectData,
     ExecuteTransactionBlockParams,
-    IotaTransactionBlockResponseOptions,
+    GetCoinsParams,
+    GetDynamicFieldObjectParams,
+    GetObjectParams,
+    GetOwnedObjectsParams,
+    GetTransactionBlockParams,
+    IotaObjectData,
+    IotaObjectResponse,
     IotaTransactionBlockResponse,
+    IotaTransactionBlockResponseOptions,
+    ObjectRead,
+    PaginatedCoins,
+    PaginatedEvents,
+    PaginatedObjectsResponse,
+    QueryEventsParams,
+    TryGetPastObjectParams,
   } from "@iota/iota.js/client";
-  import {bcs} from "@iota/iota.js/bcs";
-  
-  import {IotaTransactionBlockResponseAdapter} from "./kinesis_client_helpers";
+  import { bcs } from "@iota/iota.js/bcs";
+  import {
+    executeTransaction,
+    IotaTransactionBlockResponseAdapter,
+  } from "./kinesis_client_helpers"
 
   // TODO: decide if we use this or replace it with an adapter written in TypeScript type if needed
   type ProgrammableTransaction = ReturnType<typeof bcs.ProgrammableTransaction.parse>;
@@ -29,11 +60,11 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "IotaObjectData")]
   pub type WasmIotaObjectData;
-  
+
   #[wasm_bindgen(typescript_type = "ExecuteTransactionBlockParams")]
   #[derive(Clone)]
   pub type WasmExecuteTransactionBlockParams;
-  
+
   #[wasm_bindgen(typescript_type = "IotaTransactionBlockResponseOptions")]
   #[derive(Clone)]
   pub type WasmIotaTransactionBlockResponseOptions;
@@ -42,9 +73,41 @@ extern "C" {
   #[derive(Clone)]
   pub type WasmIotaTransactionBlockResponse;
 
+  #[wasm_bindgen(typescript_type = "GetDynamicFieldObjectParams")]
+  #[derive(Clone)]
+  pub type WasmGetDynamicFieldObjectParams;
+
+  #[wasm_bindgen(typescript_type = "GetObjectParams")]
+  #[derive(Clone)]
+  pub type WasmGetObjectParams;
+
   #[wasm_bindgen(typescript_type = "Promise<IotaTransactionBlockResponse>")]
   #[derive(Clone)]
   pub type PromiseIotaTransactionBlockResponse;
+
+  #[wasm_bindgen(typescript_type = "Promise<IotaObjectResponse>")]
+  #[derive(Clone)]
+  pub type PromiseIotaObjectResponse;
+
+  #[wasm_bindgen(typescript_type = "GetOwnedObjectsParams")]
+  #[derive(Clone)]
+  pub type WasmGetOwnedObjectsParams;
+
+  #[wasm_bindgen(typescript_type = "GetTransactionBlockParams")]
+  #[derive(Clone)]
+  pub type WasmGetTransactionBlockParams;
+
+  #[wasm_bindgen(typescript_type = "Promise<PaginatedObjectsResponse>")]
+  #[derive(Clone)]
+  pub type PromisePaginatedObjectsResponse;
+
+  #[wasm_bindgen(typescript_type = "TryGetPastObjectParams")]
+  #[derive(Clone)]
+  pub type WasmTryGetPastObjectParams;
+
+  #[wasm_bindgen(typescript_type = "Promise<ObjectRead>")]
+  #[derive(Clone)]
+  pub type PromiseObjectRead;
 
   #[wasm_bindgen(typescript_type = "ExecutionStatus")]
   #[derive(Clone)]
@@ -53,6 +116,26 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "OwnedObjectRef")]
   #[derive(Clone)]
   pub type WasmOwnedObjectRef;
+
+  #[wasm_bindgen(typescript_type = "QueryEventsParams")]
+  #[derive(Clone)]
+  pub type WasmQueryEventsParams;
+
+  #[wasm_bindgen(typescript_type = "Promise<PaginatedEvents>")]
+  #[derive(Clone)]
+  pub type PromisePaginatedEvents;
+
+  #[wasm_bindgen(typescript_type = "GetCoinsParams")]
+  #[derive(Clone)]
+  pub type WasmGetCoinsParams;
+
+  #[wasm_bindgen(typescript_type = "Promise<PaginatedCoins>")]
+  #[derive(Clone)]
+  pub type PromisePaginatedCoins;
+
+  #[wasm_bindgen(typescript_type = "Promise<IotaTransactionBlockResponseAdapter>")]
+  #[derive(Clone)]
+  pub type PromiseIotaTransactionBlockResponseAdapter;
 }
 
 #[wasm_bindgen(module = "/lib/iota_client_helpers.ts")]
@@ -66,7 +149,7 @@ extern "C" {
 
   #[wasm_bindgen(method)]
   pub fn effects_is_none(this: &IotaTransactionBlockResponseAdapter) -> bool;
-  
+
   #[wasm_bindgen(method)]
   pub fn effects_is_some(this: &IotaTransactionBlockResponseAdapter) -> bool;
 
@@ -78,6 +161,16 @@ extern "C" {
 
   #[wasm_bindgen(method)]
   fn effects_created_inner(this: &IotaTransactionBlockResponseAdapter) -> Option<Vec<WasmOwnedObjectRef>>;
+
+  #[wasm_bindgen(js_name = executeTransaction)]
+  fn execute_transaction_inner(
+    iotaClient: &WasmIotaClient, // --> TypeScript: IotaClient
+    sender_address: String,      // --> TypeScript: string
+    sender_public_key: Vec<u8>,  // --> TypeScript: Uint8Array
+    tx_bcs: Vec<u8>,             // --> TypeScript: Uint8Array,
+    signer: WasmStorageSigner,   // --> TypeScript: Signer (kinesis_client_helpers module)
+    gas_budget: Option<u64>,     // --> TypeScript: optional bigint
+  ) -> PromiseIotaTransactionBlockResponseAdapter;
 }
 
 #[wasm_bindgen] // no module here, as imported via custom section above
@@ -88,29 +181,52 @@ extern "C" {
 
 #[derive(Deserialize)]
 struct WasmExecutionStatusAdapter {
-  status: ExecutionStatus
+  status: ExecutionStatus,
 }
 
 impl IotaTransactionBlockResponseAdapter {
   pub fn effects_execution_status(&self) -> Option<ExecutionStatus> {
-    self.effects_execution_status_inner()
-      .map(|s| {
-        let state: WasmExecutionStatusAdapter = into_sdk_type(s)
-            .expect("[IotaTransactionBlockResponseAdapter] Failed to convert WasmExecutionStatus");
-        state.status
-      })
+    self.effects_execution_status_inner().map(|s| {
+      let state: WasmExecutionStatusAdapter =
+        into_sdk_type(s).expect("[IotaTransactionBlockResponseAdapter] Failed to convert WasmExecutionStatus");
+      state.status
+    })
   }
-  
+
   pub fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
-    self.effects_created_inner()
-      .map(|vex_obj_ref| {
-        vex_obj_ref
-          .into_iter()
-          .map(|obj| into_sdk_type(obj)
-              .expect("[IotaTransactionBlockResponseAdapter] Failed to convert WasmOwnedObjectRef"))
-          .collect()
-      })
+    self.effects_created_inner().map(|vex_obj_ref| {
+      vex_obj_ref
+        .into_iter()
+        .map(|obj| {
+          into_sdk_type(obj).expect("[IotaTransactionBlockResponseAdapter] Failed to convert WasmOwnedObjectRef")
+        })
+        .collect()
+    })
   }
+}
+
+pub async fn execute_transaction(
+  iota_client: &WasmIotaClient,       // --> Binding: WasmIotaClient
+  sender_address: IotaAddress,        // --> Binding: String
+  sender_public_key: &[u8],           // --> Binding: Vec<u8>
+  tx_bcs: ProgrammableTransactionBcs, // --> Binding: Vec<u8>
+  signer: WasmStorageSigner,          // --> Binding: WasmStorageSigner
+  gas_budget: Option<u64>,            // --> Binding: Option<u64>,
+) -> Result<IotaTransactionBlockResponseAdapter, Error> {
+  let promise: Promise = Promise::resolve(&execute_transaction_inner(
+    iota_client,
+    sender_address.to_string(),
+    sender_public_key.to_vec(),
+    tx_bcs,
+    signer,
+    gas_budget,
+  ));
+  let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
+    console_log!("Error executing JsFuture::from(promise): {:?}", e);
+    Error::FfiError(format!("{:?}", e))
+  })?;
+
+  Ok(IotaTransactionBlockResponseAdapter::new(result.into()))
 }
 
 #[derive(Deserialize)]
