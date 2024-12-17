@@ -10,7 +10,6 @@ use super::metadata::ClaimMetadata;
 use super::metadata::IssuerMetadata;
 use super::metadata::Jwks;
 use super::metadata::TypeMetadata;
-#[allow(unused_imports)]
 use super::metadata::WELL_KNOWN_VCT;
 use super::metadata::WELL_KNOWN_VC_ISSUER;
 use super::resolver::Error as ResolverErr;
@@ -254,8 +253,6 @@ impl SdJwtVc {
 
     // Claims' disclosability.
     self.validate_claims_disclosability(type_metadata.claim_metadata())?;
-
-    //
 
     Ok(())
   }

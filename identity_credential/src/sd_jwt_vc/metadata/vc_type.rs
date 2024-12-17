@@ -1,8 +1,8 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use futures::future::BoxFuture;
 use futures::future::FutureExt;
+use futures::future::LocalBoxFuture;
 use identity_core::common::Url;
 use itertools::Itertools as _;
 use serde::Deserialize;
@@ -84,7 +84,7 @@ impl TypeMetadata {
   }
 
   /// Similar to [`TypeMetadata::validate_credential`], but accepts a [`Resolver`]
-  /// [`StringOrUrl`] -> [`Value`] that is used to resolve any reference to either
+  /// [`Url`] -> [`Value`] that is used to resolve any reference to either
   /// another type or JSON schema.
   pub async fn validate_credential_with_resolver<R>(&self, credential: &Value, resolver: &R) -> Result<()>
   where
@@ -100,7 +100,7 @@ fn validate_credential_impl<'c, 'r, R>(
   credential: &'c Value,
   resolver: &'r R,
   mut passed_types: Vec<TypeMetadata>,
-) -> BoxFuture<'c, Result<()>>
+) -> LocalBoxFuture<'c, Result<()>>
 where
   R: Resolver<Url, Value> + Sync,
   'r: 'c,
@@ -153,7 +153,7 @@ where
       Ok(())
     }
   }
-  .boxed()
+  .boxed_local()
 }
 
 fn validate_credential_with_schema(schema: &Value, credential: &Value) -> Result<()> {

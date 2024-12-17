@@ -62,6 +62,9 @@ memstore = ["identity_storage/memstore"]
 # Enables selective disclosure features.
 sd-jwt = ["identity_credential/sd-jwt"]
 
+# Enables selectively disclosable credentials.
+sd-jwt-vc = ["identity_credential/sd-jwt-vc"]
+
 # Enables zero knowledge selective disclosurable VCs
 jpt-bbs-plus = ["identity_storage/jpt-bbs-plus", "identity_credential/jpt-bbs-plus"]
 
