@@ -48,7 +48,7 @@ We provide a collection of experimental [gRPC services](https://github.com/iotal
 
 ## Universal Resolver
 
-IOTA Identity includes a [Universal Resolver](https://github.com/decentralized-identity/universal-resolver/) driver implementation for the `did:iota` method. The Universal Resolver is a crucial component  that enables the resolution of DIDs across different DID methods.
+IOTA Identity includes a [Universal Resolver](https://github.com/decentralized-identity/universal-resolver/) driver implementation for the `did:iota` method. The Universal Resolver is a crucial component that enables the resolution of DIDs across different DID methods.
 
 Our implementation allows for resolving IOTA DIDs through the standardized Universal Resolver interface, supporting multiple networks including testnet, devnet, and custom networks. The resolver is available as a Docker container for easy deployment and integration.
 
