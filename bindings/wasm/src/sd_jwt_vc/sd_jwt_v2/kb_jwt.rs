@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_iota::credential;
 use identity_iota::credential::sd_jwt_vc;
 use identity_iota::sd_jwt_rework::KeyBindingJwt;
@@ -61,6 +64,7 @@ impl WasmKeyBindingJwt {
     serde_wasm_bindgen::to_value(self.0.claims()).unwrap().unchecked_into()
   }
 
+  #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = "toString")]
   pub fn to_string(&self) -> String {
     self.0.to_string()
@@ -72,6 +76,7 @@ pub struct WasmKeyBindingJwtBuilder(pub(crate) KeyBindingJwtBuilder);
 
 #[wasm_bindgen(js_class = KeyBindingJwtBuilder)]
 impl WasmKeyBindingJwtBuilder {
+  #[allow(clippy::new_without_default)]
   #[wasm_bindgen(constructor)]
   pub fn new() -> WasmKeyBindingJwtBuilder {
     Self(KeyBindingJwtBuilder::default())

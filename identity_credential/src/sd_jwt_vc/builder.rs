@@ -156,7 +156,7 @@ impl<H: Hasher> SdJwtVcBuilder<H> {
   /// Sets the JWT header.
   /// ## Notes
   /// - if [`SdJwtVcBuilder::header`] is not called, the default header is used: ```json { "typ": "sd-jwt", "alg":
-  ///   "<algorithm used in SdJwtBulider::finish>" } ```
+  ///   "<algorithm used in SdJwtBuilder::finish>" } ```
   /// - `alg` is always replaced with the value passed to [`SdJwtVcBuilder::finish`].
   pub fn header(mut self, header: JsonObject) -> Self {
     self.header = header;

@@ -1,7 +1,17 @@
-mod token;
-mod resolver;
-mod claims;
-pub mod sd_jwt_v2;
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
-pub use token::*;
+mod builder;
+mod claims;
+pub mod metadata;
+mod presentation;
+mod resolver;
+pub mod sd_jwt_v2;
+mod status;
+mod token;
+
+pub use builder::*;
 pub use claims::*;
+pub use presentation::*;
+pub use status::*;
+pub use token::*;

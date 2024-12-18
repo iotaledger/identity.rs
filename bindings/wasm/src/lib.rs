@@ -27,9 +27,9 @@ pub mod jpt;
 pub mod resolver;
 pub mod revocation;
 pub mod sd_jwt;
+pub mod sd_jwt_vc;
 pub mod storage;
 pub mod verification;
-pub mod sd_jwt_vc;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]

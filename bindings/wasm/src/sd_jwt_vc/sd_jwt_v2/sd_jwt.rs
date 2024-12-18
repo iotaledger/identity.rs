@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_iota::credential::sd_jwt_vc::Error;
 use identity_iota::sd_jwt_rework::SdJwt;
 use identity_iota::sd_jwt_rework::SdJwtPresentationBuilder;
@@ -38,7 +41,7 @@ pub struct WasmSdJwt(pub(crate) SdJwt);
 impl WasmSdJwt {
   #[wasm_bindgen]
   pub fn parse(s: &str) -> Result<WasmSdJwt> {
-    SdJwt::parse(s).map(Self).map_err(|e| Error::from(e)).wasm_result()
+    SdJwt::parse(s).map(Self).map_err(Error::from).wasm_result()
   }
 
   #[wasm_bindgen]

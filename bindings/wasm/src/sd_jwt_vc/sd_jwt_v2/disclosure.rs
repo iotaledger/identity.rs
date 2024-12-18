@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_iota::sd_jwt_rework::Disclosure;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
@@ -27,6 +30,7 @@ impl WasmDisclosure {
     Disclosure::parse(s).map(Self::from).wasm_result()
   }
 
+  #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {
     self.unparsed.clone()

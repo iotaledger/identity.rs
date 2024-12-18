@@ -1,6 +1,10 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::sync::OnceLock;
 
 use identity_iota::sd_jwt_rework::Hasher;
+use identity_iota::sd_jwt_rework::Sha256Hasher;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -39,5 +43,26 @@ impl Hasher for WasmHasher {
 
   fn encoded_digest(&self, disclosure: &str) -> String {
     self.encoded_digest(disclosure)
+  }
+}
+
+#[wasm_bindgen(js_name = Sha256Hasher)]
+pub struct WasmSha256Hasher(pub(crate) Sha256Hasher);
+
+#[wasm_bindgen(js_class = Sha256Hasher)]
+impl WasmSha256Hasher {
+  #[wasm_bindgen(js_name = algName)]
+  pub fn alg_name(&self) -> String {
+    self.0.alg_name().to_owned()
+  }
+
+  #[wasm_bindgen]
+  pub fn digest(&self, input: &[u8]) -> Vec<u8> {
+    self.0.digest(input)
+  }
+
+  #[wasm_bindgen(js_name = encodedDigest)]
+  pub fn encoded_digest(&self, data: &str) -> String {
+    self.0.encoded_digest(data)
   }
 }

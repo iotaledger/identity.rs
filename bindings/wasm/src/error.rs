@@ -176,6 +176,15 @@ impl From<serde_json::Error> for WasmError<'_> {
   }
 }
 
+impl From<anyhow::Error> for WasmError<'_> {
+  fn from(value: anyhow::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("Generic Error"),
+      message: Cow::Owned(value.to_string()),
+    }
+  }
+}
+
 impl From<identity_iota::iota::block::Error> for WasmError<'_> {
   fn from(error: identity_iota::iota::block::Error) -> Self {
     Self {

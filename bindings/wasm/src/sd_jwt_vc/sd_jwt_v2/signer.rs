@@ -1,3 +1,6 @@
+// Copyright 2020-2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use async_trait::async_trait;
 use identity_iota::sd_jwt_rework::JsonObject;
 use identity_iota::sd_jwt_rework::JwsSigner;
