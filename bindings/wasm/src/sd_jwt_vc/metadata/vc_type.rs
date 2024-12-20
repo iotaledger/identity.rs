@@ -13,17 +13,17 @@ use crate::sd_jwt_vc::resolver::ResolverUrlToValue;
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_TYPE_METADATA: &str = r#"
-type TypeSchema = { schema_uri: string, schema_uri#integrity: string | undefined }
-  | { schema: any, schema#integrity: string | undefined };
+type TypeSchema = { schema_uri: string, "schema_uri#integrity": string | undefined }
+  | { schema: any, "schema#integrity": string | undefined };
 
 type TypeMetadataHelper = {
   name: string | undefined;
   description: string | undefined;
   extends: string | undefined;
-  extends#integrity: string | undefined;
-  display: any[];
-  claims: ClaimMetadata[];
-} & TypeSchema;
+  "extends#integrity": string | undefined;
+  display: any[] | undefined;
+  claims: ClaimMetadata[] | undefined;
+} & (TypeSchema | undefined);
 "#;
 
 #[wasm_bindgen]
@@ -31,7 +31,7 @@ extern "C" {
   pub type TypeMetadataHelper;
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 #[serde(transparent)]
 #[wasm_bindgen(js_name = TypeMetadata)]
 pub struct WasmTypeMetadata(pub(crate) TypeMetadata);

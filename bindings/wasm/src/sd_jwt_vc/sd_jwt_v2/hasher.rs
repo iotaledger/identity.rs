@@ -51,6 +51,12 @@ pub struct WasmSha256Hasher(pub(crate) Sha256Hasher);
 
 #[wasm_bindgen(js_class = Sha256Hasher)]
 impl WasmSha256Hasher {
+  #[allow(clippy::new_without_default)]
+  #[wasm_bindgen(constructor)]
+  pub fn new() -> Self {
+    Self(Sha256Hasher)
+  }
+
   #[wasm_bindgen(js_name = algName)]
   pub fn alg_name(&self) -> String {
     self.0.alg_name().to_owned()

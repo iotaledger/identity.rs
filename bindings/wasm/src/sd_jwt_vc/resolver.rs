@@ -11,22 +11,22 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_RESOLVER: &str = r#"
-interface Resolver<I, T> {
-  resolve: async (input: I) => T;
+interface IResolver<I, T> {
+  resolve: (input: I) => Promise<T>;
 }
 "#;
 
 #[wasm_bindgen]
 extern "C" {
   // Resolver<Url, Vec<u8>>
-  #[wasm_bindgen(typescript_type = "Resolver<string, Uint8Array>")]
+  #[wasm_bindgen(typescript_type = "IResolver<string, Uint8Array>")]
   pub type ResolverStringToUint8Array;
 
   #[wasm_bindgen(structural, method, catch)]
   pub async fn resolve(this: &ResolverStringToUint8Array, input: &str) -> Result<Uint8Array, js_sys::Error>;
 
   // Resolver<Url, serde_json::Value>
-  #[wasm_bindgen(typescript_type = "Resolver<string, any>")]
+  #[wasm_bindgen(typescript_type = "IResolver<string, any>")]
   pub type ResolverUrlToValue;
 
   #[wasm_bindgen(structural, method, catch)]
@@ -44,6 +44,21 @@ where
       .await
       .map(|arr| arr.to_vec())
       .map_err(|e| ErrorR::Generic(anyhow::anyhow!("{}", e.to_string())))
+  }
+}
+
+#[async_trait(?Send)]
+impl<I> Resolver<I, serde_json::Value> for ResolverStringToUint8Array
+where
+  I: AsRef<str> + Sync,
+{
+  async fn resolve(&self, input: &I) -> Result<serde_json::Value, ErrorR> {
+    self
+      .resolve(input.as_ref())
+      .await
+      .map(|arr| arr.to_vec())
+      .map_err(|e| ErrorR::Generic(anyhow::anyhow!("{}", e.to_string())))
+      .and_then(|bytes| serde_json::from_slice(&bytes).map_err(|e| ErrorR::ParsingFailure(e.into())))
   }
 }
 

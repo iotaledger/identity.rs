@@ -1,9 +1,8 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::anyhow;
-use anyhow::Context;
 use identity_iota::core::Url;
+use identity_iota::credential::sd_jwt_vc::metadata::ClaimMetadata;
 use identity_iota::credential::sd_jwt_vc::vct_to_url as vct_to_url_impl;
 use identity_iota::credential::sd_jwt_vc::SdJwtVc;
 use wasm_bindgen::prelude::*;
@@ -16,6 +15,7 @@ use crate::sd_jwt_vc::metadata::WasmTypeMetadata;
 use crate::verification::IJwsVerifier;
 use crate::verification::WasmJwsVerifier;
 
+use super::metadata::WasmClaimMetadata;
 use super::metadata::WasmIssuerMetadata;
 use super::resolver::ResolverStringToUint8Array;
 use super::sd_jwt_v2::WasmHasher;
@@ -23,15 +23,11 @@ use super::sd_jwt_v2::WasmSdJwt;
 use super::WasmSdJwtVcClaims;
 use super::WasmSdJwtVcPresentationBuilder;
 
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "[TypeMetadata, Uint8Array]")]
-  pub type TypeMetadataResult;
-}
-
 #[derive(Clone)]
 #[wasm_bindgen(js_name = SdJwtVc)]
 pub struct WasmSdJwtVc(pub(crate) SdJwtVc);
+
+impl_wasm_clone!(WasmSdJwtVc, SdJwtVc);
 
 #[wasm_bindgen(js_class = "SdJwtVc")]
 impl WasmSdJwtVc {
@@ -64,23 +60,47 @@ impl WasmSdJwtVc {
   }
 
   #[wasm_bindgen(js_name = "typeMetadata")]
-  pub async fn type_metadata(&self, resolver: &ResolverStringToUint8Array) -> Result<TypeMetadataResult> {
+  pub async fn type_metadata(&self, resolver: &ResolverStringToUint8Array) -> Result<WasmTypeMetadata> {
     self
       .0
       .type_metadata(resolver)
       .await
-      .context("resolution error")
-      .and_then(|(metadata, integrity)| {
-        serde_wasm_bindgen::to_value(&(WasmTypeMetadata(metadata), integrity)).map_err(|e| anyhow!("{}", e.to_string()))
-      })
+      .map(|(metadata, _)| WasmTypeMetadata(metadata))
       .wasm_result()
-      .and_then(JsCast::dyn_into)
   }
 
+  /// Verifies this {@link SdJwtVc} JWT's signature.
   #[wasm_bindgen(js_name = "verifySignature")]
-  pub fn verify_signature(&self, jws_verifier: Option<IJwsVerifier>, jwk: &WasmJwk) -> Result<()> {
+  pub fn verify_signature(&self, jwk: &WasmJwk, jws_verifier: Option<IJwsVerifier>) -> Result<()> {
     let verifier = WasmJwsVerifier::new(jws_verifier);
     self.0.verify_signature(&verifier, &jwk.0).wasm_result()
+  }
+
+  /// Checks the disclosability of this {@link SdJwtVc}'s claims against a list of {@link ClaimMetadata}.
+  /// ## Notes
+  /// This check should be performed by the token's holder in order to assert the issuer's compliance with
+  /// the credential's type.
+  #[wasm_bindgen(js_name = "validateClaimDisclosability")]
+  pub fn validate_claims_disclosability(&self, claims_metadata: Vec<WasmClaimMetadata>) -> Result<()> {
+    let claims_metadata = claims_metadata.into_iter().map(ClaimMetadata::from).collect::<Vec<_>>();
+    self.0.validate_claims_disclosability(&claims_metadata).wasm_result()
+  }
+
+  /// Check whether this {@link SdJwtVc} is valid.
+  ///
+  /// This method checks:
+  /// - JWS signature
+  /// - credential's type
+  /// - claims' disclosability
+  #[wasm_bindgen]
+  pub async fn validate(
+    &self,
+    resolver: &ResolverStringToUint8Array,
+    hasher: &WasmHasher,
+    jws_verifier: Option<IJwsVerifier>,
+  ) -> Result<()> {
+    let jws_verifier = WasmJwsVerifier::new(jws_verifier);
+    self.0.validate(resolver, &jws_verifier, hasher).await.wasm_result()
   }
 
   /// Verify the signature of this {@link SdJwtVc}'s {@link KeyBindingJwt}.
@@ -111,9 +131,10 @@ impl WasmSdJwtVc {
   }
 
   #[wasm_bindgen(js_name = "intoDisclosedObject")]
-  pub fn into_disclosed_object(self, hasher: &WasmHasher) -> Result<js_sys::Object> {
+  pub fn into_disclosed_object(&self, hasher: &WasmHasher) -> Result<js_sys::Object> {
     self
       .0
+      .clone()
       .into_disclosed_object(hasher)
       .map(|obj| serde_wasm_bindgen::to_value(&obj).expect("JSON object is a valid JS object"))
       .map(JsCast::unchecked_into)
@@ -123,6 +144,17 @@ impl WasmSdJwtVc {
   #[wasm_bindgen(js_name = "intoPresentation")]
   pub fn into_presentation(self, hasher: &WasmHasher) -> Result<WasmSdJwtVcPresentationBuilder> {
     WasmSdJwtVcPresentationBuilder::new(self, hasher)
+  }
+
+  #[wasm_bindgen(js_name = "toJSON")]
+  pub fn to_json(&self) -> JsValue {
+    JsValue::from_str(&self.0.to_string())
+  }
+
+  #[allow(clippy::inherent_to_string)]
+  #[wasm_bindgen(js_name = "toString")]
+  pub fn to_string(&self) -> JsValue {
+    JsValue::from_str(&self.0.to_string())
   }
 }
 

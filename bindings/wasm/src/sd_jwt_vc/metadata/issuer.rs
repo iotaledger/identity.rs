@@ -3,8 +3,10 @@
 
 use identity_iota::core::Url;
 use identity_iota::credential::sd_jwt_vc::metadata::IssuerMetadata;
+use serde::Serialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
+use wasm_bindgen::JsValue;
 
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -12,7 +14,7 @@ use crate::sd_jwt_vc::WasmSdJwtVc;
 
 #[wasm_bindgen(typescript_custom_section)]
 pub const I_JWKS: &str = r#"
-type Jwks = { jwks_uri: string } | { jwks: { keys: Jwk[] }};
+type Jwks = { jwks_uri: string } | { jwks: { keys: IJwk[] }};
 "#;
 
 #[wasm_bindgen]
@@ -23,8 +25,6 @@ extern "C" {
 
 #[wasm_bindgen(js_name = IssuerMetadata)]
 pub struct WasmIssuerMetadata(pub(crate) IssuerMetadata);
-
-impl_wasm_json!(WasmIssuerMetadata, IssuerMetadata);
 
 #[wasm_bindgen(js_class = IssuerMetadata)]
 impl WasmIssuerMetadata {
@@ -53,5 +53,11 @@ impl WasmIssuerMetadata {
   #[wasm_bindgen]
   pub fn validate(&self, sd_jwt_vc: &WasmSdJwtVc) -> Result<()> {
     self.0.validate(&sd_jwt_vc.0).wasm_result()
+  }
+
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    let js_serializer = serde_wasm_bindgen::Serializer::default().serialize_maps_as_objects(true);
+    self.0.serialize(&js_serializer).wasm_result()
   }
 }

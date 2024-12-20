@@ -87,6 +87,17 @@ impl WasmSdJwt {
   pub fn presentation(&self) -> String {
     self.0.presentation()
   }
+
+  #[wasm_bindgen(js_name = "toJSON")]
+  pub fn to_json(&self) -> JsValue {
+    JsValue::from_str(&self.presentation())
+  }
+
+  #[allow(clippy::inherent_to_string)]
+  #[wasm_bindgen(js_name = "toString")]
+  pub fn to_string(&self) -> JsValue {
+    JsValue::from_str(&self.presentation())
+  }
 }
 
 #[wasm_bindgen(js_name = SdJwtPresentationBuilder)]

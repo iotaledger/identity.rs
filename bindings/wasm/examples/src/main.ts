@@ -19,6 +19,7 @@ import { sdJwt } from "./1_advanced/6_sd_jwt";
 import { statusList2021 } from "./1_advanced/7_status_list_2021";
 import { zkp } from "./1_advanced/8_zkp";
 import { zkp_revocation } from "./1_advanced/9_zkp_revocation";
+import { sdJwtVc } from "./1_advanced/10_sd_jwt_vc";
 
 async function main() {
     // Extract example name.
@@ -64,6 +65,8 @@ async function main() {
             return await zkp();
         case "9_zkp_revocation":
             return await zkp_revocation();
+        case "10_sd_jwt_vc":
+            return await sdJwtVc();
         default:
             throw "Unknown example name: '" + argument + "'";
     }

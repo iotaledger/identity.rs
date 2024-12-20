@@ -69,6 +69,11 @@ impl WasmKeyBindingJwt {
   pub fn to_string(&self) -> String {
     self.0.to_string()
   }
+
+  #[wasm_bindgen(js_name = "toJSON")]
+  pub fn to_json(&self) -> JsValue {
+    JsValue::from_str(&self.to_string())
+  }
 }
 
 #[wasm_bindgen(js_name = KeyBindingJwtBuilder)]

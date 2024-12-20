@@ -7,6 +7,7 @@ use identity_iota::sd_jwt_rework::JwsSigner;
 use js_sys::Error as JsError;
 use js_sys::Object;
 use js_sys::Uint8Array;
+use serde::Serialize as _;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
 
@@ -15,7 +16,7 @@ use crate::error::Result;
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWS_SIGNER: &str = r#"
 interface JwsSigner {
-  sign: (header: any, payload: any) => Promise<Uint8Array>;
+  sign: (header: object, payload: object) => Promise<Uint8Array>;
 }
 "#;
 
@@ -32,10 +33,14 @@ extern "C" {
 impl JwsSigner for WasmJwsSigner {
   type Error = String;
   async fn sign(&self, header: &JsonObject, payload: &JsonObject) -> std::result::Result<Vec<u8>, Self::Error> {
-    let header = serde_wasm_bindgen::to_value(header)
+    assert!(!payload.is_empty());
+    let js_serializer = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
+    let header = header
+      .serialize(&js_serializer)
       .map_err(|e| format!("{e:?}"))?
       .unchecked_into();
-    let payload = serde_wasm_bindgen::to_value(payload)
+    let payload = payload
+      .serialize(&js_serializer)
       .map_err(|e| format!("{e:?}"))?
       .unchecked_into();
 

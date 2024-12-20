@@ -13,7 +13,7 @@ use crate::error::WasmResult;
 ///
 /// See: https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html#name-disclosures
 #[derive(Clone)]
-#[wasm_bindgen(js_name = DisclosureV2, getter_with_clone)]
+#[wasm_bindgen(js_name = DisclosureV2, inspectable, getter_with_clone)]
 pub struct WasmDisclosure {
   pub salt: String,
   #[wasm_bindgen(js_name = claimName)]

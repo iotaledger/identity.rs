@@ -13,7 +13,7 @@
     "build:src": "cargo build --lib --release --target wasm32-unknown-unknown",
     "bundle:nodejs": "~/.cargo/bin/wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target nodejs --out-dir node && node ./build/node && tsc --project ./lib/tsconfig.json && node ./build/replace_paths ./lib/tsconfig.json node",
     "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target web --out-dir web && node ./build/web && tsc --project ./lib/tsconfig.web.json && node ./build/replace_paths ./lib/tsconfig.web.json web",
-    "build:nodejs": "npm run build:src && npm run bundle:nodejs && wasm-opt -O node/identity_wasm_bg.wasm -o node/identity_wasm_bg.wasm",
+    "build:nodejs": "npm run build:src && npm run bundle:nodejs && wasm-opt -Oz node/identity_wasm_bg.wasm -o node/identity_wasm_bg.wasm",
     "build:web": "npm run build:src && npm run bundle:web && wasm-opt -O web/identity_wasm_bg.wasm -o web/identity_wasm_bg.wasm",
     "build:docs": "typedoc && npm run fix_docs",
     "build:examples:web": "tsc --project ./examples/tsconfig.web.json && node ./build/replace_paths ./examples/tsconfig.web.json ./examples/dist resolve",
@@ -58,6 +58,7 @@
   ],
   "devDependencies": {
     "@transmute/did-key-ed25519": "0.3.0-unstable.9",
+    "@types/jsonwebtoken": "^9.0.7",
     "@types/mocha": "^9.1.0",
     "big-integer": "^1.6.51",
     "copy-webpack-plugin": "^7.0.0",
@@ -80,6 +81,7 @@
     "@noble/ed25519": "^1.7.3",
     "@types/node-fetch": "^2.6.2",
     "base64-arraybuffer": "^1.0.2",
+    "jose": "^5.9.6",
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
