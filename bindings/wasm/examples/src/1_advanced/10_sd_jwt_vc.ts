@@ -1,8 +1,8 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IssuerMetadata, SdJwtVcBuilder, Sha256Hasher, Timestamp, TypeMetadataHelper, IResolver, JwkType, IJwk, Jwk, IJwkParams } from "@iota/identity-wasm/node";
-import { base64url, exportJWK, generateKeyPair, JWK, JWTHeaderParameters, JWTPayload, SignJWT } from "jose";
+import { IssuerMetadata, SdJwtVcBuilder, Sha256Hasher, Timestamp, TypeMetadataHelper, IResolver, JwkType, IJwk, KeyBindingJwtBuilder, Jwk, IJwkParams, KeyBindingJWTValidationOptions, JwsVerificationOptions } from "@iota/identity-wasm/node";
+import { exportJWK, generateKeyPair, JWK, JWTHeaderParameters, JWTPayload, SignJWT } from "jose";
 
 const vc_metadata: TypeMetadataHelper = JSON.parse(`{
   "vct": "https://example.com/education_credential",
@@ -75,7 +75,7 @@ const vc_metadata: TypeMetadataHelper = JSON.parse(`{
   ]
 }`)
 
-const issuer_jwks = async (): Promise<[JWK, JWK]> => {
+const keypair_jwk = async (): Promise<[JWK, JWK]> => {
   const [sk, pk] = await generateKeyPair("ES256").then(res => [res.privateKey, res.publicKey]);
   const sk_jwk = await exportJWK(sk);
   const pk_jwk = await exportJWK(pk);
@@ -83,11 +83,19 @@ const issuer_jwks = async (): Promise<[JWK, JWK]> => {
   return [sk_jwk, pk_jwk];
 }
 
+const signer = async (header: object, payload: object, sk_jwk: JWK) => {
+  return new SignJWT(payload as JWTPayload)
+    .setProtectedHeader(header as JWTHeaderParameters)
+    .sign(sk_jwk)
+    .then(jws => new TextEncoder().encode(jws))
+}
+
 export async function sdJwtVc() {
   const hasher = new Sha256Hasher();
   const issuer = "https://example.com/";
-  const [sk_jwk, pk_jwk] = await issuer_jwks();
+  const [sk_jwk, pk_jwk] = await keypair_jwk();
   const issuer_public_jwk = { ...pk_jwk, kty: JwkType.Ec, kid: "key1" } as IJwk;
+  const issuer_signer = (header: object, payload: object) => signer(header, payload, sk_jwk);
   const issuer_metadata = new IssuerMetadata(issuer, { jwks: { keys: [issuer_public_jwk] } })
   const dummy_resolver = {
     resolve: async (input: string) => {
@@ -95,15 +103,11 @@ export async function sdJwtVc() {
       if (input == "https://example.com/.well-known/vct/education_credential") return new TextEncoder().encode(JSON.stringify(vc_metadata));
     }
   } as IResolver<string, Uint8Array>;
+  const [holder_sk, holder_pk] = await keypair_jwk();
+  const holder_public_jwk = { ...holder_pk, kty: JwkType.Ec, kid: "key2" } as IJwk;
+  const holder_signer = (header: object, payload: object) => signer(header, payload, holder_sk);
 
-  const sign = async (header: object, payload: object) => {
-    console.log(`about to sign payload ${typeof payload} with values ${JSON.stringify(payload)}`)
-    return new SignJWT(payload as JWTPayload)
-      .setProtectedHeader(header as JWTHeaderParameters)
-      .sign(sk_jwk)
-      .then(jws => new TextEncoder().encode(jws))
-  }
-
+  /// Issuer creates an SD-JWT VC.
   let sd_jwt_vc = await new SdJwtVcBuilder({
     name: "John Doe",
     address: {
@@ -116,15 +120,26 @@ export async function sdJwtVc() {
     .vct("https://example.com/education_credential")
     .iat(Timestamp.nowUTC())
     .iss(issuer)
-    // .requireKeyBinding({ kid: "key2" })
+    .requireKeyBinding({ kid: holder_public_jwk.kid })
     .makeConcealable("/address/street_address")
     .makeConcealable("/address")
-    .finish({ sign }, "ES256");
+    .finish({ sign: issuer_signer }, "ES256");
 
-  console.log(sd_jwt_vc.toString());
+  console.log(`issued SD-JWT VC: ${sd_jwt_vc.toString()}`);
 
+  // Holder receives its SD-JWT VC and attaches its keybinding JWT.
+  const kb_jwt = await new KeyBindingJwtBuilder()
+    .iat(Timestamp.nowUTC())
+    .header({ kid: holder_public_jwk.kid })
+    .nonce("abcdefghi")
+    .aud("https://example.com/verify")
+    .finish(sd_jwt_vc.asSdJwt(), "ES256", { sign: holder_signer });
+  const { disclosures, sdJwtVc } = sd_jwt_vc.intoPresentation(hasher).attachKeyBindingJwt(kb_jwt).finish();
+  console.log(`presented SD-JWT VC: ${sdJwtVc}`);
 
-  await sd_jwt_vc.validate(dummy_resolver, hasher);
+  // Verifier checks the presented sdJwtVc.
+  await sdJwtVc.validate(dummy_resolver, hasher);
+  sdJwtVc.validateKeyBinding(new Jwk(holder_public_jwk as IJwkParams), hasher, new KeyBindingJWTValidationOptions({ nonce: "abcdefghi", jwsOptions: new JwsVerificationOptions() }));
 
-  console.log("SdJwtVc is valid!");
+  console.log("The presented SdJwtVc is valid!");
 }

@@ -11,6 +11,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 
+use crate::common::WasmTimestamp;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -104,7 +105,8 @@ impl WasmKeyBindingJwtBuilder {
   }
 
   #[wasm_bindgen]
-  pub fn iat(self, iat: i64) -> Self {
+  pub fn iat(self, iat: WasmTimestamp) -> Self {
+    let iat = iat.0.to_unix();
     Self(self.0.iat(iat))
   }
 

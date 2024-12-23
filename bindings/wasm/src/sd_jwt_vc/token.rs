@@ -1,6 +1,8 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
+
 use identity_iota::core::Url;
 use identity_iota::credential::sd_jwt_vc::metadata::ClaimMetadata;
 use identity_iota::credential::sd_jwt_vc::vct_to_url as vct_to_url_impl;
@@ -42,6 +44,11 @@ impl WasmSdJwtVc {
     serde_wasm_bindgen::to_value(self.0.claims())
       .map(JsCast::unchecked_into)
       .wasm_result()
+  }
+
+  #[wasm_bindgen(js_name = "asSdJwt")]
+  pub fn as_sd_jwt(&self) -> WasmSdJwt {
+    WasmSdJwt(self.0.deref().clone())
   }
 
   #[wasm_bindgen(js_name = "issuerJwk")]
@@ -105,7 +112,7 @@ impl WasmSdJwtVc {
 
   /// Verify the signature of this {@link SdJwtVc}'s {@link KeyBindingJwt}.
   #[wasm_bindgen(js_name = "verifyKeyBinding")]
-  pub fn verify_key_binding(&self, jws_verifier: Option<IJwsVerifier>, jwk: &WasmJwk) -> Result<()> {
+  pub fn verify_key_binding(&self, jwk: &WasmJwk, jws_verifier: Option<IJwsVerifier>) -> Result<()> {
     let verifier = WasmJwsVerifier::new(jws_verifier);
     self.0.verify_key_binding(&verifier, &jwk.0).wasm_result()
   }
@@ -113,10 +120,10 @@ impl WasmSdJwtVc {
   #[wasm_bindgen(js_name = "validateKeyBinding")]
   pub fn validate_key_binding(
     &self,
-    jws_verifier: Option<IJwsVerifier>,
     jwk: &WasmJwk,
     hasher: &WasmHasher,
     options: &WasmKeyBindingJWTValidationOptions,
+    jws_verifier: Option<IJwsVerifier>,
   ) -> Result<()> {
     let jws_verifier = WasmJwsVerifier::new(jws_verifier);
     self
