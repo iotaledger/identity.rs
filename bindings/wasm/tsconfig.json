@@ -9,6 +9,7 @@
         "noImplicitAny": true,
         "preserveConstEnums": true,
         "forceConsistentCasingInFileNames": true,
+        "downlevelIteration": true,
         "paths": {
             "@iota/identity-wasm/*": ["./*"]
         }
