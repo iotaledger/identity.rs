@@ -106,6 +106,11 @@ pub trait IdentityMoveCalls {
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
+  // We allow clippy::too_many_arguments here because splitting this trait function into multiple
+  // other functions or creating an options struct gathering multiple function arguments has lower
+  // priority at the moment.
+  // TODO: remove clippy::too_many_arguments allowance here
+  #[allow(clippy::too_many_arguments)]
   fn propose_config_change<I1, I2>(
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,

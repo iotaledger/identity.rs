@@ -43,7 +43,7 @@ pub struct ExecuteTransactionBlockParams {
 impl ExecuteTransactionBlockParams {
   pub fn new(
     tx_bytes: &TransactionDataBcs,
-    signatures: &Vec<SignatureBcs>,
+    signatures: &[SignatureBcs],
     options: Option<IotaTransactionBlockResponseOptions>,
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> Self {

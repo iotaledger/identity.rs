@@ -110,7 +110,7 @@ pub trait QuorumDriverTrait {
   async fn execute_transaction_block(
     &self,
     tx_data_bcs: &TransactionDataBcs,
-    signatures: &Vec<SignatureBcs>,
+    signatures: &[SignatureBcs],
     options: Option<IotaTransactionBlockResponseOptions>,
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> IotaRpcResult<Box<dyn IotaTransactionBlockResponseT<Error = Self::Error, NativeResponse=Self::NativeResponse>>>;
