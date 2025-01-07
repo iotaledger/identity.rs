@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::ops::Deref;
-use std::str::FromStr;
 
 use anyhow::Context as _;
 use identity_credential::credential::Credential;
@@ -11,31 +10,16 @@ use identity_credential::credential::JwtCredential;
 use identity_jose::jwt::JwtHeader;
 use identity_jose::jwu;
 use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::{IotaKeySignature, IotaVerifiableCredential};
 use itertools::Itertools;
 use secret_storage::Signer;
-use serde::Deserialize;
-use serde::Serialize;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::transaction::TransactionInternal;
-use identity_iota_interaction::MoveType;
 
 use super::AuthenticatedAsset;
 use super::AuthenticatedAssetBuilder;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct IotaVerifiableCredential {
-  data: Vec<u8>,
-}
-
-impl MoveType for IotaVerifiableCredential {
-  fn move_type(package: ObjectID) -> TypeTag {
-    TypeTag::from_str(&format!("{package}::public_vc::PublicVc")).expect("valid utf8")
-  }
-}
 
 /// A publicly available verifiable credential.
 #[derive(Debug, Clone)]
@@ -59,7 +43,7 @@ impl PublicAvailableVC {
 
   /// Get the JWT of the credential.
   pub fn jwt(&self) -> Jwt {
-    String::from_utf8(self.asset.content().data.clone())
+    String::from_utf8(self.asset.content().data().clone())
       .map(Jwt::new)
       .expect("JWT is valid UTF8")
   }
@@ -74,7 +58,7 @@ impl PublicAvailableVC {
   {
     let jwt_bytes = String::from(jwt).into_bytes();
     let credential = parse_jwt_credential(&jwt_bytes)?;
-    let asset = AuthenticatedAssetBuilder::new(IotaVerifiableCredential { data: jwt_bytes })
+    let asset = AuthenticatedAssetBuilder::new(IotaVerifiableCredential::new(jwt_bytes))
       .transferable(false)
       .mutable(true)
       .deletable(true)
@@ -99,7 +83,7 @@ impl PublicAvailableVC {
   }
 
   fn try_from_asset(asset: AuthenticatedAsset<IotaVerifiableCredential>) -> Result<Self, anyhow::Error> {
-    let credential = parse_jwt_credential(&asset.content().data)?;
+    let credential = parse_jwt_credential(&asset.content().data())?;
     Ok(Self { asset, credential })
   }
 }

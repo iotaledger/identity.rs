@@ -67,10 +67,26 @@ pub async fn get_alias(client: &IdentityClientReadOnly, object_id: ObjectID) -> 
   }
 }
 
+
+
+cfg_if::cfg_if! {
+  if #[cfg(target_arch = "wasm32")] {
+    // Add wasm32 compatible migrate() function wrapper here
+  } else {
+    use crate::rebased::transaction::Transaction;
+    impl UnmigratedAlias {
+      /// Returns a transaction that when executed migrates a legacy `Alias`
+      /// containing a DID Document to a new [`OnChainIdentity`].
+      pub async fn migrate(self, client: &IdentityClientReadOnly)
+      -> Result<impl Transaction<Output = OnChainIdentity>, Error> {
+        self.migrate_internal(client).await
+      }
+    }
+  }
+}
+
 impl UnmigratedAlias {
-  /// Returns a transaction that when executed migrates a legacy `Alias`
-  /// containing a DID Document to a new [`OnChainIdentity`].
-  pub async fn migrate(
+  pub(crate) async fn migrate_internal(
     self,
     client: &IdentityClientReadOnly,
   ) -> Result<impl TransactionInternal<Output = OnChainIdentity>, Error> {

@@ -10,6 +10,10 @@ pub struct IotaVerifiableCredential {
 }
 
 impl IotaVerifiableCredential {
+    pub fn new(data: Vec<u8>) -> IotaVerifiableCredential {
+        IotaVerifiableCredential { data }
+    }
+
     pub fn data(&self) -> &Vec<u8> {
         &self.data
     }

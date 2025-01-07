@@ -32,18 +32,22 @@ use super::UserDrivenTx;
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
       use iota_interaction_ts::NativeTsCodeBindingWrapper as Ptb;
-
-      pub trait IntentFnT: FnOnce(&mut Ptb, &Argument) {}
-      impl<T> IntentFnT for T where T: FnOnce(&mut Ptb, &Argument) {}
+      /// Instances of ControllerIntentFnT can be used as user-provided function to describe how
+      /// a borrowed identity's controller capability will be used.
+      pub trait ControllerIntentFnT: FnOnce(&mut Ptb, &Argument) {}
+      impl<T> ControllerIntentFnT for T where T: FnOnce(&mut Ptb, &Argument) {}
       #[allow(unreachable_pub)]
-      pub type IntentFn = Box<dyn IntentFnT + Send>;
+      /// Boxed dynamic trait object of {@link ControllerIntentFnT}
+      pub type ControllerIntentFn = Box<dyn ControllerIntentFnT + Send>;
     } else {
       use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
-
-      pub trait IntentFnT: FnOnce(&mut Ptb, &Argument) {}
-      impl<T> IntentFnT for T where T: FnOnce(&mut Ptb, &Argument) {}
+      /// Instances of ControllerIntentFnT can be used as user-provided function to describe how
+      /// a borrowed identity's controller capability will be used.
+      pub trait ControllerIntentFnT: FnOnce(&mut Ptb, &Argument) {}
+      impl<T> ControllerIntentFnT for T where T: FnOnce(&mut Ptb, &Argument) {}
       #[allow(unreachable_pub)]
-      pub type IntentFn = Box<dyn IntentFnT + Send>;
+      /// Boxed dynamic trait object of {@link ControllerIntentFnT}
+      pub type ControllerIntentFn = Box<dyn ControllerIntentFnT + Send>;
     }
 }
 
@@ -59,7 +63,7 @@ pub struct ControllerExecution {
 /// the borrowed identity's controller capability will be used.
 pub struct ControllerExecutionWithIntent<F>
 where
-  F: IntentFnT,
+  F: ControllerIntentFnT,
 {
   action: ControllerExecution,
   intent_fn: F,
@@ -151,7 +155,7 @@ impl<'i> UserDrivenTx<'i, ControllerExecution> {
   /// Defines how the borrowed assets should be used.
   pub fn with_intent<F>(self, intent_fn: F) -> UserDrivenTx<'i, ControllerExecutionWithIntent<F>>
   where
-    F: IntentFnT,
+    F: ControllerIntentFnT,
   {
     let UserDrivenTx {
       identity,
@@ -167,8 +171,8 @@ impl<'i> UserDrivenTx<'i, ControllerExecution> {
 }
 
 impl<'i> ProtoTransaction for UserDrivenTx<'i, ControllerExecution> {
-  type Input = IntentFn;
-  type Tx = UserDrivenTx<'i, ControllerExecutionWithIntent<IntentFn>>;
+  type Input = ControllerIntentFn;
+  type Tx = UserDrivenTx<'i, ControllerExecutionWithIntent<ControllerIntentFn>>;
 
   fn with(self, input: Self::Input) -> Self::Tx {
     self.with_intent(input)
@@ -179,7 +183,7 @@ impl<'i> ProtoTransaction for UserDrivenTx<'i, ControllerExecution> {
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl<F> TransactionInternal for UserDrivenTx<'_, ControllerExecutionWithIntent<F>>
 where
-  F: IntentFnT + Send,
+  F: ControllerIntentFnT + Send,
 {
   type Output = ();
   async fn execute_with_opt_gas_internal<S>(

@@ -31,18 +31,22 @@ use super::UserDrivenTx;
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
       use iota_interaction_ts::NativeTsCodeBindingWrapper as Ptb;
-
-      pub trait IntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
-      impl<T> IntentFnT for T where T: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+      /// Instances of BorrowIntentFnT can be used as user-provided function to describe how
+      /// a borrowed assets shall be used.
+      pub trait BorrowIntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+      impl<T> BorrowIntentFnT for T where T: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+      /// Boxed dynamic trait object of {@link BorrowIntentFnT}
       #[allow(unreachable_pub)]
-      pub type IntentFn = Box<dyn IntentFnT + Send>;
+      pub type BorrowIntentFn = Box<dyn BorrowIntentFnT + Send>;
     } else {
       use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
-
-      pub trait IntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
-      impl<T> IntentFnT for T where T: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+      /// Instances of BorrowIntentFnT can be used as user-provided function to describe how
+      /// a borrowed assets shall be used.
+      pub trait BorrowIntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+      impl<T> BorrowIntentFnT for T where T: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+      /// Boxed dynamic trait object of {@link BorrowIntentFnT}
       #[allow(unreachable_pub)]
-      pub type IntentFn = Box<dyn IntentFnT + Send>;
+      pub type BorrowIntentFn = Box<dyn BorrowIntentFnT + Send>;
     }
 }
 
@@ -56,7 +60,7 @@ pub struct BorrowAction {
 /// the borrowed assets shall be used.
 pub struct BorrowActionWithIntent<F>
 where
-  F: IntentFnT,
+  F: BorrowIntentFnT,
 {
   action: BorrowAction,
   intent_fn: F,
@@ -167,7 +171,7 @@ impl<'i> UserDrivenTx<'i, BorrowAction> {
   /// Defines how the borrowed assets should be used.
   pub fn with_intent<F>(self, intent_fn: F) -> UserDrivenTx<'i, BorrowActionWithIntent<F>>
   where
-    F: IntentFnT,
+    F: BorrowIntentFnT,
   {
     let UserDrivenTx {
       identity,
@@ -183,8 +187,8 @@ impl<'i> UserDrivenTx<'i, BorrowAction> {
 }
 
 impl<'i> ProtoTransaction for UserDrivenTx<'i, BorrowAction> {
-  type Input = IntentFn;
-  type Tx = UserDrivenTx<'i, BorrowActionWithIntent<IntentFn>>;
+  type Input = BorrowIntentFn;
+  type Tx = UserDrivenTx<'i, BorrowActionWithIntent<BorrowIntentFn>>;
 
   fn with(self, input: Self::Input) -> Self::Tx {
     self.with_intent(input)
@@ -195,7 +199,7 @@ impl<'i> ProtoTransaction for UserDrivenTx<'i, BorrowAction> {
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl<F> TransactionInternal for UserDrivenTx<'_, BorrowActionWithIntent<F>>
 where
-  F: IntentFnT + Send,
+  F: BorrowIntentFnT + Send,
 {
   type Output = ();
   async fn execute_with_opt_gas_internal<S>(
