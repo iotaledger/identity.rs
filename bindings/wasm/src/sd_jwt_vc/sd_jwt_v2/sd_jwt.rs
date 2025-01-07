@@ -21,8 +21,8 @@ use super::WasmRequiredKeyBinding;
 const I_SD_JWT_CLAIMS: &str = r#"
 interface SdJwtClaims {
   _sd: string[];
-  _sd_alg: string | undefined;
-  cnf: RequiredKeyBinding | undefined;
+  _sd_alg?: string;
+  cnf?: RequiredKeyBinding;
   [properties: string]: unknown;
 }
 "#;
