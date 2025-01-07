@@ -58,10 +58,12 @@ impl WasmSdJwtVcBuilder {
     Self(self.0.header(header))
   }
 
-  /// Require a proof of possession of a given key from the holder.
+  /// Adds a decoy digest to the specified path.
   ///
-  /// This operation adds a JWT confirmation (`cnf`) claim as specified in
-  /// [RFC8300](https://www.rfc-editor.org/rfc/rfc7800.html#section-3).
+  /// `path` indicates the pointer to the value that will be concealed using the syntax of
+  /// [JSON pointer](https://datatracker.ietf.org/doc/html/rfc6901).
+  ///
+  /// Use `path` = "" to add decoys to the top level.
   #[wasm_bindgen(js_name = addDecoys)]
   pub fn add_decoys(self, path: &str, number_of_decoys: usize) -> Result<Self> {
     self.0.add_decoys(path, number_of_decoys).map(Self).wasm_result()
