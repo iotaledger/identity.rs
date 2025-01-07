@@ -132,10 +132,6 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
     format!("{:?}", self.response.to_string())
   }
 
-  fn to_bcs(&self) -> Result<IotaTransactionBlockResponseBcs, Self::Error> {
-    todo!() //
-  }
-
   fn effects_execution_status(&self) -> Option<IotaExecutionStatus> {
     self
       .response
@@ -150,12 +146,16 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
       .map(|wasm_o_ref_vec| wasm_o_ref_vec.into())
   }
 
-  fn as_native_response(&mut self) -> &mut Self::NativeResponse {
-    todo!()
+  fn as_native_response(&self) -> &Self::NativeResponse {
+    &self.response
   }
 
-  fn into_native_response(self) -> Self::NativeResponse {
-    todo!()
+  fn as_mut_native_response(&mut self) -> &mut Self::NativeResponse {
+    &mut self.response
+  }
+
+  fn clone_native_response(&self) -> Self::NativeResponse {
+    self.response.clone()
   }
 }
 

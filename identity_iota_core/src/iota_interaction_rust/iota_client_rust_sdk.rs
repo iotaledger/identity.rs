@@ -29,13 +29,13 @@ use identity_iota_interaction::types::{
   quorum_driver_types::ExecuteTransactionRequestType,
   transaction::{ProgrammableTransaction, Transaction, TransactionData},
 };
-use identity_iota_interaction::{IotaKeySignature, IotaTransactionBlockResponseBcs};
+use identity_iota_interaction::{IotaKeySignature};
 use identity_iota_interaction::{
   CoinReadTrait, EventTrait, IotaClientTrait, IotaTransactionBlockResponseT, ProgrammableTransactionBcs,
   QuorumDriverTrait, ReadTrait,
 };
 use identity_iota_interaction::{IotaClient, SignatureBcs, TransactionDataBcs};
-use crate::rebased::{rebased_err, Error};
+use crate::rebased::Error;
 
 /// The minimum balance required to execute a transaction.
 pub(crate) const MINIMUM_BALANCE: u64 = 1_000_000_000;
@@ -102,10 +102,6 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
     format!("{:?}", self.response)
   }
 
-  fn to_bcs(&self) -> Result<IotaTransactionBlockResponseBcs, Self::Error> {
-    bcs::to_bytes(&self.response).map_err(rebased_err)
-  }
-
   fn effects_execution_status(&self) -> Option<IotaExecutionStatus> {
     self.response.effects.as_ref().map(|effects| effects.status().clone())
   }
@@ -114,13 +110,16 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
     self.response.effects.as_ref().map(|effects| effects.created().to_vec())
   }
 
-  fn as_native_response(&mut self) -> &mut Self::NativeResponse {
+  fn as_native_response(&self) -> &Self::NativeResponse {
+    &self.response
+  }
+
+  fn as_mut_native_response(&mut self) -> &mut Self::NativeResponse {
     &mut self.response
   }
 
-  /// Consumes this adapter and returns the internally used platform specific response
-  fn into_native_response(self) -> Self::NativeResponse {
-    self.response
+  fn clone_native_response(&self) -> Self::NativeResponse {
+    self.response.clone()
   }
 }
 

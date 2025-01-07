@@ -7,8 +7,7 @@ use std::boxed::Box;
 use std::marker::Send;
 use async_trait::async_trait;
 use secret_storage::{Signer, SignatureScheme};
-use crate::{OptionalSend, ProgrammableTransactionBcs, TransactionDataBcs, SignatureBcs,
-            IotaTransactionBlockResponseBcs};
+use crate::{OptionalSend, ProgrammableTransactionBcs, TransactionDataBcs, SignatureBcs};
 use crate::rpc_types::{
   IotaTransactionBlockResponseOptions,
   IotaObjectResponse,
@@ -81,10 +80,7 @@ pub trait IotaTransactionBlockResponseT: OptionalSend {
   /// Returns Debug representation of the IotaTransactionBlockResponse
   fn to_string(&self) -> String;
 
-  /// Returns Bcs serialization of the IotaTransactionBlockResponse
-  fn to_bcs(&self) -> Result<IotaTransactionBlockResponseBcs, Self::Error>;
-
-    /// If effects_is_some(), returns a clone of the IotaTransactionBlockEffectsAPI::status()
+  /// If effects_is_some(), returns a clone of the IotaTransactionBlockEffectsAPI::status()
   /// Otherwise, returns None
   fn effects_execution_status(&self) -> Option<IotaExecutionStatus>;
 
@@ -94,10 +90,13 @@ pub trait IotaTransactionBlockResponseT: OptionalSend {
   fn effects_created(&self) -> Option<Vec<OwnedObjectRef>>;
 
   /// Returns a reference to the platform specific client sdk response instance wrapped by this adapter
-  fn as_native_response(&mut self) -> &mut Self::NativeResponse;
+  fn as_native_response(&self) -> &Self::NativeResponse;
 
-  /// Consumes this adapter and returns the wrapped platform specific client sdk response
-  fn into_native_response(self) -> Self::NativeResponse ;
+  /// Returns a mutable reference to the platform specific client sdk response instance wrapped by this adapter
+  fn as_mut_native_response(&mut self) -> &mut Self::NativeResponse;
+
+  /// Returns a clone of the wrapped platform specific client sdk response
+  fn clone_native_response(&self) -> Self::NativeResponse;
 }
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]

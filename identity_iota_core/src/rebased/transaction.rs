@@ -84,15 +84,13 @@ impl<T> Deref for TransactionOutputInternal<T> {
 #[cfg(not(target_arch = "wasm32"))]
 impl<T> From<TransactionOutputInternal<T>> for TransactionOutput<T> {
   fn from(value: TransactionOutputInternal<T>) -> Self {
-    let response_bcs = value
-        .response
-        .to_bcs()
-        .expect("TransactionOutputInternal bcs serialization failed");
-    let response =
-        bcs::from_bytes::<IotaTransactionBlockResponse>(&response_bcs)
-            .expect("IotaTransactionBlockResponse bcs deserialization failed");
+    let TransactionOutputInternal::<T> {
+      output: out,
+      response: internal_response
+    } = value;
+    let response = internal_response.clone_native_response();
     TransactionOutput {
-      output: value.output,
+      output: out,
       response,
     }
   }
