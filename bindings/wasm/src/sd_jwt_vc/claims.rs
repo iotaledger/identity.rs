@@ -7,12 +7,12 @@ use wasm_bindgen::prelude::wasm_bindgen;
 const I_SD_JWT_VC_CLAIMS: &str = r#"
 interface ISdJwtVcClaims {
   iss: string;
-  nbf: string | undefined;
-  exp: string | undefined;
   vct: string;
   status: SdJwtVcStatus;
-  iat: string | undefined;
-  sub: string | undefined;
+  nbf?: string;
+  exp?: string;
+  iat?: string;
+  sub?: string;
 }
 
 type SdJwtVcClaims = ISdJwtVcClaims & SdJwtClaims;
