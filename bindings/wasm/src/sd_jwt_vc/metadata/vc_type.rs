@@ -13,18 +13,19 @@ use crate::sd_jwt_vc::resolver::ResolverUrlToValue;
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_TYPE_METADATA: &str = r#"
-type TypeSchema = { schema_uri: string, "schema_uri#integrity"?: string }
-  | { schema: any, "schema#integrity"?: string };
+type SchemaByUri = { schema_uri: string, "schema_uri#integrity"?: string };
+type SchemaByObject = { schema: unknown, "schema#integrity"?: string };
+type NoSchema = {};
+type TypeSchema = SchemaByUri | SchemaByObject | NoSchema;
 
 type TypeMetadataHelper = {
   name?: string;
   description?: string;
   extends?: string;
   "extends#integrity"?: string;
-  display?: any[];
+  display?: unknown[];
   claims?: ClaimMetadata[];
-"#;
-} & (TypeSchema | undefined);
+} & TypeSchema;
 "#;
 
 #[wasm_bindgen]

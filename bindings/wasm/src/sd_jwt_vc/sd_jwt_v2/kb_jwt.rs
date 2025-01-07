@@ -24,7 +24,7 @@ type RequiredKeyBinding = { jwk: Jwk }
   | { jwe: string }
   | { kid: string }
   | { jwu: { jwu: string, kid: string }}
-  | any;
+  | unknown;
 "#;
 
 #[wasm_bindgen(typescript_custom_section)]

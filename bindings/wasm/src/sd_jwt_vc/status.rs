@@ -10,7 +10,7 @@ interface SdJwtVcStatusListRef {
   idx: number;
 }
 
-type SdJwtVcStatus = { status_list: SdJwtVcStatusListRef } | any;
+type SdJwtVcStatus = { status_list: SdJwtVcStatusListRef } | unknown;
 "#;
 
 #[wasm_bindgen]
