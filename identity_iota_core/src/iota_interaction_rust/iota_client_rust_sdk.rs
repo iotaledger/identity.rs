@@ -141,7 +141,7 @@ impl<'a> QuorumDriverTrait for QuorumDriverAdapter<'a> {
   ) -> IotaRpcResult<IotaTransactionBlockResponseAdaptedTraitObj> {
     let tx_data = bcs::from_bytes::<TransactionData>(tx_data_bcs.as_slice())?;
     let signatures_vec = signatures
-      .into_iter()
+      .iter()
       .map(|signature_bcs| bcs::from_bytes::<Signature>(signature_bcs.as_slice()))
       .collect::<Result<Vec<Signature>, _>>()?;
     let tx = Transaction::from_data(tx_data, signatures_vec);
@@ -412,7 +412,7 @@ impl IotaClientRustSdk {
   ) -> Result<IotaTransactionBlockResponse, Error> {
     let gas_budget = match gas_budget {
       Some(gas) => gas,
-      None => self.sdk_default_gas_budget(sender_address.clone(), &tx).await?,
+      None => self.sdk_default_gas_budget(sender_address, &tx).await?,
     };
     let tx_data = self.get_transaction_data(tx, gas_budget, sender_address).await?;
     let signature = Self::sign_transaction_data(signer, &tx_data, sender_public_key).await?;
@@ -451,7 +451,7 @@ impl IotaClientRustSdk {
       .get_reference_gas_price()
       .await
       .map_err(|e| Error::RpcError(e.to_string()))?;
-    let gas_coin = self.get_coin_for_transaction(sender_address.clone()).await?;
+    let gas_coin = self.get_coin_for_transaction(sender_address).await?;
     let tx_data = TransactionData::new_programmable(
       sender_address,
       vec![gas_coin.object_ref()],
@@ -492,7 +492,7 @@ impl IotaClientRustSdk {
       .get_reference_gas_price()
       .await
       .map_err(|err| Error::GasIssue(format!("could not get gas price; {err}")))?;
-    let coin = self.get_coin_for_transaction(sender_address.clone()).await?;
+    let coin = self.get_coin_for_transaction(sender_address).await?;
     let tx_data = TransactionData::new_programmable(
       sender_address,
       vec![coin.object_ref()],

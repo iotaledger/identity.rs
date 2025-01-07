@@ -8,6 +8,7 @@ use identity_iota_interaction::types::programmable_transaction_builder::Programm
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::TransactionBuilderT;
 
+#[derive(Default)]
 pub(crate) struct TransactionBuilderRustSdk {
   pub(crate) builder: ProgrammableTransactionBuilder,
 }
@@ -33,14 +34,6 @@ impl TransactionBuilderT for TransactionBuilderRustSdk {
 
   fn into_native_tx_builder(self) -> Self::NativeTxBuilder {
     self.builder
-  }
-}
-
-impl Default for TransactionBuilderRustSdk {
-  fn default() -> Self {
-    TransactionBuilderRustSdk {
-      builder: ProgrammableTransactionBuilder::default(),
-    }
   }
 }
 

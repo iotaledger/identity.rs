@@ -83,7 +83,7 @@ impl PublicAvailableVC {
   }
 
   fn try_from_asset(asset: AuthenticatedAsset<IotaVerifiableCredential>) -> Result<Self, anyhow::Error> {
-    let credential = parse_jwt_credential(&asset.content().data())?;
+    let credential = parse_jwt_credential(asset.content().data())?;
     Ok(Self { asset, credential })
   }
 }

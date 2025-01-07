@@ -4,8 +4,6 @@
 use std::collections::HashSet;
 use std::str::FromStr;
 
-use bcs;
-
 use identity_iota_interaction::{IdentityMoveCalls, ProgrammableTransactionBcs, TransactionBuilderT,
                                 BorrowIntentFnT, ControllerIntentFnT};
 

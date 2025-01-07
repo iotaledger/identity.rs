@@ -3,8 +3,6 @@
 
 use serde::Serialize;
 
-use bcs;
-
 use crate::rebased::Error;
 use identity_iota_interaction::ident_str;
 use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
