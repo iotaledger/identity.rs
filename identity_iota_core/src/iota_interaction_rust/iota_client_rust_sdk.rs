@@ -128,7 +128,7 @@ pub(crate) struct QuorumDriverAdapter<'a> {
 }
 
 #[async_trait::async_trait()]
-impl<'a> QuorumDriverTrait for QuorumDriverAdapter<'a> {
+impl QuorumDriverTrait for QuorumDriverAdapter<'_> {
   type Error = Error;
   type NativeResponse = IotaTransactionBlockResponse;
 
@@ -158,7 +158,7 @@ pub(crate) struct ReadAdapter<'a> {
 }
 
 #[async_trait::async_trait()]
-impl<'a> ReadTrait for ReadAdapter<'a> {
+impl ReadTrait for ReadAdapter<'_> {
   type Error = Error;
   type NativeResponse = IotaTransactionBlockResponse;
 
@@ -224,7 +224,7 @@ pub(crate) struct CoinReadAdapter<'a> {
 }
 
 #[async_trait::async_trait()]
-impl<'a> CoinReadTrait for CoinReadAdapter<'a> {
+impl CoinReadTrait for CoinReadAdapter<'_> {
   type Error = Error;
 
   async fn get_coins(
@@ -243,7 +243,7 @@ pub(crate) struct EventAdapter<'a> {
 }
 
 #[async_trait::async_trait()]
-impl<'a> EventTrait for EventAdapter<'a> {
+impl EventTrait for EventAdapter<'_> {
   type Error = Error;
 
   async fn query_events(
