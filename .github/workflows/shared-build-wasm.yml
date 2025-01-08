@@ -23,7 +23,7 @@ jobs:
   build-wasm:
     defaults:
       run:
-        working-directory: bindings/wasm
+        working-directory: bindings/wasm/identity_wasm
         shell: bash
     runs-on: ubuntu-latest
     strategy:
@@ -50,7 +50,7 @@ jobs:
           target-cache-enabled: true
           sccache-enabled: true
           sccache-path: ${{ matrix.sccache-path }}
-          target-cache-path: bindings/wasm/target
+          target-cache-path: bindings/wasm/identity_wasm/target
 
       # Download a pre-compiled wasm-bindgen binary.
       - name: Install wasm-bindgen-cli
@@ -86,9 +86,9 @@ jobs:
         with:
           name: ${{ inputs.output-artifact-name }}
           path: |
-            bindings/wasm/node
-            bindings/wasm/web
-            bindings/wasm/examples/dist
-            bindings/wasm/docs
+            bindings/wasm/identity_wasm/node
+            bindings/wasm/identity_wasm/web
+            bindings/wasm/identity_wasm/examples/dist
+            bindings/wasm/identity_wasm/docs
           if-no-files-found: error
           retention-days: 1
