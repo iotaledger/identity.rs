@@ -4,24 +4,25 @@
 use std::collections::HashSet;
 use std::str::FromStr;
 
-use identity_iota_interaction::{IdentityMoveCalls, ProgrammableTransactionBcs, TransactionBuilderT,
-                                BorrowIntentFnT, ControllerIntentFnT};
+use identity_iota_interaction::{
+  BorrowIntentFnT, ControllerIntentFnT, IdentityMoveCalls, ProgrammableTransactionBcs, TransactionBuilderT,
+};
 
 // ProgrammableTransactionBuilder can only be used here cause this is a platform specific file
 use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
 
+use super::{utils, TransactionBuilderAdapter};
+use crate::rebased::proposals::{BorrowAction, ControllerExecution, SendAction};
+use crate::rebased::{rebased_err, Error};
+use identity_iota_interaction::ident_str;
 use identity_iota_interaction::rpc_types::{IotaObjectData, OwnedObjectRef};
+use identity_iota_interaction::types::base_types::ObjectType;
 use identity_iota_interaction::types::{
   base_types::{IotaAddress, ObjectID, ObjectRef},
   transaction::ObjectArg,
 };
 use identity_iota_interaction::types::{TypeTag, IOTA_FRAMEWORK_PACKAGE_ID};
-use identity_iota_interaction::ident_str;
 use identity_iota_interaction::MoveType;
-use identity_iota_interaction::types::base_types::ObjectType;
-use crate::rebased::{Error, rebased_err};
-use crate::rebased::proposals::{BorrowAction, ControllerExecution, SendAction};
-use super::{utils, TransactionBuilderAdapter};
 
 #[derive(Clone)]
 pub(crate) struct IdentityMoveCallsRustSdk {}
@@ -84,25 +85,26 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
 
     // Borrow all the objects specified in the action.
     let obj_arg_map = objects
-        .into_iter()
-        .map(|obj_data| {
-          let obj_ref = obj_data.object_ref();
-          let ObjectType::Struct(obj_type) = obj_data.object_type()? else {
-            unreachable!("move packages cannot be borrowed to begin with");
-          };
-          let recv_obj = ptb.obj(ObjectArg::Receiving(obj_ref))?;
+      .into_iter()
+      .map(|obj_data| {
+        let obj_ref = obj_data.object_ref();
+        let ObjectType::Struct(obj_type) = obj_data.object_type()? else {
+          unreachable!("move packages cannot be borrowed to begin with");
+        };
+        let recv_obj = ptb.obj(ObjectArg::Receiving(obj_ref))?;
 
-          let obj_arg = ptb.programmable_move_call(
-            package,
-            ident_str!("identity").into(),
-            ident_str!("execute_borrow").into(),
-            vec![obj_type.into()],
-            vec![identity, borrow_action, recv_obj],
-          );
+        let obj_arg = ptb.programmable_move_call(
+          package,
+          ident_str!("identity").into(),
+          ident_str!("execute_borrow").into(),
+          vec![obj_type.into()],
+          vec![identity, borrow_action, recv_obj],
+        );
 
-          Ok((obj_ref.0, (obj_arg, obj_data)))
-        })
-        .collect::<anyhow::Result<_>>().map_err(rebased_err)?;
+        Ok((obj_ref.0, (obj_arg, obj_data)))
+      })
+      .collect::<anyhow::Result<_>>()
+      .map_err(rebased_err)?;
 
     // Apply the user-defined operation.
     let mut ptb_adapter = TransactionBuilderAdapter::new(ptb);
@@ -178,7 +180,9 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
       )
     };
     let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
-    let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(controller_cap)).map_err(rebased_err)?;
+    let controller_cap = ptb
+      .obj(ObjectArg::ImmOrOwnedObject(controller_cap))
+      .map_err(rebased_err)?;
     let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, controller_cap, package);
     let expiration = utils::option_to_move(expiration, &mut ptb, package).map_err(rebased_err)?;
     let threshold = utils::option_to_move(threshold, &mut ptb, package).map_err(rebased_err)?;
@@ -214,7 +218,9 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     let mut ptb = Ptb::new();
 
     let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
-    let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(controller_cap)).map_err(rebased_err)?;
+    let controller_cap = ptb
+      .obj(ObjectArg::ImmOrOwnedObject(controller_cap))
+      .map_err(rebased_err)?;
     let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, controller_cap, package);
     let proposal_id = ptb.pure(proposal_id).map_err(rebased_err)?;
     ptb.programmable_move_call(
@@ -283,7 +289,9 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package);
 
     // Borrow the controller cap into this transaction.
-    let receiving = ptb.obj(ObjectArg::Receiving(borrowing_controller_cap_ref)).map_err(rebased_err)?;
+    let receiving = ptb
+      .obj(ObjectArg::Receiving(borrowing_controller_cap_ref))
+      .map_err(rebased_err)?;
     let borrowed_controller_cap = ptb.programmable_move_call(
       package,
       ident_str!("identity").into(),

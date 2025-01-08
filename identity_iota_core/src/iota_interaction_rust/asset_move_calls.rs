@@ -74,7 +74,7 @@ impl AssetMoveCalls for AssetMoveCallsRustSdk {
 
   fn delete<T>(asset: ObjectRef, package: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error>
   where
-  T: MoveType,
+    T: MoveType,
   {
     let mut ptb = ProgrammableTransactionBuilder::new();
 

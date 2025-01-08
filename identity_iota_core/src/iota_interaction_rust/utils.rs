@@ -19,12 +19,12 @@ use serde::Serialize;
 /// Adds a reference to the on-chain clock to `ptb`'s arguments.
 pub(crate) fn get_clock_ref(ptb: &mut Ptb) -> Argument {
   ptb
-      .obj(ObjectArg::SharedObject {
-        id: IOTA_CLOCK_OBJECT_ID,
-        initial_shared_version: IOTA_CLOCK_OBJECT_SHARED_VERSION,
-        mutable: false,
-      })
-      .expect("network has a singleton clock instantiated")
+    .obj(ObjectArg::SharedObject {
+      id: IOTA_CLOCK_OBJECT_ID,
+      initial_shared_version: IOTA_CLOCK_OBJECT_SHARED_VERSION,
+      mutable: false,
+    })
+    .expect("network has a singleton clock instantiated")
 }
 
 pub(crate) fn get_controller_delegation(
@@ -105,7 +105,7 @@ pub(crate) fn option_to_move<T: MoveType + Serialize>(
 
 pub(crate) fn ptb_pure<T>(ptb: &mut Ptb, name: &str, value: T) -> Result<Argument, Error>
 where
-    T: Serialize + core::fmt::Debug,
+  T: Serialize + core::fmt::Debug,
 {
   ptb.pure(&value).map_err(|err| {
     Error::InvalidArgument(format!(
@@ -117,6 +117,6 @@ where
 #[allow(dead_code)]
 pub(crate) fn ptb_obj(ptb: &mut Ptb, name: &str, value: ObjectArg) -> Result<Argument, Error> {
   ptb
-      .obj(value)
-      .map_err(|err| Error::InvalidArgument(format!("could not serialize object {name} {value:?}; {err}")))
+    .obj(value)
+    .map_err(|err| Error::InvalidArgument(format!("could not serialize object {name} {value:?}; {err}")))
 }
