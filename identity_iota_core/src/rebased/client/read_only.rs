@@ -14,9 +14,16 @@ use anyhow::anyhow;
 use anyhow::Context as _;
 use futures::stream::FuturesUnordered;
 
+use crate::iota_interaction_adapter::IotaClientAdapter;
+use crate::rebased::migration::get_alias;
+use crate::rebased::migration::get_identity;
+use crate::rebased::migration::lookup;
+use crate::rebased::migration::Identity;
+use crate::rebased::Error;
 use futures::StreamExt as _;
 use identity_core::common::Url;
 use identity_did::DID;
+use identity_iota_interaction::move_types::language_storage::StructTag;
 use identity_iota_interaction::rpc_types::EventFilter;
 use identity_iota_interaction::rpc_types::IotaData as _;
 use identity_iota_interaction::rpc_types::IotaObjectData;
@@ -28,15 +35,8 @@ use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::IotaClientTrait;
-use crate::iota_interaction_adapter::IotaClientAdapter;
-use identity_iota_interaction::move_types::language_storage::StructTag;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
-use crate::rebased::migration::get_alias;
-use crate::rebased::migration::get_identity;
-use crate::rebased::migration::lookup;
-use crate::rebased::migration::Identity;
-use crate::rebased::Error;
 
 #[cfg(not(target_arch = "wasm32"))]
 use identity_iota_interaction::IotaClient;
@@ -131,7 +131,10 @@ impl IdentityClientReadOnly {
     }
   }
 
-  async fn new_with_pkg_id_internal(iota_client: IotaClientAdapter, iota_identity_pkg_id: ObjectID) -> Result<Self, Error> {
+  async fn new_with_pkg_id_internal(
+    iota_client: IotaClientAdapter,
+    iota_identity_pkg_id: ObjectID,
+  ) -> Result<Self, Error> {
     let IdentityPkgMetadata {
       migration_registry_id, ..
     } = identity_pkg_metadata(&iota_client, iota_identity_pkg_id).await?;
@@ -271,7 +274,10 @@ struct MigrationRegistryCreatedEvent {
 // TODO: remove argument `package_id` and use `EventFilter::MoveEventField` to find the beacon event and thus the
 // package id.
 // TODO: authenticate the beacon event with though sender's ID.
-async fn identity_pkg_metadata(iota_client: &IotaClientAdapter, package_id: ObjectID) -> Result<IdentityPkgMetadata, Error> {
+async fn identity_pkg_metadata(
+  iota_client: &IotaClientAdapter,
+  package_id: ObjectID,
+) -> Result<IdentityPkgMetadata, Error> {
   // const EVENT_BEACON_PATH: &str = "/beacon";
   // const EVENT_BEACON_VALUE: &[u8] = b"identity.rs_pkg";
 

@@ -1,7 +1,8 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
+use std::ops::DerefMut;
 
 use crate::rebased::Error;
 use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;

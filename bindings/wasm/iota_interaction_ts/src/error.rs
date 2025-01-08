@@ -3,15 +3,18 @@
 
 use std::result::Result as StdResult;
 
+use serde::de::DeserializeOwned;
 use std::borrow::Cow;
 use std::fmt::Debug;
 use std::fmt::Display;
-use serde::de::DeserializeOwned;
 use wasm_bindgen::JsValue;
 
-use thiserror::Error as ThisError;
-use identity_iota_interaction::types::execution_status::{CommandArgumentError, ExecutionFailureStatus, PackageUpgradeError, TypeArgumentError};
 use crate::common::into_sdk_type;
+use identity_iota_interaction::types::execution_status::CommandArgumentError;
+use identity_iota_interaction::types::execution_status::ExecutionFailureStatus;
+use identity_iota_interaction::types::execution_status::PackageUpgradeError;
+use identity_iota_interaction::types::execution_status::TypeArgumentError;
+use thiserror::Error as ThisError;
 
 /// Convenience wrapper for `Result<T, JsValue>`.
 ///

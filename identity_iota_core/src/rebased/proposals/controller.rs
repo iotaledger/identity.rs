@@ -3,14 +3,20 @@
 
 use std::marker::PhantomData;
 
-use crate::iota_interaction_adapter::{AdapterError, AdapterNativeResponse, IdentityMoveCallsAdapter, IotaTransactionBlockResponseAdapter};
-use identity_iota_interaction::{IdentityMoveCalls, IotaTransactionBlockResponseT, TransactionBuilderT};
+use crate::iota_interaction_adapter::AdapterError;
+use crate::iota_interaction_adapter::AdapterNativeResponse;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
+use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaTransactionBlockResponseT;
+use identity_iota_interaction::TransactionBuilderT;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::migration::Proposal;
-use crate::rebased::transaction::{ProtoTransaction, TransactionInternal, TransactionOutputInternal};
-use identity_iota_interaction::MoveType;
+use crate::rebased::transaction::ProtoTransaction;
+use crate::rebased::transaction::TransactionInternal;
+use crate::rebased::transaction::TransactionOutputInternal;
 use crate::rebased::Error;
 use async_trait::async_trait;
 use identity_iota_interaction::rpc_types::IotaObjectRef;
@@ -19,6 +25,7 @@ use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::transaction::Argument;
 use identity_iota_interaction::types::TypeTag;
+use identity_iota_interaction::MoveType;
 use secret_storage::Signer;
 use serde::Deserialize;
 use serde::Serialize;
@@ -146,7 +153,9 @@ impl ProposalT for Proposal<ControllerExecution> {
     })
   }
 
-  fn parse_tx_effects_internal(_tx_response: &dyn IotaTransactionBlockResponseT<Error=AdapterError, NativeResponse=AdapterNativeResponse>) -> Result<Self::Output, Error> {
+  fn parse_tx_effects_internal(
+    _tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>,
+  ) -> Result<Self::Output, Error> {
     Ok(())
   }
 }
@@ -219,7 +228,8 @@ where
       })
       .ok_or_else(|| Error::ObjectLookup(format!("object {borrowing_cap_id} doesn't exist")))?;
 
-    let intent_adapter = move |ptb: &mut dyn TransactionBuilderT<Error=AdapterError, NativeTxBuilder=Ptb>, arg: &Argument| {
+    let intent_adapter = move |ptb: &mut dyn TransactionBuilderT<Error = AdapterError, NativeTxBuilder = Ptb>,
+                               arg: &Argument| {
       (action.intent_fn)(ptb.as_native_tx_builder(), arg)
     };
 

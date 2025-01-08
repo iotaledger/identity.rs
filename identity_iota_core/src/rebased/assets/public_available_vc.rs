@@ -7,10 +7,11 @@ use anyhow::Context as _;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jwt;
 use identity_credential::credential::JwtCredential;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaVerifiableCredential;
 use identity_jose::jwt::JwtHeader;
 use identity_jose::jwu;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::{IotaKeySignature, IotaVerifiableCredential};
 use itertools::Itertools;
 use secret_storage::Signer;
 

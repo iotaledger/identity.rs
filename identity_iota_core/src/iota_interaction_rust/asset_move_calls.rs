@@ -5,17 +5,18 @@ use serde::Serialize;
 
 use crate::rebased::Error;
 use identity_iota_interaction::ident_str;
+use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::ObjectRef;
+use identity_iota_interaction::types::base_types::SequenceNumber;
 use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use identity_iota_interaction::types::transaction::Command;
+use identity_iota_interaction::types::transaction::ObjectArg;
+use identity_iota_interaction::types::TypeTag;
+use identity_iota_interaction::AssetMoveCalls;
 use identity_iota_interaction::MoveType;
+use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::TypedValue;
-use identity_iota_interaction::{
-  types::{
-    base_types::{IotaAddress, ObjectID, ObjectRef, SequenceNumber},
-    transaction::{Command, ObjectArg},
-    TypeTag,
-  },
-  AssetMoveCalls, ProgrammableTransactionBcs,
-};
 use iota_sdk::types::transaction::Argument;
 use iota_sdk::types::transaction::ProgrammableMoveCall;
 

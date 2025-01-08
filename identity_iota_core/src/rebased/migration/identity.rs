@@ -18,6 +18,8 @@ use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 use async_trait::async_trait;
 use identity_core::common::Timestamp;
+use identity_iota_interaction::ident_str;
+use identity_iota_interaction::move_types::language_storage::StructTag;
 use identity_iota_interaction::rpc_types::IotaObjectData;
 use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
 use identity_iota_interaction::rpc_types::IotaParsedData;
@@ -27,12 +29,10 @@ use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::types::id::UID;
 use identity_iota_interaction::types::object::Owner;
 use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::ident_str;
-use identity_iota_interaction::move_types::language_storage::StructTag;
+use identity_iota_interaction::IotaKeySignature;
 use secret_storage::Signer;
 use serde;
 use serde::Deserialize;
@@ -47,9 +47,12 @@ use crate::rebased::proposals::DeactivateDid;
 use crate::rebased::proposals::ProposalBuilder;
 use crate::rebased::proposals::SendAction;
 use crate::rebased::proposals::UpdateDidDocument;
-use crate::rebased::transaction::{TransactionInternal, TransactionOutputInternal};
-use identity_iota_interaction::{IotaClientTrait, MoveType};
-use crate::rebased::{rebased_err, Error};
+use crate::rebased::rebased_err;
+use crate::rebased::transaction::TransactionInternal;
+use crate::rebased::transaction::TransactionOutputInternal;
+use crate::rebased::Error;
+use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::MoveType;
 
 use super::Multicontroller;
 use super::UnmigratedAlias;
@@ -479,8 +482,9 @@ impl TransactionInternal for CreateIdentityTx {
 
     let response = client.execute_transaction(programmable_transaction, gas_budget).await?;
 
-    let created = response.effects_created()
-        .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects_created in transaction".to_string()))?;
+    let created = response.effects_created().ok_or_else(|| {
+      Error::TransactionUnexpectedResponse("could not find effects_created in transaction".to_string())
+    })?;
     let new_identities: Vec<OwnedObjectRef> = created
       .into_iter()
       .filter(|elem| {
@@ -496,7 +500,8 @@ impl TransactionInternal for CreateIdentityTx {
       [value] => value.object_id(),
       _ => {
         return Err(Error::TransactionUnexpectedResponse(format!(
-          "could not find new identity in response: {}", response.to_string()
+          "could not find new identity in response: {}",
+          response.to_string()
         )));
       }
     };

@@ -18,16 +18,23 @@ cfg_if::cfg_if! {
     use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
   }
 }
+use crate::iota_interaction_adapter::AdapterError;
+use crate::iota_interaction_adapter::AdapterNativeResponse;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
-use crate::iota_interaction_adapter::{IdentityMoveCallsAdapter};
-use crate::iota_interaction_adapter::{AdapterError, AdapterNativeResponse};
 
-use identity_iota_interaction::{IdentityMoveCalls, IotaClientTrait, IotaTransactionBlockResponseT, OptionalSend, ProgrammableTransactionBcs};
+use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaTransactionBlockResponseT;
+use identity_iota_interaction::OptionalSend;
+use identity_iota_interaction::ProgrammableTransactionBcs;
 
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::get_identity;
-use crate::rebased::transaction::{ProtoTransaction, TransactionInternal, TransactionOutputInternal};
+use crate::rebased::transaction::ProtoTransaction;
+use crate::rebased::transaction::TransactionInternal;
+use crate::rebased::transaction::TransactionOutputInternal;
 use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
@@ -49,8 +56,8 @@ pub use upgrade::*;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::migration::Proposal;
-use identity_iota_interaction::MoveType;
 use crate::rebased::Error;
+use identity_iota_interaction::MoveType;
 
 /// Interface that allows the creation and execution of an [`OnChainIdentity`]'s [`Proposal`]s.
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
@@ -61,7 +68,7 @@ pub trait ProposalT {
   /// The output of the [`Proposal`]
   type Output;
   /// Platform-agnostic type of the IotaTransactionBlockResponse
-  type Response: IotaTransactionBlockResponseT<Error=AdapterError, NativeResponse=AdapterNativeResponse>;
+  type Response: IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>;
 
   /// Creates a new [`Proposal`] with the provided action and expiration.
   async fn create<'i, S>(
@@ -90,7 +97,9 @@ pub trait ProposalT {
   }
 
   /// For internal platform-agnostic usage only.
-  fn parse_tx_effects_internal(tx_response: &dyn IotaTransactionBlockResponseT<Error=AdapterError, NativeResponse=AdapterNativeResponse>) -> Result<Self::Output, Error>;
+  fn parse_tx_effects_internal(
+    tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>,
+  ) -> Result<Self::Output, Error>;
 }
 
 impl<A> Proposal<A> {

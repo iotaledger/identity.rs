@@ -4,14 +4,15 @@
 use std::str::FromStr as _;
 
 use crate::iota_interaction_adapter::AssetMoveCallsAdapter;
-use identity_iota_interaction::IotaKeySignature;
 use crate::rebased::client::IdentityClient;
-use crate::rebased::transaction::{TransactionInternal, TransactionOutputInternal};
-use identity_iota_interaction::{AssetMoveCalls, IotaClientTrait, MoveType};
+use crate::rebased::transaction::TransactionInternal;
+use crate::rebased::transaction::TransactionOutputInternal;
 use crate::rebased::Error;
 use anyhow::anyhow;
 use anyhow::Context;
 use async_trait::async_trait;
+use identity_iota_interaction::ident_str;
+use identity_iota_interaction::move_types::language_storage::StructTag;
 use identity_iota_interaction::rpc_types::IotaData as _;
 use identity_iota_interaction::rpc_types::IotaExecutionStatus;
 use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
@@ -22,8 +23,10 @@ use identity_iota_interaction::types::base_types::SequenceNumber;
 use identity_iota_interaction::types::id::UID;
 use identity_iota_interaction::types::object::Owner;
 use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::ident_str;
-use identity_iota_interaction::move_types::language_storage::StructTag;
+use identity_iota_interaction::AssetMoveCalls;
+use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::MoveType;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -63,7 +66,7 @@ where
 
 impl<T> AuthenticatedAsset<T>
 where
-    T: for<'a> Deserialize<'a>,
+  T: for<'a> Deserialize<'a>,
 {
   /// Resolves an [`AuthenticatedAsset`] by its ID `id`.
   pub async fn get_by_id<S>(id: ObjectID, client: &IdentityClient<S>) -> Result<Self, Error> {
@@ -509,12 +512,10 @@ where
     )?;
 
     let tx_result = client.execute_transaction(tx, gas_budget).await?;
-    let effects_created = tx_result
-      .effects_created()
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned()))?;
-    let created_obj_ids = effects_created
-      .iter()
-      .map(|obj| obj.reference.object_id);
+    let effects_created = tx_result.effects_created().ok_or_else(|| {
+      Error::TransactionUnexpectedResponse("could not find effects in transaction response".to_owned())
+    })?;
+    let created_obj_ids = effects_created.iter().map(|obj| obj.reference.object_id);
     for id in created_obj_ids {
       let object_type = client
         .read_api()

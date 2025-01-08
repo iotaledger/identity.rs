@@ -4,24 +4,32 @@
 use std::collections::HashSet;
 use std::str::FromStr;
 
-use identity_iota_interaction::{
-  BorrowIntentFnT, ControllerIntentFnT, IdentityMoveCalls, ProgrammableTransactionBcs, TransactionBuilderT,
-};
+use identity_iota_interaction::BorrowIntentFnT;
+use identity_iota_interaction::ControllerIntentFnT;
+use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::ProgrammableTransactionBcs;
+use identity_iota_interaction::TransactionBuilderT;
 
 // ProgrammableTransactionBuilder can only be used here cause this is a platform specific file
 use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
 
-use super::{utils, TransactionBuilderAdapter};
-use crate::rebased::proposals::{BorrowAction, ControllerExecution, SendAction};
-use crate::rebased::{rebased_err, Error};
+use super::utils;
+use super::TransactionBuilderAdapter;
+use crate::rebased::proposals::BorrowAction;
+use crate::rebased::proposals::ControllerExecution;
+use crate::rebased::proposals::SendAction;
+use crate::rebased::rebased_err;
+use crate::rebased::Error;
 use identity_iota_interaction::ident_str;
-use identity_iota_interaction::rpc_types::{IotaObjectData, OwnedObjectRef};
+use identity_iota_interaction::rpc_types::IotaObjectData;
+use identity_iota_interaction::rpc_types::OwnedObjectRef;
+use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::base_types::ObjectType;
-use identity_iota_interaction::types::{
-  base_types::{IotaAddress, ObjectID, ObjectRef},
-  transaction::ObjectArg,
-};
-use identity_iota_interaction::types::{TypeTag, IOTA_FRAMEWORK_PACKAGE_ID};
+use identity_iota_interaction::types::transaction::ObjectArg;
+use identity_iota_interaction::types::TypeTag;
+use identity_iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use identity_iota_interaction::MoveType;
 
 #[derive(Clone)]

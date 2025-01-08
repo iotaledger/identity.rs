@@ -1,10 +1,13 @@
 use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
 
+use identity_iota_interaction::ident_str;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::types::base_types::{ObjectID, ObjectRef};
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::transaction::ObjectArg;
 use identity_iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
-use identity_iota_interaction::{ident_str, MigrationMoveCalls, ProgrammableTransactionBcs};
+use identity_iota_interaction::MigrationMoveCalls;
+use identity_iota_interaction::ProgrammableTransactionBcs;
 
 use crate::rebased::Error;
 
