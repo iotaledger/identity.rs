@@ -48,9 +48,6 @@ jobs:
       - name: wasm fmt check identity_wasm
         run: cargo +nightly fmt --manifest-path ./bindings/wasm/identity_wasm/Cargo.toml --all -- --check
 
-      - name: wasm fmt check iota_interaction_ts
-        run: cargo +nightly fmt --manifest-path ./bindings/wasm/iota_interaction_ts/Cargo.toml --all -- --check
-
       - name: Cargo.toml fmt check
         run:
           dprint check
