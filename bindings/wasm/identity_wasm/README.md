@@ -4,7 +4,7 @@
 
 ## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
 
-## [Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md)
+## [Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/identity_wasm/examples/README.md)
 
 ## Install the library:
 
@@ -158,7 +158,7 @@ Created document  {
 }
 ```
 
-**NOTE: see the [examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md) for how to publish an IOTA DID Document.**
+**NOTE: see the [examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/identity_wasm/examples/README.md) for how to publish an IOTA DID Document.**
 
 ## Web Setup
 
@@ -301,7 +301,7 @@ await identity.init("./static/identity_wasm_bg.wasm");
 
 Calling `identity.init().then(<callback>)` or `await identity.init()` is required to load the Wasm file from the server if not available, because of that it will only be slow for the first time.
 
-**NOTE: see the [examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md) for how to publish an IOTA DID Document.**
+**NOTE: see the [examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/identity_wasm/examples/README.md) for how to publish an IOTA DID Document.**
 
 ## Examples in the Wild
 
