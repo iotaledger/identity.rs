@@ -1,11 +1,11 @@
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::{IotaAddress, ObjectID, ObjectRef, SequenceNumber};
 use identity_iota_interaction::types::execution_status::ExecutionStatus;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Promise;
 use serde::Deserialize;
 use wasm_bindgen::prelude::wasm_bindgen;
-use wasm_bindgen::JsValue;
+use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
 
 use crate::bindings::WasmIotaClient;
@@ -113,6 +113,14 @@ extern "C" {
   #[derive(Clone)]
   pub type WasmExecutionStatus;
 
+  #[wasm_bindgen(typescript_type = "ObjectRef")]
+  #[derive(Clone)]
+  pub type WasmObjectRef;
+
+  #[wasm_bindgen(typescript_type = "SharedObjectRef")]
+  #[derive(Clone)]
+  pub type WasmSharedObjectRef;
+
   #[wasm_bindgen(typescript_type = "OwnedObjectRef")]
   #[derive(Clone)]
   pub type WasmOwnedObjectRef;
@@ -136,6 +144,36 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<IotaTransactionBlockResponseAdapter>")]
   #[derive(Clone)]
   pub type PromiseIotaTransactionBlockResponseAdapter;
+}
+
+impl From<ObjectRef> for WasmObjectRef {
+  fn from(value: ObjectRef) -> Self {
+    let json_obj = serde_json::json!({
+      objectId: value.0,
+      version: value.1,
+      digest: value.2,
+    });
+
+    serde_wasm_bindgen::to_value(&json_obj)
+      .expect("a JSON object is a JS value")
+      // safety: `json_obj` was constructed following TS ObjectRef's interface.
+      .unchecked_into()
+  }
+}
+
+impl From<(ObjectID, SequenceNumber, bool)> for WasmSharedObjectRef {
+  fn from(value: (ObjectID, SequenceNumber, bool)) -> Self {
+    let json_obj = serde_json::json!({
+      objectId: value.0,
+      initialSharedVersion: value.1,
+      mutable: value.2,
+    });
+
+    serde_wasm_bindgen::to_value(&json_obj)
+      .expect("a JSON object is a JS value")
+      // safety: `json_obj` was constructed following TS SharedObjectRef's interface.
+      .unchecked_into()
+  }
 }
 
 #[wasm_bindgen(module = "/lib/iota_client_helpers.ts")]

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use serde::Serialize;
+use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 use std::collections::HashSet;
 
 use super::TransactionBuilderAdapter;
@@ -13,6 +14,23 @@ use identity_iota_interaction::{IdentityMoveCalls, ProgrammableTransactionBcs, t
 use identity_iota_interaction::rpc_types::{IotaObjectData, OwnedObjectRef};
 use identity_iota_interaction::MoveType;
 use crate::error::TsSdkError;
+
+#[wasm_bindgen(module = "move_calls/identity")]
+extern "C" {
+    #[wasm_bindgen(js_name = "new_", catch)]
+    async fn identity_new(
+        did: &[u8],
+        package: &str,
+    ) -> Result<Vec<u8>, JsValue>;
+
+    #[wasm_bindgen(js_name = "newWithControllers", catch)]
+    async fn identity_new_with_controllers(
+        did: &[u8],
+        controllers: &[(&str, u64)],
+        threshold: u64,
+        package: &str,
+    ) -> Result<Vec<u8>, JsValue>;
+}
 
 pub struct IdentityMoveCallsTsSdk {}
 
