@@ -7,9 +7,14 @@ use std::marker::PhantomData;
 use std::ops::DerefMut as _;
 use std::str::FromStr as _;
 
-use crate::iota_interaction_adapter::{AdapterError, AdapterNativeResponse, IdentityMoveCallsAdapter, IotaTransactionBlockResponseAdapter};
-use identity_iota_interaction::{IdentityMoveCalls, IotaTransactionBlockResponseT, OptionalSync};
+use crate::iota_interaction_adapter::AdapterError;
+use crate::iota_interaction_adapter::AdapterNativeResponse;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
+use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaTransactionBlockResponseT;
+use identity_iota_interaction::OptionalSync;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::migration::Proposal;
@@ -25,8 +30,8 @@ use serde::Serialize;
 
 use crate::rebased::iota::types::Number;
 use crate::rebased::migration::OnChainIdentity;
-use identity_iota_interaction::MoveType;
 use crate::rebased::Error;
+use identity_iota_interaction::MoveType;
 
 use super::CreateProposalTx;
 use super::ExecuteProposalTx;
@@ -238,9 +243,13 @@ impl ProposalT for Proposal<ConfigChange> {
       .expect("identity exists on-chain");
     let controller_cap_ref = identity.get_controller_cap(client).await?;
 
-    let tx =
-        IdentityMoveCallsAdapter::execute_config_change(identity_ref, controller_cap_ref, proposal_id, client.package_id())
-        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = IdentityMoveCallsAdapter::execute_config_change(
+      identity_ref,
+      controller_cap_ref,
+      proposal_id,
+      client.package_id(),
+    )
+    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(ExecuteProposalTx {
       identity,
@@ -249,7 +258,9 @@ impl ProposalT for Proposal<ConfigChange> {
     })
   }
 
-  fn parse_tx_effects_internal(_tx_response: &dyn IotaTransactionBlockResponseT<Error=AdapterError, NativeResponse=AdapterNativeResponse>) -> Result<Self::Output, Error> {
+  fn parse_tx_effects_internal(
+    _tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>,
+  ) -> Result<Self::Output, Error> {
     Ok(())
   }
 }

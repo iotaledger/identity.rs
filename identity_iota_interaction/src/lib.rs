@@ -6,16 +6,16 @@
 #![allow(missing_docs)]
 
 mod iota_client_trait;
-mod move_call_traits;
-mod transaction_builder_trait;
-mod move_type;
 mod iota_verifiable_credential;
+mod move_call_traits;
+mod move_type;
+mod transaction_builder_trait;
 
 pub use iota_client_trait::*;
-pub use move_call_traits::*;
-pub use transaction_builder_trait::*;
-pub use move_type::*;
 pub use iota_verifiable_credential::*;
+pub use move_call_traits::*;
+pub use move_type::*;
+pub use transaction_builder_trait::*;
 
 #[cfg(target_arch = "wasm32")]
 mod sdk_types;

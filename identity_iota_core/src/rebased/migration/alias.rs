@@ -14,14 +14,17 @@ use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_iota_interaction::{MigrationMoveCalls, ProgrammableTransactionBcs};
-use identity_iota_interaction::IotaKeySignature;
 use crate::iota_interaction_adapter::MigrationMoveCallsAdapter;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::transaction::{TransactionInternal, TransactionOutputInternal};
-use identity_iota_interaction::{IotaClientTrait, MoveType};
+use crate::rebased::transaction::TransactionInternal;
+use crate::rebased::transaction::TransactionOutputInternal;
 use crate::rebased::Error;
+use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::MigrationMoveCalls;
+use identity_iota_interaction::MoveType;
+use identity_iota_interaction::ProgrammableTransactionBcs;
 
 use super::get_identity;
 use super::Identity;
@@ -67,10 +70,24 @@ pub async fn get_alias(client: &IdentityClientReadOnly, object_id: ObjectID) -> 
   }
 }
 
+cfg_if::cfg_if! {
+  if #[cfg(target_arch = "wasm32")] {
+    // Add wasm32 compatible migrate() function wrapper here
+  } else {
+    use crate::rebased::transaction::Transaction;
+    impl UnmigratedAlias {
+      /// Returns a transaction that when executed migrates a legacy `Alias`
+      /// containing a DID Document to a new [`OnChainIdentity`].
+      pub async fn migrate(self, client: &IdentityClientReadOnly)
+      -> Result<impl Transaction<Output = OnChainIdentity>, Error> {
+        self.migrate_internal(client).await
+      }
+    }
+  }
+}
+
 impl UnmigratedAlias {
-  /// Returns a transaction that when executed migrates a legacy `Alias`
-  /// containing a DID Document to a new [`OnChainIdentity`].
-  pub async fn migrate(
+  pub(crate) async fn migrate_internal(
     self,
     client: &IdentityClientReadOnly,
   ) -> Result<impl TransactionInternal<Output = OnChainIdentity>, Error> {
@@ -123,9 +140,13 @@ impl UnmigratedAlias {
       .map(|timestamp| timestamp.to_unix() as u64 * 1000);
 
     // Build migration tx.
-    let tx =
-      MigrationMoveCallsAdapter::migrate_did_output(alias_output_ref, created, migration_registry_ref, client.package_id())
-        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = MigrationMoveCallsAdapter::migrate_did_output(
+      alias_output_ref,
+      created,
+      migration_registry_ref,
+      client.package_id(),
+    )
+    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(MigrateLegacyAliasTx(tx))
   }

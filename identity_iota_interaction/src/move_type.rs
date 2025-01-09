@@ -1,8 +1,8 @@
-use serde::Serialize;
 use crate::types::base_types::IotaAddress;
 use crate::types::base_types::ObjectID;
 use crate::types::TypeTag;
 use crate::IotaVerifiableCredential;
+use serde::Serialize;
 
 pub enum TypedValue<'a, T: MoveType> {
     IotaVerifiableCredential(&'a IotaVerifiableCredential),
@@ -14,7 +14,11 @@ pub trait MoveType<T: Serialize = Self>: Serialize {
     /// Returns the Move type for this type.
     fn move_type(package: ObjectID) -> TypeTag;
 
-    fn get_typed_value(&self, _package: ObjectID) -> TypedValue<Self> where Self: MoveType, Self: Sized {
+    fn get_typed_value(&self, _package: ObjectID) -> TypedValue<Self>
+    where
+        Self: MoveType,
+        Self: Sized,
+    {
         TypedValue::Other(self)
     }
 }

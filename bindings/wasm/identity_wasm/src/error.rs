@@ -203,7 +203,9 @@ impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for KeyIdStorageResu
   }
 }
 
-impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for StdResult<T, identity_iota::iota::sui_name_tbd_error::Error> {
+impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult>
+  for StdResult<T, identity_iota::iota::sui_name_tbd_error::Error>
+{
   fn from(result: JsValueResult) -> Self {
     result.to_kinesis_client_error().and_then(|js_value| {
       js_value

@@ -4,19 +4,27 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use crate::iota_interaction_adapter::{AdapterError, AdapterNativeResponse, IdentityMoveCallsAdapter, IotaTransactionBlockResponseAdapter};
-use identity_iota_interaction::{IdentityMoveCalls, IotaKeySignature, IotaTransactionBlockResponseT, TransactionBuilderT};
+use crate::iota_interaction_adapter::AdapterError;
+use crate::iota_interaction_adapter::AdapterNativeResponse;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
+use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaTransactionBlockResponseT;
+use identity_iota_interaction::TransactionBuilderT;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::migration::Proposal;
-use crate::rebased::transaction::{ProtoTransaction, TransactionInternal, TransactionOutputInternal};
-use identity_iota_interaction::MoveType;
+use crate::rebased::transaction::ProtoTransaction;
+use crate::rebased::transaction::TransactionInternal;
+use crate::rebased::transaction::TransactionOutputInternal;
 use crate::rebased::Error;
 use async_trait::async_trait;
 use identity_iota_interaction::rpc_types::IotaObjectData;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::transaction::Argument;
 use identity_iota_interaction::types::TypeTag;
+use identity_iota_interaction::MoveType;
 use secret_storage::Signer;
 use serde::Deserialize;
 use serde::Serialize;
@@ -31,18 +39,22 @@ use super::UserDrivenTx;
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
       use iota_interaction_ts::NativeTsCodeBindingWrapper as Ptb;
-
-      pub trait IntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
-      impl<T> IntentFnT for T where T: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+      /// Instances of BorrowIntentFnT can be used as user-provided function to describe how
+      /// a borrowed assets shall be used.
+      pub trait BorrowIntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+      impl<T> BorrowIntentFnT for T where T: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+      /// Boxed dynamic trait object of {@link BorrowIntentFnT}
       #[allow(unreachable_pub)]
-      pub type IntentFn = Box<dyn IntentFnT + Send>;
+      pub type BorrowIntentFn = Box<dyn BorrowIntentFnT + Send>;
     } else {
       use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
-
-      pub trait IntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
-      impl<T> IntentFnT for T where T: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+      /// Instances of BorrowIntentFnT can be used as user-provided function to describe how
+      /// a borrowed assets shall be used.
+      pub trait BorrowIntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+      impl<T> BorrowIntentFnT for T where T: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+      /// Boxed dynamic trait object of {@link BorrowIntentFnT}
       #[allow(unreachable_pub)]
-      pub type IntentFn = Box<dyn IntentFnT + Send>;
+      pub type BorrowIntentFn = Box<dyn BorrowIntentFnT + Send>;
     }
 }
 
@@ -56,7 +68,7 @@ pub struct BorrowAction {
 /// the borrowed assets shall be used.
 pub struct BorrowActionWithIntent<F>
 where
-  F: IntentFnT,
+  F: BorrowIntentFnT,
 {
   action: BorrowAction,
   intent_fn: F,
@@ -158,7 +170,9 @@ impl ProposalT for Proposal<BorrowAction> {
     })
   }
 
-  fn parse_tx_effects_internal(_tx_response: &dyn IotaTransactionBlockResponseT<Error=AdapterError, NativeResponse=AdapterNativeResponse>) -> Result<Self::Output, Error> {
+  fn parse_tx_effects_internal(
+    _tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>,
+  ) -> Result<Self::Output, Error> {
     Ok(())
   }
 }
@@ -167,7 +181,7 @@ impl<'i> UserDrivenTx<'i, BorrowAction> {
   /// Defines how the borrowed assets should be used.
   pub fn with_intent<F>(self, intent_fn: F) -> UserDrivenTx<'i, BorrowActionWithIntent<F>>
   where
-    F: IntentFnT,
+    F: BorrowIntentFnT,
   {
     let UserDrivenTx {
       identity,
@@ -183,8 +197,8 @@ impl<'i> UserDrivenTx<'i, BorrowAction> {
 }
 
 impl<'i> ProtoTransaction for UserDrivenTx<'i, BorrowAction> {
-  type Input = IntentFn;
-  type Tx = UserDrivenTx<'i, BorrowActionWithIntent<IntentFn>>;
+  type Input = BorrowIntentFn;
+  type Tx = UserDrivenTx<'i, BorrowActionWithIntent<BorrowIntentFn>>;
 
   fn with(self, input: Self::Input) -> Self::Tx {
     self.with_intent(input)
@@ -195,7 +209,7 @@ impl<'i> ProtoTransaction for UserDrivenTx<'i, BorrowAction> {
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl<F> TransactionInternal for UserDrivenTx<'_, BorrowActionWithIntent<F>>
 where
-  F: IntentFnT + Send,
+  F: BorrowIntentFnT + Send,
 {
   type Output = ();
   async fn execute_with_opt_gas_internal<S>(
@@ -229,7 +243,8 @@ where
       object_data_list
     };
 
-    let intent_adapter = move |ptb: &mut dyn TransactionBuilderT<Error=AdapterError, NativeTxBuilder=Ptb>, args: &HashMap<ObjectID,(Argument, IotaObjectData)>| {
+    let intent_adapter = move |ptb: &mut dyn TransactionBuilderT<Error = AdapterError, NativeTxBuilder = Ptb>,
+                               args: &HashMap<ObjectID, (Argument, IotaObjectData)>| {
       (borrow_action.intent_fn)(ptb.as_native_tx_builder(), args)
     };
 

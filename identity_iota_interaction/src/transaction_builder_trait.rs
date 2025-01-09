@@ -11,5 +11,5 @@ pub trait TransactionBuilderT {
 
     fn as_native_tx_builder(&mut self) -> &mut Self::NativeTxBuilder;
 
-    fn into_native_tx_builder(self) -> Self::NativeTxBuilder ;
+    fn into_native_tx_builder(self) -> Self::NativeTxBuilder;
 }

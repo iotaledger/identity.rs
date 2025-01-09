@@ -12,14 +12,19 @@ use secret_storage::Signer;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::iota_interaction_adapter::{AdapterError, AdapterNativeResponse, IdentityMoveCallsAdapter, IotaTransactionBlockResponseAdapter};
-use identity_iota_interaction::{IdentityMoveCalls, IotaTransactionBlockResponseT, OptionalSync};
+use crate::iota_interaction_adapter::AdapterError;
+use crate::iota_interaction_adapter::AdapterNativeResponse;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
+use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaTransactionBlockResponseT;
+use identity_iota_interaction::OptionalSync;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::migration::OnChainIdentity;
-use identity_iota_interaction::MoveType;
 use crate::rebased::Error;
+use identity_iota_interaction::MoveType;
 
 use super::CreateProposalTx;
 use super::ExecuteProposalTx;
@@ -164,7 +169,9 @@ impl ProposalT for Proposal<SendAction> {
     })
   }
 
-  fn parse_tx_effects_internal(_tx_response: &dyn IotaTransactionBlockResponseT<Error=AdapterError, NativeResponse=AdapterNativeResponse>) -> Result<Self::Output, Error> {
+  fn parse_tx_effects_internal(
+    _tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>,
+  ) -> Result<Self::Output, Error> {
     Ok(())
   }
 }

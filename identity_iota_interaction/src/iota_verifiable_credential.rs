@@ -1,8 +1,8 @@
-use std::str::FromStr;
-use serde::{Deserialize, Serialize};
-use crate::{MoveType, TypedValue};
 use crate::move_types::language_storage::TypeTag;
 use crate::types::base_types::ObjectID;
+use crate::{MoveType, TypedValue};
+use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IotaVerifiableCredential {
@@ -10,6 +10,10 @@ pub struct IotaVerifiableCredential {
 }
 
 impl IotaVerifiableCredential {
+    pub fn new(data: Vec<u8>) -> IotaVerifiableCredential {
+        IotaVerifiableCredential { data }
+    }
+
     pub fn data(&self) -> &Vec<u8> {
         &self.data
     }
@@ -20,7 +24,11 @@ impl MoveType for IotaVerifiableCredential {
         TypeTag::from_str(&format!("{package}::public_vc::PublicVc")).expect("valid utf8")
     }
 
-    fn get_typed_value(&self, _package: ObjectID) -> TypedValue<Self> where Self: MoveType, Self: Sized {
+    fn get_typed_value(&self, _package: ObjectID) -> TypedValue<Self>
+    where
+        Self: MoveType,
+        Self: Sized,
+    {
         TypedValue::IotaVerifiableCredential(self)
     }
 }

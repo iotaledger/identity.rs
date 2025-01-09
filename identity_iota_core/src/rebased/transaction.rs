@@ -6,16 +6,17 @@ use std::ops::Deref;
 #[cfg(not(target_arch = "wasm32"))]
 use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
 #[cfg(not(target_arch = "wasm32"))]
-use identity_iota_interaction::types::transaction::{ProgrammableTransaction};
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 #[cfg(target_arch = "wasm32")]
 use iota_interaction_ts::ProgrammableTransaction;
 
-use async_trait::async_trait;
-use identity_iota_interaction::{IotaKeySignature, ProgrammableTransactionBcs};
 use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdaptedTraitObj;
-use secret_storage::Signer;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::Error;
+use async_trait::async_trait;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::ProgrammableTransactionBcs;
+use secret_storage::Signer;
 
 /// The output type of a [`Transaction`].
 #[cfg(not(target_arch = "wasm32"))]
@@ -84,17 +85,12 @@ impl<T> Deref for TransactionOutputInternal<T> {
 #[cfg(not(target_arch = "wasm32"))]
 impl<T> From<TransactionOutputInternal<T>> for TransactionOutput<T> {
   fn from(value: TransactionOutputInternal<T>) -> Self {
-    let response_bcs = value
-        .response
-        .to_bcs()
-        .expect("TransactionOutputInternal bcs serialization failed");
-    let response =
-        bcs::from_bytes::<IotaTransactionBlockResponse>(&response_bcs)
-            .expect("IotaTransactionBlockResponse bcs deserialization failed");
-    TransactionOutput {
-      output: value.output,
-      response,
-    }
+    let TransactionOutputInternal::<T> {
+      output: out,
+      response: internal_response,
+    } = value;
+    let response = internal_response.clone_native_response();
+    TransactionOutput { output: out, response }
   }
 }
 
@@ -130,7 +126,7 @@ pub(crate) trait TransactionInternal: Sized {
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-impl<T: TransactionInternal<Output=O> + Send, O> Transaction for T {
+impl<T: TransactionInternal<Output = O> + Send, O> Transaction for T {
   type Output = O;
 
   async fn execute_with_opt_gas<S: Signer<IotaKeySignature> + Sync>(
@@ -187,15 +183,13 @@ impl TransactionInternal for ProgrammableTransactionBcs {
   async fn execute_with_opt_gas_internal<S: Signer<IotaKeySignature> + Sync>(
     self,
     gas_budget: Option<u64>,
-    client: &IdentityClient<S>
+    client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error> {
     // For wasm32 targets, the following line will result in a compiler error[E0412]
     // TODO: Implement wasm-bindings for the ProgrammableTransaction TS equivalent
     //       and use them to do the BCS serialization
     let self_tx = bcs::from_bytes::<ProgrammableTransaction>(&self)?;
-    self_tx
-        .execute_with_opt_gas_internal(gas_budget, client)
-        .await
+    self_tx.execute_with_opt_gas_internal(gas_budget, client).await
   }
 }
 

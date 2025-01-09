@@ -9,8 +9,8 @@ use serde::Deserialize;
 #[cfg(not(target_arch = "wasm32"))]
 use tokio::process::Command;
 
-use identity_iota_interaction::types::base_types::IotaAddress;
 use crate::rebased::Error;
+use identity_iota_interaction::types::base_types::IotaAddress;
 
 const FUND_WITH_ACTIVE_ADDRESS_FUNDING_TX_BUDGET: u64 = 5_000_000;
 const FUND_WITH_ACTIVE_ADDRESS_FUNDING_VALUE: u64 = 500_000_000;

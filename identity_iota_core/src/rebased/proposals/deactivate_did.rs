@@ -3,9 +3,14 @@
 
 use std::marker::PhantomData;
 
-use crate::iota_interaction_adapter::{AdapterError, AdapterNativeResponse, IdentityMoveCallsAdapter, IotaTransactionBlockResponseAdapter};
-use identity_iota_interaction::{IdentityMoveCalls, IotaTransactionBlockResponseT, OptionalSync};
+use crate::iota_interaction_adapter::AdapterError;
+use crate::iota_interaction_adapter::AdapterNativeResponse;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
+use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaTransactionBlockResponseT;
+use identity_iota_interaction::OptionalSync;
 
 use crate::rebased::client::IdentityClient;
 use async_trait::async_trait;
@@ -17,8 +22,8 @@ use serde::Serialize;
 
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::migration::Proposal;
-use identity_iota_interaction::MoveType;
 use crate::rebased::Error;
+use identity_iota_interaction::MoveType;
 
 use super::CreateProposalTx;
 use super::ExecuteProposalTx;
@@ -69,7 +74,7 @@ impl ProposalT for Proposal<DeactivateDid> {
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
     let tx =
-        IdentityMoveCallsAdapter::propose_deactivation(identity_ref, controller_cap_ref, expiration, client.package_id())
+      IdentityMoveCallsAdapter::propose_deactivation(identity_ref, controller_cap_ref, expiration, client.package_id())
         .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(CreateProposalTx {
@@ -95,9 +100,13 @@ impl ProposalT for Proposal<DeactivateDid> {
       .expect("identity exists on-chain");
     let controller_cap_ref = identity.get_controller_cap(client).await?;
 
-    let tx =
-        IdentityMoveCallsAdapter::execute_deactivation(identity_ref, controller_cap_ref, proposal_id, client.package_id())
-        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = IdentityMoveCallsAdapter::execute_deactivation(
+      identity_ref,
+      controller_cap_ref,
+      proposal_id,
+      client.package_id(),
+    )
+    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(ExecuteProposalTx {
       identity,
@@ -106,7 +115,9 @@ impl ProposalT for Proposal<DeactivateDid> {
     })
   }
 
-  fn parse_tx_effects_internal(_tx_response: &dyn IotaTransactionBlockResponseT<Error=AdapterError, NativeResponse=AdapterNativeResponse>) -> Result<Self::Output, Error> {
+  fn parse_tx_effects_internal(
+    _tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>,
+  ) -> Result<Self::Output, Error> {
     Ok(())
   }
 }

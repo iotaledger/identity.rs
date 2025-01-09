@@ -8,23 +8,27 @@ use crate::IotaDocument;
 use async_trait::async_trait;
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::ToFromBytes;
-use identity_verification::jwk::Jwk;
+use identity_iota_interaction::move_types::language_storage::StructTag;
 use identity_iota_interaction::rpc_types::IotaObjectData;
 use identity_iota_interaction::rpc_types::IotaObjectDataFilter;
 use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::move_types::language_storage::StructTag;
+use identity_verification::jwk::Jwk;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-use crate::rebased::{rebased_err, Error};
+use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdaptedTraitObj;
 use crate::rebased::assets::AuthenticatedAssetBuilder;
 use crate::rebased::migration::Identity;
 use crate::rebased::migration::IdentityBuilder;
-use identity_iota_interaction::{IotaClientTrait, IotaKeySignature, MoveType, ProgrammableTransactionBcs};
-use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdaptedTraitObj;
+use crate::rebased::rebased_err;
+use crate::rebased::Error;
+use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::MoveType;
+use identity_iota_interaction::ProgrammableTransactionBcs;
 
 use crate::rebased::transaction::TransactionOutputInternal;
 cfg_if::cfg_if! {
@@ -91,14 +95,14 @@ impl<S> Deref for IdentityClient<S> {
 
 impl<S> IdentityClient<S>
 where
-    S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + Sync,
 {
   /// Create a new [`IdentityClient`].
   pub async fn new(client: IdentityClientReadOnly, signer: S) -> Result<Self, Error> {
     let public_key = signer
-        .public_key()
-        .await
-        .map_err(|e| Error::InvalidKey(e.to_string()))?;
+      .public_key()
+      .await
+      .map_err(|e| Error::InvalidKey(e.to_string()))?;
     let address = convert_to_address(&public_key)?;
 
     Ok(Self {
@@ -120,13 +124,17 @@ where
     // which is an IotaClientAdapter instance now, provided via the Deref trait.
     // TODO: Find a more transparent way to reference the
     //       IotaClientAdapter for readonly.
-    self.read_client.execute_transaction(
-      self.sender_address(),
-      self.sender_public_key(),
-      tx_bcs,
-      gas_budget,
-      self.signer()
-    ).await.map_err(rebased_err)
+    self
+      .read_client
+      .execute_transaction(
+        self.sender_address(),
+        self.sender_public_key(),
+        tx_bcs,
+        gas_budget,
+        self.signer(),
+      )
+      .await
+      .map_err(rebased_err)
   }
 }
 
@@ -154,7 +162,7 @@ impl<S> IdentityClient<S> {
   /// Returns a new [`IdentityBuilder`] in order to build a new [`crate::rebased::migration::OnChainIdentity`].
   pub fn create_authenticated_asset<T>(&self, content: T) -> AuthenticatedAssetBuilder<T>
   where
-      T: MoveType + Serialize + DeserializeOwned,
+    T: MoveType + Serialize + DeserializeOwned,
   {
     AuthenticatedAssetBuilder::new(content)
   }
@@ -163,21 +171,21 @@ impl<S> IdentityClient<S> {
   /// and that satisfies `predicate`.
   pub async fn find_owned_ref<P>(&self, tag: StructTag, predicate: P) -> Result<Option<ObjectRef>, Error>
   where
-      P: Fn(&IotaObjectData) -> bool,
+    P: Fn(&IotaObjectData) -> bool,
   {
     let filter = IotaObjectResponseQuery::new_with_filter(IotaObjectDataFilter::StructType(tag));
 
     let mut cursor = None;
     loop {
       let mut page = self
-          .read_api()
-          .get_owned_objects(self.sender_address(), Some(filter.clone()), cursor, None)
-          .await?;
+        .read_api()
+        .get_owned_objects(self.sender_address(), Some(filter.clone()), cursor, None)
+        .await?;
       let obj_ref = std::mem::take(&mut page.data)
-          .into_iter()
-          .filter_map(|res| res.data)
-          .find(|obj| predicate(obj))
-          .map(|obj_data| obj_data.object_ref());
+        .into_iter()
+        .filter_map(|res| res.data)
+        .find(|obj| predicate(obj))
+        .map(|obj_data| obj_data.object_ref());
       cursor = page.next_cursor;
 
       if obj_ref.is_some() {
@@ -194,7 +202,7 @@ impl<S> IdentityClient<S> {
 
 impl<S> IdentityClient<S>
 where
-    S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + Sync,
 {
   /// Returns [`Transaction`] [`PublishDidTx`] that - when executed - will publish a new DID Document on chain.
   pub fn publish_did_document(&self, document: IotaDocument) -> PublishDidTx {
@@ -209,18 +217,18 @@ where
     gas_budget: u64,
   ) -> Result<IotaDocument, Error> {
     let mut oci =
-        if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(document.id())?).await? {
-          value
-        } else {
-          return Err(Error::Identity("only new identities can be updated".to_string()));
-        };
+      if let Identity::FullFledged(value) = self.get_identity(get_object_id_from_did(document.id())?).await? {
+        value
+      } else {
+        return Err(Error::Identity("only new identities can be updated".to_string()));
+      };
 
     oci
-        .update_did_document(document.clone())
-        .finish(self)
-        .await?
-        .execute_with_gas(gas_budget, self)
-        .await?;
+      .update_did_document(document.clone())
+      .finish(self)
+      .await?
+      .execute_with_gas(gas_budget, self)
+      .await?;
 
     Ok(document)
   }
@@ -234,11 +242,11 @@ where
     };
 
     oci
-        .deactivate_did()
-        .finish(self)
-        .await?
-        .execute_with_gas(gas_budget, self)
-        .await?;
+      .deactivate_did()
+      .finish(self)
+      .await?
+      .execute_with_gas(gas_budget, self)
+      .await?;
 
     Ok(())
   }
@@ -247,18 +255,18 @@ where
 /// Utility function that returns the key's bytes of a JWK encoded public ed25519 key.
 pub fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> {
   let public_key_base_64 = &sender_public_jwk
-      .try_okp_params()
-      .map_err(|err| Error::InvalidKey(format!("key not of type `Okp`; {err}")))?
-      .x;
+    .try_okp_params()
+    .map_err(|err| Error::InvalidKey(format!("key not of type `Okp`; {err}")))?
+    .x;
 
   identity_jose::jwu::decode_b64(public_key_base_64)
-      .map_err(|err| Error::InvalidKey(format!("could not decode base64 public key; {err}")))
+    .map_err(|err| Error::InvalidKey(format!("could not decode base64 public key; {err}")))
 }
 
 /// Utility function to convert a public key's bytes into an [`IotaAddress`].
 pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error> {
   let public_key = Ed25519PublicKey::from_bytes(sender_public_key)
-      .map_err(|err| Error::InvalidKey(format!("could not parse public key to Ed25519 public key; {err}")))?;
+    .map_err(|err| Error::InvalidKey(format!("could not parse public key to Ed25519 public key; {err}")))?;
 
   Ok(IotaAddress::from(&public_key))
 }
@@ -275,16 +283,16 @@ impl PublishDidTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<IotaDocument>, Error>
   where
-      S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + Sync,
   {
     let TransactionOutputInternal {
       output: identity,
       response,
     } = client
-        .create_identity(self.0)
-        .finish()
-        .execute_with_opt_gas_internal(gas_budget, client)
-        .await?;
+      .create_identity(self.0)
+      .finish()
+      .execute_with_opt_gas_internal(gas_budget, client)
+      .await?;
 
     Ok(TransactionOutputInternal {
       output: identity.did_doc,
@@ -306,12 +314,13 @@ impl TransactionT for PublishDidTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputT<Self::Output>, Error>
   where
-      S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + Sync,
   {
     Ok(
-      self.execute_publish_did_tx_with_opt_gas(gas_budget, client)
-      .await?
-      .into()
+      self
+        .execute_publish_did_tx_with_opt_gas(gas_budget, client)
+        .await?
+        .into(),
     )
   }
 
@@ -322,7 +331,7 @@ impl TransactionT for PublishDidTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputT<Self::Output>, Error>
   where
-      S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + Sync,
   {
     self.execute_publish_did_tx_with_opt_gas(gas_budget, client).await
   }

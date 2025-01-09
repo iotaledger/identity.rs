@@ -11,70 +11,109 @@ use fastcrypto::hash::Blake2b256;
 use fastcrypto::traits::ToFromBytes;
 use secret_storage::Signer;
 
-use identity_iota_interaction::apis::{CoinReadApi, EventApi, QuorumDriverApi, ReadApi};
+use crate::rebased::Error;
+use identity_iota_interaction::apis::CoinReadApi;
+use identity_iota_interaction::apis::EventApi;
+use identity_iota_interaction::apis::QuorumDriverApi;
+use identity_iota_interaction::apis::ReadApi;
 use identity_iota_interaction::error::IotaRpcResult;
-use identity_iota_interaction::rpc_types::{
-  Coin, CoinPage, EventFilter, EventPage, IotaExecutionStatus, IotaObjectData, IotaObjectDataOptions,
-  IotaObjectResponse, IotaObjectResponseQuery, IotaPastObjectResponse, IotaTransactionBlockEffects,
-  IotaTransactionBlockEffectsAPI, IotaTransactionBlockEffectsV1, IotaTransactionBlockResponse,
-  IotaTransactionBlockResponseOptions, ObjectChange, ObjectsPage, OwnedObjectRef,
-};
-use identity_iota_interaction::shared_crypto::intent::{Intent, IntentMessage};
-use identity_iota_interaction::types::{
-  base_types::{IotaAddress, ObjectID, SequenceNumber},
-  crypto::{Signature, SignatureScheme},
-  digests::TransactionDigest,
-  dynamic_field::DynamicFieldName,
-  event::EventID,
-  quorum_driver_types::ExecuteTransactionRequestType,
-  transaction::{ProgrammableTransaction, Transaction, TransactionData},
-};
-use identity_iota_interaction::{IotaKeySignature, IotaTransactionBlockResponseBcs};
-use identity_iota_interaction::{
-  CoinReadTrait, EventTrait, IotaClientTrait, IotaTransactionBlockResponseT, ProgrammableTransactionBcs,
-  QuorumDriverTrait, ReadTrait,
-};
-use identity_iota_interaction::{IotaClient, SignatureBcs, TransactionDataBcs};
-use crate::rebased::{rebased_err, Error};
+use identity_iota_interaction::rpc_types::Coin;
+use identity_iota_interaction::rpc_types::CoinPage;
+use identity_iota_interaction::rpc_types::EventFilter;
+use identity_iota_interaction::rpc_types::EventPage;
+use identity_iota_interaction::rpc_types::IotaExecutionStatus;
+use identity_iota_interaction::rpc_types::IotaObjectData;
+use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
+use identity_iota_interaction::rpc_types::IotaObjectResponse;
+use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
+use identity_iota_interaction::rpc_types::IotaPastObjectResponse;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsV1;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockResponseOptions;
+use identity_iota_interaction::rpc_types::ObjectChange;
+use identity_iota_interaction::rpc_types::ObjectsPage;
+use identity_iota_interaction::rpc_types::OwnedObjectRef;
+use identity_iota_interaction::shared_crypto::intent::Intent;
+use identity_iota_interaction::shared_crypto::intent::IntentMessage;
+use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::SequenceNumber;
+use identity_iota_interaction::types::crypto::Signature;
+use identity_iota_interaction::types::crypto::SignatureScheme;
+use identity_iota_interaction::types::digests::TransactionDigest;
+use identity_iota_interaction::types::dynamic_field::DynamicFieldName;
+use identity_iota_interaction::types::event::EventID;
+use identity_iota_interaction::types::quorum_driver_types::ExecuteTransactionRequestType;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
+use identity_iota_interaction::types::transaction::Transaction;
+use identity_iota_interaction::types::transaction::TransactionData;
+use identity_iota_interaction::CoinReadTrait;
+use identity_iota_interaction::EventTrait;
+use identity_iota_interaction::IotaClient;
+use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaTransactionBlockResponseT;
+use identity_iota_interaction::ProgrammableTransactionBcs;
+use identity_iota_interaction::QuorumDriverTrait;
+use identity_iota_interaction::ReadTrait;
+use identity_iota_interaction::SignatureBcs;
+use identity_iota_interaction::TransactionDataBcs;
 
 /// The minimum balance required to execute a transaction.
 pub(crate) const MINIMUM_BALANCE: u64 = 1_000_000_000;
 
 #[allow(unreachable_pub, dead_code)]
-pub trait IotaTransactionBlockResponseAdaptedT: IotaTransactionBlockResponseT<Error=Error, NativeResponse=IotaTransactionBlockResponse> {}
-impl<T> IotaTransactionBlockResponseAdaptedT for T where T: IotaTransactionBlockResponseT<Error=Error, NativeResponse=IotaTransactionBlockResponse> {}
+pub trait IotaTransactionBlockResponseAdaptedT:
+  IotaTransactionBlockResponseT<Error = Error, NativeResponse = IotaTransactionBlockResponse>
+{
+}
+impl<T> IotaTransactionBlockResponseAdaptedT for T where
+  T: IotaTransactionBlockResponseT<Error = Error, NativeResponse = IotaTransactionBlockResponse>
+{
+}
 #[allow(unreachable_pub, dead_code)]
-pub type IotaTransactionBlockResponseAdaptedTraitObj = Box<dyn IotaTransactionBlockResponseT<Error=Error, NativeResponse=IotaTransactionBlockResponse>>;
+pub type IotaTransactionBlockResponseAdaptedTraitObj =
+  Box<dyn IotaTransactionBlockResponseT<Error = Error, NativeResponse = IotaTransactionBlockResponse>>;
 
 #[allow(unreachable_pub, dead_code)]
-pub trait QuorumDriverApiAdaptedT: QuorumDriverTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> {}
-impl<T> QuorumDriverApiAdaptedT for T where T: QuorumDriverTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> {}
+pub trait QuorumDriverApiAdaptedT:
+  QuorumDriverTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse>
+{
+}
+impl<T> QuorumDriverApiAdaptedT for T where
+  T: QuorumDriverTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse>
+{
+}
 #[allow(unreachable_pub, dead_code)]
-pub type QuorumDriverApiAdaptedTraitObj = Box<dyn QuorumDriverTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse>>;
+pub type QuorumDriverApiAdaptedTraitObj =
+  Box<dyn QuorumDriverTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse>>;
 
 #[allow(unreachable_pub, dead_code)]
-pub trait ReadApiAdaptedT: ReadTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> {}
-impl<T> ReadApiAdaptedT for T where T: ReadTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> {}
+pub trait ReadApiAdaptedT: ReadTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse> {}
+impl<T> ReadApiAdaptedT for T where T: ReadTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse> {}
 #[allow(unreachable_pub, dead_code)]
-pub type ReadApiAdaptedTraitObj = Box<dyn ReadTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse>>;
+pub type ReadApiAdaptedTraitObj = Box<dyn ReadTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse>>;
 
 #[allow(unreachable_pub, dead_code)]
-pub trait CoinReadApiAdaptedT: CoinReadTrait<Error=Error> {}
-impl<T> CoinReadApiAdaptedT for T where T: CoinReadTrait<Error=Error> {}
+pub trait CoinReadApiAdaptedT: CoinReadTrait<Error = Error> {}
+impl<T> CoinReadApiAdaptedT for T where T: CoinReadTrait<Error = Error> {}
 #[allow(unreachable_pub, dead_code)]
-pub type CoinReadApiAdaptedTraitObj = Box<dyn CoinReadTrait<Error=Error>>;
+pub type CoinReadApiAdaptedTraitObj = Box<dyn CoinReadTrait<Error = Error>>;
 
 #[allow(unreachable_pub, dead_code)]
-pub trait EventApiAdaptedT: EventTrait<Error=Error> {}
-impl<T> EventApiAdaptedT for T where T: EventTrait<Error=Error> {}
+pub trait EventApiAdaptedT: EventTrait<Error = Error> {}
+impl<T> EventApiAdaptedT for T where T: EventTrait<Error = Error> {}
 #[allow(unreachable_pub, dead_code)]
-pub type EventApiAdaptedTraitObj = Box<dyn EventTrait<Error=Error>>;
+pub type EventApiAdaptedTraitObj = Box<dyn EventTrait<Error = Error>>;
 
 #[allow(unreachable_pub, dead_code)]
-pub trait IotaClientAdaptedT: IotaClientTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> {}
-impl<T> IotaClientAdaptedT for T where T: IotaClientTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> {}
+pub trait IotaClientAdaptedT: IotaClientTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse> {}
+impl<T> IotaClientAdaptedT for T where T: IotaClientTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse> {}
 #[allow(unreachable_pub, dead_code)]
-pub type IotaClientAdaptedTraitObj = Box<dyn IotaClientTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse>>;
+pub type IotaClientAdaptedTraitObj =
+  Box<dyn IotaClientTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse>>;
 
 pub struct IotaTransactionBlockResponseProvider {
   response: IotaTransactionBlockResponse,
@@ -102,10 +141,6 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
     format!("{:?}", self.response)
   }
 
-  fn to_bcs(&self) -> Result<IotaTransactionBlockResponseBcs, Self::Error> {
-    bcs::to_bytes(&self.response).map_err(rebased_err)
-  }
-
   fn effects_execution_status(&self) -> Option<IotaExecutionStatus> {
     self.response.effects.as_ref().map(|effects| effects.status().clone())
   }
@@ -114,13 +149,16 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
     self.response.effects.as_ref().map(|effects| effects.created().to_vec())
   }
 
-  fn as_native_response(&mut self) -> &mut Self::NativeResponse {
+  fn as_native_response(&self) -> &Self::NativeResponse {
+    &self.response
+  }
+
+  fn as_mut_native_response(&mut self) -> &mut Self::NativeResponse {
     &mut self.response
   }
 
-  /// Consumes this adapter and returns the internally used platform specific response
-  fn into_native_response(self) -> Self::NativeResponse {
-    self.response
+  fn clone_native_response(&self) -> Self::NativeResponse {
+    self.response.clone()
   }
 }
 
@@ -129,20 +167,20 @@ pub(crate) struct QuorumDriverAdapter<'a> {
 }
 
 #[async_trait::async_trait()]
-impl<'a> QuorumDriverTrait for QuorumDriverAdapter<'a> {
+impl QuorumDriverTrait for QuorumDriverAdapter<'_> {
   type Error = Error;
   type NativeResponse = IotaTransactionBlockResponse;
 
   async fn execute_transaction_block(
     &self,
     tx_data_bcs: &TransactionDataBcs,
-    signatures: &Vec<SignatureBcs>,
+    signatures: &[SignatureBcs],
     options: Option<IotaTransactionBlockResponseOptions>,
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> IotaRpcResult<IotaTransactionBlockResponseAdaptedTraitObj> {
     let tx_data = bcs::from_bytes::<TransactionData>(tx_data_bcs.as_slice())?;
     let signatures_vec = signatures
-      .into_iter()
+      .iter()
       .map(|signature_bcs| bcs::from_bytes::<Signature>(signature_bcs.as_slice()))
       .collect::<Result<Vec<Signature>, _>>()?;
     let tx = Transaction::from_data(tx_data, signatures_vec);
@@ -159,7 +197,7 @@ pub(crate) struct ReadAdapter<'a> {
 }
 
 #[async_trait::async_trait()]
-impl<'a> ReadTrait for ReadAdapter<'a> {
+impl ReadTrait for ReadAdapter<'_> {
   type Error = Error;
   type NativeResponse = IotaTransactionBlockResponse;
 
@@ -225,7 +263,7 @@ pub(crate) struct CoinReadAdapter<'a> {
 }
 
 #[async_trait::async_trait()]
-impl<'a> CoinReadTrait for CoinReadAdapter<'a> {
+impl CoinReadTrait for CoinReadAdapter<'_> {
   type Error = Error;
 
   async fn get_coins(
@@ -244,7 +282,7 @@ pub(crate) struct EventAdapter<'a> {
 }
 
 #[async_trait::async_trait()]
-impl<'a> EventTrait for EventAdapter<'a> {
+impl EventTrait for EventAdapter<'_> {
   type Error = Error;
 
   async fn query_events(
@@ -268,13 +306,15 @@ impl IotaClientTrait for IotaClientRustSdk {
   type Error = Error;
   type NativeResponse = IotaTransactionBlockResponse;
 
-  fn quorum_driver_api(&self) -> Box<dyn QuorumDriverTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> + Send + '_> {
+  fn quorum_driver_api(
+    &self,
+  ) -> Box<dyn QuorumDriverTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse> + Send + '_> {
     Box::new(QuorumDriverAdapter {
       api: self.iota_client.quorum_driver_api(),
     })
   }
 
-  fn read_api(&self) -> Box<dyn ReadTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> + Send + '_> {
+  fn read_api(&self) -> Box<dyn ReadTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse> + Send + '_> {
     Box::new(ReadAdapter {
       api: self.iota_client.read_api(),
     })
@@ -413,7 +453,7 @@ impl IotaClientRustSdk {
   ) -> Result<IotaTransactionBlockResponse, Error> {
     let gas_budget = match gas_budget {
       Some(gas) => gas,
-      None => self.sdk_default_gas_budget(sender_address.clone(), &tx).await?,
+      None => self.sdk_default_gas_budget(sender_address, &tx).await?,
     };
     let tx_data = self.get_transaction_data(tx, gas_budget, sender_address).await?;
     let signature = Self::sign_transaction_data(signer, &tx_data, sender_public_key).await?;
@@ -452,7 +492,7 @@ impl IotaClientRustSdk {
       .get_reference_gas_price()
       .await
       .map_err(|e| Error::RpcError(e.to_string()))?;
-    let gas_coin = self.get_coin_for_transaction(sender_address.clone()).await?;
+    let gas_coin = self.get_coin_for_transaction(sender_address).await?;
     let tx_data = TransactionData::new_programmable(
       sender_address,
       vec![gas_coin.object_ref()],
@@ -493,7 +533,7 @@ impl IotaClientRustSdk {
       .get_reference_gas_price()
       .await
       .map_err(|err| Error::GasIssue(format!("could not get gas price; {err}")))?;
-    let coin = self.get_coin_for_transaction(sender_address.clone()).await?;
+    let coin = self.get_coin_for_transaction(sender_address).await?;
     let tx_data = TransactionData::new_programmable(
       sender_address,
       vec![coin.object_ref()],
@@ -569,8 +609,7 @@ impl IotaClientRustSdk {
 
     Err(Error::GasIssue(format!(
       "no coin found with minimum required balance of {} for address {}",
-      MINIMUM_BALANCE,
-      sender_address
+      MINIMUM_BALANCE, sender_address
     )))
   }
 }

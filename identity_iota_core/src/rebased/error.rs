@@ -82,6 +82,9 @@ pub enum Error {
 
 /// Can be used for example like `map_err(rebased_err)` to convert other error
 ///  types to identity_iota_core::rebased::Error.
-pub fn rebased_err<T>(error: T) -> Error where Error: From<T> {
+pub fn rebased_err<T>(error: T) -> Error
+where
+  Error: From<T>,
+{
   error.into()
 }

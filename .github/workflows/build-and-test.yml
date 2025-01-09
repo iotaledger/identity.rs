@@ -17,7 +17,7 @@ on:
       - '**.toml'
       - 'bindings/**'
       - '!bindings/**.md'
-      - 'bindings/wasm/README.md' # the Readme contain txm tests
+      - 'bindings/wasm/identity_wasm/README.md' # the Readme contain txm tests
 
 env:
   RUST_BACKTRACE: full
@@ -135,6 +135,13 @@ jobs:
         with:
           platform: ${{ matrix.os == 'ubuntu-24.04' && 'linux' || 'macos' }}
 
+      - name: test IotaIdentity package
+        if: matrix.os != 'windows-latest'
+        # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
+        run: |
+          iota move test
+        working-directory: ./identity_iota_core/packages/iota_identity
+
       - name: publish IotaIdentity package
         if: matrix.os != 'windows-latest'
         # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
@@ -165,7 +172,7 @@ jobs:
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-24.04'
         run: |
-          cd bindings/wasm
+          cd bindings/wasm/identity_wasm
           npm ci
           npm run test:readme:rust
 
@@ -204,20 +211,20 @@ jobs:
 
       - name: Install JS dependencies
         run: npm ci
-        working-directory: bindings/wasm
+        working-directory: bindings/wasm/identity_wasm
 
-      - name: Download bindings/wasm artifacts
+      - name: Download bindings/wasm/identity_wasm artifacts
         uses: actions/download-artifact@v4
         with:
           name: identity-wasm-bindings-build
-          path: bindings/wasm
+          path: bindings/wasm/identity_wasm
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
 
       - name: Run Wasm examples
         run: npm run test:readme && npm run test:node
-        working-directory: bindings/wasm
+        working-directory: bindings/wasm/identity_wasm
 
   test-wasm-firefox:
     needs: build-wasm
@@ -240,13 +247,13 @@ jobs:
 
       - name: Install JS dependencies
         run: npm ci
-        working-directory: bindings/wasm
+        working-directory: bindings/wasm/identity_wasm
 
-      - name: Download bindings/wasm artifacts
+      - name: Download bindings/wasm/identity_wasm artifacts
         uses: actions/download-artifact@v4
         with:
           name: identity-wasm-bindings-build
-          path: bindings/wasm
+          path: bindings/wasm/identity_wasm
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
@@ -254,8 +261,8 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v6.2.0
         with:
-          context: bindings/wasm/
-          file: bindings/wasm/cypress/Dockerfile
+          context: bindings/wasm/identity_wasm/
+          file: bindings/wasm/identity_wasm/cypress/Dockerfile
           push: false
           tags: cypress-test:latest
           load: true
@@ -284,13 +291,13 @@ jobs:
 
       - name: Install JS dependencies
         run: npm ci
-        working-directory: bindings/wasm
+        working-directory: bindings/wasm/identity_wasm
 
-      - name: Download bindings/wasm artifacts
+      - name: Download bindings/wasm/identity_wasm artifacts
         uses: actions/download-artifact@v4
         with:
           name: identity-wasm-bindings-build
-          path: bindings/wasm
+          path: bindings/wasm/identity_wasm
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
@@ -298,8 +305,8 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v6.2.0
         with:
-          context: bindings/wasm/
-          file: bindings/wasm/cypress/Dockerfile
+          context: bindings/wasm/identity_wasm/
+          file: bindings/wasm/identity_wasm/cypress/Dockerfile
           push: false
           tags: cypress-test:latest
           load: true

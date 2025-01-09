@@ -46,6 +46,24 @@ We provide a collection of experimental [gRPC services](https://github.com/iotal
 - [Identity Documentation Pages](https://docs.iota.org/iota-identity): Supplementing documentation with context around identity and simple examples on library usage.
 - [Examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples): Practical code snippets to get you started with the library.
 
+## Universal Resolver
+
+IOTA Identity includes a [Universal Resolver](https://github.com/decentralized-identity/universal-resolver/) driver implementation for the `did:iota` method. The Universal Resolver is a crucial component that enables the resolution of DIDs across different DID methods.
+
+Our implementation allows for resolving IOTA DIDs through the standardized Universal Resolver interface, supporting multiple networks including testnet, devnet, and custom networks. The resolver is available as a Docker container for easy deployment and integration.
+
+For more information and implementation details, visit our [Universal Resolver Driver Repository](https://github.com/iotaledger/uni-resolver-driver-iota).
+
+### Quick Start with Docker
+
+```bash
+# Pull and run the Universal Resolver driver
+docker run -p 8080:8080 iotaledger/uni-resolver-driver-iota
+
+# Resolve a DID
+curl -X GET http://localhost:8080/1.0/identifiers/did:iota:0xf4d6f08f5a1b80dd578da7dc1b49c886d580acd4cf7d48119dfeb82b538ad88a
+```
+
 ## Prerequisites
 
 - [Rust](https://www.rust-lang.org/) (>= 1.83)
