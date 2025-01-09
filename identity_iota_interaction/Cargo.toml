@@ -53,7 +53,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default=["send-sync-transaction", "secret-storage/default"]
+default = ["send-sync-transaction", "secret-storage/default"]
 send-sync-transaction = ["secret-storage/send-sync-storage"]
 
 [lints]

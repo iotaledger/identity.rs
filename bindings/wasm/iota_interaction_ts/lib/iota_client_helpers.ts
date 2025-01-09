@@ -1,7 +1,6 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { blake2b } from '@noble/hashes/blake2b';
 import {
     CoinStruct,
     ExecutionStatus,
@@ -10,8 +9,9 @@ import {
     OwnedObjectRef,
 } from "@iota/iota.js/client";
 import { messageWithIntent, toSerializedSignature } from "@iota/iota.js/cryptography";
-import { Ed25519PublicKey } from '@iota/iota.js/keypairs/ed25519';
+import { Ed25519PublicKey } from "@iota/iota.js/keypairs/ed25519";
 import { TransactionDataBuilder } from "@iota/iota.js/transactions";
+import { blake2b } from "@noble/hashes/blake2b";
 
 export type Signer = { sign(data: Uint8Array): Promise<Uint8Array> };
 
@@ -39,7 +39,9 @@ export class IotaTransactionBlockResponseAdapter {
     }
 
     effects_created_inner(): null | OwnedObjectRef[] {
-        return this.response.effects != null && this.response.effects.created != null ? this.response.effects.created : null;
+        return this.response.effects != null && this.response.effects.created != null
+            ? this.response.effects.created
+            : null;
     }
 }
 
@@ -48,25 +50,25 @@ async function signTransactionData(
     senderPublicKey: Uint8Array,
     signer: { sign(data: Uint8Array): Promise<Uint8Array> },
 ): Promise<string> {
-    const intent = 'TransactionData';
+    const intent = "TransactionData";
     const intentMessage = messageWithIntent(intent, txBcs);
     const digest = blake2b(intentMessage, { dkLen: 32 });
     const signerSignature = await signer.sign(digest);
     const signature = toSerializedSignature({
         signature: await signerSignature,
-        signatureScheme: 'ED25519',
+        signatureScheme: "ED25519",
         publicKey: new Ed25519PublicKey(senderPublicKey),
     });
 
     return signature;
 }
 
-async function getCoinForTransaction(iotaClient: IotaClient, senderAddress: string):  Promise<CoinStruct> {
+async function getCoinForTransaction(iotaClient: IotaClient, senderAddress: string): Promise<CoinStruct> {
     const coins = await iotaClient.getCoins({ owner: senderAddress });
     if (coins.data.length === 0) {
         throw new Error("could not find coins for transaction");
     }
-    
+
     return coins.data[1];
 }
 
@@ -93,16 +95,17 @@ async function addGasDataToTransaction(
         overrides: {
             gasData,
             sender: senderAddress,
-        }});
+        },
+    });
 
     if (!gasBudget) {
         // no budget given, so we have to estimate gas usage
         const dryRunGasResult = (await iotaClient
             .dryRunTransactionBlock({ transactionBlock: builtTx })).effects;
-        if (dryRunGasResult.status.status === 'failure') {
+        if (dryRunGasResult.status.status === "failure") {
             throw new Error("transaction returned an unexpected response; " + dryRunGasResult.status.error);
         }
-    
+
         const gasSummary = dryRunGasResult.gasUsed;
         const overhead = gasPrice * BigInt(1000);
         let netUsed = BigInt(gasSummary.computationCost)
@@ -118,9 +121,10 @@ async function addGasDataToTransaction(
             overrides: {
                 gasData,
                 sender: senderAddress,
-            }});
+            },
+        });
     }
-    
+
     return builtTx;
 }
 
@@ -147,12 +151,12 @@ export async function executeTransaction(
             showEvents: true,
             showObjectChanges: true,
             showBalanceChanges: true,
-            showRawEffects: false, 
+            showRawEffects: false,
         },
     });
     console.dir(response);
 
-    if (response?.effects?.status.status === 'failure') {
+    if (response?.effects?.status.status === "failure") {
         throw new Error(`transaction returned an unexpected response; ${response?.effects?.status.error}`);
     }
 
