@@ -1,3 +1,6 @@
+// Copyright 2020-2025 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 mod identity;
 mod identity_client;
 mod identity_client_builder;

@@ -1,3 +1,6 @@
+// Copyright 2020-2025 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
 
 use identity_iota_interaction::ident_str;

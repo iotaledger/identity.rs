@@ -1,3 +1,6 @@
+// Copyright 2020-2025 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::types::base_types::IotaAddress;
 use crate::types::base_types::ObjectID;
 use crate::types::TypeTag;
