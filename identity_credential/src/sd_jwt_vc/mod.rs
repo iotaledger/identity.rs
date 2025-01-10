@@ -8,7 +8,8 @@ mod error;
 /// such as issuer's metadata and credential type metadata.
 pub mod metadata;
 mod presentation;
-mod resolver;
+/// Resolver trait.
+pub mod resolver;
 mod status;
 #[cfg(test)]
 pub(crate) mod tests;

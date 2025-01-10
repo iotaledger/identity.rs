@@ -10,7 +10,6 @@ use super::metadata::ClaimMetadata;
 use super::metadata::IssuerMetadata;
 use super::metadata::Jwks;
 use super::metadata::TypeMetadata;
-#[allow(unused_imports)]
 use super::metadata::WELL_KNOWN_VCT;
 use super::metadata::WELL_KNOWN_VC_ISSUER;
 use super::resolver::Error as ResolverErr;
@@ -156,7 +155,11 @@ impl SdJwtVc {
       jwk
     } else {
       // Issuer has no metadata that can lead to its JWK. Let's see if it can be resolved directly.
-      let jwk_uri = kid.parse::<Url>().map_err(|e| Error::Verification(e.into()))?;
+      let jwk_uri = kid.parse::<Url>().map_err(|_| {
+        Error::Verification(anyhow!(
+          "JWK's kid \"{kid}\" could not be found in JKW set and cannot be resolved"
+        ))
+      })?;
       resolver
         .resolve(&jwk_uri)
         .await
@@ -236,7 +239,6 @@ impl SdJwtVc {
     R: Resolver<Url, Vec<u8>>,
     R: Resolver<StringOrUrl, Vec<u8>>,
     R: Resolver<Url, Value>,
-    R: Sync,
     V: JwsVerifier,
   {
     // Signature verification.
@@ -254,8 +256,6 @@ impl SdJwtVc {
 
     // Claims' disclosability.
     self.validate_claims_disclosability(type_metadata.claim_metadata())?;
-
-    //
 
     Ok(())
   }
