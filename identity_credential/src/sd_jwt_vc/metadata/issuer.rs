@@ -43,7 +43,7 @@ impl IssuerMetadata {
   }
 }
 
-/// A JWK Set used for [`IssuerMetadata`].
+/// JWK Set containing the issuer's public keys or a URL string referencing them.
 #[derive(Debug, Clone, Eq, PartialEq, Deserialize, Serialize)]
 pub enum Jwks {
   /// Reference to a JWK set.

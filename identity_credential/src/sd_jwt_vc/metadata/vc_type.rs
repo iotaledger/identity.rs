@@ -94,7 +94,7 @@ impl TypeMetadata {
   }
 }
 
-/// Does this method signature look weird? Turns out having recursive async functions is not that ez :'(.
+// Recursively validate a credential.
 fn validate_credential_impl<'c, 'r, R>(
   current_type: TypeMetadata,
   credential: &'c Value,

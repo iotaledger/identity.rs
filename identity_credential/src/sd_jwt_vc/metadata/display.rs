@@ -15,10 +15,9 @@ pub struct DisplayMetadata {
   /// VC type's human-readable description.
   pub description: Option<String>,
   /// Optional rendering information.
-  pub rendering: Option<serde_json::Map<String, Value>>,
+  pub rendering: Option<RenderingMetadata>,
 }
 
 /// Information on how to render a given credential type.
-// TODO: model the actual object properties.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct RenderingMetadata(serde_json::Map<String, Value>);
