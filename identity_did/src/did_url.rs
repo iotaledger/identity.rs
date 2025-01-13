@@ -537,7 +537,7 @@ pub(crate) const fn is_char_fragment(ch: char) -> bool {
 pub(crate) fn is_valid_percent_encoded_char(s: &str) -> bool {
   let mut chars = s.chars();
   let Some('%') = chars.next() else { return false };
-  chars.take(2).all(|c| c.is_ascii_hexdigit() && !c.is_ascii_lowercase())
+  s.len() == 3 && chars.take(2).all(|c| c.is_ascii_hexdigit())
 }
 
 pub(crate) fn is_valid_url_segment<F>(segment: &str, char_predicate: F) -> bool
