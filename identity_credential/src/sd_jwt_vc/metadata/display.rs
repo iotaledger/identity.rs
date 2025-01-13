@@ -5,7 +5,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
 
-/// Credential type's display information of a given languange.
+/// Credential type's display information of a given language.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct DisplayMetadata {
   /// Language tag as defined in [RFC5646](https://www.rfc-editor.org/rfc/rfc5646.txt).

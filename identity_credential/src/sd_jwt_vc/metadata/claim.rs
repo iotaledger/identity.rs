@@ -29,7 +29,7 @@ pub struct ClaimMetadata {
 }
 
 impl ClaimMetadata {
-  /// Checks wheter `value` is compliant with the disclosability policy imposed by this [`ClaimMetadata`].
+  /// Checks whether `value` is compliant with the disclosability policy imposed by this [`ClaimMetadata`].
   pub fn check_value_disclosability(&self, value: &Value) -> Result<(), Error> {
     if self.sd.unwrap_or_default() == ClaimDisclosability::Allowed {
       return Ok(());
