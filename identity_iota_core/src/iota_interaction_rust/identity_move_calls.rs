@@ -156,8 +156,8 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>
   where
-    I1: IntoIterator<Item = (IotaAddress, u64)>,
-    I2: IntoIterator<Item = (ObjectID, u64)>,
+    I1: IntoIterator<Item=(IotaAddress, u64)>,
+    I2: IntoIterator<Item=(ObjectID, u64)>,
   {
     let mut ptb = Ptb::new();
 
@@ -349,7 +349,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>
   where
-    C: IntoIterator<Item = (IotaAddress, u64)>,
+    C: IntoIterator<Item=(IotaAddress, u64)>,
   {
     let mut ptb = Ptb::new();
 
