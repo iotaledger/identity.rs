@@ -4,11 +4,12 @@
 use std::ops::Deref;
 use std::ops::DerefMut;
 
+use crate::bindings::WasmTransactionBuilder;
 use crate::error::TsSdkError;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::TransactionBuilderT;
 
-pub type NativeTsCodeBindingWrapper = ();
+pub type NativeTsCodeBindingWrapper = WasmTransactionBuilder;
 
 pub struct TransactionBuilderTsSdk {
   pub(crate) builder: NativeTsCodeBindingWrapper,

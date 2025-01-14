@@ -1,13 +1,9 @@
-use anyhow::anyhow;
-use identity_iota_interaction::ident_str;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::types::object::Owner;
-use identity_iota_interaction::types::transaction::ObjectArg;
-use identity_iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use identity_iota_interaction::MigrationMoveCalls;
 use identity_iota_interaction::ProgrammableTransactionBcs;
+use js_sys::Uint8Array;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
 
@@ -24,7 +20,7 @@ extern "C" {
     migration_registry: WasmSharedObjectRef,
     package: &str,
     creation_timestamp: Option<u64>,
-  ) -> Result<Vec<u8>, JsValue>;
+  ) -> Result<Uint8Array, JsValue>;
 }
 
 pub struct MigrationMoveCallsTsSdk {}
@@ -39,18 +35,17 @@ impl MigrationMoveCalls for MigrationMoveCallsTsSdk {
     package: ObjectID,
   ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> {
     let did_output = did_output.into();
-    let migration_registry = {
-      let Owner::Shared { initial_shared_version } = migration_registry.owner else {
-        return anyhow!("migration registry must be a shared object ref");
-      };
-      let obj_id = migration_registry.object_id();
+    let package = package.to_string();
+    let migration_registry = migration_registry.try_into()?;
 
-      (obj_id, initial_shared_version, true).into()
-    };
-
-    let future = migrate_did_output_impl(did_output, migration_registry, &package.to_string(), creation_timestamp);
-    futures::executor::block_on(future)
-      .map_err(WasmError::from)
-      .map_err(Self::Error::from)
+    futures::executor::block_on(migrate_did_output_impl(
+      did_output,
+      migration_registry,
+      &package,
+      creation_timestamp,
+    ))
+    .map(|js_arr| js_arr.to_vec())
+    .map_err(WasmError::from)
+    .map_err(Self::Error::from)
   }
 }

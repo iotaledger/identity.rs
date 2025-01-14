@@ -9,7 +9,7 @@ export function proposeConfigChange(
   identity: SharedObjectRef,
   controllerCap: ObjectRef,
   controllersToAdd: [string, number][],
-  controllersToRemove: [string],
+  controllersToRemove: string[],
   controllersToUpdate: [string, number][],
   packageId: string,
   expiration?: number,
@@ -42,6 +42,28 @@ export function proposeConfigChange(
   tx.moveCall({
     target: `${packageId}::identity::propose_config_change`,
     arguments: [identityArg, delegationToken, exp, thresholdArg, controllers_to_add, controllers_to_remove, controllers_to_update],
+  });
+
+  putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
+
+  return tx.build();
+}
+
+export function executeConfigChange(
+  identity: SharedObjectRef,
+  capability: ObjectRef,
+  proposalId: string,
+  packageId: string,
+): Promise<Uint8Array> {
+  const tx = new Transaction();
+  const cap = tx.objectRef(capability);
+  const [delegationToken, borrow] = getControllerDelegation(tx, cap, packageId);
+  const proposal = tx.pure.id(proposalId);
+  const identityArg = tx.sharedObjectRef(identity);
+
+  tx.moveCall({
+    target: `${packageId}::identity::execute_config_change`,
+    arguments: [identityArg, delegationToken, proposal],
   });
 
   putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
