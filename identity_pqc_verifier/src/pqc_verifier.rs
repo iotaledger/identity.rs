@@ -10,7 +10,6 @@ use identity_jose::jws::VerificationInput;
 use oqs::sig::Algorithm;
 
 use crate::OQSVerifier;
-use crate::PQCleanVerifier;
 
 /// An implementor of [`JwsVerifier`] that can handle the
 /// [`JwsAlgorithm::ML_DSA_44`](identity_jose::jws::JwsAlgorithm::ML_DSA_44)
@@ -40,11 +39,11 @@ impl JwsVerifier for PQCJwsVerifier {
   fn verify(&self, input: VerificationInput, public_key: &Jwk) -> std::result::Result<(), SignatureVerificationError> {
     match input.alg {
       #[cfg(feature = "ML_DSA_44")]
-      JwsAlgorithm::ML_DSA_44 => PQCleanVerifier::verify(input, public_key),
+      JwsAlgorithm::ML_DSA_44 => OQSVerifier::verify(input, public_key, Algorithm::MlDsa44),
       #[cfg(feature = "ML_DSA_65")]
-      JwsAlgorithm::ML_DSA_65 => OQSVerifier::verify(input, public_key, Algorithm::Dilithium3),
+      JwsAlgorithm::ML_DSA_65 => OQSVerifier::verify(input, public_key, Algorithm::MlDsa65),
       #[cfg(feature = "ML_DSA_87")]
-      JwsAlgorithm::ML_DSA_87 => OQSVerifier::verify(input, public_key, Algorithm::Dilithium5),
+      JwsAlgorithm::ML_DSA_87 => OQSVerifier::verify(input, public_key, Algorithm::MlDsa87),
 
       #[cfg(feature = "SLH_DSA_SHA2_128s")]
       JwsAlgorithm::SLH_DSA_SHA2_128s => OQSVerifier::verify(input, public_key, Algorithm::SphincsSha2128sSimple),
