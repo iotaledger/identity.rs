@@ -11,8 +11,9 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use serde::Serialize;
 
+use identity_iota::iota_interaction::types::base_types::ObjectID;
+
 use super::Hashable;
-use super::types::base_types::{ObjectID};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Proposal {}

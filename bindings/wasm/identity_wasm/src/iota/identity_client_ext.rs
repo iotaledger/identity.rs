@@ -1,14 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::iota::block::address::dto::AddressDto;
-use identity_iota::iota::block::address::Address;
-use identity_iota::iota::block::output::dto::AliasOutputDto;
-use identity_iota::iota::block::output::AliasOutput;
-use identity_iota::iota::block::output::RentStructure;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::IotaIdentityClientExt;
+use iota_sdk::types::block::address::dto::AddressDto;
+use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::output::dto::AliasOutputDto;
+use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::types::block::output::RentStructure;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -17,6 +16,8 @@ use wasm_bindgen_futures::future_to_promise;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::iota::identity_client::WasmIotaIdentityClient;
+use crate::obsolete::IotaIdentityClientExt;
+
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
 

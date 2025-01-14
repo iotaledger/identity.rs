@@ -1,15 +1,15 @@
 [package]
 name = "iota_interaction_ts"
 version = "1.4.0"
-authors = ["IOTA Stiftung"]
-edition = "2021"
-homepage = "https://www.iota.org"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 keywords = ["iota", "tangle", "identity", "wasm"]
-license = "Apache-2.0"
+license.workspace = true
 publish = false
-readme = "README.md"
-repository = "https://github.com/iotaledger/identity.rs"
-resolver = "2"
+readme = "./README.md"
+repository.workspace = true
+rust-version.workspace = true
 description = "identity_iota_interaction Adapters using Web Assembly bindings."
 
 [lib]
@@ -30,7 +30,7 @@ serde-wasm-bindgen = "0.6.5"
 serde_json = { version = "1.0", default-features = false }
 thiserror.workspace = true
 tsify = "0.4.5"
-wasm-bindgen = { version = "0.2.85", features = ["serde-serialize"] }
+wasm-bindgen = { version = "=0.2.93", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 zkryptium = "0.2.2"
 
@@ -47,11 +47,6 @@ rand = "0.8.5"
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 getrandom = { version = "0.2", default-features = false, features = ["js"] }
 instant = { version = "0.1", default-features = false, features = ["wasm-bindgen"] }
-
-[profile.release]
-opt-level = 's'
-lto = true
-debug = true
 
 [lints.clippy]
 # can be removed as soon as fix has been added to clippy

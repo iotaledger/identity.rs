@@ -95,7 +95,7 @@ extern "C" {
 
   #[wasm_bindgen(method, js_name = getOwnedObjects)]
   pub fn get_owned_objects(this: &WasmIotaClient, input: &WasmGetOwnedObjectsParams)
-    -> PromisePaginatedObjectsResponse;
+                           -> PromisePaginatedObjectsResponse;
 
   #[wasm_bindgen(method, js_name = getTransactionBlock)]
   pub fn get_transaction_block(
@@ -141,14 +141,14 @@ impl ManagedWasmIotaClient {
     let ex_tx_params: WasmExecuteTransactionBlockParams = serde_wasm_bindgen::to_value(
       &ExecuteTransactionBlockParams::new(tx_data_bcs, signatures, options, request_type),
     )
-    .map_err(|e| {
-      console_log!(
+      .map_err(|e| {
+        console_log!(
         "Error executing serde_wasm_bindgen::to_value(ExecuteTransactionBlockParams): {:?}",
         e
       );
-      IotaRpcError::FfiError(format!("{:?}", e))
-    })?
-    .into();
+        IotaRpcError::FfiError(format!("{:?}", e))
+      })?
+      .into();
 
     let promise: Promise = Promise::resolve(&WasmIotaClient::execute_transaction_block(&self.0, &ex_tx_params));
     let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
@@ -225,14 +225,14 @@ impl ManagedWasmIotaClient {
       query.clone().map(|v| v.filter).flatten(),
       query.clone().map(|v| v.options).flatten(),
     ))
-    .map_err(|e| {
-      console_log!(
+      .map_err(|e| {
+        console_log!(
         "Error executing serde_wasm_bindgen::to_value(WasmIotaObjectDataOptions): {:?}",
         e
       );
-      IotaRpcError::FfiError(format!("{:?}", e))
-    })?
-    .into();
+        IotaRpcError::FfiError(format!("{:?}", e))
+      })?
+      .into();
 
     let promise: Promise = Promise::resolve(&WasmIotaClient::get_owned_objects(&self.0, &params));
     let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
@@ -324,14 +324,14 @@ impl ManagedWasmIotaClient {
       limit,
       Some(SortOrder::new(descending_order)),
     ))
-    .map_err(|e| {
-      console_log!(
+      .map_err(|e| {
+        console_log!(
         "Error executing serde_wasm_bindgen::to_value(WasmIotaObjectDataOptions): {:?}",
         e
       );
-      IotaRpcError::FfiError(format!("{:?}", e))
-    })?
-    .into();
+        IotaRpcError::FfiError(format!("{:?}", e))
+      })?
+      .into();
 
     let promise: Promise = Promise::resolve(&WasmIotaClient::query_events(&self.0, &params));
     let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
@@ -355,14 +355,14 @@ impl ManagedWasmIotaClient {
       cursor.map(|v| v.to_string()),
       limit,
     ))
-    .map_err(|e| {
-      console_log!(
+      .map_err(|e| {
+        console_log!(
         "Error executing serde_wasm_bindgen::to_value(WasmIotaObjectDataOptions): {:?}",
         e
       );
-      IotaRpcError::FfiError(format!("{:?}", e))
-    })?
-    .into();
+        IotaRpcError::FfiError(format!("{:?}", e))
+      })?
+      .into();
 
     let promise: Promise = Promise::resolve(&WasmIotaClient::get_coins(&self.0, &params));
     let result: JsValue = JsFuture::from(promise).await.map_err(|e| {

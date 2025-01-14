@@ -3,7 +3,6 @@
 
 use identity_iota::did::Error as DIDError;
 use identity_iota::did::DID;
-use identity_iota::iota::block::output::AliasId;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::NetworkName;
 use wasm_bindgen::prelude::*;
@@ -55,9 +54,9 @@ impl WasmIotaDID {
   /// network name.
   #[wasm_bindgen(js_name = fromAliasId)]
   #[allow(non_snake_case)]
-  pub fn from_alias_id(aliasId: String, network: String) -> Result<WasmIotaDID> {
+  pub fn from_object_id(objectId: String, network: String) -> Result<WasmIotaDID> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
-    Ok(Self::from(IotaDID::from_alias_id(aliasId.as_ref(), &network_name)))
+    Ok(Self::from(IotaDID::from_object_id(objectId.as_ref(), &network_name)))
   }
 
   /// Creates a new placeholder {@link IotaDID} with the given network name.
@@ -155,8 +154,8 @@ impl WasmIotaDID {
 
   /// Returns the hex-encoded AliasId with a '0x' prefix, from the DID tag.
   #[wasm_bindgen(js_name = toAliasId)]
-  pub fn to_alias_id(&self) -> String {
-    AliasId::from(&self.0).to_string()
+  pub fn to_object_id(&self) -> String {
+    self.0.to_string()
   }
 
   /// Converts the `DID` into a {@link DIDUrl}, consuming it.

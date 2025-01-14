@@ -74,6 +74,9 @@ pub enum Error {
   /// An anyhow::error.
   #[error("Any error: {0}")]
   AnyError(#[from] anyhow::Error),
+  /// An error caused by a foreign function interface call.
+  #[error("FFI error: {0}")]
+  FfiError(String),
   #[cfg(target_arch = "wasm32")]
   /// An error originating from IOTA typescript SDK import bindings
   #[error("TsSdkError: {0}")]

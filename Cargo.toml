@@ -9,22 +9,22 @@ rust-version = "1.65"
 [workspace]
 resolver = "2"
 members = [
-  "identity_core",
-  "identity_credential",
-  "identity_did",
-  "identity_document",
-  "identity_iota",
-  "identity_storage",
-  "identity_iota_core",
-  "identity_resolver",
-  "identity_verification",
-  "identity_stronghold",
-  "identity_jose",
-  "identity_ecdsa_verifier",
-  "identity_eddsa_verifier",
-  "examples",
-  "identity_iota_interaction",
-  "bindings/wasm/iota_interaction_ts",
+    "identity_core",
+    "identity_credential",
+    "identity_did",
+    "identity_document",
+    "identity_iota",
+    "identity_storage",
+    "identity_iota_core",
+    "identity_resolver",
+    "identity_verification",
+    "identity_stronghold",
+    "identity_jose",
+    "identity_ecdsa_verifier",
+    "identity_eddsa_verifier",
+    "examples",
+    "identity_iota_interaction",
+    "bindings/wasm/iota_interaction_ts",
 ]
 
 exclude = ["bindings/wasm/identity_wasm", "bindings/grpc"]
@@ -40,3 +40,11 @@ zkryptium = { version = "0.2.2", default-features = false, features = ["bbsplus"
 
 [workspace.lints.clippy]
 result_large_err = "allow"
+
+[profile.release.package.iota_interaction_ts]
+opt-level = 's'
+# Enabling debug for profile.release may lead to more helpfull loged call stacks.
+# TODO: Clarify if 'debug = true' facilitates error analysis via console logs.
+#       If not, remove the next line
+#       If yes, describe the helping effect in the comment above
+# debug = true

@@ -1,6 +1,6 @@
 import * as ed from "@noble/ed25519";
-import { decodeB64, encodeB64, Jwk, JwkGenOutput, JwkStorage, ProofAlgorithm, ProofUpdateCtx } from "~identity_wasm";
-import { EdCurve, JwkType, JwsAlgorithm } from "./jose";
+import {decodeB64, encodeB64, Jwk, JwkGenOutput, JwkStorage, ProofAlgorithm, ProofUpdateCtx} from "~identity_wasm";
+import {EdCurve, JwkType, JwsAlgorithm} from "./jose";
 
 type Ed25519PrivateKey = Uint8Array;
 type Ed25519PublicKey = Uint8Array;
@@ -16,10 +16,6 @@ export class JwkMemStore implements JwkStorage {
 
     public static ed25519KeyType(): string {
         return "Ed25519";
-    }
-
-    private _get_key(keyId: string): Jwk | undefined {
-        return this._keys.get(keyId);
     }
 
     public async generate(keyType: string, algorithm: JwsAlgorithm): Promise<JwkGenOutput> {
@@ -90,6 +86,10 @@ export class JwkMemStore implements JwkStorage {
 
     public count(): number {
         return this._keys.size;
+    }
+
+    private _get_key(keyId: string): Jwk | undefined {
+        return this._keys.get(keyId);
     }
 }
 

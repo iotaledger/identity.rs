@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #[cfg(target_arch = "wasm32")]
-pub(crate) mod bindings;
+pub mod bindings;
 
 #[cfg(target_arch = "wasm32")]
 pub mod asset_move_calls;

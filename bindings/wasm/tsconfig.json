@@ -1,17 +1,38 @@
 {
-    "compilerOptions": {
-        "baseUrl": ".",
-        "lib": ["ES2020", "DOM"],
-        "declaration": true,
-        "sourceMap": true,
-        "strict": true,
-        "moduleResolution": "node",
-        "noImplicitAny": true,
-        "preserveConstEnums": true,
-        "forceConsistentCasingInFileNames": true,
-        "paths": {
-            "@iota/identity-wasm/*": ["./*"]
-        }
-    },
-    "exclude": ["node_modules"]
+  "$schema": "https://typedoc.org/schema.json",
+  "disableSources": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "excludeNotDocumented": true,
+  "excludeExternals": true,
+  "entryPointStrategy": "expand",
+  "plugin": [
+    "typedoc-plugin-markdown"
+  ],
+  "readme": "none",
+  "githubPages": false,
+  "theme": "markdown",
+  "entryDocument": "api_ref.md",
+  "hideBreadcrumbs": true,
+  "hideGenerator": true,
+  "sort": [
+    "source-order"
+  ],
+  "compilerOptions": {
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
+    "declaration": true,
+    "sourceMap": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "preserveConstEnums": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

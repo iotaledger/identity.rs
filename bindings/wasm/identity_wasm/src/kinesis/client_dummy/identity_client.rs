@@ -8,18 +8,21 @@
 
 use std::str::FromStr;
 
-use identity_iota_core::IotaDID;
-use identity_iota_core::IotaDocument;
-use identity_iota_core::NetworkName;
+use identity_iota::iota::rebased::{rebased_err, Error};
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::NetworkName;
+use identity_iota::iota_interaction::rpc_types::IotaTransactionBlockResponseOptions;
+use identity_iota::iota_interaction::types::base_types::{IotaAddress, ObjectID};
+use identity_iota::iota_interaction::IotaClientTrait;
+use identity_iota::iota_interaction::{IotaTransactionBlockResponseT, SignatureBcs, TransactionDataBcs};
 
-use crate::error::Error;
-use crate::iota_sdk_abstraction::rpc_types::IotaTransactionBlockResponseOptions;
-use crate::iota_sdk_abstraction::types::base_types::{IotaAddress, ObjectID};
-use super::{DummySigner, IotaTransactionBlockResponseT, SignatureBcs, TransactionDataBcs};
+use super::DummySigner;
 use super::Identity;
 use super::IdentityBuilder;
 use super::IdentityClientBuilder;
-use super::IotaClientTrait;
+use iota_interaction_ts::bindings::IotaTransactionBlockResponseAdapter;
+use iota_interaction_ts::error::TsSdkError;
 
 // `IdentityClient` is a dummy placeholder to prepare wasm bindings for the actual one
 // as long as it is not compilable to wasm
@@ -35,7 +38,7 @@ pub struct IdentityClient<T: IotaClientTrait> {
 // builder related functions
 impl<T> IdentityClient<T>
 where
-  T: IotaClientTrait<Error = Error>,
+  T: IotaClientTrait<Error=TsSdkError>,
 {
   pub fn builder() -> IdentityClientBuilder<T> {
     IdentityClientBuilder::<T>::default()
@@ -49,10 +52,10 @@ where
       network_name,
       identity_iota_package_id: IotaAddress::from(
         builder.identity_iota_package_id.unwrap_or(
-        ObjectID::from_str("0x0101010101010101010101010101010101010101010101010101010101010101")
-          .map_err(|e| Error::InvalidArgument(e.to_string()))?
-      )),
-      sender_public_key:  builder.sender_public_key.unwrap_or(vec![1u8, 2u8, 3u8, 4u8]),
+          ObjectID::from_str("0x0101010101010101010101010101010101010101010101010101010101010101")
+            .map_err(|e| Error::InvalidArgument(e.to_string()))?
+        )),
+      sender_public_key: builder.sender_public_key.unwrap_or(vec![1u8, 2u8, 3u8, 4u8]),
       sender_address,
     })
   }
@@ -61,7 +64,7 @@ where
 // mock functions for wasm integration
 impl<T> IdentityClient<T>
 where
-  T: IotaClientTrait<Error = Error>,
+  T: IotaClientTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>,
 {
   pub fn sender_public_key(&self) -> Result<&[u8], Error> {
     Ok(self.sender_public_key.as_ref())
@@ -85,7 +88,7 @@ where
     &self,
     tx_data_bcs: TransactionDataBcs,
     signatures: Vec<SignatureBcs>,
-  ) -> Result<Box<dyn IotaTransactionBlockResponseT<Error=Error>>, Error> {
+  ) -> Result<Box<dyn IotaTransactionBlockResponseT<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>>, Error> {
     let tx_response = self
       .client
       .quorum_driver_api()
@@ -93,11 +96,11 @@ where
         &tx_data_bcs,
         &signatures,
         Some(IotaTransactionBlockResponseOptions::new().with_effects()),
-        None
+        None,
       ).await?;
     Ok(tx_response)
   }
-  
+
   pub async fn resolve_did(&self, _did: &IotaDID) -> Result<IotaDocument, Error> {
     unimplemented!("resolve_did");
   }
@@ -133,9 +136,9 @@ where
 // test function(s) for wasm calling test
 impl<T> IdentityClient<T>
 where
-  T: IotaClientTrait<Error = Error>,
+  T: IotaClientTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>,
 {
   pub async fn get_chain_identifier(&self) -> Result<String, Error> {
-    self.client.read_api().get_chain_identifier().await
+    self.client.read_api().get_chain_identifier().await.map_err(rebased_err)
   }
 }

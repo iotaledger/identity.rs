@@ -1,4 +1,5 @@
-import { CoreDID, CoreDocument, IotaDID, IotaDocument, IToCoreDID, IToCoreDocument } from "~identity_wasm";
+import {CoreDID, CoreDocument, IotaDID, IotaDocument, IToCoreDID, IToCoreDocument} from "~identity_wasm";
+
 type GetCoreDocument = (arg: IToCoreDocument) => CoreDocument;
 type MaybeGetIotaDocument = (arg: IToCoreDocument) => IotaDocument | void;
 type GetCoreDidClone = (arg: IToCoreDID) => CoreDID;
@@ -8,6 +9,7 @@ declare global {
     var _maybeGetIotaDocumentInternal: MaybeGetIotaDocument;
     var _getCoreDidCloneInternal: GetCoreDidClone;
 }
+
 function _getCoreDocumentInternal(arg: IToCoreDocument): CoreDocument {
     if (arg instanceof CoreDocument) {
         return arg._shallowCloneInternal();

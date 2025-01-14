@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::rc::Rc;
+use std::sync::Arc;
 
 use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
@@ -14,9 +15,6 @@ use identity_iota::credential::JwtPresentationOptions;
 use identity_iota::credential::Presentation;
 
 use identity_iota::did::DIDUrl;
-use identity_iota::iota::block::output::dto::AliasOutputDto;
-use identity_iota::iota::block::output::AliasOutput;
-use identity_iota::iota::block::TryFromDto;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::NetworkName;
@@ -27,6 +25,7 @@ use identity_iota::storage::storage::JwsSignatureOptions;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
+use iota_sdk::types::TryFromDto;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -62,7 +61,6 @@ use crate::did::WasmJwsVerificationOptions;
 use crate::did::WasmService;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::iota::identity_client_ext::WasmAliasOutput;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocumentMetadata;
 use crate::iota::WasmStateMetadataEncoding;
@@ -437,63 +435,67 @@ impl WasmIotaDocument {
       .wasm_result()
   }
 
-  /// Deserializes the document from an Alias Output.
-  ///
-  /// If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
-  /// if `stateMetadata` is empty.
-  ///
-  /// The `tokenSupply` must be equal to the token supply of the network the DID is associated with.  
-  ///
-  /// NOTE: `did` is required since it is omitted from the serialized DID Document and
-  /// cannot be inferred from the state metadata. It also indicates the network, which is not
-  /// encoded in the `AliasId` alone.
-  #[allow(non_snake_case)]
-  #[wasm_bindgen(js_name = unpackFromOutput)]
-  pub fn unpack_from_output(
-    did: &WasmIotaDID,
-    aliasOutput: WasmAliasOutput,
-    allowEmpty: bool,
-  ) -> Result<WasmIotaDocument> {
-    let alias_dto: AliasOutputDto = aliasOutput.into_serde().wasm_result()?;
-    let alias_output: AliasOutput = AliasOutput::try_from_dto(alias_dto)
-      .map_err(|err| {
-        identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {err}"))
-      })
-      .wasm_result()?;
-    IotaDocument::unpack_from_output(&did.0, &alias_output, allowEmpty)
-      .map(WasmIotaDocument::from)
-      .wasm_result()
-  }
+  // Uncomment this code when working on [Issue #1445 Replace mocked Identity client with real Identity client]
+  //
+  // /// Deserializes the document from an Alias Output.
+  // ///
+  // /// If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
+  // /// if `stateMetadata` is empty.
+  // ///
+  // /// The `tokenSupply` must be equal to the token supply of the network the DID is associated with.
+  // ///
+  // /// NOTE: `did` is required since it is omitted from the serialized DID Document and
+  // /// cannot be inferred from the state metadata. It also indicates the network, which is not
+  // /// encoded in the `AliasId` alone.
+  // #[allow(non_snake_case)]
+  // #[wasm_bindgen(js_name = unpackFromOutput)]
+  // pub fn unpack_from_output(
+  //   did: &WasmIotaDID,
+  //   aliasOutput: WasmAliasOutput,
+  //   allowEmpty: bool,
+  // ) -> Result<WasmIotaDocument> {
+  //   let alias_dto: AliasOutputDto = aliasOutput.into_serde().wasm_result()?;
+  //   let alias_output: AliasOutput = AliasOutput::try_from_dto(alias_dto)
+  //     .map_err(|err| {
+  //       identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {err}"))
+  //     })
+  //     .wasm_result()?;
+  //   IotaDocument::unpack_from_output(&did.0, &alias_output, allowEmpty)
+  //     .map(WasmIotaDocument::from)
+  //     .wasm_result()
+  // }
 
-  /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
-  /// outputs, if any.
-  ///
-  /// Errors if any Alias Output does not contain a valid or empty DID Document.
-  #[allow(non_snake_case)]
-  #[wasm_bindgen(js_name = unpackFromBlock)]
-  pub fn unpack_from_block(network: String, block: &WasmBlock) -> Result<ArrayIotaDocument> {
-    let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
-    let block_dto: identity_iota::iota::block::BlockDto = block
-      .into_serde()
-      .map_err(|err| {
-        identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {err}"))
-      })
-      .wasm_result()?;
-
-    let block: identity_iota::iota::block::Block = identity_iota::iota::block::Block::try_from_dto(block_dto)
-      .map_err(|err| identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {err}")))
-      .wasm_result()?;
-
-    Ok(
-      IotaDocument::unpack_from_block(&network_name, &block)
-        .wasm_result()?
-        .into_iter()
-        .map(WasmIotaDocument::from)
-        .map(JsValue::from)
-        .collect::<js_sys::Array>()
-        .unchecked_into::<ArrayIotaDocument>(),
-    )
-  }
+  // Uncomment this code when working on [Issue #1445 Replace mocked Identity client with real Identity client]
+  //
+  // /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
+  // /// outputs, if any.
+  // ///
+  // /// Errors if any Alias Output does not contain a valid or empty DID Document.
+  // #[allow(non_snake_case)]
+  // #[wasm_bindgen(js_name = unpackFromBlock)]
+  // pub fn unpack_from_block(network: String, block: &WasmBlock) -> Result<ArrayIotaDocument> {
+  //   let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
+  //   let block_dto: iota_sdk::types::block::BlockDto = block
+  //     .into_serde()
+  //     .map_err(|err| {
+  //       identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {err}"))
+  //     })
+  //     .wasm_result()?;
+  //
+  //   let block: iota_sdk::types::block::Block = iota_sdk::types::block::Block::try_from_dto(block_dto)
+  //     .map_err(|err| identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {err}")))
+  //     .wasm_result()?;
+  //
+  //   Ok(
+  //     IotaDocument::unpack_from_block(&network_name, &block)
+  //       .wasm_result()?
+  //       .into_iter()
+  //       .map(WasmIotaDocument::from)
+  //       .map(JsValue::from)
+  //       .collect::<js_sys::Array>()
+  //       .unchecked_into::<ArrayIotaDocument>(),
+  //   )
+  // }
 
   // ===========================================================================
   // Metadata
@@ -691,7 +693,7 @@ impl WasmIotaDocument {
   ) -> Result<PromiseString> {
     let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let scope: MethodScope = scope.0;
     let promise: Promise = future_to_promise(async move {
       let method_fragment: String = document_lock_clone
@@ -709,7 +711,7 @@ impl WasmIotaDocument {
   /// the given `storage`.
   #[wasm_bindgen(js_name = purgeMethod)]
   pub fn purge_method(&mut self, storage: &WasmStorage, id: &WasmDIDUrl) -> Result<PromiseVoid> {
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let id: DIDUrl = id.0.clone();
     let promise: Promise = future_to_promise(async move {
@@ -740,7 +742,7 @@ impl WasmIotaDocument {
     payload: String,
     options: &WasmJwsSignatureOptions,
   ) -> Result<PromiseJws> {
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
@@ -769,7 +771,7 @@ impl WasmIotaDocument {
     payload: String,
     options: &WasmJwsSignatureOptions,
   ) -> Result<PromiseJws> {
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
@@ -802,7 +804,7 @@ impl WasmIotaDocument {
     options: &WasmJwsSignatureOptions,
     custom_claims: Option<RecordStringAny>,
   ) -> Result<PromiseJwt> {
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let credential_clone: Credential = credential.0.clone();
@@ -837,7 +839,7 @@ impl WasmIotaDocument {
     signature_options: &WasmJwsSignatureOptions,
     presentation_options: &WasmJwtPresentationOptions,
   ) -> Result<PromiseJwt> {
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = signature_options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let presentation_clone: Presentation<UnknownCredential> = presentation.0.clone();
@@ -870,7 +872,7 @@ impl WasmIotaDocument {
     scope: WasmMethodScope,
   ) -> Result<PromiseString> {
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let promise: Promise = future_to_promise(async move {
       let method_fragment: String = document_lock_clone
         .write()
@@ -900,7 +902,7 @@ impl WasmIotaDocument {
   ) -> Result<PromiseString> {
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let jpt_claims = jpt_claims.into_serde().wasm_result()?;
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let options = options.into();
     let promise: Promise = future_to_promise(async move {
       let jwp: String = document_lock_clone
@@ -948,7 +950,7 @@ impl WasmIotaDocument {
     custom_claims: Option<MapStringAny>,
   ) -> Result<PromiseJpt> {
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
     let options = options.into();
     let custom_claims = custom_claims.and_then(|claims| claims.into_serde().ok());
     let promise: Promise = future_to_promise(async move {

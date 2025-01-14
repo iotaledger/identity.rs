@@ -14,10 +14,10 @@ import {
     Multicontroller,
     ProposalAction,
     Storage,
-    StorageSigner,
+//    StorageSigner,
 } from "@iota/identity-wasm/node";
 
-import { executeTransaction } from "@iota/identity-wasm/lib/kinesis_client_helpers";
+import { executeTransaction } from "@iota/iota-interaction-ts/lib/iota_client_helpers";
 import { bcs } from "@iota/iota.js/bcs";
 import { IotaClient as KinesisClient } from "@iota/iota.js/client";
 import { getFaucetHost, requestIotaFromFaucetV0, requestIotaFromFaucetV1 } from "@iota/iota.js/faucet";
@@ -274,78 +274,78 @@ async function testProposals(identityClient: KinesisIdentityClient): Promise<voi
     console.dir(updateProposal);
 }
 
-async function signerTest(): Promise<void> {
-    // create new storage
-    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+// async function signerTest(): Promise<void> {
+//     // create new storage
+//     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+//
+//     // generate new key
+//     let generate = await storage.keyStorage().generate("Ed25519", JwsAlgorithm.EdDSA);
+//     let publicKeyJwk = generate.jwk().toPublic();
+//     if (typeof publicKeyJwk === "undefined") {
+//         throw new Error("failed to derive public JWK from generated JWK");
+//     }
+//     let keyId = generate.keyId();
+//     console.dir({
+//         keyId,
+//         publicKeyJwk: publicKeyJwk,
+//     });
+//
+//     // create signer from storage
+//     let signer = new StorageSigner(storage, keyId, publicKeyJwk);
+//     console.log({ keyIdFromSigner: signer.keyId() });
+//
+//     // sign test
+//     let signed = await signer.sign(new Uint8Array([0, 1, 2, 4]));
+//     console.dir({ signed });
+// }
 
-    // generate new key
-    let generate = await storage.keyStorage().generate("Ed25519", JwsAlgorithm.EdDSA);
-    let publicKeyJwk = generate.jwk().toPublic();
-    if (typeof publicKeyJwk === "undefined") {
-        throw new Error("failed to derive public JWK from generated JWK");
-    }
-    let keyId = generate.keyId();
-    console.dir({
-        keyId,
-        publicKeyJwk: publicKeyJwk,
-    });
-
-    // create signer from storage
-    let signer = new StorageSigner(storage, keyId, publicKeyJwk);
-    console.log({ keyIdFromSigner: signer.keyId() });
-
-    // sign test
-    let signed = await signer.sign(new Uint8Array([0, 1, 2, 4]));
-    console.dir({ signed });
-}
-
-async function testExecuteTransaction(kinesis_client: KinesisClient) {
-    console.log("---------------- testing executeTransaction ------------------------");
-
-    // create new storage
-    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-
-    // generate new key
-    let generate = await storage.keyStorage().generate("Ed25519", JwsAlgorithm.EdDSA);
-    let publicKeyJwk = generate.jwk().toPublic();
-    if (typeof publicKeyJwk === "undefined") {
-        throw new Error("failed to derive public JWK from generated JWK");
-    }
-
-    // create signer from storage
-    let signer = new StorageSigner(storage, generate.keyId(), publicKeyJwk);
-    // get public key as bytes and create address
-    let publicJwk = (signer as any).publicKeyRaw();
-    let address = convertToAddress(publicJwk);
-
-    await requestIotaFromFaucetV0({
-        host: getFaucetHost(NETWORK_NAME_FAUCET),
-        recipient: address,
-    });
-
-    // try to craft tx with js api
-    let coins = await kinesis_client.getCoins({
-        owner: address,
-        coinType: IOTA_TYPE_ARG,
-    });
-    const tx = new Transaction();
-    const coin_0 = coins.data[0];
-    const coin = tx.splitCoins(tx.object(coin_0.coinObjectId), [
-        bcs.u64().serialize(DEFAULT_GAS_BUDGET * 2),
-    ]);
-    tx.transferObjects([coin], address);
-    tx.setSenderIfNotSet(address);
-
-    let response = await executeTransaction(
-        kinesis_client,
-        address,
-        publicJwk,
-        await tx.build({ client: kinesis_client }),
-        signer,
-    );
-    console.dir(response);
-    console.dir(response?.response?.transaction?.data);
-}
+// async function testExecuteTransaction(kinesis_client: KinesisClient) {
+//     console.log("---------------- testing executeTransaction ------------------------");
+//
+//     // create new storage
+//     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+//
+//     // generate new key
+//     let generate = await storage.keyStorage().generate("Ed25519", JwsAlgorithm.EdDSA);
+//     let publicKeyJwk = generate.jwk().toPublic();
+//     if (typeof publicKeyJwk === "undefined") {
+//         throw new Error("failed to derive public JWK from generated JWK");
+//     }
+//
+//     // create signer from storage
+//     let signer = new StorageSigner(storage, generate.keyId(), publicKeyJwk);
+//     // get public key as bytes and create address
+//     let publicJwk = (signer as any).publicKeyRaw();
+//     let address = convertToAddress(publicJwk);
+//
+//     await requestIotaFromFaucetV0({
+//         host: getFaucetHost(NETWORK_NAME_FAUCET),
+//         recipient: address,
+//     });
+//
+//     // try to craft tx with js api
+//     let coins = await kinesis_client.getCoins({
+//         owner: address,
+//         coinType: IOTA_TYPE_ARG,
+//     });
+//     const tx = new Transaction();
+//     const coin_0 = coins.data[0];
+//     const coin = tx.splitCoins(tx.object(coin_0.coinObjectId), [
+//         bcs.u64().serialize(DEFAULT_GAS_BUDGET * 2),
+//     ]);
+//     tx.transferObjects([coin], address);
+//     tx.setSenderIfNotSet(address);
+//
+//     let response = await executeTransaction(
+//         kinesis_client,
+//         address,
+//         publicJwk,
+//         await tx.build({ client: kinesis_client }),
+//         signer,
+//     );
+//     console.dir(response);
+//     console.dir(response?.response?.transaction?.data);
+// }
 
 /** Test API usage */
 export async function testApiCall(): Promise<void> {
@@ -376,19 +376,19 @@ export async function testApiCall(): Promise<void> {
         console.error(`proposals binding test failed: ${suffix}`);
     }
 
-    try {
-        await signerTest();
-    } catch (err) {
-        const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
-        console.error(`signer binding test failed: ${suffix}`);
-    }
+    // try {
+    //     await signerTest();
+    // } catch (err) {
+    //     const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
+    //     console.error(`signer binding test failed: ${suffix}`);
+    // }
 
-    try {
-        await testExecuteTransaction(kinesis_client);
-    } catch (err) {
-        const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
-        console.error(`signer binding test failed: ${suffix}`);
-    }
+    // try {
+    //     await testExecuteTransaction(kinesis_client);
+    // } catch (err) {
+    //     const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
+    //     console.error(`signer binding test failed: ${suffix}`);
+    // }
 
     console.log("done");
 }

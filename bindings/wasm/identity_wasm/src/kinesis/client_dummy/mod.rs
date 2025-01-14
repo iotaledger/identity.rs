@@ -10,3 +10,8 @@ pub use identity::*;
 pub use identity_client::*;
 pub use identity_client_builder::*;
 pub use multicontroller::*;
+
+// dummy types, have to be replaced with actual types later on
+pub type DummySigner = str;
+pub type Hashable<T> = Vec<T>;
+pub type Identity = ();

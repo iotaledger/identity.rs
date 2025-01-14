@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import "./append_functions.js";
+
 export * from "./iota_identity_client.js";
 export * from "./jose";
 export * from "./jwk_storage";

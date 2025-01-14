@@ -50,7 +50,6 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Service[]")]
   pub type ArrayService;
-
 }
 
 impl TryFrom<Object> for MapStringAny {

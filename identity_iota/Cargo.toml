@@ -17,10 +17,15 @@ identity_credential = { version = "=1.4.0", path = "../identity_credential", fea
 identity_did = { version = "=1.4.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.4.0", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=1.4.0", path = "../identity_iota_core", default-features = false }
-identity_iota_interaction = { version = "=1.4.0", path = "../identity_iota_interaction" }
 identity_resolver = { version = "=1.4.0", path = "../identity_resolver", default-features = false, optional = true }
 identity_storage = { version = "=1.4.0", path = "../identity_storage", default-features = false, features = ["iota-document"] }
 identity_verification = { version = "=1.4.0", path = "../identity_verification", default-features = false }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+identity_iota_interaction = { version = "=1.4.0", path = "../identity_iota_interaction" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+identity_iota_interaction = { version = "=1.4.0", path = "../identity_iota_interaction", default-features = false }
 
 [dev-dependencies]
 # required for doc test
@@ -31,21 +36,20 @@ rand = "0.8.5"
 tokio = { version = "1.29.0", features = ["full"] }
 
 [features]
-default = ["revocation-bitmap", "iota-client", "resolver"]
+default = ["revocation-bitmap", "iota-client", "send-sync", "resolver"]
 
 # Enables the IOTA client integration, and the `DidResolutionHandler` trait.
 iota-client = [
-  "identity_iota_core/iota-client",
-  "identity_resolver/iota",
-  "identity_storage/send-sync-storage",
-  "identity_storage/storage-signer",
+    "identity_iota_core/iota-client",
+    #  "identity_resolver/iota",
+    "identity_storage/storage-signer",
 ]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [
-  "identity_credential/revocation-bitmap",
-  "identity_iota_core/revocation-bitmap",
-  "identity_resolver?/revocation-bitmap",
+    "identity_credential/revocation-bitmap",
+    "identity_iota_core/revocation-bitmap",
+    "identity_resolver?/revocation-bitmap",
 ]
 
 # Enables revocation with `StatusList2021`.
@@ -54,8 +58,12 @@ status-list-2021 = ["revocation-bitmap", "identity_credential/status-list-2021"]
 # Enables support for the `Resolver`.
 resolver = ["dep:identity_resolver"]
 
+# Enables `Send` + `Sync` bounds for the storage and client interaction traits.
+send-sync = ["send-sync-storage", "send-sync-client"]
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = ["identity_storage/send-sync-storage"]
+# Enables `Send` + `Sync` bounds for IOTA client interaction traits.
+send-sync-client = ["identity_iota_core/send-sync-client-ext"]
 
 # Enables domain linkage support.
 domain-linkage = ["identity_credential/domain-linkage"]

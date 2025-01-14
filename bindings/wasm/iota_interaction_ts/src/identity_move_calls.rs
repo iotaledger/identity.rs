@@ -58,8 +58,8 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>
   where
-    I1: IntoIterator<Item = (IotaAddress, u64)>,
-    I2: IntoIterator<Item = (ObjectID, u64)>,
+    I1: IntoIterator<Item=(IotaAddress, u64)>,
+    I2: IntoIterator<Item=(ObjectID, u64)>,
   {
     unimplemented!();
   }
