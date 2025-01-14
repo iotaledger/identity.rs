@@ -347,15 +347,11 @@ mod pqc_liboqs {
   use crate::key_storage::jwk_storage_pqc::JwkStoragePQ;
   use crate::JwkGenOutput;
 
-  //TODO mod pqcrypto
-  use pqcrypto::sign::mldsa44::{SecretKey, DetachedSignature, detached_sign, PublicKey, keypair};
-  use pqcrypto::traits::sign::{SecretKey as SKTrait, DetachedSignature as DTSTrait, PublicKey as PKTrait};
-
   fn check_pq_alg_compatibility(alg: JwsAlgorithm) -> KeyStorageResult<Algorithm> {
     match alg {
-      JwsAlgorithm::ML_DSA_44 => Ok(Algorithm::Dilithium2),
-      JwsAlgorithm::ML_DSA_65 => Ok(Algorithm::Dilithium3),
-      JwsAlgorithm::ML_DSA_87 => Ok(Algorithm::Dilithium5),
+      JwsAlgorithm::ML_DSA_44 => Ok(Algorithm::MlDsa44),
+      JwsAlgorithm::ML_DSA_65 => Ok(Algorithm::MlDsa65),
+      JwsAlgorithm::ML_DSA_87 => Ok(Algorithm::MlDsa87),
       JwsAlgorithm::SLH_DSA_SHA2_128s => Ok(Algorithm::SphincsSha2128sSimple),
       JwsAlgorithm::SLH_DSA_SHAKE_128s => Ok(Algorithm::SphincsShake128sSimple),
       JwsAlgorithm::SLH_DSA_SHA2_128f => Ok(Algorithm::SphincsSha2128fSimple),
@@ -396,10 +392,10 @@ mod pqc_liboqs {
         );
       }
 
-      //let oqs_alg = check_pq_alg_compatibility(alg)?;
-     // oqs::init(); //TODO: check what this function does
+      let oqs_alg = check_pq_alg_compatibility(alg)?;
+      oqs::init(); //TODO: check what this function does
 
-/*       let scheme = Sig::new(oqs_alg).map_err(|err| {
+       let scheme = Sig::new(oqs_alg).map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
           .with_custom_message(format!("signature scheme init failed"))
           .with_source(err)
@@ -408,14 +404,12 @@ mod pqc_liboqs {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
           .with_custom_message(format!("keypair generation failed!"))
           .with_source(err)
-      })?; */
-
-      let (pk, sk) = keypair();
+      })?;
 
       let kid: KeyId = random_key_id();
 
-      let public = jwu::encode_b64(pk.as_bytes());
-      let private = jwu::encode_b64(sk.as_bytes());
+      let public = jwu::encode_b64(pk.into_vec());
+      let private = jwu::encode_b64(sk.into_vec());
 
       let mut jwk_params = match alg {
         JwsAlgorithm::ML_DSA_44 => JwkParams::new(JwkType::MLDSA),
@@ -482,7 +476,7 @@ mod pqc_liboqs {
           JwsAlgorithm::from_str(alg_str).map_err(|_| KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
         })?;
 
-     // let oqs_alg = check_pq_alg_compatibility(alg)?;
+      let oqs_alg = check_pq_alg_compatibility(alg)?;
 
       // Check that `kty` is `ML-DSA`or `SLH-DSA` or `FALCON`.
       match alg {
@@ -535,15 +529,26 @@ mod pqc_liboqs {
             .with_custom_message("unable to decode `d` param")
             .with_source(err)
         })?;
-        println!("1111111111111111111111111111111111111111111111111111111111111111111");
-        
-      let sk = SecretKey::from_bytes(&sk_bytes)
-      .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified))?;
-    println!("22222222222222222222222222222222222222222222222222222222222222222222222222222222");
+        oqs::init(); //TODO: check what this function does
 
-      let signature: DetachedSignature = detached_sign(&data, &sk);
-      println!("3333333333333333333333333333333333333333333333333333333333");
-      Ok(signature.as_bytes().to_vec())
+        let scheme = Sig::new(oqs_alg).map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+            .with_custom_message(format!("signature scheme init failed"))
+            .with_source(err)
+        })?;
+  
+        let secret_key = scheme.secret_key_from_bytes(&sk_bytes).ok_or(
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+            .with_custom_message(format!("wrong key length")),
+        )?;
+  
+        let signature = scheme.sign(&data, secret_key).map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+            .with_custom_message(format!("signature computation failed"))
+            .with_source(err)
+        })?;
+  
+        Ok(signature.into_vec())
     }
   }
 }
