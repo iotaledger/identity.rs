@@ -60,9 +60,10 @@ use crate::rebased::Error;
 use identity_iota_interaction::MoveType;
 
 /// Interface that allows the creation and execution of an [`OnChainIdentity`]'s [`Proposal`]s.
+#[async_trait]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-pub trait ProposalT {
+pub trait ProposalT: Sized {
   /// The [`Proposal`] action's type.
   type Action;
   /// The output of the [`Proposal`]
@@ -76,7 +77,7 @@ pub trait ProposalT {
     expiration: Option<u64>,
     identity: &'i mut OnChainIdentity,
     client: &IdentityClient<S>,
-  ) -> Result<CreateProposalTx<'i, Self::Action>, Error>
+  ) -> Result<impl Transaction<Output = ProposalResult<Self>>, Error>
   where
     S: Signer<IotaKeySignature> + Sync;
 
@@ -150,10 +151,15 @@ impl<'i, A> ProposalBuilder<'i, A> {
 
   /// Creates a [`Proposal`] with the provided arguments. If `forbid_chained_execution` is set to `true`,
   /// the [`Proposal`] won't be executed even if creator alone has enough voting power.
-  pub async fn finish<S>(self, client: &IdentityClient<S>) -> Result<CreateProposalTx<'i, A>, Error>
+  pub async fn finish<'c, S>(
+    self,
+    client: &'c IdentityClient<S>,
+  ) -> Result<impl Transaction<Output = ProposalResult<Proposal<A>>> + use<'i, 'c, S, A>, Error>
   where
     Proposal<A>: ProposalT<Action = A>,
     S: Signer<IotaKeySignature> + Sync,
+    A: 'c,
+    'i: 'c,
   {
     let Self {
       action,

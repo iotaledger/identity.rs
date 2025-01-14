@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::marker::PhantomData;
-use std::ops::Deref;
 
 use async_trait::async_trait;
 use identity_iota_interaction::types::base_types::IotaAddress;
@@ -42,13 +41,6 @@ impl MoveType for SendAction {
     use std::str::FromStr;
 
     TypeTag::from_str(&format!("{package}::transfer_proposal::Send")).expect("valid move type")
-  }
-}
-
-impl Deref for SendAction {
-  type Target = [(ObjectID, IotaAddress)];
-  fn deref(&self) -> &Self::Target {
-    &self.0
   }
 }
 
@@ -107,20 +99,45 @@ impl ProposalT for Proposal<SendAction> {
       .await?
       .expect("identity exists on-chain");
     let controller_cap_ref = identity.get_controller_cap(client).await?;
-    let tx = IdentityMoveCallsAdapter::propose_send(
-      identity_ref,
-      controller_cap_ref,
-      action.0,
-      expiration,
-      client.package_id(),
-    )
+    let can_execute = identity
+      .controller_voting_power(controller_cap_ref.0)
+      .expect("controller_cap is for this identity")
+      >= identity.threshold();
+    let tx = if can_execute {
+      // Construct a list of `(ObjectRef, TypeTag)` from the list of objects to send.
+      let object_type_list = {
+        let ids = action.0.iter().map(|(obj_id, _rcp)| obj_id);
+        let mut object_and_type_list = vec![];
+        for obj_id in ids {
+          let ref_and_type = super::obj_ref_and_type_for_id(client, *obj_id)
+            .await
+            .map_err(|e| Error::ObjectLookup(e.to_string()))?;
+          object_and_type_list.push(ref_and_type);
+        }
+        object_and_type_list
+      };
+      IdentityMoveCallsAdapter::identity::create_and_execute_send(
+        identity_ref,
+        controller_cap_ref,
+        action.0,
+        expiration,
+        object_type_list,
+        client.package_id(),
+      )
+    } else {
+      IdentityMoveCallsAdapter::identity::propose_send(
+        identity_ref,
+        controller_cap_ref,
+        action.0,
+        expiration,
+        client.package_id(),
+      )
+    }
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
-
     Ok(CreateProposalTx {
       identity,
       tx,
-      // Send proposals cannot be chain-executed as they have to be driven.
-      chained_execution: false,
+      chained_execution: can_execute,
       _action: PhantomData,
     })
   }
