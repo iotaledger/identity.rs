@@ -4,7 +4,7 @@
 import { Transaction, TransactionArgument } from "@iota/iota-sdk/transactions"
 
 export function new_(
-  inner: (tx: Transaction) => TransactionArgument,
+  inner_bytes: Uint8Array,
   inner_type: string,
   mutable: boolean,
   transferable: boolean,
@@ -12,7 +12,7 @@ export function new_(
   packageId: string,
 ): Promise<Uint8Array> {
   const tx = new Transaction();
-  const inner_arg = inner(tx);
+  const inner_arg = tx.pure(inner_bytes)
   const mutable_arg = tx.pure.bool(mutable);
   const transferable_arg = tx.pure.bool(transferable);
   const deletable_arg = tx.pure.bool(deletable);

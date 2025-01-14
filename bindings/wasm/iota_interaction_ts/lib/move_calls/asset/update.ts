@@ -1,16 +1,16 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { ObjectRef, Transaction, TransactionArgument } from "@iota/iota-sdk/transactions"
+import { ObjectRef, Transaction } from "@iota/iota-sdk/transactions"
 
 export function update(
   asset: ObjectRef,
-  content: (tx: Transaction) => TransactionArgument,
+  content: Uint8Array,
   content_type: string,
   packageId: string,
 ): Promise<Uint8Array> {
   const tx = new Transaction();
-  const content_arg = content(tx);
+  const content_arg = tx.pure(content);
   const asset_arg = tx.objectRef(asset);
 
   tx.moveCall({

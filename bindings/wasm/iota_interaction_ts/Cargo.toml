@@ -33,6 +33,7 @@ tsify = "0.4.5"
 wasm-bindgen = { version = "0.2.85", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 zkryptium = "0.2.2"
+bcs = "0.1.6"
 
 [dependencies.identity_iota_interaction]
 path = "../../../identity_iota_interaction"

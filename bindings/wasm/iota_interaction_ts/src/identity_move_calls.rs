@@ -389,7 +389,12 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     };
 
     futures::executor::block_on(execute_controller_execution(
-      identity, capability, &proposal, borrowing_cap, &closure, &package,
+      identity,
+      capability,
+      &proposal,
+      borrowing_cap,
+      &closure,
+      &package,
     ))
     .map(|js_arr| js_arr.to_vec())
     .map_err(WasmError::from)
@@ -607,4 +612,3 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
       .map_err(TsSdkError::from)
   }
 }
-

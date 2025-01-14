@@ -16,7 +16,6 @@ use crate::{OptionalSend, ProgrammableTransactionBcs, SignatureBcs, TransactionD
 use async_trait::async_trait;
 use secret_storage::{SignatureScheme, Signer};
 use std::boxed::Box;
-use std::marker::Send;
 use std::option::Option;
 use std::result::Result;
 

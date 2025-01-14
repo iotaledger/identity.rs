@@ -62,7 +62,7 @@ export function acceptProposal(
   );
 }
 
-export function conclude_or_cancel(
+export function concludeOrCancel(
   proposal: SharedObjectRef,
   sender_cap: ObjectRef,
   asset: ObjectRef,
