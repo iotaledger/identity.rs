@@ -32,15 +32,12 @@ extern "C" {
 #[async_trait::async_trait(?Send)]
 impl JwkStoragePQ for WasmJwkStorage {
   async fn generate_pq_key(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
-    web_sys::console::log_1(&"YYYYYYYYYYYYYYY".into());
     let promise: Promise = Promise::resolve(&WasmJwkStorage::_generate_pq_key(self, key_type.into(), alg.name().to_owned()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   async fn pq_sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>> {
-    web_sys::console::log_1(&"pq_sign from rust".into());
-    println!("pq_sign from rust");
     let promise: Promise = Promise::resolve(&WasmJwkStorage::sign(
       self,
       key_id.clone().into(),
