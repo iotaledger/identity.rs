@@ -1,9 +1,8 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota_interaction::TransactionBuilderT;
 use js_sys::Uint8Array;
-use std::collections::HashMap;
+use std::cell::Cell;
 use std::collections::HashSet;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
@@ -22,7 +21,6 @@ use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::types::transaction::Argument;
 use identity_iota_interaction::types::TypeTag;
 use identity_iota_interaction::BorrowIntentFnT;
 use identity_iota_interaction::ControllerIntentFnT;
@@ -197,7 +195,7 @@ pub struct IdentityMoveCallsTsSdk {}
 
 impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
   type Error = TsSdkError;
-  type NativeTxBuilder = WasmTransactionBuilder; // TODO: Set this to the wasm32... type that is wrapped by IdentityMoveCallsTsSdk
+  type NativeTxBuilder = WasmTransactionBuilder;
 
   fn propose_borrow(
     identity: OwnedObjectRef,
@@ -241,22 +239,13 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
       .collect::<Result<Vec<_>, _>>()
       .map_err(WasmError::from)?;
 
-    // # Safety:
-    // - `dyn_intent_fn` and `transmuted_fn` have the same size & alignment.
-    // - `transmuted_fn` is called exactly once (respecting FnOnce behaviour).
-    let dyn_intent_fn: &dyn FnOnce(
-      &mut dyn TransactionBuilderT<Error = Self::Error, NativeTxBuilder = Self::NativeTxBuilder>,
-      &HashMap<ObjectID, (Argument, IotaObjectData)>,
-    ) = &intent_fn;
-    let trasmuted_fn: &dyn Fn(
-      &mut dyn TransactionBuilderT<Error = Self::Error, NativeTxBuilder = Self::NativeTxBuilder>,
-      &HashMap<ObjectID, (Argument, IotaObjectData)>,
-    ) = unsafe { std::mem::transmute(dyn_intent_fn) };
-
+    // Use cell to move `intent_fn` inside `closure` without actually moving it.
+    // This ensures that `closure` is an `impl Fn(..)` instead of `impl FnOnce(..)` like `intent_fn`.
+    let wrapped_intent_fn = Cell::new(Some(intent_fn));
     let closure = |tx_builder: WasmTransactionBuilder, args: WasmTxArgumentMap| {
       let mut builder = TransactionBuilderTsSdk::new(tx_builder);
       let args = serde_wasm_bindgen::from_value(args.into()).expect("failed to convert JS argument map");
-      trasmuted_fn(&mut builder, &args);
+      wrapped_intent_fn.take().unwrap()(&mut builder, &args);
     };
 
     futures::executor::block_on(execute_borrow(
@@ -370,22 +359,13 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     let package = package.to_string();
     let borrowing_cap = borrowing_controller_cap_ref.into();
 
-    // # Safety:
-    // - `dyn_intent_fn` and `transmuted_fn` have the same size & alignment.
-    // - `transmuted_fn` is called exactly once (respecting FnOnce behaviour).
-    let dyn_intent_fn: &dyn FnOnce(
-      &mut dyn TransactionBuilderT<Error = Self::Error, NativeTxBuilder = Self::NativeTxBuilder>,
-      &Argument,
-    ) = &intent_fn;
-    let trasmuted_fn: &dyn Fn(
-      &mut dyn TransactionBuilderT<Error = Self::Error, NativeTxBuilder = Self::NativeTxBuilder>,
-      &Argument,
-    ) = unsafe { std::mem::transmute(dyn_intent_fn) };
-
+    // Use cell to move `intent_fn` inside `closure` without actually moving it.
+    // This ensures that `closure` is an `impl Fn(..)` instead of `impl FnOnce(..)` like `intent_fn`.
+    let wrapped_intent_fn = Cell::new(Some(intent_fn));
     let closure = |tx_builder: WasmTransactionBuilder, args: WasmTransactionArgument| {
       let mut builder = TransactionBuilderTsSdk::new(tx_builder);
       let args = serde_wasm_bindgen::from_value(args.into()).expect("failed to convert JS argument map");
-      trasmuted_fn(&mut builder, &args);
+      wrapped_intent_fn.take().unwrap()(&mut builder, &args);
     };
 
     futures::executor::block_on(execute_controller_execution(
