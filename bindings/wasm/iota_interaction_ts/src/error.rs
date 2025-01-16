@@ -183,13 +183,13 @@ pub fn stringify_js_error<T>(result: Result<T>) -> StdResult<T, String> {
 #[derive(ThisError, Debug)]
 pub enum TsSdkError {
   #[error("[TsSdkError] PackageUpgradeError: {0}")]
-  PackageUpgradeError(PackageUpgradeError),
+  PackageUpgradeError(#[from] PackageUpgradeError),
   #[error("[TsSdkError] CommandArgumentError: {0}")]
-  CommandArgumentError(CommandArgumentError),
+  CommandArgumentError(#[from] CommandArgumentError),
   #[error("[TsSdkError] ExecutionFailureStatus: {0}")]
-  ExecutionFailureStatus(ExecutionFailureStatus),
+  ExecutionFailureStatus(#[from] ExecutionFailureStatus),
   #[error("[TsSdkError] TypeArgumentError: {0}")]
-  TypeArgumentError(TypeArgumentError),
+  TypeArgumentError(#[from] TypeArgumentError),
   #[error("[TsSdkError] WasmError:{{\n   name: {0},\n   message: {1}\n}}")]
   WasmError(String, String),
   #[error("[TsSdkError] JsSysError: {0}")]
