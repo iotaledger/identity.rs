@@ -3,8 +3,10 @@
 
 use crate::move_types::language_storage::TypeTag;
 use crate::types::base_types::ObjectID;
-use crate::{MoveType, TypedValue};
-use serde::{Deserialize, Serialize};
+use crate::MoveType;
+use crate::TypedValue;
+use serde::Deserialize;
+use serde::Serialize;
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

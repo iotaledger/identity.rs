@@ -11,7 +11,7 @@ use identity_iota_interaction::TransactionBuilderT;
 // TODO: When the rust type wrapping the native TS transaction-builder has been
 //       developed, replace the NativeTsTransactionBuilderBindingWrapper type
 //       with the final type name (NativeTsTransactionBuilderBindingWrapper is
-//       also imported in identity_iota_core/src/rebased/...) 
+//       also imported in identity_iota_core/src/rebased/...)
 pub type NativeTsTransactionBuilderBindingWrapper = ();
 
 pub struct TransactionBuilderTsSdk {

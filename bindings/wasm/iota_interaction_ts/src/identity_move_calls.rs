@@ -54,7 +54,9 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     intent_fn: F,
     expiration: Option<u64>,
     package_id: ObjectID,
-  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> { todo!() }
+  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> {
+    todo!()
+  }
 
   fn propose_config_change<I1, I2>(
     identity: OwnedObjectRef,
@@ -67,8 +69,8 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>
   where
-    I1: IntoIterator<Item=(IotaAddress, u64)>,
-    I2: IntoIterator<Item=(ObjectID, u64)>,
+    I1: IntoIterator<Item = (IotaAddress, u64)>,
+    I2: IntoIterator<Item = (ObjectID, u64)>,
   {
     unimplemented!();
   }
@@ -99,8 +101,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     borrowing_controller_cap_ref: ObjectRef,
     intent_fn: F,
     package: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, Self::Error>
-  {
+  ) -> Result<ProgrammableTransactionBcs, Self::Error> {
     todo!()
   }
 
@@ -113,7 +114,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>
   where
-    F: ControllerIntentFnInternalT<Self::NativeTxBuilder>
+    F: ControllerIntentFnInternalT<Self::NativeTxBuilder>,
   {
     todo!()
   }
@@ -175,7 +176,9 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     expiration: Option<u64>,
     objects: Vec<(ObjectRef, TypeTag)>,
     package: ObjectID,
-  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> { todo!() }
+  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> {
+    todo!()
+  }
 
   fn execute_send(
     identity: OwnedObjectRef,

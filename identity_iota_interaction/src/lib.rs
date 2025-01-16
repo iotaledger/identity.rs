@@ -40,7 +40,7 @@ pub type TransactionDataBcs = Vec<u8>;
 /// BCS serialized Signature
 pub type SignatureBcs = Vec<u8>;
 /// BCS serialized ProgrammableTransaction
-/// A ProgrammableTransaction 
+/// A ProgrammableTransaction
 /// * has `inputs` (or *CallArgs*) and `commands` (or *Transactions*)
 /// * is the result of ProgrammableTransactionBuilder::finish()
 pub type ProgrammableTransactionBcs = Vec<u8>;
@@ -60,7 +60,8 @@ pub type Identity = ();
 /// Creating a valid static or const [`IdentStr`]:
 ///
 /// ```rust
-/// use move_core_types::{ident_str, identifier::IdentStr};
+/// use move_core_types::ident_str;
+/// use move_core_types::identifier::IdentStr;
 /// const VALID_IDENT: &'static IdentStr = ident_str!("MyCoolIdentifier");
 ///
 /// const THING_NAME: &'static str = "thing_name";
@@ -79,32 +80,32 @@ pub type Identity = ();
 // (but not const-fn's).
 #[macro_export]
 macro_rules! ident_str {
-    ($ident:expr) => {{
-        // Only static strings allowed.
-        let s: &'static str = $ident;
+  ($ident:expr) => {{
+    // Only static strings allowed.
+    let s: &'static str = $ident;
 
-        // Only valid identifier strings are allowed.
-        // Note: Work-around hack to print an error message in a const block.
-        let is_valid = $crate::move_types::identifier::is_valid(s);
-        ["String is not a valid Move identifier"][!is_valid as usize];
+    // Only valid identifier strings are allowed.
+    // Note: Work-around hack to print an error message in a const block.
+    let is_valid = $crate::move_types::identifier::is_valid(s);
+    ["String is not a valid Move identifier"][!is_valid as usize];
 
-        // SAFETY: the following transmute is safe because
-        // (1) it's equivalent to the unsafe-reborrow inside IdentStr::ref_cast()
-        //     (which we can't use b/c it's not const).
-        // (2) we've just asserted that IdentStr impls RefCast<From = str>, which
-        //     already guarantees the transmute is safe (RefCast checks that
-        //     IdentStr(str) is #[repr(transparent)]).
-        // (3) both in and out lifetimes are 'static, so we're not widening the
-        // lifetime. (4) we've just asserted that the IdentStr passes the
-        // is_valid check.
-        //
-        // Note: this lint is unjustified and no longer checked. See issue:
-        // https://github.com/rust-lang/rust-clippy/issues/6372
-        #[allow(clippy::transmute_ptr_to_ptr)]
-        unsafe {
-            ::std::mem::transmute::<&'static str, &'static $crate::move_types::identifier::IdentStr>(s)
-        }
-    }};
+    // SAFETY: the following transmute is safe because
+    // (1) it's equivalent to the unsafe-reborrow inside IdentStr::ref_cast()
+    //     (which we can't use b/c it's not const).
+    // (2) we've just asserted that IdentStr impls RefCast<From = str>, which
+    //     already guarantees the transmute is safe (RefCast checks that
+    //     IdentStr(str) is #[repr(transparent)]).
+    // (3) both in and out lifetimes are 'static, so we're not widening the
+    // lifetime. (4) we've just asserted that the IdentStr passes the
+    // is_valid check.
+    //
+    // Note: this lint is unjustified and no longer checked. See issue:
+    // https://github.com/rust-lang/rust-clippy/issues/6372
+    #[allow(clippy::transmute_ptr_to_ptr)]
+    unsafe {
+      ::std::mem::transmute::<&'static str, &'static $crate::move_types::identifier::IdentStr>(s)
+    }
+  }};
 }
 
 // Alias name for the Send trait controlled by the "send-sync-transaction" feature
