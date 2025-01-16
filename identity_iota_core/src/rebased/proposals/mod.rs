@@ -16,6 +16,7 @@ use std::ops::DerefMut;
 cfg_if::cfg_if! {
   if #[cfg(not(target_arch = "wasm32"))] {
     use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
+    use crate::rebased::transaction::Transaction;
   }
 }
 use crate::iota_interaction_adapter::AdapterError;
@@ -59,10 +60,22 @@ use crate::rebased::migration::Proposal;
 use crate::rebased::Error;
 use identity_iota_interaction::MoveType;
 
+cfg_if::cfg_if! {
+  if #[cfg(target_arch = "wasm32")] {
+    /// The internally used [`Transaction`] resulting from a proposal
+    pub trait ResultingTransactionT: TransactionInternal {}
+    impl<T> ResultingTransactionT for T where T: TransactionInternal {}
+  } else {
+    /// The [`Transaction`] resulting from a proposal
+    pub trait ResultingTransactionT: Transaction {}
+    impl<T> ResultingTransactionT for T where T: Transaction {}
+  }
+}
+
 /// Interface that allows the creation and execution of an [`OnChainIdentity`]'s [`Proposal`]s.
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-pub trait ProposalT {
+pub trait ProposalT: Sized {
   /// The [`Proposal`] action's type.
   type Action;
   /// The output of the [`Proposal`]
@@ -76,7 +89,7 @@ pub trait ProposalT {
     expiration: Option<u64>,
     identity: &'i mut OnChainIdentity,
     client: &IdentityClient<S>,
-  ) -> Result<CreateProposalTx<'i, Self::Action>, Error>
+  ) -> Result<impl ResultingTransactionT<Output = ProposalResult<Self>>, Error>
   where
     S: Signer<IotaKeySignature> + Sync;
 
@@ -150,10 +163,15 @@ impl<'i, A> ProposalBuilder<'i, A> {
 
   /// Creates a [`Proposal`] with the provided arguments. If `forbid_chained_execution` is set to `true`,
   /// the [`Proposal`] won't be executed even if creator alone has enough voting power.
-  pub async fn finish<S>(self, client: &IdentityClient<S>) -> Result<CreateProposalTx<'i, A>, Error>
+  pub async fn finish<'c, S>(
+    self,
+    client: &'c IdentityClient<S>,
+  ) -> Result<impl ResultingTransactionT<Output = ProposalResult<Proposal<A>>> + use<'i, 'c, S, A>, Error>
   where
     Proposal<A>: ProposalT<Action = A>,
     S: Signer<IotaKeySignature> + Sync,
+    A: 'c,
+    'i: 'c,
   {
     let Self {
       action,

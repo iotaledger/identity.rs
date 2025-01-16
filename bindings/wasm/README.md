@@ -1,6 +1,7 @@
 # WASM build projects using wasm-bindgen
 
-This folder contains several crates using wasm-bindgen to import or export TS types from & to JS runtimes. These crates are named _artifact_ in the following to indicate that the NodeJS based JS build system is used instead of cargo.
+This folder contains several crates using wasm-bindgen to import or export TS types from & to JS runtimes. These crates
+are named _artifact_ in the following to indicate that the NodeJS based JS build system is used instead of cargo.
 
 The `build` folder provides build scripts needed to build the artifacts.
 
@@ -8,10 +9,10 @@ Here is an overview of the existing artifacts:
 
 * `identity_wasm`<br>
   Exports the IdentityClient to Typescript using wasm-bindgen generated wasm bindings
-  
+
 * `iota_interaction_ts`<br>
   Imports Typescript IOTA Client SDK types using wasm-bindgen generated wasm bindings
-and implements identity_iota_interaction traits (among others, IotaClient and MoveCall traits) for wasm32 platforms.
+  and implements identity_iota_interaction traits (among others, IotaClient and MoveCall traits) for wasm32 platforms.
 
 ## Building an Artifact
 
@@ -25,7 +26,7 @@ Each artifact is located in its own artifact folder (see above) containing the f
 * The `package.json` file
 * `lib` folder<br>
   Contains TS files used for wasm-bindings
-  * Contains `tsconfig` files for the `nodejs` and `web` runtimes with additional TS compiler configurations
+    * Contains `tsconfig` files for the `nodejs` and `web` runtimes with additional TS compiler configurations
 * `node` folder<br>
   Distribution folder for the `nodejs` runtime
 * `web` folder<br>
@@ -41,7 +42,8 @@ The build process is defined by run scripts contained in the artifacts `package.
 The build process for the `nodejs` and `web` runtimes, consists of the following steps:
 
 * cargo build of the crate with target wasm32-unknown-unknown
-* wasm-bindgen CLI call, generating `___.js` and `___.d.ts` files in the distribution folder of the artifact (`node` or `web`)
+* wasm-bindgen CLI call, generating `___.js` and `___.d.ts` files in the distribution folder of the artifact (`node` or
+  `web`)
 * execute the `build/node` or `build/web` build script (see below)
 * typescript transpiler call (tsc)<br>
   Converts the TS files in the `lib` folder into JS files.
@@ -70,11 +72,11 @@ Used by the `bundle:web` run task in the package.json file of the artifact.
 Process steps:
 
 * In the main js file of the artifact:
-  * Comment out a webpack workaround by commenting out all occurrences of<br>
-    `input = new URL(<SOME_CAPTURED_REGEX_GROUP>, import.meta.url);`
-  * Create an init function which imports the artifact wasm file.
+    * Comment out a webpack workaround by commenting out all occurrences of<br>
+      `input = new URL(<SOME_CAPTURED_REGEX_GROUP>, import.meta.url);`
+    * Create an init function which imports the artifact wasm file.
 * In the typescript source map file `<ARTIFACT_NAME>.d.ts`:
-  *  Adds the declaration of the above created init function to the typescript source map file
+    * Adds the declaration of the above created init function to the typescript source map file
 * Generate a `package.json` file derived from the original package.json file of the artifact
   (done by `utils/generatePackage.js`)
 

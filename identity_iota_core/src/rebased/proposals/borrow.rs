@@ -11,7 +11,6 @@ use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
 use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockResponseT;
-use identity_iota_interaction::TransactionBuilderT;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::migration::Proposal;
@@ -38,7 +37,8 @@ use super::UserDrivenTx;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-      use iota_interaction_ts::NativeTsCodeBindingWrapper as Ptb;
+      use iota_interaction_ts::NativeTsTransactionBuilderBindingWrapper as Ptb;
+      use iota_interaction_ts::error::TsSdkError as IotaInteractionError;
       /// Instances of BorrowIntentFnT can be used as user-provided function to describe how
       /// a borrowed assets shall be used.
       pub trait BorrowIntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
@@ -59,20 +59,27 @@ cfg_if::cfg_if! {
 }
 
 /// Action used to borrow in transaction [OnChainIdentity]'s assets.
-#[derive(Default, Deserialize, Serialize)]
-pub struct BorrowAction {
+#[derive(Deserialize, Serialize)]
+pub struct BorrowAction<F = BorrowIntentFn> {
   objects: Vec<ObjectID>,
+  #[serde(skip, default = "Option::default")]
+  intent_fn: Option<F>,
+}
+
+impl<F> Default for BorrowAction<F> {
+  fn default() -> Self {
+    Self {
+      objects: vec![],
+      intent_fn: None,
+    }
+  }
 }
 
 /// A [`BorrowAction`] coupled with a user-provided function to describe how
 /// the borrowed assets shall be used.
-pub struct BorrowActionWithIntent<F>
+pub struct BorrowActionWithIntent<F>(BorrowAction<F>)
 where
-  F: BorrowIntentFnT,
-{
-  action: BorrowAction,
-  intent_fn: F,
-}
+  F: BorrowIntentFnT;
 
 impl MoveType for BorrowAction {
   fn move_type(package: ObjectID) -> TypeTag {
@@ -82,7 +89,7 @@ impl MoveType for BorrowAction {
   }
 }
 
-impl BorrowAction {
+impl<F> BorrowAction<F> {
   /// Adds an object to the lists of objects that will be borrowed when executing
   /// this action in a proposal.
   pub fn borrow_object(&mut self, object_id: ObjectID) {
@@ -98,10 +105,10 @@ impl BorrowAction {
   }
 }
 
-impl ProposalBuilder<'_, BorrowAction> {
+impl<'i, F> ProposalBuilder<'i, BorrowAction<F>> {
   /// Adds an object to the list of objects that will be borrowed when executing this action.
   pub fn borrow(mut self, object_id: ObjectID) -> Self {
-    self.borrow_object(object_id);
+    self.action.borrow_object(object_id);
     self
   }
   /// Adds many objects. See [`BorrowAction::borrow_object`] for more details.
@@ -111,12 +118,34 @@ impl ProposalBuilder<'_, BorrowAction> {
   {
     objects.into_iter().fold(self, |builder, obj| builder.borrow(obj))
   }
+
+  /// Specifies how to use the borrowed assets. This is only useful if the sender of this
+  /// transaction has enough voting power to execute this proposal right-away.
+  pub fn with_intent<F1>(self, intent_fn: F1) -> ProposalBuilder<'i, BorrowAction<F1>>
+  where
+    F1: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>),
+  {
+    let ProposalBuilder {
+      identity,
+      expiration,
+      action: BorrowAction { objects, .. },
+    } = self;
+    let intent_fn = Some(intent_fn);
+    ProposalBuilder {
+      identity,
+      expiration,
+      action: BorrowAction { objects, intent_fn },
+    }
+  }
 }
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-impl ProposalT for Proposal<BorrowAction> {
-  type Action = BorrowAction;
+impl<F> ProposalT for Proposal<BorrowAction<F>>
+where
+  F: BorrowIntentFnT + Send,
+{
+  type Action = BorrowAction<F>;
   type Output = ();
   type Response = IotaTransactionBlockResponseAdapter;
 
@@ -134,20 +163,46 @@ impl ProposalT for Proposal<BorrowAction> {
       .await?
       .expect("identity exists on-chain");
     let controller_cap_ref = identity.get_controller_cap(client).await?;
-    let tx = IdentityMoveCallsAdapter::propose_borrow(
-      identity_ref,
-      controller_cap_ref,
-      action.objects,
-      expiration,
-      client.package_id(),
-    )
+    let can_execute = identity
+      .controller_voting_power(controller_cap_ref.0)
+      .expect("is a controller of identity")
+      >= identity.threshold();
+    let chained_execution = can_execute && action.intent_fn.is_some();
+    let tx = if chained_execution {
+      // Construct a list of `(ObjectRef, TypeTag)` from the list of objects to send.
+      let object_data_list = {
+        let mut object_data_list = vec![];
+        for obj_id in action.objects {
+          let object_data = super::obj_data_for_id(client, obj_id)
+            .await
+            .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+          object_data_list.push(object_data);
+        }
+        object_data_list
+      };
+      IdentityMoveCallsAdapter::create_and_execute_borrow(
+        identity_ref,
+        controller_cap_ref,
+        object_data_list,
+        action.intent_fn.unwrap(),
+        expiration,
+        client.package_id(),
+      )
+    } else {
+      IdentityMoveCallsAdapter::propose_borrow(
+        identity_ref,
+        controller_cap_ref,
+        action.objects,
+        expiration,
+        client.package_id(),
+      )
+    }
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(CreateProposalTx {
       identity,
       tx,
-      // Borrow proposals cannot be chain-executed as they have to be driven.
-      chained_execution: false,
+      chained_execution,
       _action: PhantomData,
     })
   }
@@ -177,26 +232,27 @@ impl ProposalT for Proposal<BorrowAction> {
   }
 }
 
-impl<'i> UserDrivenTx<'i, BorrowAction> {
+impl<'i, F> UserDrivenTx<'i, BorrowAction<F>> {
   /// Defines how the borrowed assets should be used.
-  pub fn with_intent<F>(self, intent_fn: F) -> UserDrivenTx<'i, BorrowActionWithIntent<F>>
+  pub fn with_intent<F1>(self, intent_fn: F1) -> UserDrivenTx<'i, BorrowActionWithIntent<F1>>
   where
-    F: BorrowIntentFnT,
+    F1: BorrowIntentFnT,
   {
     let UserDrivenTx {
       identity,
-      action,
+      action: BorrowAction { objects, .. },
       proposal_id,
     } = self;
+    let intent_fn = Some(intent_fn);
     UserDrivenTx {
       identity,
       proposal_id,
-      action: BorrowActionWithIntent { action, intent_fn },
+      action: BorrowActionWithIntent(BorrowAction { objects, intent_fn }),
     }
   }
 }
 
-impl<'i> ProtoTransaction for UserDrivenTx<'i, BorrowAction> {
+impl<'i, F> ProtoTransaction for UserDrivenTx<'i, BorrowAction<F>> {
   type Input = BorrowIntentFn;
   type Tx = UserDrivenTx<'i, BorrowActionWithIntent<BorrowIntentFn>>;
 
@@ -234,7 +290,7 @@ where
     // Construct a list of `(ObjectRef, TypeTag)` from the list of objects to send.
     let object_data_list = {
       let mut object_data_list = vec![];
-      for obj_id in borrow_action.action.objects {
+      for obj_id in borrow_action.0.objects {
         let object_data = super::obj_data_for_id(client, obj_id)
           .await
           .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
@@ -243,17 +299,12 @@ where
       object_data_list
     };
 
-    let intent_adapter = move |ptb: &mut dyn TransactionBuilderT<Error = AdapterError, NativeTxBuilder = Ptb>,
-                               args: &HashMap<ObjectID, (Argument, IotaObjectData)>| {
-      (borrow_action.intent_fn)(ptb.as_native_tx_builder(), args)
-    };
-
     let tx = IdentityMoveCallsAdapter::execute_borrow(
       identity_ref,
       controller_cap_ref,
       proposal_id,
       object_data_list,
-      intent_adapter,
+      borrow_action.0.intent_fn.expect("BorrowActionWithIntent makes sure intent_fn is there"),
       client.package_id(),
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;

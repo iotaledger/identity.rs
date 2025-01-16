@@ -1,3 +1,6 @@
 {
-  "extends": "../tsconfig.typedoc.json",
+  "extends": "./tsconfig.node.json",
+  "include": [
+    "node/**/*"
+  ]
 }

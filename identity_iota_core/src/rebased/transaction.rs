@@ -38,8 +38,7 @@ impl<T> Deref for TransactionOutput<T> {
 
 /// Interface for operations that interact with the ledger through transactions.
 #[cfg(not(target_arch = "wasm32"))]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[async_trait::async_trait]
 pub trait Transaction: Sized {
   /// The result of performing the operation.
   type Output;
@@ -124,8 +123,7 @@ pub(crate) trait TransactionInternal: Sized {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[async_trait::async_trait]
 impl<T: TransactionInternal<Output = O> + Send, O> Transaction for T {
   type Output = O;
 
@@ -140,8 +138,7 @@ impl<T: TransactionInternal<Output = O> + Send, O> Transaction for T {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[async_trait::async_trait]
 impl TransactionInternal for ProgrammableTransaction {
   type Output = ();
   async fn execute_with_opt_gas_internal<S>(
@@ -159,8 +156,7 @@ impl TransactionInternal for ProgrammableTransaction {
 }
 
 #[cfg(target_arch = "wasm32")]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[async_trait::async_trait(?Send)]
 impl TransactionInternal for ProgrammableTransaction {
   type Output = ();
   async fn execute_with_opt_gas_internal<S>(

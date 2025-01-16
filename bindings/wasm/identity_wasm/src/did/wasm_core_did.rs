@@ -151,7 +151,6 @@ extern "C" {
   // or {@link IotaDID}.
   #[wasm_bindgen(js_name = _getCoreDidCloneInternal, skip_typescript)]
   pub fn get_core_did_clone(input: &IToCoreDID) -> WasmCoreDID;
-
 }
 
 #[wasm_bindgen(typescript_custom_section)]

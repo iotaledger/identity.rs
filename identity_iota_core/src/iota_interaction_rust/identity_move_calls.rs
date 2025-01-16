@@ -1,25 +1,11 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use itertools::Itertools;
+
 use std::collections::HashSet;
 use std::str::FromStr;
 
-use identity_iota_interaction::BorrowIntentFnT;
-use identity_iota_interaction::ControllerIntentFnT;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::ProgrammableTransactionBcs;
-use identity_iota_interaction::TransactionBuilderT;
-
-// ProgrammableTransactionBuilder can only be used here cause this is a platform specific file
-use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
-
-use super::utils;
-use super::TransactionBuilderAdapter;
-use crate::rebased::proposals::BorrowAction;
-use crate::rebased::proposals::ControllerExecution;
-use crate::rebased::proposals::SendAction;
-use crate::rebased::rebased_err;
-use crate::rebased::Error;
 use identity_iota_interaction::ident_str;
 use identity_iota_interaction::rpc_types::IotaObjectData;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
@@ -27,17 +13,299 @@ use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::base_types::ObjectType;
+use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as PrgrTxBuilder;
+use identity_iota_interaction::types::transaction::Argument;
 use identity_iota_interaction::types::transaction::ObjectArg;
 use identity_iota_interaction::types::TypeTag;
 use identity_iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
+use identity_iota_interaction::BorrowIntentFnInternalT;
+use identity_iota_interaction::ControllerIntentFnInternalT;
+use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::MoveType;
+use identity_iota_interaction::ProgrammableTransactionBcs;
+use identity_iota_interaction::TransactionBuilderT;
+
+use super::transaction_builder::TransactionBuilderRustSdk;
+use super::utils;
+
+use crate::rebased::proposals::BorrowAction;
+use crate::rebased::proposals::ControllerExecution;
+use crate::rebased::proposals::SendAction;
+use crate::rebased::rebased_err;
+use crate::rebased::Error;
+
+struct ProposalContext {
+  ptb: PrgrTxBuilder,
+  controller_cap: Argument,
+  delegation_token: Argument,
+  borrow: Argument,
+  identity: Argument,
+  proposal_id: Argument,
+}
+
+fn borrow_proposal_impl(
+  identity: OwnedObjectRef,
+  capability: ObjectRef,
+  objects: Vec<ObjectID>,
+  expiration: Option<u64>,
+  package_id: ObjectID,
+) -> anyhow::Result<ProposalContext> {
+  let mut ptb = PrgrTxBuilder::new();
+  let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
+  let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
+  let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
+  let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id)?;
+  let objects_arg = ptb.pure(objects)?;
+
+  let proposal_id = ptb.programmable_move_call(
+    package_id,
+    ident_str!("identity").into(),
+    ident_str!("propose_borrow").into(),
+    vec![],
+    vec![identity_arg, delegation_token, exp_arg, objects_arg],
+  );
+
+  Ok(ProposalContext {
+    ptb,
+    identity: identity_arg,
+    controller_cap: cap_arg,
+    delegation_token,
+    borrow,
+    proposal_id,
+  })
+}
+
+fn execute_borrow_impl<F: BorrowIntentFnInternalT<PrgrTxBuilder>>(
+  ptb: &mut PrgrTxBuilder,
+  identity: Argument,
+  delegation_token: Argument,
+  proposal_id: Argument,
+  objects: Vec<IotaObjectData>,
+  intent_fn: F,
+  package: ObjectID,
+) -> anyhow::Result<()> {
+  // Get the proposal's action as argument.
+  let borrow_action = ptb.programmable_move_call(
+    package,
+    move_core_types::ident_str!("identity").into(),
+    move_core_types::ident_str!("execute_proposal").into(),
+    vec![BorrowAction::move_type(package)],
+    vec![identity, delegation_token, proposal_id],
+  );
+
+  // Borrow all the objects specified in the action.
+  let obj_arg_map = objects
+    .into_iter()
+    .map(|obj_data| {
+      let obj_ref = obj_data.object_ref();
+      let ObjectType::Struct(obj_type) = obj_data.object_type()? else {
+        unreachable!("move packages cannot be borrowed to begin with");
+      };
+      let recv_obj = ptb.obj(ObjectArg::Receiving(obj_ref))?;
+
+      let obj_arg = ptb.programmable_move_call(
+        package,
+        move_core_types::ident_str!("identity").into(),
+        move_core_types::ident_str!("execute_borrow").into(),
+        vec![obj_type.into()],
+        vec![identity, borrow_action, recv_obj],
+      );
+
+      Ok((obj_ref.0, (obj_arg, obj_data)))
+    })
+    .collect::<anyhow::Result<_>>()?;
+
+  // Apply the user-defined operation.
+  intent_fn(ptb, &obj_arg_map);
+
+  // Put back all the objects.
+  obj_arg_map.into_values().for_each(|(obj_arg, obj_data)| {
+    let ObjectType::Struct(obj_type) = obj_data.object_type().expect("checked above") else {
+      unreachable!("move packages cannot be borrowed to begin with");
+    };
+    ptb.programmable_move_call(
+      package,
+      move_core_types::ident_str!("borrow_proposal").into(),
+      move_core_types::ident_str!("put_back").into(),
+      vec![obj_type.into()],
+      vec![borrow_action, obj_arg],
+    );
+  });
+
+  // Consume the now empty borrow_action
+  ptb.programmable_move_call(
+    package,
+    move_core_types::ident_str!("borrow_proposal").into(),
+    move_core_types::ident_str!("conclude_borrow").into(),
+    vec![],
+    vec![borrow_action],
+  );
+
+  Ok(())
+}
+
+fn controller_execution_impl(
+  identity: OwnedObjectRef,
+  capability: ObjectRef,
+  controller_cap_id: ObjectID,
+  expiration: Option<u64>,
+  package_id: ObjectID,
+) -> anyhow::Result<ProposalContext> {
+  let mut ptb = PrgrTxBuilder::new();
+  let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
+  let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
+  let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
+  let controller_cap_id = ptb.pure(controller_cap_id)?;
+  let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id)?;
+
+  let proposal_id = ptb.programmable_move_call(
+    package_id,
+    ident_str!("identity").into(),
+    ident_str!("propose_controller_execution").into(),
+    vec![],
+    vec![identity_arg, delegation_token, controller_cap_id, exp_arg],
+  );
+
+  Ok(ProposalContext {
+    ptb,
+    controller_cap: cap_arg,
+    delegation_token,
+    borrow,
+    identity: identity_arg,
+    proposal_id,
+  })
+}
+
+fn execute_controller_execution_impl<F: ControllerIntentFnInternalT<PrgrTxBuilder>>(
+  ptb: &mut PrgrTxBuilder,
+  identity: Argument,
+  proposal_id: Argument,
+  delegation_token: Argument,
+  borrowing_controller_cap_ref: ObjectRef,
+  intent_fn: F,
+  package: ObjectID,
+) -> anyhow::Result<()> {
+  // Get the proposal's action as argument.
+  let controller_execution_action = ptb.programmable_move_call(
+    package,
+    ident_str!("identity").into(),
+    ident_str!("execute_proposal").into(),
+    vec![ControllerExecution::move_type(package)],
+    vec![identity, delegation_token, proposal_id],
+  );
+
+  // Borrow the controller cap into this transaction.
+  let receiving = ptb.obj(ObjectArg::Receiving(borrowing_controller_cap_ref))?;
+  let borrowed_controller_cap = ptb.programmable_move_call(
+    package,
+    ident_str!("identity").into(),
+    ident_str!("borrow_controller_cap").into(),
+    vec![],
+    vec![identity, controller_execution_action, receiving],
+  );
+
+  // Apply the user-defined operation.
+  intent_fn(ptb, &borrowed_controller_cap);
+
+  // Put back the borrowed controller cap.
+  ptb.programmable_move_call(
+    package,
+    ident_str!("controller_proposal").into(),
+    ident_str!("put_back").into(),
+    vec![],
+    vec![controller_execution_action, borrowed_controller_cap],
+  );
+
+  Ok(())
+}
+
+fn send_proposal_impl(
+  identity: OwnedObjectRef,
+  capability: ObjectRef,
+  transfer_map: Vec<(ObjectID, IotaAddress)>,
+  expiration: Option<u64>,
+  package_id: ObjectID,
+) -> anyhow::Result<ProposalContext> {
+  let mut ptb = PrgrTxBuilder::new();
+  let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
+  let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
+  let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
+  let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id)?;
+  let (objects, recipients) = {
+    let (objects, recipients): (Vec<_>, Vec<_>) = transfer_map.into_iter().unzip();
+    let objects = ptb.pure(objects)?;
+    let recipients = ptb.pure(recipients)?;
+
+    (objects, recipients)
+  };
+
+  let proposal_id = ptb.programmable_move_call(
+    package_id,
+    ident_str!("identity").into(),
+    ident_str!("propose_send").into(),
+    vec![],
+    vec![identity_arg, delegation_token, exp_arg, objects, recipients],
+  );
+
+  Ok(ProposalContext {
+    ptb,
+    identity: identity_arg,
+    controller_cap: cap_arg,
+    delegation_token,
+    borrow,
+    proposal_id,
+  })
+}
+
+fn execute_send_impl(
+  ptb: &mut PrgrTxBuilder,
+  identity: Argument,
+  delegation_token: Argument,
+  proposal_id: Argument,
+  objects: Vec<(ObjectRef, TypeTag)>,
+  package: ObjectID,
+) -> anyhow::Result<()> {
+  // Get the proposal's action as argument.
+  let send_action = ptb.programmable_move_call(
+    package,
+    ident_str!("identity").into(),
+    ident_str!("execute_proposal").into(),
+    vec![SendAction::move_type(package)],
+    vec![identity, delegation_token, proposal_id],
+  );
+
+  // Send each object in this send action.
+  // Traversing the map in reverse reduces the number of operations on the move side.
+  for (obj, obj_type) in objects.into_iter().rev() {
+    let recv_obj = ptb.obj(ObjectArg::Receiving(obj))?;
+
+    ptb.programmable_move_call(
+      package,
+      ident_str!("identity").into(),
+      ident_str!("execute_send").into(),
+      vec![obj_type],
+      vec![identity, send_action, recv_obj],
+    );
+  }
+
+  // Consume the now empty send_action
+  ptb.programmable_move_call(
+    package,
+    ident_str!("transfer_proposal").into(),
+    ident_str!("complete_send").into(),
+    vec![],
+    vec![send_action],
+  );
+
+  Ok(())
+}
 
 #[derive(Clone)]
 pub(crate) struct IdentityMoveCallsRustSdk {}
 
 impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
   type Error = Error;
-  type NativeTxBuilder = Ptb;
+  type NativeTxBuilder = PrgrTxBuilder;
 
   fn propose_borrow(
     identity: OwnedObjectRef,
@@ -46,27 +314,20 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     expiration: Option<u64>,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
-    let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
-    let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
-    let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
-    let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id).map_err(rebased_err)?;
-    let objects_arg = ptb.pure(objects).map_err(rebased_err)?;
+    let ProposalContext {
+      mut ptb,
+      controller_cap,
+      delegation_token,
+      borrow,
+      ..
+    } = borrow_proposal_impl(identity, capability, objects, expiration, package_id)?;
 
-    let _proposal_id = ptb.programmable_move_call(
-      package_id,
-      ident_str!("identity").into(),
-      ident_str!("propose_borrow").into(),
-      vec![],
-      vec![identity_arg, delegation_token, exp_arg, objects_arg],
-    );
-
-    utils::put_back_delegation_token(&mut ptb, cap_arg, delegation_token, borrow, package_id);
+    utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package_id);
 
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
 
-  fn execute_borrow<F: BorrowIntentFnT<Self::Error, Self::NativeTxBuilder>>(
+  fn execute_borrow<F: BorrowIntentFnInternalT<Self::NativeTxBuilder>>(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,
@@ -74,73 +335,62 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     intent_fn: F,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
-    let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
-    let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
-    let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, controller_cap, package);
-    let proposal_id = ptb.pure(proposal_id).map_err(rebased_err)?;
+    let mut internal_ptb = TransactionBuilderRustSdk::new(PrgrTxBuilder::new());
+    let ptb = internal_ptb.as_native_tx_builder();
+    let identity = utils::owned_ref_to_shared_object_arg(identity, ptb, true)?;
+    let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
+    let (delegation_token, borrow) = utils::get_controller_delegation(ptb, controller_cap, package);
+    let proposal_id = ptb.pure(proposal_id)?;
 
-    // Get the proposal's action as argument.
-    let borrow_action = ptb.programmable_move_call(
+    execute_borrow_impl(
+      ptb,
+      identity,
+      delegation_token,
+      proposal_id,
+      objects,
+      intent_fn,
       package,
-      ident_str!("identity").into(),
-      ident_str!("execute_proposal").into(),
-      vec![BorrowAction::move_type(package)],
-      vec![identity, delegation_token, proposal_id],
-    );
+    )?;
 
-    utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package);
+    utils::put_back_delegation_token(ptb, controller_cap, delegation_token, borrow, package);
 
-    // Borrow all the objects specified in the action.
-    let obj_arg_map = objects
-      .into_iter()
-      .map(|obj_data| {
-        let obj_ref = obj_data.object_ref();
-        let ObjectType::Struct(obj_type) = obj_data.object_type()? else {
-          unreachable!("move packages cannot be borrowed to begin with");
-        };
-        let recv_obj = ptb.obj(ObjectArg::Receiving(obj_ref))?;
+    internal_ptb.finish()
+  }
 
-        let obj_arg = ptb.programmable_move_call(
-          package,
-          ident_str!("identity").into(),
-          ident_str!("execute_borrow").into(),
-          vec![obj_type.into()],
-          vec![identity, borrow_action, recv_obj],
-        );
+  fn create_and_execute_borrow<F: BorrowIntentFnInternalT<Self::NativeTxBuilder>>(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    objects: Vec<IotaObjectData>,
+    intent_fn: F,
+    expiration: Option<u64>,
+    package_id: ObjectID,
+  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> {
+    let ProposalContext {
+      mut ptb,
+      controller_cap,
+      delegation_token,
+      borrow,
+      identity,
+      proposal_id,
+    } = borrow_proposal_impl(
+      identity,
+      capability,
+      objects.iter().map(|obj_data| obj_data.object_id).collect_vec(),
+      expiration,
+      package_id,
+    )?;
 
-        Ok((obj_ref.0, (obj_arg, obj_data)))
-      })
-      .collect::<anyhow::Result<_>>()
-      .map_err(rebased_err)?;
+    execute_borrow_impl(
+      &mut ptb,
+      identity,
+      delegation_token,
+      proposal_id,
+      objects,
+      intent_fn,
+      package_id,
+    )?;
 
-    // Apply the user-defined operation.
-    let mut ptb_adapter = TransactionBuilderAdapter::new(ptb);
-    intent_fn(&mut ptb_adapter, &obj_arg_map);
-
-    // Put back all the objects.
-    let mut ptb = ptb_adapter.into_native_tx_builder();
-    obj_arg_map.into_values().for_each(|(obj_arg, obj_data)| {
-      let ObjectType::Struct(obj_type) = obj_data.object_type().expect("checked above") else {
-        unreachable!("move packages cannot be borrowed to begin with");
-      };
-      ptb.programmable_move_call(
-        package,
-        ident_str!("borrow_proposal").into(),
-        ident_str!("put_back").into(),
-        vec![obj_type.into()],
-        vec![borrow_action, obj_arg],
-      );
-    });
-
-    // Consume the now empty borrow_action
-    ptb.programmable_move_call(
-      package,
-      ident_str!("borrow_proposal").into(),
-      ident_str!("conclude_borrow").into(),
-      vec![],
-      vec![borrow_action],
-    );
+    utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package_id);
 
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
@@ -159,7 +409,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     I1: IntoIterator<Item = (IotaAddress, u64)>,
     I2: IntoIterator<Item = (ObjectID, u64)>,
   {
-    let mut ptb = Ptb::new();
+    let mut ptb = PrgrTxBuilder::new();
 
     let controllers_to_add = {
       let (addresses, vps): (Vec<IotaAddress>, Vec<u64>) = controllers_to_add.into_iter().unzip();
@@ -223,7 +473,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     proposal_id: ObjectID,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
+    let mut ptb = PrgrTxBuilder::new();
 
     let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
     let controller_cap = ptb
@@ -251,27 +501,19 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     expiration: Option<u64>,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
-    let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
-    let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
-    let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
-    let controller_cap_id = ptb.pure(controller_cap_id).map_err(rebased_err)?;
-    let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id).map_err(rebased_err)?;
-
-    let _proposal_id = ptb.programmable_move_call(
-      package_id,
-      ident_str!("identity").into(),
-      ident_str!("propose_controller_execution").into(),
-      vec![],
-      vec![identity_arg, delegation_token, controller_cap_id, exp_arg],
-    );
-
-    utils::put_back_delegation_token(&mut ptb, cap_arg, delegation_token, borrow, package_id);
+    let ProposalContext {
+      mut ptb,
+      controller_cap,
+      delegation_token,
+      borrow,
+      ..
+    } = controller_execution_impl(identity, capability, controller_cap_id, expiration, package_id)?;
+    utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package_id);
 
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
 
-  fn execute_controller_execution<F: ControllerIntentFnT<Self::Error, Self::NativeTxBuilder>>(
+  fn execute_controller_execution<F: ControllerIntentFnInternalT<Self::NativeTxBuilder>>(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,
@@ -279,54 +521,67 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     intent_fn: F,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
-    let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
-    let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
+    let mut ptb = PrgrTxBuilder::new();
+    let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
+    let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
     let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, controller_cap, package);
-    let proposal_id = ptb.pure(proposal_id).map_err(rebased_err)?;
+    let proposal_id = ptb.pure(proposal_id)?;
 
-    // Get the proposal's action as argument.
-    let controller_execution_action = ptb.programmable_move_call(
+    execute_controller_execution_impl(
+      &mut ptb,
+      identity,
+      proposal_id,
+      delegation_token,
+      borrowing_controller_cap_ref,
+      intent_fn,
       package,
-      ident_str!("identity").into(),
-      ident_str!("execute_proposal").into(),
-      vec![ControllerExecution::move_type(package)],
-      vec![identity, delegation_token, proposal_id],
-    );
+    )?;
 
     utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package);
 
-    // Borrow the controller cap into this transaction.
-    let receiving = ptb
-      .obj(ObjectArg::Receiving(borrowing_controller_cap_ref))
-      .map_err(rebased_err)?;
-    let borrowed_controller_cap = ptb.programmable_move_call(
-      package,
-      ident_str!("identity").into(),
-      ident_str!("borrow_controller_cap").into(),
-      vec![],
-      vec![identity, controller_execution_action, receiving],
-    );
+    Ok(bcs::to_bytes(&ptb.finish())?)
+  }
 
-    // Apply the user-defined operation.
-    let mut ptb_adapter = TransactionBuilderAdapter::new(ptb);
-    intent_fn(&mut ptb_adapter, &borrowed_controller_cap);
+  fn create_and_execute_controller_execution<F: ControllerIntentFnInternalT<Self::NativeTxBuilder>>(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    expiration: Option<u64>,
+    borrowing_controller_cap_ref: ObjectRef,
+    intent_fn: F,
+    package_id: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error> {
+    let ProposalContext {
+      mut ptb,
+      controller_cap,
+      delegation_token,
+      borrow,
+      proposal_id,
+      identity,
+    } = controller_execution_impl(
+      identity,
+      capability,
+      borrowing_controller_cap_ref.0,
+      expiration,
+      package_id,
+    )?;
 
-    // Put back the borrowed controller cap.
-    let mut ptb = ptb_adapter.into_native_tx_builder();
-    ptb.programmable_move_call(
-      package,
-      ident_str!("controller_proposal").into(),
-      ident_str!("put_back").into(),
-      vec![],
-      vec![controller_execution_action, borrowed_controller_cap],
-    );
+    execute_controller_execution_impl(
+      &mut ptb,
+      identity,
+      proposal_id,
+      delegation_token,
+      borrowing_controller_cap_ref,
+      intent_fn,
+      package_id,
+    )?;
+
+    utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package_id);
 
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
 
   fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
+    let mut ptb = PrgrTxBuilder::new();
     let doc_arg = utils::ptb_pure(&mut ptb, "did_doc", did_doc)?;
     let clock = utils::get_clock_ref(&mut ptb);
 
@@ -351,7 +606,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
   where
     C: IntoIterator<Item = (IotaAddress, u64)>,
   {
-    let mut ptb = Ptb::new();
+    let mut ptb = PrgrTxBuilder::new();
 
     let controllers = {
       let (ids, vps): (Vec<IotaAddress>, Vec<u64>) = controllers.into_iter().unzip();
@@ -401,7 +656,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     expiration: Option<u64>,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
+    let mut ptb = PrgrTxBuilder::new();
     let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
     let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
     let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
@@ -427,7 +682,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     proposal_id: ObjectID,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
+    let mut ptb = PrgrTxBuilder::new();
     let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
     let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
     let proposal_id = ptb.pure(proposal_id).map_err(rebased_err)?;
@@ -453,7 +708,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     proposal_id: ObjectID,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
+    let mut ptb = PrgrTxBuilder::new();
     let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
     let controller_cap = ptb
@@ -484,28 +739,15 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     expiration: Option<u64>,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
-    let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
-    let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
-    let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
-    let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id).map_err(rebased_err)?;
-    let (objects, recipients) = {
-      let (objects, recipients): (Vec<_>, Vec<_>) = transfer_map.into_iter().unzip();
-      let objects = ptb.pure(objects).map_err(rebased_err)?;
-      let recipients = ptb.pure(recipients).map_err(rebased_err)?;
+    let ProposalContext {
+      mut ptb,
+      controller_cap,
+      delegation_token,
+      borrow,
+      ..
+    } = send_proposal_impl(identity, capability, transfer_map, expiration, package_id)?;
 
-      (objects, recipients)
-    };
-
-    let _proposal_id = ptb.programmable_move_call(
-      package_id,
-      ident_str!("identity").into(),
-      ident_str!("propose_send").into(),
-      vec![],
-      vec![identity_arg, delegation_token, exp_arg, objects, recipients],
-    );
-
-    utils::put_back_delegation_token(&mut ptb, cap_arg, delegation_token, borrow, package_id);
+    utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package_id);
 
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
@@ -517,45 +759,39 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     objects: Vec<(ObjectRef, TypeTag)>,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
-    let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
-    let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
+    let mut ptb = PrgrTxBuilder::new();
+    let identity = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true)?;
+    let controller_cap = ptb.obj(ObjectArg::ImmOrOwnedObject(capability))?;
     let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, controller_cap, package);
-    let proposal_id = ptb.pure(proposal_id).map_err(rebased_err)?;
+    let proposal_id = ptb.pure(proposal_id)?;
 
-    // Get the proposal's action as argument.
-    let send_action = ptb.programmable_move_call(
-      package,
-      ident_str!("identity").into(),
-      ident_str!("execute_proposal").into(),
-      vec![SendAction::move_type(package)],
-      vec![identity, delegation_token, proposal_id],
-    );
+    execute_send_impl(&mut ptb, identity, delegation_token, proposal_id, objects, package)?;
 
     utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package);
 
-    // Send each object in this send action.
-    // Traversing the map in reverse reduces the number of operations on the move side.
-    for (obj, obj_type) in objects.into_iter().rev() {
-      let recv_obj = ptb.obj(ObjectArg::Receiving(obj)).map_err(rebased_err)?;
+    Ok(bcs::to_bytes(&ptb.finish())?)
+  }
 
-      ptb.programmable_move_call(
-        package,
-        ident_str!("identity").into(),
-        ident_str!("execute_send").into(),
-        vec![obj_type],
-        vec![identity, send_action, recv_obj],
-      );
-    }
+  fn create_and_execute_send(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    transfer_map: Vec<(ObjectID, IotaAddress)>,
+    expiration: Option<u64>,
+    objects: Vec<(ObjectRef, TypeTag)>,
+    package: ObjectID,
+  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> {
+    let ProposalContext {
+      mut ptb,
+      identity,
+      controller_cap,
+      delegation_token,
+      borrow,
+      proposal_id,
+    } = send_proposal_impl(identity, capability, transfer_map, expiration, package)?;
 
-    // Consume the now empty send_action
-    ptb.programmable_move_call(
-      package,
-      ident_str!("transfer_proposal").into(),
-      ident_str!("complete_send").into(),
-      vec![],
-      vec![send_action],
-    );
+    execute_send_impl(&mut ptb, identity, delegation_token, proposal_id, objects, package)?;
+
+    utils::put_back_delegation_token(&mut ptb, controller_cap, delegation_token, borrow, package);
 
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
@@ -567,7 +803,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     expiration: Option<u64>,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
+    let mut ptb = PrgrTxBuilder::new();
     let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
     let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
     let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
@@ -594,7 +830,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     proposal_id: ObjectID,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
+    let mut ptb = PrgrTxBuilder::new();
     let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
     let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
     let proposal_id = ptb.pure(proposal_id).map_err(rebased_err)?;
@@ -620,7 +856,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     expiration: Option<u64>,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
+    let mut ptb = PrgrTxBuilder::new();
     let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
     let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
     let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id).map_err(rebased_err)?;
@@ -642,7 +878,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     proposal_id: ObjectID,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = Ptb::new();
+    let mut ptb = PrgrTxBuilder::new();
     let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
     let proposal_id = ptb.pure(proposal_id).map_err(rebased_err)?;
     let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;

@@ -1,3 +1,19 @@
 {
   "extends": "../tsconfig.json",
+  "entryPoints": [
+    "./node/"
+  ],
+  "tsconfig": "./tsconfig.typedoc.json",
+  "out": "./docs/wasm",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@iota/iota-interaction-ts/*": [
+        "./*"
+      ],
+      "@iota/identity-wasm/*": [
+        "../identity_wasm/*"
+      ]
+    }
+  }
 }

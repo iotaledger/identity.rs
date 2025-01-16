@@ -13,6 +13,7 @@ pub(crate) use identity_move_calls::IdentityMoveCallsRustSdk as IdentityMoveCall
 pub(crate) use iota_client_rust_sdk::IotaClientRustSdk as IotaClientAdapter;
 pub(crate) use iota_client_rust_sdk::IotaTransactionBlockResponseProvider as IotaTransactionBlockResponseAdapter;
 pub(crate) use migration_move_calls::MigrationMoveCallsRustSdk as MigrationMoveCallsAdapter;
+#[allow(unused_imports)]
 pub(crate) use transaction_builder::TransactionBuilderRustSdk as TransactionBuilderAdapter;
 
 #[allow(unused_imports)]

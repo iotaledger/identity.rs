@@ -40,7 +40,7 @@ impl WasmMethodData {
         Cow::Borrowed("PrivateKeyMaterialExposed"),
         Cow::Borrowed("jwk with private key components is not permitted"),
       ))
-      .wasm_result();
+        .wasm_result();
     };
 
     Ok(Self(MethodData::PublicKeyJwk(key.0.clone())))

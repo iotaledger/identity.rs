@@ -78,8 +78,9 @@
     "wasm-opt": "^1.3.0"
   },
   "dependencies": {
-    "@iota/iota.js": "file:../../../../iotaledger/iota/sdk/typescript",
+    "@iota/iota.js": "file:../../../../iota/sdk/typescript",
     "@noble/ed25519": "^1.7.3",
+    "@noble/hashes": "^1.4.0",
     "@types/node-fetch": "^2.6.2",
     "base64-arraybuffer": "^1.0.2",
     "node-fetch": "^2.6.7"

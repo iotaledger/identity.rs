@@ -22,8 +22,8 @@ use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::BorrowIntentFnT;
-use identity_iota_interaction::ControllerIntentFnT;
+use identity_iota_interaction::BorrowIntentFnInternalT;
+use identity_iota_interaction::ControllerIntentFnInternalT;
 use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::MoveType;
 use identity_iota_interaction::ProgrammableTransactionBcs;
@@ -221,7 +221,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     .map_err(TsSdkError::from)
   }
 
-  fn execute_borrow<F: BorrowIntentFnT<Self::Error, Self::NativeTxBuilder>>(
+  fn execute_borrow<F: BorrowIntentFnInternalT<Self::NativeTxBuilder>>(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,
@@ -256,6 +256,15 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     .map_err(TsSdkError::from)
   }
 
+  fn create_and_execute_borrow<F: BorrowIntentFnInternalT<Self::NativeTxBuilder>>(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    objects: Vec<IotaObjectData>,
+    intent_fn: F,
+    expiration: Option<u64>,
+    package_id: ObjectID,
+  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> { todo!() }
+
   fn propose_config_change<I1, I2>(
     identity: OwnedObjectRef,
     controller_cap: ObjectRef,
@@ -267,8 +276,8 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>
   where
-    I1: IntoIterator<Item = (IotaAddress, u64)>,
-    I2: IntoIterator<Item = (ObjectID, u64)>,
+    I1: IntoIterator<Item=(IotaAddress, u64)>,
+    I2: IntoIterator<Item=(ObjectID, u64)>,
   {
     let identity = identity.try_into()?;
     let capability = controller_cap.into();
@@ -345,7 +354,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     .map_err(TsSdkError::from)
   }
 
-  fn execute_controller_execution<F: ControllerIntentFnT<Self::Error, Self::NativeTxBuilder>>(
+  fn execute_controller_execution<F: ControllerIntentFnInternalT<Self::NativeTxBuilder>>(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,
@@ -494,6 +503,15 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     .map_err(WasmError::from)
     .map_err(TsSdkError::from)
   }
+
+  fn create_and_execute_send(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    transfer_map: Vec<(ObjectID, IotaAddress)>,
+    expiration: Option<u64>,
+    objects: Vec<(ObjectRef, TypeTag)>,
+    package: ObjectID,
+  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> { todo!() }
 
   fn execute_send(
     identity: OwnedObjectRef,

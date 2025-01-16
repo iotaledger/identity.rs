@@ -45,9 +45,3 @@ jobs:
         if: ${{ false }}
         with:
           args: --manifest-path ./bindings/wasm/identity_wasm/Cargo.toml --target wasm32-unknown-unknown --all-targets --all-features -- -D warnings
-
-      - name: Wasm clippy check iota_interaction_ts
-        uses: actions-rs-plus/clippy-check@b09a9c37c9df7db8b1a5d52e8fe8e0b6e3d574c4
-        if: ${{ false }}
-        with:
-          args: --manifest-path ./bindings/wasm/iota_interaction_ts/Cargo.toml --target wasm32-unknown-unknown --all-targets --all-features -- -D warnings

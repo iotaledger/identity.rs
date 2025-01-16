@@ -37,7 +37,7 @@ npm run example:node -- 0_create_did
 The following basic CRUD (Create, Read, Update, Delete) examples are available:
 
 | Name                                                | Information                                                                          |
-| :-------------------------------------------------- | :----------------------------------------------------------------------------------- |
+|:----------------------------------------------------|:-------------------------------------------------------------------------------------|
 | [0_create_did](src/0_basic/0_create_did.ts)         | Demonstrates how to create a DID Document and publish it in a new Alias Output.      |
 | [1_update_did](src/0_basic/1_update_did.ts)         | Demonstrates how to update a DID document in an existing Alias Output.               |
 | [2_resolve_did](src/0_basic/2_resolve_did.ts)       | Demonstrates how to resolve an existing DID in an Alias Output.                      |
@@ -52,7 +52,7 @@ The following basic CRUD (Create, Read, Update, Delete) examples are available:
 The following advanced examples are available:
 
 | Name                                                         | Information                                                                                              |
-| :----------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
+|:-------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------|
 | [0_did_controls_did](src/1_advanced/0_did_controls_did.ts)   | Demonstrates how an identity can control another identity.                                               |
 | [1_did_issues_nft](src/1_advanced/1_did_issues_nft.ts)       | Demonstrates how an identity can issue and own NFTs, and how observers can verify the issuer of the NFT. |
 | [2_nft_owns_did](src/1_advanced/2_nft_owns_did.ts)           | Demonstrates how an identity can be owned by NFTs, and how observers can verify that relationship.       |

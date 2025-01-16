@@ -1,3 +1,6 @@
+// Copyright 2020-2025 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
@@ -54,7 +57,7 @@ const TS_SDK_TYPES: &'static str = r#"
   import {
     executeTransaction,
     IotaTransactionBlockResponseAdapter,
-  } from "./kinesis_client_helpers"
+  } from "./iota_client_helpers"
 
   // TODO: decide if we use this or replace it with an adapter written in TypeScript type if needed
   type ProgrammableTransaction = ReturnType<typeof bcs.ProgrammableTransaction.parse>;
@@ -241,7 +244,7 @@ extern "C" {
     sender_address: String,      // --> TypeScript: string
     sender_public_key: Vec<u8>,  // --> TypeScript: Uint8Array
     tx_bcs: Vec<u8>,             // --> TypeScript: Uint8Array,
-    signer: WasmStorageSigner,   // --> TypeScript: Signer (kinesis_client_helpers module)
+    signer: WasmStorageSigner,   // --> TypeScript: Signer (iota_client_helpers module)
     gas_budget: Option<u64>,     // --> TypeScript: optional bigint
   ) -> PromiseIotaTransactionBlockResponseAdapter;
 }

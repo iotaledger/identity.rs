@@ -6,10 +6,11 @@
 // The file provides a POC for the wasm-bindgen glue code needed to
 // implement the TS-Client-SDK integration.
 
-use crate::error::Error;
 use super::IdentityClient;
-use super::IotaClientTrait;
-use super::types::base_types::{IotaAddress, ObjectID};
+use identity_iota::iota::rebased::Error;
+use identity_iota::iota_interaction::types::base_types::{IotaAddress, ObjectID};
+use identity_iota::iota_interaction::IotaClientTrait;
+use iota_interaction_ts::error::TsSdkError;
 
 pub struct IdentityClientBuilder<T: IotaClientTrait> {
   pub(crate) identity_iota_package_id: Option<ObjectID>,
@@ -21,7 +22,7 @@ pub struct IdentityClientBuilder<T: IotaClientTrait> {
 
 impl<T> IdentityClientBuilder<T>
 where
-  T: IotaClientTrait<Error = Error>,
+  T: IotaClientTrait<Error=TsSdkError>,
 {
   /// Sets the `identity_iota_package_id` value.
   #[must_use]

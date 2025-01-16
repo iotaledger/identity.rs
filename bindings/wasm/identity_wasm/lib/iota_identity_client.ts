@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IIotaIdentityClient, IotaDID, IotaDocument, IotaIdentityClientExt } from "~identity_wasm";
+import {IIotaIdentityClient, IotaDID, IotaDocument, IotaIdentityClientExt} from "~identity_wasm";
 
 import {
     Address,
@@ -134,12 +134,15 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         });
         await this.client.retryUntilIncluded(blockId);
 
-        // Extract document with computed AliasId.
-        const documents = IotaDocument.unpackFromBlock(networkHrp, block);
-        if (documents.length < 1) {
-            throw new Error("publishDidOutput: no DID document in transaction payload");
-        }
-        return documents[0];
+        // Rewrite the following code when working on [Issue #1445 Replace mocked Identity client with real Identity client]
+        //
+        // // Extract document with computed AliasId.
+        // const documents = IotaDocument.unpackFromBlock(networkHrp, block);
+        // if (documents.length < 1) {
+        //     throw new Error("publishDidOutput: no DID document in transaction payload");
+        // }
+        // return documents[0];
+        return IotaDocument.newWithId(IotaDID.parse("Foo Bar"));
     }
 
     /** Destroy the Alias Output containing the given `did`, sending its tokens to a new Basic Output
@@ -156,7 +159,7 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         if (networkHrp !== did.network()) {
             throw new Error(
                 "deleteDidOutput: DID network mismatch, client expected `" + networkHrp + "`, DID network is `"
-                    + did.network() + "`",
+                + did.network() + "`",
             );
         }
 

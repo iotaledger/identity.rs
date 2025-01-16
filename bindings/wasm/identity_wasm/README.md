@@ -4,7 +4,7 @@
 
 ## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
 
-## [Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md)
+## [Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/identity_wasm/examples/README.md)
 
 ## Install the library:
 
@@ -16,9 +16,12 @@ npm install @iota/identity-wasm
 
 ## Build
 
-Alternatively, you can build the bindings yourself if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation.
+Alternatively, you can build the bindings yourself if you have Rust installed. If not, refer
+to [rustup.rs](https://rustup.rs) for the installation.
 
-Install [`wasm-bindgen-cli`](https://github.com/rustwasm/wasm-bindgen). A manual installation is required because we use the [Weak References](https://rustwasm.github.io/wasm-bindgen/reference/weak-references.html) feature, which [`wasm-pack` does not expose](https://github.com/rustwasm/wasm-pack/issues/930).
+Install [`wasm-bindgen-cli`](https://github.com/rustwasm/wasm-bindgen). A manual installation is required because we use
+the [Weak References](https://rustwasm.github.io/wasm-bindgen/reference/weak-references.html) feature, which [
+`wasm-pack` does not expose](https://github.com/rustwasm/wasm-pack/issues/930).
 
 ```bash
 cargo install --force wasm-bindgen-cli
@@ -49,7 +52,8 @@ The minimum supported version for node is: `v16`
 ## NodeJS Usage
 
 The following code creates a new IOTA DID Document suitable for publishing to a locally running private network.
-See the [instructions](https://github.com/iotaledger/hornet/tree/develop/private_tangle) on running your own private network.
+See the [instructions](https://github.com/iotaledger/hornet/tree/develop/private_tangle) on running your own private
+network.
 
 <!--
 Test this example using https://github.com/anko/txm: `txm README.md`
@@ -158,11 +162,14 @@ Created document  {
 }
 ```
 
-**NOTE: see the [examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md) for how to publish an IOTA DID Document.**
+**NOTE: see
+the [examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/identity_wasm/examples/README.md) for
+how to publish an IOTA DID Document.**
 
 ## Web Setup
 
-The library loads the WASM file with an HTTP GET request, so the .wasm file must be copied to the root of the dist folder.
+The library loads the WASM file with an HTTP GET request, so the .wasm file must be copied to the root of the dist
+folder.
 
 ### Rollup
 
@@ -299,9 +306,12 @@ init()
 await identity.init("./static/identity_wasm_bg.wasm");
 ```
 
-Calling `identity.init().then(<callback>)` or `await identity.init()` is required to load the Wasm file from the server if not available, because of that it will only be slow for the first time.
+Calling `identity.init().then(<callback>)` or `await identity.init()` is required to load the Wasm file from the server
+if not available, because of that it will only be slow for the first time.
 
-**NOTE: see the [examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md) for how to publish an IOTA DID Document.**
+**NOTE: see
+the [examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/identity_wasm/examples/README.md) for
+how to publish an IOTA DID Document.**
 
 ## Examples in the Wild
 

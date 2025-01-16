@@ -4,12 +4,14 @@
 use std::collections::{HashMap, HashSet};
 use std::iter::IntoIterator;
 
+use serde::Serialize;
+
 use crate::rpc_types::{IotaObjectData, OwnedObjectRef};
 use crate::types::base_types::{IotaAddress, ObjectID, ObjectRef, SequenceNumber};
 use crate::types::transaction::Argument;
 use crate::types::TypeTag;
-use crate::{MoveType, ProgrammableTransactionBcs, TransactionBuilderT};
-use serde::Serialize;
+use crate::MoveType;
+use crate::ProgrammableTransactionBcs;
 
 pub trait AssetMoveCalls {
     type Error;
@@ -76,29 +78,13 @@ pub trait MigrationMoveCalls {
     ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error>;
 }
 
-pub trait BorrowIntentFnT<E, B>:
-    FnOnce(
-    &mut dyn TransactionBuilderT<Error = E, NativeTxBuilder = B>,
-    &HashMap<ObjectID, (Argument, IotaObjectData)>,
-)
-{
-}
-impl<T, E, B> BorrowIntentFnT<E, B> for T where
-    T: FnOnce(
-        &mut dyn TransactionBuilderT<Error = E, NativeTxBuilder = B>,
-        &HashMap<ObjectID, (Argument, IotaObjectData)>,
-    )
-{
-}
+pub trait BorrowIntentFnInternalT<B>:
+    FnOnce(&mut B, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
+impl<T, B> BorrowIntentFnInternalT<B> for T where
+    T: FnOnce(&mut B, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
 
-pub trait ControllerIntentFnT<E, B>:
-    FnOnce(&mut dyn TransactionBuilderT<Error = E, NativeTxBuilder = B>, &Argument)
-{
-}
-impl<T, E, B> ControllerIntentFnT<E, B> for T where
-    T: FnOnce(&mut dyn TransactionBuilderT<Error = E, NativeTxBuilder = B>, &Argument)
-{
-}
+pub trait ControllerIntentFnInternalT<B>: FnOnce(&mut B, &Argument) {}
+impl<T, B> ControllerIntentFnInternalT<B> for T where T: FnOnce(&mut B, &Argument) {}
 
 pub trait IdentityMoveCalls {
     type Error;
@@ -112,7 +98,7 @@ pub trait IdentityMoveCalls {
         package_id: ObjectID,
     ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-    fn execute_borrow<F: BorrowIntentFnT<Self::Error, Self::NativeTxBuilder>>(
+    fn execute_borrow<F: BorrowIntentFnInternalT<Self::NativeTxBuilder>>(
         identity: OwnedObjectRef,
         capability: ObjectRef,
         proposal_id: ObjectID,
@@ -120,6 +106,17 @@ pub trait IdentityMoveCalls {
         intent_fn: F,
         package: ObjectID,
     ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+    fn create_and_execute_borrow<F>(
+        identity: OwnedObjectRef,
+        capability: ObjectRef,
+        objects: Vec<IotaObjectData>,
+        intent_fn: F,
+        expiration: Option<u64>,
+        package_id: ObjectID,
+    ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error>
+    where
+        F: BorrowIntentFnInternalT<Self::NativeTxBuilder>;
 
     // We allow clippy::too_many_arguments here because splitting this trait function into multiple
     // other functions or creating an options struct gathering multiple function arguments has lower
@@ -155,7 +152,7 @@ pub trait IdentityMoveCalls {
         package_id: ObjectID,
     ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-    fn execute_controller_execution<F: ControllerIntentFnT<Self::Error, Self::NativeTxBuilder>>(
+    fn execute_controller_execution<F: ControllerIntentFnInternalT<Self::NativeTxBuilder>>(
         identity: OwnedObjectRef,
         capability: ObjectRef,
         proposal_id: ObjectID,
@@ -163,6 +160,17 @@ pub trait IdentityMoveCalls {
         intent_fn: F,
         package: ObjectID,
     ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+    fn create_and_execute_controller_execution<F>(
+        identity: OwnedObjectRef,
+        capability: ObjectRef,
+        expiration: Option<u64>,
+        borrowing_controller_cap_ref: ObjectRef,
+        intent_fn: F,
+        package_id: ObjectID,
+    ) -> Result<ProgrammableTransactionBcs, Self::Error>
+    where
+        F: ControllerIntentFnInternalT<Self::NativeTxBuilder>;
 
     fn new_identity(
         did_doc: &[u8],
@@ -227,6 +235,15 @@ pub trait IdentityMoveCalls {
         proposal_id: ObjectID,
         package_id: ObjectID,
     ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+    fn create_and_execute_send(
+        identity: OwnedObjectRef,
+        capability: ObjectRef,
+        transfer_map: Vec<(ObjectID, IotaAddress)>,
+        expiration: Option<u64>,
+        objects: Vec<(ObjectRef, TypeTag)>,
+        package: ObjectID,
+    ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error>;
 
     fn propose_upgrade(
         identity: OwnedObjectRef,

@@ -4,18 +4,18 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
-use identity_iota::iota::block::output::dto::AliasOutputDto;
-use identity_iota::iota::block::output::AliasId;
-use identity_iota::iota::block::output::AliasOutput;
-use identity_iota::iota::block::output::OutputId;
-use identity_iota::iota::block::protocol::ProtocolParameters;
-use identity_iota::iota::block::TryFromDto;
-use identity_iota::iota::IotaIdentityClient;
+use iota_sdk::types::block::output::dto::AliasOutputDto;
+use iota_sdk::types::block::output::AliasId;
+use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::types::block::output::OutputId;
+use iota_sdk::types::block::protocol::ProtocolParameters;
+use iota_sdk::types::TryFromDto;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::error::JsValueResult;
+use crate::obsolete::IotaIdentityClient;
 
 #[wasm_bindgen]
 extern "C" {

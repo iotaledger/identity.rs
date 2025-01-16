@@ -18,7 +18,6 @@ extern "C" {
 
   #[wasm_bindgen(method, getter)]
   pub(crate) fn handlers(this: &ResolverConfig) -> Option<MapResolutionHandler>;
-
 }
 
 // Workaround because JSDocs does not support arrows (=>) while TS does not support the "function" word in type

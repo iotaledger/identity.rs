@@ -1,8 +1,8 @@
-// Copyright 2020-2024 IOTA Stiftung
-// SPDX-License-Identifier: Apache-2.0pub mod iota_client_ts_sdk;
+// Copyright 2020-2025 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
 #[cfg(target_arch = "wasm32")]
-pub(crate) mod bindings;
+pub mod bindings;
 
 #[cfg(target_arch = "wasm32")]
 pub mod asset_move_calls;
@@ -50,7 +50,7 @@ cfg_if::cfg_if! {
         #[allow(unused_imports)] pub use error::TsSdkError as AdapterError;
         #[allow(unused_imports)] pub use bindings::IotaTransactionBlockResponseAdapter as AdapterNativeResponse;
 
-        #[allow(unused_imports)] pub use transaction_builder::NativeTsCodeBindingWrapper;
+        #[allow(unused_imports)] pub use transaction_builder::NativeTsTransactionBuilderBindingWrapper;
 
         #[allow(unused_imports)] pub use bindings::ProgrammableTransaction;
     }

@@ -32,10 +32,17 @@ pub use shared_crypto;
 /// BCS serialized Transaction, where a Transaction includes the TransactionData and a Vec<Signature>
 pub type TransactionBcs = Vec<u8>;
 /// BCS serialized TransactionData
+/// TransactionData usually contain the ProgrammableTransaction, sender, kind = ProgrammableTransaction,
+/// gas_coin, gas_budget, gas_price, expiration, ...
+/// Example usage:
+/// * TS: ExecuteTransactionBlockParams::transactionBlock - Base64 encoded TransactionDataBcs
 pub type TransactionDataBcs = Vec<u8>;
 /// BCS serialized Signature
 pub type SignatureBcs = Vec<u8>;
 /// BCS serialized ProgrammableTransaction
+/// A ProgrammableTransaction 
+/// * has `inputs` (or *CallArgs*) and `commands` (or *Transactions*)
+/// * is the result of ProgrammableTransactionBuilder::finish()
 pub type ProgrammableTransactionBcs = Vec<u8>;
 /// BCS serialized IotaTransactionBlockResponse
 pub type IotaTransactionBlockResponseBcs = Vec<u8>;

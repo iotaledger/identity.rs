@@ -9,26 +9,24 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use identity_iota_core::IotaDocument;
-
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::error::Error;
-
 use super::DummySigner;
 use super::IdentityClient;
-use super::IotaClientTrait;
 use super::Multicontroller;
 use super::Proposal;
-
-use super::rpc_types::{
+use identity_iota::iota::rebased::Error;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota_interaction::rpc_types::{
   IotaObjectData,
   OwnedObjectRef,
 };
-use super::types::base_types::{IotaAddress, ObjectID};
-use super::types::id::UID;
+use identity_iota::iota_interaction::types::base_types::{IotaAddress, ObjectID};
+use identity_iota::iota_interaction::types::id::UID;
+use identity_iota::iota_interaction::IotaClientTrait;
+use iota_interaction_ts::error::TsSdkError;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OnChainIdentity {
@@ -52,14 +50,14 @@ impl OnChainIdentity {
 
   pub fn update_did_document<T>(self, updated_doc: IotaDocument) -> ProposalBuilder
   where
-    T: IotaClientTrait<Error = Error>,
+    T: IotaClientTrait<Error=TsSdkError>,
   {
     ProposalBuilder::new(self, ProposalAction::UpdateDocument(updated_doc))
   }
 
   pub fn deactivate_did<T>(self) -> ProposalBuilder
   where
-    T: IotaClientTrait<Error = Error>,
+    T: IotaClientTrait<Error=TsSdkError>,
   {
     ProposalBuilder::new(self, ProposalAction::Deactivate)
   }
@@ -133,7 +131,7 @@ impl IdentityBuilder {
 
   pub fn controllers<I>(self, _controllers: I) -> Self
   where
-    I: IntoIterator<Item = (IotaAddress, u64)>,
+    I: IntoIterator<Item=(IotaAddress, u64)>,
   {
     self
   }
@@ -145,7 +143,7 @@ impl IdentityBuilder {
     Ok(OnChainIdentity {
       id: UID::new(
         ObjectID::from_str("did:iota:foobar:0x0000000000000000000000000000000000000000000000000000000000000000")
-            .map_err(|e| Error::InvalidArgument(e.to_string()) )?
+          .map_err(|e| Error::InvalidArgument(e.to_string()))?
       ),
       did_doc: Multicontroller::new(vec![1u8, 2u8, 3u8]),
       obj_ref: None,

@@ -66,54 +66,52 @@ pub(crate) const MINIMUM_BALANCE: u64 = 1_000_000_000;
 
 #[allow(unreachable_pub, dead_code)]
 pub trait IotaTransactionBlockResponseAdaptedT:
-  IotaTransactionBlockResponseT<Error = Error, NativeResponse = IotaTransactionBlockResponse>
-{
-}
-impl<T> IotaTransactionBlockResponseAdaptedT for T where
-  T: IotaTransactionBlockResponseT<Error = Error, NativeResponse = IotaTransactionBlockResponse>
-{
-}
+IotaTransactionBlockResponseT<Error=Error, NativeResponse=IotaTransactionBlockResponse>
+{}
+impl<T> IotaTransactionBlockResponseAdaptedT for T
+where
+  T: IotaTransactionBlockResponseT<Error=Error, NativeResponse=IotaTransactionBlockResponse>,
+{}
 #[allow(unreachable_pub, dead_code)]
 pub type IotaTransactionBlockResponseAdaptedTraitObj =
-  Box<dyn IotaTransactionBlockResponseT<Error = Error, NativeResponse = IotaTransactionBlockResponse>>;
+Box<dyn IotaTransactionBlockResponseT<Error=Error, NativeResponse=IotaTransactionBlockResponse>>;
 
 #[allow(unreachable_pub, dead_code)]
 pub trait QuorumDriverApiAdaptedT:
-  QuorumDriverTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse>
-{
-}
-impl<T> QuorumDriverApiAdaptedT for T where
-  T: QuorumDriverTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse>
-{
-}
+QuorumDriverTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse>
+{}
+impl<T> QuorumDriverApiAdaptedT for T
+where
+  T: QuorumDriverTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse>,
+{}
 #[allow(unreachable_pub, dead_code)]
 pub type QuorumDriverApiAdaptedTraitObj =
-  Box<dyn QuorumDriverTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse>>;
+Box<dyn QuorumDriverTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse>>;
 
 #[allow(unreachable_pub, dead_code)]
-pub trait ReadApiAdaptedT: ReadTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse> {}
-impl<T> ReadApiAdaptedT for T where T: ReadTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse> {}
+pub trait ReadApiAdaptedT: ReadTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> {}
+impl<T> ReadApiAdaptedT for T where T: ReadTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> {}
 #[allow(unreachable_pub, dead_code)]
-pub type ReadApiAdaptedTraitObj = Box<dyn ReadTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse>>;
+pub type ReadApiAdaptedTraitObj = Box<dyn ReadTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse>>;
 
 #[allow(unreachable_pub, dead_code)]
-pub trait CoinReadApiAdaptedT: CoinReadTrait<Error = Error> {}
-impl<T> CoinReadApiAdaptedT for T where T: CoinReadTrait<Error = Error> {}
+pub trait CoinReadApiAdaptedT: CoinReadTrait<Error=Error> {}
+impl<T> CoinReadApiAdaptedT for T where T: CoinReadTrait<Error=Error> {}
 #[allow(unreachable_pub, dead_code)]
-pub type CoinReadApiAdaptedTraitObj = Box<dyn CoinReadTrait<Error = Error>>;
+pub type CoinReadApiAdaptedTraitObj = Box<dyn CoinReadTrait<Error=Error>>;
 
 #[allow(unreachable_pub, dead_code)]
-pub trait EventApiAdaptedT: EventTrait<Error = Error> {}
-impl<T> EventApiAdaptedT for T where T: EventTrait<Error = Error> {}
+pub trait EventApiAdaptedT: EventTrait<Error=Error> {}
+impl<T> EventApiAdaptedT for T where T: EventTrait<Error=Error> {}
 #[allow(unreachable_pub, dead_code)]
-pub type EventApiAdaptedTraitObj = Box<dyn EventTrait<Error = Error>>;
+pub type EventApiAdaptedTraitObj = Box<dyn EventTrait<Error=Error>>;
 
 #[allow(unreachable_pub, dead_code)]
-pub trait IotaClientAdaptedT: IotaClientTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse> {}
-impl<T> IotaClientAdaptedT for T where T: IotaClientTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse> {}
+pub trait IotaClientAdaptedT: IotaClientTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> {}
+impl<T> IotaClientAdaptedT for T where T: IotaClientTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> {}
 #[allow(unreachable_pub, dead_code)]
 pub type IotaClientAdaptedTraitObj =
-  Box<dyn IotaClientTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse>>;
+Box<dyn IotaClientTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse>>;
 
 pub struct IotaTransactionBlockResponseProvider {
   response: IotaTransactionBlockResponse,
@@ -308,25 +306,25 @@ impl IotaClientTrait for IotaClientRustSdk {
 
   fn quorum_driver_api(
     &self,
-  ) -> Box<dyn QuorumDriverTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse> + Send + '_> {
+  ) -> Box<dyn QuorumDriverTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> + Send + '_> {
     Box::new(QuorumDriverAdapter {
       api: self.iota_client.quorum_driver_api(),
     })
   }
 
-  fn read_api(&self) -> Box<dyn ReadTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse> + Send + '_> {
+  fn read_api(&self) -> Box<dyn ReadTrait<Error=Error, NativeResponse=IotaTransactionBlockResponse> + Send + '_> {
     Box::new(ReadAdapter {
       api: self.iota_client.read_api(),
     })
   }
 
-  fn coin_read_api(&self) -> Box<dyn CoinReadTrait<Error = Self::Error> + Send + '_> {
+  fn coin_read_api(&self) -> Box<dyn CoinReadTrait<Error=Self::Error> + Send + '_> {
     Box::new(CoinReadAdapter {
       api: self.iota_client.coin_read_api(),
     })
   }
 
-  fn event_api(&self) -> Box<dyn EventTrait<Error = Self::Error> + Send + '_> {
+  fn event_api(&self) -> Box<dyn EventTrait<Error=Self::Error> + Send + '_> {
     Box::new(EventAdapter {
       api: self.iota_client.event_api(),
     })
@@ -471,9 +469,9 @@ impl IotaClientRustSdk {
       .map_err(Error::TransactionExecutionFailed)?;
 
     if let Some(IotaTransactionBlockEffects::V1(IotaTransactionBlockEffectsV1 {
-      status: IotaExecutionStatus::Failure { error },
-      ..
-    })) = &response.effects
+                                                  status: IotaExecutionStatus::Failure { error },
+                                                  ..
+                                                })) = &response.effects
     {
       Err(Error::TransactionUnexpectedResponse(error.to_string()))
     } else {
@@ -571,7 +569,7 @@ impl IotaClientRustSdk {
       &raw_signature,
       sender_public_key,
     ]
-    .concat();
+      .concat();
     let signature_bytes: &[u8] = binding.as_slice();
 
     Signature::from_bytes(signature_bytes)

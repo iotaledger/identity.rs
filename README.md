@@ -33,7 +33,7 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 [Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages:
 
-- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/bindings/wasm/) (JavaScript/TypeScript) -->
+- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/bindings/wasm/identity_wasm/) (JavaScript/TypeScript) -->
 
 ## gRPC
 

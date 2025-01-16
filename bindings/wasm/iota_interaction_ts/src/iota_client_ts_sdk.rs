@@ -46,64 +46,61 @@ use crate::error::TsSdkError;
 
 #[allow(dead_code)]
 pub trait IotaTransactionBlockResponseAdaptedT:
-  IotaTransactionBlockResponseT<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>
-{
-}
-impl<T> IotaTransactionBlockResponseAdaptedT for T where
-  T: IotaTransactionBlockResponseT<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>
-{
-}
+IotaTransactionBlockResponseT<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>
+{}
+impl<T> IotaTransactionBlockResponseAdaptedT for T
+where
+  T: IotaTransactionBlockResponseT<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>,
+{}
 #[allow(dead_code)]
 pub type IotaTransactionBlockResponseAdaptedTraitObj =
-  Box<dyn IotaTransactionBlockResponseT<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>>;
+Box<dyn IotaTransactionBlockResponseT<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>>;
 
 #[allow(dead_code)]
 pub trait QuorumDriverApiAdaptedT:
-  QuorumDriverTrait<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>
-{
-}
-impl<T> QuorumDriverApiAdaptedT for T where
-  T: QuorumDriverTrait<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>
-{
-}
+QuorumDriverTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>
+{}
+impl<T> QuorumDriverApiAdaptedT for T
+where
+  T: QuorumDriverTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>,
+{}
 #[allow(dead_code)]
 pub type QuorumDriverApiAdaptedTraitObj =
-  Box<dyn QuorumDriverTrait<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>>;
+Box<dyn QuorumDriverTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>>;
 
 #[allow(dead_code)]
-pub trait ReadApiAdaptedT: ReadTrait<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter> {}
-impl<T> ReadApiAdaptedT for T where
-  T: ReadTrait<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>
-{
-}
+pub trait ReadApiAdaptedT: ReadTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter> {}
+impl<T> ReadApiAdaptedT for T
+where
+  T: ReadTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>,
+{}
 #[allow(dead_code)]
 pub type ReadApiAdaptedTraitObj =
-  Box<dyn ReadTrait<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>>;
+Box<dyn ReadTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>>;
 
 #[allow(dead_code)]
-pub trait CoinReadApiAdaptedT: CoinReadTrait<Error = TsSdkError> {}
-impl<T> CoinReadApiAdaptedT for T where T: CoinReadTrait<Error = TsSdkError> {}
+pub trait CoinReadApiAdaptedT: CoinReadTrait<Error=TsSdkError> {}
+impl<T> CoinReadApiAdaptedT for T where T: CoinReadTrait<Error=TsSdkError> {}
 #[allow(dead_code)]
-pub type CoinReadApiAdaptedTraitObj = Box<dyn CoinReadTrait<Error = TsSdkError>>;
+pub type CoinReadApiAdaptedTraitObj = Box<dyn CoinReadTrait<Error=TsSdkError>>;
 
 #[allow(dead_code)]
-pub trait EventApiAdaptedT: EventTrait<Error = TsSdkError> {}
-impl<T> EventApiAdaptedT for T where T: EventTrait<Error = TsSdkError> {}
+pub trait EventApiAdaptedT: EventTrait<Error=TsSdkError> {}
+impl<T> EventApiAdaptedT for T where T: EventTrait<Error=TsSdkError> {}
 #[allow(dead_code)]
-pub type EventApiAdaptedTraitObj = Box<dyn EventTrait<Error = TsSdkError>>;
+pub type EventApiAdaptedTraitObj = Box<dyn EventTrait<Error=TsSdkError>>;
 
 #[allow(dead_code)]
 pub trait IotaClientAdaptedT:
-  IotaClientTrait<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>
-{
-}
-impl<T> IotaClientAdaptedT for T where
-  T: IotaClientTrait<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>
-{
-}
+IotaClientTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>
+{}
+impl<T> IotaClientAdaptedT for T
+where
+  T: IotaClientTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>,
+{}
 #[allow(dead_code)]
 pub type IotaClientAdaptedTraitObj =
-  Box<dyn IotaClientTrait<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>>;
+Box<dyn IotaClientTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>>;
 
 pub struct IotaTransactionBlockResponseProvider {
   response: IotaTransactionBlockResponseAdapter,
@@ -311,13 +308,13 @@ impl IotaClientTrait for IotaClientTsSdk {
     })
   }
 
-  fn coin_read_api(&self) -> Box<dyn CoinReadTrait<Error = Self::Error> + '_> {
+  fn coin_read_api(&self) -> Box<dyn CoinReadTrait<Error=Self::Error> + '_> {
     Box::new(CoinReadAdapter {
       client: self.iota_client.clone(),
     })
   }
 
-  fn event_api(&self) -> Box<dyn EventTrait<Error = Self::Error> + '_> {
+  fn event_api(&self) -> Box<dyn EventTrait<Error=Self::Error> + '_> {
     Box::new(EventAdapter {
       client: self.iota_client.clone(),
     })

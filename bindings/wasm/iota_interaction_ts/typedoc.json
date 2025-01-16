@@ -1,3 +1,5 @@
 {
-  "extends": ["../typedoc.json"]
+  "extends": [
+    "../typedoc.json"
+  ]
 }
