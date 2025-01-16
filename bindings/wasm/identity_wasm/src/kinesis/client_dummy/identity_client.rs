@@ -8,14 +8,18 @@
 
 use std::str::FromStr;
 
-use identity_iota::iota::rebased::{rebased_err, Error};
+use identity_iota::iota::rebased::rebased_err;
+use identity_iota::iota::rebased::Error;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::NetworkName;
 use identity_iota::iota_interaction::rpc_types::IotaTransactionBlockResponseOptions;
-use identity_iota::iota_interaction::types::base_types::{IotaAddress, ObjectID};
+use identity_iota::iota_interaction::types::base_types::IotaAddress;
+use identity_iota::iota_interaction::types::base_types::ObjectID;
 use identity_iota::iota_interaction::IotaClientTrait;
-use identity_iota::iota_interaction::{IotaTransactionBlockResponseT, SignatureBcs, TransactionDataBcs};
+use identity_iota::iota_interaction::IotaTransactionBlockResponseT;
+use identity_iota::iota_interaction::SignatureBcs;
+use identity_iota::iota_interaction::TransactionDataBcs;
 
 use super::DummySigner;
 use super::Identity;
@@ -38,7 +42,7 @@ pub struct IdentityClient<T: IotaClientTrait> {
 // builder related functions
 impl<T> IdentityClient<T>
 where
-  T: IotaClientTrait<Error=TsSdkError>,
+  T: IotaClientTrait<Error = TsSdkError>,
 {
   pub fn builder() -> IdentityClientBuilder<T> {
     IdentityClientBuilder::<T>::default()
@@ -53,8 +57,9 @@ where
       identity_iota_package_id: IotaAddress::from(
         builder.identity_iota_package_id.unwrap_or(
           ObjectID::from_str("0x0101010101010101010101010101010101010101010101010101010101010101")
-            .map_err(|e| Error::InvalidArgument(e.to_string()))?
-        )),
+            .map_err(|e| Error::InvalidArgument(e.to_string()))?,
+        ),
+      ),
       sender_public_key: builder.sender_public_key.unwrap_or(vec![1u8, 2u8, 3u8, 4u8]),
       sender_address,
     })
@@ -64,20 +69,25 @@ where
 // mock functions for wasm integration
 impl<T> IdentityClient<T>
 where
-  T: IotaClientTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>,
+  T: IotaClientTrait<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>,
 {
   pub fn sender_public_key(&self) -> Result<&[u8], Error> {
     Ok(self.sender_public_key.as_ref())
   }
 
-  pub fn sender_address(&self) -> Result<IotaAddress, Error> { Ok(self.sender_address.clone()) }
+  pub fn sender_address(&self) -> Result<IotaAddress, Error> {
+    Ok(self.sender_address.clone())
+  }
 
   pub fn network_name(&self) -> &NetworkName {
     &self.network_name
   }
 
   pub fn create_identity(&self, _iota_document: &[u8]) -> IdentityBuilder {
-    IdentityBuilder::new(&[], ObjectID::from_str("foobar").expect("foobar can not be parsed into ObjectId"))
+    IdentityBuilder::new(
+      &[],
+      ObjectID::from_str("foobar").expect("foobar can not be parsed into ObjectId"),
+    )
   }
 
   pub async fn get_identity(&self, _object_id: ObjectID) -> Result<Identity, Error> {
@@ -88,7 +98,10 @@ where
     &self,
     tx_data_bcs: TransactionDataBcs,
     signatures: Vec<SignatureBcs>,
-  ) -> Result<Box<dyn IotaTransactionBlockResponseT<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>>, Error> {
+  ) -> Result<
+    Box<dyn IotaTransactionBlockResponseT<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>>,
+    Error,
+  > {
     let tx_response = self
       .client
       .quorum_driver_api()
@@ -97,7 +110,8 @@ where
         &signatures,
         Some(IotaTransactionBlockResponseOptions::new().with_effects()),
         None,
-      ).await?;
+      )
+      .await?;
     Ok(tx_response)
   }
 
@@ -136,7 +150,7 @@ where
 // test function(s) for wasm calling test
 impl<T> IdentityClient<T>
 where
-  T: IotaClientTrait<Error=TsSdkError, NativeResponse=IotaTransactionBlockResponseAdapter>,
+  T: IotaClientTrait<Error = TsSdkError, NativeResponse = IotaTransactionBlockResponseAdapter>,
 {
   pub async fn get_chain_identifier(&self) -> Result<String, Error> {
     self.client.read_api().get_chain_identifier().await.map_err(rebased_err)

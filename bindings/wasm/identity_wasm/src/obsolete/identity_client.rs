@@ -197,10 +197,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
 }
 
 #[cfg(not(feature = "test"))]
-impl<T> IotaIdentityClientExt for T
-where
-  T: IotaIdentityClient,
-{}
+impl<T> IotaIdentityClientExt for T where T: IotaIdentityClient {}
 #[cfg(feature = "test")]
 impl IotaIdentityClientExt for Client {}
 

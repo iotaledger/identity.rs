@@ -8,7 +8,8 @@
 
 use super::IdentityClient;
 use identity_iota::iota::rebased::Error;
-use identity_iota::iota_interaction::types::base_types::{IotaAddress, ObjectID};
+use identity_iota::iota_interaction::types::base_types::IotaAddress;
+use identity_iota::iota_interaction::types::base_types::ObjectID;
 use identity_iota::iota_interaction::IotaClientTrait;
 use iota_interaction_ts::error::TsSdkError;
 
@@ -22,7 +23,7 @@ pub struct IdentityClientBuilder<T: IotaClientTrait> {
 
 impl<T> IdentityClientBuilder<T>
 where
-  T: IotaClientTrait<Error=TsSdkError>,
+  T: IotaClientTrait<Error = TsSdkError>,
 {
   /// Sets the `identity_iota_package_id` value.
   #[must_use]
