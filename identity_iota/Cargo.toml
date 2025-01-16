@@ -40,16 +40,16 @@ default = ["revocation-bitmap", "iota-client", "send-sync", "resolver"]
 
 # Enables the IOTA client integration, and the `DidResolutionHandler` trait.
 iota-client = [
-    "identity_iota_core/iota-client",
-    #  "identity_resolver/iota",
-    "identity_storage/storage-signer",
+  "identity_iota_core/iota-client",
+  #  "identity_resolver/iota",
+  "identity_storage/storage-signer",
 ]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [
-    "identity_credential/revocation-bitmap",
-    "identity_iota_core/revocation-bitmap",
-    "identity_resolver?/revocation-bitmap",
+  "identity_credential/revocation-bitmap",
+  "identity_iota_core/revocation-bitmap",
+  "identity_resolver?/revocation-bitmap",
 ]
 
 # Enables revocation with `StatusList2021`.

@@ -23,15 +23,15 @@ tokio = { version = "1.29", default-features = false, features = ["rt", "macros"
 path = "../identity_iota"
 default-features = false
 features = [
-    "domain-linkage",
-    "jpt-bbs-plus",
-    "iota-client",
-    "send-sync-storage",
-    "memstore",
-    "resolver",
-    "revocation-bitmap",
-    "sd-jwt",
-    "status-list-2021",
+  "domain-linkage",
+  "jpt-bbs-plus",
+  "iota-client",
+  "send-sync-storage",
+  "memstore",
+  "resolver",
+  "revocation-bitmap",
+  "sd-jwt",
+  "status-list-2021",
 ]
 
 [lib]

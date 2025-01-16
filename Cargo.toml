@@ -9,22 +9,22 @@ rust-version = "1.65"
 [workspace]
 resolver = "2"
 members = [
-    "identity_core",
-    "identity_credential",
-    "identity_did",
-    "identity_document",
-    "identity_iota",
-    "identity_storage",
-    "identity_iota_core",
-    "identity_resolver",
-    "identity_verification",
-    "identity_stronghold",
-    "identity_jose",
-    "identity_ecdsa_verifier",
-    "identity_eddsa_verifier",
-    "examples",
-    "identity_iota_interaction",
-    "bindings/wasm/iota_interaction_ts",
+  "identity_core",
+  "identity_credential",
+  "identity_did",
+  "identity_document",
+  "identity_iota",
+  "identity_storage",
+  "identity_iota_core",
+  "identity_resolver",
+  "identity_verification",
+  "identity_stronghold",
+  "identity_jose",
+  "identity_ecdsa_verifier",
+  "identity_eddsa_verifier",
+  "examples",
+  "identity_iota_interaction",
+  "bindings/wasm/iota_interaction_ts",
 ]
 
 exclude = ["bindings/wasm/identity_wasm", "bindings/grpc"]

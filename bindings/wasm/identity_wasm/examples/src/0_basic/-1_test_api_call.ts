@@ -14,7 +14,7 @@ import {
     Multicontroller,
     ProposalAction,
     Storage,
-//    StorageSigner,
+    //    StorageSigner,
 } from "@iota/identity-wasm/node";
 
 import { executeTransaction } from "@iota/iota-interaction-ts/lib/iota_client_helpers";
