@@ -11,7 +11,6 @@ use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
 use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockResponseT;
-use identity_iota_interaction::TransactionBuilderT;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::migration::Proposal;
@@ -38,7 +37,8 @@ use super::UserDrivenTx;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-      use iota_interaction_ts::NativeTsCodeBindingWrapper as Ptb;
+      use iota_interaction_ts::NativeTsTransactionBuilderBindingWrapper as Ptb;
+      use iota_interaction_ts::error::TsSdkError as IotaInteractionError;
       /// Instances of BorrowIntentFnT can be used as user-provided function to describe how
       /// a borrowed assets shall be used.
       pub trait BorrowIntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
@@ -60,7 +60,7 @@ cfg_if::cfg_if! {
 
 /// Action used to borrow in transaction [OnChainIdentity]'s assets.
 #[derive(Deserialize, Serialize)]
-pub struct BorrowAction<F = IntentFn> {
+pub struct BorrowAction<F = BorrowIntentFn> {
   objects: Vec<ObjectID>,
   #[serde(skip, default = "Option::default")]
   intent_fn: Option<F>,
@@ -180,7 +180,7 @@ where
         }
         object_data_list
       };
-      move_calls::identity::create_and_execute_borrow(
+      IdentityMoveCallsAdapter::create_and_execute_borrow(
         identity_ref,
         controller_cap_ref,
         object_data_list,
@@ -189,7 +189,7 @@ where
         client.package_id(),
       )
     } else {
-      move_calls::identity::propose_borrow(
+      IdentityMoveCallsAdapter::propose_borrow(
         identity_ref,
         controller_cap_ref,
         action.objects,
@@ -299,18 +299,12 @@ where
       object_data_list
     };
 
-    let intent_adapter = move |ptb: &mut dyn TransactionBuilderT<Error = AdapterError, NativeTxBuilder = Ptb>,
-                               args: &HashMap<ObjectID, (Argument, IotaObjectData)>| {
-      (borrow_action.0.intent_fn)(ptb.as_native_tx_builder(), args)
-    };
-
     let tx = IdentityMoveCallsAdapter::execute_borrow(
       identity_ref,
       controller_cap_ref,
       proposal_id,
       object_data_list,
-      intent_adapter
-        .expect("BorrowActionWithIntent makes sure intent_fn is there"),
+      borrow_action.0.intent_fn.expect("BorrowActionWithIntent makes sure intent_fn is there"),
       client.package_id(),
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;

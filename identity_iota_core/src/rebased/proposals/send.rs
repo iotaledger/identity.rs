@@ -116,7 +116,7 @@ impl ProposalT for Proposal<SendAction> {
         }
         object_and_type_list
       };
-      IdentityMoveCallsAdapter::identity::create_and_execute_send(
+      IdentityMoveCallsAdapter::create_and_execute_send(
         identity_ref,
         controller_cap_ref,
         action.0,
@@ -125,7 +125,7 @@ impl ProposalT for Proposal<SendAction> {
         client.package_id(),
       )
     } else {
-      IdentityMoveCallsAdapter::identity::propose_send(
+      IdentityMoveCallsAdapter::propose_send(
         identity_ref,
         controller_cap_ref,
         action.0,

@@ -10,7 +10,6 @@ use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
 use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockResponseT;
-use identity_iota_interaction::TransactionBuilderT;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::migration::Proposal;
@@ -39,7 +38,7 @@ use super::UserDrivenTx;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-      use iota_interaction_ts::NativeTsCodeBindingWrapper as Ptb;
+      use iota_interaction_ts::NativeTsTransactionBuilderBindingWrapper as Ptb;
       /// Instances of ControllerIntentFnT can be used as user-provided function to describe how
       /// a borrowed identity's controller capability will be used.
       pub trait ControllerIntentFnT: FnOnce(&mut Ptb, &Argument) {}
@@ -62,7 +61,7 @@ cfg_if::cfg_if! {
 /// Borrow an [`OnChainIdentity`]'s controller capability to exert control on
 /// a sub-owned identity.
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ControllerExecution<F = IntentFn> {
+pub struct ControllerExecution<F = ControllerIntentFn> {
   controller_cap: ObjectID,
   identity: IotaAddress,
   #[serde(skip, default = "Option::default")]
@@ -189,7 +188,7 @@ where
         })
         .ok_or_else(|| Error::ObjectLookup(format!("object {} doesn't exist", action.controller_cap)))?;
 
-      IdentityMoveCallsAdapter::identity::create_and_execute_controller_execution(
+      IdentityMoveCallsAdapter::create_and_execute_controller_execution(
         identity_ref,
         controller_cap_ref,
         expiration,
@@ -198,7 +197,7 @@ where
         client.package_id(),
       )
     } else {
-      IdentityMoveCallsAdapter::identity::propose_controller_execution(
+      IdentityMoveCallsAdapter::propose_controller_execution(
         identity_ref,
         controller_cap_ref,
         action.controller_cap,
@@ -310,18 +309,12 @@ where
       })
       .ok_or_else(|| Error::ObjectLookup(format!("object {borrowing_cap_id} doesn't exist")))?;
 
-    let intent_adapter = move |ptb: &mut dyn TransactionBuilderT<Error = AdapterError, NativeTxBuilder = Ptb>,
-                               arg: &Argument| {
-      (action.0.intent_fn)(ptb.as_native_tx_builder(), arg)
-    };
-
     let tx = IdentityMoveCallsAdapter::execute_controller_execution(
       identity_ref,
       controller_cap_ref,
       proposal_id,
       borrowing_controller_cap_ref,
-      action.intent_fn
-        .expect("BorrowActionWithIntent makes sure intent_fn is present"),
+      action.0.intent_fn.expect("BorrowActionWithIntent makes sure intent_fn is present"),
       client.package_id(),
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;

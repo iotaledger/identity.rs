@@ -16,6 +16,7 @@ use std::ops::DerefMut;
 cfg_if::cfg_if! {
   if #[cfg(not(target_arch = "wasm32"))] {
     use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
+    use crate::rebased::transaction::Transaction;
   }
 }
 use crate::iota_interaction_adapter::AdapterError;
@@ -59,8 +60,19 @@ use crate::rebased::migration::Proposal;
 use crate::rebased::Error;
 use identity_iota_interaction::MoveType;
 
+cfg_if::cfg_if! {
+  if #[cfg(target_arch = "wasm32")] {
+    /// The internally used [`Transaction`] resulting from a proposal
+    pub trait ResultingTransactionT: TransactionInternal {}
+    impl<T> ResultingTransactionT for T where T: TransactionInternal {}
+  } else {
+    /// The [`Transaction`] resulting from a proposal
+    pub trait ResultingTransactionT: Transaction {}
+    impl<T> ResultingTransactionT for T where T: Transaction {}
+  }
+}
+
 /// Interface that allows the creation and execution of an [`OnChainIdentity`]'s [`Proposal`]s.
-#[async_trait]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait ProposalT: Sized {
@@ -77,7 +89,7 @@ pub trait ProposalT: Sized {
     expiration: Option<u64>,
     identity: &'i mut OnChainIdentity,
     client: &IdentityClient<S>,
-  ) -> Result<impl Transaction<Output = ProposalResult<Self>>, Error>
+  ) -> Result<impl ResultingTransactionT<Output = ProposalResult<Self>>, Error>
   where
     S: Signer<IotaKeySignature> + Sync;
 
@@ -154,7 +166,7 @@ impl<'i, A> ProposalBuilder<'i, A> {
   pub async fn finish<'c, S>(
     self,
     client: &'c IdentityClient<S>,
-  ) -> Result<impl Transaction<Output = ProposalResult<Proposal<A>>> + use<'i, 'c, S, A>, Error>
+  ) -> Result<impl ResultingTransactionT<Output = ProposalResult<Proposal<A>>> + use<'i, 'c, S, A>, Error>
   where
     Proposal<A>: ProposalT<Action = A>,
     S: Signer<IotaKeySignature> + Sync,

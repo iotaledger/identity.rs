@@ -14,8 +14,8 @@ use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::base_types::SequenceNumber;
 use identity_iota_interaction::types::transaction::Argument;
 use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::BorrowIntentFnT;
-use identity_iota_interaction::ControllerIntentFnT;
+use identity_iota_interaction::BorrowIntentFnInternalT;
+use identity_iota_interaction::ControllerIntentFnInternalT;
 use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::MoveType;
 use identity_iota_interaction::ProgrammableTransactionBcs;
@@ -36,7 +36,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     todo!()
   }
 
-  fn execute_borrow<F: BorrowIntentFnT<Self::Error, Self::NativeTxBuilder>>(
+  fn execute_borrow<F: BorrowIntentFnInternalT<Self::NativeTxBuilder>>(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,
@@ -46,6 +46,15 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
     todo!()
   }
+
+  fn create_and_execute_borrow<F: BorrowIntentFnInternalT<Self::NativeTxBuilder>>(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    objects: Vec<IotaObjectData>,
+    intent_fn: F,
+    expiration: Option<u64>,
+    package_id: ObjectID,
+  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> { todo!() }
 
   fn propose_config_change<I1, I2>(
     identity: OwnedObjectRef,
@@ -83,14 +92,29 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     todo!()
   }
 
-  fn execute_controller_execution<F: ControllerIntentFnT<Self::Error, Self::NativeTxBuilder>>(
+  fn execute_controller_execution<F: ControllerIntentFnInternalT<Self::NativeTxBuilder>>(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,
     borrowing_controller_cap_ref: ObjectRef,
     intent_fn: F,
     package: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, Self::Error> {
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>
+  {
+    todo!()
+  }
+
+  fn create_and_execute_controller_execution<F>(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    expiration: Option<u64>,
+    borrowing_controller_cap_ref: ObjectRef,
+    intent_fn: F,
+    package_id: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>
+  where
+    F: ControllerIntentFnInternalT<Self::NativeTxBuilder>
+  {
     todo!()
   }
 
@@ -143,6 +167,15 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
     todo!()
   }
+
+  fn create_and_execute_send(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    transfer_map: Vec<(ObjectID, IotaAddress)>,
+    expiration: Option<u64>,
+    objects: Vec<(ObjectRef, TypeTag)>,
+    package: ObjectID,
+  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> { todo!() }
 
   fn execute_send(
     identity: OwnedObjectRef,
