@@ -23,9 +23,11 @@ members = [
   "identity_ecdsa_verifier",
   "identity_eddsa_verifier",
   "examples",
+  "identity_iota_interaction",
+  "bindings/wasm/iota_interaction_ts",
 ]
 
-exclude = ["bindings/wasm", "bindings/grpc"]
+exclude = ["bindings/wasm/identity_wasm", "bindings/grpc"]
 
 [workspace.dependencies]
 bls12_381_plus = { version = "0.8.17" }
@@ -38,3 +40,11 @@ zkryptium = { version = "0.2.2", default-features = false, features = ["bbsplus"
 
 [workspace.lints.clippy]
 result_large_err = "allow"
+
+[profile.release.package.iota_interaction_ts]
+opt-level = 's'
+# Enabling debug for profile.release may lead to more helpfull loged call stacks.
+# TODO: Clarify if 'debug = true' facilitates error analysis via console logs.
+#       If not, remove the next line
+#       If yes, describe the helping effect in the comment above
+# debug = true

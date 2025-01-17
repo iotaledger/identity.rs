@@ -1,16 +1,17 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::Command;
-use iota_sdk::types::transaction::ProgrammableMoveCall;
-use iota_sdk::types::transaction::ProgrammableTransaction;
-use move_core_types::ident_str;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use identity_iota_interaction::types::transaction::Command;
+use identity_iota_interaction::types::transaction::ProgrammableMoveCall;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
+use identity_iota_interaction::ident_str;
 use serde::Serialize;
 
-use crate::rebased::utils::MoveType;
+use identity_iota_interaction::MoveType;
 use crate::rebased::Error;
+use super::try_to_argument;
 
 pub(crate) fn new<T: Serialize + MoveType>(
   inner: T,
@@ -20,7 +21,7 @@ pub(crate) fn new<T: Serialize + MoveType>(
   package: ObjectID,
 ) -> Result<ProgrammableTransaction, Error> {
   let mut ptb = ProgrammableTransactionBuilder::new();
-  let inner = inner.try_to_argument(&mut ptb, Some(package))?;
+  let inner = try_to_argument(&inner, &mut ptb, package)?;
   let mutable = ptb.pure(mutable).map_err(|e| Error::InvalidArgument(e.to_string()))?;
   let transferable = ptb
     .pure(transferable)

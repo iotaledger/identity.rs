@@ -13,26 +13,41 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
+cfg_if::cfg_if! {
+  if #[cfg(not(target_arch = "wasm32"))] {
+    use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
+    use crate::rebased::transaction::Transaction;
+  }
+}
+use crate::iota_interaction_adapter::AdapterError;
+use crate::iota_interaction_adapter::AdapterNativeResponse;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
+
+use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaTransactionBlockResponseT;
+use identity_iota_interaction::OptionalSend;
+use identity_iota_interaction::ProgrammableTransactionBcs;
+
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::client::IotaKeySignature;
-use crate::rebased::iota::move_calls;
 use crate::rebased::migration::get_identity;
 use crate::rebased::transaction::ProtoTransaction;
+use crate::rebased::transaction::TransactionInternal;
+use crate::rebased::transaction::TransactionOutputInternal;
 use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
 pub use controller::*;
 pub use deactivate_did::*;
-use iota_sdk::rpc_types::IotaExecutionStatus;
-use iota_sdk::rpc_types::IotaObjectData;
-use iota_sdk::rpc_types::IotaObjectDataOptions;
-use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
-use iota_sdk::rpc_types::IotaTransactionBlockResponse;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::base_types::ObjectType;
-use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::TypeTag;
+use identity_iota_interaction::rpc_types::IotaExecutionStatus;
+use identity_iota_interaction::rpc_types::IotaObjectData;
+use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::ObjectRef;
+use identity_iota_interaction::types::base_types::ObjectType;
+use identity_iota_interaction::types::TypeTag;
 use secret_storage::Signer;
 pub use send::*;
 use serde::de::DeserializeOwned;
@@ -42,18 +57,31 @@ pub use upgrade::*;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::migration::Proposal;
-use crate::rebased::transaction::Transaction;
-use crate::rebased::transaction::TransactionOutput;
-use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
+use identity_iota_interaction::MoveType;
+
+cfg_if::cfg_if! {
+  if #[cfg(target_arch = "wasm32")] {
+    /// The internally used [`Transaction`] resulting from a proposal
+    pub trait ResultingTransactionT: TransactionInternal {}
+    impl<T> ResultingTransactionT for T where T: TransactionInternal {}
+  } else {
+    /// The [`Transaction`] resulting from a proposal
+    pub trait ResultingTransactionT: Transaction {}
+    impl<T> ResultingTransactionT for T where T: Transaction {}
+  }
+}
 
 /// Interface that allows the creation and execution of an [`OnChainIdentity`]'s [`Proposal`]s.
-#[async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait ProposalT: Sized {
   /// The [`Proposal`] action's type.
   type Action;
   /// The output of the [`Proposal`]
   type Output;
+  /// Platform-agnostic type of the IotaTransactionBlockResponse
+  type Response: IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>;
 
   /// Creates a new [`Proposal`] with the provided action and expiration.
   async fn create<'i, S>(
@@ -61,7 +89,7 @@ pub trait ProposalT: Sized {
     expiration: Option<u64>,
     identity: &'i mut OnChainIdentity,
     client: &IdentityClient<S>,
-  ) -> Result<impl Transaction<Output = ProposalResult<Self>>, Error>
+  ) -> Result<impl ResultingTransactionT<Output = ProposalResult<Self>>, Error>
   where
     S: Signer<IotaKeySignature> + Sync;
 
@@ -74,8 +102,17 @@ pub trait ProposalT: Sized {
   where
     S: Signer<IotaKeySignature> + Sync;
 
+  #[cfg(not(target_arch = "wasm32"))]
   /// Parses the transaction's effects and returns the output of the [`Proposal`].
-  fn parse_tx_effects(tx_response: &IotaTransactionBlockResponse) -> Result<Self::Output, Error>;
+  fn parse_tx_effects(tx_response: &IotaTransactionBlockResponse) -> Result<Self::Output, Error> {
+    let adapter = IotaTransactionBlockResponseAdapter::new(tx_response.clone());
+    Self::parse_tx_effects_internal(&adapter)
+  }
+
+  /// For internal platform-agnostic usage only.
+  fn parse_tx_effects_internal(
+    tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>,
+  ) -> Result<Self::Output, Error>;
 }
 
 impl<A> Proposal<A> {
@@ -129,7 +166,7 @@ impl<'i, A> ProposalBuilder<'i, A> {
   pub async fn finish<'c, S>(
     self,
     client: &'c IdentityClient<S>,
-  ) -> Result<impl Transaction<Output = ProposalResult<Proposal<A>>> + use<'i, 'c, S, A>, Error>
+  ) -> Result<impl ResultingTransactionT<Output = ProposalResult<Proposal<A>>> + use<'i, 'c, S, A>, Error>
   where
     Proposal<A>: ProposalT<Action = A>,
     S: Signer<IotaKeySignature> + Sync,
@@ -160,24 +197,25 @@ pub enum ProposalResult<P: ProposalT> {
 #[derive(Debug)]
 pub struct CreateProposalTx<'i, A> {
   identity: &'i mut OnChainIdentity,
-  tx: ProgrammableTransaction,
+  tx: ProgrammableTransactionBcs,
   chained_execution: bool,
   _action: PhantomData<A>,
 }
 
-#[async_trait]
-impl<A> Transaction for CreateProposalTx<'_, A>
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl<A> TransactionInternal for CreateProposalTx<'_, A>
 where
   Proposal<A>: ProposalT<Action = A> + DeserializeOwned,
   A: Send,
 {
   type Output = ProposalResult<Proposal<A>>;
 
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas_internal<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<ProposalResult<Proposal<A>>>, Error>
+  ) -> Result<TransactionOutputInternal<ProposalResult<Proposal<A>>>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -188,13 +226,11 @@ where
       ..
     } = self;
     let tx_response = client.execute_transaction(tx, gas_budget).await?;
-    let tx_effects_status = tx_response
-      .effects
-      .as_ref()
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("missing transaction's effects".to_string()))?
-      .status();
+    let tx_effects_execution_status = tx_response
+      .effects_execution_status()
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("missing transaction's effects".to_string()))?;
 
-    if let IotaExecutionStatus::Failure { error } = tx_effects_status {
+    if let IotaExecutionStatus::Failure { error } = tx_effects_execution_status {
       return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
@@ -206,16 +242,14 @@ where
 
     if chained_execution {
       // The proposal has been created and executed right-away. Parse its effects.
-      Proposal::<A>::parse_tx_effects(&tx_response).map(ProposalResult::Executed)
+      Proposal::<A>::parse_tx_effects_internal(tx_response.as_ref()).map(ProposalResult::Executed)
     } else {
       // 2 objects are created, one is the Bag's Field and the other is our Proposal. Proposal is not owned by the bag,
       // but the field is.
       let proposals_bag_id = identity.multicontroller().proposals_bag_id();
       let proposal_id = tx_response
-        .effects
-        .as_ref()
+        .effects_created()
         .ok_or_else(|| Error::TransactionUnexpectedResponse("transaction had no effects".to_string()))?
-        .created()
         .iter()
         .find(|obj_ref| obj_ref.owner != proposals_bag_id)
         .expect("tx was successful")
@@ -223,7 +257,7 @@ where
 
       client.get_object_by_id(proposal_id).await.map(ProposalResult::Pending)
     }
-    .map(move |output| TransactionOutput {
+    .map(move |output| TransactionOutputInternal {
       output,
       response: tx_response,
     })
@@ -233,41 +267,41 @@ where
 /// A transaction to execute a [`Proposal`].
 #[derive(Debug)]
 pub struct ExecuteProposalTx<'i, A> {
-  tx: ProgrammableTransaction,
+  tx: ProgrammableTransactionBcs,
   identity: &'i mut OnChainIdentity,
   _action: PhantomData<A>,
 }
 
-#[async_trait]
-impl<A> Transaction for ExecuteProposalTx<'_, A>
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl<A> TransactionInternal for ExecuteProposalTx<'_, A>
 where
   Proposal<A>: ProposalT<Action = A>,
-  A: Send,
+  A: OptionalSend,
 {
   type Output = <Proposal<A> as ProposalT>::Output;
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas_internal<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<Self::Output>, Error>
+  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
     let Self { identity, tx, .. } = self;
     let tx_response = client.execute_transaction(tx, gas_budget).await?;
-    let tx_effects_status = tx_response
-      .effects
-      .as_ref()
+    let tx_effects_execution_status = tx_response
+      .effects_execution_status()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
 
-    if let IotaExecutionStatus::Failure { error } = tx_effects_status.status() {
+    if let IotaExecutionStatus::Failure { error } = tx_effects_execution_status {
       Err(Error::TransactionUnexpectedResponse(error.clone()))
     } else {
       *identity = get_identity(client, identity.id())
         .await?
         .expect("identity exists on-chain");
 
-      Proposal::<A>::parse_tx_effects(&tx_response).map(move |output| TransactionOutput {
+      Proposal::<A>::parse_tx_effects_internal(tx_response.as_ref()).map(move |output| TransactionOutputInternal {
         output,
         response: tx_response,
       })
@@ -282,25 +316,26 @@ pub struct ApproveProposalTx<'p, 'i, A> {
   identity: &'i OnChainIdentity,
 }
 
-#[async_trait]
-impl<A> Transaction for ApproveProposalTx<'_, '_, A>
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl<A> TransactionInternal for ApproveProposalTx<'_, '_, A>
 where
   Proposal<A>: ProposalT<Action = A>,
   A: MoveType + Send,
 {
   type Output = ();
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas_internal<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<Self::Output>, Error>
+  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
     let Self { proposal, identity, .. } = self;
     let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
     let controller_cap = identity.get_controller_cap(client).await?;
-    let tx = move_calls::identity::proposal::approve::<A>(
+    let tx = <IdentityMoveCallsAdapter as IdentityMoveCalls>::approve_proposal::<A>(
       identity_ref.clone(),
       controller_cap,
       proposal.id(),
@@ -308,12 +343,11 @@ where
     )?;
 
     let response = client.execute_transaction(tx, gas_budget).await?;
-    let tx_effects_status = response
-      .effects
-      .as_ref()
+    let tx_effects_execution_status = response
+      .effects_execution_status()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects".to_string()))?;
 
-    if let IotaExecutionStatus::Failure { error } = tx_effects_status.status() {
+    if let IotaExecutionStatus::Failure { error } = tx_effects_execution_status {
       return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
@@ -322,7 +356,7 @@ where
       .expect("is identity's controller");
     *proposal.votes_mut() = proposal.votes() + vp;
 
-    Ok(TransactionOutput { output: (), response })
+    Ok(TransactionOutputInternal { output: (), response })
   }
 }
 

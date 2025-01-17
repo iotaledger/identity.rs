@@ -1,12 +1,15 @@
 const path = require("path");
 const fs = require("fs");
 const fse = require("fs-extra");
-const { lintAll } = require("./lints");
+const {lintAll} = require("./lints");
 const generatePackage = require("./utils/generatePackage");
 
-const RELEASE_FOLDER = path.join(__dirname, "../web/");
-const entryFilePath = path.join(RELEASE_FOLDER, "identity_wasm.js");
+const artifact = process.argv[2];
+
+const RELEASE_FOLDER = path.join(__dirname, "..", artifact, "web");
+const entryFilePath = path.join(RELEASE_FOLDER, `${artifact}.js`);
 const entryFile = fs.readFileSync(entryFilePath).toString();
+console.log(`[build/web.js] Processing entryFile '${entryFilePath}' for artifact '${artifact}'`,)
 
 lintAll(entryFile);
 
@@ -26,8 +29,9 @@ fs.writeFileSync(
     entryFilePath,
     changedFile,
 );
+console.log(`[build/web.js] Commented out webpack workaround for '${entryFilePath}'.`,)
 
-const entryFilePathTs = path.join(RELEASE_FOLDER, "identity_wasm.d.ts");
+const entryFilePathTs = path.join(RELEASE_FOLDER, `${artifact}.d.ts`);
 const entryFileTs = fs.readFileSync(entryFilePathTs).toString();
 
 let changedFileTs = entryFileTs.concat(
@@ -43,9 +47,13 @@ fs.writeFileSync(
     entryFilePathTs,
     changedFileTs,
 );
+console.log(`[build/web.js] Created init function for '${entryFilePathTs}'. Starting generatePackage().`,)
+
 // Generate `package.json`.
 const newPackage = generatePackage({
     module: "index.js",
     types: "index.d.ts",
+    artifact,
 });
 fs.writeFileSync(path.join(RELEASE_FOLDER, "package.json"), JSON.stringify(newPackage, null, 2));
+console.log(`[build/web.js] Finished processing entryFile '${entryFilePathNode}' for artifact '${artifact}'`,)

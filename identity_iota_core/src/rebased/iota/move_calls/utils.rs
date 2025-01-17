@@ -1,19 +1,19 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rebased::utils::MoveType;
+use identity_iota_interaction::MoveType;
 use crate::rebased::Error;
-use iota_sdk::rpc_types::OwnedObjectRef;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::base_types::STD_OPTION_MODULE_NAME;
-use iota_sdk::types::object::Owner;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
-use iota_sdk::types::transaction::Argument;
-use iota_sdk::types::transaction::ObjectArg;
-use iota_sdk::types::IOTA_CLOCK_OBJECT_ID;
-use iota_sdk::types::IOTA_CLOCK_OBJECT_SHARED_VERSION;
-use iota_sdk::types::MOVE_STDLIB_PACKAGE_ID;
-use move_core_types::ident_str;
+use identity_iota_interaction::rpc_types::OwnedObjectRef;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::STD_OPTION_MODULE_NAME;
+use identity_iota_interaction::types::object::Owner;
+use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
+use identity_iota_interaction::types::transaction::Argument;
+use identity_iota_interaction::types::transaction::ObjectArg;
+use identity_iota_interaction::types::IOTA_CLOCK_OBJECT_ID;
+use identity_iota_interaction::types::IOTA_CLOCK_OBJECT_SHARED_VERSION;
+use identity_iota_interaction::types::MOVE_STDLIB_PACKAGE_ID;
+use identity_iota_interaction::ident_str;
 use serde::Serialize;
 
 /// Adds a reference to the on-chain clock to `ptb`'s arguments.

@@ -33,7 +33,7 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 [Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages:
 
-- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/bindings/wasm/) (JavaScript/TypeScript) -->
+- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/bindings/wasm/identity_wasm/) (JavaScript/TypeScript) -->
 
 ## gRPC
 
@@ -99,7 +99,7 @@ _Cargo.toml_
 Test this example using https://github.com/anko/txm: `txm README.md`
 
 !test program
-cd ../..
+cd ../../..
 mkdir tmp
 cat | sed -e 's#identity_iota = { git = "[^"]*", tag = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
 echo '[workspace]' >>tmp/Cargo.toml

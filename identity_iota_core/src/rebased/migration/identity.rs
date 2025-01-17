@@ -6,6 +6,9 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::str::FromStr;
 
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use identity_iota_interaction::IdentityMoveCalls;
+
 use crate::rebased::iota::types::Number;
 use crate::rebased::proposals::Upgrade;
 use crate::IotaDID;
@@ -15,24 +18,21 @@ use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 use async_trait::async_trait;
 use identity_core::common::Timestamp;
-use iota_sdk::rpc_types::IotaObjectData;
-use iota_sdk::rpc_types::IotaObjectDataOptions;
-use iota_sdk::rpc_types::IotaParsedData;
-use iota_sdk::rpc_types::IotaParsedMoveObject;
-use iota_sdk::rpc_types::IotaPastObjectResponse;
-use iota_sdk::rpc_types::IotaTransactionBlockEffects;
-use iota_sdk::rpc_types::IotaTransactionBlockResponseOptions;
-use iota_sdk::rpc_types::ObjectChange;
-use iota_sdk::rpc_types::OwnedObjectRef;
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::base_types::SequenceNumber;
-use iota_sdk::types::id::UID;
-use iota_sdk::types::object::Owner;
-use iota_sdk::types::TypeTag;
-use move_core_types::ident_str;
-use move_core_types::language_storage::StructTag;
+use identity_iota_interaction::ident_str;
+use identity_iota_interaction::move_types::language_storage::StructTag;
+use identity_iota_interaction::rpc_types::IotaObjectData;
+use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
+use identity_iota_interaction::rpc_types::IotaParsedData;
+use identity_iota_interaction::rpc_types::IotaParsedMoveObject;
+use identity_iota_interaction::rpc_types::IotaPastObjectResponse;
+use identity_iota_interaction::rpc_types::OwnedObjectRef;
+use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::ObjectRef;
+use identity_iota_interaction::types::id::UID;
+use identity_iota_interaction::types::object::Owner;
+use identity_iota_interaction::types::TypeTag;
+use identity_iota_interaction::IotaKeySignature;
 use secret_storage::Signer;
 use serde;
 use serde::Deserialize;
@@ -40,8 +40,6 @@ use serde::Serialize;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::client::IotaKeySignature;
-use crate::rebased::iota::move_calls;
 use crate::rebased::proposals::BorrowAction;
 use crate::rebased::proposals::ConfigChange;
 use crate::rebased::proposals::ControllerExecution;
@@ -49,10 +47,12 @@ use crate::rebased::proposals::DeactivateDid;
 use crate::rebased::proposals::ProposalBuilder;
 use crate::rebased::proposals::SendAction;
 use crate::rebased::proposals::UpdateDidDocument;
-use crate::rebased::transaction::Transaction;
-use crate::rebased::transaction::TransactionOutput;
-use crate::rebased::utils::MoveType;
+use crate::rebased::rebased_err;
+use crate::rebased::transaction::TransactionInternal;
+use crate::rebased::transaction::TransactionOutputInternal;
 use crate::rebased::Error;
+use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::MoveType;
 
 use super::Multicontroller;
 use super::UnmigratedAlias;
@@ -226,7 +226,7 @@ impl OnChainIdentity {
     } else {
       // no version given, this version will be included in history
       let version = identity_ref.version();
-      let response = get_past_object(client, object_id, version).await?;
+      let response = client.get_past_object(object_id, version).await?;
       let latest_version = if let IotaPastObjectResponse::VersionFound(response_value) = response {
         response_value
       } else {
@@ -265,86 +265,11 @@ pub fn has_previous_version(history_item: &IotaObjectData) -> Result<bool, Error
   }
 }
 
-async fn get_past_object(
-  client: &IdentityClientReadOnly,
-  object_id: ObjectID,
-  version: SequenceNumber,
-) -> Result<IotaPastObjectResponse, Error> {
-  client
-    .read_api()
-    .try_get_parsed_past_object(object_id, version, IotaObjectDataOptions::full_content())
-    .await
-    .map_err(|err| {
-      Error::InvalidIdentityHistory(format!("could not look up object {object_id} version {version}; {err}"))
-    })
-}
-
 async fn get_previous_version(
   client: &IdentityClientReadOnly,
   iod: IotaObjectData,
 ) -> Result<Option<IotaObjectData>, Error> {
-  // try to get digest of previous tx
-  // if we requested the prev tx and it isn't returned, this should be the oldest state
-  let prev_tx_digest = if let Some(value) = iod.previous_transaction {
-    value
-  } else {
-    return Ok(None);
-  };
-
-  // resolve previous tx
-  let prev_tx_response = client
-    .read_api()
-    .get_transaction_with_options(
-      prev_tx_digest,
-      IotaTransactionBlockResponseOptions::new().with_object_changes(),
-    )
-    .await
-    .map_err(|err| {
-      Error::InvalidIdentityHistory(format!("could not get previous transaction {prev_tx_digest}; {err}"))
-    })?;
-
-  // check for updated/created changes
-  let (created, other_changes): (Vec<ObjectChange>, _) = prev_tx_response
-    .clone()
-    .object_changes
-    .ok_or_else(|| {
-      Error::InvalidIdentityHistory(format!(
-        "could not find object changes for object {} in transaction {prev_tx_digest}",
-        iod.object_id
-      ))
-    })?
-    .into_iter()
-    .filter(|elem| iod.object_id.eq(&elem.object_id()))
-    .partition(|elem| matches!(elem, ObjectChange::Created { .. }));
-
-  // previous tx contain create tx, so there is no previous version
-  if created.len() == 1 {
-    return Ok(None);
-  }
-
-  let mut previous_versions: Vec<SequenceNumber> = other_changes
-    .iter()
-    .filter_map(|elem| match elem {
-      ObjectChange::Mutated { previous_version, .. } => Some(*previous_version),
-      _ => None,
-    })
-    .collect();
-
-  previous_versions.sort();
-
-  let earliest_previous = if let Some(value) = previous_versions.first() {
-    value
-  } else {
-    return Ok(None); // no mutations in prev tx, so no more versions can be found
-  };
-
-  let past_obj_response = get_past_object(client, iod.object_id, *earliest_previous).await?;
-  match past_obj_response {
-    IotaPastObjectResponse::VersionFound(value) => Ok(Some(value)),
-    _ => Err(Error::InvalidIdentityHistory(format!(
-      "could not find previous version, past object response: {past_obj_response:?}"
-    ))),
-  }
+  client.get_previous_version(iod).await.map_err(rebased_err)
 }
 
 /// Returns the [`OnChainIdentity`] having ID `object_id`, if it exists.
@@ -517,14 +442,15 @@ impl MoveType for OnChainIdentity {
 #[derive(Debug)]
 pub struct CreateIdentityTx(IdentityBuilder);
 
-#[async_trait]
-impl Transaction for CreateIdentityTx {
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl TransactionInternal for CreateIdentityTx {
   type Output = OnChainIdentity;
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas_internal<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<Self::Output>, Error>
+  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -537,7 +463,7 @@ impl Transaction for CreateIdentityTx {
       .pack(StateMetadataEncoding::default())
       .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
     let programmable_transaction = if controllers.is_empty() {
-      move_calls::identity::new(&did_doc, client.package_id())?
+      IdentityMoveCallsAdapter::new_identity(&did_doc, client.package_id())?
     } else {
       let threshold = match threshold {
         Some(t) => t,
@@ -551,19 +477,14 @@ impl Transaction for CreateIdentityTx {
           ))
         }
       };
-      move_calls::identity::new_with_controllers(&did_doc, controllers, threshold, client.package_id())?
+      IdentityMoveCallsAdapter::new_with_controllers(&did_doc, controllers, threshold, client.package_id())?
     };
 
     let response = client.execute_transaction(programmable_transaction, gas_budget).await?;
 
-    let created = match response.clone().effects {
-      Some(IotaTransactionBlockEffects::V1(effects)) => effects.created,
-      _ => {
-        return Err(Error::TransactionUnexpectedResponse(format!(
-          "could not find effects in transaction response: {response:?}"
-        )));
-      }
-    };
+    let created = response.effects_created().ok_or_else(|| {
+      Error::TransactionUnexpectedResponse("could not find effects_created in transaction".to_string())
+    })?;
     let new_identities: Vec<OwnedObjectRef> = created
       .into_iter()
       .filter(|elem| {
@@ -579,7 +500,8 @@ impl Transaction for CreateIdentityTx {
       [value] => value.object_id(),
       _ => {
         return Err(Error::TransactionUnexpectedResponse(format!(
-          "could not find new identity in response: {response:?}"
+          "could not find new identity in response: {}",
+          response.to_string()
         )));
       }
     };
@@ -587,7 +509,7 @@ impl Transaction for CreateIdentityTx {
     get_identity(client, new_identity_id)
       .await
       .and_then(|identity| identity.ok_or_else(|| Error::ObjectLookup(new_identity_id.to_string())))
-      .map(move |identity| TransactionOutput {
+      .map(move |identity| TransactionOutputInternal {
         output: identity,
         response,
       })

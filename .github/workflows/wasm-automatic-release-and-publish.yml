@@ -14,7 +14,7 @@ jobs:
     # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
     uses: iotaledger/identity.rs/.github/workflows/shared-release.yml@main
     with:
-      changelog-config-path: ./bindings/wasm/.github_changelog_generator
+      changelog-config-path: ./bindings/wasm/identity_wasm/.github_changelog_generator
       pre-release-tag-regex: ^wasm-v[0-9]+\.[0-9]+\.[0-9]+-(?<pre_release>\w+)\.\d+$
       main-release-tag-regex: ^wasm-v[0-9]+\.[0-9]+\.[0-9]+$
       create-github-release: false

@@ -2,28 +2,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use iota_sdk::rpc_types::IotaExecutionStatus;
-use iota_sdk::rpc_types::IotaObjectDataOptions;
-use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::id::UID;
-use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::TypeTag;
-use iota_sdk::types::STARDUST_PACKAGE_ID;
+use identity_iota_interaction::rpc_types::IotaExecutionStatus;
+use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
+use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::id::UID;
+use identity_iota_interaction::types::TypeTag;
+use identity_iota_interaction::types::STARDUST_PACKAGE_ID;
 use secret_storage::Signer;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::iota_interaction_adapter::MigrationMoveCallsAdapter;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::client::IotaKeySignature;
-use crate::rebased::iota::move_calls;
-use crate::rebased::transaction::Transaction;
-use crate::rebased::transaction::TransactionOutput;
-use crate::rebased::utils::MoveType;
+use crate::rebased::transaction::TransactionInternal;
+use crate::rebased::transaction::TransactionOutputInternal;
 use crate::rebased::Error;
+use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::MigrationMoveCalls;
+use identity_iota_interaction::MoveType;
+use identity_iota_interaction::ProgrammableTransactionBcs;
 
 use super::get_identity;
 use super::Identity;
@@ -69,13 +70,27 @@ pub async fn get_alias(client: &IdentityClientReadOnly, object_id: ObjectID) -> 
   }
 }
 
+cfg_if::cfg_if! {
+  if #[cfg(target_arch = "wasm32")] {
+    // Add wasm32 compatible migrate() function wrapper here
+  } else {
+    use crate::rebased::transaction::Transaction;
+    impl UnmigratedAlias {
+      /// Returns a transaction that when executed migrates a legacy `Alias`
+      /// containing a DID Document to a new [`OnChainIdentity`].
+      pub async fn migrate(self, client: &IdentityClientReadOnly)
+      -> Result<impl Transaction<Output = OnChainIdentity>, Error> {
+        self.migrate_internal(client).await
+      }
+    }
+  }
+}
+
 impl UnmigratedAlias {
-  /// Returns a transaction that when executed migrates a legacy `Alias`
-  /// containing a DID Document to a new [`OnChainIdentity`].
-  pub async fn migrate(
+  pub(crate) async fn migrate_internal(
     self,
     client: &IdentityClientReadOnly,
-  ) -> Result<impl Transaction<Output = OnChainIdentity>, Error> {
+  ) -> Result<impl TransactionInternal<Output = OnChainIdentity>, Error> {
     // Try to parse a StateMetadataDocument out of this alias.
     let identity = Identity::Legacy(self);
     let did_doc = identity.did_document(client.network())?;
@@ -125,39 +140,45 @@ impl UnmigratedAlias {
       .map(|timestamp| timestamp.to_unix() as u64 * 1000);
 
     // Build migration tx.
-    let tx =
-      move_calls::migration::migrate_did_output(alias_output_ref, created, migration_registry_ref, client.package_id())
-        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = MigrationMoveCallsAdapter::migrate_did_output(
+      alias_output_ref,
+      created,
+      migration_registry_ref,
+      client.package_id(),
+    )
+    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(MigrateLegacyAliasTx(tx))
   }
 }
 
 #[derive(Debug)]
-struct MigrateLegacyAliasTx(ProgrammableTransaction);
+struct MigrateLegacyAliasTx(ProgrammableTransactionBcs);
 
-#[async_trait]
-impl Transaction for MigrateLegacyAliasTx {
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl TransactionInternal for MigrateLegacyAliasTx {
   type Output = OnChainIdentity;
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas_internal<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<Self::Output>, Error>
+  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
-    let response = self.0.execute_with_opt_gas(gas_budget, client).await?.response;
+    let response = self.0.execute_with_opt_gas_internal(gas_budget, client).await?.response;
     // Make sure the tx was successful.
-    let effects = response
-      .effects
-      .as_ref()
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("transaction had no effects".to_string()))?;
-    if let IotaExecutionStatus::Failure { error } = effects.status() {
+    let effects_execution_status = response
+      .effects_execution_status()
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("transaction had no effects_execution_status".to_string()))?;
+    if let IotaExecutionStatus::Failure { error } = effects_execution_status {
       Err(Error::TransactionUnexpectedResponse(error.to_string()))
     } else {
-      let identity_ref = effects
-        .created()
+      let effects_created = response
+        .effects_created()
+        .ok_or_else(|| Error::TransactionUnexpectedResponse("transaction had no effects_created".to_string()))?;
+      let identity_ref = effects_created
         .iter()
         .find(|obj_ref| obj_ref.owner.is_shared())
         .ok_or_else(|| {
@@ -166,7 +187,7 @@ impl Transaction for MigrateLegacyAliasTx {
 
       get_identity(client, identity_ref.object_id())
         .await
-        .map(move |identity| TransactionOutput {
+        .map(move |identity| TransactionOutputInternal {
           output: identity.expect("identity exists on-chain"),
           response,
         })

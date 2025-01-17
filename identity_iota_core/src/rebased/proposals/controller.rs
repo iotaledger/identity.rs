@@ -3,24 +3,28 @@
 
 use std::marker::PhantomData;
 
+use crate::iota_interaction_adapter::AdapterError;
+use crate::iota_interaction_adapter::AdapterNativeResponse;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
+use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaTransactionBlockResponseT;
+
 use crate::rebased::client::IdentityClient;
-use crate::rebased::client::IotaKeySignature;
-use crate::rebased::iota::move_calls;
 use crate::rebased::migration::Proposal;
 use crate::rebased::transaction::ProtoTransaction;
-use crate::rebased::transaction::Transaction;
-use crate::rebased::transaction::TransactionOutput;
-use crate::rebased::utils::MoveType;
+use crate::rebased::transaction::TransactionInternal;
+use crate::rebased::transaction::TransactionOutputInternal;
 use crate::rebased::Error;
 use async_trait::async_trait;
-use iota_sdk::rpc_types::IotaObjectRef;
-use iota_sdk::rpc_types::IotaTransactionBlockResponse;
-use iota_sdk::rpc_types::OwnedObjectRef;
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
-use iota_sdk::types::transaction::Argument;
-use iota_sdk::types::TypeTag;
+use identity_iota_interaction::rpc_types::IotaObjectRef;
+use identity_iota_interaction::rpc_types::OwnedObjectRef;
+use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::transaction::Argument;
+use identity_iota_interaction::types::TypeTag;
+use identity_iota_interaction::MoveType;
 use secret_storage::Signer;
 use serde::Deserialize;
 use serde::Serialize;
@@ -32,12 +36,32 @@ use super::ProposalBuilder;
 use super::ProposalT;
 use super::UserDrivenTx;
 
-pub(crate) type IntentFn = Box<dyn FnOnce(&mut Ptb, &Argument) + Send>;
+cfg_if::cfg_if! {
+    if #[cfg(target_arch = "wasm32")] {
+      use iota_interaction_ts::NativeTsTransactionBuilderBindingWrapper as Ptb;
+      /// Instances of ControllerIntentFnT can be used as user-provided function to describe how
+      /// a borrowed identity's controller capability will be used.
+      pub trait ControllerIntentFnT: FnOnce(&mut Ptb, &Argument) {}
+      impl<T> ControllerIntentFnT for T where T: FnOnce(&mut Ptb, &Argument) {}
+      #[allow(unreachable_pub)]
+      /// Boxed dynamic trait object of {@link ControllerIntentFnT}
+      pub type ControllerIntentFn = Box<dyn ControllerIntentFnT + Send>;
+    } else {
+      use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
+      /// Instances of ControllerIntentFnT can be used as user-provided function to describe how
+      /// a borrowed identity's controller capability will be used.
+      pub trait ControllerIntentFnT: FnOnce(&mut Ptb, &Argument) {}
+      impl<T> ControllerIntentFnT for T where T: FnOnce(&mut Ptb, &Argument) {}
+      #[allow(unreachable_pub)]
+      /// Boxed dynamic trait object of {@link ControllerIntentFnT}
+      pub type ControllerIntentFn = Box<dyn ControllerIntentFnT + Send>;
+    }
+}
 
 /// Borrow an [`OnChainIdentity`]'s controller capability to exert control on
 /// a sub-owned identity.
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ControllerExecution<F = IntentFn> {
+pub struct ControllerExecution<F = ControllerIntentFn> {
   controller_cap: ObjectID,
   identity: IotaAddress,
   #[serde(skip, default = "Option::default")]
@@ -52,7 +76,7 @@ where
 
 impl<F> ControllerExecutionWithIntent<F>
 where
-  F: FnOnce(&mut Ptb, &Argument),
+  F: ControllerIntentFnT,
 {
   fn new(action: ControllerExecution<F>) -> Self {
     debug_assert!(action.intent_fn.is_some());
@@ -120,13 +144,15 @@ impl MoveType for ControllerExecution {
   }
 }
 
-#[async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl<F> ProposalT for Proposal<ControllerExecution<F>>
 where
-  F: FnOnce(&mut Ptb, &Argument) + Send,
+  F: ControllerIntentFnT + Send,
 {
   type Action = ControllerExecution<F>;
   type Output = ();
+  type Response = IotaTransactionBlockResponseAdapter;
 
   async fn create<'i, S>(
     action: Self::Action,
@@ -162,7 +188,7 @@ where
         })
         .ok_or_else(|| Error::ObjectLookup(format!("object {} doesn't exist", action.controller_cap)))?;
 
-      move_calls::identity::create_and_execute_controller_execution(
+      IdentityMoveCallsAdapter::create_and_execute_controller_execution(
         identity_ref,
         controller_cap_ref,
         expiration,
@@ -171,7 +197,7 @@ where
         client.package_id(),
       )
     } else {
-      move_calls::identity::propose_controller_execution(
+      IdentityMoveCallsAdapter::propose_controller_execution(
         identity_ref,
         controller_cap_ref,
         action.controller_cap,
@@ -207,7 +233,9 @@ where
     })
   }
 
-  fn parse_tx_effects(_tx_response: &IotaTransactionBlockResponse) -> Result<Self::Output, Error> {
+  fn parse_tx_effects_internal(
+    _tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>,
+  ) -> Result<Self::Output, Error> {
     Ok(())
   }
 }
@@ -216,7 +244,7 @@ impl<'i, F> UserDrivenTx<'i, ControllerExecution<F>> {
   /// Defines how the borrowed assets should be used.
   pub fn with_intent<F1>(self, intent_fn: F1) -> UserDrivenTx<'i, ControllerExecutionWithIntent<F1>>
   where
-    F1: FnOnce(&mut Ptb, &Argument),
+    F1: ControllerIntentFnT,
   {
     let UserDrivenTx {
       identity,
@@ -233,25 +261,26 @@ impl<'i, F> UserDrivenTx<'i, ControllerExecution<F>> {
 }
 
 impl<'i, F> ProtoTransaction for UserDrivenTx<'i, ControllerExecution<F>> {
-  type Input = IntentFn;
-  type Tx = UserDrivenTx<'i, ControllerExecutionWithIntent<IntentFn>>;
+  type Input = ControllerIntentFn;
+  type Tx = UserDrivenTx<'i, ControllerExecutionWithIntent<ControllerIntentFn>>;
 
   fn with(self, input: Self::Input) -> Self::Tx {
     self.with_intent(input)
   }
 }
 
-#[async_trait]
-impl<F> Transaction for UserDrivenTx<'_, ControllerExecutionWithIntent<F>>
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl<F> TransactionInternal for UserDrivenTx<'_, ControllerExecutionWithIntent<F>>
 where
-  F: FnOnce(&mut Ptb, &Argument) + Send,
+  F: ControllerIntentFnT + Send,
 {
   type Output = ();
-  async fn execute_with_opt_gas<S>(
+  async fn execute_with_opt_gas_internal<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<Self::Output>, Error>
+  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
@@ -280,7 +309,7 @@ where
       })
       .ok_or_else(|| Error::ObjectLookup(format!("object {borrowing_cap_id} doesn't exist")))?;
 
-    let tx = move_calls::identity::execute_controller_execution(
+    let tx = IdentityMoveCallsAdapter::execute_controller_execution(
       identity_ref,
       controller_cap_ref,
       proposal_id,
@@ -298,7 +327,7 @@ where
       tx,
       _action: PhantomData::<ControllerExecution>,
     }
-    .execute_with_opt_gas(gas_budget, client)
+    .execute_with_opt_gas_internal(gas_budget, client)
     .await
   }
 }

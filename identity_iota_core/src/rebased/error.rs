@@ -3,13 +3,16 @@
 
 //! Errors that may occur for the rebased logic.
 
+#[cfg(target_arch = "wasm32")]
+use iota_interaction_ts::error::TsSdkError;
+
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
 pub enum Error {
   /// failed to connect to network.
   #[error("failed to connect to iota network node; {0:?}")]
-  Network(String, #[source] iota_sdk::error::Error),
+  Network(String, #[source] identity_iota_interaction::error::Error),
   /// could not lookup an object ID.
   #[error("failed to lookup an object; {0}")]
   ObjectLookup(String),
@@ -39,7 +42,7 @@ pub enum Error {
   TransactionSigningFailed(String),
   /// Could not execute transaction.
   #[error("transaction execution failed; {0}")]
-  TransactionExecutionFailed(#[from] iota_sdk::error::Error),
+  TransactionExecutionFailed(#[from] identity_iota_interaction::error::Error),
   /// Transaction yielded invalid response. This usually means that the transaction was executed but did not produce
   /// the expected result.
   #[error("transaction returned an unexpected response; {0}")]
@@ -68,4 +71,23 @@ pub enum Error {
   /// An error caused by a bcs serialization or deserialization.
   #[error("BCS error: {0}")]
   BcsError(#[from] bcs::Error),
+  /// An anyhow::error.
+  #[error("Any error: {0}")]
+  AnyError(#[from] anyhow::Error),
+  /// An error caused by a foreign function interface call.
+  #[error("FFI error: {0}")]
+  FfiError(String),
+  #[cfg(target_arch = "wasm32")]
+  /// An error originating from IOTA typescript SDK import bindings
+  #[error("TsSdkError: {0}")]
+  TsSdkError(#[from] TsSdkError),
+}
+
+/// Can be used for example like `map_err(rebased_err)` to convert other error
+///  types to identity_iota_core::rebased::Error.
+pub fn rebased_err<T>(error: T) -> Error
+where
+  Error: From<T>,
+{
+  error.into()
 }

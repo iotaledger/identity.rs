@@ -398,7 +398,7 @@ impl IotaDocument {
 mod client_document {
   use identity_core::common::Timestamp;
   use identity_did::DID;
-  use iota_sdk::rpc_types::IotaObjectData;
+  use identity_iota_interaction::rpc_types::IotaObjectData;
 
   use crate::rebased::migration::unpack_identity_data;
 

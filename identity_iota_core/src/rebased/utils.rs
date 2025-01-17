@@ -4,19 +4,13 @@
 use std::process::Output;
 
 use anyhow::Context as _;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::Argument;
-use iota_sdk::types::TypeTag;
+use identity_iota_interaction::types::base_types::ObjectID;
 use serde::Deserialize;
-use serde::Serialize;
+#[cfg(not(target_arch = "wasm32"))]
 use tokio::process::Command;
 
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::IotaClient;
-use iota_sdk::IotaClientBuilder;
-
 use crate::rebased::Error;
+use identity_iota_interaction::types::base_types::IotaAddress;
 
 const FUND_WITH_ACTIVE_ADDRESS_FUNDING_TX_BUDGET: u64 = 5_000_000;
 const FUND_WITH_ACTIVE_ADDRESS_FUNDING_VALUE: u64 = 500_000_000;
@@ -28,14 +22,20 @@ struct CoinOutput {
   nanos_balance: u64,
 }
 
-/// Builds an `IOTA` client for the given network.
-pub async fn get_client(network: &str) -> Result<IotaClient, Error> {
-  let client = IotaClientBuilder::default()
-    .build(network)
-    .await
-    .map_err(|err| Error::Network(format!("failed to connect to {network}"), err))?;
+cfg_if::cfg_if! {
+    if #[cfg(not(target_arch = "wasm32"))] {
+      use iota_sdk::{IotaClientBuilder, IotaClient};
 
-  Ok(client)
+      /// Builds an `IOTA` client for the given network.
+      pub async fn get_client(network: &str) -> Result<IotaClient, Error> {
+        let client = IotaClientBuilder::default()
+          .build(network)
+          .await
+          .map_err(|err| Error::Network(format!("failed to connect to {network}"), err))?;
+
+        Ok(client)
+      }
+  }
 }
 
 fn unpack_command_output(output: &Output, task: &str) -> anyhow::Result<String> {
@@ -54,6 +54,7 @@ fn unpack_command_output(output: &Output, task: &str) -> anyhow::Result<String> 
 /// For that the env variable `IOTA_IDENTITY_FUND_WITH_ACTIVE_ADDRESS` must be set to `true`.
 /// Notice, that this is a setting mostly intended for internal test use and must be used with care.
 /// For details refer to to `identity_iota_core`'s README.md.
+#[cfg(not(target_arch = "wasm32"))]
 pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
   let fund_with_active_address = std::env::var("IOTA_IDENTITY_FUND_WITH_ACTIVE_ADDRESS")
     .map(|v| !v.is_empty() && v.to_lowercase() == "true")
@@ -107,67 +108,4 @@ pub async fn request_funds(address: &IotaAddress) -> anyhow::Result<()> {
   }
 
   Ok(())
-}
-
-/// Trait for types that can be converted to a Move type.
-pub trait MoveType<T: Serialize = Self>: Serialize {
-  /// Returns the Move type for this type.
-  fn move_type(package: ObjectID) -> TypeTag;
-
-  /// Tries to convert this type to a Move argument.
-  fn try_to_argument(
-    &self,
-    ptb: &mut ProgrammableTransactionBuilder,
-    _package: Option<ObjectID>,
-  ) -> Result<Argument, Error> {
-    ptb.pure(self).map_err(|e| Error::InvalidArgument(e.to_string()))
-  }
-}
-
-impl MoveType for u8 {
-  fn move_type(_package: ObjectID) -> TypeTag {
-    TypeTag::U8
-  }
-}
-
-impl MoveType for u16 {
-  fn move_type(_package: ObjectID) -> TypeTag {
-    TypeTag::U16
-  }
-}
-
-impl MoveType for u32 {
-  fn move_type(_package: ObjectID) -> TypeTag {
-    TypeTag::U32
-  }
-}
-
-impl MoveType for u64 {
-  fn move_type(_package: ObjectID) -> TypeTag {
-    TypeTag::U64
-  }
-}
-
-impl MoveType for u128 {
-  fn move_type(_package: ObjectID) -> TypeTag {
-    TypeTag::U128
-  }
-}
-
-impl MoveType for bool {
-  fn move_type(_package: ObjectID) -> TypeTag {
-    TypeTag::Bool
-  }
-}
-
-impl MoveType for IotaAddress {
-  fn move_type(_package: ObjectID) -> TypeTag {
-    TypeTag::Address
-  }
-}
-
-impl<T: MoveType> MoveType for Vec<T> {
-  fn move_type(package: ObjectID) -> TypeTag {
-    TypeTag::Vector(Box::new(T::move_type(package)))
-  }
 }

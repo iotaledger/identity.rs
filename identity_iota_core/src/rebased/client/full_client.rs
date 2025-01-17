@@ -8,60 +8,42 @@ use crate::IotaDocument;
 use async_trait::async_trait;
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::ToFromBytes;
+use identity_iota_interaction::move_types::language_storage::StructTag;
+use identity_iota_interaction::rpc_types::IotaObjectData;
+use identity_iota_interaction::rpc_types::IotaObjectDataFilter;
+use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
+use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_verification::jwk::Jwk;
-use iota_sdk::rpc_types::Coin;
-use iota_sdk::rpc_types::IotaExecutionStatus;
-use iota_sdk::rpc_types::IotaObjectData;
-use iota_sdk::rpc_types::IotaObjectDataFilter;
-use iota_sdk::rpc_types::IotaObjectResponseQuery;
-use iota_sdk::rpc_types::IotaTransactionBlockEffects;
-use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
-use iota_sdk::rpc_types::IotaTransactionBlockEffectsV1;
-use iota_sdk::rpc_types::IotaTransactionBlockResponse;
-use iota_sdk::rpc_types::IotaTransactionBlockResponseOptions;
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::crypto::DefaultHash;
-use iota_sdk::types::crypto::Signature;
-use iota_sdk::types::crypto::SignatureScheme;
-use iota_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
-use iota_sdk::types::transaction::ProgrammableTransaction;
-use iota_sdk::types::transaction::Transaction;
-use iota_sdk::types::transaction::TransactionData;
-use move_core_types::language_storage::StructTag;
-use secret_storage::SignatureScheme as SignatureSchemeT;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use shared_crypto::intent::Intent;
-use shared_crypto::intent::IntentMessage;
 
+use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdaptedTraitObj;
 use crate::rebased::assets::AuthenticatedAssetBuilder;
 use crate::rebased::migration::Identity;
 use crate::rebased::migration::IdentityBuilder;
-use crate::rebased::transaction::Transaction as TransactionT;
-use crate::rebased::transaction::TransactionOutput;
-use crate::rebased::utils::MoveType;
+use crate::rebased::rebased_err;
 use crate::rebased::Error;
+use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::MoveType;
+use identity_iota_interaction::ProgrammableTransactionBcs;
+
+use crate::rebased::transaction::TransactionOutputInternal;
+cfg_if::cfg_if! {
+  if #[cfg(target_arch = "wasm32")] {
+    use crate::rebased::transaction::TransactionInternal as TransactionT;
+    type TransactionOutputT<T> = TransactionOutputInternal<T>;
+  } else {
+    use crate::rebased::transaction::TransactionInternal;
+    use crate::rebased::transaction::Transaction as TransactionT;
+    use crate::rebased::transaction::TransactionOutput as TransactionOutputT;
+  }
+}
 
 use super::get_object_id_from_did;
 use super::IdentityClientReadOnly;
-
-/// The minimum balance required to execute a transaction.
-pub(crate) const MINIMUM_BALANCE: u64 = 1_000_000_000;
-
-/// A signature which is used to sign transactions.
-pub struct IotaKeySignature {
-  /// The public key of the signature.
-  pub public_key: Vec<u8>,
-  /// The signature of the transaction.
-  pub signature: Vec<u8>,
-}
-
-impl SignatureSchemeT for IotaKeySignature {
-  type PublicKey = Vec<u8>;
-  type Signature = Vec<u8>;
-}
 
 /// Mirrored types from identity_storage::KeyId
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
@@ -131,69 +113,28 @@ where
     })
   }
 
-  async fn sign_transaction_data(&self, tx_data: &TransactionData) -> Result<Signature, Error> {
-    use fastcrypto::hash::HashFunction;
-    let sender_public_key = self.sender_public_key();
-
-    let intent = Intent::iota_transaction();
-    let intent_msg = IntentMessage::new(intent, tx_data);
-    let mut hasher = DefaultHash::default();
-    let bcs_bytes = bcs::to_bytes(&intent_msg).map_err(|err| {
-      Error::TransactionSigningFailed(format!("could not serialize transaction message to bcs; {err}"))
-    })?;
-    hasher.update(bcs_bytes);
-    let digest = hasher.finalize().digest;
-
-    let raw_signature = self
-      .signer
-      .sign(&digest)
-      .await
-      .map_err(|err| Error::TransactionSigningFailed(format!("could not sign transaction message; {err}")))?;
-
-    let binding = [
-      [SignatureScheme::ED25519.flag()].as_slice(),
-      &raw_signature,
-      sender_public_key,
-    ]
-    .concat();
-    let signature_bytes: &[u8] = binding.as_slice();
-
-    Signature::from_bytes(signature_bytes)
-      .map_err(|err| Error::TransactionSigningFailed(format!("could not parse signature to IOTA signature; {err}")))
-  }
-
   pub(crate) async fn execute_transaction(
     &self,
-    tx: ProgrammableTransaction,
+    tx_bcs: ProgrammableTransactionBcs,
     gas_budget: Option<u64>,
-  ) -> Result<IotaTransactionBlockResponse, Error> {
-    let gas_budget = match gas_budget {
-      Some(gas) => gas,
-      None => self.default_gas_budget(&tx).await?,
-    };
-    let tx_data = self.get_transaction_data(tx, gas_budget).await?;
-    let signature = self.sign_transaction_data(&tx_data).await?;
-
-    // execute tx
-    let response = self
-      .quorum_driver_api()
-      .execute_transaction_block(
-        Transaction::from_data(tx_data, vec![signature]),
-        IotaTransactionBlockResponseOptions::full_content(),
-        Some(ExecuteTransactionRequestType::WaitForLocalExecution),
+  ) -> Result<IotaTransactionBlockResponseAdaptedTraitObj, Error> {
+    // This code looks like we would call execute_transaction() on
+    // self.read_client (which is an IdentityClientReadOnly).
+    // Actually we call execute_transaction() on self.read_client.iota_client
+    // which is an IotaClientAdapter instance now, provided via the Deref trait.
+    // TODO: Find a more transparent way to reference the
+    //       IotaClientAdapter for readonly.
+    self
+      .read_client
+      .execute_transaction(
+        self.sender_address(),
+        self.sender_public_key(),
+        tx_bcs,
+        gas_budget,
+        self.signer(),
       )
       .await
-      .map_err(Error::TransactionExecutionFailed)?;
-
-    if let Some(IotaTransactionBlockEffects::V1(IotaTransactionBlockEffectsV1 {
-      status: IotaExecutionStatus::Failure { error },
-      ..
-    })) = &response.effects
-    {
-      Err(Error::TransactionUnexpectedResponse(error.to_string()))
-    } else {
-      Ok(response)
-    }
+      .map_err(rebased_err)
   }
 }
 
@@ -224,93 +165,6 @@ impl<S> IdentityClient<S> {
     T: MoveType + Serialize + DeserializeOwned,
   {
     AuthenticatedAssetBuilder::new(content)
-  }
-
-  pub(crate) async fn default_gas_budget(&self, tx: &ProgrammableTransaction) -> Result<u64, Error> {
-    let gas_price = self
-      .read_api()
-      .get_reference_gas_price()
-      .await
-      .map_err(|e| Error::RpcError(e.to_string()))?;
-    let gas_coin = self.get_coin_for_transaction().await?;
-    let tx_data = TransactionData::new_programmable(
-      self.sender_address(),
-      vec![gas_coin.object_ref()],
-      tx.clone(),
-      50_000_000,
-      gas_price,
-    );
-    let dry_run_gas_result = self.read_api().dry_run_transaction_block(tx_data).await?.effects;
-    if dry_run_gas_result.status().is_err() {
-      let IotaExecutionStatus::Failure { error } = dry_run_gas_result.into_status() else {
-        unreachable!();
-      };
-      return Err(Error::TransactionUnexpectedResponse(error));
-    }
-    let gas_summary = dry_run_gas_result.gas_cost_summary();
-    let overhead = gas_price * 1000;
-    let net_used = gas_summary.net_gas_usage();
-    let computation = gas_summary.computation_cost;
-
-    let budget = overhead + (net_used.max(0) as u64).max(computation);
-    Ok(budget)
-  }
-
-  async fn get_coin_for_transaction(&self) -> Result<Coin, Error> {
-    const LIMIT: usize = 10;
-    let mut cursor = None;
-
-    loop {
-      let coins = self
-        .coin_read_api()
-        .get_coins(self.sender_address(), None, cursor, Some(LIMIT))
-        .await?;
-
-      let Some(coin) = coins.data.into_iter().max_by_key(|coin| coin.balance) else {
-        return Err(Error::GasIssue(format!(
-          "no coins found for address {}",
-          self.sender_address()
-        )));
-      };
-
-      if coin.balance >= MINIMUM_BALANCE {
-        return Ok(coin);
-      }
-
-      if !coins.has_next_page {
-        break;
-      }
-
-      cursor = coins.next_cursor;
-    }
-
-    Err(Error::GasIssue(format!(
-      "no coin found with minimum required balance of {} for address {}",
-      MINIMUM_BALANCE,
-      self.sender_address()
-    )))
-  }
-
-  async fn get_transaction_data(
-    &self,
-    programmable_transaction: ProgrammableTransaction,
-    gas_budget: u64,
-  ) -> Result<TransactionData, Error> {
-    let gas_price = self
-      .read_api()
-      .get_reference_gas_price()
-      .await
-      .map_err(|err| Error::GasIssue(format!("could not get gas price; {err}")))?;
-    let coin = self.get_coin_for_transaction().await?;
-    let tx_data = TransactionData::new_programmable(
-      self.sender_address(),
-      vec![coin.object_ref()],
-      programmable_transaction,
-      gas_budget,
-      gas_price,
-    );
-
-    Ok(tx_data)
   }
 
   /// Query the objects owned by the address wrapped by this client to find the object of type `tag`
@@ -422,29 +276,63 @@ pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error
 #[derive(Debug)]
 pub struct PublishDidTx(IotaDocument);
 
-#[async_trait]
-impl TransactionT for PublishDidTx {
-  type Output = IotaDocument;
-  async fn execute_with_opt_gas<S>(
+impl PublishDidTx {
+  async fn execute_publish_did_tx_with_opt_gas<S>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
-  ) -> Result<TransactionOutput<Self::Output>, Error>
+  ) -> Result<TransactionOutputInternal<IotaDocument>, Error>
   where
     S: Signer<IotaKeySignature> + Sync,
   {
-    let TransactionOutput {
+    let TransactionOutputInternal {
       output: identity,
       response,
     } = client
       .create_identity(self.0)
       .finish()
-      .execute_with_opt_gas(gas_budget, client)
+      .execute_with_opt_gas_internal(gas_budget, client)
       .await?;
 
-    Ok(TransactionOutput {
+    Ok(TransactionOutputInternal {
       output: identity.did_doc,
       response,
     })
+  }
+}
+
+// #[cfg(not(target_arch = "wasm32"))]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl TransactionT for PublishDidTx {
+  type Output = IotaDocument;
+
+  #[cfg(not(target_arch = "wasm32"))]
+  async fn execute_with_opt_gas<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<TransactionOutputT<Self::Output>, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    Ok(
+      self
+        .execute_publish_did_tx_with_opt_gas(gas_budget, client)
+        .await?
+        .into(),
+    )
+  }
+
+  #[cfg(target_arch = "wasm32")]
+  async fn execute_with_opt_gas_internal<S>(
+    self,
+    gas_budget: Option<u64>,
+    client: &IdentityClient<S>,
+  ) -> Result<TransactionOutputT<Self::Output>, Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
+    self.execute_publish_did_tx_with_opt_gas(gas_budget, client).await
   }
 }

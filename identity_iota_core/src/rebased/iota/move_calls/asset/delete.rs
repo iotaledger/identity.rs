@@ -1,15 +1,15 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use iota_sdk::types::transaction::Command;
-use iota_sdk::types::transaction::ObjectArg;
-use iota_sdk::types::transaction::ProgrammableTransaction;
-use move_core_types::ident_str;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::ObjectRef;
+use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use identity_iota_interaction::types::transaction::Command;
+use identity_iota_interaction::types::transaction::ObjectArg;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
+use identity_iota_interaction::ident_str;
 
-use crate::rebased::utils::MoveType;
+use identity_iota_interaction::MoveType;
 use crate::rebased::Error;
 
 pub(crate) fn delete<T>(asset: ObjectRef, package: ObjectID) -> Result<ProgrammableTransaction, Error>

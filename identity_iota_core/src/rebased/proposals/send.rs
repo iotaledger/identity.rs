@@ -4,20 +4,26 @@
 use std::marker::PhantomData;
 
 use async_trait::async_trait;
-use iota_sdk::rpc_types::IotaTransactionBlockResponse;
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::TypeTag;
+use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::TypeTag;
 use secret_storage::Signer;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::iota_interaction_adapter::AdapterError;
+use crate::iota_interaction_adapter::AdapterNativeResponse;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
+use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaTransactionBlockResponseT;
+use identity_iota_interaction::OptionalSync;
+
 use crate::rebased::client::IdentityClient;
-use crate::rebased::client::IotaKeySignature;
-use crate::rebased::iota::move_calls;
 use crate::rebased::migration::OnChainIdentity;
-use crate::rebased::utils::MoveType;
 use crate::rebased::Error;
+use identity_iota_interaction::MoveType;
 
 use super::CreateProposalTx;
 use super::ExecuteProposalTx;
@@ -72,10 +78,12 @@ impl ProposalBuilder<'_, SendAction> {
   }
 }
 
-#[async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl ProposalT for Proposal<SendAction> {
   type Action = SendAction;
   type Output = ();
+  type Response = IotaTransactionBlockResponseAdapter;
 
   async fn create<'i, S>(
     action: Self::Action,
@@ -84,7 +92,7 @@ impl ProposalT for Proposal<SendAction> {
     client: &IdentityClient<S>,
   ) -> Result<CreateProposalTx<'i, Self::Action>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
@@ -108,7 +116,7 @@ impl ProposalT for Proposal<SendAction> {
         }
         object_and_type_list
       };
-      move_calls::identity::create_and_execute_send(
+      IdentityMoveCallsAdapter::create_and_execute_send(
         identity_ref,
         controller_cap_ref,
         action.0,
@@ -117,7 +125,7 @@ impl ProposalT for Proposal<SendAction> {
         client.package_id(),
       )
     } else {
-      move_calls::identity::propose_send(
+      IdentityMoveCallsAdapter::propose_send(
         identity_ref,
         controller_cap_ref,
         action.0,
@@ -140,7 +148,7 @@ impl ProposalT for Proposal<SendAction> {
     client: &IdentityClient<S>,
   ) -> Result<ExecuteProposalTx<'i, Self::Action>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let proposal_id = self.id();
     let identity_ref = client
@@ -162,7 +170,7 @@ impl ProposalT for Proposal<SendAction> {
       object_and_type_list
     };
 
-    let tx = move_calls::identity::execute_send(
+    let tx = IdentityMoveCallsAdapter::execute_send(
       identity_ref,
       controller_cap_ref,
       proposal_id,
@@ -178,7 +186,9 @@ impl ProposalT for Proposal<SendAction> {
     })
   }
 
-  fn parse_tx_effects(_tx_response: &IotaTransactionBlockResponse) -> Result<Self::Output, Error> {
+  fn parse_tx_effects_internal(
+    _tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>,
+  ) -> Result<Self::Output, Error> {
     Ok(())
   }
 }

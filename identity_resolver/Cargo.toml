@@ -27,17 +27,18 @@ thiserror = { version = "1.0", default-features = false }
 version = "=1.4.0"
 path = "../identity_iota_core"
 default-features = false
-features = ["send-sync-client-ext", "iota-client"]
+features = ["iota-client"]
 optional = true
 
 [dev-dependencies]
 tokio = { version = "1.29.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [features]
-default = ["revocation-bitmap", "iota"]
+default = ["revocation-bitmap", "iota", "send-sync-client"]
 revocation-bitmap = ["identity_credential/revocation-bitmap", "identity_iota_core?/revocation-bitmap"]
 # Enables the IOTA integration for the resolver.
-iota = ["dep:identity_iota_core", "identity_iota_core/iota-client"]
+iota = ["dep:identity_iota_core"]
+send-sync-client = ["identity_iota_core?/send-sync-client-ext"]
 
 [lints]
 workspace = true

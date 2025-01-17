@@ -17,4 +17,4 @@ pub mod transaction;
 pub mod utils;
 
 pub use assets::*;
-pub use error::Error;
+pub use error::*;
