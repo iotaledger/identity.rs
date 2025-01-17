@@ -151,6 +151,16 @@ extern "C" {
     package: &str,
   ) -> Result<Uint8Array, JsValue>;
 
+  #[wasm_bindgen(js_name = "createAndExecuteBorrow", catch)]
+  async fn create_and_execute_borrow(
+    identity: WasmSharedObjectRef,
+    capability: WasmObjectRef,
+    objects: Vec<WasmIotaObjectData>,
+    intent_fn: &dyn Fn(WasmTransactionBuilder, WasmTxArgumentMap),
+    package: &str,
+    expiration: Option<u64>,
+  ) -> Result<Uint8Array, JsValue>;
+
   #[wasm_bindgen(js_name = "proposeConfigChange", catch)]
   async fn propose_config_change(
     identity: WasmSharedObjectRef,
@@ -188,6 +198,16 @@ extern "C" {
     controller_cap_ref: WasmObjectRef,
     intent_fn: &dyn Fn(WasmTransactionBuilder, WasmTransactionArgument),
     package: &str,
+  ) -> Result<Uint8Array, JsValue>;
+
+  #[wasm_bindgen(js_name = "createAndExecuteControllerExecution", catch)]
+  async fn create_and_execute_controller_execution(
+    identity: WasmSharedObjectRef,
+    capability: WasmObjectRef,
+    controller_cap_ref: WasmObjectRef,
+    intent_fn: &dyn Fn(WasmTransactionBuilder, WasmTransactionArgument),
+    package: &str,
+    expiration: Option<u64>,
   ) -> Result<Uint8Array, JsValue>;
 }
 
@@ -263,7 +283,33 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     intent_fn: F,
     expiration: Option<u64>,
     package_id: ObjectID,
-  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> { todo!() }
+  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> {
+    let identity = identity.try_into()?;
+    let capability = capability.into();
+    let proposal = proposal_id.to_string();
+    let package = package.to_string();
+    let objects = objects
+      .into_iter()
+      .map(|obj| serde_wasm_bindgen::to_value(&obj).map(WasmIotaObjectData::from))
+      .collect::<Result<Vec<_>, _>>()
+      .map_err(WasmError::from)?;
+
+    // Use cell to move `intent_fn` inside `closure` without actually moving it.
+    // This ensures that `closure` is an `impl Fn(..)` instead of `impl FnOnce(..)` like `intent_fn`.
+    let wrapped_intent_fn = Cell::new(Some(intent_fn));
+    let closure = |tx_builder: WasmTransactionBuilder, args: WasmTxArgumentMap| {
+      let mut builder = TransactionBuilderTsSdk::new(tx_builder);
+      let args = serde_wasm_bindgen::from_value(args.into()).expect("failed to convert JS argument map");
+      wrapped_intent_fn.take().unwrap()(&mut builder, &args);
+    };
+
+    futures::executor::block_on(execute_borrow(
+      identity, capability, &proposal, objects, &closure, &package,
+    ))
+    .map(|js_arr| js_arr.to_vec())
+    .map_err(WasmError::from)
+    .map_err(TsSdkError::from)
+  }
 
   fn propose_config_change<I1, I2>(
     identity: OwnedObjectRef,
@@ -276,8 +322,8 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>
   where
-    I1: IntoIterator<Item=(IotaAddress, u64)>,
-    I2: IntoIterator<Item=(ObjectID, u64)>,
+    I1: IntoIterator<Item = (IotaAddress, u64)>,
+    I2: IntoIterator<Item = (ObjectID, u64)>,
   {
     let identity = identity.try_into()?;
     let capability = controller_cap.into();
@@ -384,6 +430,44 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
       borrowing_cap,
       &closure,
       &package,
+    ))
+    .map(|js_arr| js_arr.to_vec())
+    .map_err(WasmError::from)
+    .map_err(TsSdkError::from)
+  }
+
+  fn create_and_execute_controller_execution<F>(
+    identity: OwnedObjectRef,
+    capability: ObjectRef,
+    expiration: Option<u64>,
+    borrowing_controller_cap_ref: ObjectRef,
+    intent_fn: F,
+    package_id: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>
+  where
+    F: ControllerIntentFnInternalT<Self::NativeTxBuilder>,
+  {
+    let identity = identity.try_into()?;
+    let capability = capability.into();
+    let package = package.to_string();
+    let borrowing_cap = borrowing_controller_cap_ref.into();
+
+    // Use cell to move `intent_fn` inside `closure` without actually moving it.
+    // This ensures that `closure` is an `impl Fn(..)` instead of `impl FnOnce(..)` like `intent_fn`.
+    let wrapped_intent_fn = Cell::new(Some(intent_fn));
+    let closure = |tx_builder: WasmTransactionBuilder, args: WasmTransactionArgument| {
+      let mut builder = TransactionBuilderTsSdk::new(tx_builder);
+      let args = serde_wasm_bindgen::from_value(args.into()).expect("failed to convert JS argument map");
+      wrapped_intent_fn.take().unwrap()(&mut builder, &args);
+    };
+
+    futures::executor::block_on(create_and_execute_controller_execution(
+      identity,
+      capability,
+      borrowing_cap,
+      &closure,
+      &package,
+      expiration,
     ))
     .map(|js_arr| js_arr.to_vec())
     .map_err(WasmError::from)
@@ -511,7 +595,9 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     expiration: Option<u64>,
     objects: Vec<(ObjectRef, TypeTag)>,
     package: ObjectID,
-  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> { todo!() }
+  ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> {
+    todo!()
+  }
 
   fn execute_send(
     identity: OwnedObjectRef,
