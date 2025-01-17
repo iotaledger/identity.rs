@@ -39,7 +39,16 @@ zkryptium = "0.2.2"
 [dependencies.identity_iota]
 path = "../../identity_iota"
 default-features = false
-features = ["client", "revocation-bitmap", "resolver", "domain-linkage", "sd-jwt", "status-list-2021", "jpt-bbs-plus", "sd-jwt-vc"]
+features = [
+  "client",
+  "revocation-bitmap",
+  "resolver",
+  "domain-linkage",
+  "sd-jwt",
+  "status-list-2021",
+  "jpt-bbs-plus",
+  "sd-jwt-vc",
+]
 
 [dev-dependencies]
 rand = "0.8.5"
