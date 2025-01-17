@@ -5,19 +5,14 @@
   "excludeInternal": true,
   "excludeNotDocumented": true,
   "excludeExternals": true,
-  "entryPoints": [
-    "./node/"
-  ],
   "entryPointStrategy": "expand",
-  "tsconfig": "./tsconfig.typedoc.json",
-  "out": "./docs/wasm",
   "plugin": [
     "typedoc-plugin-markdown"
   ],
   "readme": "none",
   "githubPages": false,
   "theme": "markdown",
-  "entryDocument": "api_ref.md",
+  "entryFileName": "api_ref.md",
   "hideBreadcrumbs": true,
   "hideGenerator": true,
   "sort": [

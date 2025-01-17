@@ -12,7 +12,7 @@
   "readme": "none",
   "githubPages": false,
   "theme": "markdown",
-  "entryDocument": "api_ref.md",
+  "entryFileName": "api_ref.md",
   "hideBreadcrumbs": true,
   "hideGenerator": true,
   "sort": [
