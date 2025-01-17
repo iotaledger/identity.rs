@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::verification::jose::jwk::CompositeJwk;
-use identity_iota::verification::jose::jwk::CompositeAlgId;
+
 use wasm_bindgen::prelude::*;
 use crate::jose::WasmCompositeAlgId;
 use crate::jose::WasmJwk;
