@@ -58,6 +58,7 @@
   ],
   "devDependencies": {
     "@transmute/did-key-ed25519": "0.3.0-unstable.9",
+    "@types/jsonwebtoken": "^9.0.7",
     "@types/mocha": "^9.1.0",
     "big-integer": "^1.6.51",
     "copy-webpack-plugin": "^7.0.0",
@@ -80,6 +81,7 @@
     "@noble/ed25519": "^1.7.3",
     "@types/node-fetch": "^2.6.2",
     "base64-arraybuffer": "^1.0.2",
+    "jose": "^5.9.6",
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {

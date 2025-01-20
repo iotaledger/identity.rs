@@ -16,6 +16,7 @@ description = "Web Assembly bindings for the identity-rs crate."
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+anyhow = { version = "1.0.94", features = ["std"] }
 async-trait = { version = "0.1", default-features = false }
 bls12_381_plus = "0.8.17"
 console_error_panic_hook = { version = "0.1" }
@@ -26,6 +27,7 @@ js-sys = { version = "0.3.61" }
 json-proof-token = "0.3.4"
 proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
 serde = { version = "1.0", features = ["derive"] }
+serde-wasm-bindgen = "0.6.5"
 serde_json = { version = "1.0", default-features = false }
 serde_repr = { version = "0.1", default-features = false }
 # Want to use the nice API of tokio::sync::RwLock for now even though we can't use threads.
@@ -37,7 +39,16 @@ zkryptium = "0.2.2"
 [dependencies.identity_iota]
 path = "../../identity_iota"
 default-features = false
-features = ["client", "revocation-bitmap", "resolver", "domain-linkage", "sd-jwt", "status-list-2021", "jpt-bbs-plus"]
+features = [
+  "client",
+  "revocation-bitmap",
+  "resolver",
+  "domain-linkage",
+  "sd-jwt",
+  "status-list-2021",
+  "jpt-bbs-plus",
+  "sd-jwt-vc",
+]
 
 [dev-dependencies]
 rand = "0.8.5"
