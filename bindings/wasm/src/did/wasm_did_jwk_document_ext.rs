@@ -26,6 +26,14 @@ use crate::did::PromiseJws;
 use crate::storage::WasmJwsSignatureOptions;
 use crate::credential::WasmJws;
 use wasm_bindgen_futures::future_to_promise;
+use crate::credential::WasmPresentation;
+use crate::storage::WasmJwtPresentationOptions;
+use crate::did::PromiseJwt;
+use identity_iota::credential::Presentation;
+use crate::credential::UnknownCredential;
+use identity_iota::credential::JwtPresentationOptions;
+use crate::credential::WasmJwt;
+
 
 #[wasm_bindgen(js_class = CoreDocument)]
 impl WasmCoreDocument {
@@ -148,4 +156,71 @@ impl WasmCoreDocument {
     Ok(promise.unchecked_into())
   }
 
+  #[wasm_bindgen(js_name = createPresentationJwtPqc)]
+  pub fn _create_presentation_jwt_pqc(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    presentation: &WasmPresentation,
+    signature_options: &WasmJwsSignatureOptions,
+    presentation_options: &WasmJwtPresentationOptions,
+  ) -> Result<PromiseJwt> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = signature_options.0.clone();
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let presentation_clone: Presentation<UnknownCredential> = presentation.0.clone();
+    let presentation_options_clone: JwtPresentationOptions = presentation_options.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .create_presentation_jwt_pqc(
+          &presentation_clone,
+          &storage_clone,
+          &fragment,
+          &options_clone,
+          &presentation_options_clone,
+        )
+        .await
+        .wasm_result()
+        .map(WasmJwt::new)
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  #[wasm_bindgen(js_name = createPresentationJwtHybrid)]
+  pub fn _create_presentation_jwt_hybrid(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    presentation: &WasmPresentation,
+    signature_options: &WasmJwsSignatureOptions,
+    presentation_options: &WasmJwtPresentationOptions,
+  ) -> Result<PromiseJwt> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = signature_options.0.clone();
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let presentation_clone: Presentation<UnknownCredential> = presentation.0.clone();
+    let presentation_options_clone: JwtPresentationOptions = presentation_options.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .create_presentation_jwt_hybrid(
+          &presentation_clone,
+          &storage_clone,
+          &fragment,
+          &options_clone,
+          &presentation_options_clone,
+        )
+        .await
+        .wasm_result()
+        .map(WasmJwt::new)
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
+  }
+
 }
+
