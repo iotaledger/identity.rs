@@ -314,10 +314,7 @@ where
       controller_cap_ref,
       proposal_id,
       borrowing_controller_cap_ref,
-      action
-        .0
-        .intent_fn
-        .expect("BorrowActionWithIntent makes sure intent_fn is present"),
+      action.0.intent_fn.expect("BorrowActionWithIntent makes sure intent_fn is present"),
       client.package_id(),
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;

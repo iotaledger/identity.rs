@@ -1,6 +1,6 @@
 import * as ed from "@noble/ed25519";
-import { decodeB64, encodeB64, Jwk, JwkGenOutput, JwkStorage, ProofAlgorithm, ProofUpdateCtx } from "~identity_wasm";
-import { EdCurve, JwkType, JwsAlgorithm } from "./jose";
+import {decodeB64, encodeB64, Jwk, JwkGenOutput, JwkStorage, ProofAlgorithm, ProofUpdateCtx} from "~identity_wasm";
+import {EdCurve, JwkType, JwsAlgorithm} from "./jose";
 
 type Ed25519PrivateKey = Uint8Array;
 type Ed25519PublicKey = Uint8Array;

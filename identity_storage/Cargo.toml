@@ -52,10 +52,10 @@ iota-document = ["dep:identity_iota_core"]
 storage-signer = ["identity_iota_core?/iota-client", "dep:secret-storage", "dep:identity_iota_interaction"]
 # Enables JSON Proof Token & BBS+ related features
 jpt-bbs-plus = [
-  "identity_credential/jpt-bbs-plus",
-  "dep:zkryptium",
-  "dep:bls12_381_plus",
-  "dep:json-proof-token",
+    "identity_credential/jpt-bbs-plus",
+    "dep:zkryptium",
+    "dep:bls12_381_plus",
+    "dep:json-proof-token",
 ]
 
 [lints]
