@@ -11,6 +11,7 @@ use identity_iota_interaction::types::execution_status::ExecutionStatus;
 use identity_iota_interaction::types::object::Owner;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Promise;
+use js_sys::Uint8Array;
 use serde::Deserialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
@@ -70,6 +71,9 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Transaction")]
   pub type WasmTransactionBuilder;
+
+  #[wasm_bindgen(method, structural, catch)]
+  pub async fn build(this: &WasmTransactionBuilder) -> Result<Uint8Array, JsValue>;
 
   #[wasm_bindgen(typescript_type = "TransactionArgument")]
   pub type WasmTransactionArgument;

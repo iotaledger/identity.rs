@@ -286,8 +286,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
   ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> {
     let identity = identity.try_into()?;
     let capability = capability.into();
-    let proposal = proposal_id.to_string();
-    let package = package.to_string();
+    let package = package_id.to_string();
     let objects = objects
       .into_iter()
       .map(|obj| serde_wasm_bindgen::to_value(&obj).map(WasmIotaObjectData::from))
@@ -303,8 +302,8 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
       wrapped_intent_fn.take().unwrap()(&mut builder, &args);
     };
 
-    futures::executor::block_on(execute_borrow(
-      identity, capability, &proposal, objects, &closure, &package,
+    futures::executor::block_on(create_and_execute_borrow(
+      identity, capability, objects, &closure, &package, expiration,
     ))
     .map(|js_arr| js_arr.to_vec())
     .map_err(WasmError::from)
@@ -449,7 +448,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
   {
     let identity = identity.try_into()?;
     let capability = capability.into();
-    let package = package.to_string();
+    let package = package_id.to_string();
     let borrowing_cap = borrowing_controller_cap_ref.into();
 
     // Use cell to move `intent_fn` inside `closure` without actually moving it.

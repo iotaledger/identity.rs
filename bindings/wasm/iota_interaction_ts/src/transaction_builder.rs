@@ -6,6 +6,7 @@ use std::ops::DerefMut;
 
 use crate::bindings::WasmTransactionBuilder;
 use crate::error::TsSdkError;
+use crate::error::WasmError;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::TransactionBuilderT;
 
@@ -26,15 +27,18 @@ impl TransactionBuilderT for TransactionBuilderTsSdk {
   type NativeTxBuilder = NativeTsCodeBindingWrapper;
 
   fn finish(self) -> Result<ProgrammableTransactionBcs, TsSdkError> {
-    unimplemented!();
+    futures::executor::block_on(self.builder.build())
+      .map(|js_arr| js_arr.to_vec())
+      .map_err(WasmError::from)
+      .map_err(Self::Error::from)
   }
 
   fn as_native_tx_builder(&mut self) -> &mut Self::NativeTxBuilder {
-    todo!()
+    &mut self.builder
   }
 
   fn into_native_tx_builder(self) -> Self::NativeTxBuilder {
-    todo!()
+    self.builder
   }
 }
 
