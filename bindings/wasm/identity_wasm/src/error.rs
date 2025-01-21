@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::credential::CompoundJwtPresentationValidationError;
+#[cfg(feature = "wasm-resolver")]
 use identity_iota::resolver;
 use identity_iota::storage::key_id_storage::KeyIdStorageError;
 use identity_iota::storage::key_id_storage::KeyIdStorageErrorKind;
@@ -158,6 +159,7 @@ impl<'a, E: std::error::Error> Display for ErrorMessage<'a, E> {
   }
 }
 
+#[cfg(feature = "wasm-resolver")]
 impl From<resolver::Error> for WasmError<'_> {
   fn from(error: resolver::Error) -> Self {
     Self {
