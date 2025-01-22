@@ -303,7 +303,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     };
 
     futures::executor::block_on(create_and_execute_borrow(
-      identity, capability, objects, &closure, &package, expiration
+      identity, capability, objects, &closure, &package, expiration,
     ))
     .map(|js_arr| js_arr.to_vec())
     .map_err(WasmError::from)

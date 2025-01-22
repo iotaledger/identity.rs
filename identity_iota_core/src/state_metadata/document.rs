@@ -423,10 +423,7 @@ mod tests {
     // Encoding.
     assert_eq!(packed[4], StateMetadataEncoding::Json as u8);
     // JSON length.
-    assert_eq!(
-      &packed[5..=6],
-      (expected_payload.len() as u16).to_le_bytes().as_ref()
-    );
+    assert_eq!(&packed[5..=6], (expected_payload.len() as u16).to_le_bytes().as_ref());
     // JSON payload.
     assert_eq!(&packed[7..], expected_payload.as_bytes());
   }
