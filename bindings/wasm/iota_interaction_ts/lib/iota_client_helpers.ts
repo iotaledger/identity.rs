@@ -8,10 +8,10 @@ import {
     IotaTransactionBlockResponse,
     OwnedObjectRef,
 } from "@iota/iota.js/client";
-import {messageWithIntent, toSerializedSignature} from "@iota/iota.js/cryptography";
-import {Ed25519PublicKey} from "@iota/iota.js/keypairs/ed25519";
-import {TransactionDataBuilder} from "@iota/iota.js/transactions";
-import {blake2b} from "@noble/hashes/blake2b";
+import { messageWithIntent, toSerializedSignature } from "@iota/iota.js/cryptography";
+import { Ed25519PublicKey } from "@iota/iota.js/keypairs/ed25519";
+import { TransactionDataBuilder } from "@iota/iota.js/transactions";
+import { blake2b } from "@noble/hashes/blake2b";
 
 export type Signer = { sign(data: Uint8Array): Promise<Uint8Array> };
 
@@ -52,7 +52,7 @@ async function signTransactionData(
 ): Promise<string> {
     const intent = "TransactionData";
     const intentMessage = messageWithIntent(intent, txBcs);
-    const digest = blake2b(intentMessage, {dkLen: 32});
+    const digest = blake2b(intentMessage, { dkLen: 32 });
     const signerSignature = await signer.sign(digest);
     const signature = toSerializedSignature({
         signature: await signerSignature,
@@ -64,7 +64,7 @@ async function signTransactionData(
 }
 
 async function getCoinForTransaction(iotaClient: IotaClient, senderAddress: string): Promise<CoinStruct> {
-    const coins = await iotaClient.getCoins({owner: senderAddress});
+    const coins = await iotaClient.getCoins({ owner: senderAddress });
     if (coins.data.length === 0) {
         throw new Error("could not find coins for transaction");
     }
@@ -101,7 +101,7 @@ async function addGasDataToTransaction(
     if (!gasBudget) {
         // no budget given, so we have to estimate gas usage
         const dryRunGasResult = (await iotaClient
-            .dryRunTransactionBlock({transactionBlock: builtTx})).effects;
+            .dryRunTransactionBlock({ transactionBlock: builtTx })).effects;
         if (dryRunGasResult.status.status === "failure") {
             throw new Error("transaction returned an unexpected response; " + dryRunGasResult.status.error);
         }

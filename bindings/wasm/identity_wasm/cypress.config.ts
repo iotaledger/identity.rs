@@ -1,4 +1,4 @@
-import {defineConfig} from "cypress";
+import { defineConfig } from "cypress";
 
 export default defineConfig({
     screenshotOnRunFailure: false,
@@ -17,13 +17,13 @@ export default defineConfig({
                     // https://github.com/cypress-io/cypress/issues/18217
                     launchOptions.preferences[
                         "network.proxy.testing_localhost_is_secure_when_hijacked"
-                        ] = true;
+                    ] = true;
                     // Temporary fix to allow cypress to control Firefox via CDP
                     // https://github.com/cypress-io/cypress/issues/29713
                     // https://fxdx.dev/deprecating-cdp-support-in-firefox-embracing-the-future-with-webdriver-bidi/
                     launchOptions.preferences[
                         "remote.active-protocols"
-                        ] = 3;
+                    ] = 3;
                 }
                 return launchOptions;
             });

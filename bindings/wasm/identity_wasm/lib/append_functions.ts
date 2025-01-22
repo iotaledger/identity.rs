@@ -1,4 +1,4 @@
-import {CoreDID, CoreDocument, IotaDID, IotaDocument, IToCoreDID, IToCoreDocument} from "~identity_wasm";
+import { CoreDID, CoreDocument, IotaDID, IotaDocument, IToCoreDID, IToCoreDocument } from "~identity_wasm";
 
 type GetCoreDocument = (arg: IToCoreDocument) => CoreDocument;
 type MaybeGetIotaDocument = (arg: IToCoreDocument) => IotaDocument | void;

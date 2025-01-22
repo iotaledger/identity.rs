@@ -79,22 +79,22 @@ rustdoc-args = ["--cfg", "docsrs"]
 default = ["iota-client", "revocation-bitmap", "send-sync"]
 # Enables the IOTA Client related components, and dependencies.
 iota-client = [
-    "dep:async-trait",
-    "dep:bcs",
-    "dep:fastcrypto",
-    "dep:identity_eddsa_verifier",
-    "dep:identity_iota_interaction",
-    "dep:identity_jose",
-    "dep:iota-config",
-    "dep:iota-crypto",
-    "dep:iota-sdk",
-    "dep:itertools",
-    "dep:move-core-types",
-    "dep:rand",
-    "dep:secret-storage",
-    "dep:serde-aux",
-    "dep:shared-crypto",
-    "dep:tokio",
+  "dep:async-trait",
+  "dep:bcs",
+  "dep:fastcrypto",
+  "dep:identity_eddsa_verifier",
+  "dep:identity_iota_interaction",
+  "dep:identity_jose",
+  "dep:iota-config",
+  "dep:iota-crypto",
+  "dep:iota-sdk",
+  "dep:itertools",
+  "dep:move-core-types",
+  "dep:rand",
+  "dep:secret-storage",
+  "dep:serde-aux",
+  "dep:shared-crypto",
+  "dep:tokio",
 ]
 
 # Enables revocation with `RevocationBitmap2022`.

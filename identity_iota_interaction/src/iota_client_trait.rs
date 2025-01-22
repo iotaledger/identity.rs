@@ -2,19 +2,32 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::error::IotaRpcResult;
-use crate::rpc_types::{
-  CoinPage, EventFilter, EventPage, IotaExecutionStatus, IotaObjectData, IotaObjectDataOptions,
-  IotaObjectResponse, IotaObjectResponseQuery, IotaPastObjectResponse,
-  IotaTransactionBlockResponseOptions, ObjectsPage, OwnedObjectRef,
-};
-use crate::types::base_types::{IotaAddress, ObjectID, SequenceNumber};
-use crate::types::{
-  digests::TransactionDigest, dynamic_field::DynamicFieldName, event::EventID,
-  quorum_driver_types::ExecuteTransactionRequestType,
-};
-use crate::{OptionalSend, ProgrammableTransactionBcs, SignatureBcs, TransactionDataBcs};
+use crate::rpc_types::CoinPage;
+use crate::rpc_types::EventFilter;
+use crate::rpc_types::EventPage;
+use crate::rpc_types::IotaExecutionStatus;
+use crate::rpc_types::IotaObjectData;
+use crate::rpc_types::IotaObjectDataOptions;
+use crate::rpc_types::IotaObjectResponse;
+use crate::rpc_types::IotaObjectResponseQuery;
+use crate::rpc_types::IotaPastObjectResponse;
+use crate::rpc_types::IotaTransactionBlockResponseOptions;
+use crate::rpc_types::ObjectsPage;
+use crate::rpc_types::OwnedObjectRef;
+use crate::types::base_types::IotaAddress;
+use crate::types::base_types::ObjectID;
+use crate::types::base_types::SequenceNumber;
+use crate::types::digests::TransactionDigest;
+use crate::types::dynamic_field::DynamicFieldName;
+use crate::types::event::EventID;
+use crate::types::quorum_driver_types::ExecuteTransactionRequestType;
+use crate::OptionalSend;
+use crate::ProgrammableTransactionBcs;
+use crate::SignatureBcs;
+use crate::TransactionDataBcs;
 use async_trait::async_trait;
-use secret_storage::{SignatureScheme, Signer};
+use secret_storage::SignatureScheme;
+use secret_storage::Signer;
 use std::boxed::Box;
 use std::option::Option;
 use std::result::Result;
@@ -103,14 +116,7 @@ pub trait QuorumDriverTrait {
     signatures: &[SignatureBcs],
     options: Option<IotaTransactionBlockResponseOptions>,
     request_type: Option<ExecuteTransactionRequestType>,
-  ) -> IotaRpcResult<
-    Box<
-      dyn IotaTransactionBlockResponseT<
-        Error=Self::Error,
-        NativeResponse=Self::NativeResponse,
-      >,
-    >,
-  >;
+  ) -> IotaRpcResult<Box<dyn IotaTransactionBlockResponseT<Error = Self::Error, NativeResponse = Self::NativeResponse>>>;
 }
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
@@ -149,14 +155,7 @@ pub trait ReadTrait {
     &self,
     digest: TransactionDigest,
     options: IotaTransactionBlockResponseOptions,
-  ) -> IotaRpcResult<
-    Box<
-      dyn IotaTransactionBlockResponseT<
-        Error=Self::Error,
-        NativeResponse=Self::NativeResponse,
-      >,
-    >,
-  >;
+  ) -> IotaRpcResult<Box<dyn IotaTransactionBlockResponseT<Error = Self::Error, NativeResponse = Self::NativeResponse>>>;
 
   async fn try_get_parsed_past_object(
     &self,
@@ -206,34 +205,26 @@ pub trait IotaClientTrait {
   #[cfg(not(feature = "send-sync-transaction"))]
   fn quorum_driver_api(
     &self,
-  ) -> Box<dyn QuorumDriverTrait<Error=Self::Error, NativeResponse=Self::NativeResponse> + '_>;
+  ) -> Box<dyn QuorumDriverTrait<Error = Self::Error, NativeResponse = Self::NativeResponse> + '_>;
   #[cfg(feature = "send-sync-transaction")]
   fn quorum_driver_api(
     &self,
-  ) -> Box<
-    dyn QuorumDriverTrait<Error=Self::Error, NativeResponse=Self::NativeResponse>
-    + Send
-    + '_,
-  >;
+  ) -> Box<dyn QuorumDriverTrait<Error = Self::Error, NativeResponse = Self::NativeResponse> + Send + '_>;
 
   #[cfg(not(feature = "send-sync-transaction"))]
-  fn read_api(
-    &self,
-  ) -> Box<dyn ReadTrait<Error=Self::Error, NativeResponse=Self::NativeResponse> + '_>;
+  fn read_api(&self) -> Box<dyn ReadTrait<Error = Self::Error, NativeResponse = Self::NativeResponse> + '_>;
   #[cfg(feature = "send-sync-transaction")]
-  fn read_api(
-    &self,
-  ) -> Box<dyn ReadTrait<Error=Self::Error, NativeResponse=Self::NativeResponse> + Send + '_>;
+  fn read_api(&self) -> Box<dyn ReadTrait<Error = Self::Error, NativeResponse = Self::NativeResponse> + Send + '_>;
 
   #[cfg(not(feature = "send-sync-transaction"))]
-  fn coin_read_api(&self) -> Box<dyn CoinReadTrait<Error=Self::Error> + '_>;
+  fn coin_read_api(&self) -> Box<dyn CoinReadTrait<Error = Self::Error> + '_>;
   #[cfg(feature = "send-sync-transaction")]
-  fn coin_read_api(&self) -> Box<dyn CoinReadTrait<Error=Self::Error> + Send + '_>;
+  fn coin_read_api(&self) -> Box<dyn CoinReadTrait<Error = Self::Error> + Send + '_>;
 
   #[cfg(not(feature = "send-sync-transaction"))]
-  fn event_api(&self) -> Box<dyn EventTrait<Error=Self::Error> + '_>;
+  fn event_api(&self) -> Box<dyn EventTrait<Error = Self::Error> + '_>;
   #[cfg(feature = "send-sync-transaction")]
-  fn event_api(&self) -> Box<dyn EventTrait<Error=Self::Error> + Send + '_>;
+  fn event_api(&self) -> Box<dyn EventTrait<Error = Self::Error> + Send + '_>;
 
   #[cfg(not(feature = "send-sync-transaction"))]
   async fn execute_transaction<S: Signer<IotaKeySignature>>(
@@ -244,12 +235,7 @@ pub trait IotaClientTrait {
     gas_budget: Option<u64>,
     signer: &S,
   ) -> Result<
-    Box<
-      dyn IotaTransactionBlockResponseT<
-        Error=Self::Error,
-        NativeResponse=Self::NativeResponse,
-      >,
-    >,
+    Box<dyn IotaTransactionBlockResponseT<Error = Self::Error, NativeResponse = Self::NativeResponse>>,
     Self::Error,
   >;
   #[cfg(feature = "send-sync-transaction")]
@@ -261,12 +247,7 @@ pub trait IotaClientTrait {
     gas_budget: Option<u64>,
     signer: &S,
   ) -> Result<
-    Box<
-      dyn IotaTransactionBlockResponseT<
-        Error=Self::Error,
-        NativeResponse=Self::NativeResponse,
-      >,
-    >,
+    Box<dyn IotaTransactionBlockResponseT<Error = Self::Error, NativeResponse = Self::NativeResponse>>,
     Self::Error,
   >;
 
@@ -276,10 +257,7 @@ pub trait IotaClientTrait {
     tx_bcs: &ProgrammableTransactionBcs,
   ) -> Result<u64, Self::Error>;
 
-  async fn get_previous_version(
-    &self,
-    iod: IotaObjectData,
-  ) -> Result<Option<IotaObjectData>, Self::Error>;
+  async fn get_previous_version(&self, iod: IotaObjectData) -> Result<Option<IotaObjectData>, Self::Error>;
 
   async fn get_past_object(
     &self,

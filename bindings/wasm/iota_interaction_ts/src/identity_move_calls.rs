@@ -449,7 +449,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
   {
     let identity = identity.try_into()?;
     let capability = capability.into();
-    let package = package.to_string();
+    let package = package_id.to_string();
     let borrowing_cap = borrowing_controller_cap_ref.into();
 
     // Use cell to move `intent_fn` inside `closure` without actually moving it.

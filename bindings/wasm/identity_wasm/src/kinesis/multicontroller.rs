@@ -37,7 +37,11 @@ impl WasmMulticontroller {
 
   #[wasm_bindgen(js_name = controllerVotingPower)]
   pub fn controller_voting_power(&self, controller_cap_id: WasmObjectID) -> Option<u64> {
-    self.0.controller_voting_power(controller_cap_id.parse().expect("Could not parse controller_cap_id into ObjectID"))
+    self.0.controller_voting_power(
+      controller_cap_id
+        .parse()
+        .expect("Could not parse controller_cap_id into ObjectID"),
+    )
   }
 
   pub fn proposals(&self) -> Result<MapStringAny, JsValue> {

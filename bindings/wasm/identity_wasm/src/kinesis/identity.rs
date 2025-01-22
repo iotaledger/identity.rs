@@ -18,7 +18,9 @@ use super::client_dummy::IdentityBuilder;
 use super::client_dummy::OnChainIdentity;
 use super::client_dummy::ProposalAction;
 use super::client_dummy::ProposalBuilder;
-use super::types::{into_sdk_type, WasmIotaAddress, WasmObjectID};
+use super::types::into_sdk_type;
+use super::types::WasmIotaAddress;
+use super::types::WasmObjectID;
 use super::WasmKinesisIdentityClient;
 use super::WasmProposal;
 
@@ -58,9 +60,7 @@ impl WasmOnChainIdentity {
       .try_read()
       .map_err(|err| JsError::new(&format!("failed to read DID document; {err:?}")))?
       .clone();
-    Ok(WasmProposalBuilder(
-      self.0.update_did_document::<IotaClientTsSdk>(doc),
-    ))
+    Ok(WasmProposalBuilder(self.0.update_did_document::<IotaClientTsSdk>(doc)))
   }
 
   #[wasm_bindgen(js_name = deactivateDid)]
@@ -161,11 +161,23 @@ pub struct WasmIdentityBuilder(pub(crate) IdentityBuilder);
 impl WasmIdentityBuilder {
   #[wasm_bindgen(constructor)]
   pub fn new(did_doc: &[u8], _package_id: WasmObjectID) -> Self {
-    Self(IdentityBuilder::new(did_doc, "foobar".parse().expect("foobar won't be parsable into an ObjectID, TODO: Replace foobar with correct ObjectID")))
+    Self(IdentityBuilder::new(
+      did_doc,
+      "foobar"
+        .parse()
+        .expect("foobar won't be parsable into an ObjectID, TODO: Replace foobar with correct ObjectID"),
+    ))
   }
 
   pub fn controller(self, address: WasmIotaAddress, voting_power: u64) -> Self {
-    Self(self.0.controller(address.parse().expect("Parameter address could not be parsed into valid IotaAddress"), voting_power))
+    Self(
+      self.0.controller(
+        address
+          .parse()
+          .expect("Parameter address could not be parsed into valid IotaAddress"),
+        voting_power,
+      ),
+    )
   }
 
   pub fn threshold(self, threshold: u64) -> Self {
@@ -179,17 +191,19 @@ impl WasmIdentityBuilder {
 
   pub fn controllers(self, controllers: Vec<ControllerAndVotingPower>) -> Self {
     Self(
-      self
-        .0
-        .controllers(controllers
+      self.0.controllers(
+        controllers
           .into_iter()
-          .map(
-            |v| (
-              v.0.parse().expect("controller can not be parsed into valid IotaAddress"),
-              v.1
+          .map(|v| {
+            (
+              v.0
+                .parse()
+                .expect("controller can not be parsed into valid IotaAddress"),
+              v.1,
             )
-          )
-          .collect::<Vec<_>>()),
+          })
+          .collect::<Vec<_>>(),
+      ),
     )
   }
 

@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {testApiCall} from "./0_basic/-1_test_api_call";
+import { testApiCall } from "./0_basic/-1_test_api_call";
 // import { createIdentity } from "./0_basic/0_create_did";
 // import { updateIdentity } from "./0_basic/1_update_did";
 // import { resolveIdentity } from "./0_basic/2_resolve_did";

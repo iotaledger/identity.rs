@@ -483,7 +483,9 @@ impl WasmIotaDocument {
   //     .wasm_result()?;
   //
   //   let block: iota_sdk::types::block::Block = iota_sdk::types::block::Block::try_from_dto(block_dto)
-  //     .map_err(|err| identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {err}")))
+  //     .map_err(|err| identity_iota::iota::Error::JsError(
+  //        format!("unpackFromBlock failed to convert BlockDto: {err}")
+  //      ))
   //     .wasm_result()?;
   //
   //   Ok(

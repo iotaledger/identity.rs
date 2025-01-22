@@ -99,7 +99,7 @@ _Cargo.toml_
 Test this example using https://github.com/anko/txm: `txm README.md`
 
 !test program
-cd ../..
+cd ../../..
 mkdir tmp
 cat | sed -e 's#identity_iota = { git = "[^"]*", tag = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
 echo '[workspace]' >>tmp/Cargo.toml

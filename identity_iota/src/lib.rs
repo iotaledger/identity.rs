@@ -77,16 +77,16 @@ pub mod prelude {
   pub use identity_iota_core::IotaDID;
   pub use identity_iota_core::IotaDocument;
 
-  #[cfg(feature = "resolver")]
+  #[cfg(all(feature = "resolver", not(target_arch = "wasm32")))]
   #[cfg_attr(docsrs, doc(cfg(feature = "resolver")))]
   pub use identity_iota_core::DidResolutionHandler;
 
-  #[cfg(feature = "resolver")]
+  #[cfg(all(feature = "resolver", not(target_arch = "wasm32")))]
   #[cfg_attr(docsrs, doc(cfg(feature = "resolver")))]
   pub use identity_resolver::Resolver;
 }
 
-#[cfg(feature = "resolver")]
+#[cfg(all(feature = "resolver", not(target_arch = "wasm32")))]
 #[cfg_attr(docsrs, doc(cfg(feature = "resolver")))]
 pub mod resolver {
   //! DID resolution utilities
