@@ -1,9 +1,9 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { ObjectRef, Transaction, TransactionArgument } from "@iota/iota-sdk/transactions";
+import { ObjectRef, Transaction } from "@iota/iota-sdk/transactions";
 
-export function delete_(
+export function remove(
     asset: ObjectRef,
     asset_type: string,
     packageId: string,

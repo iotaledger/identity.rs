@@ -4,7 +4,7 @@
 import { Transaction } from "@iota/iota-sdk/transactions";
 import { getClockRef } from "../utils";
 
-export function new_(didDoc: Uint8Array, packageId: string): Promise<Uint8Array> {
+export function create(didDoc: Uint8Array, packageId: string): Promise<Uint8Array> {
     const tx = new Transaction();
     const didDocArg = tx.pure.vector("u8", didDoc);
     const clock = getClockRef(tx);

@@ -45,7 +45,7 @@ extern "C" {
 
 #[wasm_bindgen(module = "move_calls/identity")]
 extern "C" {
-  #[wasm_bindgen(js_name = "new_", catch)]
+  #[wasm_bindgen(js_name = "create", catch)]
   async fn identity_new(did: &[u8], package: &str) -> Result<Uint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "newWithControllers", catch)]

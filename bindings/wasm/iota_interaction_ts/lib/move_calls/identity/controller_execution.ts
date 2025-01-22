@@ -17,11 +17,11 @@ export function proposeControllerExecution(
     const [delegationToken, borrow] = getControllerDelegation(tx, cap, packageId);
     const identityArg = tx.sharedObjectRef(identity);
     const exp = tx.pure.option("u64", expiration);
-    const controller_cap_id = tx.pure.id(controllerCapId);
+    const controllerCapIdArg = tx.pure.id(controllerCapId);
 
     tx.moveCall({
         target: `${packageId}::identity::propose_controller_execution`,
-        arguments: [identityArg, delegationToken, controller_cap_id, exp],
+        arguments: [identityArg, delegationToken, controllerCapIdArg, exp],
     });
 
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
@@ -52,16 +52,16 @@ export function executeControllerExecution(
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
 
     const receiving = tx.receivingRef(controllerCapRef);
-    const borrowed_controller_cap = tx.moveCall({
+    const BorrowedControllerCap = tx.moveCall({
         target: `${packageId}::identity::borrow_controller_cap`,
         arguments: [identityArg, action, receiving],
     });
 
-    intentFn(tx, borrowed_controller_cap);
+    intentFn(tx, BorrowedControllerCap);
 
     tx.moveCall({
         target: `${packageId}::controller_proposal::put_back`,
-        arguments: [action, borrowed_controller_cap],
+        arguments: [action, BorrowedControllerCap],
     });
 
     return tx.build();
@@ -96,16 +96,16 @@ export function createAndExecuteControllerExecution(
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
 
     const receiving = tx.receivingRef(controllerCapRef);
-    const borrowed_controller_cap = tx.moveCall({
+    const borrowedControllerCap = tx.moveCall({
         target: `${packageId}::identity::borrow_controller_cap`,
         arguments: [identityArg, action, receiving],
     });
 
-    intentFn(tx, borrowed_controller_cap);
+    intentFn(tx, borrowedControllerCap);
 
     tx.moveCall({
         target: `${packageId}::controller_proposal::put_back`,
-        arguments: [action, borrowed_controller_cap],
+        arguments: [action, borrowedControllerCap],
     });
 
     return tx.build();

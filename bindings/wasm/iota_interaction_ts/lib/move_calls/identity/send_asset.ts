@@ -51,11 +51,11 @@ export function executeSend(
 
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
 
-    for (const [obj, obj_type] of objects) {
+    for (const [obj, objType] of objects) {
         const recv_obj = tx.receivingRef(obj);
         tx.moveCall({
             target: `${packageId}::identity::execute_send`,
-            typeArguments: [obj_type],
+            typeArguments: [objType],
             arguments: [identityArg, action, recv_obj],
         });
     }

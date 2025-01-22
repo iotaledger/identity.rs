@@ -18,11 +18,11 @@ export function proposeBorrow(
     const [delegationToken, borrow] = getControllerDelegation(tx, cap, packageId);
     const identityArg = tx.sharedObjectRef(identity);
     const exp = tx.pure.option("u64", expiration);
-    const objects_arg = tx.pure.vector("id", objects);
+    const objectsArg = tx.pure.vector("id", objects);
 
     tx.moveCall({
         target: `${packageId}::identity::propose_borrow`,
-        arguments: [identityArg, delegationToken, exp, objects_arg],
+        arguments: [identityArg, delegationToken, exp, objectsArg],
     });
 
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
@@ -52,24 +52,24 @@ export function executeBorrow(
 
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
 
-    const object_arg_map = new Map<string, [TransactionArgument, IotaObjectData]>();
+    const objectArgMap = new Map<string, [TransactionArgument, IotaObjectData]>();
     for (const obj of objects) {
-        const recv_obj = tx.receivingRef(obj);
-        const obj_arg = tx.moveCall({
+        const recvObj = tx.receivingRef(obj);
+        const objArg = tx.moveCall({
             target: `${packageId}::identity::execute_borrow`,
             typeArguments: [obj.type!],
-            arguments: [identityArg, action, recv_obj],
+            arguments: [identityArg, action, recvObj],
         });
 
-        object_arg_map.set(obj.objectId, [obj_arg, obj]);
+        objectArgMap.set(obj.objectId, [objArg, obj]);
     }
 
-    intentFn(tx, object_arg_map);
+    intentFn(tx, objectArgMap);
 
-    for (const [obj, obj_data] of object_arg_map.values()) {
+    for (const [obj, objData] of objectArgMap.values()) {
         tx.moveCall({
             target: `${packageId}::borrow_proposal::put_back`,
-            typeArguments: [obj_data.type!],
+            typeArguments: [objData.type!],
             arguments: [action, obj],
         });
     }
@@ -95,11 +95,11 @@ export function createAndExecuteBorrow(
     const [delegationToken, borrow] = getControllerDelegation(tx, cap, packageId);
     const identityArg = tx.sharedObjectRef(identity);
     const exp = tx.pure.option("u64", expiration);
-    const objects_arg = tx.pure.vector("id", objects.map(obj => obj.objectId));
+    const objectsArg = tx.pure.vector("id", objects.map(obj => obj.objectId));
 
     const proposal = tx.moveCall({
         target: `${packageId}::identity::propose_borrow`,
-        arguments: [identityArg, delegationToken, exp, objects_arg],
+        arguments: [identityArg, delegationToken, exp, objectsArg],
     });
 
     let action = tx.moveCall({
@@ -110,24 +110,24 @@ export function createAndExecuteBorrow(
 
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
 
-    const object_arg_map = new Map<string, [TransactionArgument, IotaObjectData]>();
+    const objectArgMap = new Map<string, [TransactionArgument, IotaObjectData]>();
     for (const obj of objects) {
-        const recv_obj = tx.receivingRef(obj);
-        const obj_arg = tx.moveCall({
+        const recvObj = tx.receivingRef(obj);
+        const objArg = tx.moveCall({
             target: `${packageId}::identity::execute_borrow`,
             typeArguments: [obj.type!],
-            arguments: [identityArg, action, recv_obj],
+            arguments: [identityArg, action, recvObj],
         });
 
-        object_arg_map.set(obj.objectId, [obj_arg, obj]);
+        objectArgMap.set(obj.objectId, [objArg, obj]);
     }
 
-    intentFn(tx, object_arg_map);
+    intentFn(tx, objectArgMap);
 
-    for (const [obj, obj_data] of object_arg_map.values()) {
+    for (const [obj, objData] of objectArgMap.values()) {
         tx.moveCall({
             target: `${packageId}::borrow_proposal::put_back`,
-            typeArguments: [obj_data.type!],
+            typeArguments: [objData.type!],
             arguments: [action, obj],
         });
     }

@@ -3,7 +3,7 @@
 
 import { SharedObjectRef } from "@iota/iota-sdk/dist/cjs/bcs/types";
 import { ObjectRef, Transaction } from "@iota/iota-sdk/transactions";
-import { getClockRef, getControllerDelegation, putBackDelegationToken } from "../utils";
+import { getControllerDelegation, putBackDelegationToken } from "../utils";
 
 export function proposeConfigChange(
     identity: SharedObjectRef,
@@ -16,20 +16,20 @@ export function proposeConfigChange(
     threshold?: number,
 ): Promise<Uint8Array> {
     const tx = new Transaction();
-    const addresses_to_add = tx.pure.vector("address", controllersToAdd.map(c => c[0]));
-    const vps_to_add = tx.pure.vector("u64", controllersToAdd.map(c => c[1]));
-    const controllers_to_add = tx.moveCall({
+    const addressesToAdd = tx.pure.vector("address", controllersToAdd.map(c => c[0]));
+    const vpsToAdd = tx.pure.vector("u64", controllersToAdd.map(c => c[1]));
+    const controllersToAddArg = tx.moveCall({
         target: `${packageId}::utils::vec_map_from_keys_values`,
         typeArguments: ["address", "u64"],
-        arguments: [addresses_to_add, vps_to_add],
+        arguments: [addressesToAdd, vpsToAdd],
     });
 
-    const ids_to_update = tx.pure.vector("id", controllersToUpdate.map(c => c[0]));
-    const vps_to_update = tx.pure.vector("u64", controllersToUpdate.map(c => c[1]));
-    const controllers_to_update = tx.moveCall({
+    const idsToUpdate = tx.pure.vector("id", controllersToUpdate.map(c => c[0]));
+    const vpsToUpdate = tx.pure.vector("u64", controllersToUpdate.map(c => c[1]));
+    const controllersToUpdateArg = tx.moveCall({
         target: `${packageId}::utils::vec_map_from_keys_values`,
         typeArguments: ["id", "u64"],
-        arguments: [ids_to_update, vps_to_update],
+        arguments: [idsToUpdate, vpsToUpdate],
     });
 
     const identityArg = tx.sharedObjectRef(identity);
@@ -37,12 +37,12 @@ export function proposeConfigChange(
     const [delegationToken, borrow] = getControllerDelegation(tx, cap, packageId);
     const thresholdArg = tx.pure.option("u64", threshold);
     const exp = tx.pure.option("u64", expiration);
-    const controllers_to_remove = tx.pure.vector("id", controllersToRemove);
+    const controllersToRemoveArg = tx.pure.vector("id", controllersToRemove);
 
     tx.moveCall({
         target: `${packageId}::identity::propose_config_change`,
-        arguments: [identityArg, delegationToken, exp, thresholdArg, controllers_to_add, controllers_to_remove,
-            controllers_to_update],
+        arguments: [identityArg, delegationToken, exp, thresholdArg, controllersToAddArg, controllersToRemoveArg,
+            controllersToUpdateArg],
     });
 
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);

@@ -22,7 +22,7 @@ use identity_iota_interaction::ProgrammableTransactionBcs;
 
 #[wasm_bindgen(module = "move_calls/asset")]
 extern "C" {
-  #[wasm_bindgen(js_name = "new_", catch)]
+  #[wasm_bindgen(js_name = "create", catch)]
   pub(crate) async fn new_asset(
     inner_bytes: &[u8],
     inner_type: &str,
@@ -32,7 +32,7 @@ extern "C" {
     package: &str,
   ) -> Result<Uint8Array, JsValue>;
 
-  #[wasm_bindgen(catch)]
+  #[wasm_bindgen(catch, js_name = "remove")]
   pub(crate) async fn delete(asset: WasmObjectRef, asset_type: &str, package: &str) -> Result<Uint8Array, JsValue>;
 
   #[wasm_bindgen(catch)]
