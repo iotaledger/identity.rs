@@ -37,32 +37,39 @@ use super::dynamic_field::DynamicFieldInfo;
 use super::error::{IotaError, IotaResult};
 use super::gas_coin::GAS;
 use super::governance::{StakedIota, STAKING_POOL_MODULE_NAME, STAKED_IOTA_STRUCT_NAME};
-use super::iota_serde::{Readable, HexAccountAddress, parse_iota_struct_tag, to_iota_struct_tag_string};
-use super::timelock::timelock::{self, TimeLock, TimelockedStakedIota};
-use super::stardust::nft::Nft;
+use super::iota_serde::{Readable, HexAccountAddress, to_iota_struct_tag_string};
+use super::timelock::timelock::{self, TimeLock};
+use super::timelock::timelocked_staked_iota::TimelockedStakedIota;
+use super::stardust::output::Nft;
 use super::gas_coin::GasCoin;
 use super::object::{Owner};
+use super::parse_iota_struct_tag;
 
 pub use super::digests::{ObjectDigest, TransactionDigest};
 
+// -----------------------------------------------------------------
+// Originally defined in crates/iota-types/src/committee.rs
+// -----------------------------------------------------------------
 pub type EpochId = u64;
-
 // TODO: the stake and voting power of a validator can be different so
 // in some places when we are actually referring to the voting power, we
 // should use a different type alias, field name, etc.
 pub type StakeUnit = u64;
-
-pub type ObjectRef = (ObjectID, SequenceNumber, ObjectDigest);
-
-pub type AuthorityName = AuthorityPublicKeyBytes;
-
+// -----------------------------------------------------------------
+// Originally defined in crates/iota-types/src/execution_status.rs
+// -----------------------------------------------------------------
 pub type CommandIndex = usize;
-
+// -----------------------------------------------------------------
+// Originally defined in external-crates/move/crates/move-binary-format/src/file_format.rs
+// -----------------------------------------------------------------
+/// Index into the code stream for a jump. The offset is relative to the
+/// beginning of the instruction stream.
+pub type CodeOffset = u16;
 /// Type parameters are encoded as indices. This index can also be used to
 /// lookup the kind of a type parameter in the `FunctionHandle` and
 /// `StructHandle`.
 pub type TypeParameterIndex = u16;
-pub type CodeOffset = u16;
+// -----------------------------------------------------------------
 
 #[derive(
     Eq,
@@ -85,32 +92,7 @@ impl fmt::Display for SequenceNumber {
     }
 }
 
-// TODO: rename to version
-impl SequenceNumber {
-    pub const MIN: SequenceNumber = SequenceNumber(u64::MIN);
-    pub const MAX: SequenceNumber = SequenceNumber(0x7fff_ffff_ffff_ffff);
-
-    pub const fn new() -> Self {
-        SequenceNumber(0)
-    }
-
-    pub const fn value(&self) -> u64 {
-        self.0
-    }
-
-    pub const fn from_u64(u: u64) -> Self {
-        SequenceNumber(u)
-    }
-}
-
-#[derive(PartialEq, Eq, Clone, Debug, thiserror::Error)]
-pub enum ObjectIDParseError {
-    #[error("ObjectID hex literal must start with 0x")]
-    HexLiteralPrefixMissing,
-
-    #[error("Could not convert from bytes slice")]
-    TryFromSliceError,
-}
+pub type AuthorityName = AuthorityPublicKeyBytes;
 
 #[serde_as]
 #[derive(Eq, PartialEq, Clone, Copy, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -119,152 +101,7 @@ pub struct ObjectID(
     AccountAddress,
 );
 
-impl ObjectID {
-    /// The number of bytes in an address.
-    pub const LENGTH: usize = AccountAddress::LENGTH;
-    /// Hex address: 0x0
-    pub const ZERO: Self = Self::new([0u8; Self::LENGTH]);
-    pub const MAX: Self = Self::new([0xff; Self::LENGTH]);
-    /// Create a new ObjectID
-    pub const fn new(obj_id: [u8; Self::LENGTH]) -> Self {
-        Self(AccountAddress::new(obj_id))
-    }
-
-    /// Const fn variant of `<ObjectID as From<AccountAddress>>::from`
-    pub const fn from_address(addr: AccountAddress) -> Self {
-        Self(addr)
-    }
-
-    /// Return a random ObjectID.
-    pub fn random() -> Self {
-        Self::from(AccountAddress::random())
-    }
-
-    /// Return the underlying bytes buffer of the ObjectID.
-    pub fn to_vec(&self) -> Vec<u8> {
-        self.0.to_vec()
-    }
-
-    /// Parse the ObjectID from byte array or buffer.
-    pub fn from_bytes<T: AsRef<[u8]>>(bytes: T) -> Result<Self, ObjectIDParseError> {
-        <[u8; Self::LENGTH]>::try_from(bytes.as_ref())
-            .map_err(|_| ObjectIDParseError::TryFromSliceError)
-            .map(ObjectID::new)
-    }
-
-    /// Return the underlying bytes array of the ObjectID.
-    pub fn into_bytes(self) -> [u8; Self::LENGTH] {
-        self.0.into_bytes()
-    }
-
-    /// Make an ObjectID with padding 0s before the single byte.
-    pub const fn from_single_byte(byte: u8) -> ObjectID {
-        let mut bytes = [0u8; Self::LENGTH];
-        bytes[Self::LENGTH - 1] = byte;
-        ObjectID::new(bytes)
-    }
-
-    /// Convert from hex string to ObjectID where the string is prefixed with 0x
-    /// Padding 0s if the string is too short.
-    pub fn from_hex_literal(literal: &str) -> Result<Self, ObjectIDParseError> {
-        if !literal.starts_with("0x") {
-            return Err(ObjectIDParseError::HexLiteralPrefixMissing);
-        }
-
-        let hex_len = literal.len() - 2;
-
-        // If the string is too short, pad it
-        if hex_len < Self::LENGTH * 2 {
-            let mut hex_str = String::with_capacity(Self::LENGTH * 2);
-            for _ in 0..Self::LENGTH * 2 - hex_len {
-                hex_str.push('0');
-            }
-            hex_str.push_str(&literal[2..]);
-            Self::from_str(&hex_str)
-        } else {
-            Self::from_str(&literal[2..])
-        }
-    }
-
-
-    /// Return the full hex string with 0x prefix without removing trailing 0s.
-    /// Prefer this over [fn to_hex_literal] if the string needs to be fully
-    /// preserved.
-    pub fn to_hex_uncompressed(&self) -> String {
-        format!("{self}")
-    }
-
-    pub fn is_clock(&self) -> bool {
-        *self == IOTA_CLOCK_OBJECT_ID
-    }
-}
-
-impl From<IotaAddress> for ObjectID {
-    fn from(address: IotaAddress) -> ObjectID {
-        let tmp: AccountAddress = address.into();
-        tmp.into()
-    }
-}
-
-impl From<AccountAddress> for ObjectID {
-    fn from(address: AccountAddress) -> Self {
-        Self(address)
-    }
-}
-
-impl fmt::Display for ObjectID {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        write!(f, "0x{}", Hex::encode(self.0))
-    }
-}
-
-impl fmt::Debug for ObjectID {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        write!(f, "0x{}", Hex::encode(self.0))
-    }
-}
-
-impl AsRef<[u8]> for ObjectID {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_slice()
-    }
-}
-
-impl TryFrom<&[u8]> for ObjectID {
-    type Error = ObjectIDParseError;
-
-    /// Tries to convert the provided byte array into ObjectID.
-    fn try_from(bytes: &[u8]) -> Result<ObjectID, ObjectIDParseError> {
-        Self::from_bytes(bytes)
-    }
-}
-
-impl TryFrom<Vec<u8>> for ObjectID {
-    type Error = ObjectIDParseError;
-
-    /// Tries to convert the provided byte buffer into ObjectID.
-    fn try_from(bytes: Vec<u8>) -> Result<ObjectID, ObjectIDParseError> {
-        Self::from_bytes(bytes)
-    }
-}
-
-impl FromStr for ObjectID {
-    type Err = ObjectIDParseError;
-
-    /// Parse ObjectID from hex string with or without 0x prefix, pad with 0s if
-    /// needed.
-    fn from_str(s: &str) -> Result<Self, ObjectIDParseError> {
-        decode_bytes_hex(s).or_else(|_| Self::from_hex_literal(s))
-    }
-}
-
-impl std::ops::Deref for ObjectID {
-    type Target = AccountAddress;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+pub type ObjectRef = (ObjectID, SequenceNumber, ObjectDigest);
 
 /// Wrapper around StructTag with a space-efficient representation for common
 /// types like coins The StructTag for a gas coin is 84 bytes, so using 1 byte
@@ -447,10 +284,10 @@ impl MoveObjectType {
             && self.name().as_str() == "RegulatedCoinMetadata"
     }
 
-    pub fn is_coin_deny_cap(&self) -> bool {
+  pub fn is_coin_deny_cap_v1(&self) -> bool {
         self.address() == IOTA_FRAMEWORK_ADDRESS
             && self.module().as_str() == "coin"
-            && self.name().as_str() == "DenyCap"
+      && self.name().as_str() == "DenyCapV1"
     }
 
     pub fn is_dynamic_field(&self) -> bool {
@@ -742,38 +579,6 @@ impl fmt::Debug for IotaAddress {
     }
 }
 
-impl fmt::Display for MoveObjectType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        let s: StructTag = self.clone().into();
-        write!(
-            f,
-            "{}",
-            to_iota_struct_tag_string(&s).map_err(fmt::Error::custom)?
-        )
-    }
-}
-
-impl fmt::Display for ObjectType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ObjectType::Package => write!(f, "{}", PACKAGE),
-            ObjectType::Struct(t) => write!(f, "{}", t),
-        }
-    }
-}
-
-impl From<ObjectID> for AccountAddress {
-    fn from(obj_id: ObjectID) -> Self {
-        obj_id.0
-    }
-}
-
-impl From<IotaAddress> for AccountAddress {
-    fn from(address: IotaAddress) -> Self {
-        Self::new(address.0)
-    }
-}
-
 pub const STD_OPTION_MODULE_NAME: &IdentStr = ident_str!("option");
 pub const STD_OPTION_STRUCT_NAME: &IdentStr = ident_str!("Option");
 pub const RESOLVED_STD_OPTION: (&AccountAddress, &IdentStr, &IdentStr) = (
@@ -797,3 +602,209 @@ pub const RESOLVED_UTF8_STR: (&AccountAddress, &IdentStr, &IdentStr) = (
     STD_UTF8_MODULE_NAME,
     STD_UTF8_STRUCT_NAME,
 );
+
+// TODO: rename to version
+impl SequenceNumber {
+    pub const MIN: SequenceNumber = SequenceNumber(u64::MIN);
+    pub const MAX: SequenceNumber = SequenceNumber(0x7fff_ffff_ffff_ffff);
+
+    pub const fn new() -> Self {
+        SequenceNumber(0)
+    }
+
+    pub const fn value(&self) -> u64 {
+        self.0
+    }
+
+    pub const fn from_u64(u: u64) -> Self {
+        SequenceNumber(u)
+    }
+}
+
+impl ObjectID {
+    /// The number of bytes in an address.
+    pub const LENGTH: usize = AccountAddress::LENGTH;
+    /// Hex address: 0x0
+    pub const ZERO: Self = Self::new([0u8; Self::LENGTH]);
+    pub const MAX: Self = Self::new([0xff; Self::LENGTH]);
+    /// Create a new ObjectID
+    pub const fn new(obj_id: [u8; Self::LENGTH]) -> Self {
+        Self(AccountAddress::new(obj_id))
+    }
+
+    /// Const fn variant of `<ObjectID as From<AccountAddress>>::from`
+    pub const fn from_address(addr: AccountAddress) -> Self {
+        Self(addr)
+    }
+
+    /// Return a random ObjectID.
+    pub fn random() -> Self {
+        Self::from(AccountAddress::random())
+    }
+
+    /// Return the underlying bytes buffer of the ObjectID.
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.0.to_vec()
+    }
+
+    /// Parse the ObjectID from byte array or buffer.
+    pub fn from_bytes<T: AsRef<[u8]>>(bytes: T) -> Result<Self, ObjectIDParseError> {
+        <[u8; Self::LENGTH]>::try_from(bytes.as_ref())
+          .map_err(|_| ObjectIDParseError::TryFromSlice)
+          .map(ObjectID::new)
+    }
+
+    /// Return the underlying bytes array of the ObjectID.
+    pub fn into_bytes(self) -> [u8; Self::LENGTH] {
+        self.0.into_bytes()
+    }
+
+    /// Make an ObjectID with padding 0s before the single byte.
+    pub const fn from_single_byte(byte: u8) -> ObjectID {
+        let mut bytes = [0u8; Self::LENGTH];
+        bytes[Self::LENGTH - 1] = byte;
+        ObjectID::new(bytes)
+    }
+
+    /// Convert from hex string to ObjectID where the string is prefixed with 0x
+    /// Padding 0s if the string is too short.
+    pub fn from_hex_literal(literal: &str) -> Result<Self, ObjectIDParseError> {
+        if !literal.starts_with("0x") {
+            return Err(ObjectIDParseError::HexLiteralPrefixMissing);
+        }
+
+        let hex_len = literal.len() - 2;
+
+        // If the string is too short, pad it
+        if hex_len < Self::LENGTH * 2 {
+            let mut hex_str = String::with_capacity(Self::LENGTH * 2);
+            for _ in 0..Self::LENGTH * 2 - hex_len {
+                hex_str.push('0');
+            }
+            hex_str.push_str(&literal[2..]);
+            Self::from_str(&hex_str)
+        } else {
+            Self::from_str(&literal[2..])
+        }
+    }
+
+
+    /// Return the full hex string with 0x prefix without removing trailing 0s.
+    /// Prefer this over [fn to_hex_literal] if the string needs to be fully
+    /// preserved.
+    pub fn to_hex_uncompressed(&self) -> String {
+        format!("{self}")
+    }
+
+    pub fn is_clock(&self) -> bool {
+        *self == IOTA_CLOCK_OBJECT_ID
+    }
+}
+
+impl From<IotaAddress> for ObjectID {
+    fn from(address: IotaAddress) -> ObjectID {
+        let tmp: AccountAddress = address.into();
+        tmp.into()
+    }
+}
+
+impl From<AccountAddress> for ObjectID {
+    fn from(address: AccountAddress) -> Self {
+        Self(address)
+    }
+}
+
+impl fmt::Display for ObjectID {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+        write!(f, "0x{}", Hex::encode(self.0))
+    }
+}
+
+impl fmt::Debug for ObjectID {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+        write!(f, "0x{}", Hex::encode(self.0))
+    }
+}
+
+impl AsRef<[u8]> for ObjectID {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_slice()
+    }
+}
+
+impl TryFrom<&[u8]> for ObjectID {
+    type Error = ObjectIDParseError;
+
+    /// Tries to convert the provided byte array into ObjectID.
+    fn try_from(bytes: &[u8]) -> Result<ObjectID, ObjectIDParseError> {
+        Self::from_bytes(bytes)
+    }
+}
+
+impl TryFrom<Vec<u8>> for ObjectID {
+    type Error = ObjectIDParseError;
+
+    /// Tries to convert the provided byte buffer into ObjectID.
+    fn try_from(bytes: Vec<u8>) -> Result<ObjectID, ObjectIDParseError> {
+        Self::from_bytes(bytes)
+    }
+}
+
+impl FromStr for ObjectID {
+    type Err = ObjectIDParseError;
+
+    /// Parse ObjectID from hex string with or without 0x prefix, pad with 0s if
+    /// needed.
+    fn from_str(s: &str) -> Result<Self, ObjectIDParseError> {
+        decode_bytes_hex(s).or_else(|_| Self::from_hex_literal(s))
+    }
+}
+
+impl std::ops::Deref for ObjectID {
+    type Target = AccountAddress;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Debug, thiserror::Error)]
+pub enum ObjectIDParseError {
+    #[error("ObjectID hex literal must start with 0x")]
+    HexLiteralPrefixMissing,
+
+    #[error("Could not convert from bytes slice")]
+    TryFromSlice,
+}
+
+impl From<ObjectID> for AccountAddress {
+    fn from(obj_id: ObjectID) -> Self {
+        obj_id.0
+    }
+}
+
+impl From<IotaAddress> for AccountAddress {
+    fn from(address: IotaAddress) -> Self {
+        Self::new(address.0)
+    }
+}
+
+impl fmt::Display for MoveObjectType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+        let s: StructTag = self.clone().into();
+        write!(
+            f,
+            "{}",
+            to_iota_struct_tag_string(&s).map_err(fmt::Error::custom)?
+        )
+    }
+}
+
+impl fmt::Display for ObjectType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ObjectType::Package => write!(f, "{}", PACKAGE),
+            ObjectType::Struct(t) => write!(f, "{}", t),
+        }
+    }
+}

@@ -8,7 +8,8 @@ use anyhow::bail;
 
 use super::super::move_core_types::{
     account_address::AccountAddress,
-    identifier::{is_valid_identifier_char},
+    identifier,
+    runtime_value::{MoveStruct, MoveValue},
     u256::U256,
 };
 
@@ -16,25 +17,6 @@ use super::{
     address::ParsedAddress,
     parser::{Parser, Token},
 };
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct MoveStruct(pub Vec<MoveValue>);
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum MoveValue {
-    U8(u8),
-    U64(u64),
-    U128(u128),
-    Bool(bool),
-    Address(AccountAddress),
-    Vector(Vec<MoveValue>),
-    Struct(MoveStruct),
-    Signer(AccountAddress),
-    // NOTE: Added in bytecode version v6, do not reorder!
-    U16(u16),
-    U32(u32),
-    U256(U256),
-}
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub enum ValueToken {
@@ -74,6 +56,7 @@ pub enum ParsedValue<Extra: ParsableValue = ()> {
     Struct(Vec<ParsedValue<Extra>>),
     Custom(Extra),
 }
+
 pub trait ParsableValue: Sized + Send + Sync + Clone + 'static {
     type ConcreteValue: Send;
     fn parse_value<'a, I: Iterator<Item = (ValueToken, &'a str)>>(
@@ -289,7 +272,7 @@ impl Token for ValueToken {
                 // c + remaining
                 // TODO be more permissive
                 let len = 1 + chars
-                    .take_while(|c| is_valid_identifier_char(*c))
+                    .take_while(|c| identifier::is_valid_identifier_char(*c))
                     .count();
                 (Self::Ident, len)
             }

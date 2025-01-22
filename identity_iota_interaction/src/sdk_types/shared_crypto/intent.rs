@@ -34,7 +34,7 @@ impl TryFrom<u8> for IntentVersion {
 }
 
 /// This enums specifies the application ID. Two intents in two different
-/// applications (i.e., Narwhal, Iota, Ethereum etc) should never collide, so
+/// applications (i.e., Iota, Ethereum etc) should never collide, so
 /// that even when a signing key is reused, nobody can take a signature
 /// designated for app_1 and present it as a valid signature for an (any) intent
 /// in app_2.
@@ -42,8 +42,7 @@ impl TryFrom<u8> for IntentVersion {
 #[repr(u8)]
 pub enum AppId {
     Iota = 0,
-    Narwhal = 1,
-    Consensus = 2,
+    Consensus = 1,
 }
 
 // TODO(joyqvq): Use num_derive
@@ -72,10 +71,9 @@ pub enum IntentScope {
     PersonalMessage = 3,         // Used for a user signature on a personal message.
     SenderSignedTransaction = 4, // Used for an authority signature on a user signed transaction.
     ProofOfPossession = 5,       /* Used as a signature representing an authority's proof of
-                                  * possession of its authority protocol key. */
-    HeaderDigest = 6,      // Used for narwhal authority signature on header digest.
-    BridgeEventUnused = 7, // for bridge purposes but it's currently not included in messages.
-    ConsensusBlock = 8,    // Used for consensus authority signature on block's digest
+                                  * possession of its authority key. */
+    BridgeEventUnused = 6, // for bridge purposes but it's currently not included in messages.
+    ConsensusBlock = 7,    // Used for consensus authority signature on block's digest
 }
 
 impl TryFrom<u8> for IntentScope {
@@ -100,18 +98,28 @@ pub struct Intent {
     pub app_id: AppId,
 }
 
-impl FromStr for Intent {
-    type Err = eyre::Report;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let s: Vec<u8> = decode_bytes_hex(s).map_err(|_| eyre!("Invalid Intent"))?;
-        if s.len() != 3 {
+impl Intent {
+    pub fn to_bytes(&self) -> [u8; INTENT_PREFIX_LENGTH] {
+        [self.scope as u8, self.version as u8, self.app_id as u8]
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, eyre::Report> {
+        if bytes.len() != INTENT_PREFIX_LENGTH {
             return Err(eyre!("Invalid Intent"));
         }
         Ok(Self {
-            scope: s[0].try_into()?,
-            version: s[1].try_into()?,
-            app_id: s[2].try_into()?,
+            scope: bytes[0].try_into()?,
+            version: bytes[1].try_into()?,
+            app_id: bytes[2].try_into()?,
         })
+    }
+}
+
+impl FromStr for Intent {
+    type Err = eyre::Report;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes: Vec<u8> = decode_bytes_hex(s).map_err(|_| eyre!("Invalid Intent"))?;
+        Self::from_bytes(bytes.as_slice())
     }
 }
 
@@ -137,14 +145,6 @@ impl Intent {
             scope: IntentScope::PersonalMessage,
             version: IntentVersion::V0,
             app_id: AppId::Iota,
-        }
-    }
-
-    pub fn narwhal_app(scope: IntentScope) -> Self {
-        Self {
-            scope,
-            version: IntentVersion::V0,
-            app_id: AppId::Narwhal,
         }
     }
 

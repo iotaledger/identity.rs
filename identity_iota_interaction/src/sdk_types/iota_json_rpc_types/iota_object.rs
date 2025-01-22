@@ -173,7 +173,7 @@ pub struct IotaObjectData {
     pub storage_rebate: Option<u64>,
     /// The Display metadata for frontend UI rendering, default to be None
     /// unless IotaObjectDataOptions.showContent is set to true This can also
-    /// be None if the struct type does not have Display defined See more details in <https://forums.iota.io/t/nft-object-display-proposal/4872>
+    /// be None if the struct type does not have Display defined
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<DisplayFieldsResponse>,
     /// Move object content or package content, default to be None unless
@@ -244,6 +244,10 @@ impl Display for IotaObjectData {
                 "{}: {previous_transaction:?}",
                 "Previous Transaction",
             )?;
+        }
+        if let Some(content) = self.content.as_ref() {
+            writeln!(writer, "{}", "----- Data -----")?;
+            write!(writer, "{content}")?;
         }
 
         write!(f, "{writer}")
@@ -426,6 +430,9 @@ impl IotaData for IotaRawData {
     type ObjectType = IotaRawMoveObject;
     type PackageType = IotaRawMovePackage;
 
+    // try_from_object() and try_from_package() are not defined her because
+    // MoveObject and MoveStructLayout introduce too many depencies
+    
     fn try_as_move(&self) -> Option<&Self::ObjectType> {
         match self {
             Self::MoveObject(o) => Some(o),
@@ -468,6 +475,9 @@ impl IotaData for IotaParsedData {
     type ObjectType = IotaParsedMoveObject;
     type PackageType = IotaMovePackage;
 
+    // try_from_object() and try_from_package() are not defined her because
+    // MoveObject and MoveStructLayout introduce too many depencies
+    
     fn try_as_move(&self) -> Option<&Self::ObjectType> {
         match self {
             Self::MoveObject(o) => Some(o),
@@ -525,7 +535,6 @@ pub struct IotaParsedMoveObject {
     #[serde(rename = "type")]
     #[serde_as(as = "IotaStructTag")]
     pub type_: StructTag,
-    pub has_public_transfer: bool,
     pub fields: IotaMoveStruct,
 }
 
@@ -546,7 +555,6 @@ pub struct IotaRawMoveObject {
     #[serde(rename = "type")]
     #[serde_as(as = "IotaStructTag")]
     pub type_: StructTag,
-    pub has_public_transfer: bool,
     pub version: SequenceNumber,
     #[serde_as(as = "Base64")]
     pub bcs_bytes: Vec<u8>,

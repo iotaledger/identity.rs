@@ -465,7 +465,8 @@ pub fn parse_address_number(s: &str) -> Option<([u8; AccountAddress::LENGTH], Nu
 
 #[cfg(test)]
 mod tests {
-    use move_core_types::{account_address::AccountAddress, u256::U256};
+    use move_core_types::{account_address::AccountAddress, identifier::Identifier, u256::U256};
+    use proptest::{prelude::*, proptest};
 
     use crate::{
         address::{NumericalAddress, ParsedAddress},
@@ -618,6 +619,46 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_type_negative() {
+        for s in &[
+            "_",
+            "_::_::_",
+            "0x1::_",
+            "0x1::__::_",
+            "0x1::_::__",
+            "0x1::_::foo",
+            "0x1::foo::_",
+            "0x1::_::_",
+            "0x1::bar::foo<0x1::_::foo>",
+        ] {
+            assert!(
+                ParsedType::parse(s).is_err(),
+                "Parsed type {s} but should have failed"
+            );
+        }
+    }
+
+    #[test]
+    fn test_parse_struct_negative() {
+        for s in &[
+            "_",
+            "_::_::_",
+            "0x1::_",
+            "0x1::__::_",
+            "0x1::_::__",
+            "0x1::_::foo",
+            "0x1::foo::_",
+            "0x1::_::_",
+            "0x1::bar::foo<0x1::_::foo>",
+        ] {
+            assert!(
+                ParsedStructType::parse(s).is_err(),
+                "Parsed type {s} but should have failed"
+            );
+        }
+    }
+
+    #[test]
     fn test_type_type() {
         for s in &[
             "u64",
@@ -637,6 +678,10 @@ mod tests {
             "vector<0x1::M_::S_>",
             "vector<vector<0x1::M_::S_>>",
             "0x1::M::S<vector<u8>>",
+            "0x1::_bar::_BAR",
+            "0x1::__::__",
+            "0x1::_bar::_BAR<0x2::_____::______fooo______>",
+            "0x1::__::__<0x2::_____::______fooo______, 0xff::Bar____::_______foo>",
         ] {
             assert!(ParsedType::parse(s).is_ok(), "Failed to parse type {}", s);
         }
@@ -668,6 +713,10 @@ mod tests {
             "0x1::Foo::Foo<u8 , bool  ,    vector<u8>,address,signer>",
             "0x1::Foo::Foo<vector<0x1::Foo::Struct<0x1::XYZ::XYZ>>>",
             "0x1::Foo::Foo<0x1::Foo::Struct<vector<0x1::XYZ::XYZ>, 0x1::Foo::Foo<vector<0x1::Foo::Struct<0x1::XYZ::XYZ>>>>>",
+            "0x1::_bar::_BAR",
+            "0x1::__::__",
+            "0x1::_bar::_BAR<0x2::_____::______fooo______>",
+            "0x1::__::__<0x2::_____::______fooo______, 0xff::Bar____::_______foo>",
         ];
         for s in valid {
             assert!(
@@ -677,4 +726,25 @@ mod tests {
             );
         }
     }
+
+    fn struct_type_gen() -> impl Strategy<Value = String> {
+        (
+            any::<AccountAddress>(),
+            any::<Identifier>(),
+            any::<Identifier>(),
+        )
+            .prop_map(|(address, module, name)| format!("0x{}::{}::{}", address, module, name))
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_valid_struct_type_proptest(s in struct_type_gen()) {
+            prop_assert!(ParsedStructType::parse(&s).is_ok());
+        }
+
+        #[test]
+        fn test_parse_valid_type_struct_only_proptest(s in struct_type_gen()) {
+            prop_assert!(ParsedStructType::parse(&s).is_ok());
+        }
+}
 }

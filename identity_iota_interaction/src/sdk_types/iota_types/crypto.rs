@@ -60,7 +60,9 @@ pub enum PublicKey {
     Secp256k1(Secp256k1PublicKeyAsBytes),
     Secp256r1(Secp256r1PublicKeyAsBytes),
     ZkLogin(ZkLoginPublicIdentifier),
+    Passkey(Secp256r1PublicKeyAsBytes),
 }
+
 /// A wrapper struct to retrofit in [enum PublicKey] for zkLogin.
 /// Useful to construct [struct MultiSigPublicKey].
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -85,6 +87,7 @@ impl AsRef<[u8]> for PublicKey {
             PublicKey::Secp256k1(pk) => &pk.0,
             PublicKey::Secp256r1(pk) => &pk.0,
             PublicKey::ZkLogin(z) => &z.0,
+            PublicKey::Passkey(pk) => &pk.0,
         }
     }
 }
@@ -92,10 +95,11 @@ impl AsRef<[u8]> for PublicKey {
 impl PublicKey {
     pub fn scheme(&self) -> SignatureScheme {
         match self {
-            PublicKey::Ed25519(_) => SignatureScheme::ED25519,
-            PublicKey::Secp256k1(_) => SignatureScheme::Secp256k1,
-            PublicKey::Secp256r1(_) => SignatureScheme::Secp256r1,
+            PublicKey::Ed25519(_) => SignatureScheme::ED25519,     // Equals Ed25519IotaSignature::SCHEME
+            PublicKey::Secp256k1(_) => SignatureScheme::Secp256k1, // Equals Secp256k1IotaSignature::SCHEME
+            PublicKey::Secp256r1(_) => SignatureScheme::Secp256r1, // Equals Secp256r1IotaSignature::SCHEME
             PublicKey::ZkLogin(_) => SignatureScheme::ZkLoginAuthenticator,
+            PublicKey::Passkey(_) => SignatureScheme::PasskeyAuthenticator,
         }
     }
 }
@@ -162,6 +166,7 @@ pub enum SignatureScheme {
     BLS12381, // This is currently not supported for user Iota Address.
     MultiSig,
     ZkLoginAuthenticator,
+    PasskeyAuthenticator,
 }
 
 impl SignatureScheme {
@@ -174,6 +179,7 @@ impl SignatureScheme {
             SignatureScheme::BLS12381 => 0x04, // This is currently not supported for user Iota
             // Address.
             SignatureScheme::ZkLoginAuthenticator => 0x05,
+            SignatureScheme::PasskeyAuthenticator => 0x06,
         }
     }
 
@@ -201,6 +207,7 @@ impl SignatureScheme {
             0x03 => Ok(SignatureScheme::MultiSig),
             0x04 => Ok(SignatureScheme::BLS12381),
             0x05 => Ok(SignatureScheme::ZkLoginAuthenticator),
+            0x06 => Ok(SignatureScheme::PasskeyAuthenticator),
             _ => Err(IotaError::KeyConversion("Invalid key scheme".to_string())),
         }
     }

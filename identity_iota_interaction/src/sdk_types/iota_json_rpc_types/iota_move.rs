@@ -22,7 +22,7 @@ use crate::types::{
 
 use super::super::move_core_types::{
     language_storage::StructTag,
-    annotated_value::{MoveStruct, MoveValue},
+    annotated_value::{MoveStruct, MoveValue, MoveVariant},
     identifier::Identifier,
 };
 
@@ -39,6 +39,7 @@ pub enum IotaMoveValue {
     UID { id: ObjectID },
     Struct(IotaMoveStruct),
     Option(Box<Option<IotaMoveValue>>),
+    Variant(IotaMoveVariant),
 }
 
 impl IotaMoveValue {
@@ -53,6 +54,7 @@ impl IotaMoveValue {
             IotaMoveValue::String(v) => json!(v),
             IotaMoveValue::UID { id } => json!({ "id": id }),
             IotaMoveValue::Option(v) => json!(v),
+            IotaMoveValue::Variant(v) => v.to_json_value(),
         }
     }
 }
@@ -75,6 +77,7 @@ impl Display for IotaMoveValue {
                     vec.iter().map(|value| format!("{value}")).join(",\n")
                 )?;
             }
+            IotaMoveValue::Variant(value) => write!(writer, "{value}")?,
         }
         write!(f, "{}", writer.trim_end_matches('\n'))
     }
@@ -104,6 +107,19 @@ impl From<MoveValue> for IotaMoveValue {
             MoveValue::Signer(value) | MoveValue::Address(value) => {
                 IotaMoveValue::Address(IotaAddress::from(ObjectID::from(value)))
             }
+            MoveValue::Variant(MoveVariant {
+                type_,
+                variant_name,
+                tag: _,
+                fields,
+            }) => IotaMoveValue::Variant(IotaMoveVariant {
+                type_: type_.clone(),
+                variant: variant_name.to_string(),
+                fields: fields
+                    .into_iter()
+                    .map(|(id, value)| (id.into_string(), value.into()))
+                    .collect::<BTreeMap<_, _>>(),
+            }),
         }
     }
 }
@@ -123,6 +139,58 @@ fn to_bytearray(value: &[MoveValue]) -> Option<Vec<u8>> {
         Some(bytearray)
     } else {
         None
+    }
+}
+
+#[serde_as]
+#[derive(Debug, Deserialize, Serialize, Clone, Eq, PartialEq)]
+#[serde(rename = "MoveVariant")]
+pub struct IotaMoveVariant {
+    #[serde(rename = "type")]
+    #[serde_as(as = "IotaStructTag")]
+    pub type_: StructTag,
+    pub variant: String,
+    pub fields: BTreeMap<String, IotaMoveValue>,
+}
+
+impl IotaMoveVariant {
+    pub fn to_json_value(self) -> Value {
+        // We only care about values here, assuming type information is known at the
+        // client side.
+        let fields = self
+            .fields
+            .into_iter()
+            .map(|(key, value)| (key, value.to_json_value()))
+            .collect::<BTreeMap<_, _>>();
+        json!({
+            "variant": self.variant,
+            "fields": fields,
+        })
+    }
+}
+
+impl Display for IotaMoveVariant {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let mut writer = String::new();
+        let IotaMoveVariant {
+            type_,
+            variant,
+            fields,
+        } = self;
+        writeln!(writer)?;
+        writeln!(writer, "  {}: {type_}", "type")?;
+        writeln!(writer, "  {}: {variant}", "variant")?;
+        for (name, value) in fields {
+            let value = format!("{}", value);
+            let value = if value.starts_with('\n') {
+                indent(&value, 2)
+            } else {
+                value
+            };
+            writeln!(writer, "  {}: {value}", name)?;
+        }
+
+        write!(f, "{}", writer.trim_end_matches('\n'))
     }
 }
 

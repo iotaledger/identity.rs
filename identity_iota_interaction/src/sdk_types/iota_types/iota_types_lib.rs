@@ -2,91 +2,91 @@
 // Modifications Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde::{Deserialize, Serialize};
 use super::super::move_core_types::{
     account_address::AccountAddress,
-    language_storage::TypeTag,
+    language_storage::{TypeTag, StructTag},
 };
 use super::base_types::{ObjectID, SequenceNumber, IotaAddress};
 use super::object::OBJECT_START_VERSION;
 
-/// 0x1-- account address where Move stdlib modules are stored
-/// Same as the ObjectID
-pub const MOVE_STDLIB_ADDRESS: AccountAddress = AccountAddress::ONE;
-pub const MOVE_STDLIB_PACKAGE_ID: ObjectID = ObjectID::from_address(MOVE_STDLIB_ADDRESS);
+macro_rules! built_in_ids {
+    ($($addr:ident / $id:ident = $init:expr);* $(;)?) => {
+        $(
+            pub const $addr: AccountAddress = builtin_address($init);
+            pub const $id: ObjectID = ObjectID::from_address($addr);
+        )*
+    }
+}
 
-/// 0x2-- account address where iota framework modules are stored
-/// Same as the ObjectID
-pub const IOTA_FRAMEWORK_ADDRESS: AccountAddress = address_from_single_byte(2);
-pub const IOTA_FRAMEWORK_PACKAGE_ID: ObjectID = ObjectID::from_address(IOTA_FRAMEWORK_ADDRESS);
+macro_rules! built_in_pkgs {
+    ($($addr:ident / $id:ident = $init:expr);* $(;)?) => {
+        built_in_ids! { $($addr / $id = $init;)* }
+        pub const SYSTEM_PACKAGE_ADDRESSES: &[AccountAddress] = &[$($addr),*];
+        pub fn is_system_package(addr: impl Into<AccountAddress>) -> bool {
+            matches!(addr.into(), $($addr)|*)
+        }
+    }
+}
 
-/// 0x3-- account address where iota system modules are stored
-/// Same as the ObjectID
-pub const IOTA_SYSTEM_ADDRESS: AccountAddress = address_from_single_byte(3);
-pub const IOTA_SYSTEM_PACKAGE_ID: ObjectID = ObjectID::from_address(IOTA_SYSTEM_ADDRESS);
+built_in_pkgs! {
+    MOVE_STDLIB_ADDRESS / MOVE_STDLIB_PACKAGE_ID = 0x1;
+    IOTA_FRAMEWORK_ADDRESS / IOTA_FRAMEWORK_PACKAGE_ID = 0x2;
+    IOTA_SYSTEM_ADDRESS / IOTA_SYSTEM_PACKAGE_ID = 0x3;
+    BRIDGE_ADDRESS / BRIDGE_PACKAGE_ID = 0xb;
+    STARDUST_ADDRESS / STARDUST_PACKAGE_ID = 0x107a;
+}
 
-/// 0xdee9-- account address where DeepBook modules are stored
-/// Same as the ObjectID
-pub const DEEPBOOK_ADDRESS: AccountAddress = deepbook_addr();
-pub const DEEPBOOK_PACKAGE_ID: ObjectID = ObjectID::from_address(DEEPBOOK_ADDRESS);
+built_in_ids! {
+    IOTA_SYSTEM_STATE_ADDRESS / IOTA_SYSTEM_STATE_OBJECT_ID = 0x5;
+    IOTA_CLOCK_ADDRESS / IOTA_CLOCK_OBJECT_ID = 0x6;
+    IOTA_AUTHENTICATOR_STATE_ADDRESS / IOTA_AUTHENTICATOR_STATE_OBJECT_ID = 0x7;
+    IOTA_RANDOMNESS_STATE_ADDRESS / IOTA_RANDOMNESS_STATE_OBJECT_ID = 0x8;
+    IOTA_BRIDGE_ADDRESS / IOTA_BRIDGE_OBJECT_ID = 0x9;
+    IOTA_DENY_LIST_ADDRESS / IOTA_DENY_LIST_OBJECT_ID = 0x403;
+}
 
-/// 0x107a-- account address where Stardust modules are stored
-/// Same as the ObjectID
-pub const STARDUST_ADDRESS: AccountAddress = stardust_addr();
-pub const STARDUST_PACKAGE_ID: ObjectID = ObjectID::from_address(STARDUST_ADDRESS);
-
-/// 0x5: hardcoded object ID for the singleton iota system state object.
-pub const IOTA_SYSTEM_STATE_ADDRESS: AccountAddress = address_from_single_byte(5);
-pub const IOTA_SYSTEM_STATE_OBJECT_ID: ObjectID = ObjectID::from_address(IOTA_SYSTEM_STATE_ADDRESS);
 pub const IOTA_SYSTEM_STATE_OBJECT_SHARED_VERSION: SequenceNumber = OBJECT_START_VERSION;
-
-/// 0x6: hardcoded object ID for the singleton clock object.
-pub const IOTA_CLOCK_ADDRESS: AccountAddress = address_from_single_byte(6);
-pub const IOTA_CLOCK_OBJECT_ID: ObjectID = ObjectID::from_address(IOTA_CLOCK_ADDRESS);
 pub const IOTA_CLOCK_OBJECT_SHARED_VERSION: SequenceNumber = OBJECT_START_VERSION;
-
-/// 0x7: hardcode object ID for the singleton authenticator state object.
-pub const IOTA_AUTHENTICATOR_STATE_ADDRESS: AccountAddress = address_from_single_byte(7);
-pub const IOTA_AUTHENTICATOR_STATE_OBJECT_ID: ObjectID =
-    ObjectID::from_address(IOTA_AUTHENTICATOR_STATE_ADDRESS);
 pub const IOTA_AUTHENTICATOR_STATE_OBJECT_SHARED_VERSION: SequenceNumber = OBJECT_START_VERSION;
 
-/// 0x8: hardcode object ID for the singleton randomness state object.
-pub const IOTA_RANDOMNESS_STATE_ADDRESS: AccountAddress = address_from_single_byte(8);
-pub const IOTA_RANDOMNESS_STATE_OBJECT_ID: ObjectID =
-    ObjectID::from_address(IOTA_RANDOMNESS_STATE_ADDRESS);
-
-/// 0x403: hardcode object ID for the singleton DenyList object.
-pub const IOTA_DENY_LIST_ADDRESS: AccountAddress = deny_list_addr();
-pub const IOTA_DENY_LIST_OBJECT_ID: ObjectID = ObjectID::from_address(IOTA_DENY_LIST_ADDRESS);
-
-const fn address_from_single_byte(b: u8) -> AccountAddress {
+const fn builtin_address(suffix: u16) -> AccountAddress {
     let mut addr = [0u8; AccountAddress::LENGTH];
-    addr[AccountAddress::LENGTH - 1] = b;
+    let [hi, lo] = suffix.to_be_bytes();
+    addr[AccountAddress::LENGTH - 2] = hi;
+    addr[AccountAddress::LENGTH - 1] = lo;
     AccountAddress::new(addr)
 }
 
-/// return 0x0...dee9
-pub(crate) const fn deepbook_addr() -> AccountAddress {
-    let mut addr = [0u8; AccountAddress::LENGTH];
-    addr[AccountAddress::LENGTH - 2] = 0xde;
-    addr[AccountAddress::LENGTH - 1] = 0xe9;
-    AccountAddress::new(addr)
+/// Parse `s` as a struct type: A fully-qualified name, optionally followed by a
+/// list of type parameters (types -- see `parse_iota_type_tag`, separated by
+/// commas, surrounded by angle brackets). Parsing succeeds if and only if `s`
+/// matches this format exactly, with no remaining input. This function is
+/// intended for use within the authority codebase.
+pub fn parse_iota_struct_tag(s: &str) -> anyhow::Result<StructTag> {
+    use super::super::move_command_line_common::types::ParsedStructType;
+    ParsedStructType::parse(s)?.into_struct_tag(&resolve_address)
 }
 
-/// return 0x0...107a
-const fn stardust_addr() -> AccountAddress {
-    let mut addr = [0u8; AccountAddress::LENGTH];
-    addr[AccountAddress::LENGTH - 2] = 0x10;
-    addr[AccountAddress::LENGTH - 1] = 0x7a;
-    AccountAddress::new(addr)
+/// Parse `s` as a type: Either a struct type (see `parse_iota_struct_tag`), a
+/// primitive type, or a vector with a type parameter. Parsing succeeds if and
+/// only if `s` matches this format exactly, with no remaining input. This
+/// function is intended for use within the authority codebase.
+pub fn parse_iota_type_tag(s: &str) -> anyhow::Result<TypeTag> {
+    use super::super::move_command_line_common::types::ParsedType;
+    ParsedType::parse(s)?.into_type_tag(&resolve_address)
 }
 
-/// return 0x0...403
-const fn deny_list_addr() -> AccountAddress {
-    let mut addr = [0u8; AccountAddress::LENGTH];
-    addr[AccountAddress::LENGTH - 2] = 4;
-    addr[AccountAddress::LENGTH - 1] = 3;
-    AccountAddress::new(addr)
+/// Resolve well-known named addresses into numeric addresses.
+pub fn resolve_address(addr: &str) -> Option<AccountAddress> {
+    match addr {
+        "std" => Some(MOVE_STDLIB_ADDRESS),
+        "iota" => Some(IOTA_FRAMEWORK_ADDRESS),
+        "iota_system" => Some(IOTA_SYSTEM_ADDRESS),
+        "stardust" => Some(STARDUST_ADDRESS),
+        "bridge" => Some(BRIDGE_ADDRESS),
+        _ => None,
+    }
 }
 
 pub trait MoveTypeTagTrait {

@@ -2,7 +2,10 @@
 // Modifications Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::vec::Vec;
+use std::{
+    vec::Vec,
+    fmt::{self, Display, Formatter},
+};
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -122,10 +125,6 @@ impl IotaTransactionBlockResponseOptions {
         }
     }
 
-    pub fn require_local_execution(&self) -> bool {
-        self.show_balance_changes || self.show_object_changes
-    }
-
     pub fn require_input(&self) -> bool {
         self.show_input || self.show_raw_input || self.show_object_changes
     }
@@ -150,6 +149,15 @@ pub enum IotaExecutionStatus {
     Success,
     // Gas used in the failed case, and the error.
     Failure { error: String },
+}
+
+impl Display for IotaExecutionStatus {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Success => write!(f, "success"),
+            Self::Failure { error } => write!(f, "failure due to {error}"),
+        }
+    }
 }
 
 impl IotaExecutionStatus {
