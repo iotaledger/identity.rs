@@ -1,6 +1,9 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::AddrParseError;
+
+use identity_iota_interaction::rpc_types::IotaExecutionStatus;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
@@ -9,6 +12,7 @@ use identity_iota_interaction::types::base_types::SequenceNumber;
 use identity_iota_interaction::types::execution_status::CommandArgumentError;
 use identity_iota_interaction::types::execution_status::ExecutionStatus;
 use identity_iota_interaction::types::object::Owner;
+use identity_iota_interaction::IotaTransactionBlockResponseT;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Promise;
 use js_sys::Uint8Array;
@@ -242,6 +246,9 @@ extern "C" {
   #[wasm_bindgen(method)]
   fn effects_created_inner(this: &IotaTransactionBlockResponseAdapter) -> Option<Vec<WasmOwnedObjectRef>>;
 
+  #[wasm_bindgen(method, js_name = "get_response")]
+  fn response(this: &IotaTransactionBlockResponseAdapter) -> WasmIotaTransactionBlockResponse;
+
   #[wasm_bindgen(js_name = executeTransaction)]
   fn execute_transaction_inner(
     iotaClient: &WasmIotaClient, // --> TypeScript: IotaClient
@@ -253,15 +260,61 @@ extern "C" {
   ) -> PromiseIotaTransactionBlockResponseAdapter;
 }
 
-#[wasm_bindgen] // no module here, as imported via custom section above
-extern "C" {
-  #[wasm_bindgen(typescript_type = "ProgrammableTransaction")]
-  pub type WasmProgrammableTransaction;
-}
-
 #[derive(Deserialize)]
 struct WasmExecutionStatusAdapter {
   status: ExecutionStatus,
+}
+
+pub struct ManagedIotaTransactionBlockResponseAdapter {
+  ts_adapter: IotaTransactionBlockResponseAdapter,
+  response: WasmIotaTransactionBlockResponse,
+}
+
+impl ManagedIotaTransactionBlockResponseAdapter {
+  pub fn new(adapter: IotaTransactionBlockResponseAdapter) -> Self {
+    let response = adapter.response();
+    Self {
+      ts_adapter: adapter,
+      response,
+    }
+  }
+}
+
+impl IotaTransactionBlockResponseT for ManagedIotaTransactionBlockResponseAdapter {
+  type Error = TsSdkError;
+  type NativeResponse = WasmIotaTransactionBlockResponse;
+
+  fn effects_is_none(&self) -> bool {
+    self.ts_adapter.effects_is_none()
+  }
+
+  fn effects_is_some(&self) -> bool {
+    self.ts_adapter.effects_is_some()
+  }
+
+  fn to_string(&self) -> String {
+    self.ts_adapter.to_string()
+  }
+
+  fn effects_execution_status(&self) -> Option<IotaExecutionStatus> {
+    self.ts_adapter.effects_execution_status().map(|status| status.into())
+  }
+
+  fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
+    self.ts_adapter.effects_created()
+  }
+
+  fn as_native_response(&self) -> &Self::NativeResponse {
+    &self.response
+  }
+
+  fn as_mut_native_response(&mut self) -> &mut Self::NativeResponse {
+    &mut self.response
+  }
+
+  fn clone_native_response(&self) -> Self::NativeResponse {
+    self.response.clone()
+  }
 }
 
 impl IotaTransactionBlockResponseAdapter {
@@ -308,11 +361,3 @@ pub async fn execute_transaction(
 
   Ok(IotaTransactionBlockResponseAdapter::new(result.into()))
 }
-
-#[derive(Deserialize)]
-// TODO: add manual deserialization later on (must be deserializable, but WasmPT is not)
-// pub struct ProgrammableTransaction(WasmProgrammableTransaction);
-pub struct ProgrammableTransaction(());
-
-// TODO: fill in required functions and data handling here
-impl ProgrammableTransaction {}
