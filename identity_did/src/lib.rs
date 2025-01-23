@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 #![forbid(unsafe_code)]
 #![doc = include_str!("./../README.md")]
 #![allow(clippy::upper_case_acronyms)]
@@ -21,6 +25,8 @@ mod did;
 mod did_jwk;
 mod did_url;
 mod error;
+mod did_web;
+mod did_compositejwk;
 
 pub use crate::did_url::DIDUrl;
 pub use crate::did_url::RelativeDIDUrl;
@@ -29,3 +35,5 @@ pub use did::CoreDID;
 pub use did::DID;
 pub use did_jwk::*;
 pub use error::Error;
+pub use did_web::*;
+pub use did_compositejwk::*;

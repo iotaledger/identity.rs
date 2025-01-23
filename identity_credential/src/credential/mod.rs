@@ -37,6 +37,10 @@ pub use self::jpt::Jpt;
 pub use self::jwp_credential_options::JwpCredentialOptions;
 pub use self::jws::Jws;
 pub use self::jwt::Jwt;
+#[cfg(feature = "validator")]
+pub(crate) use self::jwt_serialization::CredentialJwtClaims;
+#[cfg(feature = "presentation")]
+pub(crate) use self::jwt_serialization::IssuanceDateClaims;
 pub use self::linked_domain_service::LinkedDomainService;
 pub use self::linked_verifiable_presentation_service::LinkedVerifiablePresentationService;
 pub use self::policy::Policy;
@@ -49,8 +53,3 @@ pub use self::revocation_bitmap_status::RevocationBitmapStatus;
 pub use self::schema::Schema;
 pub use self::status::Status;
 pub use self::subject::Subject;
-
-#[cfg(feature = "validator")]
-pub(crate) use self::jwt_serialization::CredentialJwtClaims;
-#[cfg(feature = "presentation")]
-pub(crate) use self::jwt_serialization::IssuanceDateClaims;

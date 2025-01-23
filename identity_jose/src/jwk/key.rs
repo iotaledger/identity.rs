@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use crypto::hashes::sha::SHA256;
 use crypto::hashes::sha::SHA256_LEN;
 use identity_core::common::Url;
@@ -20,6 +24,8 @@ use crate::jwk::JwkParamsRsa;
 use crate::jwk::JwkType;
 use crate::jwk::JwkUse;
 use crate::jwu::encode_b64;
+
+use super::JwkParamsPQ;
 
 /// A SHA256 JSON Web Key Thumbprint.
 pub type JwkThumbprintSha256 = [u8; SHA256_LEN];
@@ -339,6 +345,26 @@ impl Jwk {
     }
   }
 
+  /// Returns the [`JwkParamsPQ`] in this JWK if it is of type `ML-DSA` or `SLH-DSA`.
+  pub fn try_pq_params(&self) -> Result<&JwkParamsPQ> {
+    match self.params() {
+      JwkParams::MLDSA(params) => Ok(params),
+      JwkParams::SLHDSA(params) => Ok(params),
+      JwkParams::FALCON(params) => Ok(params),
+      _ => Err(Error::KeyError("PQ")),
+    }
+  }
+
+  /// Returns a mutable reference to the [`JwkParamsPQ`] in this JWK if it is of type `ML-DSA` or `SLH-DSA`.
+  pub fn try_pq_params_mut(&mut self) -> Result<&mut JwkParamsPQ> {
+    match self.params_mut() {
+      JwkParams::MLDSA(params) => Ok(params),
+      JwkParams::SLHDSA(params) => Ok(params),
+      JwkParams::FALCON(params) => Ok(params),
+      _ => Err(Error::KeyError("PQ")),
+    }
+  }
+
   // ===========================================================================
   // Thumbprint
   // ===========================================================================
@@ -386,6 +412,16 @@ impl Jwk {
       // Implementation according to https://www.rfc-editor.org/rfc/rfc8037#section-2.
       JwkParams::Okp(JwkParamsOkp { crv, x, .. }) => {
         format!(r#"{{"crv":"{crv}","kty":"{kty}","x":"{x}"}}"#)
+      }
+      //TODO: PQ - thumbprint for PQ keys
+      JwkParams::MLDSA(JwkParamsPQ { public, .. }) => {
+        format!(r#"{{"kty":"{kty}","pub":"{public}"}}"#)
+      }
+      JwkParams::SLHDSA(JwkParamsPQ { public, .. }) => {
+        format!(r#"{{"kty":"{kty}","pub":"{public}"}}"#)
+      }
+      JwkParams::FALCON(JwkParamsPQ { public, .. }) => {
+        format!(r#"{{"kty":"{kty}","pub":"{public}"}}"#)
       }
     }
   }
@@ -439,6 +475,9 @@ impl Jwk {
       JwkParams::Rsa(params) => params.is_private(),
       JwkParams::Oct(_) => true,
       JwkParams::Okp(params) => params.is_private(),
+      JwkParams::MLDSA(params) => params.is_private(), //TODO: PQ - is_private Jwk method
+      JwkParams::SLHDSA(params) => params.is_private(),
+      JwkParams::FALCON(params) => params.is_private(),
     }
   }
 

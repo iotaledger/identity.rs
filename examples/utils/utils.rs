@@ -1,5 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
 
 use std::path::PathBuf;
 
@@ -30,6 +33,9 @@ use serde_json::Value;
 
 pub static API_ENDPOINT: &str = "http://localhost";
 pub static FAUCET_ENDPOINT: &str = "http://localhost/faucet/api/enqueue";
+
+pub static DID_URL: &str = "https://localhost:4443/.well-known/";
+pub static PATH_DID_FILE: &str = "./examples/2_pqc/server/.well-known/";
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 

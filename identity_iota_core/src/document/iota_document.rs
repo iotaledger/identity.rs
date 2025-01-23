@@ -512,6 +512,8 @@ impl AsRef<CoreDocument> for IotaDocument {
   }
 }
 
+
+//TODO: Web DID - how to handle revocation? I think this code should be repeated for WebDocument. This can be avoided?
 #[cfg(feature = "revocation-bitmap")]
 mod iota_document_revocation {
   use identity_credential::revocation::RevocationDocumentExt;

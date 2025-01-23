@@ -14,10 +14,11 @@ members = [
   "identity_jose",
   "identity_ecdsa_verifier",
   "identity_eddsa_verifier",
+  "identity_pqc_verifier",
   "examples",
 ]
 
-exclude = ["bindings/wasm", "bindings/grpc"]
+exclude = ["bindings/wasm", "bindings/grpc", "examples/demo/server"]
 
 [workspace.dependencies]
 bls12_381_plus = { version = "0.8.17" }
@@ -27,6 +28,8 @@ strum = { version = "0.25", default-features = false, features = ["std", "derive
 serde_json = { version = "1.0", default-features = false }
 json-proof-token = { version = "0.3.5" }
 zkryptium = { version = "0.2.2", default-features = false, features = ["bbsplus"] }
+oqs = {version = "0.10.0", default-features = false, features = ["sigs", "std", "vendored"] }
+
 
 [workspace.package]
 authors = ["IOTA Stiftung"]

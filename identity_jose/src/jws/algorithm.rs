@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
@@ -44,6 +48,71 @@ pub enum JwsAlgorithm {
   NONE,
   /// EdDSA signature algorithms
   EdDSA,
+
+  //TODO: PQC - new PQ JwsAlgorithms
+  /// JSON Web Signature Algorithm for ML-DSA-44
+  /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium#name-the-ml-dsa-algorithm-family)
+  #[serde(rename = "ML-DSA-44")]
+  ML_DSA_44,
+  /// JSON Web Signature Algorithm for ML-DSA-44
+  /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium#name-the-ml-dsa-algorithm-family)
+  #[serde(rename = "ML-DSA-65")]
+  ML_DSA_65,
+  /// JSON Web Signature Algorithm for ML-DSA-44
+  /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium#name-the-ml-dsa-algorithm-family)
+  #[serde(rename = "ML-DSA-87")]
+  ML_DSA_87,
+  /// JSON Web Signature Algorithm for SLH-DSA-SHA2-128s
+  /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-sphincs-plus#name-the-slh-dsa-algorithm-famil)
+  #[serde(rename = "SLH-DSA-SHA2-128s")]
+  SLH_DSA_SHA2_128s,
+  /// JSON Web Signature Algorithm for SLH-DSA-SHAKE-128s
+  /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-sphincs-plus#name-the-slh-dsa-algorithm-famil)
+  #[serde(rename = "SLH-DSA-SHAKE-128s")]
+  SLH_DSA_SHAKE_128s,
+  /// JSON Web Signature Algorithm for SLH-DSA-SHA2-128f
+  /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-sphincs-plus#name-the-slh-dsa-algorithm-famil)
+  #[serde(rename = "SLH-DSA-SHA2-128f")]
+  SLH_DSA_SHA2_128f,
+
+  ///SLH_DSA_SHAKE_128f
+  #[serde(rename = "SLH-DSA-SHAKE-128f")]
+  SLH_DSA_SHAKE_128f,
+  ///SLH_DSA_SHA2_192s
+  #[serde(rename = "SLH-DSA-SHA2-192s")]
+  SLH_DSA_SHA2_192s,
+  ///SLH_DSA_SHAKE_192s
+  #[serde(rename = "SLH-DSA-SHAKE-192s")]
+  SLH_DSA_SHAKE_192s,
+  ///SLH-DSA-SHA2-192f
+  #[serde(rename = "SLH-DSA-SHA2-192f")]
+  SLH_DSA_SHA2_192f,
+  ///SLH-DSA-SHAKE-192f
+  #[serde(rename = "SLH-DSA-SHAKE-192f")]
+  SLH_DSA_SHAKE_192f,
+  ///SLH-DSA-SHA2-256s
+  #[serde(rename = "SLH-DSA-SHA2-256s")]
+  SLH_DSA_SHA2_256s,
+  ///SLH-DSA-SHA2-256s
+  #[serde(rename = "SLH-DSA-SHAKE-256s")]
+  SLH_DSA_SHAKE_256s,
+  ///SLH-DSA-SHA2-256f
+  #[serde(rename = "SLH-DSA-SHA2-256f")]
+  SLH_DSA_SHA2_256f,
+  ///SLH-DSA-SHAKE-256f
+  #[serde(rename = "SLH-DSA-SHAKE-256f")]
+  SLH_DSA_SHAKE_256f,
+
+  ///FALCON512
+  FALCON512,
+  ///FALCON1024
+  FALCON1024,
+  ///id-MLDSA44-Ed25519-SHA512
+  #[serde(rename = "id-MLDSA44-Ed25519-SHA512")]
+  IdMldsa44Ed25519Sha512,
+  ///id-MLDSA65-Ed25519-SHA512
+  #[serde(rename = "id-MLDSA65-Ed25519-SHA512")]
+  IdMldsa65Ed25519Sha512,
   /// Custom algorithm
   #[cfg(feature = "custom_alg")]
   #[serde(untagged)]
@@ -73,6 +142,25 @@ impl JwsAlgorithm {
     Self::ES256K,
     Self::NONE,
     Self::EdDSA,
+    Self::ML_DSA_44,
+    Self::ML_DSA_65,
+    Self::ML_DSA_87,
+    Self::SLH_DSA_SHA2_128s,
+    Self::SLH_DSA_SHAKE_128s,
+    Self::SLH_DSA_SHA2_128f,
+    Self::SLH_DSA_SHAKE_128f,
+    Self::SLH_DSA_SHA2_192s,
+    Self::SLH_DSA_SHAKE_192s,
+    Self::SLH_DSA_SHA2_192f,
+    Self::SLH_DSA_SHAKE_192f,
+    Self::SLH_DSA_SHA2_256s,
+    Self::SLH_DSA_SHAKE_256s,
+    Self::SLH_DSA_SHA2_256f,
+    Self::SLH_DSA_SHAKE_256f,
+    Self::FALCON512,
+    Self::FALCON1024,
+    Self::IdMldsa44Ed25519Sha512,
+    Self::IdMldsa65Ed25519Sha512,
   ];
 
   /// Returns the JWS algorithm as a `str` slice.
@@ -94,6 +182,28 @@ impl JwsAlgorithm {
       Self::ES256K => "ES256K",
       Self::NONE => "none",
       Self::EdDSA => "EdDSA",
+      Self::ML_DSA_44 => "ML-DSA-44",
+      Self::ML_DSA_65 => "ML-DSA-65",
+      Self::ML_DSA_87 => "ML-DSA-87",
+      Self::SLH_DSA_SHA2_128s => "SLH-DSA-SHA2-128s",
+      Self::SLH_DSA_SHAKE_128s => "SLH-DSA-SHAKE-128s",
+      Self::SLH_DSA_SHA2_128f => "SLH-DSA-SHA2-128f",
+
+      Self::SLH_DSA_SHAKE_128f => "SLH-DSA-SHAKE-128f",
+      Self::SLH_DSA_SHA2_192s => "SLH-DSA-SHA2-192s",
+      Self::SLH_DSA_SHAKE_192s => "SLH-DSA-SHAKE-192s",
+      Self::SLH_DSA_SHA2_192f => "SLH-DSA-SHA2-192f",
+      Self::SLH_DSA_SHAKE_192f => "SLH-DSA-SHAKE-192f",
+      Self::SLH_DSA_SHA2_256s => "SLH-DSA-SHA2-256s",
+      Self::SLH_DSA_SHAKE_256s => "SLH-DSA-SHAKE-256s",
+      Self::SLH_DSA_SHA2_256f => "SLH-DSA-SHA2-256f",
+      Self::SLH_DSA_SHAKE_256f => "SLH-DSA-SHAKE-256f",
+
+      Self::FALCON512 => "FALCON512",
+      Self::FALCON1024 => "FALCON1024",
+
+      Self::IdMldsa44Ed25519Sha512 => "id-MLDSA44-Ed25519-SHA512",
+      Self::IdMldsa65Ed25519Sha512 => "id-MLDSA65-Ed25519-SHA512",
     }
   }
 
@@ -141,6 +251,28 @@ impl FromStr for JwsAlgorithm {
       "ES256K" => Ok(Self::ES256K),
       "none" => Ok(Self::NONE),
       "EdDSA" => Ok(Self::EdDSA),
+      "ML-DSA-44" => Ok(Self::ML_DSA_44),
+      "ML-DSA-65" => Ok(Self::ML_DSA_65),
+      "ML-DSA-87" => Ok(Self::ML_DSA_87),
+      "SLH-DSA-SHA2-128s" => Ok(Self::SLH_DSA_SHA2_128s),
+      "SLH-DSA-SHAKE-128s" => Ok(Self::SLH_DSA_SHAKE_128s),
+      "SLH-DSA-SHA2-128f" => Ok(Self::SLH_DSA_SHA2_128f),
+
+      "SLH-DSA-SHAKE-128f" => Ok(Self::SLH_DSA_SHAKE_128f),
+      "SLH-DSA-SHA2-192s" => Ok(Self::SLH_DSA_SHA2_192s),
+      "SLH-DSA-SHAKE-192s" => Ok(Self::SLH_DSA_SHAKE_192s),
+      "SLH-DSA-SHA2-192f" => Ok(Self::SLH_DSA_SHA2_192f),
+      "SLH-DSA-SHAKE-192f" => Ok(Self::SLH_DSA_SHAKE_192f),
+      "SLH-DSA-SHA2-256s" => Ok(Self::SLH_DSA_SHA2_256s),
+      "SLH-DSA-SHAKE-256s" => Ok(Self::SLH_DSA_SHAKE_256s),
+      "SLH-DSA-SHA2-256f" => Ok(Self::SLH_DSA_SHA2_256f),
+      "SLH-DSA-SHAKE-256f" => Ok(Self::SLH_DSA_SHAKE_256f),
+
+      "FALCON512" => Ok(Self::FALCON512),
+      "FALCON1024" => Ok(Self::FALCON1024),
+
+      "id-MLDSA44-Ed25519-SHA512" => Ok(Self::IdMldsa44Ed25519Sha512),
+      "id-MLDSA65-Ed25519-SHA512" => Ok(Self::IdMldsa65Ed25519Sha512),
       #[cfg(feature = "custom_alg")]
       value => Ok(Self::Custom(value.to_string())),
       #[cfg(not(feature = "custom_alg"))]

@@ -315,7 +315,6 @@ mod iota_document {
         .create_issued_jwp(storage, fragment, jpt_claims, options)
         .await
     }
-
     async fn create_presented_jwp(
       &self,
       presentation: &mut SelectiveDisclosurePresentation,

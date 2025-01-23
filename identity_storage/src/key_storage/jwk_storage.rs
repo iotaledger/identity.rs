@@ -62,3 +62,4 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// Returns `true` if the key with the given `key_id` exists in storage, `false` otherwise.
   async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool>;
 }
+

@@ -1,11 +1,15 @@
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
 import * as ed from "@noble/ed25519";
-import { decodeB64, encodeB64, Jwk, JwkGenOutput, JwkStorage, ProofAlgorithm, ProofUpdateCtx } from "~identity_wasm";
+import { decodeB64, encodeB64, Jwk, JwkGenOutput, JwkStorage, ProofAlgorithm, ProofUpdateCtx, JwkStoragePQ } from "~identity_wasm";
 import { EdCurve, JwkType, JwsAlgorithm } from "./jose";
+import { ml_dsa44, ml_dsa65, ml_dsa87 } from '@noble/post-quantum/ml-dsa';
 
 type Ed25519PrivateKey = Uint8Array;
 type Ed25519PublicKey = Uint8Array;
 
-export class JwkMemStore implements JwkStorage {
+export class JwkMemStore implements JwkStorage,  JwkStoragePQ{
     /** The map from key identifiers to Jwks. */
     private _keys: Map<string, Jwk>;
 
@@ -14,8 +18,45 @@ export class JwkMemStore implements JwkStorage {
         this._keys = new Map();
     }
 
+    public async generatePQKey(keyType: String, algorithm: JwsAlgorithm):  Promise<JwkGenOutput> {
+        if (keyType !== JwkMemStore.mldsaKeyType()) {
+            throw new Error(`unsupported key type ${keyType}`);
+        }
+
+        const seed = new TextEncoder().encode(randomKeyId())
+        let keys;
+        if (algorithm === JwsAlgorithm.MLDSA44) {
+            keys = ml_dsa44.keygen(seed);
+        } else if(algorithm === JwsAlgorithm.MLDSA65) {
+            keys = ml_dsa65.keygen(seed);
+        } else if(algorithm === JwsAlgorithm.MLDSA87) {
+            keys = ml_dsa87.keygen(seed);
+        } else {
+            throw new Error(`unsupported algorithm`);
+        }
+
+        const keyId = randomKeyId();
+        const jwk = await encodeJwk(keys.secretKey, keys.publicKey, algorithm);
+
+        if(jwk == undefined)
+            throw new Error("Unexpected error: await encodeJwk(privKey, publicKey, algorithm)");
+        
+        this._keys.set(keyId, jwk);
+
+        const publicJWK = jwk?.toPublic();
+        if (!publicJWK) {
+            throw new Error(`JWK is not a public key`);
+        }
+        return new JwkGenOutput(keyId, publicJWK);
+
+    }
+
     public static ed25519KeyType(): string {
         return "Ed25519";
+    }
+
+    public static mldsaKeyType(): string {
+        return "ML-DSA";
     }
 
     private _get_key(keyId: string): Jwk | undefined {
@@ -33,7 +74,11 @@ export class JwkMemStore implements JwkStorage {
 
         const keyId = randomKeyId();
         const privKey: Ed25519PrivateKey = ed.utils.randomPrivateKey();
-        const jwk = await encodeJwk(privKey, algorithm);
+        const publicKey = await ed.getPublicKey(privKey);
+
+        const jwk = await encodeJwk(privKey, publicKey, algorithm);
+        if(jwk == undefined)
+            throw new Error("Unexpected error: await encodeJwk(privKey, publicKey, algorithm)");
 
         this._keys.set(keyId, jwk);
 
@@ -46,7 +91,7 @@ export class JwkMemStore implements JwkStorage {
     }
 
     public async sign(keyId: string, data: Uint8Array, publicKey: Jwk): Promise<Uint8Array> {
-        if (publicKey.alg() !== JwsAlgorithm.EdDSA) {
+        if (publicKey.alg()! !== JwsAlgorithm.EdDSA) {
             throw new Error("unsupported JWS algorithm");
         } else {
             if (publicKey.paramsOkp()?.crv !== (EdCurve.Ed25519 as string)) {
@@ -91,45 +136,82 @@ export class JwkMemStore implements JwkStorage {
     public count(): number {
         return this._keys.size;
     }
+
+
 }
 
 // Encodes a Ed25519 keypair into a Jwk.
-async function encodeJwk(privateKey: Ed25519PrivateKey, alg: JwsAlgorithm): Promise<Jwk> {
-    const publicKey = await ed.getPublicKey(privateKey);
-    let x = encodeB64(publicKey);
-    let d = encodeB64(privateKey);
+async function encodeJwk(
+    privateKey: Uint8Array,
+    publicKey: Uint8Array,
+    alg: JwsAlgorithm
+): Promise<Jwk | undefined> {
+    const x = encodeB64(publicKey);
+    const d = encodeB64(privateKey);
 
-    return new Jwk({
-        "kty": JwkType.Okp,
-        "crv": "Ed25519",
-        d,
-        x,
-        alg,
-    });
+    if (alg === JwsAlgorithm.EdDSA) {
+        return new Jwk({
+            kty: JwkType.Okp,
+            crv: "Ed25519",
+            d,
+            x,
+            alg,
+        });
+    } else if (alg === JwsAlgorithm.MLDSA44 || alg === JwsAlgorithm.MLDSA65 || alg === JwsAlgorithm.MLDSA87) {
+        return new Jwk({
+            "kty": JwkType.MLDSA,
+            pub: x,
+            priv: d,
+            alg,
+        });
+    }
+
+    return undefined;
 }
 
-function decodeJwk(jwk: Jwk): [Ed25519PrivateKey, Ed25519PublicKey] {
-    if (jwk.alg() !== JwsAlgorithm.EdDSA) {
+function decodeJwk(jwk: Jwk): [Uint8Array, Uint8Array] {
+    if (jwk.alg()! !== JwsAlgorithm.EdDSA) {
         throw new Error("unsupported `alg`");
     }
 
-    const paramsOkp = jwk.paramsOkp();
-    if (paramsOkp) {
-        const d = paramsOkp.d;
+    if (jwk.alg()! === JwsAlgorithm.EdDSA) {
+        const paramsOkp = jwk.paramsOkp();
+        if (paramsOkp) {
+            const d = paramsOkp.d;
 
-        if (d) {
-            let textEncoder = new TextEncoder();
-            const privateKey = decodeB64(textEncoder.encode(d));
-            const publicKey = decodeB64(textEncoder.encode(paramsOkp.x));
-            return [privateKey, publicKey];
+            if (d) {
+                const textEncoder = new TextEncoder();
+                const privateKey = decodeB64(textEncoder.encode(d));
+                const publicKey = decodeB64(textEncoder.encode(paramsOkp.x));
+                return [privateKey, publicKey];
+            } else {
+                throw new Error("missing private key component");
+            }
         } else {
-            throw new Error("missing private key component");
+            throw new Error("expected Okp params");
+        }
+    } else if (jwk.alg()! === JwsAlgorithm.MLDSA44 || jwk.alg()! === JwsAlgorithm.MLDSA65 || jwk.alg()! === JwsAlgorithm.MLDSA87) {
+        const paramsPQ = jwk.paramsMldsa();
+        if (paramsPQ) {
+            const priv = paramsPQ.priv;
+
+            if (priv) {
+                const textEncoder = new TextEncoder();
+                const privateKey = decodeB64(textEncoder.encode(priv));
+                const publicKey = decodeB64(textEncoder.encode(paramsPQ.pub));
+                return [privateKey, publicKey];
+            } else {
+                throw new Error("missing private key component");
+            }
+        } else {
+            throw new Error("expected Okp params");
         }
     } else {
-        throw new Error("expected Okp params");
+        throw new Error("unsupported `alg`");
     }
 }
 
+//TODO: non sembra servire a nulla
 export interface JwkStorageBBSPlusExt {
     // Generate a new BLS12381 key represented as a JSON Web Key.
     generateBBS: (algorithm: ProofAlgorithm) => Promise<JwkGenOutput>;

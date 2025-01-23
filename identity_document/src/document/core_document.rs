@@ -1,13 +1,19 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use core::convert::TryInto as _;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use std::collections::HashMap;
 use std::convert::Infallible;
 
+use identity_did::DIDCompositeJwk;
 use identity_did::DIDJwk;
+use identity_did::WebDID;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::DecodedJws;
 use identity_verification::jose::jws::Decoder;
@@ -983,6 +989,53 @@ impl CoreDocument {
       .verify(signature_verifier, public_key)
       .map_err(Error::JwsVerificationError)
   }
+
+  pub fn verify_jws_hybrid<'jws, TRV: JwsVerifier, PQV: JwsVerifier>(
+    &self,
+    jws: &'jws str,
+    detached_payload: Option<&'jws [u8]>,
+    traditional_verifier: &TRV,
+    pq_verifier: &PQV,
+    options: &JwsVerificationOptions,
+  ) -> Result<DecodedJws<'jws>> {
+    let validation_item = Decoder::new()
+      .decode_compact_serialization(jws.as_bytes(), detached_payload)
+      .map_err(Error::JwsVerificationError)?;
+
+    let nonce: Option<&str> = options.nonce.as_deref();
+    // Validate the nonce
+    if validation_item.nonce() != nonce {
+      return Err(Error::JwsVerificationError(
+        identity_verification::jose::error::Error::InvalidParam("invalid nonce value"),
+      ));
+    }
+
+    let method_url_query: DIDUrlQuery<'_> = match &options.method_id {
+      Some(method_id) => method_id.into(),
+      None => validation_item
+        .kid()
+        .ok_or(Error::JwsVerificationError(
+          identity_verification::jose::error::Error::InvalidParam("missing kid value"),
+        ))?
+        .into(),
+    };
+
+    let composite_public_key = self
+      .resolve_method(method_url_query, options.method_scope)
+      .ok_or(Error::MethodNotFound)?
+      .data()
+      .try_composite_public_key()
+      .map_err(Error::InvalidKeyMaterial)?;
+
+    validation_item
+      .verify_hybrid(
+        traditional_verifier,
+        pq_verifier,
+        composite_public_key.traditional_public_key(),
+        composite_public_key.pq_public_key(),
+      )
+      .map_err(Error::JwsVerificationError)
+  }
 }
 
 impl CoreDocument {
@@ -999,6 +1052,36 @@ impl CoreDocument {
       .capability_invocation(verification_method_id.clone())
       .capability_delegation(verification_method_id.clone())
       .build()
+  }
+}
+
+impl CoreDocument {
+  /// Creates a [`CoreDocument`] from a did:jwk DID.
+  pub fn expand_did_compositejwk(did_compositejwk: DIDCompositeJwk) -> Result<Self, Error> {
+    let verification_method = VerificationMethod::try_from(did_compositejwk.clone()).map_err(Error::InvalidKeyMaterial)?;
+    let verification_method_id = verification_method.id().clone();
+
+    DocumentBuilder::default()
+      .id(did_compositejwk.into())
+      .verification_method(verification_method)
+      .assertion_method(verification_method_id.clone())
+      .authentication(verification_method_id.clone())
+      .capability_invocation(verification_method_id.clone())
+      .capability_delegation(verification_method_id.clone())
+      .build()
+  }
+}
+
+impl CoreDocument {
+  /// Creates a [`CoreDocument`] from a url following the did:web method.
+  pub fn new_from_url(url: &str) -> Result<Self, Error>{
+    let id = WebDID::new(url).map_err(|_| Error::InvalidDocument("Invalid DID Web", None))?;
+    let document: CoreDocument = CoreDocument::builder(Object::default())
+      .id(id.into())
+      .build()
+      .map_err(|_| Error::InvalidDocument("empty Document construction failed", None))?;
+
+    Ok(document)
   }
 }
 
