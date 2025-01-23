@@ -37,7 +37,7 @@ use super::UserDrivenTx;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-      use iota_interaction_ts::NativeTsTransactionBuilderBindingWrapper as Ptb;
+      use iota_interaction_ts::NativeTsCodeBindingWrapper as Ptb;
       use iota_interaction_ts::error::TsSdkError as IotaInteractionError;
       /// Instances of BorrowIntentFnT can be used as user-provided function to describe how
       /// a borrowed assets shall be used.

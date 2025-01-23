@@ -1,5 +1,5 @@
-import { Transaction, TransactionArgument, TransactionResult } from "@iota/iota-sdk/transactions";
-import { IOTA_CLOCK_OBJECT_ID } from "@iota/iota-sdk/utils";
+import { Transaction, TransactionArgument, TransactionResult } from "@iota/iota.js/transactions";
+import { IOTA_CLOCK_OBJECT_ID } from "@iota/iota.js/utils";
 
 export function getClockRef(tx: Transaction): TransactionArgument {
     return tx.sharedObjectRef({ objectId: IOTA_CLOCK_OBJECT_ID, initialSharedVersion: 1, mutable: false });
