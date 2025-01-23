@@ -332,7 +332,7 @@ impl IotaDocument {
   /// Returns the first [`Service`] with an `id` property matching the provided `service_query`, if present.
   // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
   // services whose ids are of the form <did different from this document's>#<fragment>.
-  pub fn resolve_service<'query, 'me, Q>(&'me self, service_query: Q) -> Option<&'me Service>
+  pub fn resolve_service<'query, 'me, Q>(&'me self, service_query: Q) -> Option<&Service>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
@@ -347,7 +347,7 @@ impl IotaDocument {
     &'me self,
     method_query: Q,
     scope: Option<MethodScope>,
-  ) -> Option<&'me VerificationMethod>
+  ) -> Option<&VerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {

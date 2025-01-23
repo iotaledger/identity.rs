@@ -86,7 +86,7 @@ pub(super) struct Flatten<'payload, 'unprotected> {
   pub(super) signature: JwsSignature<'unprotected>,
 }
 
-impl Flatten<'_, '_> {
+impl<'payload, 'unprotected> Flatten<'payload, 'unprotected> {
   pub(super) fn to_json(&self) -> Result<String> {
     serde_json::to_string(&self).map_err(Error::InvalidJson)
   }
@@ -99,7 +99,7 @@ pub(super) struct General<'payload, 'unprotected> {
   pub(super) signatures: Vec<JwsSignature<'unprotected>>,
 }
 
-impl General<'_, '_> {
+impl<'payload, 'unprotected> General<'payload, 'unprotected> {
   pub(super) fn to_json(&self) -> Result<String> {
     serde_json::to_string(&self).map_err(Error::InvalidJson)
   }

@@ -422,7 +422,7 @@ pub struct JwsValidationIter<'decoder, 'payload, 'signatures> {
   payload: &'payload [u8],
 }
 
-impl<'payload> Iterator for JwsValidationIter<'_, 'payload, '_> {
+impl<'decoder, 'payload, 'signatures> Iterator for JwsValidationIter<'decoder, 'payload, 'signatures> {
   type Item = Result<JwsValidationItem<'payload>>;
 
   fn next(&mut self) -> Option<Self::Item> {

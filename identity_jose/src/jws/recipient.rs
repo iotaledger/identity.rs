@@ -15,7 +15,7 @@ pub struct Recipient<'a> {
   pub unprotected: Option<&'a JwsHeader>,
 }
 
-impl Default for Recipient<'_> {
+impl<'a> Default for Recipient<'a> {
   fn default() -> Self {
     Self::new()
   }

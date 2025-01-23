@@ -17,7 +17,7 @@ use crate::error::Error;
 use crate::error::Result;
 
 /// A parsed URL.
-#[derive(Clone, Hash, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(transparent)]
 pub struct Url(::url::Url);
@@ -94,11 +94,5 @@ impl KeyComparable for Url {
   #[inline]
   fn key(&self) -> &Self::Key {
     self
-  }
-}
-
-impl AsRef<str> for Url {
-  fn as_ref(&self) -> &str {
-    self.as_str()
   }
 }

@@ -79,9 +79,4 @@ pub enum Error {
   /// Cause by an invalid attribute path
   #[error("Attribute Not found")]
   SelectiveDisclosureError,
-
-  /// Failure of an SD-JWT VC operation.
-  #[cfg(feature = "sd-jwt-vc")]
-  #[error(transparent)]
-  SdJwtVc(#[from] crate::sd_jwt_vc::Error),
 }

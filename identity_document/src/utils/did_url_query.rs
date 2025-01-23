@@ -13,7 +13,7 @@ use identity_did::DID;
 #[repr(transparent)]
 pub struct DIDUrlQuery<'query>(Cow<'query, str>);
 
-impl DIDUrlQuery<'_> {
+impl<'query> DIDUrlQuery<'query> {
   /// Returns whether this query matches the given DIDUrl.
   pub(crate) fn matches(&self, did_url: &DIDUrl) -> bool {
     // Ensure the DID matches if included in the query.
@@ -81,7 +81,7 @@ impl<'query> From<&'query DIDUrl> for DIDUrlQuery<'query> {
   }
 }
 
-impl From<DIDUrl> for DIDUrlQuery<'_> {
+impl<'query> From<DIDUrl> for DIDUrlQuery<'query> {
   fn from(other: DIDUrl) -> Self {
     Self(Cow::Owned(other.to_string()))
   }

@@ -136,7 +136,7 @@ where
 }
 
 #[cfg(feature = "validator")]
-impl<CRED, T> PresentationJwtClaims<'_, CRED, T>
+impl<'presentation, CRED, T> PresentationJwtClaims<'presentation, CRED, T>
 where
   CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone,
   T: ToOwned<Owned = T> + Serialize + DeserializeOwned,

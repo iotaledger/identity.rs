@@ -108,8 +108,7 @@ impl_wasm_error_from!(
   identity_iota::sd_jwt_payload::Error,
   identity_iota::credential::KeyBindingJwtError,
   identity_iota::credential::status_list_2021::StatusListError,
-  identity_iota::credential::status_list_2021::StatusList2021CredentialError,
-  identity_iota::sd_jwt_rework::Error
+  identity_iota::credential::status_list_2021::StatusList2021CredentialError
 );
 
 // Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
@@ -152,7 +151,7 @@ fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) 
 
 struct ErrorMessage<'a, E: std::error::Error>(&'a E);
 
-impl<E: std::error::Error> Display for ErrorMessage<'_, E> {
+impl<'a, E: std::error::Error> Display for ErrorMessage<'a, E> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     error_chain_fmt(self.0, f)
   }
@@ -176,29 +175,11 @@ impl From<serde_json::Error> for WasmError<'_> {
   }
 }
 
-impl From<anyhow::Error> for WasmError<'_> {
-  fn from(value: anyhow::Error) -> Self {
-    Self {
-      name: Cow::Borrowed("Generic Error"),
-      message: Cow::Owned(value.to_string()),
-    }
-  }
-}
-
 impl From<identity_iota::iota::block::Error> for WasmError<'_> {
   fn from(error: identity_iota::iota::block::Error) -> Self {
     Self {
       name: Cow::Borrowed("iota_sdk::types::block::Error"),
       message: Cow::Owned(error.to_string()),
-    }
-  }
-}
-
-impl From<serde_wasm_bindgen::Error> for WasmError<'_> {
-  fn from(value: serde_wasm_bindgen::Error) -> Self {
-    Self {
-      name: Cow::Borrowed("JSConversionError"),
-      message: Cow::Owned(value.to_string()),
     }
   }
 }
@@ -279,15 +260,6 @@ impl From<TryLockError> for WasmError<'_> {
   fn from(error: TryLockError) -> Self {
     Self {
       name: Cow::Borrowed("TryLockError"),
-      message: Cow::Owned(ErrorMessage(&error).to_string()),
-    }
-  }
-}
-
-impl From<identity_iota::credential::sd_jwt_vc::Error> for WasmError<'_> {
-  fn from(error: identity_iota::credential::sd_jwt_vc::Error) -> Self {
-    Self {
-      name: Cow::Borrowed("SdJwtVcError"),
       message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }

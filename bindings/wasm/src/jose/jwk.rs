@@ -24,8 +24,7 @@ use crate::jose::WasmJwsAlgorithm;
 use core::ops::Deref;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(transparent)]
-#[wasm_bindgen(js_name = Jwk)]
+#[wasm_bindgen(js_name = Jwk, inspectable)]
 pub struct WasmJwk(pub(crate) Jwk);
 
 #[wasm_bindgen(js_class = Jwk)]

@@ -18,7 +18,7 @@ where
   D: serde::Deserializer<'de>,
 {
   struct ExactStrVisitor(&'static str);
-  impl Visitor<'_> for ExactStrVisitor {
+  impl<'a> Visitor<'a> for ExactStrVisitor {
     type Value = &'static str;
     fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
       write!(formatter, "the exact string \"{}\"", self.0)

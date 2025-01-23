@@ -18,7 +18,7 @@ where
   D: serde::Deserializer<'de>,
 {
   struct ExactStrVisitor(&'static str);
-  impl Visitor<'_> for ExactStrVisitor {
+  impl<'a> Visitor<'a> for ExactStrVisitor {
     type Value = &'static str;
     fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
       write!(formatter, "the exact string \"{}\"", self.0)
@@ -37,14 +37,6 @@ where
     .map(ToOwned::to_owned)
 }
 
-/// Serialize usize as string.
-fn serialize_number_as_string<S>(value: &usize, serializer: S) -> Result<S::Ok, S::Error>
-where
-  S: serde::Serializer,
-{
-  serializer.serialize_str(&value.to_string())
-}
-
 /// [StatusList2021Entry](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021entry) implementation.
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -53,10 +45,7 @@ pub struct StatusList2021Entry {
   #[serde(rename = "type", deserialize_with = "deserialize_status_entry_type")]
   type_: String,
   status_purpose: StatusPurpose,
-  #[serde(
-    deserialize_with = "serde_aux::prelude::deserialize_number_from_string",
-    serialize_with = "serialize_number_as_string"
-  )]
+  #[serde(deserialize_with = "serde_aux::prelude::deserialize_number_from_string")]
   status_list_index: usize,
   status_list_credential: Url,
 }
@@ -152,14 +141,5 @@ mod tests {
       "statusListCredential": "https://example.com/credentials/status/3"
     });
     serde_json::from_value::<StatusList2021Entry>(status).expect("wrong type");
-  }
-
-  #[test]
-  fn test_status_list_index_serialization() {
-    let base_url = Url::parse("https://example.com/credentials/status/3").unwrap();
-
-    let entry1 = StatusList2021Entry::new(base_url.clone(), StatusPurpose::Revocation, 94567, None);
-    let json1 = serde_json::to_value(&entry1).unwrap();
-    assert_eq!(json1["statusListIndex"], "94567");
   }
 }

@@ -21,6 +21,7 @@ use super::DomainLinkageValidationResult;
 use crate::utils::url_only_includes_origin;
 
 /// A validator for a Domain Linkage Configuration and Credentials.
+
 pub struct JwtDomainLinkageValidator<V: JwsVerifier> {
   validator: JwtCredentialValidator<V>,
 }
