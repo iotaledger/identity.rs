@@ -9,21 +9,21 @@ use crate::error::TsSdkError;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::TransactionBuilderT;
 
-pub type NativeTsCodeBindingWrapper = WasmTransactionBuilder;
+pub type NativeTsTransactionBuilderBindingWrapper = WasmTransactionBuilder;
 
 pub struct TransactionBuilderTsSdk {
-  pub(crate) builder: NativeTsCodeBindingWrapper,
+  pub(crate) builder: NativeTsTransactionBuilderBindingWrapper,
 }
 
 impl TransactionBuilderTsSdk {
-  pub fn new(builder: NativeTsCodeBindingWrapper) -> Self {
+  pub fn new(builder: NativeTsTransactionBuilderBindingWrapper) -> Self {
     TransactionBuilderTsSdk { builder }
   }
 }
 
 impl TransactionBuilderT for TransactionBuilderTsSdk {
   type Error = TsSdkError;
-  type NativeTxBuilder = NativeTsCodeBindingWrapper;
+  type NativeTxBuilder = NativeTsTransactionBuilderBindingWrapper;
 
   fn finish(self) -> Result<ProgrammableTransactionBcs, TsSdkError> {
     unimplemented!();
@@ -45,7 +45,7 @@ impl Default for TransactionBuilderTsSdk {
 }
 
 impl Deref for TransactionBuilderTsSdk {
-  type Target = NativeTsCodeBindingWrapper;
+  type Target = NativeTsTransactionBuilderBindingWrapper;
 
   fn deref(&self) -> &Self::Target {
     &self.builder
