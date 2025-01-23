@@ -40,6 +40,8 @@ pub mod credential {
   pub use identity_credential::presentation::*;
   #[cfg(feature = "revocation-bitmap")]
   pub use identity_credential::revocation::*;
+  #[cfg(feature = "sd-jwt-vc")]
+  pub use identity_credential::sd_jwt_vc;
   pub use identity_credential::validator::*;
 }
 
@@ -94,7 +96,6 @@ pub mod prelude {
 #[cfg_attr(docsrs, doc(cfg(feature = "resolver")))]
 pub mod resolver {
   //! DID resolution utilities
-
   pub use identity_resolver::*;
 }
 
@@ -128,3 +129,8 @@ pub mod sd_jwt_payload {
   //! Expose the selective disclosure crate.
   pub use identity_credential::sd_jwt_payload::*;
 }
+
+// Exposes the reworked version of the selective disclosure crate
+// which is needed for selectively disclosable credentials.
+#[cfg(feature = "sd-jwt-vc")]
+pub use identity_credential::sd_jwt_v2 as sd_jwt_rework;

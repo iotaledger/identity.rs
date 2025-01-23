@@ -67,7 +67,7 @@ impl<'credential, T> CredentialJwtClaims<'credential, T>
 where
   T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
 {
-  pub(super) fn new(credential: &'credential Credential<T>, custom: Option<Object>) -> Result<Self> {
+  pub(crate) fn new(credential: &'credential Credential<T>, custom: Option<Object>) -> Result<Self> {
     let Credential {
       context,
       id,
@@ -118,7 +118,7 @@ where
 }
 
 #[cfg(feature = "validator")]
-impl<'credential, T> CredentialJwtClaims<'credential, T>
+impl<T> CredentialJwtClaims<'_, T>
 where
   T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
 {

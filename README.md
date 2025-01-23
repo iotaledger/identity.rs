@@ -7,6 +7,7 @@ This repository extends IOTA Identity by implementing both pure **Post-Quantum (
 
 2. **PQ/T hybrid Signatures**: to mitigate risks associated with the relative immaturity of Post-Quantum Cryptography (PQC), the IOTA Identity also extends its support for PQ/T hybrid signatures. The hybrid scheme combines a PQ signature with a Traditional signature in a single composite signature. This ensures secure authentication, even if one of the two algorithms becomes compromised. The PQ/T hybrid signature requires a PQ/T hybrid key pair; the PQ/T hybrid public key is handled using the newly introduced [verification material property](https://www.w3.org/TR/did-core/#verification-material) type called `compositeJwk`, which stores both types of public keys within the DID document. This setup enforces the `Weak Non-Separability` (WSN) property of signatures, protecting against stripping attack.
 
+
 ```json
 "compositeJwk": {
   "algId": ".. composite key OID ..",
