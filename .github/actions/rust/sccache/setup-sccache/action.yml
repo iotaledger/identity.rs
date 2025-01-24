@@ -12,7 +12,7 @@ runs:
       if: inputs.os == 'macos-latest'
       shell: bash
       run: |
-        brew update --preinstall
+        brew update --auto-update
         brew install sccache
 
     - name: Install sccache (ubuntu-24.04)
