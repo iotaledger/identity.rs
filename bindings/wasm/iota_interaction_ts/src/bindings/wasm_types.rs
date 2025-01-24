@@ -26,6 +26,7 @@ use crate::bindings::WasmIotaClient;
 use crate::common::into_sdk_type;
 use crate::console_log;
 use crate::error::TsSdkError;
+use crate::error::WasmError;
 
 // TODO: fix/add
 // not available anymore
@@ -63,9 +64,6 @@ const TS_SDK_TYPES: &'static str = r#"
     executeTransaction,
     IotaTransactionBlockResponseAdapter,
   } from "./iota_client_helpers"
-
-  // TODO: decide if we use this or replace it with an adapter written in TypeScript type if needed
-  type ProgrammableTransaction = ReturnType<typeof bcs.ProgrammableTransaction.parse>;
 "#;
 
 #[wasm_bindgen(module = "@iota/iota.js/client")]
@@ -75,6 +73,9 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Transaction")]
   pub type WasmTransactionBuilder;
+
+  #[wasm_bindgen(js_name = "from", static_method_of = WasmTransactionBuilder, catch)]
+  pub fn from_bcs_bytes(bytes: &[u8]) -> Result<WasmTransactionBuilder, JsValue>;
 
   #[wasm_bindgen(method, structural, catch)]
   pub async fn build(this: &WasmTransactionBuilder) -> Result<Uint8Array, JsValue>;
@@ -265,58 +266,6 @@ struct WasmExecutionStatusAdapter {
   status: ExecutionStatus,
 }
 
-pub struct ManagedIotaTransactionBlockResponseAdapter {
-  ts_adapter: IotaTransactionBlockResponseAdapter,
-  response: WasmIotaTransactionBlockResponse,
-}
-
-impl ManagedIotaTransactionBlockResponseAdapter {
-  pub fn new(adapter: IotaTransactionBlockResponseAdapter) -> Self {
-    let response = adapter.response();
-    Self {
-      ts_adapter: adapter,
-      response,
-    }
-  }
-}
-
-impl IotaTransactionBlockResponseT for ManagedIotaTransactionBlockResponseAdapter {
-  type Error = TsSdkError;
-  type NativeResponse = WasmIotaTransactionBlockResponse;
-
-  fn effects_is_none(&self) -> bool {
-    self.ts_adapter.effects_is_none()
-  }
-
-  fn effects_is_some(&self) -> bool {
-    self.ts_adapter.effects_is_some()
-  }
-
-  fn to_string(&self) -> String {
-    self.ts_adapter.to_string()
-  }
-
-  fn effects_execution_status(&self) -> Option<IotaExecutionStatus> {
-    self.ts_adapter.effects_execution_status().map(|status| status.into())
-  }
-
-  fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
-    self.ts_adapter.effects_created()
-  }
-
-  fn as_native_response(&self) -> &Self::NativeResponse {
-    &self.response
-  }
-
-  fn as_mut_native_response(&mut self) -> &mut Self::NativeResponse {
-    &mut self.response
-  }
-
-  fn clone_native_response(&self) -> Self::NativeResponse {
-    self.response.clone()
-  }
-}
-
 impl IotaTransactionBlockResponseAdapter {
   pub fn effects_execution_status(&self) -> Option<ExecutionStatus> {
     self.effects_execution_status_inner().map(|s| {
@@ -360,4 +309,18 @@ pub async fn execute_transaction(
   })?;
 
   Ok(IotaTransactionBlockResponseAdapter::new(result.into()))
+}
+
+#[derive(Deserialize)]
+#[serde(try_from = "Vec<u8>")]
+pub struct ProgrammableTransaction(WasmTransactionBuilder);
+
+impl TryFrom<Vec<u8>> for ProgrammableTransaction {
+  type Error = TsSdkError;
+  fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+    WasmTransactionBuilder::from_bcs_bytes(&value)
+      .map(Self)
+      .map_err(WasmError::from)
+      .map_err(TsSdkError::from)
+  }
 }
