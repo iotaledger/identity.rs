@@ -38,7 +38,7 @@ use super::UserDrivenTx;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-      use iota_interaction_ts::NativeTsCodeBindingWrapper as Ptb;
+      use iota_interaction_ts::NativeTsTransactionBuilderBindingWrapper as Ptb;
       /// Instances of ControllerIntentFnT can be used as user-provided function to describe how
       /// a borrowed identity's controller capability will be used.
       pub trait ControllerIntentFnT: FnOnce(&mut Ptb, &Argument) {}
