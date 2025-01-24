@@ -45,7 +45,7 @@ export class IotaTransactionBlockResponseAdapter {
     }
 
     get_response(): IotaTransactionBlockResponse {
-        return this.response
+        return this.response;
     }
 }
 

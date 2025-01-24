@@ -47,9 +47,9 @@ iota-client = [
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [
-    "identity_credential/revocation-bitmap",
-    "identity_iota_core/revocation-bitmap",
-    "identity_resolver?/revocation-bitmap",
+  "identity_credential/revocation-bitmap",
+  "identity_iota_core/revocation-bitmap",
+  "identity_resolver?/revocation-bitmap",
 ]
 
 # Enables revocation with `StatusList2021`.
