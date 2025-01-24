@@ -4,15 +4,12 @@
 use std::ops::Deref;
 use std::ops::DerefMut;
 
+use crate::bindings::WasmTransactionBuilder;
 use crate::error::TsSdkError;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::TransactionBuilderT;
 
-// TODO: When the rust type wrapping the native TS transaction-builder has been
-//       developed, replace the NativeTsTransactionBuilderBindingWrapper type
-//       with the final type name (NativeTsTransactionBuilderBindingWrapper is
-//       also imported in identity_iota_core/src/rebased/...)
-pub type NativeTsTransactionBuilderBindingWrapper = ();
+pub type NativeTsTransactionBuilderBindingWrapper = WasmTransactionBuilder;
 
 pub struct TransactionBuilderTsSdk {
   pub(crate) builder: NativeTsTransactionBuilderBindingWrapper,

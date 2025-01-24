@@ -9,8 +9,25 @@ use identity_iota_interaction::types::transaction::ObjectArg;
 use identity_iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use identity_iota_interaction::MigrationMoveCalls;
 use identity_iota_interaction::ProgrammableTransactionBcs;
+use js_sys::Uint8Array;
+use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::JsValue;
 
+use crate::bindings::WasmObjectRef;
+use crate::bindings::WasmSharedObjectRef;
 use crate::error::TsSdkError;
+use crate::error::WasmError;
+
+#[wasm_bindgen(module = "move_calls")]
+extern "C" {
+  #[wasm_bindgen(js_name = "migrateDidOutput", catch)]
+  async fn migrate_did_output_impl(
+    did_output: WasmObjectRef,
+    migration_registry: WasmSharedObjectRef,
+    package: &str,
+    creation_timestamp: Option<u64>,
+  ) -> Result<Uint8Array, JsValue>;
+}
 
 pub struct MigrationMoveCallsTsSdk {}
 
@@ -23,6 +40,18 @@ impl MigrationMoveCalls for MigrationMoveCallsTsSdk {
     migration_registry: OwnedObjectRef,
     package: ObjectID,
   ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> {
-    unimplemented!();
+    let did_output = did_output.into();
+    let package = package.to_string();
+    let migration_registry = migration_registry.try_into()?;
+
+    futures::executor::block_on(migrate_did_output_impl(
+      did_output,
+      migration_registry,
+      &package,
+      creation_timestamp,
+    ))
+    .map(|js_arr| js_arr.to_vec())
+    .map_err(WasmError::from)
+    .map_err(Self::Error::from)
   }
 }
