@@ -98,7 +98,7 @@ impl Identity {
 }
 
 /// An on-chain entity that wraps a DID Document.
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct OnChainIdentity {
   id: UID,
   multi_controller: Multicontroller<Vec<u8>>,

@@ -14,11 +14,11 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use super::DummySigner;
-use super::IdentityClient;
 use super::Multicontroller;
 use super::Proposal;
 use identity_iota::iota::rebased::Error;
 use identity_iota::iota::IotaDocument;
+use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota_interaction::rpc_types::IotaObjectData;
 use identity_iota::iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota::iota_interaction::types::base_types::IotaAddress;

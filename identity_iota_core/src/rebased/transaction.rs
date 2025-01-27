@@ -69,7 +69,7 @@ pub trait Transaction: Sized {
   }
 }
 
-pub(crate) struct TransactionOutputInternal<T> {
+pub struct TransactionOutputInternal<T> {
   pub output: T,
   pub response: IotaTransactionBlockResponseAdaptedTraitObj,
 }
@@ -95,7 +95,7 @@ impl<T> From<TransactionOutputInternal<T>> for TransactionOutput<T> {
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-pub(crate) trait TransactionInternal: Sized {
+pub trait TransactionInternal: Sized {
   type Output;
 
   async fn execute_with_opt_gas_internal<S: Signer<IotaKeySignature> + Sync>(

@@ -2,46 +2,35 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    IotaDocument,
-    IotaIdentityClient,
     JwkMemStore,
     JwsAlgorithm,
-    KeyIdMemStore,
     MethodRelationship,
     MethodScope,
     Service,
-    Storage,
     Timestamp,
     VerificationMethod,
 } from "@iota/identity-wasm/node";
-import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+
+import {
+    createDidDocument,
+    getClientAndCreateAccount,
+    getMemstorage,
+    TEST_GAS_BUDGET,
+} from "../utils_alpha";
 
 /** Demonstrates how to update a DID document in an existing Alias Output. */
 export async function updateIdentity() {
-    const client = new Client({
-        primaryNode: API_ENDPOINT,
-        localPow: true,
-    });
-    const didClient = new IotaIdentityClient(client);
-
-    // Generate a random mnemonic for our wallet.
-    const secretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
-
-    // Creates a new wallet and identity (see "0_create_did" example).
-    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document, fragment } = await createDid(
-        client,
-        secretManager,
-        storage,
-    );
-    const did = document.id();
+    // create new client to interact with chain and get funded account with keys
+    const storage = getMemstorage();
+    const identityClient = await getClientAndCreateAccount(storage);
+  
+    // create new DID document and publish it
+    let [document, vmFragment1] = await createDidDocument(identityClient, storage);
+    let did = document.id();
 
     // Resolve the latest state of the document.
     // Technically this is equivalent to the document above.
-    document = await didClient.resolveDid(did);
+    document = await identityClient.resolveDid(did);
 
     // Insert a new Ed25519 verification method in the DID document.
     await document.generateMethod(
@@ -55,6 +44,7 @@ export async function updateIdentity() {
     // Attach a new method relationship to the inserted method.
     document.attachMethodRelationship(did.join("#key-2"), MethodRelationship.Authentication);
 
+
     // Add a new Service.
     const service: Service = new Service({
         id: did.join("#linked-domain"),
@@ -65,24 +55,10 @@ export async function updateIdentity() {
     document.setMetadataUpdated(Timestamp.nowUTC());
 
     // Remove a verification method.
-    let originalMethod = document.resolveMethod(fragment) as VerificationMethod;
+    let originalMethod = document.resolveMethod(vmFragment1) as VerificationMethod;
     await document.purgeMethod(storage, originalMethod?.id());
 
-    // Resolve the latest output and update it with the given document.
-    let aliasOutput: AliasOutput = await didClient.updateDidOutput(document);
-
-    // Because the size of the DID document increased, we have to increase the allocated storage deposit.
-    // This increases the deposit amount to the new minimum.
-    const rentStructure: IRent = await didClient.getRentStructure();
-
-    aliasOutput = await client.buildAliasOutput({
-        ...aliasOutput,
-        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
-        aliasId: aliasOutput.getAliasId(),
-        unlockConditions: aliasOutput.getUnlockConditions(),
-    });
-
-    // Publish the output.
-    const updated: IotaDocument = await didClient.publishDidOutput(secretManager, aliasOutput);
-    console.log("Updated DID document:", JSON.stringify(updated, null, 2));
+    let updated = identityClient
+        .publishDidDocumentUpdate(document.clone(), TEST_GAS_BUDGET);
+    console.log(`Updated DID document result: ${JSON.stringify(updated, null, 2)}`);
 }

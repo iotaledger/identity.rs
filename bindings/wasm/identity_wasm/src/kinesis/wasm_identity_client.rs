@@ -6,6 +6,7 @@ use std::rc::Rc;
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::ToFromBytes;
 
+use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota_interaction::types::base_types::IotaAddress;
 use identity_iota::iota_interaction::SignatureBcs;
 
@@ -18,20 +19,20 @@ use iota_interaction_ts::iota_client_ts_sdk::IotaClientTsSdk;
 
 use identity_iota::iota::rebased::Error;
 
-use super::client_dummy::DummySigner;
-use super::client_dummy::Identity;
-use super::client_dummy::IdentityClient;
+use super::IdentityContainer;
+use super::WasmIdentityBuilder;
+use super::WasmKinesisIdentityClientReadOnly;
 
 use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
+use crate::storage::StorageSignerOwned;
+use crate::storage::WasmStorageSigner;
 use identity_iota::iota::IotaDocument;
 use wasm_bindgen::prelude::*;
 
 use super::types::WasmIotaAddress;
 use super::types::WasmObjectID;
-use super::wasm_identity_client_builder::WasmKinesisIdentityClientBuilder;
-use super::WasmIdentityBuilder;
 
 #[wasm_bindgen(getter_with_clone, inspectable, js_name = IotaTransactionBlockResponseEssence)]
 pub struct WasmIotaTransactionBlockResponseEssence {
@@ -45,80 +46,57 @@ pub struct WasmIotaTransactionBlockResponseEssence {
 }
 
 #[wasm_bindgen(js_name = KinesisIdentityClient)]
-pub struct WasmKinesisIdentityClient(pub(crate) IdentityClient<IotaClientTsSdk>);
+pub struct WasmKinesisIdentityClient(pub(crate) IdentityClient<StorageSignerOwned>);
 
 // builder related functions
 #[wasm_bindgen(js_class = KinesisIdentityClient)]
 impl WasmKinesisIdentityClient {
-  #[wasm_bindgen]
-  pub fn builder() -> WasmKinesisIdentityClientBuilder {
-    // WasmKinesisIdentityClientBuilder::default()
-    WasmKinesisIdentityClientBuilder(IdentityClient::<IotaClientTsSdk>::builder())
+  #[wasm_bindgen(js_name = create)]
+  pub async fn new(client: WasmKinesisIdentityClientReadOnly, signer: WasmStorageSigner) -> Result<WasmKinesisIdentityClient, JsError> {
+    let inner_client = IdentityClient::new(client.0, signer.0).await?;
+    Ok(WasmKinesisIdentityClient(inner_client))
   }
 
-  // mock functions for wasm integration
-
   #[wasm_bindgen(js_name = senderPublicKey)]
-  pub fn sender_public_key(&self) -> Result<Vec<u8>, JsError> {
-    self.0.sender_public_key().map(|v| v.to_vec()).map_err(|e| e.into())
+  pub fn sender_public_key(&self) -> Vec<u8> {
+    self.0.sender_public_key().to_vec()
   }
 
   #[wasm_bindgen(js_name = senderAddress)]
-  pub fn sender_address(&self) -> Result<WasmIotaAddress, JsError> {
-    self.0.sender_address().map(|a| a.to_string()).map_err(|e| e.into())
+  pub fn sender_address(&self) -> WasmIotaAddress {
+    self.0.sender_address().to_string()
   }
 
-  #[wasm_bindgen(js_name = networkName)]
-  pub fn network_name(&self) -> String {
-    self.0.network_name().to_string()
+  #[wasm_bindgen(js_name = network)]
+  pub fn network(&self) -> String {
+    self.0.network().to_string()
+  }
+  
+  #[wasm_bindgen(js_name = migrationRegistryId)]
+  pub fn migration_registry_id(&self) -> String {
+    self.0.migration_registry_id().to_string()
   }
 
   #[wasm_bindgen(js_name = createIdentity)]
-  pub fn create_identity(&self, iota_document: &[u8]) -> WasmIdentityBuilder {
-    WasmIdentityBuilder(self.0.create_identity(iota_document))
+  pub fn create_identity(&self, iota_document: &WasmIotaDocument) -> WasmIdentityBuilder {
+    WasmIdentityBuilder::new(iota_document)
   }
+
+  // #[wasm_bindgen(js_name = getIdentity)]
+  // pub async fn get_identity(&self, object_id: WasmObjectID) -> Result<WasmIdentity, JsError> {
+  //   let identity = self.0.get_identity(object_id.parse()?).await.map_err(|e| e.into())?;
+  //   Ok(WasmIdentity(identity))
+  // }
 
   #[wasm_bindgen(js_name = getIdentity)]
-  pub async fn get_identity(&self, object_id: WasmObjectID) -> Result<Identity, JsError> {
-    self.0.get_identity(object_id.parse()?).await.map_err(|e| e.into())
+  pub async fn get_identity(&self, object_id: WasmObjectID) -> Result<IdentityContainer, JsError> {
+    let inner_value = self.0.get_identity(object_id.parse()?).await.unwrap();
+    Ok(IdentityContainer(inner_value))
   }
 
-  #[wasm_bindgen(js_name = executeDummyTransaction)]
-  pub async fn execute_dummy_transaction(
-    &self,
-    tx_data_bcs_str: String,
-    signatures_str: Vec<String>,
-  ) -> Result<WasmIotaTransactionBlockResponseEssence, JsError> {
-    let dummy = 1;
-    let tx_data_bcs = BaseEncoding::decode(tx_data_bcs_str.as_str(), Base::Base64Pad)?;
-    let signatures = signatures_str
-      .iter()
-      .map(|s| BaseEncoding::decode(s, Base::Base64Pad))
-      .collect::<std::result::Result<Vec<SignatureBcs>, _>>()?;
-
-    let response = self
-      .0
-      .execute_dummy_transaction(tx_data_bcs, signatures)
-      .await
-      .map_err(<Error as Into<JsError>>::into)?;
-
-    let effects_execution_status: Option<WasmExecutionStatus> = response
-      .effects_execution_status()
-      .map(|status| serde_wasm_bindgen::to_value(&status).unwrap().into());
-
-    let effects_created: Option<Vec<WasmOwnedObjectRef>> = response.effects_created().map(|effects| {
-      effects
-        .into_iter()
-        .map(|efct| serde_wasm_bindgen::to_value(&efct).unwrap().into())
-        .collect()
-    });
-
-    Ok(WasmIotaTransactionBlockResponseEssence {
-      effects_exist: response.effects_is_some(),
-      effects: response.to_string(),
-      effects_execution_status,
-      effects_created,
-    })
+  #[wasm_bindgen(js_name = packageId)]
+  pub fn package_id(&self) -> Result<String, JsError> {
+    Ok(self.0.package_id().to_string())
   }
 
   #[wasm_bindgen(js_name = resolveDid)]
@@ -131,73 +109,64 @@ impl WasmKinesisIdentityClient {
     Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
   }
 
-  #[wasm_bindgen(js_name = publishDidDocument)]
-  pub async fn publish_did_document(
-    &self,
-    document: &WasmIotaDocument,
-    gas_budget: u64,
-    signer: &DummySigner,
-  ) -> Result<WasmIotaDocument, JsError> {
-    let doc: IotaDocument = document
-      .0
-      .try_read()
-      .map_err(|err| JsError::new(&format!("failed to read DID document; {err:?}")))?
-      .clone();
-    let document = self
-      .0
-      .publish_did_document(doc, gas_budget, signer)
-      .await
-      .map_err(<Error as std::convert::Into<JsError>>::into)?;
+  // not included in any e2e test anymore, so let's skip it for now
 
-    Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
-  }
+  // #[wasm_bindgen(js_name = publishDidDocument)]
+  // pub async fn publish_did_document(
+  //   &self,
+  //   document: &WasmIotaDocument,
+  // ) -> Result<(), JsError> {
+  //   let doc: IotaDocument = document
+  //     .0
+  //     .try_read()
+  //     .map_err(|err| JsError::new(&format!("failed to read DID document; {err:?}")))?
+  //     .clone();
+  //   let publish_tx = self
+  //     .0
+  //     .publish_did_document(doc);
+  //     // .await
+  //     // .map_err(<Error as std::convert::Into<JsError>>::into)?;
 
-  #[wasm_bindgen(js_name = publishDidDocumentUpdate)]
-  pub async fn publish_did_document_update(
-    &self,
-    document: &WasmIotaDocument,
-    gas_budget: u64,
-    signer: &DummySigner,
-  ) -> Result<WasmIotaDocument, JsError> {
-    let doc: IotaDocument = document
-      .0
-      .try_read()
-      .map_err(|err| JsError::new(&format!("failed to read DID document; {err:?}")))?
-      .clone();
-    let document = self
-      .0
-      .publish_did_document_update(doc, gas_budget, signer)
-      .await
-      .map_err(<Error as std::convert::Into<JsError>>::into)?;
+  //   // Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
+  //   Ok(())
+  // }
 
-    Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
-  }
+  // #[wasm_bindgen(js_name = publishDidDocumentUpdate)]
+  // pub async fn publish_did_document_update(
+  //   &self,
+  //   document: &WasmIotaDocument,
+  //   gas_budget: u64,
+  //   signer: &WasmStorageSigner,
+  // ) -> Result<WasmIotaDocument, JsError> {
+  //   let doc: IotaDocument = document
+  //     .0
+  //     .try_read()
+  //     .map_err(|err| JsError::new(&format!("failed to read DID document; {err:?}")))?
+  //     .clone();
+  //   let document = self
+  //     .0
+  //     .publish_did_document_update(doc, gas_budget)
+  //     .await
+  //     .map_err(<Error as std::convert::Into<JsError>>::into)?;
 
-  #[wasm_bindgen(js_name = deactivateDidOutput)]
-  pub async fn deactivate_did_output(
-    &self,
-    did: &WasmIotaDID,
-    gas_budget: u64,
-    signer: &DummySigner,
-  ) -> Result<(), JsError> {
-    self
-      .0
-      .deactivate_did_output(&did.0, gas_budget, signer)
-      .await
-      .map_err(<Error as std::convert::Into<JsError>>::into)?;
+  //   Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
+  // }
 
-    Ok(())
-  }
+  // #[wasm_bindgen(js_name = deactivateDidOutput)]
+  // pub async fn deactivate_did_output(
+  //   &self,
+  //   did: &WasmIotaDID,
+  //   gas_budget: u64,
+  //   signer: &WasmStorageSigner,
+  // ) -> Result<(), JsError> {
+  //   self
+  //     .0
+  //     .deactivate_did_output(&did.0, gas_budget)
+  //     .await
+  //     .map_err(<Error as std::convert::Into<JsError>>::into)?;
 
-  // test function(s) for wasm calling test
-
-  // make test call
-  #[wasm_bindgen(js_name = getChainIdentifier)]
-  pub async fn get_chain_identifier(&self) -> Result<String, JsError> {
-    IdentityClient::get_chain_identifier(&self.0)
-      .await
-      .map_err(|err| JsError::new(&format!("could not get balance; {err}")))
-  }
+  //   Ok(())
+  // }
 }
 
 /// TODO: consider importing function from rebased later on, if possible

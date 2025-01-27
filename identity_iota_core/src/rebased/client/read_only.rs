@@ -41,6 +41,11 @@ use serde::Deserialize;
 #[cfg(not(target_arch = "wasm32"))]
 use identity_iota_interaction::IotaClient;
 
+#[cfg(target_arch = "wasm32")]
+use iota_interaction_ts::bindings::WasmIotaClient;
+#[cfg(target_arch = "wasm32")]
+use iota_interaction_ts::iota_client_ts_sdk::IotaClientTsSdk;
+
 /// An [`IotaClient`] enriched with identity-related
 /// functionalities.
 #[derive(Clone)]
@@ -79,7 +84,10 @@ impl IdentityClientReadOnly {
 
   cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-      //TODO: Define fn new() for wasm32 platforms
+      // TODO: Define fn new() for wasm32 platforms
+      pub async fn new(iota_client: WasmIotaClient) -> Result<Self, Error> {
+        Self::new_internal(IotaClientAdapter::new(iota_client)?).await
+      }
     } else {
       /// Attempts to create a new [`IdentityClientReadOnly`] from a given [`IotaClient`].
       ///
@@ -118,7 +126,13 @@ impl IdentityClientReadOnly {
 
   cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-      //TODO: Define fn new() for wasm32 platforms
+      // TODO: Define fn new() for wasm32 platforms
+      pub async fn new_with_pkg_id(iota_client: WasmIotaClient, iota_identity_pkg_id: ObjectID) -> Result<Self, Error> {
+        Self::new_with_pkg_id_internal(
+          IotaClientAdapter::new(iota_client)?,
+          iota_identity_pkg_id
+        ).await
+      }
     } else {
       /// Attempts to create a new [`IdentityClientReadOnly`] from
       /// the given [`IotaClient`].
