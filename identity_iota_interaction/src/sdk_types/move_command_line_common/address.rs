@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::{fmt, hash::Hash};
-use std::option::Option;
-use std::option::Option::{Some, None};
+use std::option::Option::{self, Some, None};
 use std::string::String;
 
 use num_bigint::BigUint;

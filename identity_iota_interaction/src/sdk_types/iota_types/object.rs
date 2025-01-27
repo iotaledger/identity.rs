@@ -99,8 +99,10 @@ impl Display for Owner {
             Self::Immutable => {
                 write!(f, "Immutable")
             }
-            Self::Shared { .. } => {
-                write!(f, "Shared")
+            Self::Shared {
+                initial_shared_version,
+            } => {
+                write!(f, "Shared( {} )", initial_shared_version.value())
             }
         }
     }

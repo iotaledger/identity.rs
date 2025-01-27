@@ -194,6 +194,14 @@ impl IdentStr {
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
+
+    // AbstractMemorySize is not available for wasm32
+    //
+    // /// Returns the abstract size of the struct
+    // /// TODO (ade): use macro to enfornce determinism
+    // pub fn abstract_size_for_gas_metering(&self) -> AbstractMemorySize {
+    //     AbstractMemorySize::new((self.len()) as u64)
+    // }
 }
 
 impl Borrow<IdentStr> for Identifier {

@@ -30,44 +30,70 @@ use super::super::move_core_types::{
     account_address::AccountAddress,
     language_storage::{StructTag, TypeTag}
 };
-// use super::address::ParsedAddress;
-use super::{IOTA_FRAMEWORK_ADDRESS, DEEPBOOK_ADDRESS, MOVE_STDLIB_ADDRESS, IOTA_SYSTEM_ADDRESS,
-            STARDUST_ADDRESS, IOTA_SYSTEM_STATE_ADDRESS, IOTA_CLOCK_ADDRESS};
+
+use super::{IOTA_FRAMEWORK_ADDRESS, MOVE_STDLIB_ADDRESS, IOTA_SYSTEM_ADDRESS,
+            STARDUST_ADDRESS, IOTA_SYSTEM_STATE_ADDRESS, IOTA_CLOCK_ADDRESS };
+use super::parse_iota_struct_tag;
+use super::parse_iota_type_tag;
 
 /// The minimum and maximum protocol versions supported by this build.
-const MIN_PROTOCOL_VERSION: u64 = 1;
-pub const MAX_PROTOCOL_VERSION: u64 = 1;
+const MIN_PROTOCOL_VERSION: u64 = 1;      // Originally defined in crates/iota-protocol-config/src/lib.rs
+pub const MAX_PROTOCOL_VERSION: u64 = 1;  // Originally defined in crates/iota-protocol-config/src/lib.rs
 
-/// Resolve well-known named addresses into numeric addresses.
-pub fn resolve_address(addr: &str) -> Option<AccountAddress> {
-    match addr {
-        "deepbook" => Some(DEEPBOOK_ADDRESS),
-        "std" => Some(MOVE_STDLIB_ADDRESS),
-        "iota" => Some(IOTA_FRAMEWORK_ADDRESS),
-        "iota_system" => Some(IOTA_SYSTEM_ADDRESS),
-        "stardust" => Some(STARDUST_ADDRESS),
-        _ => None,
+// -----------------------------------------------------------------------------------------
+// Originally contained in crates/iota-protocol-config/src/lib.rs
+// -----------------------------------------------------------------------------------------
+
+// Record history of protocol version allocations here:
+//
+// Version 1: Original version.
+// Version 2: Don't redistribute slashed staking rewards, fix computation of
+// SystemEpochInfoEventV1.
+#[derive(Copy, Clone, Debug, Hash, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ProtocolVersion(u64);
+
+impl ProtocolVersion {
+    // The minimum and maximum protocol version supported by this binary.
+    // Counterintuitively, this constant may change over time as support for old
+    // protocol versions is removed from the source. This ensures that when a
+    // new network (such as a testnet) is created, its genesis committee will
+    // use a protocol version that is actually supported by the binary.
+    pub const MIN: Self = Self(MIN_PROTOCOL_VERSION);
+
+    pub const MAX: Self = Self(MAX_PROTOCOL_VERSION);
+
+    #[cfg(not(msim))]
+    const MAX_ALLOWED: Self = Self::MAX;
+
+    // We create 3 additional "fake" versions in simulator builds so that we can
+    // test upgrades.
+    #[cfg(msim)]
+    pub const MAX_ALLOWED: Self = Self(MAX_PROTOCOL_VERSION + 3);
+
+    pub fn new(v: u64) -> Self {
+        Self(v)
+    }
+
+    pub const fn as_u64(&self) -> u64 {
+        self.0
+    }
+
+    // For serde deserialization - we don't define a Default impl because there
+    // isn't a single universally appropriate default value.
+    pub fn max() -> Self {
+        Self::MAX
     }
 }
 
-/// Parse `s` as a struct type: A fully-qualified name, optionally followed by a
-/// list of type parameters (types -- see `parse_iota_type_tag`, separated by
-/// commas, surrounded by angle brackets). Parsing succeeds if and only if `s`
-/// matches this format exactly, with no remaining input. This function is
-/// intended for use within the authority codebase.
-pub fn parse_iota_struct_tag(s: &str) -> anyhow::Result<StructTag> {
-    use super::super::move_command_line_common::types::ParsedStructType;
-    ParsedStructType::parse(s)?.into_struct_tag(&resolve_address)
+impl From<u64> for ProtocolVersion {
+    fn from(v: u64) -> Self {
+        Self::new(v)
+    }
 }
 
-/// Parse `s` as a type: Either a struct type (see `parse_iota_struct_tag`), a
-/// primitive type, or a vector with a type parameter. Parsing succeeds if and
-/// only if `s` matches this format exactly, with no remaining input. This
-/// function is intended for use within the authority codebase.
-pub fn parse_iota_type_tag(s: &str) -> anyhow::Result<TypeTag> {
-    use super::super::move_command_line_common::types::ParsedType;
-    ParsedType::parse(s)?.into_type_tag(&resolve_address)
-}
+// -----------------------------------------------------------------------------------------
+// End of originally contained in crates/iota-protocol-config/src/lib.rs section
+// -----------------------------------------------------------------------------------------
 
 #[inline]
 fn to_custom_error<'de, D, E>(e: E) -> D::Error
@@ -175,13 +201,12 @@ impl SerializeAs<StructTag> for IotaStructTag {
     }
 }
 
-const IOTA_ADDRESSES: [AccountAddress; 8] = [
+const IOTA_ADDRESSES: [AccountAddress; 7] = [
     AccountAddress::ZERO,
     AccountAddress::ONE,
     IOTA_FRAMEWORK_ADDRESS,
     IOTA_SYSTEM_ADDRESS,
     STARDUST_ADDRESS,
-    DEEPBOOK_ADDRESS,
     IOTA_SYSTEM_STATE_ADDRESS,
     IOTA_CLOCK_ADDRESS,
 ];
@@ -349,43 +374,6 @@ impl<'de> DeserializeAs<'de, super::base_types::SequenceNumber> for SequenceNumb
     {
         let b = BigInt::deserialize(deserializer)?;
         Ok(super::base_types::SequenceNumber::from_u64(*b))
-    }
-}
-
-// Record history of protocol version allocations here:
-//
-// Version 1: Original version.
-#[derive(Copy, Clone, Debug, Hash, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ProtocolVersion(u64);
-
-impl ProtocolVersion {
-    // The minimum and maximum protocol version supported by this binary.
-    // Counterintuitively, this constant may change over time as support for old
-    // protocol versions is removed from the source. This ensures that when a
-    // new network (such as a testnet) is created, its genesis committee will
-    // use a protocol version that is actually supported by the binary.
-    pub const MIN: Self = Self(MIN_PROTOCOL_VERSION);
-
-    pub const MAX: Self = Self(MAX_PROTOCOL_VERSION);
-
-    pub fn new(v: u64) -> Self {
-        Self(v)
-    }
-
-    pub const fn as_u64(&self) -> u64 {
-        self.0
-    }
-
-    // For serde deserialization - we don't define a Default impl because there
-    // isn't a single universally appropriate default value.
-    pub fn max() -> Self {
-        Self::MAX
-    }
-}
-
-impl From<u64> for ProtocolVersion {
-    fn from(v: u64) -> Self {
-        Self::new(v)
     }
 }
 

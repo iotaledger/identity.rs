@@ -87,22 +87,6 @@ impl ObjectArg {
     };
 }
 
-/// The command for calling a Move function, either an entry function or a
-/// public function (which cannot return references).
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]
-pub struct ProgrammableMoveCall {
-    /// The package containing the module and function.
-    pub package: ObjectID,
-    /// The specific module in the package containing the function.
-    pub module: Identifier,
-    /// The function to be called.
-    pub function: Identifier,
-    /// The type arguments to the function.
-    pub type_arguments: Vec<TypeTag>,
-    /// The arguments to the function.
-    pub arguments: Vec<Argument>,
-}
-
 /// A single command in a programmable transaction.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]
 pub enum Command {
@@ -152,6 +136,22 @@ pub enum Argument {
     /// usage of this is to access a value from a Move call with multiple
     /// return values.
     NestedResult(u16, u16),
+}
+
+/// The command for calling a Move function, either an entry function or a
+/// public function (which cannot return references).
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]
+pub struct ProgrammableMoveCall {
+    /// The package containing the module and function.
+    pub package: ObjectID,
+    /// The specific module in the package containing the function.
+    pub module: Identifier,
+    /// The function to be called.
+    pub function: Identifier,
+    /// The type arguments to the function.
+    pub type_arguments: Vec<TypeTag>,
+    /// The arguments to the function.
+    pub arguments: Vec<Argument>,
 }
 
 impl Display for Argument {

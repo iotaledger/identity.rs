@@ -102,6 +102,12 @@ impl GasCoin {
         bcs::to_bytes(&self).unwrap()
     }
 
+    // MoveObject is not available for wasm32
+    //
+    // pub fn to_object(&self, version: SequenceNumber) -> MoveObject {
+    //    MoveObject::new_gas_coin(version, *self.id(), self.value())
+    // }
+
     pub fn layout() -> MoveStructLayout {
         Coin::layout(TypeTag::Struct(Box::new(GAS::type_())))
     }
@@ -128,6 +134,11 @@ impl IotaTreasuryCap {
             type_params: Vec::new(),
         }
     }
+
+        /// Returns the `TreasuryCap<IOTA>` object ID.
+        pub fn id(&self) -> &ObjectID {
+            self.inner.id.object_id()
+        }
 
     /// Returns the total `Supply` of `Coin<IOTA>`.
     pub fn total_supply(&self) -> &Supply {

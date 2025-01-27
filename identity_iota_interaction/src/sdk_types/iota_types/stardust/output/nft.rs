@@ -3,9 +3,10 @@
 
 use crate::ident_str;
 
-use super::super::super::move_core_types::language_storage::StructTag;
-use super::super::super::move_core_types::identifier::IdentStr;
-use super::super::STARDUST_PACKAGE_ID;
+use crate::sdk_types::move_types::language_storage::StructTag;
+use crate::sdk_types::move_types::identifier::IdentStr;
+
+use super::super::super::STARDUST_PACKAGE_ID;
 
 pub const IRC27_MODULE_NAME: &IdentStr = ident_str!("irc27");
 pub const NFT_MODULE_NAME: &IdentStr = ident_str!("nft");

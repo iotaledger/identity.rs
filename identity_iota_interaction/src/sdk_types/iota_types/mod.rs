@@ -9,6 +9,7 @@ pub mod crypto;
 pub mod digests;
 pub mod dynamic_field;
 pub mod error;
+pub mod event;
 pub mod execution_status;
 pub mod gas_coin;
 pub mod governance;
@@ -21,7 +22,6 @@ pub mod quorum_driver_types;
 pub mod stardust;
 pub mod timelock;
 pub mod transaction;
-pub mod event;
 
 pub use iota_types_lib::*;
 pub use super::move_core_types::{identifier::Identifier, language_storage::TypeTag};

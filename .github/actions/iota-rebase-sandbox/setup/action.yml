@@ -25,9 +25,9 @@ runs:
         # url = https://api.github.com/repos/iotaledger/iota/releases/latest
         # releases might be visible before all binaries are available, so refer to fixed binaries here
         if [ "$PLATFORM" = "linux" ]; then
-          DOWNLOAD_URL="https://github.com/iotaledger/iota/releases/download/v0.7.3-rc/iota-v0.7.3-rc-linux-x86_64.tgz"
+          DOWNLOAD_URL="https://github.com/iotaledger/iota/releases/download/v0.8.1-rc/iota-v0.8.1-rc-linux-x86_64.tgz"
         elif [ "$PLATFORM" = "macos" ]; then
-          DOWNLOAD_URL="https://github.com/iotaledger/iota/releases/download/v0.7.3-rc/iota-v0.7.3-rc-macos-arm64.tgz"
+          DOWNLOAD_URL="https://github.com/iotaledger/iota/releases/download/v0.8.1-rc/iota-v0.8.1-rc-macos-arm64.tgz"
         else
           echo "not binaries for platform: $PLATFORM"
           exit 1
