@@ -43,6 +43,10 @@ export class IotaTransactionBlockResponseAdapter {
             ? this.response.effects.created
             : null;
     }
+
+    get_response(): IotaTransactionBlockResponse {
+        return this.response;
+    }
 }
 
 async function signTransactionData(

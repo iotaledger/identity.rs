@@ -21,8 +21,6 @@ use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::types::base_types::SequenceNumber;
-use identity_iota_interaction::types::transaction::Argument;
 use identity_iota_interaction::types::TypeTag;
 use identity_iota_interaction::BorrowIntentFnInternalT;
 use identity_iota_interaction::ControllerIntentFnInternalT;

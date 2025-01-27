@@ -1,6 +1,9 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::AddrParseError;
+
+use identity_iota_interaction::rpc_types::IotaExecutionStatus;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
@@ -9,8 +12,10 @@ use identity_iota_interaction::types::base_types::SequenceNumber;
 use identity_iota_interaction::types::execution_status::CommandArgumentError;
 use identity_iota_interaction::types::execution_status::ExecutionStatus;
 use identity_iota_interaction::types::object::Owner;
+use identity_iota_interaction::IotaTransactionBlockResponseT;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Promise;
+use js_sys::Uint8Array;
 use serde::Deserialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
@@ -21,6 +26,7 @@ use crate::bindings::WasmIotaClient;
 use crate::common::into_sdk_type;
 use crate::console_log;
 use crate::error::TsSdkError;
+use crate::error::WasmError;
 
 // TODO: fix/add
 // not available anymore
@@ -58,9 +64,6 @@ const TS_SDK_TYPES: &'static str = r#"
     executeTransaction,
     IotaTransactionBlockResponseAdapter,
   } from "./iota_client_helpers"
-
-  // TODO: decide if we use this or replace it with an adapter written in TypeScript type if needed
-  type ProgrammableTransaction = ReturnType<typeof bcs.ProgrammableTransaction.parse>;
 "#;
 
 #[wasm_bindgen(module = "@iota/iota.js/client")]
@@ -70,6 +73,12 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Transaction")]
   pub type WasmTransactionBuilder;
+
+  #[wasm_bindgen(js_name = "from", static_method_of = WasmTransactionBuilder, catch)]
+  pub fn from_bcs_bytes(bytes: &[u8]) -> Result<WasmTransactionBuilder, JsValue>;
+
+  #[wasm_bindgen(method, structural, catch)]
+  pub async fn build(this: &WasmTransactionBuilder) -> Result<Uint8Array, JsValue>;
 
   #[wasm_bindgen(typescript_type = "TransactionArgument")]
   pub type WasmTransactionArgument;
@@ -238,6 +247,9 @@ extern "C" {
   #[wasm_bindgen(method)]
   fn effects_created_inner(this: &IotaTransactionBlockResponseAdapter) -> Option<Vec<WasmOwnedObjectRef>>;
 
+  #[wasm_bindgen(method, js_name = "get_response")]
+  fn response(this: &IotaTransactionBlockResponseAdapter) -> WasmIotaTransactionBlockResponse;
+
   #[wasm_bindgen(js_name = executeTransaction)]
   fn execute_transaction_inner(
     iotaClient: &WasmIotaClient, // --> TypeScript: IotaClient
@@ -247,12 +259,6 @@ extern "C" {
     signer: WasmStorageSigner,   // --> TypeScript: Signer (iota_client_helpers module)
     gas_budget: Option<u64>,     // --> TypeScript: optional bigint
   ) -> PromiseIotaTransactionBlockResponseAdapter;
-}
-
-#[wasm_bindgen] // no module here, as imported via custom section above
-extern "C" {
-  #[wasm_bindgen(typescript_type = "ProgrammableTransaction")]
-  pub type WasmProgrammableTransaction;
 }
 
 #[derive(Deserialize)]
@@ -306,9 +312,15 @@ pub async fn execute_transaction(
 }
 
 #[derive(Deserialize)]
-// TODO: add manual deserialization later on (must be deserializable, but WasmPT is not)
-// pub struct ProgrammableTransaction(WasmProgrammableTransaction);
-pub struct ProgrammableTransaction(());
+#[serde(try_from = "Vec<u8>")]
+pub struct ProgrammableTransaction(WasmTransactionBuilder);
 
-// TODO: fill in required functions and data handling here
-impl ProgrammableTransaction {}
+impl TryFrom<Vec<u8>> for ProgrammableTransaction {
+  type Error = TsSdkError;
+  fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+    WasmTransactionBuilder::from_bcs_bytes(&value)
+      .map(Self)
+      .map_err(WasmError::from)
+      .map_err(TsSdkError::from)
+  }
+}
