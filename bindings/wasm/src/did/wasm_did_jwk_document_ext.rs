@@ -33,7 +33,11 @@ use identity_iota::credential::Presentation;
 use crate::credential::UnknownCredential;
 use identity_iota::credential::JwtPresentationOptions;
 use crate::credential::WasmJwt;
-
+use identity_iota::storage::JwpDocumentExt;
+use crate::credential::WasmJpt;
+use crate::credential::PromiseJpt;
+use crate::credential::WasmJwpPresentationOptions;
+use crate::jpt::WasmSelectiveDisclosurePresentation;
 
 #[wasm_bindgen(js_class = CoreDocument)]
 impl WasmCoreDocument {
@@ -221,6 +225,31 @@ impl WasmCoreDocument {
     });
     Ok(promise.unchecked_into())
   }
+
+  #[wasm_bindgen(js_name = createPresentationJpt)]
+  pub fn create_presentation_jpt(
+    &self,
+    presentation: WasmSelectiveDisclosurePresentation,
+    method_id: String,
+    options: WasmJwpPresentationOptions,
+  ) -> Result<PromiseJpt> {
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let options = options.try_into()?;
+    let promise: Promise = future_to_promise(async move {
+      let mut presentation = presentation.0;
+      let jpt = document_lock_clone
+        .write()
+        .await
+        .create_presentation_jpt(&mut presentation, method_id.as_str(), &options)
+        .await
+        .map(WasmJpt)
+        .wasm_result()?;
+      Ok(JsValue::from(jpt))
+    });
+
+    Ok(promise.unchecked_into())
+  }
+
 
 }
 
