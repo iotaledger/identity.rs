@@ -26,6 +26,7 @@ num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
 prefix-hex = { version = "0.7", default-features = false }
 ref-cast = { version = "1.0.14", default-features = false }
+jsonpath-rust = { version = "0.5.1", optional = true }
 serde.workspace = true
 serde_json.workspace = true
 strum.workspace = true
@@ -76,7 +77,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["iota-client", "revocation-bitmap", "send-sync"]
+default = ["iota-client", "revocation-bitmap", "send-sync", "keytool"]
 # Enables the IOTA Client related components, and dependencies.
 iota-client = [
   "dep:async-trait",
@@ -106,6 +107,9 @@ send-sync = ["send-sync-storage", "send-sync-client-ext"]
 send-sync-storage = ["secret-storage?/send-sync-storage"]
 # Enables `Send` + `Sync` bounds for IOTA client interaction traits.
 send-sync-client-ext = []
+
+# Enables integration with IOTA's Keytool.
+keytool = ["dep:jsonpath-rust"]
 
 [lints]
 workspace = true
