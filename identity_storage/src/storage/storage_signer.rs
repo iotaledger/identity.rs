@@ -1,10 +1,15 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::anyhow;
+use anyhow::Context as _;
 use async_trait::async_trait;
+use identity_iota_interaction::types::crypto::PublicKey;
+use identity_iota_interaction::types::crypto::SignatureScheme as IotaSignatureScheme;
 use identity_iota_interaction::IotaKeySignature;
 use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkParams;
+use identity_verification::jwk::JwkParamsEc;
 use identity_verification::jwu;
 use secret_storage::Error as SecretStorageError;
 use secret_storage::SignatureScheme;
@@ -71,11 +76,45 @@ where
   fn key_id(&self) -> &KeyId {
     &self.key_id
   }
-  async fn public_key(&self) -> Result<<IotaKeySignature as SignatureScheme>::PublicKey, SecretStorageError> {
+  async fn public_key(&self) -> Result<PublicKey, SecretStorageError> {
     match self.public_key.params() {
-      JwkParams::Okp(params) => jwu::decode_b64(&params.x)
-        .map_err(|e| SecretStorageError::Other(anyhow::anyhow!("could not base64 decode key {}; {e}", self.key_id()))),
-      _ => todo!("add support for other key types"),
+      JwkParams::Okp(params) => {
+        if params.crv != "Ed25519" {
+          return Err(SecretStorageError::Other(anyhow!(
+            "unsupported key type {}",
+            params.crv
+          )));
+        }
+
+        jwu::decode_b64(&params.x)
+          .context("failed to base64 decode key")
+          .and_then(|pk_bytes| {
+            PublicKey::try_from_bytes(IotaSignatureScheme::ED25519, &pk_bytes).map_err(|e| anyhow!("{e}"))
+          })
+          .map_err(SecretStorageError::Other)
+      }
+      JwkParams::Ec(JwkParamsEc { crv, x, y, .. }) => {
+        let pk_bytes = {
+          let mut decoded_x_bytes = jwu::decode_b64(x)
+            .map_err(|e| SecretStorageError::Other(anyhow!("failed to decode b64 x parameter: {e}")))?;
+          let mut decoded_y_bytes = jwu::decode_b64(y)
+            .map_err(|e| SecretStorageError::Other(anyhow!("failed to decode b64 y parameter: {e}")))?;
+          decoded_x_bytes.append(&mut decoded_y_bytes);
+
+          decoded_x_bytes
+        };
+
+        if self.public_key.alg() == Some("ES256") || crv == "P-256" {
+          PublicKey::try_from_bytes(IotaSignatureScheme::Secp256r1, &pk_bytes)
+            .map_err(|e| SecretStorageError::Other(anyhow!("not a secp256r1 key: {e}")))
+        } else if self.public_key.alg() == Some("ES256K") || crv == "K-256" {
+          PublicKey::try_from_bytes(IotaSignatureScheme::Secp256k1, &pk_bytes)
+            .map_err(|e| SecretStorageError::Other(anyhow!("not a secp256k1 key: {e}")))
+        } else {
+          Err(SecretStorageError::Other(anyhow!("invalid EC key")))
+        }
+      }
+      _ => Err(SecretStorageError::Other(anyhow!("unsupported key"))),
     }
   }
   async fn sign(&self, data: &[u8]) -> Result<<IotaKeySignature as SignatureScheme>::Signature, SecretStorageError> {

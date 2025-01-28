@@ -332,17 +332,23 @@ impl IotaClientTrait for IotaClientRustSdk {
     })
   }
 
-  async fn execute_transaction<S: Signer<IotaKeySignature> + Sync>(
+  async fn execute_transaction<S>(
     &self,
-    sender_address: IotaAddress,
-    sender_public_key: &[u8],
     tx_bcs: ProgrammableTransactionBcs,
     gas_budget: Option<u64>,
     signer: &S,
-  ) -> Result<IotaTransactionBlockResponseAdaptedTraitObj, Self::Error> {
+  ) -> Result<IotaTransactionBlockResponseAdaptedTraitObj, Self::Error>
+  where
+    S: Signer<IotaKeySignature> + Sync,
+  {
     let tx = bcs::from_bytes::<ProgrammableTransaction>(tx_bcs.as_slice())?;
+    let public_key = signer
+      .public_key()
+      .await
+      .map_err(|e| Error::TransactionSigningFailed(e.to_string()))?;
+    let address = IotaAddress::from(&public_key);
     let response = self
-      .sdk_execute_transaction(sender_address, sender_public_key, tx, gas_budget, signer)
+      .sdk_execute_transaction(address, public_key.as_ref(), tx, gas_budget, signer)
       .await?;
     Ok(Box::new(IotaTransactionBlockResponseProvider::new(response)))
   }

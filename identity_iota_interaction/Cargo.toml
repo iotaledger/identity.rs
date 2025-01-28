@@ -45,6 +45,7 @@ strum.workspace = true
 thiserror.workspace = true
 tracing = { version = "0.1" }
 uint = { version = "0.9" }
+phf = { version = "0.11.2", features = ["macros"] }
 
 [package.metadata.docs.rs]
 # To build locally:
