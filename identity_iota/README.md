@@ -97,6 +97,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.62"
 identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha", features = ["memstore"] }
+secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.2.0" }
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.8.1-rc" }
 rand = "0.8.5"
 tokio = { version = "1", features = ["full"] }
@@ -119,8 +120,6 @@ timeout 360 cargo build || (echo "Process timed out after 360 seconds" && exit 1
 ```rust,no_run
 use anyhow::Context;
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::rebased::client::convert_to_address;
-use identity_iota::iota::rebased::client::get_sender_public_key;
 use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::client::IdentityClientReadOnly;
 use identity_iota::iota::rebased::transaction::Transaction;
@@ -134,6 +133,8 @@ use identity_iota::storage::StorageSigner;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use iota_sdk::IotaClientBuilder;
+use iota_sdk::types::base_types::IotaAddress;
+use secret_storage::Signer;
 use tokio::io::AsyncReadExt;
 
 /// Demonstrates how to create a DID Document and publish it in a new identity.
@@ -152,8 +153,11 @@ async fn main() -> anyhow::Result<()> {
     .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
     .await?;
   let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
-  let public_key_bytes = get_sender_public_key(&public_key_jwk)?;
-  let sender_address = convert_to_address(&public_key_bytes)?;
+  let signer = StorageSigner::new(&storage, generate.key_id, public_key_jwk);
+  let sender_address = {
+    let public_key = Signer::public_key(&signer).await?;
+    IotaAddress::from(&public_key)
+  };
   let package_id = std::env::var("IOTA_IDENTITY_PKG_ID")
     .map_err(|e| {
       anyhow::anyhow!("env variable IOTA_IDENTITY_PKG_ID must be set in order to run the examples").context(e)
@@ -162,7 +166,6 @@ async fn main() -> anyhow::Result<()> {
 
   // Create identity client with signing capabilities.
   let read_only_client = IdentityClientReadOnly::new_with_pkg_id(iota_client, package_id).await?;
-  let signer = StorageSigner::new(&storage, generate.key_id, public_key_jwk);
   let identity_client = IdentityClient::new(read_only_client, signer).await?;
 
   println!("Your wallet address is: {}", sender_address);
