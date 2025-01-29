@@ -97,7 +97,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.62"
 identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha", features = ["memstore"] }
-secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.1.0" }
+secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.2.0" }
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.8.1-rc" }
 rand = "0.8.5"
 tokio = { version = "1", features = ["full"] }

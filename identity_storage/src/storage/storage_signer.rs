@@ -4,15 +4,20 @@
 use anyhow::anyhow;
 use anyhow::Context as _;
 use async_trait::async_trait;
+use fastcrypto::hash::Blake2b256;
+use fastcrypto::traits::ToFromBytes;
+use identity_iota_interaction::shared_crypto::intent::Intent;
+use identity_iota_interaction::shared_crypto::intent::IntentMessage;
 use identity_iota_interaction::types::crypto::PublicKey;
+use identity_iota_interaction::types::crypto::Signature;
 use identity_iota_interaction::types::crypto::SignatureScheme as IotaSignatureScheme;
+use identity_iota_interaction::types::transaction::TransactionData;
 use identity_iota_interaction::IotaKeySignature;
 use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkParams;
 use identity_verification::jwk::JwkParamsEc;
 use identity_verification::jwu;
 use secret_storage::Error as SecretStorageError;
-use secret_storage::SignatureScheme;
 use secret_storage::Signer;
 
 use crate::JwkStorage;
@@ -73,9 +78,11 @@ where
   I: KeyIdStorage + Sync,
 {
   type KeyId = KeyId;
+
   fn key_id(&self) -> &KeyId {
     &self.key_id
   }
+
   async fn public_key(&self) -> Result<PublicKey, SecretStorageError> {
     match self.public_key.params() {
       JwkParams::Okp(params) => {
@@ -117,16 +124,33 @@ where
       _ => Err(SecretStorageError::Other(anyhow!("unsupported key"))),
     }
   }
-  async fn sign(&self, data: &[u8]) -> Result<<IotaKeySignature as SignatureScheme>::Signature, SecretStorageError> {
-    self
+  async fn sign(&self, data: &TransactionData) -> Result<Signature, SecretStorageError> {
+    use fastcrypto::hash::HashFunction;
+
+    let intent = Intent::iota_transaction();
+    let intent_msg = IntentMessage::new(intent, data);
+    let mut hasher = Blake2b256::default();
+    let bcs_bytes = bcs::to_bytes(&intent_msg)
+      .map_err(|e| SecretStorageError::Other(anyhow!("could not serialize transaction message to bcs; {e}")))?;
+    hasher.update(bcs_bytes);
+    let digest = hasher.finalize().digest;
+
+    let signature_bytes = self
       .storage
       .key_storage()
-      .sign(&self.key_id, data, &self.public_key)
+      .sign(&self.key_id, &digest, &self.public_key)
       .await
       .map_err(|e| match e.kind() {
         KeyStorageErrorKind::KeyNotFound => SecretStorageError::KeyNotFound(e.to_string()),
         KeyStorageErrorKind::RetryableIOFailure => SecretStorageError::StoreDisconnected(e.to_string()),
         _ => SecretStorageError::Other(anyhow::anyhow!(e)),
-      })
+      })?;
+
+    let public_key = Signer::public_key(self).await?;
+
+    let iota_signature_bytes = [[public_key.flag()].as_slice(), &signature_bytes, public_key.as_ref()].concat();
+
+    Signature::from_bytes(&iota_signature_bytes)
+      .map_err(|e| SecretStorageError::Other(anyhow!("failed to create valid IOTA signature: {e}")))
   }
 }

@@ -18,10 +18,12 @@ use crate::types::base_types::IotaAddress;
 use crate::types::base_types::ObjectID;
 use crate::types::base_types::SequenceNumber;
 use crate::types::crypto::PublicKey;
+use crate::types::crypto::Signature;
 use crate::types::digests::TransactionDigest;
 use crate::types::dynamic_field::DynamicFieldName;
 use crate::types::event::EventID;
 use crate::types::quorum_driver_types::ExecuteTransactionRequestType;
+use crate::types::transaction::TransactionData;
 use crate::OptionalSend;
 use crate::ProgrammableTransactionBcs;
 use crate::SignatureBcs;
@@ -38,12 +40,13 @@ use std::marker::Send;
 
 pub struct IotaKeySignature {
   pub public_key: PublicKey,
-  pub signature: Vec<u8>,
+  pub signature: Signature,
 }
 
 impl SignatureScheme for IotaKeySignature {
   type PublicKey = PublicKey;
-  type Signature = Vec<u8>;
+  type Signature = Signature;
+  type Input = TransactionData;
 }
 
 //********************************************************************
