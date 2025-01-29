@@ -1,8 +1,12 @@
+// Copyright 2020-2025 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use anyhow::anyhow;
 use anyhow::Context as _;
 use async_trait::async_trait;
 use fastcrypto::encoding::Base64;
 use fastcrypto::encoding::Encoding;
+use fastcrypto::traits::EncodeDecodeBase64;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::crypto::Signature;
@@ -37,7 +41,7 @@ impl KeytoolSigner {
 
     let address = String::from_utf8(output)
       .context("command output is not valid utf8")
-      .and_then(|s| s.parse().context("command output is not a valid IOTA address"))
+      .and_then(|s| s.trim().parse().context("command output is not a valid IOTA address"))
       .map_err(Error::AnyError)?;
 
     Ok(Self { address })
@@ -59,34 +63,25 @@ impl Signer<IotaKeySignature> for KeytoolSigner {
   }
 
   async fn public_key(&self) -> Result<PublicKey, SecretStorageError> {
-    let query = format!(
-      "$[@.iotaAddress==\"{}\"][\"publicBase64Key\",\"keyScheme\"]",
-      self.address
-    );
-    let (base64_pk, key_type) = run_iota_cli_command("keytool list")
+    let query = format!("$[?(@.iotaAddress==\"{}\")].publicBase64Key", self.address);
+    let Value::String(base64_key_str) = run_iota_cli_command("keytool list --json")
       .await
-      .and_then(|output_bytes| {
-        serde_json::from_slice::<Value>(&output_bytes).context("failed to parse command output to JSON")
+      .and_then(|output_bytes| String::from_utf8(output_bytes).context("command output is not valid utf8"))
+      .and_then(|output_str| {
+        serde_json::from_str::<Value>(output_str.trim()).context("failed to parse command output to JSON")
       })
       .and_then(|json_value| {
         json_value
           .path(&query)
           .map_err(|e| anyhow!("failed to query JSON output: {e}"))
+          .and_then(|mut results| results.get_mut(0).context("key not found").map(Value::take))
       })
-      .and_then(|key_attributes| {
-        serde_json::from_value::<(String, String)>(key_attributes).context("failed to parse key data tuple")
-      })
-      .map_err(SecretStorageError::Other)?;
+      .map_err(SecretStorageError::Other)?
+    else {
+      return Err(SecretStorageError::Other(anyhow!("keytool key encoding error")));
+    };
 
-    let decoded_pk_bytes = Base64::decode(&base64_pk)
-      .context("invalid base64 data")
-      .map_err(SecretStorageError::Other)?;
-    let signature_scheme = key_type
-      .parse()
-      .map_err(|_| SecretStorageError::Other(anyhow!("invalid key type {key_type}")))?;
-
-    PublicKey::try_from_bytes(signature_scheme, &decoded_pk_bytes)
-      .map_err(|e| SecretStorageError::Other(anyhow!("invalid key: {e}")))
+    PublicKey::decode_base64(&base64_key_str).map_err(|e| SecretStorageError::Other(anyhow!("{e}")))
   }
 
   async fn sign(&self, data: &TransactionDataBcs) -> Result<Signature, SecretStorageError> {
@@ -98,10 +93,13 @@ impl Signer<IotaKeySignature> for KeytoolSigner {
       .and_then(|output_bytes| serde_json::from_slice::<Value>(&output_bytes).context("output is not JSON"))
       .and_then(|json| {
         json
-          .path("$.iotaSignature")
-          .map_err(|_| anyhow!("invalid JSON output: missing iotaSignature"))
+          .get("iotaSignature")
+          .context("invalid JSON output: missing iotaSignature")?
+          .as_str()
+          .context("not a JSON string")?
+          .parse()
+          .map_err(|e| anyhow!("invalid IOTA signature: {e}"))
       })
-      .and_then(|json_sig| serde_json::from_value::<Signature>(json_sig).context("invalid IOTA signature"))
       .map_err(SecretStorageError::Other)
   }
 }
