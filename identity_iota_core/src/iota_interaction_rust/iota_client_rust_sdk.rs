@@ -36,7 +36,6 @@ use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::SequenceNumber;
-use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::crypto::Signature;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::dynamic_field::DynamicFieldName;
@@ -338,14 +337,7 @@ impl IotaClientTrait for IotaClientRustSdk {
     S: Signer<IotaKeySignature> + Sync,
   {
     let tx = bcs::from_bytes::<ProgrammableTransaction>(tx_bcs.as_slice())?;
-    let public_key = signer
-      .public_key()
-      .await
-      .map_err(|e| Error::TransactionSigningFailed(e.to_string()))?;
-    let address = IotaAddress::from(&public_key);
-    let response = self
-      .sdk_execute_transaction(address, &public_key, tx, gas_budget, signer)
-      .await?;
+    let response = self.sdk_execute_transaction(tx, gas_budget, signer).await?;
     Ok(Box::new(IotaTransactionBlockResponseProvider::new(response)))
   }
 
@@ -447,8 +439,6 @@ impl IotaClientRustSdk {
 
   async fn sdk_execute_transaction<S: Signer<IotaKeySignature>>(
     &self,
-    sender_address: IotaAddress,
-    sender_public_key: &PublicKey,
     tx: ProgrammableTransaction,
     gas_budget: Option<u64>,
     signer: &S,
@@ -555,23 +545,11 @@ impl IotaClientRustSdk {
   async fn sign_transaction_data<S: Signer<IotaKeySignature>>(
     signer: &S,
     tx_data: &TransactionData,
-    sender_public_key: &PublicKey,
   ) -> Result<Signature, Error> {
     signer
       .sign(&bcs::to_bytes(tx_data)?)
       .await
-      .map_err(|err| Error::TransactionSigningFailed(format!("could not sign transaction message; {err}")))?;
-
-    let binding = [
-      [sender_public_key.flag()].as_slice(),
-      &raw_signature,
-      sender_public_key.as_ref(),
-    ]
-    .concat();
-    let signature_bytes: &[u8] = binding.as_slice();
-
-    Signature::from_bytes(signature_bytes)
-      .map_err(|err| Error::TransactionSigningFailed(format!("could not parse signature to IOTA signature; {err}")))
+      .map_err(|err| Error::TransactionSigningFailed(format!("could not sign transaction message; {err}")))
   }
 
   async fn get_coin_for_transaction(&self, sender_address: IotaAddress) -> Result<Coin, Error> {

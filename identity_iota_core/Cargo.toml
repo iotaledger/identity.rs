@@ -21,12 +21,12 @@ identity_credential = { version = "=1.4.0", path = "../identity_credential", def
 identity_did = { version = "=1.4.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.4.0", path = "../identity_document", default-features = false }
 identity_verification = { version = "=1.4.0", path = "../identity_verification", default-features = false }
+jsonpath-rust = { version = "0.5.1", optional = true }
 num-derive = { version = "0.4", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
 prefix-hex = { version = "0.7", default-features = false }
 ref-cast = { version = "1.0.14", default-features = false }
-jsonpath-rust = { version = "0.5.1", optional = true }
 serde.workspace = true
 serde_json.workspace = true
 strum.workspace = true
