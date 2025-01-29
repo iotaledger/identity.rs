@@ -33,8 +33,8 @@ anyhow = "1.0.64"
 identity_iota = { version = "=1.4.0", path = "./", features = ["memstore"] }
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.8.1-rc" }
 rand = "0.8.5"
-tokio = { version = "1.29.0", features = ["full"] }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.1.0" }
+tokio = { version = "1.29.0", features = ["full"] }
 
 [features]
 default = ["revocation-bitmap", "iota-client", "send-sync", "resolver"]
