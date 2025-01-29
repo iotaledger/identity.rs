@@ -45,6 +45,9 @@ strum.workspace = true
 thiserror.workspace = true
 tracing = { version = "0.1" }
 uint = { version = "0.9" }
+derive_more = "0.99.18"
+enum_dispatch = "0.3.13"
+schemars = "0.8.21"
 
 [package.metadata.docs.rs]
 # To build locally:

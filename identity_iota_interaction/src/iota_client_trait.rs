@@ -23,7 +23,6 @@ use crate::types::digests::TransactionDigest;
 use crate::types::dynamic_field::DynamicFieldName;
 use crate::types::event::EventID;
 use crate::types::quorum_driver_types::ExecuteTransactionRequestType;
-use crate::types::transaction::TransactionData;
 use crate::OptionalSend;
 use crate::ProgrammableTransactionBcs;
 use crate::SignatureBcs;
@@ -46,7 +45,7 @@ pub struct IotaKeySignature {
 impl SignatureScheme for IotaKeySignature {
   type PublicKey = PublicKey;
   type Signature = Signature;
-  type Input = TransactionData;
+  type Input = TransactionDataBcs;
 }
 
 //********************************************************************

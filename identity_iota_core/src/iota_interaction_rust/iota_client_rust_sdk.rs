@@ -547,7 +547,7 @@ impl IotaClientRustSdk {
     tx_data: &TransactionData,
   ) -> Result<Signature, Error> {
     signer
-      .sign(tx_data)
+      .sign(&bcs::to_bytes(tx_data)?)
       .await
       .map_err(|err| Error::TransactionSigningFailed(format!("could not sign transaction message; {err}")))
   }
