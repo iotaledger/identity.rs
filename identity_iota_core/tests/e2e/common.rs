@@ -195,7 +195,8 @@ impl TestClient {
 
     let storage = Arc::new(Storage::new(JwkMemStore::new(), KeyIdMemstore::new()));
     let identity_client = IdentityClientReadOnly::new_with_pkg_id(client, package_id).await?;
-    let client = IdentityClient::new(identity_client, KeytoolSigner::new_active_address().await?).await?;
+    let signer = KeytoolSigner::builder().build().await?;
+    let client = IdentityClient::new(identity_client, signer).await?;
 
     Ok(TestClient {
       client: Arc::new(client),
