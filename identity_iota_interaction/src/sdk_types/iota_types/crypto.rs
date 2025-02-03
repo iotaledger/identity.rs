@@ -2,6 +2,7 @@
 // Modifications Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 use std::hash::Hash;
+use std::str::FromStr;
 
 use enum_dispatch::enum_dispatch;
 use strum::EnumString;
@@ -9,13 +10,14 @@ use schemars::JsonSchema;
 use derive_more::{AsRef, AsMut};
 
 use fastcrypto::{
+    error::FastCryptoResult,
     bls12381::min_sig::{
         BLS12381AggregateSignature, BLS12381AggregateSignatureAsBytes, BLS12381KeyPair,
         BLS12381PrivateKey, BLS12381PublicKey, BLS12381Signature,
     }, ed25519::{
         Ed25519KeyPair, Ed25519PrivateKey, Ed25519PublicKey, Ed25519PublicKeyAsBytes,
         Ed25519Signature
-    }, encoding::{Base64, Encoding}, error::FastCryptoError, hash::{Blake2b256, HashFunction}, secp256k1::{Secp256k1KeyPair, Secp256k1PublicKey, Secp256k1PublicKeyAsBytes, Secp256k1Signature}, secp256r1::{Secp256r1KeyPair, Secp256r1PublicKey, Secp256r1PublicKeyAsBytes, Secp256r1Signature}, traits::{Authenticator, KeyPair as KeypairTraits, Signer, ToFromBytes, VerifyingKey}
+    }, encoding::{Base64, Encoding}, error::FastCryptoError, hash::{Blake2b256, HashFunction}, secp256k1::{Secp256k1KeyPair, Secp256k1PublicKey, Secp256k1PublicKeyAsBytes, Secp256k1Signature}, secp256r1::{Secp256r1KeyPair, Secp256r1PublicKey, Secp256r1PublicKeyAsBytes, Secp256r1Signature}, traits::{Authenticator, KeyPair as KeypairTraits, Signer, ToFromBytes, VerifyingKey, EncodeDecodeBase64}
 };
 use fastcrypto_zkp::zk_login_utils::Bn254FrElement;
 
@@ -87,7 +89,53 @@ impl AsRef<[u8]> for PublicKey {
     }
 }
 
+impl EncodeDecodeBase64 for PublicKey {
+    fn encode_base64(&self) -> String {
+        let mut bytes: Vec<u8> = Vec::new();
+        bytes.extend_from_slice(&[self.flag()]);
+        bytes.extend_from_slice(self.as_ref());
+        Base64::encode(&bytes[..])
+    }
+
+    fn decode_base64(value: &str) -> FastCryptoResult<Self> {
+        let bytes = Base64::decode(value)?;
+        match bytes.first() {
+            Some(x) => {
+                if x == &SignatureScheme::ED25519.flag() {
+                    let pk: Ed25519PublicKey =
+                        Ed25519PublicKey::from_bytes(bytes.get(1..).ok_or(
+                            FastCryptoError::InputLengthWrong(Ed25519PublicKey::LENGTH + 1),
+                        )?)?;
+                    Ok(PublicKey::Ed25519((&pk).into()))
+                } else if x == &SignatureScheme::Secp256k1.flag() {
+                    let pk = Secp256k1PublicKey::from_bytes(bytes.get(1..).ok_or(
+                        FastCryptoError::InputLengthWrong(Secp256k1PublicKey::LENGTH + 1),
+                    )?)?;
+                    Ok(PublicKey::Secp256k1((&pk).into()))
+                } else if x == &SignatureScheme::Secp256r1.flag() {
+                    let pk = Secp256r1PublicKey::from_bytes(bytes.get(1..).ok_or(
+                        FastCryptoError::InputLengthWrong(Secp256r1PublicKey::LENGTH + 1),
+                    )?)?;
+                    Ok(PublicKey::Secp256r1((&pk).into()))
+                } else if x == &SignatureScheme::PasskeyAuthenticator.flag() {
+                    let pk = Secp256r1PublicKey::from_bytes(bytes.get(1..).ok_or(
+                        FastCryptoError::InputLengthWrong(Secp256r1PublicKey::LENGTH + 1),
+                    )?)?;
+                    Ok(PublicKey::Passkey((&pk).into()))
+                } else {
+                    Err(FastCryptoError::InvalidInput)
+                }
+            }
+            _ => Err(FastCryptoError::InvalidInput),
+        }
+    }
+}
+
 impl PublicKey {
+    pub fn flag(&self) -> u8 {
+        self.scheme().flag()
+    }
+
     pub fn scheme(&self) -> SignatureScheme {
         match self {
             PublicKey::Ed25519(_) => SignatureScheme::ED25519,     // Equals Ed25519IotaSignature::SCHEME
@@ -297,6 +345,13 @@ impl ToFromBytes for Signature {
             }
             _ => Err(FastCryptoError::InvalidInput),
         }
+    }
+}
+
+impl FromStr for Signature {
+    type Err = eyre::Report;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::decode_base64(s).map_err(|e| eyre::eyre!("Fail to decode base64 {}", e.to_string()))
     }
 }
 

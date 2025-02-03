@@ -154,10 +154,11 @@ async fn run_iota_cli_command_with_bin(iota_bin: impl AsRef<Path>, args: &str) -
     serde_json::from_slice(&output.stdout).context("invalid JSON object in command output")
     } else {
       extern "Rust" {
-        async fn __wasm_exec_iota_cmd(cmd: &str) -> anyhow::Result<Value>;
+        fn __wasm_exec_iota_cmd(cmd: &str) -> anyhow::Result<Value>;
       }
+      let iota_bin = iota_bin.to_str().context("invalid IOTA bin path")?;
       let cmd = format!("{iota_bin} {args} --json");
-      unsafe { __wasm_exec_iota_cmd(&cmd).await }
+      unsafe { __wasm_exec_iota_cmd(&cmd) }
     }
   }
 }
