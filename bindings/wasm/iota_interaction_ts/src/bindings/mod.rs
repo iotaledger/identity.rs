@@ -4,7 +4,11 @@
 mod types;
 mod wasm_iota_client;
 mod wasm_types;
+#[cfg(feature = "keytool-signer")]
+mod keytool_signer;
 
 pub use types::*;
 pub use wasm_iota_client::*;
 pub use wasm_types::*;
+#[cfg(feature = "keytool-signer")]
+pub use keytool_signer::*;

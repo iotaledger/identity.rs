@@ -66,7 +66,6 @@ proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 # for feature iota-client tests
 identity_iota_core = { path = ".", features = ["iota-client"] } # enable for e2e tests
 identity_storage = { path = "../identity_storage", features = ["send-sync-storage", "storage-signer"] }
-jsonpath-rust = "0.5.1"
 lazy_static = "1.5.0"
 serial_test = "3.1.1"
 
@@ -77,7 +76,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["iota-client", "revocation-bitmap", "send-sync", "keytool"]
+default = ["iota-client", "revocation-bitmap", "send-sync", "keytool-signer"]
 # Enables the IOTA Client related components, and dependencies.
 iota-client = [
   "dep:async-trait",
@@ -107,9 +106,7 @@ send-sync = ["send-sync-storage", "send-sync-client-ext"]
 send-sync-storage = ["secret-storage?/send-sync-storage"]
 # Enables `Send` + `Sync` bounds for IOTA client interaction traits.
 send-sync-client-ext = []
-
-# Enables integration with IOTA's Keytool.
-keytool = ["dep:jsonpath-rust"]
+keytool-signer = ["identity_iota_interaction/keytool-signer", "iota-client"]
 
 [lints]
 workspace = true

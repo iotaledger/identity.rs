@@ -16,12 +16,9 @@ pub mod transaction;
 /// Contains utility functions.
 pub mod utils;
 
-/// Integration with IOTA's Keytool.
-#[cfg(feature = "keytool")]
-mod keytool_signer;
-
-#[cfg(feature = "keytool")]
-pub use keytool_signer::*;
-
 pub use assets::*;
 pub use error::*;
+
+/// Integration with IOTA's Keytool.
+#[cfg(feature = "keytool-signer")]
+pub use identity_iota_interaction::keytool_signer::*;

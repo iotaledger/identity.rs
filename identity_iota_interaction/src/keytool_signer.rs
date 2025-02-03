@@ -4,24 +4,21 @@
 use std::path::Path;
 use std::path::PathBuf;
 
+use crate::types::base_types::IotaAddress;
+use crate::types::crypto::PublicKey;
+use crate::types::crypto::Signature;
+use crate::IotaKeySignature;
+use crate::TransactionDataBcs;
 use anyhow::anyhow;
 use anyhow::Context as _;
 use async_trait::async_trait;
 use fastcrypto::encoding::Base64;
 use fastcrypto::encoding::Encoding;
 use fastcrypto::traits::EncodeDecodeBase64;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::crypto::PublicKey;
-use identity_iota_interaction::types::crypto::Signature;
-use identity_iota_interaction::IotaKeySignature;
-use identity_iota_interaction::TransactionDataBcs;
 use jsonpath_rust::JsonPathQuery as _;
 use secret_storage::Error as SecretStorageError;
 use secret_storage::Signer;
 use serde_json::Value;
-use tokio::process::Command;
-
-use super::Error;
 
 /// Builder structure to ease the creation of a [KeytoolSigner].
 #[derive(Debug, Default)]
@@ -103,8 +100,8 @@ impl KeytoolSigner {
   }
 }
 
-#[cfg_attr(feature = "send-sync", async_trait)]
-#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-transaction", async_trait)]
+#[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
 impl Signer<IotaKeySignature> for KeytoolSigner {
   type KeyId = IotaAddress;
 
@@ -139,20 +136,30 @@ impl Signer<IotaKeySignature> for KeytoolSigner {
 async fn run_iota_cli_command_with_bin(iota_bin: impl AsRef<Path>, args: &str) -> anyhow::Result<Value> {
   let iota_bin = iota_bin.as_ref();
 
-  let output = Command::new(iota_bin)
-    .args(args.split_ascii_whitespace())
-    .arg("--json")
-    .output()
-    .await
-    .map_err(|e| Error::AnyError(anyhow!("failed to run command: {e}")))?;
+  cfg_if::cfg_if! {
+    if #[cfg(not(target_arch = "wasm32"))] {
+    let output = tokio::process::Command::new(iota_bin)
+      .args(args.split_ascii_whitespace())
+      .arg("--json")
+      .output()
+      .await
+      .map_err(|e| anyhow!("failed to run command: {e}"))?;
 
-  if !output.status.success() {
-    let err_msg =
-      String::from_utf8(output.stderr).map_err(|e| anyhow!("command failed with non-utf8 error message: {e}"))?;
-    return Err(anyhow!("failed to run \"iota client active-address\": {err_msg}"));
+    if !output.status.success() {
+      let err_msg =
+        String::from_utf8(output.stderr).map_err(|e| anyhow!("command failed with non-utf8 error message: {e}"))?;
+      return Err(anyhow!("failed to run \"iota client active-address\": {err_msg}"));
+    }
+
+    serde_json::from_slice(&output.stdout).context("invalid JSON object in command output")
+    } else {
+      extern "Rust" {
+        async fn __wasm_exec_iota_cmd(cmd: &str) -> anyhow::Result<Value>;
+      }
+      let cmd = format!("{iota_bin} {args} --json");
+      unsafe { __wasm_exec_iota_cmd(&cmd).await }
+    }
   }
-
-  serde_json::from_slice(&output.stdout).context("invalid JSON object in command output")
 }
 
 async fn get_active_address(iota_bin: impl AsRef<Path>) -> anyhow::Result<IotaAddress> {
