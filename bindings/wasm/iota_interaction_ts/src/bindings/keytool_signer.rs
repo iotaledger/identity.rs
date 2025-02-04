@@ -17,25 +17,18 @@ use serde_json::Value;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
 
-#[wasm_bindgen(typescript_custom_section)]
-const NODE_EXEC_HANDLER: &str = r#"
-const utils = require("util");
-const exec = utils.promisify(require("child_process").exec);
-
-async function exec_handler(cmd: string): Promise<unknown> {
-  try {
-    const { stdout } = await exec(cmd);
-    return JSON.parse(stdout) as unknown;
-  } catch(e) {
-    console.error(e);
-  }
-}
-"#;
-
-#[wasm_bindgen]
+#[wasm_bindgen(module = buffer)]
 extern "C" {
-  #[wasm_bindgen(catch)]
-  async fn exec_handler(cmd: &str) -> Result<JsValue>;
+  #[wasm_bindgen(typescript_type = Buffer)]
+  type NodeBuffer;
+  #[wasm_bindgen(method, js_name = toString)]
+  fn to_string(this: &NodeBuffer) -> String;
+}
+
+#[wasm_bindgen(module = child_process)]
+extern "C" {
+  #[wasm_bindgen(js_name = execSync, catch)]
+  fn exec_cli_cmd(cmd: &str) -> Result<NodeBuffer>;
 }
 
 #[wasm_bindgen(js_name = KeytoolSigner)]
@@ -88,8 +81,9 @@ impl Signer<IotaKeySignature> for WasmKeytoolSigner {
 
 // This is used in KeytoolSigner implementation to issue CLI commands.
 #[no_mangle]
-fn __wasm_exec_iota_cmd(cmd: &str) -> anyhow::Result<Value> {
-  let output = futures::executor::block_on(exec_handler(cmd)).map_err(|_| anyhow::anyhow!("exec failed"))?;
-  serde_wasm_bindgen::from_value(output)
-    .map_err(|_| anyhow::anyhow!("failed to deserialize JSON object from command output"))
+pub extern "Rust" fn __wasm_exec_iota_cmd(cmd: &str) -> anyhow::Result<Value> {
+  let output = exec_cli_cmd(cmd)
+    .map_err(|e| anyhow::anyhow!("exec failed: {e:?}"))?
+    .to_string();
+  serde_json::from_str(&output).map_err(|_| anyhow::anyhow!("failed to deserialize JSON object from command output"))
 }
