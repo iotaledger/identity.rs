@@ -325,8 +325,6 @@ impl IotaClientTrait for IotaClientTsSdk {
 
   async fn execute_transaction<S: Signer<IotaKeySignature>>(
     &self,
-    sender_address: IotaAddress,
-    sender_public_key: &[u8],
     tx_bcs: ProgrammableTransactionBcs,
     gas_budget: Option<u64>,
     signer: &S,
