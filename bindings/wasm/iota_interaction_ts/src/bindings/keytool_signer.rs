@@ -60,6 +60,28 @@ impl WasmKeytoolSigner {
   pub fn address(&self) -> String {
     self.0.address().to_string()
   }
+
+  // These method definition are needed to make sure `KeytoolSigner`
+  // implements `Signer` interface.
+
+  #[wasm_bindgen(js_name = keyId)]
+  pub fn key_id(&self) -> String {
+    self.address()
+  }
+
+  #[wasm_bindgen(js_name = publicKey)]
+  pub async fn public_key(&self) -> Vec<u8> {
+    self.0.public_key().as_ref().to_owned()
+  }
+
+  #[wasm_bindgen]
+  pub async fn sign(&self, data: Vec<u8>) -> Result<Vec<u8>> {
+    Signer::sign(self, &data)
+      .await
+      .map_err(|e| anyhow::Error::from(e))
+      .map(|signature| signature.as_ref().to_owned())
+      .wasm_result()
+  }
 }
 
 #[async_trait(?Send)]
