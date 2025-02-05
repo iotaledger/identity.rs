@@ -25,7 +25,7 @@ import { IOTA_TYPE_ARG } from "@iota/iota.js/utils";
 import { IDENTITY_IOTA_PACKAGE_ID, NETWORK_NAME_FAUCET, NETWORK_URL, TEST_GAS_BUDGET } from "../utils_alpha";
 
 async function initializeClients() {
-    const kinesis_client = new KinesisClient({ url: NETWORK_URL });
+    const kinesisClient = new KinesisClient({ url: NETWORK_URL });
 
     console.log("---------------- Preparing IdentityClient ------------------------");
     const VALID_SECP256K1_SECRET_KEY = [
@@ -62,26 +62,12 @@ async function initializeClients() {
         136,
         28,
     ];
-    const secret_key = new Uint8Array(VALID_SECP256K1_SECRET_KEY);
-    let key_pair = Ed25519Keypair.fromSecretKey(secret_key);
-    let pub_key = key_pair.getPublicKey();
-    console.log(`Created Ed25519Keypair with PublicKey ${pub_key.toBase64()} and address ${pub_key.toIotaAddress()}`);
+    const secretKey = new Uint8Array(VALID_SECP256K1_SECRET_KEY);
+    let keyPair = Ed25519Keypair.fromSecretKey(secretKey);
+    let pubKey = keyPair.getPublicKey();
+    console.log(`Created Ed25519Keypair with PublicKey ${pubKey.toBase64()} and address ${pubKey.toIotaAddress()}`);
 
-    // delete later if not required anymore
-    // try to find package beforehand
-            // "MoveEventType":"0xac854096fcbfadcdd8cc8e4b6242d1b35607ef5324bfe54ba7a4be69fa6db36d::migration_registry::MigrationRegistryCreated"
-            // "Sender": "0xd40005ab355d8342fa6b94e9638a1040483d70430720d28e9b425283d011c0a8"
-    const eventsQuery: QueryEventsParams = {
-        "query": {
-            "MoveEventType":`${IDENTITY_IOTA_PACKAGE_ID}::migration_registry::MigrationRegistryCreated`
-        },
-        "limit":1,
-        "order":"ascending"
-    };
-    const eventsResult = await kinesis_client.queryEvents(eventsQuery);
-    console.dir(eventsResult);
-
-    const identityClientReadOnly = await KinesisIdentityClientReadOnly.createWithPkgId(kinesis_client, IDENTITY_IOTA_PACKAGE_ID);
+    const identityClientReadOnly = await KinesisIdentityClientReadOnly.createWithPkgId(kinesisClient, IDENTITY_IOTA_PACKAGE_ID);
 
     // create new storage
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
@@ -103,14 +89,14 @@ async function initializeClients() {
         recipient: identityClient.senderAddress(),
     });
 
-    const balance = await kinesis_client.getBalance({ owner: identityClient.senderAddress() });
+    const balance = await kinesisClient.getBalance({ owner: identityClient.senderAddress() });
     if (balance.totalBalance === "0") {
         throw new Error("Balance is still 0");
     } else {
         console.log(`Received gas from faucet: ${balance.totalBalance} for owner ${identityClient.senderAddress()}`);
     }
 
-    return { kinesis_client, identityClient, key_pair };
+    return { kinesisClient, identityClient, keyPair };
 }
 
 
@@ -135,7 +121,7 @@ async function testIdentityClientReadOnly() {
 
 async function testIdentityClient(
     identityClient: KinesisIdentityClient,
-    kinesis_client: KinesisClient,
+    kinesisClient: KinesisClient,
 ): Promise<void> {
     console.log("\n-------------- Start testIdentityClient -------------------------------");
     console.log(`senderPublicKey: ${identityClient.senderPublicKey()}`);
@@ -155,7 +141,7 @@ async function testIdentityClient(
         recipient: identityClient.senderAddress(),
     });
 
-    const balance = await kinesis_client.getBalance({ owner: identityClient.senderAddress() });
+    const balance = await kinesisClient.getBalance({ owner: identityClient.senderAddress() });
     if (balance.totalBalance === "0") {
         throw new Error("Balance is still 0");
     } else {
@@ -308,7 +294,7 @@ async function signerTest(): Promise<void> {
     console.dir({ signed });
 }
 
-async function testExecuteTransaction(kinesis_client: KinesisClient) {
+async function testExecuteTransaction(kinesisClient: KinesisClient) {
     console.log("---------------- testing executeTransaction ------------------------");
 
     // create new storage
@@ -333,23 +319,23 @@ async function testExecuteTransaction(kinesis_client: KinesisClient) {
     });
 
     // try to craft tx with js api
-    let coins = await kinesis_client.getCoins({
+    let coins = await kinesisClient.getCoins({
         owner: address,
         coinType: IOTA_TYPE_ARG,
     });
     const tx = new Transaction();
-    const coin_0 = coins.data[0];
-    const coin = tx.splitCoins(tx.object(coin_0.coinObjectId), [
+    const coin0 = coins.data[0];
+    const coin = tx.splitCoins(tx.object(coin0.coinObjectId), [
         bcs.u64().serialize(TEST_GAS_BUDGET * 2),
     ]);
     tx.transferObjects([coin], address);
     tx.setSenderIfNotSet(address);
 
     let response = await executeTransaction(
-        kinesis_client,
+        kinesisClient,
         address,
         publicJwk,
-        await tx.build({ client: kinesis_client }),
+        await tx.build({ client: kinesisClient }),
         signer,
     );
     console.dir(response);
@@ -358,7 +344,7 @@ async function testExecuteTransaction(kinesis_client: KinesisClient) {
 
 /** Test API usage */
 export async function testApiCall(): Promise<void> {
-    const { kinesis_client, identityClient } = await initializeClients();
+    const { kinesisClient, identityClient } = await initializeClients();
 
     try {
         await testIdentityClientReadOnly();
@@ -368,7 +354,7 @@ export async function testApiCall(): Promise<void> {
     }
 
     try {
-        await testIdentityClient(identityClient, kinesis_client);
+        await testIdentityClient(identityClient, kinesisClient);
     } catch (err) {
         const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
         console.error(`identity client binding test failed: ${suffix}`);
@@ -396,7 +382,7 @@ export async function testApiCall(): Promise<void> {
     }
 
     try {
-        await testExecuteTransaction(kinesis_client);
+        await testExecuteTransaction(kinesisClient);
     } catch (err) {
         const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
         console.error(`signer binding test failed: ${suffix}`);

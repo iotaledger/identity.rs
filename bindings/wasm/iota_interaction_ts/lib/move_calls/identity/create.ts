@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Transaction } from "@iota/iota.js/transactions";
-import { getClockRef } from "../utils";
+import { getClockRef, insertPlaceholders } from "../utils";
 
-// TODO: check going back to Uint8Array
-// export async function create(didDoc: Uint8Array, packageId: string): Promise<Uint8Array> {
-export async function create(didDoc: Uint8Array, packageId: string): Promise<number[]> {
+export async function create(didDoc: Uint8Array, packageId: string): Promise<Uint8Array> {
     const tx = new Transaction();
     const didDocArg = tx.pure.vector("u8", didDoc);
     const clock = getClockRef(tx);
@@ -16,14 +14,9 @@ export async function create(didDoc: Uint8Array, packageId: string): Promise<num
         arguments: [didDocArg, clock],
     });
 
-    // TODO: define default values for these placeholders in a central place
-    tx.setGasPrice(1);
-    tx.setGasBudget(1);
-    tx.setGasPayment([]);
-    tx.setSender('0x00000000000000090807060504030201');
+    insertPlaceholders(tx);
 
-    let asArray = [... await tx.build()];
-    return asArray;
+    return tx.build();
 }
 
 export function newWithControllers(

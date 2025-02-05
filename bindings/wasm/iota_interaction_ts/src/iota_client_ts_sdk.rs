@@ -437,12 +437,16 @@ impl IotaClientTsSdk {
     sender_address: IotaAddress,
     gas_budget: Option<u64>,
   ) -> Result<Vec<u8>, TsSdkError> {
+    let tx_bcs = tx.0.build()
+      .await
+      .map_err(WasmError::from)?
+      .to_vec();
     let updated = add_gas_data_to_transaction(
       &self.iota_client.0,
       sender_address,
-      tx.0.build().await.unwrap().to_vec(),
+      tx_bcs,
       gas_budget,
-    ).await.unwrap();
+    ).await?;
 
     Ok(updated)
   }

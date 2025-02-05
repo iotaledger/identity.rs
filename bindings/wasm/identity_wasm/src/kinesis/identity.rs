@@ -173,10 +173,12 @@ pub struct WasmIdentityBuilder(pub(crate) IdentityBuilder);
 #[wasm_bindgen(js_class = IdentityBuilder)]
 impl WasmIdentityBuilder {
   #[wasm_bindgen(constructor)]
-  pub fn new(did_doc: &WasmIotaDocument) -> WasmIdentityBuilder {
+  pub fn new(did_doc: &WasmIotaDocument) -> Result<WasmIdentityBuilder> {
     let document: IotaDocument = did_doc.0.try_read().unwrap().clone();
-    WasmIdentityBuilder(
-      IdentityBuilder::new(document)
+    Ok(
+      WasmIdentityBuilder(
+        IdentityBuilder::new(document)
+      )
     )
   }
 
@@ -226,7 +228,7 @@ pub struct WasmCreateIdentityTx(pub(crate) CreateIdentityTx);
 impl WasmCreateIdentityTx {
   #[wasm_bindgen(js_name = execute)]
   pub async fn execute(self, client: &WasmKinesisIdentityClient) -> Result<WasmTransactionOutputInternalOnChainIdentity> {
-    let output = self.0.execute(&client.0).await.unwrap();
+    let output = self.0.execute(&client.0).await.map_err(wasm_error)?;
     Ok(WasmTransactionOutputInternalOnChainIdentity(output))
   }
 }

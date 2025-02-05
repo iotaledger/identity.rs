@@ -100,7 +100,9 @@ impl WasmKinesisIdentityClientReadOnly {
 
   #[wasm_bindgen(js_name = getIdentity)]
   pub async fn get_identity(&self, object_id: WasmObjectID) -> Result<IdentityContainer, JsError> {
-    let inner_value = self.0.get_identity(object_id.parse()?).await.unwrap();
+    let inner_value = self.0.get_identity(object_id.parse()?)
+      .await
+      .map_err(|err| JsError::new(&format!("failed to resolve identity by object id; {err:?}")))?;
     Ok(IdentityContainer(inner_value))
   }
 }

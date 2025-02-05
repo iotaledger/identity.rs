@@ -22,6 +22,7 @@ use super::IdentityContainer;
 use super::WasmIdentityBuilder;
 use super::WasmKinesisIdentityClientReadOnly;
 
+use crate::error::wasm_error;
 use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
@@ -75,8 +76,9 @@ impl WasmKinesisIdentityClient {
   }
 
   #[wasm_bindgen(js_name = createIdentity)]
-  pub fn create_identity(&self, iota_document: &WasmIotaDocument) -> WasmIdentityBuilder {
+  pub fn create_identity(&self, iota_document: &WasmIotaDocument) -> Result<WasmIdentityBuilder, JsError> {
     WasmIdentityBuilder::new(iota_document)
+      .map_err(|err| JsError::new(&format!("failed to initialize new identity builder; {err:?}")))
   }
 
   #[wasm_bindgen(js_name = getIdentity)]
@@ -181,7 +183,7 @@ pub struct WasmPublishDidTx(pub(crate) PublishDidTx);
 impl WasmPublishDidTx {
   #[wasm_bindgen(js_name = execute)]
   pub async fn execute(self, client: &WasmKinesisIdentityClient) -> Result<WasmTransactionOutputPublishDid, JsValue> {
-    let output = self.0.execute(&client.0).await.unwrap();
+    let output = self.0.execute(&client.0).await.map_err(wasm_error)?;
     Ok(WasmTransactionOutputPublishDid(output))
   }
 }

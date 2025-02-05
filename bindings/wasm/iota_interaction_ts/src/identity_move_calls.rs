@@ -479,7 +479,8 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
 
   async fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
     let package = package_id.to_string();
-    let promise: Promise = Promise::resolve(&identity_new(did_doc, &package).unwrap());
+    let array_promise = identity_new(did_doc, &package).map_err(WasmError::from)?;
+    let promise: Promise = Promise::resolve(&array_promise);
     JsFuture::from(promise)
         .await
         .map(|v| JsValue::from(Array::from(&v)))

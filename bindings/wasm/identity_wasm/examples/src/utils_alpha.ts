@@ -30,7 +30,7 @@ export async function createDocumentForNetwork(storage: Storage, network: string
     // Create a new DID document with a placeholder DID.
     const unpublished = new IotaDocument(network);
 
-    const verification_method_fragment = await unpublished.generateMethod(
+    const verificationMethodFragment = await unpublished.generateMethod(
         storage,
         JwkMemStore.ed25519KeyType(),
         JwsAlgorithm.EdDSA,
@@ -38,7 +38,7 @@ export async function createDocumentForNetwork(storage: Storage, network: string
         MethodScope.VerificationMethod(),
     );
 
-    return [unpublished, verification_method_fragment];
+    return [unpublished, verificationMethodFragment];
 }
 
 export async function getClientAndCreateAccount(storage: Storage): Promise<KinesisIdentityClient> {
@@ -79,12 +79,12 @@ export async function getClientAndCreateAccount(storage: Storage): Promise<Kines
 }
 
 export async function createDidDocument(
-    identity_client: KinesisIdentityClient,
+    identityClient: KinesisIdentityClient,
     unpublished: IotaDocument,
 ): Promise<IotaDocument> {
-    let tx = identity_client
+    let tx = identityClient
       .publishDidDocument(unpublished);
-    let txOutput = await tx.execute(identity_client);
+    let txOutput = await tx.execute(identityClient);
   
     return txOutput.output;
   }

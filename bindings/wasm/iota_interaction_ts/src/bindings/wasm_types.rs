@@ -27,13 +27,6 @@ use crate::error::WasmError;
 
 // TODO: fix/add signer or remove functions relying on it
 type WasmStorageSigner = ();
-// TODO: use proper error type here
-// not available anymore
-// use identity_iota::iota::iota_sdk_abstraction::error::Error;
-#[derive(Debug)]
-pub enum Error {
-  FfiError(String),
-}
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_SDK_TYPES: &'static str = r#"
@@ -170,23 +163,25 @@ extern "C" {
   #[wasm_bindgen(method, structural, catch)]
   pub async fn build(this: &WasmTransactionBuilder) -> Result<Uint8Array, JsValue>;
 
-  #[wasm_bindgen(js_name = "setSender", method, catch)]
-  pub fn set_sender(this: &WasmTransactionBuilder, address: String) -> Result<(), JsValue>;
+  // TODO: decide if we need the following functions: "yagni" or not?
 
-  #[wasm_bindgen(js_name = "setGasOwner", method, catch)]
-  pub fn set_gas_owner(this: &WasmTransactionBuilder, address: String) -> Result<(), JsValue>;
+  // #[wasm_bindgen(js_name = "setSender", method, catch)]
+  // pub fn set_sender(this: &WasmTransactionBuilder, address: String) -> Result<(), JsValue>;
 
-  #[wasm_bindgen(js_name = "setGasPrice", method, catch)]
-  pub fn set_gas_price(this: &WasmTransactionBuilder, price: u64) -> Result<(), JsValue>;
+  // #[wasm_bindgen(js_name = "setGasOwner", method, catch)]
+  // pub fn set_gas_owner(this: &WasmTransactionBuilder, address: String) -> Result<(), JsValue>;
 
-  #[wasm_bindgen(js_name = "setGasPayment", method, catch)]
-  pub fn set_gas_payment(this: &WasmTransactionBuilder, payments: Vec<WasmObjectRef>) -> Result<(), JsValue>;
+  // #[wasm_bindgen(js_name = "setGasPrice", method, catch)]
+  // pub fn set_gas_price(this: &WasmTransactionBuilder, price: u64) -> Result<(), JsValue>;
 
-  #[wasm_bindgen(js_name = "setGasBudget", method, catch)]
-  pub fn set_gas_budget(this: &WasmTransactionBuilder, budget: u64) -> Result<(), JsValue>;
+  // #[wasm_bindgen(js_name = "setGasPayment", method, catch)]
+  // pub fn set_gas_payment(this: &WasmTransactionBuilder, payments: Vec<WasmObjectRef>) -> Result<(), JsValue>;
 
-  #[wasm_bindgen(js_name = "getData", method, catch)]
-  pub fn get_data(this: &WasmTransactionBuilder) -> Result<JsValue, JsValue>;
+  // #[wasm_bindgen(js_name = "setGasBudget", method, catch)]
+  // pub fn set_gas_budget(this: &WasmTransactionBuilder, budget: u64) -> Result<(), JsValue>;
+
+  // #[wasm_bindgen(js_name = "getData", method, catch)]
+  // pub fn get_data(this: &WasmTransactionBuilder) -> Result<JsValue, JsValue>;
 }
 
 impl From<ObjectRef> for WasmObjectRef {
@@ -317,7 +312,7 @@ pub(crate) async fn add_gas_data_to_transaction(
     sender_address: IotaAddress,
     tx_bcs: Vec<u8>,
     gas_budget: Option<u64>,
-) -> Result<Vec<u8>, Error> {
+) -> Result<Vec<u8>, TsSdkError> {
   let promise: Promise = Promise::resolve(&add_gas_data_to_transaction_inner(
     iota_client,
     sender_address.to_string(),
@@ -325,8 +320,10 @@ pub(crate) async fn add_gas_data_to_transaction(
     gas_budget,
   ));
   let value: JsValue = JsFuture::from(promise).await.map_err(|e| {
-    console_log!("Error executing JsFuture::from(promise) for `add_gas_data_to_transaction`: {:?}", e);
-    Error::FfiError(format!("{:?}", e))
+    let message = "Error executing JsFuture::from(promise) for `add_gas_data_to_transaction`";
+    let details = format!("{e:?}");
+    console_log!("{message}; {details}");
+    TsSdkError::WasmError(message.to_string(), details.to_string())
   })?;
 
   Ok(Uint8Array::new(&value).to_vec())
@@ -373,7 +370,7 @@ pub async fn execute_transaction(
   tx_bcs: ProgrammableTransactionBcs, // --> Binding: Vec<u8>
   signer: WasmStorageSigner,          // --> Binding: WasmStorageSigner
   gas_budget: Option<u64>,            // --> Binding: Option<u64>,
-) -> Result<IotaTransactionBlockResponseAdapter, Error> {
+) -> Result<IotaTransactionBlockResponseAdapter, TsSdkError> {
   let promise: Promise = Promise::resolve(&execute_transaction_inner(
     iota_client,
     sender_address.to_string(),
@@ -383,8 +380,10 @@ pub async fn execute_transaction(
     gas_budget,
   ));
   let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
-    console_log!("Error executing JsFuture::from(promise) for `execute_transaction`: {:?}", e);
-    Error::FfiError(format!("{:?}", e))
+    let message = "Error executing JsFuture::from(promise) for `execute_transaction`";
+    let details = format!("{e:?}");
+    console_log!("{message}; {details}");
+    TsSdkError::WasmError(message.to_string(), details.to_string())
   })?;
 
   Ok(IotaTransactionBlockResponseAdapter::new(result.into()))

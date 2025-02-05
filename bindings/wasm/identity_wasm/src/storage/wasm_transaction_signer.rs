@@ -40,15 +40,23 @@ impl Signer<IotaKeySignature> for WasmTransactionSigner {
     type KeyId = String;
 
     async fn sign(&self, data: &[u8]) -> std::result::Result<Vec<u8>, SecretStorageError> {
-        self.sign(data).await.map(|v| v.to_vec()).map_err(|err| SecretStorageError::Other(
-            anyhow::anyhow!(err.as_string().unwrap_or_else(|| "could not sign data".to_string()))
-        ))
+        self.sign(data).await.map(|v| v.to_vec()).map_err(|err| {
+            let details = err.as_string()
+                .map(|v| format!("; {}", v))
+                .unwrap_or_default();
+            let message = format!("could not sign data{details}");
+            SecretStorageError::Other(anyhow::anyhow!(message))
+        })
     }
 
     async fn public_key(&self) -> std::result::Result<Vec<u8>, SecretStorageError> {
-        self.public_key().await.map(|v| v.to_vec()).map_err(|err| SecretStorageError::Other(
-            anyhow::anyhow!(err.as_string().unwrap_or_else(|| "could not get public key".to_string()))
-        ))
+        self.public_key().await.map(|v| v.to_vec()).map_err(|err| {
+            let details = err.as_string()
+                .map(|v| format!("; {}", v))
+                .unwrap_or_default();
+            let message = format!("could not get public key{details}");
+            SecretStorageError::KeyNotFound(message)
+        })
     }
     
     fn key_id(&self) -> &String {
