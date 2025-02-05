@@ -77,7 +77,7 @@ async fn create_did<K, I, S>(
 where
   K: identity_storage::JwkStorage + identity_storage::JwkStorageBbsPlusExt,
   I: identity_storage::KeyIdStorage,
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + OptionalSync,
 {
   // Get the network name.
   let network_name: &NetworkName = identity_client.network();

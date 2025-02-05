@@ -51,7 +51,7 @@ pub async fn create_did<K, I, S>(
 where
   K: identity_storage::JwkStorage + identity_storage::JwkStorageBbsPlusExt,
   I: identity_storage::KeyIdStorage,
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + OptionalSync,
 {
   // Create a new DID document with a placeholder DID.
   let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network());

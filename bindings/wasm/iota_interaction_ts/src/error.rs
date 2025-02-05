@@ -194,6 +194,10 @@ pub enum TsSdkError {
   WasmError(String, String),
   #[error("[TsSdkError] JsSysError: {0}")]
   JsSysError(String),
+  #[error("[TsSdkError] TransactionSerializationError: {0}")]
+  TransactionSerializationError(String),
+  #[error("[TsSdkError] TransactionSigningError: {0}")]
+  TransactionSigningError(String, String),
 }
 
 pub type TsSdkResult<T> = core::result::Result<T, TsSdkError>;

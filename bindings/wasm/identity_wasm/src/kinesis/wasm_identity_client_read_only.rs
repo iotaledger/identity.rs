@@ -21,9 +21,10 @@ pub struct IdentityContainer(pub(crate) Identity);
 #[wasm_bindgen(js_class = Identity)]
 impl IdentityContainer {
   /// TODO: check if we can actually do this like this w/o consuming the container on the 1st try
+  /// TODO: add support for unmigrated aliases
   #[wasm_bindgen(js_name = toFullFledged)]
-  pub fn to_full_fledged(self) -> Option<WasmOnChainIdentity> {
-    match self.0 {
+  pub fn to_full_fledged(&self) -> Option<WasmOnChainIdentity> {
+    match self.0.clone() {
       Identity::FullFledged(v) => Some(WasmOnChainIdentity(v)),
       _ => None,
     }
@@ -103,18 +104,3 @@ impl WasmKinesisIdentityClientReadOnly {
     Ok(IdentityContainer(inner_value))
   }
 }
-
-// TODO: consider importing function from rebased later on, if possible
-// pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error> {
-//   let public_key = Ed25519PublicKey::from_bytes(sender_public_key)
-//     .map_err(|err| Error::InvalidKey(format!("could not parse public key to Ed25519 public key; {err}")))?;
-
-//   Ok(IotaAddress::from(&public_key))
-// }
-
-// #[wasm_bindgen(js_name = convertToAddress)]
-// pub fn wasm_convert_to_address(sender_public_key: &[u8]) -> Result<String, JsError> {
-//   convert_to_address(sender_public_key)
-//     .map(|v| v.to_string())
-//     .map_err(|err| JsError::new(&format!("could not derive address from public key; {err}")))
-// }

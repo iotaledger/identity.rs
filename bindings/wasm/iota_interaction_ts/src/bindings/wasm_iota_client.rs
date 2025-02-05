@@ -61,7 +61,7 @@ use crate::error::TsSdkError;
 
 // The typescript declarations imported in the following typescript_custom_section
 // can be use as arguments for rust functions via the typescript_type annotation.
-// In other words: The typescript_type "IotaClient" is imported here to be binded
+// In other words: The typescript_type "IotaClient" is imported here to be bound
 // to the WasmIotaClient functions below.
 // TODO: check why this isn't done by `module` macro attribute for `WasmKinesisClient`
 #[wasm_bindgen(typescript_custom_section)]
@@ -118,7 +118,7 @@ extern "C" {
 
 // Helper struct used to convert TYPESCRIPT types to RUST types
 #[derive(Clone)]
-pub struct ManagedWasmIotaClient(WasmIotaClient);
+pub struct ManagedWasmIotaClient(pub(crate) WasmIotaClient);
 
 // convert TYPESCRIPT types to RUST types
 impl ManagedWasmIotaClient {

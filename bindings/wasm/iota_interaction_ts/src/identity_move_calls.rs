@@ -1,7 +1,10 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use js_sys::Array;
+use js_sys::Promise;
 use js_sys::Uint8Array;
+use wasm_bindgen_futures::JsFuture;
 use std::cell::Cell;
 use std::collections::HashSet;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -13,6 +16,7 @@ use crate::bindings::WasmObjectRef;
 use crate::bindings::WasmSharedObjectRef;
 use crate::bindings::WasmTransactionArgument;
 use crate::bindings::WasmTransactionBuilder;
+use crate::common::PromiseUint8Array;
 use crate::error::TsSdkError;
 use crate::error::WasmError;
 use crate::transaction_builder::TransactionBuilderTsSdk;
@@ -43,10 +47,10 @@ extern "C" {
   pub(crate) type WasmTxArgumentMap;
 }
 
-#[wasm_bindgen(module = "move_calls/identity")]
+#[wasm_bindgen(module = "@iota/iota-interaction-ts/move_calls/identity")]
 extern "C" {
   #[wasm_bindgen(js_name = "create", catch)]
-  async fn identity_new(did: &[u8], package: &str) -> Result<Uint8Array, JsValue>;
+  fn identity_new(did: &[u8], package: &str) -> Result<PromiseUint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "newWithControllers", catch)]
   async fn identity_new_with_controllers(
@@ -473,12 +477,15 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     .map_err(TsSdkError::from)
   }
 
-  fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
+  async fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
     let package = package_id.to_string();
-    futures::executor::block_on(identity_new(did_doc, &package))
-      .map(|js_arr| js_arr.to_vec())
-      .map_err(WasmError::from)
-      .map_err(TsSdkError::from)
+    let promise: Promise = Promise::resolve(&identity_new(did_doc, &package).unwrap());
+    JsFuture::from(promise)
+        .await
+        .map(|v| JsValue::from(Array::from(&v)))
+        .map_err(WasmError::from)
+        .and_then(|v| v.into_serde().map_err(WasmError::from))
+        .map_err(TsSdkError::from)
   }
 
   fn new_with_controllers<C>(

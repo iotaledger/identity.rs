@@ -580,7 +580,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
 
-  fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
+  async fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
     let mut ptb = PrgrTxBuilder::new();
     let doc_arg = utils::ptb_pure(&mut ptb, "did_doc", did_doc)?;
     let clock = utils::get_clock_ref(&mut ptb);

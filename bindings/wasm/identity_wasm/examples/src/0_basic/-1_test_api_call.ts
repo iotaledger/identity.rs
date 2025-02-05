@@ -2,64 +2,27 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    ControllerAndVotingPower,
     convertToAddress,
     IotaDID,
     IotaDocument,
-    Jwk,
     JwkMemStore,
     JwsAlgorithm,
     KeyIdMemStore,
     KinesisIdentityClient,
     KinesisIdentityClientReadOnly,
     Multicontroller,
-    OnChainIdentity,
-    ProposalAction,
     Storage,
     StorageSigner,
-    //    StorageSigner,
 } from "@iota/identity-wasm/node";
 
 import { executeTransaction } from "@iota/iota-interaction-ts/lib/iota_client_helpers";
 import { bcs } from "@iota/iota.js/bcs";
 import { IotaClient as KinesisClient, QueryEventsParams } from "@iota/iota.js/client";
-import { getFaucetHost, requestIotaFromFaucetV0, requestIotaFromFaucetV1 } from "@iota/iota.js/faucet";
-import { Ed25519Keypair, Ed25519PublicKey } from "@iota/iota.js/keypairs/ed25519";
+import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota.js/faucet";
+import { Ed25519Keypair } from "@iota/iota.js/keypairs/ed25519";
 import { Transaction } from "@iota/iota.js/transactions";
 import { IOTA_TYPE_ARG } from "@iota/iota.js/utils";
-import { event } from "cypress/types/jquery";
-
-// this was is the  implemented in `src/kinesis/wasm_identity_client.rs`
-// and then imported here as `convertToAddress` from `@iota/identity-wasm/node` (see above)
-//
-// use fastcrypto::ed25519::Ed25519PublicKey;
-// use identity_iota::iota::iota_sdk_abstraction::types::base_types::IotaAddress;
-// use identity_iota::iota::sui_name_tbd_error::Error as TbdError;
-//
-/// TODO: consider importing function from rebased later on, if possible
-// pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, TbdError> {
-//     let public_key = Ed25519PublicKey::from_bytes(sender_public_key)
-//       .map_err(|err| TbdError::InvalidKey(format!("could not parse public key to Ed25519 public key; {err}")))?;
-//
-//     Ok(IotaAddress::from(&public_key))
-//   }
-//
-//   #[wasm_bindgen(js_name = convertToAddress)]
-//   pub fn wasm_convert_to_address(sender_public_key: &[u8]) -> Result<String, JsError> {
-//     convert_to_address(sender_public_key)
-//       .map(|v| v.to_string())
-//       .map_err(|err| JsError::new(&format!("could not derive address from public key; {err}")))
-//   }
-//
-// Currently unclear where to put the this implementation atm. It was a helper for testing performing transactions,
-// we might also be able to just drop it due to API restructuring.
-
-export const DEFAULT_GAS_BUDGET = 10000000;
-const NETWORK_NAME = "local";
-const NETWORK_NAME_FAUCET = "localnet";
-const NETWORK_URL = "http://127.0.0.1:9000";
-// for now fixed, better impl in utils already
-const IDENTITY_IOTA_PACKAGE_ID = "0xac854096fcbfadcdd8cc8e4b6242d1b35607ef5324bfe54ba7a4be69fa6db36d";
+import { IDENTITY_IOTA_PACKAGE_ID, NETWORK_NAME_FAUCET, NETWORK_URL, TEST_GAS_BUDGET } from "../utils_alpha";
 
 async function initializeClients() {
     const kinesis_client = new KinesisClient({ url: NETWORK_URL });
@@ -104,32 +67,21 @@ async function initializeClients() {
     let pub_key = key_pair.getPublicKey();
     console.log(`Created Ed25519Keypair with PublicKey ${pub_key.toBase64()} and address ${pub_key.toIotaAddress()}`);
 
-    // // test builder and create instance for other tests
-    // let identityClient = KinesisIdentityClient
-    //     .builder()
-    //     .identityIotaPackageId(IDENTITY_IOTA_PACKAGE_ID)
-    //     .senderPublicKey(pub_key.toRawBytes())
-    //     .senderAddress(pub_key.toIotaAddress())
-    //     .iotaClient(kinesis_client)
-    //     .networkName(NETWORK_NAME)
-    //     .build();
-
     // delete later if not required anymore
     // try to find package beforehand
             // "MoveEventType":"0xac854096fcbfadcdd8cc8e4b6242d1b35607ef5324bfe54ba7a4be69fa6db36d::migration_registry::MigrationRegistryCreated"
             // "Sender": "0xd40005ab355d8342fa6b94e9638a1040483d70430720d28e9b425283d011c0a8"
-    // const eventsQuery: QueryEventsParams = {
-    //     "query": {
-    //         "MoveEventType":"0xac854096fcbfadcdd8cc8e4b6242d1b35607ef5324bfe54ba7a4be69fa6db36d::migration_registry::MigrationRegistryCreated"
-    //     },
-    //     "limit":1,
-    //     "order":"ascending"
-    // };
-    // const eventsResult = await kinesis_client.queryEvents(eventsQuery);
-    // console.dir(eventsResult);
+    const eventsQuery: QueryEventsParams = {
+        "query": {
+            "MoveEventType":`${IDENTITY_IOTA_PACKAGE_ID}::migration_registry::MigrationRegistryCreated`
+        },
+        "limit":1,
+        "order":"ascending"
+    };
+    const eventsResult = await kinesis_client.queryEvents(eventsQuery);
+    console.dir(eventsResult);
 
     const identityClientReadOnly = await KinesisIdentityClientReadOnly.createWithPkgId(kinesis_client, IDENTITY_IOTA_PACKAGE_ID);
-    console.dir(identityClientReadOnly);
 
     // create new storage
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
@@ -141,26 +93,22 @@ async function initializeClients() {
         throw new Error("failed to derive public JWK from generated JWK");
     }
     let keyId = generate.keyId();
-    console.dir({
-        keyId,
-        publicKeyJwk: publicKeyJwk,
-    });
 
     // create signer from storage
     let signer = new StorageSigner(storage, keyId, publicKeyJwk);
     const identityClient = await KinesisIdentityClient.create(identityClientReadOnly, signer);
 
-    // await requestIotaFromFaucetV0({
-    //     host: getFaucetHost(NETWORK_NAME_FAUCET),
-    //     recipient: identityClient.senderAddress(),
-    // });
+    await requestIotaFromFaucetV0({
+        host: getFaucetHost(NETWORK_NAME_FAUCET),
+        recipient: identityClient.senderAddress(),
+    });
 
-    // const balance = await kinesis_client.getBalance({ owner: identityClient.senderAddress() });
-    // if (balance.totalBalance === "0") {
-    //     throw new Error("Balance is still 0");
-    // } else {
-    //     console.log(`Received gas from faucet: ${balance.totalBalance} for owner ${identityClient.senderAddress()}`);
-    // }
+    const balance = await kinesis_client.getBalance({ owner: identityClient.senderAddress() });
+    if (balance.totalBalance === "0") {
+        throw new Error("Balance is still 0");
+    } else {
+        console.log(`Received gas from faucet: ${balance.totalBalance} for owner ${identityClient.senderAddress()}`);
+    }
 
     return { kinesis_client, identityClient, key_pair };
 }
@@ -188,7 +136,6 @@ async function testIdentityClientReadOnly() {
 async function testIdentityClient(
     identityClient: KinesisIdentityClient,
     kinesis_client: KinesisClient,
-    key_pair: Ed25519Keypair,
 ): Promise<void> {
     console.log("\n-------------- Start testIdentityClient -------------------------------");
     console.log(`senderPublicKey: ${identityClient.senderPublicKey()}`);
@@ -203,54 +150,32 @@ async function testIdentityClient(
     )
     )}`);
 
+    await requestIotaFromFaucetV0({
+        host: getFaucetHost(NETWORK_NAME_FAUCET),
+        recipient: identityClient.senderAddress(),
+    });
+
+    const balance = await kinesis_client.getBalance({ owner: identityClient.senderAddress() });
+    if (balance.totalBalance === "0") {
+        throw new Error("Balance is still 0");
+    } else {
+        console.log(`Received gas from faucet: ${balance.totalBalance} for owner ${identityClient.senderAddress()}`);
+    }
+
     const newDoc = new IotaDocument(identityClient.network());
-    console.dir(newDoc);
-    const builder = identityClient.createIdentity(newDoc)
-    console.dir(builder);
-    const tx = builder.finish();
-    console.dir(tx);
-    const ex = tx.execute(identityClient);
-    console.dir(ex);
-
-    // try {
-    //     console.log("\n---------------- executeDummyTransaction ------------------------");
-    //     let coins = await kinesis_client.getCoins({
-    //         owner: identityClient.senderAddress(),
-    //         coinType: IOTA_TYPE_ARG,
-    //     });
-    //     const tx = new Transaction();
-    //     const coin_0 = coins.data[0];
-    //     const coin = tx.splitCoins(tx.object(coin_0.coinObjectId), [
-    //         bcs.u64().serialize(DEFAULT_GAS_BUDGET * 2),
-    //     ]);
-    //     tx.transferObjects([coin], identityClient.senderAddress());
-    //     tx.setSenderIfNotSet(key_pair.getPublicKey().toIotaAddress());
-    //     const signatureWithBytes = await tx.sign({ signer: key_pair, client: kinesis_client });
-
-    //     const response = await identityClient.executeDummyTransaction(
-    //         signatureWithBytes.bytes,
-    //         [signatureWithBytes.signature],
-    //     );
-    //     console.dir(response);
-
-    //     // The above transaction execution is equivalent to the following snippet using the TS SDK iota client
-    //     const response2 = await kinesis_client.executeTransactionBlock({
-    //         transactionBlock: signatureWithBytes.bytes,
-    //         signature: signatureWithBytes.signature,
-    //     });
-    //     console.log(`TX result: ${response2}`);
-    // } catch (ex) {
-    //     console.log(`\nTest execute_dummy_transaction() - Error: ${(ex as Error).message}`);
-    // }
+    const { output: identity } = await identityClient
+        .createIdentity(newDoc)
+        .finish()
+        .execute(identityClient);
+    console.log(`created new identity with id "${identity.id()}"`);
 
     try {
         console.log("\n---------------- getIdentity ------------------------");
-        // const testValue = await identityClient.getIdentity("foobar");
-        const testValue = await identityClient.getIdentity("0xd9a0f8139076bfbdc245d402c655b4e93cdf5b4184294da2bbbf7ae3d8ec97a4");
-        console.dir(testValue);
-        const fufle = testValue.toFullFledged() as OnChainIdentity;
-        console.dir(fufle.id());
-        console.dir(fufle.isShared());
+        const identity = await identityClient.getIdentity("0xd9a0f8139076bfbdc245d402c655b4e93cdf5b4184294da2bbbf7ae3d8ec97a4");
+        console.dir(identity);
+        const onchainIdentity = identity.toFullFledged();
+        console.dir(`resolved identities id is ${onchainIdentity?.id()}`);
+        console.dir(`resolved identity is shared: ${onchainIdentity?.isShared()}`);
 
     } catch (ex) {
         console.log(`Test getIdentity() - Error: ${(ex as Error).message}`);
@@ -258,9 +183,9 @@ async function testIdentityClient(
 
     const did4resolveDid = IotaDID.parse("did:iota:0x0101010101010101010101010101010101010101010101010101010101010101");
     try {
-        // console.log("\n---------------- resolveDid ------------------------");
-        // not implemented
-        // await identityClient.resolveDid(did4resolveDid);
+        console.log("\n---------------- resolveDid ------------------------");
+        // invalid DID
+        await identityClient.resolveDid(did4resolveDid);
     } catch (ex) {
         console.log(`Test resolveDid() - Error: ${(ex as Error).message}`);
     }
@@ -307,55 +232,56 @@ function testMultiController(): void {
     console.dir(multiController.threshold());
 }
 
-// async function testProposals(identityClient: KinesisIdentityClient): Promise<void> {
-//     let action: ProposalAction = "Deactivate";
-//     console.dir(action);
+async function testProposals(identityClient: KinesisIdentityClient): Promise<void> {
+    console.log(`testProposals disabled after interface updates`);
+    // let action: ProposalAction = "Deactivate";
+    // console.dir(action);
 
-//     action = { UpdateDocument: new IotaDocument("foobar") };
-//     console.dir(action);
-//     console.dir(action.UpdateDocument);
-//     console.dir(action.UpdateDocument.id());
-//     console.dir(action.UpdateDocument.toJSON());
+    // action = { UpdateDocument: new IotaDocument("foobar") };
+    // console.dir(action);
+    // console.dir(action.UpdateDocument);
+    // console.dir(action.UpdateDocument.id());
+    // console.dir(action.UpdateDocument.toJSON());
 
-//     let identity = await identityClient
-//         .createIdentity(Uint8Array.from([1, 2, 3]))
-//         .threshold(BigInt(1))
-//         .gasBudget(BigInt(1))
-//         .controllers([
-//             new ControllerAndVotingPower("one", BigInt(1)),
-//             new ControllerAndVotingPower("two", BigInt(2)),
-//         ])
-//         .finish(identityClient, "dummySigner");
-//     console.dir(identity);
-//     console.dir(identity.isShared());
-//     console.dir(identity.proposals());
-//     const deactivateProposal = await identity
-//         .deactivateDid()
-//         .expirationEpoch(BigInt(1))
-//         .gasBudget(BigInt(1))
-//         .key("key")
-//         .finish(identityClient, "dummySigner");
-//     console.dir(deactivateProposal);
+    // let identity = await identityClient
+    //     .createIdentity(Uint8Array.from([1, 2, 3]))
+    //     .threshold(BigInt(1))
+    //     .gasBudget(BigInt(1))
+    //     .controllers([
+    //         new ControllerAndVotingPower("one", BigInt(1)),
+    //         new ControllerAndVotingPower("two", BigInt(2)),
+    //     ])
+    //     .finish(identityClient, "dummySigner");
+    // console.dir(identity);
+    // console.dir(identity.isShared());
+    // console.dir(identity.proposals());
+    // const deactivateProposal = await identity
+    //     .deactivateDid()
+    //     .expirationEpoch(BigInt(1))
+    //     .gasBudget(BigInt(1))
+    //     .key("key")
+    //     .finish(identityClient, "dummySigner");
+    // console.dir(deactivateProposal);
 
-//     // proposals consume the identity instance, so we need a new one
-//     identity = await identityClient
-//         .createIdentity(Uint8Array.from([1, 2, 3]))
-//         .threshold(BigInt(1))
-//         .gasBudget(BigInt(1))
-//         .controllers([
-//             new ControllerAndVotingPower("one", BigInt(1)),
-//             new ControllerAndVotingPower("two", BigInt(2)),
-//         ])
-//         .finish(identityClient, "dummySigner");
+    // // proposals consume the identity instance, so we need a new one
+    // identity = await identityClient
+    //     .createIdentity(Uint8Array.from([1, 2, 3]))
+    //     .threshold(BigInt(1))
+    //     .gasBudget(BigInt(1))
+    //     .controllers([
+    //         new ControllerAndVotingPower("one", BigInt(1)),
+    //         new ControllerAndVotingPower("two", BigInt(2)),
+    //     ])
+    //     .finish(identityClient, "dummySigner");
 
-//     const updateProposal = await identity
-//         .updateDidDocument(new IotaDocument("foobar"))
-//         .expirationEpoch(BigInt(1))
-//         .gasBudget(BigInt(1))
-//         .key("key")
-//         .finish(identityClient, "dummySigner");
-//     console.dir(updateProposal);
-// }
+    // const updateProposal = await identity
+    //     .updateDidDocument(new IotaDocument("foobar"))
+    //     .expirationEpoch(BigInt(1))
+    //     .gasBudget(BigInt(1))
+    //     .key("key")
+    //     .finish(identityClient, "dummySigner");
+    // console.dir(updateProposal);
+}
 
 async function signerTest(): Promise<void> {
     // create new storage
@@ -382,62 +308,57 @@ async function signerTest(): Promise<void> {
     console.dir({ signed });
 }
 
-// async function testExecuteTransaction(kinesis_client: KinesisClient) {
-//     console.log("---------------- testing executeTransaction ------------------------");
-//
-//     // create new storage
-//     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-//
-//     // generate new key
-//     let generate = await storage.keyStorage().generate("Ed25519", JwsAlgorithm.EdDSA);
-//     let publicKeyJwk = generate.jwk().toPublic();
-//     if (typeof publicKeyJwk === "undefined") {
-//         throw new Error("failed to derive public JWK from generated JWK");
-//     }
-//
-//     // create signer from storage
-//     let signer = new StorageSigner(storage, generate.keyId(), publicKeyJwk);
-//     // get public key as bytes and create address
-//     let publicJwk = (signer as any).publicKeyRaw();
-//     let address = convertToAddress(publicJwk);
-//
-//     await requestIotaFromFaucetV0({
-//         host: getFaucetHost(NETWORK_NAME_FAUCET),
-//         recipient: address,
-//     });
-//
-//     // try to craft tx with js api
-//     let coins = await kinesis_client.getCoins({
-//         owner: address,
-//         coinType: IOTA_TYPE_ARG,
-//     });
-//     const tx = new Transaction();
-//     const coin_0 = coins.data[0];
-//     const coin = tx.splitCoins(tx.object(coin_0.coinObjectId), [
-//         bcs.u64().serialize(DEFAULT_GAS_BUDGET * 2),
-//     ]);
-//     tx.transferObjects([coin], address);
-//     tx.setSenderIfNotSet(address);
-//
-//     let response = await executeTransaction(
-//         kinesis_client,
-//         address,
-//         publicJwk,
-//         await tx.build({ client: kinesis_client }),
-//         signer,
-//     );
-//     console.dir(response);
-//     console.dir(response?.response?.transaction?.data);
-// }
+async function testExecuteTransaction(kinesis_client: KinesisClient) {
+    console.log("---------------- testing executeTransaction ------------------------");
+
+    // create new storage
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+
+    // generate new key
+    let generate = await storage.keyStorage().generate("Ed25519", JwsAlgorithm.EdDSA);
+    let publicKeyJwk = generate.jwk().toPublic();
+    if (typeof publicKeyJwk === "undefined") {
+        throw new Error("failed to derive public JWK from generated JWK");
+    }
+
+    // create signer from storage
+    let signer = new StorageSigner(storage, generate.keyId(), publicKeyJwk);
+    // get public key as bytes and create address
+    let publicJwk = (signer as any).publicKeyRaw();
+    let address = convertToAddress(publicJwk);
+
+    await requestIotaFromFaucetV0({
+        host: getFaucetHost(NETWORK_NAME_FAUCET),
+        recipient: address,
+    });
+
+    // try to craft tx with js api
+    let coins = await kinesis_client.getCoins({
+        owner: address,
+        coinType: IOTA_TYPE_ARG,
+    });
+    const tx = new Transaction();
+    const coin_0 = coins.data[0];
+    const coin = tx.splitCoins(tx.object(coin_0.coinObjectId), [
+        bcs.u64().serialize(TEST_GAS_BUDGET * 2),
+    ]);
+    tx.transferObjects([coin], address);
+    tx.setSenderIfNotSet(address);
+
+    let response = await executeTransaction(
+        kinesis_client,
+        address,
+        publicJwk,
+        await tx.build({ client: kinesis_client }),
+        signer,
+    );
+    console.dir(response);
+    console.dir(response?.response?.transaction?.data);
+}
 
 /** Test API usage */
 export async function testApiCall(): Promise<void> {
-    const { kinesis_client, identityClient, key_pair } = await initializeClients();
-
-    // type ProgrammableTransaction = ReturnType<typeof bcs.ProgrammableTransaction.parse>;
-    // let tt: ProgrammableTransaction = bcs.ProgrammableTransaction.parse(new Uint8Array([]));
-    // console.dir(tt);
-
+    const { kinesis_client, identityClient } = await initializeClients();
 
     try {
         await testIdentityClientReadOnly();
@@ -447,39 +368,39 @@ export async function testApiCall(): Promise<void> {
     }
 
     try {
-        await testIdentityClient(identityClient, kinesis_client, key_pair);
+        await testIdentityClient(identityClient, kinesis_client);
     } catch (err) {
         const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
         console.error(`identity client binding test failed: ${suffix}`);
     }
 
-    // try {
-    //     testMultiController();
-    // } catch (err) {
-    //     const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
-    //     console.error(`multi controller binding test failed: ${suffix}`);
-    // }
+    try {
+        testMultiController();
+    } catch (err) {
+        const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
+        console.error(`multi controller binding test failed: ${suffix}`);
+    }
 
-    // try {
-    //     await testProposals(identityClient);
-    // } catch (err) {
-    //     const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
-    //     console.error(`proposals binding test failed: ${suffix}`);
-    // }
+    try {
+        await testProposals(identityClient);
+    } catch (err) {
+        const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
+        console.error(`proposals binding test failed: ${suffix}`);
+    }
 
-    // try {
-    //     await signerTest();
-    // } catch (err) {
-    //     const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
-    //     console.error(`signer binding test failed: ${suffix}`);
-    // }
+    try {
+        await signerTest();
+    } catch (err) {
+        const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
+        console.error(`signer binding test failed: ${suffix}`);
+    }
 
-    // try {
-    //     await testExecuteTransaction(kinesis_client);
-    // } catch (err) {
-    //     const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
-    //     console.error(`signer binding test failed: ${suffix}`);
-    // }
+    try {
+        await testExecuteTransaction(kinesis_client);
+    } catch (err) {
+        const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
+        console.error(`signer binding test failed: ${suffix}`);
+    }
 
     console.log("done");
 }

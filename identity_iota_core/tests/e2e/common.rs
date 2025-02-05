@@ -288,7 +288,7 @@ impl TestClient {
 
 pub async fn get_test_coin<S>(recipient: IotaAddress, client: &IdentityClient<S>) -> anyhow::Result<ObjectID>
 where
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + OptionalSync,
 {
   let mut ptb = ProgrammableTransactionBuilder::new();
   let coin = ptb.programmable_move_call(

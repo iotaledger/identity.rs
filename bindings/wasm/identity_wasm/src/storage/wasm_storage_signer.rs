@@ -54,4 +54,9 @@ impl WasmStorageSigner {
       _ => todo!("add support for other key types"),
     }
   }
+
+  #[wasm_bindgen(js_name = publicKey)]
+  pub async fn public_key(&self) -> Result<Vec<u8>> {
+    self.public_key_raw()
+  }
 }

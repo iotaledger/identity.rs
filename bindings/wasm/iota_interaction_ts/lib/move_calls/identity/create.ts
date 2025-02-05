@@ -4,7 +4,9 @@
 import { Transaction } from "@iota/iota.js/transactions";
 import { getClockRef } from "../utils";
 
-export function create(didDoc: Uint8Array, packageId: string): Promise<Uint8Array> {
+// TODO: check going back to Uint8Array
+// export async function create(didDoc: Uint8Array, packageId: string): Promise<Uint8Array> {
+export async function create(didDoc: Uint8Array, packageId: string): Promise<number[]> {
     const tx = new Transaction();
     const didDocArg = tx.pure.vector("u8", didDoc);
     const clock = getClockRef(tx);
@@ -14,7 +16,14 @@ export function create(didDoc: Uint8Array, packageId: string): Promise<Uint8Arra
         arguments: [didDocArg, clock],
     });
 
-    return tx.build();
+    // TODO: define default values for these placeholders in a central place
+    tx.setGasPrice(1);
+    tx.setGasBudget(1);
+    tx.setGasPayment([]);
+    tx.setSender('0x00000000000000090807060504030201');
+
+    let asArray = [... await tx.build()];
+    return asArray;
 }
 
 export function newWithControllers(
