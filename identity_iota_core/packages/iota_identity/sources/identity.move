@@ -578,14 +578,19 @@ module iota_identity::identity {
         self.did_doc.execute_proposal(cap, proposal_id, ctx)
     }
 
-    /// Deletes an `Identity`'s proposal. Only proposals with no votes can be deleted.
+    /// Deletes an `Identity`'s proposal. Proposals can only be deleted if they have no votes, if they are expired,
+    // or if the identity is deleted.
     public fun delete_proposal<T: store + drop>(
         self: &mut Identity,
         cap: &DelegationToken,
         proposal_id: ID,
         ctx: &mut TxContext,
     ) {
-        self.did_doc.delete_proposal<_, T>(cap, proposal_id, ctx);
+        if (self.deleted) {
+            self.did_doc.force_delete_proposal<_, T>(proposal_id);
+        } else {
+            self.did_doc.delete_proposal<_, T>(cap, proposal_id, ctx);
+        }
     }
 
     /// revoke the `DelegationToken` with `ID` `deny_id`. Only controllers can perform this operation.

@@ -418,4 +418,15 @@ module iota_identity::multicontroller {
     public(package) fun set_controlled_value<V: store + drop>(multi: &mut Multicontroller<V>, controlled_value: V) {
         multi.controlled_value = controlled_value;
     }
+
+    public(package) fun force_delete_proposal<V, T: drop + store>(self: &mut Multicontroller<V>, proposal_id: ID) {
+        let proposal = self.proposals.remove<ID, Proposal<T>>(proposal_id);
+
+        let Proposal<T> {
+            id,
+            ..
+        } = proposal;
+
+        id.delete();
+    }
 }
