@@ -12,7 +12,7 @@ module iota_identity::controller_proposal {
 
   /// Borrow a given `ControllerCap` from an `Identity` for 
   /// a single transaction.
-  public struct ControllerExecution has store {
+  public struct ControllerExecution has store, drop {
     /// ID of the `ControllerCap` to borrow.
     controller_cap: ID,
     /// The address of the `Identity` that owns

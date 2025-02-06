@@ -17,6 +17,7 @@ module iota_identity::identity {
         did_deactivation_proposal::{Self, DidDeactivation},
         controller_proposal::{Self, ControllerExecution},
         upgrade_proposal::{Self, Upgrade},
+        did_deletion_proposal::{Self, DidDeletion},
     };
 
     const ENotADidDocument: u64 = 0;
@@ -28,8 +29,10 @@ module iota_identity::identity {
     const EInvalidControllersList: u64 = 3;
     /// There's no upgrade available for this identity.
     const ENoUpgrade: u64 = 4;
+    /// Cannot delete identity.
+    const ECannotDelete: u64 = 5;
 
-    const PACKAGE_VERSION: u64 = 0;
+    const PACKAGE_VERSION: u64 = 1;
 
     // ===== Events ======
     /// Event emitted when an `identity`'s `Proposal` with `ID` `proposal` is created or executed by `controller`.
@@ -64,6 +67,8 @@ module iota_identity::identity {
         updated: u64,
         /// Package version used by this object.
         version: u64,
+        /// Flag to verify if this Identity has been deleted.
+        deleted: bool,
     }
 
     /// Creates an `Identity` with a single controller.
@@ -86,13 +91,16 @@ module iota_identity::identity {
     ): ID {
         let now = clock.timestamp_ms();
         assert!(now >= creation_timestamp, EInvalidTimestamp);
+        let id = object::new(ctx);
+        let identity_id = id.to_inner();
         let identity = Identity {
-            id: object::new(ctx),
-            did_doc: multicontroller::new_with_controller(doc, ctx.sender(), false, ctx),
+            id,
+            did_doc: multicontroller::new_with_controller(doc, ctx.sender(), false, identity_id, ctx),
             legacy_id: option::some(legacy_id),
             created: creation_timestamp,
             updated: now,
             version: PACKAGE_VERSION,
+            deleted: false,
         };
         let id = object::id(&identity);
         transfer::share_object(identity);
@@ -110,13 +118,17 @@ module iota_identity::identity {
         ctx: &mut TxContext,
     ): ID {
         let now = clock.timestamp_ms();
+        let id = object::new(ctx);
+        let identity_id = id.to_inner();
+
         let identity = Identity {
-            id: object::new(ctx),
-            did_doc: multicontroller::new_with_controller(doc, controller, can_delegate, ctx),
+            id,
+            did_doc: multicontroller::new_with_controller(doc, controller, can_delegate, identity_id, ctx),
             legacy_id: option::none(),
             created: now,
             updated: now,
             version: PACKAGE_VERSION,
+            deleted: false,
         };
         let id = object::id(&identity);
         transfer::share_object(identity);
@@ -140,13 +152,16 @@ module iota_identity::identity {
         assert!(controllers.size() > 0, EInvalidControllersList);
 
         let now = clock.timestamp_ms();
+        let id = object::new(ctx);
+        let identity_id = id.to_inner();
         let identity = Identity {
-            id: object::new(ctx),
-            did_doc: multicontroller::new_with_controllers(doc, controllers, controllers_that_can_delegate, threshold, ctx),
+            id, 
+            did_doc: multicontroller::new_with_controllers(doc, controllers, controllers_that_can_delegate, threshold, identity_id, ctx),
             legacy_id: option::none(),
             created: now,
             updated: now,
             version: PACKAGE_VERSION,
+            deleted: false,
         };
         let id = object::id(&identity);
 
@@ -176,6 +191,11 @@ module iota_identity::identity {
     /// that passed from the UNIX epoch to the last update on this `Identity`.
     public fun updated(self: &Identity): u64 {
         self.updated
+    }
+
+    /// Returns the value of flag `deleted`.
+    public fun deleted(self: &Identity): bool {
+        self.deleted
     }
 
     /// Returns this `Identity`'s threshold.
@@ -215,10 +235,37 @@ module iota_identity::identity {
         );
         let is_approved = self
             .did_doc
-            .is_proposal_approved<_, did_deactivation_proposal::DidDeactivation>(proposal_id);
+            .is_proposal_approved<_, DidDeactivation>(proposal_id);
  
         if (is_approved) {
             self.execute_deactivation(cap, proposal_id, clock, ctx);
+            option::none()
+        } else {
+            emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, false);
+            option::some(proposal_id)
+        }
+    }
+
+    /// Proposes the deletion of this `Identity`.
+    public fun propose_deletion(
+        self: &mut Identity,
+        cap: &DelegationToken,
+        expiration: Option<u64>,
+        clock: &Clock,
+        ctx: &mut TxContext,
+    ): Option<ID> {
+        let proposal_id = self.did_doc.create_proposal(
+            cap,
+            did_deletion_proposal::new(),
+            expiration,
+            ctx,
+        );
+        let is_approved = self
+            .did_doc
+            .is_proposal_approved<_, DidDeletion>(proposal_id);
+ 
+        if (is_approved) {
+            self.execute_deletion(cap, proposal_id, clock, ctx);
             option::none()
         } else {
             emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, false);
@@ -239,6 +286,26 @@ module iota_identity::identity {
             proposal_id,
             ctx,
         ).unwrap();
+        self.did_doc.set_controlled_value(vector[]);
+        self.updated = clock.timestamp_ms();
+
+        emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
+    }
+
+    /// Executes a proposal to deactivate this `Identity`'s DID document.
+    public fun execute_deletion(
+        self: &mut Identity,
+        cap: &DelegationToken,
+        proposal_id: ID,
+        clock: &Clock,
+        ctx: &mut TxContext,
+    ) {
+        let _ = self.did_doc.execute_proposal<vector<u8>, DidDeletion>(
+            cap,
+            proposal_id,
+            ctx,
+        ).unwrap();
+        self.deleted = true;
         self.did_doc.set_controlled_value(vector[]);
         self.updated = clock.timestamp_ms();
 
@@ -516,8 +583,9 @@ module iota_identity::identity {
         self: &mut Identity,
         cap: &DelegationToken,
         proposal_id: ID,
+        ctx: &mut TxContext,
     ) {
-        self.did_doc.delete_proposal<_, T>(cap, proposal_id);
+        self.did_doc.delete_proposal<_, T>(cap, proposal_id, ctx);
     }
 
     /// revoke the `DelegationToken` with `ID` `deny_id`. Only controllers can perform this operation.
@@ -531,14 +599,33 @@ module iota_identity::identity {
     }
 
     /// Destroys a `ControllerCap`. Can only be used after a controller has been removed from
-    /// the controller committee.
-    public fun destroy_controller_cap(self: &Identity, cap: ControllerCap) {
-        self.did_doc.destroy_controller_cap(cap);
+    /// the controller committee OR if `Identity`'s `deleted` flag is set.
+    public fun destroy_controller_cap(self: &mut Identity, cap: ControllerCap) {
+        if (self.deleted) {
+            self.did_doc.remove_and_destroy_controller(cap);
+        } else {
+            self.did_doc.destroy_controller_cap(cap);
+        }
     }
 
     /// Destroys a `DelegationToken`.
     public fun destroy_delegation_token(self: &mut Identity, token: DelegationToken) {
         self.did_doc.destroy_delegation_token(token);
+    }
+
+    /// Deletes this Identity.
+    /// Calls to this method will succeed only if
+    /// the `Identity` has no controllers left and its `deleted` flag had been
+    /// set to `true`.
+    public fun delete(self: Identity) {
+        assert!(self.deleted && self.did_doc.controllers().is_empty(), ECannotDelete);
+        let Identity {
+            id,
+            did_doc,
+            ..
+        } = self;
+        object::delete(id);
+        did_doc.delete();
     }
 
     /// Checks if `data` is a state metadata representing a DID.

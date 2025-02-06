@@ -18,6 +18,7 @@ module iota_identity::multicontroller {
     /// Shares control of a value `V` with multiple entities called controllers.
     public struct Multicontroller<V> has store {
         threshold: u64,
+        owner: ID,
         controllers: VecMap<ID, u64>,
         controlled_value: V,
         active_proposals: vector<ID>,
@@ -27,8 +28,13 @@ module iota_identity::multicontroller {
 
     /// Wraps a `V` in `Multicontroller`, making the tx's sender a controller with
     /// voting power 1.
-    public fun new<V>(controlled_value: V, can_delegate: bool, ctx: &mut TxContext): Multicontroller<V> {
-        new_with_controller(controlled_value, ctx.sender(), can_delegate, ctx)
+    public fun new<V>(
+        controlled_value: V,
+        can_delegate: bool,
+        owner: ID,
+        ctx: &mut TxContext
+    ): Multicontroller<V> {
+        new_with_controller(controlled_value, ctx.sender(), can_delegate, owner, ctx)
     }
 
     /// Wraps a `V` in `Multicontroller` and sends `controller` a `ControllerCap`.
@@ -36,15 +42,16 @@ module iota_identity::multicontroller {
         controlled_value: V,
         controller: address,
         can_delegate: bool,
+        owner: ID,
         ctx: &mut TxContext
     ): Multicontroller<V> {
         let mut controllers = vec_map::empty();
         controllers.insert(controller, 1);
 
         if (can_delegate) {
-            new_with_controllers(controlled_value, vec_map::empty(), controllers, 1, ctx)
+            new_with_controllers(controlled_value, vec_map::empty(), controllers, 1, owner, ctx)
         } else {
-            new_with_controllers(controlled_value, controllers, vec_map::empty(), 1, ctx)
+            new_with_controllers(controlled_value, controllers, vec_map::empty(), 1, owner, ctx)
         }
     }
 
@@ -59,6 +66,7 @@ module iota_identity::multicontroller {
         controllers: VecMap<address, u64>,
         controllers_that_can_delegate: VecMap<address, u64>,
         threshold: u64,
+        owner: ID,
         ctx: &mut TxContext,
     ): Multicontroller<V> {
         let (mut addrs, mut vps) = controllers.into_keys_values();
@@ -67,7 +75,7 @@ module iota_identity::multicontroller {
             let addr = addrs.pop_back();
             let vp = vps.pop_back();
 
-            let cap = controller::new(false, ctx);
+            let cap = controller::new(false, owner, ctx);
             controllers.insert(cap.id().to_inner(), vp);
 
             cap.transfer(addr)
@@ -78,7 +86,7 @@ module iota_identity::multicontroller {
             let addr = addrs.pop_back();
             let vp = vps.pop_back();
 
-            let cap = controller::new(true, ctx);
+            let cap = controller::new(true, owner, ctx);
             controllers.insert(cap.id().to_inner(), vp);
 
             cap.transfer(addr)
@@ -87,6 +95,7 @@ module iota_identity::multicontroller {
         let mut multi = Multicontroller {
             controlled_value,
             controllers,
+            owner,
             threshold,
             active_proposals: vector[],
             proposals: object_bag::new(ctx),
@@ -248,11 +257,12 @@ module iota_identity::multicontroller {
         multi: &mut Multicontroller<V>,
         cap: &DelegationToken,
         proposal_id: ID,
+        ctx: &mut TxContext,
     ) {
         cap.assert_has_permission(permissions::can_delete_proposal());
 
         let proposal = multi.proposals.remove<ID, Proposal<T>>(proposal_id);
-        assert!(proposal.votes == 0, ECannotDelete);
+        assert!(proposal.votes == 0 || proposal.is_expired(ctx), ECannotDelete);
 
         let Proposal {
             id,
@@ -320,8 +330,20 @@ module iota_identity::multicontroller {
 
     /// Destroys a `ControllerCap`. Can only be used after a controller has been removed from
     /// the controller committee.
-    public fun destroy_controller_cap<V>(self: &Multicontroller<V>, cap: ControllerCap) {
+    public fun destroy_controller_cap<V>(self: &mut Multicontroller<V>, cap: ControllerCap) {
         assert!(!self.controllers.contains(&cap.id().to_inner()), EInvalidController);
+        assert!(cap.controller_of() == self.owner, EInvalidController);
+
+        cap.delete();
+    }
+
+    public fun remove_and_destroy_controller<V>(self: &mut Multicontroller<V>, cap: ControllerCap) {
+        assert!(cap.controller_of() == self.owner, EInvalidController);
+
+        let controller_id = object::id(&cap);
+        if (self.controllers.contains(&controller_id)) {
+            self.controllers.remove(&controller_id);
+        };
 
         cap.delete();
     }
@@ -335,6 +357,21 @@ module iota_identity::multicontroller {
         };
 
         token.delete();
+    }
+
+    /// Deletes this `Multicontroller` returning the wrapped value.
+    /// This function can only be called if there are no active proposals.
+    public fun delete<V>(self: Multicontroller<V>): V {
+        assert!(self.active_proposals.is_empty(), ECannotDelete);
+        
+        let Multicontroller {
+            controlled_value,
+            proposals,
+            ..
+        } = self;
+
+        proposals.destroy_empty();
+        controlled_value
     }
 
     public(package) fun unpack_action<T: store>(action: Action<T>): T {
@@ -351,7 +388,7 @@ module iota_identity::multicontroller {
         let mut i = 0;
         while (i < to_add.size()) {
             let (addr, vp) = to_add.get_entry_by_idx(i);
-            let new_cap = controller::new(false, ctx);
+            let new_cap = controller::new(false, multi.owner, ctx);
             multi.controllers.insert(new_cap.id().to_inner(), *vp);
             new_cap.transfer(*addr);
             i = i + 1;

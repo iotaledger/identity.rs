@@ -5,7 +5,7 @@ module iota_identity::update_value_proposal {
     use iota_identity::multicontroller::Multicontroller;
     use iota_identity::controller::DelegationToken;
 
-    public struct UpdateValue<V: store> has store {
+    public struct UpdateValue<V: store> has store, drop {
         new_value: V,
     }
 
