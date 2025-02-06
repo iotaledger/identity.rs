@@ -12,15 +12,15 @@ import {
 
 /** Demonstrate how to create a DID Document and publish it. */
 export async function createIdentity(): Promise<void>  {
-    // figure out a better way to organize those calls >.>
+    // create new client to connect to IOTA network
     const kinesisClient = new KinesisClient({ url: NETWORK_URL });
     const network = await kinesisClient.getChainIdentifier();
 
-    // create new client to interact with chain and get funded account with keys
     const storage = getMemstorage();
     // TODO: check if we can update storage implementation to a non-owning variant
     // order is important here as wrapped storage will be set to a null pointer after passing it to a client
     const [unpublished] = await createDocumentForNetwork(storage, network);
+    // create new client that offers identity related functions
     const identityClient = await getClientAndCreateAccount(storage);
 
     console.log(`Unpublished DID document: ${JSON.stringify(unpublished, null, 2)}`); 

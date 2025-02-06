@@ -118,29 +118,27 @@ impl WasmKinesisIdentityClient {
       .publish_did_document(doc)))
   }
 
+  #[wasm_bindgen(js_name = publishDidDocumentUpdate)]
+  pub async fn publish_did_document_update(
+    &self,
+    document: &WasmIotaDocument,
+    gas_budget: u64,
+  ) -> Result<WasmIotaDocument, JsError> {
+    let doc: IotaDocument = document
+      .0
+      .try_read()
+      .map_err(|err| JsError::new(&format!("failed to read DID document; {err:?}")))?
+      .clone();
+    let document = self
+      .0
+      .publish_did_document_update(doc, gas_budget)
+      .await
+      .map_err(<Error as std::convert::Into<JsError>>::into)?;
+
+    Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
+  }
+
   // not included in any e2e test anymore, so let's skip it for now
-
-  // TODO: re-add WasmKinesisIdentityClient::publish_did_document_update
-  // #[wasm_bindgen(js_name = publishDidDocumentUpdate)]
-  // pub async fn publish_did_document_update(
-  //   &self,
-  //   document: &WasmIotaDocument,
-  //   gas_budget: u64,
-  //   signer: &WasmStorageSigner,
-  // ) -> Result<WasmIotaDocument, JsError> {
-  //   let doc: IotaDocument = document
-  //     .0
-  //     .try_read()
-  //     .map_err(|err| JsError::new(&format!("failed to read DID document; {err:?}")))?
-  //     .clone();
-  //   let document = self
-  //     .0
-  //     .publish_did_document_update(doc, gas_budget)
-  //     .await
-  //     .map_err(<Error as std::convert::Into<JsError>>::into)?;
-
-  //   Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
-  // }
 
   // TODO: re-add WasmKinesisIdentityClient::deactivate_did_output
   // #[wasm_bindgen(js_name = deactivateDidOutput)]

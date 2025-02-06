@@ -3,7 +3,12 @@
 
 import { SharedObjectRef } from "@iota/iota.js/dist/cjs/bcs/types";
 import { ObjectRef, Transaction } from "@iota/iota.js/transactions";
-import { getClockRef, getControllerDelegation, putBackDelegationToken } from "../utils";
+import {
+    getClockRef,
+    getControllerDelegation,
+    insertPlaceholders,
+    putBackDelegationToken,
+} from "../utils";
 
 export function proposeUpdate(
     identity: SharedObjectRef,
@@ -26,6 +31,8 @@ export function proposeUpdate(
     });
 
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
+
+    insertPlaceholders(tx);
 
     return tx.build();
 }

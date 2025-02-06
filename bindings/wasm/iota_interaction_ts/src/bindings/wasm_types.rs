@@ -12,6 +12,7 @@ use identity_iota_interaction::types::object::Owner;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Promise;
 use js_sys::Uint8Array;
+use serde::Serialize;
 use serde::Deserialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
@@ -192,7 +193,7 @@ impl From<ObjectRef> for WasmObjectRef {
       "digest": value.2,
     });
 
-    serde_wasm_bindgen::to_value(&json_obj)
+    json_obj.serialize(&serde_wasm_bindgen::Serializer::json_compatible())
       .expect("a JSON object is a JS value")
       // safety: `json_obj` was constructed following TS ObjectRef's interface.
       .unchecked_into()
@@ -207,7 +208,7 @@ impl From<(ObjectID, SequenceNumber, bool)> for WasmSharedObjectRef {
       "mutable": value.2,
     });
 
-    serde_wasm_bindgen::to_value(&json_obj)
+    json_obj.serialize(&serde_wasm_bindgen::Serializer::json_compatible())
       .expect("a JSON object is a JS value")
       // safety: `json_obj` was constructed following TS SharedObjectRef's interface.
       .unchecked_into()

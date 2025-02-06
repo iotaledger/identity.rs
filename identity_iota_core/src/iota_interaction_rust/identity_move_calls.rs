@@ -796,7 +796,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
 
-  fn propose_update(
+  async fn propose_update(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     did_doc: impl AsRef<[u8]>,

@@ -82,6 +82,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       expiration,
       client.package_id(),
     )
+    .await
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(CreateProposalTx {

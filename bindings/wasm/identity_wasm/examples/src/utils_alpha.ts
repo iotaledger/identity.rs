@@ -20,7 +20,7 @@ export const IDENTITY_IOTA_PACKAGE_ID =
 export const NETWORK_NAME_FAUCET = "localnet";
 export const NETWORK_URL =
   process.env.NETWORK_URL || "http://127.0.0.1:9000";
-  export const TEST_GAS_BUDGET = 50_000_000;
+export const TEST_GAS_BUDGET = BigInt(50_000_000);
 
 export function getMemstorage(): Storage {
     return new Storage(new JwkMemStore(), new KeyIdMemStore());

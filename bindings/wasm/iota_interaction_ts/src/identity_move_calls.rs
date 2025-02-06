@@ -120,13 +120,13 @@ extern "C" {
   ) -> Result<Uint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "proposeUpdate", catch)]
-  async fn propose_update(
+  fn propose_update(
     identity: WasmSharedObjectRef,
     capability: WasmObjectRef,
     did_doc: &[u8],
     package: &str,
     expiration: Option<u64>,
-  ) -> Result<Uint8Array, JsValue>;
+  ) -> Result<PromiseUint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "executeUpdate", catch)]
   async fn execute_update(
@@ -479,6 +479,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
 
   async fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
     let package = package_id.to_string();
+    
     let array_promise = identity_new(did_doc, &package).map_err(WasmError::from)?;
     let promise: Promise = Promise::resolve(&array_promise);
     JsFuture::from(promise)
@@ -629,7 +630,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
       .map_err(TsSdkError::from)
   }
 
-  fn propose_update(
+  async fn propose_update(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     did_doc: impl AsRef<[u8]>,
@@ -637,20 +638,36 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
     let identity = identity.try_into()?;
+    // panic!("controller cap {capability:?}");
     let controller_cap = capability.into();
     let did_doc = did_doc.as_ref();
     let package_id = package_id.to_string();
 
-    futures::executor::block_on(propose_update(
+    let array_promise = propose_update(
       identity,
       controller_cap,
       did_doc,
       &package_id,
       expiration,
-    ))
-    .map(|js_arr| js_arr.to_vec())
-    .map_err(WasmError::from)
-    .map_err(TsSdkError::from)
+    ).map_err(WasmError::from)?;
+    let promise: Promise = Promise::resolve(&array_promise);
+    JsFuture::from(promise)
+        .await
+        .map(|v| JsValue::from(Array::from(&v)))
+        .map_err(WasmError::from)
+        .and_then(|v| v.into_serde().map_err(WasmError::from))
+        .map_err(TsSdkError::from)
+
+    // futures::executor::block_on(propose_update(
+    //   identity,
+    //   controller_cap,
+    //   did_doc,
+    //   &package_id,
+    //   expiration,
+    // ))
+    // .map(|js_arr| js_arr.to_vec())
+    // .map_err(WasmError::from)
+    // .map_err(TsSdkError::from)
   }
 
   fn execute_update(

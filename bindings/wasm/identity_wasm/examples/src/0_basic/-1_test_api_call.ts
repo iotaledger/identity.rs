@@ -326,7 +326,7 @@ async function testExecuteTransaction(kinesisClient: KinesisClient) {
     const tx = new Transaction();
     const coin0 = coins.data[0];
     const coin = tx.splitCoins(tx.object(coin0.coinObjectId), [
-        bcs.u64().serialize(TEST_GAS_BUDGET * 2),
+        bcs.u64().serialize(TEST_GAS_BUDGET * BigInt(2)),
     ]);
     tx.transferObjects([coin], address);
     tx.setSenderIfNotSet(address);

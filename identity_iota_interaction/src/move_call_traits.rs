@@ -218,7 +218,7 @@ pub trait IdentityMoveCalls {
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-  fn propose_update(
+  async fn propose_update(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     did_doc: impl AsRef<[u8]>,
