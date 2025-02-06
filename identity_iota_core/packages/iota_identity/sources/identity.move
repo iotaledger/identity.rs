@@ -1044,4 +1044,30 @@ module iota_identity::identity_tests {
         scenario.end();
         clock::destroy_for_testing(clock);
     }
+
+    #[test]
+    fun identity_can_be_deleted() {
+        let controller = @0x1;
+        let mut scenario = test_scenario::begin(controller);
+        let clock = clock::create_for_testing(scenario.ctx());
+
+        let _ = new(b"DID", &clock, scenario.ctx());
+
+        scenario.next_tx(controller);
+
+        let mut identity = scenario.take_shared<Identity>();
+        let mut cap = scenario.take_from_address<ControllerCap>(controller);
+        let (token, borrow) = cap.borrow();
+        identity.propose_deletion(&token, option::none(), &clock, scenario.ctx());
+        cap.put_back(token, borrow);
+
+        scenario.next_tx(controller);
+        identity.destroy_controller_cap(cap);
+
+        assert!(identity.deleted());
+        identity.delete();
+
+        scenario.end();
+        clock::destroy_for_testing(clock);
+    }
 }
