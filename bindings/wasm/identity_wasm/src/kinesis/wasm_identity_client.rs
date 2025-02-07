@@ -88,8 +88,8 @@ impl WasmKinesisIdentityClient {
   }
 
   #[wasm_bindgen(js_name = packageId)]
-  pub fn package_id(&self) -> Result<String, JsError> {
-    Ok(self.0.package_id().to_string())
+  pub fn package_id(&self) -> String {
+    self.0.package_id().to_string()
   }
 
   #[wasm_bindgen(js_name = resolveDid)]
