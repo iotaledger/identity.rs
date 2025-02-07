@@ -23,10 +23,9 @@ extern "C" {
     #[wasm_bindgen(typescript_type = "TransactionSigner")]
     pub type WasmTransactionSigner;
 
-    #[wasm_bindgen(js_name = "sign", structural, method, catch)]
+    #[wasm_bindgen(method, catch)]
     pub async fn sign(this: &WasmTransactionSigner, data: &[u8]) -> Result<js_sys::Uint8Array>;
-
-    #[wasm_bindgen(js_name = "publicKey", structural, method, catch)]
+    #[wasm_bindgen(js_name = "publicKey", method, catch)]
     pub async fn public_key(this: &WasmTransactionSigner) -> Result<js_sys::Uint8Array>;
 
     // TODO: re-add WasmTransactionSigner::key_id
