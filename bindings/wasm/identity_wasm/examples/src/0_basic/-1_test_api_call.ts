@@ -17,56 +17,15 @@ import {
 
 import { executeTransaction } from "@iota/iota-interaction-ts/lib/iota_client_helpers";
 import { bcs } from "@iota/iota.js/bcs";
-import { IotaClient as KinesisClient, QueryEventsParams } from "@iota/iota.js/client";
+import { IotaClient as KinesisClient } from "@iota/iota.js/client";
 import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota.js/faucet";
-import { Ed25519Keypair } from "@iota/iota.js/keypairs/ed25519";
 import { Transaction } from "@iota/iota.js/transactions";
 import { IOTA_TYPE_ARG } from "@iota/iota.js/utils";
 import { IDENTITY_IOTA_PACKAGE_ID, NETWORK_NAME_FAUCET, NETWORK_URL, TEST_GAS_BUDGET } from "../utils_alpha";
 
 async function initializeClients() {
-    const kinesisClient = new KinesisClient({ url: NETWORK_URL });
-
     console.log("---------------- Preparing IdentityClient ------------------------");
-    const VALID_SECP256K1_SECRET_KEY = [
-        59,
-        148,
-        11,
-        85,
-        134,
-        130,
-        61,
-        253,
-        2,
-        174,
-        59,
-        70,
-        27,
-        180,
-        51,
-        107,
-        94,
-        203,
-        174,
-        253,
-        102,
-        39,
-        170,
-        146,
-        46,
-        252,
-        4,
-        143,
-        236,
-        12,
-        136,
-        28,
-    ];
-    const secretKey = new Uint8Array(VALID_SECP256K1_SECRET_KEY);
-    let keyPair = Ed25519Keypair.fromSecretKey(secretKey);
-    let pubKey = keyPair.getPublicKey();
-    console.log(`Created Ed25519Keypair with PublicKey ${pubKey.toBase64()} and address ${pubKey.toIotaAddress()}`);
-
+    const kinesisClient = new KinesisClient({ url: NETWORK_URL });
     const identityClientReadOnly = await KinesisIdentityClientReadOnly.createWithPkgId(kinesisClient, IDENTITY_IOTA_PACKAGE_ID);
 
     // create new storage
@@ -96,7 +55,7 @@ async function initializeClients() {
         console.log(`Received gas from faucet: ${balance.totalBalance} for owner ${identityClient.senderAddress()}`);
     }
 
-    return { kinesisClient, identityClient, keyPair };
+    return { kinesisClient, identityClient };
 }
 
 
@@ -175,35 +134,6 @@ async function testIdentityClient(
     } catch (ex) {
         console.log(`Test resolveDid() - Error: ${(ex as Error).message}`);
     }
-
-    const document1 = new IotaDocument("foobar");
-    try {
-        // console.log("\n---------------- publishDidDocument ------------------------");
-        // not implemented
-        // await identityClient.publishDidDocument(document1, BigInt(12345), "dummy signer");
-    } catch (ex) {
-        console.log(`Test publishDidDocument() - Error: ${(ex as Error).message}`);
-    }
-
-    const document2 = new IotaDocument("foobar");
-    try {
-        // not implemented
-        // console.log("\n---------------- publishDidDocumentUpdate ------------------------");
-        // await identityClient.publishDidDocumentUpdate(document2, BigInt(12345), "dummy signer");
-    } catch (ex) {
-        console.log(`Test publishDidDocumentUpdate() - Error: ${(ex as Error).message}`);
-    }
-
-    const did4deactivateDidOutput = IotaDID.parse(
-        "did:iota:0x0101010101010101010101010101010101010101010101010101010101010101",
-    );
-    try {
-        // not implemented
-        // console.log("\n---------------- deactivateDidOutput ------------------------");
-        // await identityClient.deactivateDidOutput(did4deactivateDidOutput, BigInt(12345), "dummy signer");
-    } catch (ex) {
-        console.log(`Test deactivateDidOutput() - Error: ${(ex as Error).message}`);
-    }
 }
 
 function testMultiController(): void {
@@ -216,57 +146,6 @@ function testMultiController(): void {
     console.dir(multiController.intoInner());
     console.dir(multiController.proposals());
     console.dir(multiController.threshold());
-}
-
-async function testProposals(identityClient: KinesisIdentityClient): Promise<void> {
-    console.log(`testProposals disabled after interface updates`);
-    // let action: ProposalAction = "Deactivate";
-    // console.dir(action);
-
-    // action = { UpdateDocument: new IotaDocument("foobar") };
-    // console.dir(action);
-    // console.dir(action.UpdateDocument);
-    // console.dir(action.UpdateDocument.id());
-    // console.dir(action.UpdateDocument.toJSON());
-
-    // let identity = await identityClient
-    //     .createIdentity(Uint8Array.from([1, 2, 3]))
-    //     .threshold(BigInt(1))
-    //     .gasBudget(BigInt(1))
-    //     .controllers([
-    //         new ControllerAndVotingPower("one", BigInt(1)),
-    //         new ControllerAndVotingPower("two", BigInt(2)),
-    //     ])
-    //     .finish(identityClient, "dummySigner");
-    // console.dir(identity);
-    // console.dir(identity.isShared());
-    // console.dir(identity.proposals());
-    // const deactivateProposal = await identity
-    //     .deactivateDid()
-    //     .expirationEpoch(BigInt(1))
-    //     .gasBudget(BigInt(1))
-    //     .key("key")
-    //     .finish(identityClient, "dummySigner");
-    // console.dir(deactivateProposal);
-
-    // // proposals consume the identity instance, so we need a new one
-    // identity = await identityClient
-    //     .createIdentity(Uint8Array.from([1, 2, 3]))
-    //     .threshold(BigInt(1))
-    //     .gasBudget(BigInt(1))
-    //     .controllers([
-    //         new ControllerAndVotingPower("one", BigInt(1)),
-    //         new ControllerAndVotingPower("two", BigInt(2)),
-    //     ])
-    //     .finish(identityClient, "dummySigner");
-
-    // const updateProposal = await identity
-    //     .updateDidDocument(new IotaDocument("foobar"))
-    //     .expirationEpoch(BigInt(1))
-    //     .gasBudget(BigInt(1))
-    //     .key("key")
-    //     .finish(identityClient, "dummySigner");
-    // console.dir(updateProposal);
 }
 
 async function signerTest(): Promise<void> {
@@ -365,13 +244,6 @@ export async function testApiCall(): Promise<void> {
     } catch (err) {
         const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
         console.error(`multi controller binding test failed: ${suffix}`);
-    }
-
-    try {
-        await testProposals(identityClient);
-    } catch (err) {
-        const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
-        console.error(`proposals binding test failed: ${suffix}`);
     }
 
     try {
