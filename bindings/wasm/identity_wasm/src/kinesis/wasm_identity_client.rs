@@ -138,24 +138,20 @@ impl WasmKinesisIdentityClient {
     Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
   }
 
-  // not included in any e2e test anymore, so let's skip it for now
+  #[wasm_bindgen(js_name = deactivateDidOutput)]
+  pub async fn deactivate_did_output(
+    &self,
+    did: &WasmIotaDID,
+    gas_budget: u64,
+  ) -> Result<(), JsError> {
+    self
+      .0
+      .deactivate_did_output(&did.0, gas_budget)
+      .await
+      .map_err(<Error as std::convert::Into<JsError>>::into)?;
 
-  // TODO: re-add WasmKinesisIdentityClient::deactivate_did_output
-  // #[wasm_bindgen(js_name = deactivateDidOutput)]
-  // pub async fn deactivate_did_output(
-  //   &self,
-  //   did: &WasmIotaDID,
-  //   gas_budget: u64,
-  //   signer: &WasmStorageSigner,
-  // ) -> Result<(), JsError> {
-  //   self
-  //     .0
-  //     .deactivate_did_output(&did.0, gas_budget)
-  //     .await
-  //     .map_err(<Error as std::convert::Into<JsError>>::into)?;
-
-  //   Ok(())
-  // }
+    Ok(())
+  }
 }
 
 // TODO: consider importing function from rebased later on, if possible

@@ -181,7 +181,7 @@ pub trait IdentityMoveCalls {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-  fn propose_deactivation(
+  async fn propose_deactivation(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     expiration: Option<u64>,

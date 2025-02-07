@@ -650,7 +650,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
 
-  fn propose_deactivation(
+  async fn propose_deactivation(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     expiration: Option<u64>,

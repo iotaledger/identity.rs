@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use identity_iota::iota::IotaDocument;
+use identity_iota::iota_interaction::OptionalSync;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::KeyIdMemstore;
