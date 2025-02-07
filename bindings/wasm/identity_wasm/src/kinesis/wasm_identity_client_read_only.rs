@@ -62,7 +62,7 @@ impl WasmKinesisIdentityClientReadOnly {
     Ok(self.0.package_id().to_string())
   }
 
-  #[wasm_bindgen(js_name = network)]
+  #[wasm_bindgen]
   pub fn network(&self) -> String {
     self.0.network().to_string()
   }

@@ -47,7 +47,7 @@ pub struct WasmOnChainIdentity(pub(crate) OnChainIdentity);
 
 #[wasm_bindgen(js_class = OnChainIdentity)]
 impl WasmOnChainIdentity {
-  #[wasm_bindgen(js_name = id)]
+  #[wasm_bindgen]
   pub fn id(&self) -> String {
     self.0.id().to_string()
   }
@@ -215,7 +215,7 @@ impl WasmIdentityBuilder {
     )
   }
 
-  #[wasm_bindgen(js_name = finish)]
+  #[wasm_bindgen]
   pub fn finish(self) -> WasmCreateIdentityTx {
     WasmCreateIdentityTx(self.0.finish())
   }
@@ -226,7 +226,7 @@ pub struct WasmCreateIdentityTx(pub(crate) CreateIdentityTx);
 
 #[wasm_bindgen(js_class = CreateIdentityTx)]
 impl WasmCreateIdentityTx {
-  #[wasm_bindgen(js_name = execute)]
+  #[wasm_bindgen]
   pub async fn execute(self, client: &WasmKinesisIdentityClient) -> Result<WasmTransactionOutputInternalOnChainIdentity> {
     let output = self.0.execute(&client.0).await.map_err(wasm_error)?;
     Ok(WasmTransactionOutputInternalOnChainIdentity(output))
