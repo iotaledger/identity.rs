@@ -10,7 +10,7 @@ use secret_storage::Signer;
 use crate::error::Result;
 
 #[wasm_bindgen(typescript_custom_section)]
-const I_JWS_SIGNER: &str = r#"
+const I_TX_SIGNER: &str = r#"
 interface TransactionSigner {
   sign: (data: Uint8Array) => Promise<Uint8Array>;
   publicKey: () => Promise<Uint8Array>;
@@ -21,7 +21,7 @@ interface TransactionSigner {
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "TransactionSigner")]
-    pub type WasmTransactionSigner; // we will receive this as `StorageSigner` from TS
+    pub type WasmTransactionSigner;
 
     #[wasm_bindgen(js_name = "sign", structural, method, catch)]
     pub async fn sign(this: &WasmTransactionSigner, data: &[u8]) -> Result<js_sys::Uint8Array>;

@@ -30,7 +30,7 @@ use crate::error::WasmError;
 type WasmStorageSigner = ();
 
 #[wasm_bindgen(typescript_custom_section)]
-const TS_SDK_TYPES: &'static str = r#"
+const TS_SDK_TYPES: &str = r#"
   import {
     Balance,
     ExecuteTransactionBlockParams,

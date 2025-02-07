@@ -60,7 +60,7 @@ use crate::error::TsSdkError;
 // the interface of the TS Iota client to rust code.
 
 // The typescript declarations imported in the following typescript_custom_section
-// can be use as arguments for rust functions via the typescript_type annotation.
+// can be used as arguments for rust functions via the typescript_type annotation.
 // In other words: The typescript_type "IotaClient" is imported here to be bound
 // to the WasmIotaClient functions below.
 // TODO: check why this isn't done by `module` macro attribute for `WasmKinesisClient`
