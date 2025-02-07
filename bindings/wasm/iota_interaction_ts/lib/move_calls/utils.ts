@@ -1,5 +1,5 @@
-import { ObjectRef, Transaction, TransactionArgument } from "@iota/iota.js/transactions";
-import { IOTA_CLOCK_OBJECT_ID } from "@iota/iota.js/utils";
+import { ObjectRef, Transaction, TransactionArgument } from "@iota/iota-sdk/transactions";
+import { IOTA_CLOCK_OBJECT_ID } from "@iota/iota-sdk/utils";
 
 const PLACEHOLDER_SENDER = '0x00000000000000090807060504030201';
 const PLACEHOLDER_GAS_BUDGET = 9;

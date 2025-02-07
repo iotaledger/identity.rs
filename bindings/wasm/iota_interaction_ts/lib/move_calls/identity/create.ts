@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Transaction } from "@iota/iota.js/transactions";
+import { Transaction } from "@iota/iota-sdk/transactions";
 import { getClockRef, insertPlaceholders } from "../utils";
 
 export async function create(didDoc: Uint8Array, packageId: string): Promise<Uint8Array> {

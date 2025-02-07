@@ -66,10 +66,10 @@ use crate::error::TsSdkError;
 // TODO: check why this isn't done by `module` macro attribute for `WasmKinesisClient`
 #[wasm_bindgen(typescript_custom_section)]
 const IOTA_CLIENT_TYPE: &'static str = r#"
-  import { IotaClient } from "@iota/iota.js/client";
+  import { IotaClient } from "@iota/iota-sdk/client";
 "#;
 
-#[wasm_bindgen(module = "@iota/iota.js/client")]
+#[wasm_bindgen(module = "@iota/iota-sdk/client")]
 extern "C" {
   #[wasm_bindgen(typescript_type = "IotaClient")]
   #[derive(Clone)]

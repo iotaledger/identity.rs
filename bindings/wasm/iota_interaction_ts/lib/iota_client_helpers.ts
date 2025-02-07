@@ -7,10 +7,10 @@ import {
     IotaClient,
     IotaTransactionBlockResponse,
     OwnedObjectRef,
-} from "@iota/iota.js/client";
-import { messageWithIntent, toSerializedSignature } from "@iota/iota.js/cryptography";
-import { Ed25519PublicKey } from "@iota/iota.js/keypairs/ed25519";
-import { GasData, TransactionDataBuilder } from "@iota/iota.js/transactions";
+} from "@iota/iota-sdk/client";
+import { messageWithIntent, toSerializedSignature } from "@iota/iota-sdk/cryptography";
+import { Ed25519PublicKey } from "@iota/iota-sdk/keypairs/ed25519";
+import { GasData, TransactionDataBuilder } from "@iota/iota-sdk/transactions";
 import { blake2b } from "@noble/hashes/blake2b";
 
 export type Signer = { sign(data: Uint8Array): Promise<Uint8Array> };

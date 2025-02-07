@@ -49,15 +49,15 @@ const TS_SDK_TYPES: &'static str = r#"
     PaginatedObjectsResponse,
     QueryEventsParams,
     TryGetPastObjectParams,
-  } from "@iota/iota.js/client";
-  import { bcs } from "@iota/iota.js/bcs";
+  } from "@iota/iota-sdk/client";
+  import { bcs } from "@iota/iota-sdk/bcs";
   import {
     executeTransaction,
     IotaTransactionBlockResponseAdapter,
   } from "./iota_client_helpers"
 "#;
 
-#[wasm_bindgen(module = "@iota/iota.js/client")]
+#[wasm_bindgen(module = "@iota/iota-sdk/client")]
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Balance>")]
   pub type PromiseBalance;
@@ -153,7 +153,7 @@ extern "C" {
   pub type PromiseIotaTransactionBlockResponseAdapter;
 }
 
-#[wasm_bindgen(module = "@iota/iota.js/transactions")]
+#[wasm_bindgen(module = "@iota/iota-sdk/transactions")]
 extern "C" {
   #[wasm_bindgen(typescript_type = "Transaction")]
   pub type WasmTransactionBuilder;

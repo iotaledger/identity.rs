@@ -11,7 +11,7 @@ import {
     Timestamp,
     VerificationMethod,
 } from "@iota/identity-wasm/node";
-import { IotaClient as KinesisClient } from "@iota/iota.js/client";
+import { IotaClient as KinesisClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
     getClientAndCreateAccount,

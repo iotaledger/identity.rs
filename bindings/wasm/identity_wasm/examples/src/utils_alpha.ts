@@ -12,8 +12,8 @@ import {
     Storage,
     StorageSigner,
 } from "@iota/identity-wasm/node";
-import { IotaClient as KinesisClient } from "@iota/iota.js/client";
-import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota.js/faucet";
+import { IotaClient as KinesisClient } from "@iota/iota-sdk/client";
+import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
 
 export const IDENTITY_IOTA_PACKAGE_ID =
   process.env.IDENTITY_IOTA_PACKAGE_ID || "0xac854096fcbfadcdd8cc8e4b6242d1b35607ef5324bfe54ba7a4be69fa6db36d";

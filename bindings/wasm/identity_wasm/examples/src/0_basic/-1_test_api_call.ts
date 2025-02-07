@@ -16,11 +16,11 @@ import {
 } from "@iota/identity-wasm/node";
 
 import { executeTransaction } from "@iota/iota-interaction-ts/lib/iota_client_helpers";
-import { bcs } from "@iota/iota.js/bcs";
-import { IotaClient as KinesisClient } from "@iota/iota.js/client";
-import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota.js/faucet";
-import { Transaction } from "@iota/iota.js/transactions";
-import { IOTA_TYPE_ARG } from "@iota/iota.js/utils";
+import { bcs } from "@iota/iota-sdk/bcs";
+import { IotaClient as KinesisClient } from "@iota/iota-sdk/client";
+import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
+import { Transaction } from "@iota/iota-sdk/transactions";
+import { IOTA_TYPE_ARG } from "@iota/iota-sdk/utils";
 import { IDENTITY_IOTA_PACKAGE_ID, NETWORK_NAME_FAUCET, NETWORK_URL, TEST_GAS_BUDGET } from "../utils_alpha";
 
 async function initializeClients() {
