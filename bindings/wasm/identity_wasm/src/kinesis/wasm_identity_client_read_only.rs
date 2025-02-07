@@ -94,7 +94,7 @@ impl WasmKinesisIdentityClientReadOnly {
       .0
       .resolve_did(&did.0)
       .await
-      .map_err(<identity_iota::iota::rebased::Error as std::convert::Into<JsError>>::into)?;
+      .map_err(JsError::from)?;
     Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
   }
 
