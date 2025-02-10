@@ -25,7 +25,7 @@ use super::client_dummy::ProposalBuilder;
 use super::types::into_sdk_type;
 use super::types::WasmIotaAddress;
 use super::types::WasmObjectID;
-use super::WasmKinesisIdentityClient;
+use super::WasmIdentityClient;
 use super::WasmProposal;
 
 /// Helper type for `WasmIdentityBuilder::controllers`.
@@ -82,7 +82,7 @@ impl WasmOnChainIdentity {
   #[wasm_bindgen(js_name = getHistory, skip_typescript)] // ts type in custom section below
   pub async fn get_history(
     &self,
-    client: WasmKinesisIdentityClient,
+    client: WasmIdentityClient,
     last_version: Option<WasmIotaObjectData>,
     page_size: Option<usize>,
   ) -> Result<JsValue> {
@@ -156,7 +156,7 @@ impl WasmProposalBuilder {
     Self(self.0.gas_budget(amount))
   }
 
-  pub async fn finish(self, client: &WasmKinesisIdentityClient, signer: &DummySigner) -> Result<Option<WasmProposal>> {
+  pub async fn finish(self, client: &WasmIdentityClient, signer: &DummySigner) -> Result<Option<WasmProposal>> {
     unimplemented!("WasmProposalBuilder::finish");
     // self
     //   .0
@@ -227,7 +227,7 @@ pub struct WasmCreateIdentityTx(pub(crate) CreateIdentityTx);
 #[wasm_bindgen(js_class = CreateIdentityTx)]
 impl WasmCreateIdentityTx {
   #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmKinesisIdentityClient) -> Result<WasmTransactionOutputInternalOnChainIdentity> {
+  pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionOutputInternalOnChainIdentity> {
     let output = self.0.execute(&client.0).await.map_err(wasm_error)?;
     Ok(WasmTransactionOutputInternalOnChainIdentity(output))
   }

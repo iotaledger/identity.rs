@@ -313,7 +313,7 @@ impl JsValueResult {
     self.stringify_error().map_err(identity_iota::iota::Error::JsError)
   }
 
-  pub fn to_kinesis_client_error(self) -> StdResult<JsValue, identity_iota::iota::rebased::Error> {
+  pub fn to_iota_client_error(self) -> StdResult<JsValue, identity_iota::iota::rebased::Error> {
     self
       .stringify_error()
       .map_err(|e| identity_iota::iota::rebased::Error::FfiError(e.to_string()))
@@ -361,7 +361,7 @@ impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for KeyIdStorageResu
 
 impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for StdResult<T, identity_iota::iota::rebased::Error> {
   fn from(result: JsValueResult) -> Self {
-    result.to_kinesis_client_error().and_then(|js_value| {
+    result.to_iota_client_error().and_then(|js_value| {
       js_value
         .into_serde()
         .map_err(|e| identity_iota::iota::rebased::Error::FfiError(e.to_string()))

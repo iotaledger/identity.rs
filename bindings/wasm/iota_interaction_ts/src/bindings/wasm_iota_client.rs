@@ -63,7 +63,7 @@ use crate::error::TsSdkError;
 // can be used as arguments for rust functions via the typescript_type annotation.
 // In other words: The typescript_type "IotaClient" is imported here to be bound
 // to the WasmIotaClient functions below.
-// TODO: check why this isn't done by `module` macro attribute for `WasmKinesisClient`
+// TODO: check why this isn't done by `module` macro attribute for `WasmIotaClient`
 #[wasm_bindgen(typescript_custom_section)]
 const IOTA_CLIENT_TYPE: &'static str = r#"
   import { IotaClient } from "@iota/iota-sdk/client";

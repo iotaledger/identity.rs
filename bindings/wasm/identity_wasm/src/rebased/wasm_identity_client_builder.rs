@@ -16,14 +16,14 @@ use crate::error::Result;
 
 use super::types::WasmObjectID;
 use super::WasmIotaAddress;
-use super::WasmKinesisIdentityClient;
+use super::WasmIdentityClient;
 
 #[derive(Default)]
-#[wasm_bindgen(js_name = KinesisIdentityClientBuilder)]
-pub struct WasmKinesisIdentityClientBuilder(pub(crate) IdentityClientBuilder<IotaClientTsSdk>);
+#[wasm_bindgen(js_name = IdentityClientBuilder)]
+pub struct WasmIdentityClientBuilder(pub(crate) IdentityClientBuilder<IotaClientTsSdk>);
 
-#[wasm_bindgen(js_class = KinesisIdentityClientBuilder)]
-impl WasmKinesisIdentityClientBuilder {
+#[wasm_bindgen(js_class = IdentityClientBuilder)]
+impl WasmIdentityClientBuilder {
   #[wasm_bindgen(js_name = identityIotaPackageId)]
   pub fn identity_iota_package_id(self, value: WasmObjectID) -> Self {
     Self(
@@ -63,7 +63,7 @@ impl WasmKinesisIdentityClientBuilder {
     Self(self.0.network_name(value))
   }
 
-  pub fn build(self) -> Result<WasmKinesisIdentityClient> {
-    Ok(WasmKinesisIdentityClient(self.0.build().map_err(wasm_error)?))
+  pub fn build(self) -> Result<WasmIdentityClient> {
+    Ok(WasmIdentityClient(self.0.build().map_err(wasm_error)?))
   }
 }

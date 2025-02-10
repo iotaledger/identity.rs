@@ -39,22 +39,22 @@ impl IdentityContainer {
   // }
 }
 
-#[wasm_bindgen(js_name = KinesisIdentityClientReadOnly)]
-pub struct WasmKinesisIdentityClientReadOnly(pub(crate) IdentityClientReadOnly);
+#[wasm_bindgen(js_name = IdentityClientReadOnly)]
+pub struct WasmIdentityClientReadOnly(pub(crate) IdentityClientReadOnly);
 
 // builder related functions
-#[wasm_bindgen(js_class = KinesisIdentityClientReadOnly)]
-impl WasmKinesisIdentityClientReadOnly {
+#[wasm_bindgen(js_class = IdentityClientReadOnly)]
+impl WasmIdentityClientReadOnly {
   #[wasm_bindgen(js_name = create)]
-  pub async fn new(iota_client: WasmIotaClient) -> Result<WasmKinesisIdentityClientReadOnly, JsError> {
+  pub async fn new(iota_client: WasmIotaClient) -> Result<WasmIdentityClientReadOnly, JsError> {
     let inner_client = IdentityClientReadOnly::new(iota_client).await?;
-    Ok(WasmKinesisIdentityClientReadOnly(inner_client))
+    Ok(WasmIdentityClientReadOnly(inner_client))
   }
 
   #[wasm_bindgen(js_name = createWithPkgId)]
-  pub async fn new_new_with_pkg_id(iota_client: WasmIotaClient, iota_identity_pkg_id: String) -> Result<WasmKinesisIdentityClientReadOnly, JsError> {
+  pub async fn new_new_with_pkg_id(iota_client: WasmIotaClient, iota_identity_pkg_id: String) -> Result<WasmIdentityClientReadOnly, JsError> {
     let inner_client = IdentityClientReadOnly::new_with_pkg_id(iota_client, ObjectID::from_str(&iota_identity_pkg_id)?).await?;
-    Ok(WasmKinesisIdentityClientReadOnly(inner_client))
+    Ok(WasmIdentityClientReadOnly(inner_client))
   }
 
   #[wasm_bindgen(js_name = packageId)]

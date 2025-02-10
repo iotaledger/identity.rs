@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { IotaDID } from "@iota/identity-wasm/node";
-import { IotaClient as KinesisClient } from "@iota/iota-sdk/client";
+import { IotaClient as IotaClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
     getClientAndCreateAccount,
@@ -14,8 +14,8 @@ import {
 /** Demonstrates how to deactivate a DID in an Alias Output. */
 export async function deactivateIdentity() {
     // create new clients and create new account
-    const kinesisClient = new KinesisClient({ url: NETWORK_URL });
-    const network = await kinesisClient.getChainIdentifier();
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
     const storage = getMemstorage();
     const [unpublished, vmFragment1] = await createDocumentForNetwork(storage, network);
     const identityClient = await getClientAndCreateAccount(storage);

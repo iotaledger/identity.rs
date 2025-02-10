@@ -8,8 +8,8 @@ import {
     JwkMemStore,
     JwsAlgorithm,
     KeyIdMemStore,
-    KinesisIdentityClient,
-    KinesisIdentityClientReadOnly,
+    IdentityClient,
+    IdentityClientReadOnly,
     Multicontroller,
     Storage,
     StorageSigner,
@@ -17,7 +17,7 @@ import {
 
 import { executeTransaction } from "@iota/iota-interaction-ts/lib/iota_client_helpers";
 import { bcs } from "@iota/iota-sdk/bcs";
-import { IotaClient as KinesisClient } from "@iota/iota-sdk/client";
+import { IotaClient } from "@iota/iota-sdk/client";
 import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
 import { Transaction } from "@iota/iota-sdk/transactions";
 import { IOTA_TYPE_ARG } from "@iota/iota-sdk/utils";
@@ -25,8 +25,8 @@ import { IDENTITY_IOTA_PACKAGE_ID, NETWORK_NAME_FAUCET, NETWORK_URL, TEST_GAS_BU
 
 async function initializeClients() {
     console.log("---------------- Preparing IdentityClient ------------------------");
-    const kinesisClient = new KinesisClient({ url: NETWORK_URL });
-    const identityClientReadOnly = await KinesisIdentityClientReadOnly.createWithPkgId(kinesisClient, IDENTITY_IOTA_PACKAGE_ID);
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const identityClientReadOnly = await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PACKAGE_ID);
 
     // create new storage
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
@@ -41,27 +41,27 @@ async function initializeClients() {
 
     // create signer from storage
     let signer = new StorageSigner(storage, keyId, publicKeyJwk);
-    const identityClient = await KinesisIdentityClient.create(identityClientReadOnly, signer);
+    const identityClient = await IdentityClient.create(identityClientReadOnly, signer);
 
     await requestIotaFromFaucetV0({
         host: getFaucetHost(NETWORK_NAME_FAUCET),
         recipient: identityClient.senderAddress(),
     });
 
-    const balance = await kinesisClient.getBalance({ owner: identityClient.senderAddress() });
+    const balance = await iotaClient.getBalance({ owner: identityClient.senderAddress() });
     if (balance.totalBalance === "0") {
         throw new Error("Balance is still 0");
     } else {
         console.log(`Received gas from faucet: ${balance.totalBalance} for owner ${identityClient.senderAddress()}`);
     }
 
-    return { kinesisClient, identityClient };
+    return { iotaClient, identityClient };
 }
 
 
 async function testIdentityClientReadOnly() {
-    const kinesisClient = new KinesisClient({ url: NETWORK_URL });
-    const identityClient = await KinesisIdentityClientReadOnly.createWithPkgId(kinesisClient, IDENTITY_IOTA_PACKAGE_ID);
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const identityClient = await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PACKAGE_ID);
 
     console.log("\n-------------- Start testIdentityClientReadOnly -------------------------------");
     console.log(`networkName: ${identityClient.network()}`);
@@ -79,8 +79,8 @@ async function testIdentityClientReadOnly() {
 
 
 async function testIdentityClient(
-    identityClient: KinesisIdentityClient,
-    kinesisClient: KinesisClient,
+    identityClient: IdentityClient,
+    iotaClient: IotaClient,
 ): Promise<void> {
     console.log("\n-------------- Start testIdentityClient -------------------------------");
     console.log(`senderPublicKey: ${identityClient.senderPublicKey()}`);
@@ -100,7 +100,7 @@ async function testIdentityClient(
         recipient: identityClient.senderAddress(),
     });
 
-    const balance = await kinesisClient.getBalance({ owner: identityClient.senderAddress() });
+    const balance = await iotaClient.getBalance({ owner: identityClient.senderAddress() });
     if (balance.totalBalance === "0") {
         throw new Error("Balance is still 0");
     } else {
@@ -173,7 +173,7 @@ async function signerTest(): Promise<void> {
     console.dir({ signed });
 }
 
-async function testExecuteTransaction(kinesisClient: KinesisClient) {
+async function testExecuteTransaction(iotaClient: IotaClient) {
     console.log("---------------- testing executeTransaction ------------------------");
 
     // create new storage
@@ -198,7 +198,7 @@ async function testExecuteTransaction(kinesisClient: KinesisClient) {
     });
 
     // try to craft tx with js api
-    let coins = await kinesisClient.getCoins({
+    let coins = await iotaClient.getCoins({
         owner: address,
         coinType: IOTA_TYPE_ARG,
     });
@@ -211,10 +211,10 @@ async function testExecuteTransaction(kinesisClient: KinesisClient) {
     tx.setSenderIfNotSet(address);
 
     let response = await executeTransaction(
-        kinesisClient,
+        iotaClient,
         address,
         publicJwk,
-        await tx.build({ client: kinesisClient }),
+        await tx.build({ client: iotaClient }),
         signer,
     );
     console.dir(response);
@@ -223,7 +223,7 @@ async function testExecuteTransaction(kinesisClient: KinesisClient) {
 
 /** Test API usage */
 export async function testApiCall(): Promise<void> {
-    const { kinesisClient, identityClient } = await initializeClients();
+    const { iotaClient, identityClient } = await initializeClients();
 
     try {
         await testIdentityClientReadOnly();
@@ -233,7 +233,7 @@ export async function testApiCall(): Promise<void> {
     }
 
     try {
-        await testIdentityClient(identityClient, kinesisClient);
+        await testIdentityClient(identityClient, iotaClient);
     } catch (err) {
         const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
         console.error(`identity client binding test failed: ${suffix}`);
@@ -254,7 +254,7 @@ export async function testApiCall(): Promise<void> {
     }
 
     try {
-        await testExecuteTransaction(kinesisClient);
+        await testExecuteTransaction(iotaClient);
     } catch (err) {
         const suffix = err instanceof Error ? `${err.message}; ${err.stack}` : `${err}`;
         console.error(`signer binding test failed: ${suffix}`);

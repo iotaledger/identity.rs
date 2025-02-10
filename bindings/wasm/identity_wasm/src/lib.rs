@@ -33,8 +33,8 @@ pub mod verification;
 
 #[cfg(feature = "dummy-client")]
 // Currently it's unclear if this module will be removed or can be used for integration or unit tests.
-// TODO manage the final location of the kinesis TS module
-pub(crate) mod kinesis;
+// TODO manage the final location of the rebased TS module
+pub(crate) mod rebased;
 #[cfg(feature = "dummy-client")]
 // Remove this module when working on [Issue #1445 Replace mocked Identity client with real Identity client]
 pub(crate) mod obsolete;
