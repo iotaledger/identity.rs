@@ -92,11 +92,13 @@ impl Default for MapStringAny {
 }
 
 impl PromiseUint8Array {
-  pub async fn to_transaction_bcs(&self) -> TsSdkResult<ProgrammableTransactionBcs>{
+  /// Helper function to convert Uint8 arrays from contract calls to the internal `ProgrammableTransactionBcs` type.
+  pub async fn to_transaction_bcs(&self) -> TsSdkResult<ProgrammableTransactionBcs> {
     let promise: Promise = Promise::resolve(self);
-    JsFuture::from(promise).await
-        .map(|v| Uint8Array::from(v).to_vec())
-        .map_err(WasmError::from)
-        .map_err(TsSdkError::from)
+    JsFuture::from(promise)
+      .await
+      .map(|v| Uint8Array::from(v).to_vec())
+      .map_err(WasmError::from)
+      .map_err(TsSdkError::from)
   }
 }
