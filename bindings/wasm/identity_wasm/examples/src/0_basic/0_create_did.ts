@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { IotaDID } from '@iota/identity-wasm/node';
-import { IotaClient as KinesisClient } from "@iota/iota-sdk/client";
+import { IotaClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
     getClientAndCreateAccount,
@@ -13,8 +13,8 @@ import {
 /** Demonstrate how to create a DID Document and publish it. */
 export async function createIdentity(): Promise<void>  {
     // create new client to connect to IOTA network
-    const kinesisClient = new KinesisClient({ url: NETWORK_URL });
-    const network = await kinesisClient.getChainIdentifier();
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
 
     const storage = getMemstorage();
     // TODO: check if we can update storage implementation to a non-owning variant

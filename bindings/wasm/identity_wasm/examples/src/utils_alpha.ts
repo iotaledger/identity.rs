@@ -6,13 +6,13 @@ import {
     JwkMemStore,
     JwsAlgorithm,
     KeyIdMemStore,
-    KinesisIdentityClient,
-    KinesisIdentityClientReadOnly,
+    IdentityClient,
+    IdentityClientReadOnly,
     MethodScope,
     Storage,
     StorageSigner,
 } from "@iota/identity-wasm/node";
-import { IotaClient as KinesisClient } from "@iota/iota-sdk/client";
+import { IotaClient } from "@iota/iota-sdk/client";
 import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
 
 export const IDENTITY_IOTA_PACKAGE_ID =
@@ -41,15 +41,15 @@ export async function createDocumentForNetwork(storage: Storage, network: string
     return [unpublished, verificationMethodFragment];
 }
 
-export async function getClientAndCreateAccount(storage: Storage): Promise<KinesisIdentityClient> {
+export async function getClientAndCreateAccount(storage: Storage): Promise<IdentityClient> {
     if (!IDENTITY_IOTA_PACKAGE_ID) {
         throw new Error(`IDENTITY_IOTA_PACKAGE_ID env variable must be provided to run the examples`);
     }
 
-    const kinesisClient = new KinesisClient({ url: NETWORK_URL });
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
 
-    const identityClientReadOnly = await KinesisIdentityClientReadOnly.createWithPkgId(
-        kinesisClient, IDENTITY_IOTA_PACKAGE_ID);
+    const identityClientReadOnly = await IdentityClientReadOnly.createWithPkgId(
+        iotaClient, IDENTITY_IOTA_PACKAGE_ID);
 
     // generate new key
     let generate = await storage.keyStorage().generate("Ed25519", JwsAlgorithm.EdDSA);
@@ -61,14 +61,14 @@ export async function getClientAndCreateAccount(storage: Storage): Promise<Kines
 
     // create signer from storage
     let signer = new StorageSigner(storage, keyId, publicKeyJwk);
-    const identityClient = await KinesisIdentityClient.create(identityClientReadOnly, signer);
+    const identityClient = await IdentityClient.create(identityClientReadOnly, signer);
 
     await requestIotaFromFaucetV0({
         host: getFaucetHost(NETWORK_NAME_FAUCET),
         recipient: identityClient.senderAddress(),
     });
 
-    const balance = await kinesisClient.getBalance({ owner: identityClient.senderAddress() });
+    const balance = await iotaClient.getBalance({ owner: identityClient.senderAddress() });
     if (balance.totalBalance === "0") {
         throw new Error("Balance is still 0");
     } else {
@@ -79,7 +79,7 @@ export async function getClientAndCreateAccount(storage: Storage): Promise<Kines
 }
 
 export async function createDidDocument(
-    identityClient: KinesisIdentityClient,
+    identityClient: IdentityClient,
     unpublished: IotaDocument,
 ): Promise<IotaDocument> {
     let tx = identityClient

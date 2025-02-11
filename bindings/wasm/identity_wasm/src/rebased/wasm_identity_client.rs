@@ -20,7 +20,7 @@ use iota_interaction_ts::AdapterNativeResponse;
 
 use super::IdentityContainer;
 use super::WasmIdentityBuilder;
-use super::WasmKinesisIdentityClientReadOnly;
+use super::WasmIdentityClientReadOnly;
 
 use crate::error::wasm_error;
 use crate::iota::IotaDocumentLock;
@@ -44,18 +44,15 @@ pub struct WasmIotaTransactionBlockResponseEssence {
   pub effects_created: Option<Vec<WasmOwnedObjectRef>>,
 }
 
-#[wasm_bindgen(js_name = KinesisIdentityClient)]
-pub struct WasmKinesisIdentityClient(pub(crate) IdentityClient<WasmTransactionSigner>);
+#[wasm_bindgen(js_name = IdentityClient)]
+pub struct WasmIdentityClient(pub(crate) IdentityClient<WasmTransactionSigner>);
 
-#[wasm_bindgen(js_class = KinesisIdentityClient)]
-impl WasmKinesisIdentityClient {
+#[wasm_bindgen(js_class = IdentityClient)]
+impl WasmIdentityClient {
   #[wasm_bindgen(js_name = create)]
-  pub async fn new(
-    client: WasmKinesisIdentityClientReadOnly,
-    signer: WasmTransactionSigner,
-  ) -> Result<WasmKinesisIdentityClient, JsError> {
+  pub async fn new(client: WasmIdentityClientReadOnly, signer: WasmTransactionSigner) -> Result<WasmIdentityClient, JsError> {
     let inner_client = IdentityClient::new(client.0, signer).await?;
-    Ok(WasmKinesisIdentityClient(inner_client))
+    Ok(WasmIdentityClient(inner_client))
   }
 
   #[wasm_bindgen(js_name = senderPublicKey)]
@@ -166,7 +163,7 @@ pub struct WasmPublishDidTx(pub(crate) PublishDidTx);
 #[wasm_bindgen(js_class = PublishDidTx)]
 impl WasmPublishDidTx {
   #[wasm_bindgen(js_name = execute)]
-  pub async fn execute(self, client: &WasmKinesisIdentityClient) -> Result<WasmTransactionOutputPublishDid, JsValue> {
+  pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionOutputPublishDid, JsValue> {
     let output = self.0.execute(&client.0).await.map_err(wasm_error)?;
     Ok(WasmTransactionOutputPublishDid(output))
   }
