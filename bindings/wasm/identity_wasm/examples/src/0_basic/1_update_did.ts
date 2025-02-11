@@ -11,7 +11,7 @@ import {
     Timestamp,
     VerificationMethod,
 } from "@iota/identity-wasm/node";
-import { IotaClient as IotaClient } from "@iota/iota-sdk/client";
+import { IotaClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
     getClientAndCreateAccount,
