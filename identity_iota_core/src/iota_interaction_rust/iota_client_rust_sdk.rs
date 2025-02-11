@@ -56,6 +56,7 @@ use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockResponseT;
 use identity_iota_interaction::ProgrammableTransactionBcs;
+use identity_iota_interaction::OptionalSync;
 use identity_iota_interaction::QuorumDriverTrait;
 use identity_iota_interaction::ReadTrait;
 use identity_iota_interaction::SignatureBcs;
@@ -332,7 +333,7 @@ impl IotaClientTrait for IotaClientRustSdk {
     })
   }
 
-  async fn execute_transaction<S: Signer<IotaKeySignature> + Sync>(
+  async fn execute_transaction<S: Signer<IotaKeySignature> + OptionalSync>(
     &self,
     sender_address: IotaAddress,
     sender_public_key: &[u8],

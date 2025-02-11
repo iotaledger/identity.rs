@@ -10,6 +10,7 @@ use identity_credential::credential::JwtCredential;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaVerifiableCredential;
+use identity_iota_interaction::OptionalSync;
 use identity_jose::jwt::JwtHeader;
 use identity_jose::jwu;
 use itertools::Itertools;
@@ -55,7 +56,7 @@ impl PublicAvailableVC {
   /// A new `PublicAvailableVC`.
   pub async fn new<S>(jwt: Jwt, gas_budget: Option<u64>, client: &IdentityClient<S>) -> Result<Self, anyhow::Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let jwt_bytes = String::from(jwt).into_bytes();
     let credential = parse_jwt_credential(&jwt_bytes)?;

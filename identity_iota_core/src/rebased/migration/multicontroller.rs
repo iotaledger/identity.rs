@@ -109,7 +109,7 @@ impl<T> From<Proposal<T>> for IotaProposal<T> {
 }
 
 /// Representation of `identity.rs`'s `multicontroller::Multicontroller` Move type.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(try_from = "IotaMulticontroller::<T>")]
 pub struct Multicontroller<T> {
   controlled_value: T,

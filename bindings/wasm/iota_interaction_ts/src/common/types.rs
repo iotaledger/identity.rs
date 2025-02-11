@@ -2,9 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
+use identity_iota_interaction::ProgrammableTransactionBcs;
+use js_sys::Promise;
+use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::JsFuture;
 
+use crate::error::TsSdkError;
+use crate::error::TsSdkResult;
+use crate::error::WasmError;
 use crate::error::WasmResult;
 
 #[wasm_bindgen]
@@ -81,5 +88,17 @@ impl TryFrom<&Object> for MapStringAny {
 impl Default for MapStringAny {
   fn default() -> Self {
     js_sys::Map::new().unchecked_into()
+  }
+}
+
+impl PromiseUint8Array {
+  /// Helper function to convert Uint8 arrays from contract calls to the internal `ProgrammableTransactionBcs` type.
+  pub async fn to_transaction_bcs(&self) -> TsSdkResult<ProgrammableTransactionBcs> {
+    let promise: Promise = Promise::resolve(self);
+    JsFuture::from(promise)
+      .await
+      .map(|v| Uint8Array::from(v).to_vec())
+      .map_err(WasmError::from)
+      .map_err(TsSdkError::from)
   }
 }

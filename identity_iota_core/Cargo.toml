@@ -54,7 +54,7 @@ tokio = { version = "1.29.0", default-features = false, optional = true, feature
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 identity_iota_interaction = { version = "=1.4.0", path = "../identity_iota_interaction", default-features = false, optional = true }
 # Dependency iota_interaction_ts is always used on wasm32 platform. It is not controlled by the "iota-client" feature
-# because ut's unclear how to implement this. wasm32 build will most probably always use the "iota-client" feature
+# because it's unclear how to implement this. wasm32 build will most probably always use the "iota-client" feature
 # so this seems to be tolerable for now.
 iota_interaction_ts = { version = "=1.4.0", path = "../bindings/wasm/iota_interaction_ts" }
 

@@ -6,10 +6,10 @@ mod identity;
 mod multicontroller;
 mod types;
 mod wasm_identity_client;
-mod wasm_identity_client_builder;
+mod wasm_identity_client_read_only;
 
 pub use identity::*;
 pub use multicontroller::*;
 pub use types::*;
 pub use wasm_identity_client::*;
-pub use wasm_identity_client_builder::*;
+pub use wasm_identity_client_read_only::*;

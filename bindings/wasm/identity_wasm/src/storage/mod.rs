@@ -10,8 +10,8 @@ mod key_id_storage;
 mod method_digest;
 mod signature_options;
 mod wasm_storage;
-// Uncomment this code when working on [Issue #1445 Replace mocked Identity client with real Identity client]
-// mod wasm_storage_signer;
+mod wasm_storage_signer;
+mod wasm_transaction_signer;
 
 pub use jpt_timeframe_revocation_ext::*;
 pub use jwk_gen_output::*;
@@ -21,5 +21,5 @@ pub use key_id_storage::*;
 pub use method_digest::*;
 pub use signature_options::*;
 pub use wasm_storage::*;
-// Uncomment this code when working on [Issue #1445 Replace mocked Identity client with real Identity client]
-// pub use wasm_storage_signer::*;
+pub use wasm_storage_signer::*;
+pub use wasm_transaction_signer::*;

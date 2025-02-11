@@ -10,6 +10,7 @@ use identity_iota_core::rebased::transaction::Transaction;
 use identity_iota_core::rebased::utils::request_funds;
 use identity_iota_core::IotaDID;
 use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::OptionalSync;
 use identity_jose::jwk::Jwk;
 use identity_jose::jws::JwsAlgorithm;
 use identity_storage::JwkMemStore;
@@ -288,7 +289,7 @@ impl TestClient {
 
 pub async fn get_test_coin<S>(recipient: IotaAddress, client: &IdentityClient<S>) -> anyhow::Result<ObjectID>
 where
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + OptionalSync,
 {
   let mut ptb = ProgrammableTransactionBuilder::new();
   let coin = ptb.programmable_move_call(

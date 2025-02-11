@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { ObjectRef, Transaction } from "@iota/iota.js/transactions";
+import { ObjectRef, Transaction } from "@iota/iota-sdk/transactions";
 
 export function update(
     asset: ObjectRef,
