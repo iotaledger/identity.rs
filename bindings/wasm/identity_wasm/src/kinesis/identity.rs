@@ -175,11 +175,7 @@ impl WasmIdentityBuilder {
   #[wasm_bindgen(constructor)]
   pub fn new(did_doc: &WasmIotaDocument) -> Result<WasmIdentityBuilder> {
     let document: IotaDocument = did_doc.0.try_read().unwrap().clone();
-    Ok(
-      WasmIdentityBuilder(
-        IdentityBuilder::new(document)
-      )
-    )
+    Ok(WasmIdentityBuilder(IdentityBuilder::new(document)))
   }
 
   pub fn controller(self, address: WasmIotaAddress, voting_power: u64) -> Self {
@@ -227,7 +223,10 @@ pub struct WasmCreateIdentityTx(pub(crate) CreateIdentityTx);
 #[wasm_bindgen(js_class = CreateIdentityTx)]
 impl WasmCreateIdentityTx {
   #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmKinesisIdentityClient) -> Result<WasmTransactionOutputInternalOnChainIdentity> {
+  pub async fn execute(
+    self,
+    client: &WasmKinesisIdentityClient,
+  ) -> Result<WasmTransactionOutputInternalOnChainIdentity> {
     let output = self.0.execute(&client.0).await.map_err(wasm_error)?;
     Ok(WasmTransactionOutputInternalOnChainIdentity(output))
   }
