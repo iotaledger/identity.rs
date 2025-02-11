@@ -175,11 +175,7 @@ impl WasmIdentityBuilder {
   #[wasm_bindgen(constructor)]
   pub fn new(did_doc: &WasmIotaDocument) -> Result<WasmIdentityBuilder> {
     let document: IotaDocument = did_doc.0.try_read().unwrap().clone();
-    Ok(
-      WasmIdentityBuilder(
-        IdentityBuilder::new(document)
-      )
-    )
+    Ok(WasmIdentityBuilder(IdentityBuilder::new(document)))
   }
 
   pub fn controller(self, address: WasmIotaAddress, voting_power: u64) -> Self {

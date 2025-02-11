@@ -4,12 +4,12 @@
 use js_sys::Array;
 use js_sys::Promise;
 use js_sys::Uint8Array;
-use wasm_bindgen_futures::JsFuture;
 use std::cell::Cell;
 use std::collections::HashSet;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
+use wasm_bindgen_futures::JsFuture;
 
 use crate::bindings::WasmIotaObjectData;
 use crate::bindings::WasmObjectRef;
@@ -479,15 +479,11 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
 
   async fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
     let package = package_id.to_string();
-    
-    let array_promise = identity_new(did_doc, &package).map_err(WasmError::from)?;
-    let promise: Promise = Promise::resolve(&array_promise);
-    JsFuture::from(promise)
-        .await
-        .map(|v| JsValue::from(Array::from(&v)))
-        .map_err(WasmError::from)
-        .and_then(|v| v.into_serde().map_err(WasmError::from))
-        .map_err(TsSdkError::from)
+
+    identity_new(did_doc, &package)
+      .map_err(WasmError::from)?
+      .to_transaction_bcs()
+      .await
   }
 
   fn new_with_controllers<C>(
@@ -522,20 +518,10 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     let capability = capability.into();
     let package = package_id.to_string();
 
-    let array_promise = propose_deactivation(
-      identity,
-      capability,
-      &package,
-      expiration,
-    )
-      .map_err(WasmError::from)?;
-    let promise: Promise = Promise::resolve(&array_promise);
-    JsFuture::from(promise)
-        .await
-        .map(|v| JsValue::from(Array::from(&v)))
-        .map_err(WasmError::from)
-        .and_then(|v| v.into_serde().map_err(WasmError::from))
-        .map_err(TsSdkError::from)
+    propose_deactivation(identity, capability, &package, expiration)
+      .map_err(WasmError::from)?
+      .to_transaction_bcs()
+      .await
   }
 
   fn execute_deactivation(
@@ -652,20 +638,10 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     let did_doc = did_doc.as_ref();
     let package_id = package_id.to_string();
 
-    let array_promise = propose_update(
-      identity,
-      controller_cap,
-      did_doc,
-      &package_id,
-      expiration,
-    ).map_err(WasmError::from)?;
-    let promise: Promise = Promise::resolve(&array_promise);
-    JsFuture::from(promise)
-        .await
-        .map(|v| JsValue::from(Array::from(&v)))
-        .map_err(WasmError::from)
-        .and_then(|v| v.into_serde().map_err(WasmError::from))
-        .map_err(TsSdkError::from)
+    propose_update(identity, controller_cap, did_doc, &package_id, expiration)
+      .map_err(WasmError::from)?
+      .to_transaction_bcs()
+      .await
   }
 
   fn execute_update(

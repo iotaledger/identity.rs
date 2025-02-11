@@ -69,7 +69,7 @@ impl WasmIdentityClient {
   pub fn network(&self) -> String {
     self.0.network().to_string()
   }
-  
+
   #[wasm_bindgen(js_name = migrationRegistryId)]
   pub fn migration_registry_id(&self) -> String {
     self.0.migration_registry_id().to_string()
@@ -94,28 +94,19 @@ impl WasmIdentityClient {
 
   #[wasm_bindgen(js_name = resolveDid)]
   pub async fn resolve_did(&self, did: &WasmIotaDID) -> Result<WasmIotaDocument, JsError> {
-    let document = self
-      .0
-      .resolve_did(&did.0)
-      .await
-      .map_err(JsError::from)?;
+    let document = self.0.resolve_did(&did.0).await.map_err(JsError::from)?;
     Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
   }
 
   #[wasm_bindgen(js_name = publishDidDocument)]
-  pub fn publish_did_document(
-    &self,
-    document: &WasmIotaDocument,
-  ) -> Result<WasmPublishDidTx, JsError> {
+  pub fn publish_did_document(&self, document: &WasmIotaDocument) -> Result<WasmPublishDidTx, JsError> {
     let doc: IotaDocument = document
       .0
       .try_read()
       .map_err(|err| JsError::new(&format!("failed to read DID document; {err:?}")))?
       .clone();
 
-    Ok(WasmPublishDidTx(self
-      .0
-      .publish_did_document(doc)))
+    Ok(WasmPublishDidTx(self.0.publish_did_document(doc)))
   }
 
   #[wasm_bindgen(js_name = publishDidDocumentUpdate)]
@@ -139,11 +130,7 @@ impl WasmIdentityClient {
   }
 
   #[wasm_bindgen(js_name = deactivateDidOutput)]
-  pub async fn deactivate_did_output(
-    &self,
-    did: &WasmIotaDID,
-    gas_budget: u64,
-  ) -> Result<(), JsError> {
+  pub async fn deactivate_did_output(&self, did: &WasmIotaDID, gas_budget: u64) -> Result<(), JsError> {
     self
       .0
       .deactivate_did_output(&did.0, gas_budget)
