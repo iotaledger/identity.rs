@@ -4,7 +4,7 @@
 import { testApiCall } from "./0_basic/-1_test_api_call";
 import { createIdentity } from "./0_basic/0_create_did";
 import { updateIdentity } from "./0_basic/1_update_did";
-// import { resolveIdentity } from "./0_basic/2_resolve_did";
+import { resolveIdentity } from "./0_basic/2_resolve_did";
 import { deactivateIdentity } from "./0_basic/3_deactivate_did";
 // import { deleteIdentity } from "./0_basic/4_delete_did";
 // import { createVC } from "./0_basic/5_create_vc";
@@ -14,7 +14,7 @@ import { deactivateIdentity } from "./0_basic/3_deactivate_did";
 // import { didIssuesNft } from "./1_advanced/1_did_issues_nft";
 // import { nftOwnsDid } from "./1_advanced/2_nft_owns_did";
 // import { didIssuesTokens } from "./1_advanced/3_did_issues_tokens";
-// import { customResolution } from "./1_advanced/4_custom_resolution";
+import { customResolution } from "./1_advanced/4_custom_resolution";
 // import { domainLinkage } from "./1_advanced/5_domain_linkage";
 // import { sdJwt } from "./1_advanced/6_sd_jwt";
 // import { statusList2021 } from "./1_advanced/7_status_list_2021";
@@ -35,8 +35,8 @@ async function main() {
             return await createIdentity();
         case "1_update_did":
             return await updateIdentity();
-        // case "2_resolve_did":
-        //     return await resolveIdentity();
+        case "2_resolve_did":
+            return await resolveIdentity();
         case "3_deactivate_did":
             return await deactivateIdentity();
         // case "4_delete_did":
@@ -55,8 +55,8 @@ async function main() {
         //     return await nftOwnsDid();
         // case "3_did_issues_tokens":
         //     return await didIssuesTokens();
-        // case "4_custom_resolution":
-        //     return await customResolution();
+        case "4_custom_resolution":
+            return await customResolution();
         // case "5_domain_linkage":
         //     return await domainLinkage();
         // case "6_sd_jwt":
