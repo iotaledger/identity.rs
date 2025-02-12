@@ -8,7 +8,7 @@ import {
     IToCoreDocument,
     Resolver,
 } from "@iota/identity-wasm/node";
-import { IotaClient as KinesisClient } from "@iota/iota-sdk/client";
+import { IotaClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
     getClientAndCreateAccount,
@@ -22,8 +22,8 @@ const DID_JWK: string =
 /** Demonstrates how to resolve an existing DID in an Alias Output. */
 export async function resolveIdentity() {
     // create new clients and create new account
-    const kinesisClient = new KinesisClient({ url: NETWORK_URL });
-    const network = await kinesisClient.getChainIdentifier();
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
     const storage = getMemstorage();
     const [unpublished, vmFragment1] = await createDocumentForNetwork(storage, network);
     const identityClient = await getClientAndCreateAccount(storage);
