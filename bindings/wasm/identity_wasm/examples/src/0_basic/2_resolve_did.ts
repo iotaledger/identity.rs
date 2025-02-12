@@ -46,14 +46,14 @@ export async function resolveIdentity() {
 
     // Or we can resolve it via the `Resolver` api:
 
-    // While at it, also define a custom resolver for jwk:
+    // While at it, define a custom resolver for jwk DIDs as well.
     const handlers = new Map<string, (did: string) => Promise<CoreDocument | IToCoreDocument>>();
     handlers.set("jwk", didJwkHandler);
 
     // Create new `Resolver` instance
     const resolver = new Resolver({ client: identityClient, handlers });
 
-    // and resolve DID with it.
+    // and resolve identity DID with it.
     const resolverResolved = await resolver.resolve(did.toString());
     console.log(`resolverResolved ${DID_JWK} resolves to:\n ${JSON.stringify(resolverResolved, null, 2)}`);
 
