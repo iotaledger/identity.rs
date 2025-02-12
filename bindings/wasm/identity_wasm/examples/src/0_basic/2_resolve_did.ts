@@ -25,8 +25,8 @@ export async function resolveIdentity() {
     const iotaClient = new IotaClient({ url: NETWORK_URL });
     const network = await iotaClient.getChainIdentifier();
     const storage = getMemstorage();
-    const [unpublished, vmFragment1] = await createDocumentForNetwork(storage, network);
     const identityClient = await getClientAndCreateAccount(storage);
+    const [unpublished] = await createDocumentForNetwork(storage, network);
 
     // create new identity for this account and publish document for it
     const { output: identity } = await identityClient
