@@ -18,11 +18,9 @@ use wasm_bindgen_futures::JsFuture;
 use crate::common::ArrayString;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
-use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
-use crate::iota::WasmIotaIdentityClient;
-use crate::obsolete::IotaIdentityClientExt;
+use crate::rebased::WasmIdentityClient;
 use crate::resolver::resolver_config::MapResolutionHandler;
 use crate::resolver::resolver_config::ResolverConfig;
 use crate::resolver::PromiseArrayIToCoreDocument;
@@ -59,7 +57,7 @@ impl WasmResolver {
 
     let mut attached_iota_method = false;
     let resolution_handlers: Option<MapResolutionHandler> = config.handlers();
-    let client: Option<WasmIotaIdentityClient> = config.client();
+    let client: Option<WasmIdentityClient> = config.client();
 
     if let Some(handlers) = resolution_handlers {
       let map: &Map = handlers.dyn_ref::<js_sys::Map>().ok_or_else(|| {
@@ -82,11 +80,11 @@ impl WasmResolver {
         ))?;
       }
 
-      let rc_client: Rc<WasmIotaIdentityClient> = Rc::new(wasm_client);
+      let rc_client: Rc<WasmIdentityClient> = Rc::new(wasm_client);
       // Take CoreDID (instead of IotaDID) to avoid inconsistent error messages between the
       // cases when the iota handler is attached by passing a client or directly as a handler.
       let handler = move |did: CoreDID| {
-        let rc_client_clone: Rc<WasmIotaIdentityClient> = rc_client.clone();
+        let rc_client_clone: Rc<WasmIdentityClient> = rc_client.clone();
         async move {
           let iota_did: IotaDID = IotaDID::parse(did).map_err(identity_iota::iota::Error::DIDSyntaxError)?;
           Self::client_as_handler(rc_client_clone.as_ref(), iota_did.into()).await
@@ -99,12 +97,17 @@ impl WasmResolver {
   }
 
   pub(crate) async fn client_as_handler(
-    client: &WasmIotaIdentityClient,
+    client: &WasmIdentityClient,
     did: WasmIotaDID,
   ) -> std::result::Result<WasmIotaDocument, identity_iota::iota::Error> {
-    Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(
-      client.resolve_did(&did.0).await?,
-    ))))
+    Ok(WasmIotaDocument(
+      client
+        .resolve_did(&did)
+        .await
+        .map_err(JsValue::from)
+        .map_err(|err| identity_iota::iota::Error::JsError(format!("failed to resolve DID; {:?}", &err)))?
+        .0,
+    ))
   }
 
   /// attempts to extract (method, handler) pairs from the entries of a map and attaches them to the resolver.

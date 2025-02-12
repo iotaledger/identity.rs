@@ -4,7 +4,7 @@
 import { testApiCall } from "./0_basic/-1_test_api_call";
 import { createIdentity } from "./0_basic/0_create_did";
 import { updateIdentity } from "./0_basic/1_update_did";
-// import { resolveIdentity } from "./0_basic/2_resolve_did";
+import { resolveIdentity } from "./0_basic/2_resolve_did";
 import { deactivateIdentity } from "./0_basic/3_deactivate_did";
 // import { deleteIdentity } from "./0_basic/4_delete_did";
 // import { createVC } from "./0_basic/5_create_vc";
@@ -35,8 +35,8 @@ async function main() {
             return await createIdentity();
         case "1_update_did":
             return await updateIdentity();
-        // case "2_resolve_did":
-        //     return await resolveIdentity();
+        case "2_resolve_did":
+            return await resolveIdentity();
         case "3_deactivate_did":
             return await deactivateIdentity();
         // case "4_delete_did":

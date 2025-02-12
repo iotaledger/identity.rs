@@ -76,7 +76,3 @@ empty_docs = "allow"
 [features]
 default = ["dummy-client"]
 dummy-client = ["dep:iota_interaction_ts"]
-# As identity_iota::resolver is currently not available for wasm32 this temporary flag is used
-# to switch of all code depending on identity_iota::resolver
-# TODO: Remove this feature flag after identity_iota::resolver is available for wasm32 platforms
-wasm-resolver = []
