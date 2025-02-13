@@ -241,28 +241,28 @@ impl WasmSharedObjectRef {
 extern "C" {
   #[wasm_bindgen(typescript_type = "IotaTransactionBlockResponseAdapter")]
   #[derive(Clone)]
-  pub type IotaTransactionBlockResponseAdapter;
+  pub type WasmIotaTxBlockResponseAdapter;
 
   #[wasm_bindgen(constructor)]
-  pub fn new(response: WasmIotaTransactionBlockResponse) -> IotaTransactionBlockResponseAdapter;
+  pub fn new(response: WasmIotaTransactionBlockResponse) -> WasmIotaTxBlockResponseAdapter;
 
   #[wasm_bindgen(method)]
-  pub fn effects_is_none(this: &IotaTransactionBlockResponseAdapter) -> bool;
+  pub fn effects_is_none(this: &WasmIotaTxBlockResponseAdapter) -> bool;
 
   #[wasm_bindgen(method)]
-  pub fn effects_is_some(this: &IotaTransactionBlockResponseAdapter) -> bool;
+  pub fn effects_is_some(this: &WasmIotaTxBlockResponseAdapter) -> bool;
 
   #[wasm_bindgen(method)]
-  pub fn to_string(this: &IotaTransactionBlockResponseAdapter) -> String;
+  pub fn to_string(this: &WasmIotaTxBlockResponseAdapter) -> String;
 
   #[wasm_bindgen(method)]
-  fn effects_execution_status_inner(this: &IotaTransactionBlockResponseAdapter) -> Option<WasmExecutionStatus>;
+  fn effects_execution_status_inner(this: &WasmIotaTxBlockResponseAdapter) -> Option<WasmExecutionStatus>;
 
   #[wasm_bindgen(method)]
-  fn effects_created_inner(this: &IotaTransactionBlockResponseAdapter) -> Option<Vec<WasmOwnedObjectRef>>;
+  fn effects_created_inner(this: &WasmIotaTxBlockResponseAdapter) -> Option<Vec<WasmOwnedObjectRef>>;
 
   #[wasm_bindgen(method, js_name = "get_response")]
-  fn response(this: &IotaTransactionBlockResponseAdapter) -> WasmIotaTransactionBlockResponse;
+  fn response(this: &WasmIotaTxBlockResponseAdapter) -> WasmIotaTransactionBlockResponse;
 
   #[wasm_bindgen(js_name = executeTransaction)]
   fn execute_transaction_inner(
@@ -343,7 +343,7 @@ struct WasmExecutionStatusAdapter {
   status: ExecutionStatus,
 }
 
-impl IotaTransactionBlockResponseAdapter {
+impl WasmIotaTxBlockResponseAdapter {
   pub fn effects_execution_status(&self) -> Option<ExecutionStatus> {
     self.effects_execution_status_inner().map(|s| {
       let state: WasmExecutionStatusAdapter =
@@ -371,7 +371,7 @@ pub async fn execute_transaction(
   tx_bcs: ProgrammableTransactionBcs, // --> Binding: Vec<u8>
   signer: WasmStorageSigner,          // --> Binding: WasmStorageSigner
   gas_budget: Option<u64>,            // --> Binding: Option<u64>,
-) -> Result<IotaTransactionBlockResponseAdapter, TsSdkError> {
+) -> Result<WasmIotaTxBlockResponseAdapter, TsSdkError> {
   let promise: Promise = Promise::resolve(&execute_transaction_inner(
     iota_client,
     sender_address.to_string(),
@@ -387,7 +387,7 @@ pub async fn execute_transaction(
     TsSdkError::WasmError(message.to_string(), details.to_string())
   })?;
 
-  Ok(IotaTransactionBlockResponseAdapter::new(result.into()))
+  Ok(WasmIotaTxBlockResponseAdapter::new(result.into()))
 }
 
 #[derive(Deserialize)]

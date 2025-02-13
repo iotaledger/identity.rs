@@ -7,7 +7,7 @@ use identity_iota::iota::rebased::migration::OnChainIdentity;
 use identity_iota::iota::rebased::transaction::TransactionInternal;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
 use identity_iota::iota::IotaDocument;
-use iota_interaction_ts::AdapterNativeResponse;
+use iota_interaction_ts::NativeTransactionBlockResponse;
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
@@ -240,7 +240,7 @@ impl WasmTransactionOutputInternalOnChainIdentity {
   }
 
   #[wasm_bindgen(getter)]
-  pub fn response(&self) -> AdapterNativeResponse {
+  pub fn response(&self) -> NativeTransactionBlockResponse {
     self.0.response.clone_native_response()
   }
 }

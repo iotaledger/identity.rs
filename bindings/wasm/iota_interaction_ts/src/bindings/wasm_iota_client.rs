@@ -34,7 +34,7 @@ use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
-use super::wasm_types::IotaTransactionBlockResponseAdapter;
+use super::wasm_types::WasmIotaTxBlockResponseAdapter;
 use super::wasm_types::PromiseIotaTransactionBlockResponse;
 use super::wasm_types::WasmExecuteTransactionBlockParams;
 
@@ -137,7 +137,7 @@ impl ManagedWasmIotaClient {
     signatures: &[SignatureBcs],
     options: Option<IotaTransactionBlockResponseOptions>,
     request_type: Option<ExecuteTransactionRequestType>,
-  ) -> IotaRpcResult<IotaTransactionBlockResponseAdapter> {
+  ) -> IotaRpcResult<WasmIotaTxBlockResponseAdapter> {
     let ex_tx_params: WasmExecuteTransactionBlockParams = serde_wasm_bindgen::to_value(
       &ExecuteTransactionBlockParams::new(tx_data_bcs, signatures, options, request_type),
     )
@@ -155,7 +155,7 @@ impl ManagedWasmIotaClient {
       console_log!("Error executing JsFuture::from(promise): {:?}", e);
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
-    Ok(IotaTransactionBlockResponseAdapter::new(result.into()))
+    Ok(WasmIotaTxBlockResponseAdapter::new(result.into()))
   }
 
   /**
@@ -247,7 +247,7 @@ impl ManagedWasmIotaClient {
     &self,
     digest: TransactionDigest,
     options: IotaTransactionBlockResponseOptions,
-  ) -> IotaRpcResult<IotaTransactionBlockResponseAdapter> {
+  ) -> IotaRpcResult<WasmIotaTxBlockResponseAdapter> {
     let params: WasmGetTransactionBlockParams =
       serde_wasm_bindgen::to_value(&GetTransactionBlockParams::new(digest.to_string(), Some(options)))
         .map_err(|e| {
@@ -267,7 +267,7 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
-    Ok(IotaTransactionBlockResponseAdapter::new(result.into()))
+    Ok(WasmIotaTxBlockResponseAdapter::new(result.into()))
   }
 
   pub async fn get_reference_gas_price(&self) -> IotaRpcResult<u64> {

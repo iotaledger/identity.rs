@@ -16,7 +16,7 @@ use iota_interaction_ts::bindings::WasmExecutionStatus;
 use iota_interaction_ts::bindings::WasmOwnedObjectRef;
 
 use identity_iota::iota::rebased::Error;
-use iota_interaction_ts::AdapterNativeResponse;
+use iota_interaction_ts::NativeTransactionBlockResponse;
 
 use super::IdentityContainer;
 use super::WasmIdentityBuilder;
@@ -180,7 +180,7 @@ impl WasmTransactionOutputPublishDid {
   }
 
   #[wasm_bindgen(getter)]
-  pub fn response(&self) -> AdapterNativeResponse {
+  pub fn response(&self) -> NativeTransactionBlockResponse {
     self.0.response.clone_native_response()
   }
 }
