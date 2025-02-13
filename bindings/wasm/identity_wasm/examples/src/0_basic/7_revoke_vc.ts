@@ -24,7 +24,7 @@ import {
     getMemstorage,
     NETWORK_URL,
     TEST_GAS_BUDGET,
-} from '../utils_alpha';
+} from '../util';
 
 /**
  * This example shows how to revoke a verifiable credential.

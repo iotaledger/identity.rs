@@ -22,7 +22,7 @@ import {
     getClientAndCreateAccount,
     getMemstorage,
     NETWORK_URL,
-} from '../utils_alpha';
+} from '../util';
 
 /**
  * Demonstrates how to create a selective disclosure verifiable credential and validate it * using the [Selective Disclosure for JWTs (SD-JWT)](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html) specification.

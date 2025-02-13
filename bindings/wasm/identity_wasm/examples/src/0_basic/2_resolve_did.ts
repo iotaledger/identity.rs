@@ -14,7 +14,7 @@ import {
     getClientAndCreateAccount,
     getMemstorage,
     NETWORK_URL,
-} from '../utils_alpha';
+} from '../util';
 
 const DID_JWK: string =
     "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9";

@@ -21,7 +21,7 @@ import {
     getClientAndCreateAccount,
     getMemstorage,
     NETWORK_URL,
-} from '../utils_alpha';
+} from '../util';
 
 export async function statusList2021() {
     // ===========================================================================

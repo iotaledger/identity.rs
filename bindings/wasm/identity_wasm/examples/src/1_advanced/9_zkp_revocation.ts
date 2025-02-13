@@ -27,7 +27,7 @@ import {
     getMemstorage,
     NETWORK_URL,
     TEST_GAS_BUDGET,
-} from '../utils_alpha';
+} from '../util';
 
 export async function zkp_revocation() {
     // create new client to connect to IOTA network

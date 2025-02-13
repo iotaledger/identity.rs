@@ -9,7 +9,7 @@ import {
     getMemstorage,
     NETWORK_URL,
     TEST_GAS_BUDGET,
-} from '../utils_alpha';
+} from '../util';
 
 /** Demonstrates how to deactivate a DID in an Alias Output. */
 export async function deactivateIdentity() {

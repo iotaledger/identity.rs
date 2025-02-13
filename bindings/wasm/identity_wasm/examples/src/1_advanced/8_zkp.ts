@@ -22,7 +22,7 @@ import {
     getMemstorage,
     IDENTITY_IOTA_PACKAGE_ID,
     NETWORK_URL,
-} from '../utils_alpha';
+} from '../util';
 
 export async function zkp() {
     // ===========================================================================

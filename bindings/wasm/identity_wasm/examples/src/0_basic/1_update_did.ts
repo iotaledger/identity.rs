@@ -18,7 +18,7 @@ import {
     getMemstorage,
     NETWORK_URL,
     TEST_GAS_BUDGET,
-} from '../utils_alpha';
+} from '../util';
 
 /** Demonstrates how to update a DID document in an existing Alias Output. */
 export async function updateIdentity() {

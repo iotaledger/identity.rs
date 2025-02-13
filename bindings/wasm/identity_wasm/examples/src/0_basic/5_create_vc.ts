@@ -15,7 +15,7 @@ import {
     getClientAndCreateAccount,
     getMemstorage,
     NETWORK_URL,
-} from '../utils_alpha';
+} from '../util';
 
 /**
  * This example shows how to create a Verifiable Credential and validate it.

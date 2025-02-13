@@ -10,7 +10,7 @@ import {
     getClientAndCreateAccount,
     getMemstorage,
     NETWORK_URL,
-} from '../utils_alpha';
+} from '../util';
 
 // Use this external package to avoid implementing the entire did:key method in this example.
 import * as ed25519 from "@transmute/did-key-ed25519";

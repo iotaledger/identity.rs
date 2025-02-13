@@ -26,7 +26,7 @@ import {
     getClientAndCreateAccount,
     getMemstorage,
     NETWORK_URL,
-} from '../utils_alpha';
+} from '../util';
 
 /**
  * This example shows how to create a Verifiable Presentation and validate it.
@@ -160,9 +160,7 @@ export async function createVP() {
         },
     );
 
-    const resolver = new Resolver({
-        client: issuerClient, // TODO: add support for read only client here and use a separate client
-    });
+    const resolver = new Resolver({ client: issuerClient });
     // Resolve the presentation holder.
     const presentationHolderDID: CoreDID = JwtPresentationValidator.extractHolder(presentationJwt);
     const resolvedHolder = await resolver.resolve(

@@ -8,7 +8,7 @@ import {
     getClientAndCreateAccount,
     getMemstorage,
     NETWORK_URL,
-} from '../utils_alpha';
+} from '../util';
 
 /** Demonstrate how to create a DID Document and publish it. */
 export async function createIdentity(): Promise<void> {

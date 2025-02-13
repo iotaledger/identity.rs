@@ -23,7 +23,7 @@ import {
     getMemstorage,
     NETWORK_URL,
     TEST_GAS_BUDGET,
-} from '../utils_alpha';
+} from '../util';
 
 /**
  * Demonstrates how to link a domain and a DID and verify the linkage.
