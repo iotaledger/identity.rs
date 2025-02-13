@@ -42,7 +42,7 @@ export async function resolveIdentity() {
     // We can resolve the Object ID directly
     const resolvedIdentity = await identityClient.getIdentity(identity.id());
     console.dir(resolvedIdentity);
-    console.log(`Resolved identity has object ID ${resolvedIdentity.toFullFledged()?.id()}`);
+    console.log(`Identity client resolved identity has object ID ${resolvedIdentity.toFullFledged()?.id()}`);
 
     // Or we can resolve it via the `Resolver` api:
 
@@ -55,7 +55,7 @@ export async function resolveIdentity() {
 
     // and resolve identity DID with it.
     const resolverResolved = await resolver.resolve(did.toString());
-    console.log(`resolverResolved ${DID_JWK} resolves to:\n ${JSON.stringify(resolverResolved, null, 2)}`);
+    console.log(`Resolver resolved document ${DID_JWK} resolves to:\n ${JSON.stringify(resolverResolved, null, 2)}`);
 
     // We can also resolve via the custom resolver defined before:
     const did_jwk_resolved_doc = await resolver.resolve(DID_JWK);

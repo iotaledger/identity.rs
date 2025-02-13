@@ -1,106 +1,53 @@
 import {
     Credential,
     FailFast,
+    IdentityClientReadOnly,
     IotaDID,
     IotaDocument,
-    IotaIdentityClient,
     JptCredentialValidationOptions,
     JptCredentialValidator,
     JptCredentialValidatorUtils,
     JptPresentationValidationOptions,
     JptPresentationValidator,
     JptPresentationValidatorUtils,
-    JwkMemStore,
     JwpCredentialOptions,
     JwpPresentationOptions,
-    KeyIdMemStore,
     MethodScope,
     ProofAlgorithm,
     SelectiveDisclosurePresentation,
-    Storage,
 } from "@iota/identity-wasm/node";
+import { IotaClient } from "@iota/iota-sdk/client";
 import {
-    type Address,
-    AliasOutput,
-    Client,
-    MnemonicSecretManager,
-    SecretManager,
-    SecretManagerType,
-    Utils,
-} from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
+    getClientAndCreateAccount,
+    getMemstorage,
+    IDENTITY_IOTA_PACKAGE_ID,
+    NETWORK_URL,
+} from '../utils_alpha';
 
-/** Creates a DID Document and publishes it in a new Alias Output.
-
-Its functionality is equivalent to the "create DID" example
-and exists for convenient calling from the other examples. */
-export async function createDid(client: Client, secretManager: SecretManagerType, storage: Storage): Promise<{
-    address: Address;
-    document: IotaDocument;
-    fragment: string;
-}> {
-    const didClient = new IotaIdentityClient(client);
-    const networkHrp: string = await didClient.getNetworkHrp();
-
-    const secretManagerInstance = new SecretManager(secretManager);
-    const walletAddressBech32 = (await secretManagerInstance.generateEd25519Addresses({
-        accountIndex: 0,
-        range: {
-            start: 0,
-            end: 1,
-        },
-        bech32Hrp: networkHrp,
-    }))[0];
-
-    console.log("Wallet address Bech32:", walletAddressBech32);
-
-    await ensureAddressHasFunds(client, walletAddressBech32);
-
-    const address: Address = Utils.parseBech32Address(walletAddressBech32);
-
-    // Create a new DID document with a placeholder DID.
-    // The DID will be derived from the Alias Id of the Alias Output after publishing.
-    const document = new IotaDocument(networkHrp);
-
-    const fragment = await document.generateMethodJwp(
-        storage,
-        ProofAlgorithm.BLS12381_SHA256,
-        undefined,
-        MethodScope.VerificationMethod(),
-    );
-    // Construct an Alias Output containing the DID document, with the wallet address
-    // set as both the state controller and governor.
-    const aliasOutput: AliasOutput = await didClient.newDidOutput(address, document);
-
-    // Publish the Alias Output and get the published DID document.
-    const published = await didClient.publishDidOutput(secretManager, aliasOutput);
-
-    return { address, document: published, fragment };
-}
 export async function zkp() {
     // ===========================================================================
     // Step 1: Create identity for the issuer.
     // ===========================================================================
 
-    // Create a new client to interact with the IOTA ledger.
-    const client = new Client({
-        primaryNode: API_ENDPOINT,
-        localPow: true,
-    });
+    // create new client to connect to IOTA network
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
 
-    // Creates a new wallet and identity (see "0_create_did" example).
-    const issuerSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
-    const issuerStorage: Storage = new Storage(
-        new JwkMemStore(),
-        new KeyIdMemStore(),
-    );
-    let { document: issuerDocument, fragment: issuerFragment } = await createDid(
-        client,
-        issuerSecretManager,
+    // Create an identity for the issuer with one verification method `key-1`, and publish DID document for it.
+    const issuerStorage = getMemstorage();
+    const issuerClient = await getClientAndCreateAccount(issuerStorage);
+    const unpublishedIssuerDocument = new IotaDocument(network);
+    const issuerFragment = await unpublishedIssuerDocument.generateMethodJwp(
         issuerStorage,
+        ProofAlgorithm.BLS12381_SHA256,
+        undefined,
+        MethodScope.VerificationMethod(),
     );
+    const { output: issuerIdentity } = await issuerClient
+        .createIdentity(unpublishedIssuerDocument)
+        .finish()
+        .execute(issuerClient);
+    const issuerDocument = issuerIdentity.didDocument();
 
     // ===========================================================================
     // Step 2: Issuer creates and signs a Verifiable Credential with BBS algorithm.
@@ -148,11 +95,12 @@ export async function zkp() {
     // ============================================================================================
     // Step 4: Holder resolve Issuer's DID, retrieve Issuer's document and validate the Credential
     // ============================================================================================
-    const identityClient = new IotaIdentityClient(client);
+    const identityClientReadOnly = await IdentityClientReadOnly.createWithPkgId(
+        iotaClient, IDENTITY_IOTA_PACKAGE_ID);
 
     // Holder resolves issuer's DID.
     let issuerDid = IotaDID.parse(JptCredentialValidatorUtils.extractIssuerFromIssuedJpt(credentialJpt).toString());
-    let issuerDoc = await identityClient.resolveDid(issuerDid);
+    let issuerDoc = await identityClientReadOnly.resolveDid(issuerDid);
 
     // Holder validates the credential and retrieve the JwpIssued, needed to construct the JwpPresented
     let decodedCredential = JptCredentialValidator.validate(
@@ -212,7 +160,7 @@ export async function zkp() {
     const issuerDidV = IotaDID.parse(
         JptPresentationValidatorUtils.extractIssuerFromPresentedJpt(presentationJpt).toString(),
     );
-    const issuerDocV = await identityClient.resolveDid(issuerDidV);
+    const issuerDocV = await identityClientReadOnly.resolveDid(issuerDidV);
 
     const presentationValidationOptions = new JptPresentationValidationOptions({ nonce: challenge });
     const decodedPresentedCredential = JptPresentationValidator.validate(

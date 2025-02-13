@@ -19,7 +19,7 @@ import * as ed25519 from "@transmute/did-key-ed25519";
  */
 export async function customResolution() {
     // Set up a handler for resolving Ed25519 did:key
-    const keyHandler = async function(didKey: string): Promise<CoreDocument> {
+    const keyHandler = async function (didKey: string): Promise<CoreDocument> {
         let document = await ed25519.resolve(
             didKey,
             { accept: "application/did+ld+json" },
@@ -33,7 +33,7 @@ export async function customResolution() {
     const storage = getMemstorage();
     const identityClient = await getClientAndCreateAccount(storage);
     const [unpublished] = await createDocumentForNetwork(storage, network);
-    
+
     // create new identity for this account and publish document for it, DID of it will be resolved later on
     const { output: identity } = await identityClient
         .createIdentity(unpublished)

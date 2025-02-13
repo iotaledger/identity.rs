@@ -11,7 +11,7 @@ import {
 } from '../utils_alpha';
 
 /** Demonstrate how to create a DID Document and publish it. */
-export async function createIdentity(): Promise<void>  {
+export async function createIdentity(): Promise<void> {
     // create new client to connect to IOTA network
     const iotaClient = new IotaClient({ url: NETWORK_URL });
     const network = await iotaClient.getChainIdentifier();
@@ -22,7 +22,7 @@ export async function createIdentity(): Promise<void>  {
 
     // create new unpublished document 
     const [unpublished] = await createDocumentForNetwork(storage, network);
-    console.log(`Unpublished DID document: ${JSON.stringify(unpublished, null, 2)}`); 
+    console.log(`Unpublished DID document: ${JSON.stringify(unpublished, null, 2)}`);
     let did: IotaDID;
 
     // TODO: decide upon wich style to use here
@@ -41,9 +41,8 @@ export async function createIdentity(): Promise<void>  {
             .execute(identityClient);
         did = published.id();
     }
-  
+
     // check if we can resolve it via client
     const resolved = await identityClient.resolveDid(did);
     console.log(`Resolved DID document: ${JSON.stringify(resolved, null, 2)}`);
-  }
-  
+}
