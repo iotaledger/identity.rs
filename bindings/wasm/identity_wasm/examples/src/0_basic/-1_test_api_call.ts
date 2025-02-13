@@ -21,7 +21,7 @@ import { IotaClient } from "@iota/iota-sdk/client";
 import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
 import { Transaction } from "@iota/iota-sdk/transactions";
 import { IOTA_TYPE_ARG } from "@iota/iota-sdk/utils";
-import { IDENTITY_IOTA_PACKAGE_ID, NETWORK_NAME_FAUCET, NETWORK_URL, TEST_GAS_BUDGET } from "../utils_alpha";
+import { IDENTITY_IOTA_PACKAGE_ID, NETWORK_NAME_FAUCET, NETWORK_URL, TEST_GAS_BUDGET } from "../util";
 
 async function initializeClients() {
     console.log("---------------- Preparing IdentityClient ------------------------");
