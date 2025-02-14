@@ -57,7 +57,7 @@
     "node/*"
   ],
   "devDependencies": {
-    "@transmute/did-key-ed25519": "0.3.0-unstable.9",
+    "@digitalcredentials/did-method-key": "^2.0.3",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/mocha": "^9.1.0",
     "big-integer": "^1.6.51",
