@@ -13,13 +13,14 @@ import { API_ENDPOINT, createDid } from "../util";
 // Use this external package to avoid implementing the entire did:key method in this example.
 // @ts-ignore
 import { DidKeyDriver } from "@digitalcredentials/did-method-key";
+const didKeyDriver = new DidKeyDriver();
 
 /** Demonstrates how to set up a resolver using custom handlers.
  */
 export async function customResolution() {
     // Set up a handler for resolving Ed25519 did:key
     const keyHandler = async function(didKey: string): Promise<CoreDocument> {
-        let document = await DidKeyDriver.get({ did });
+        let document = await didKeyDriver.get({ did: didKey });
         return CoreDocument.fromJSON(document);
     };
 
