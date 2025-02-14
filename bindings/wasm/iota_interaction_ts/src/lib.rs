@@ -26,7 +26,7 @@ cfg_if::cfg_if! {
         #[allow(unused_imports)] pub use identity_move_calls::IdentityMoveCallsTsSdk as IdentityMoveCallsAdapter;
         #[allow(unused_imports)] pub use iota_client_ts_sdk::IotaClientTsSdk as IotaClientAdapter;
         #[allow(unused_imports)] pub use iota_client_ts_sdk::IotaTransactionBlockResponseProvider as IotaTransactionBlockResponseAdapter;
-        #[allow(unused_imports)] pub use bindings::WasmIotaTxBlockResponseAdapter as NativeTransactionBlockResponse;
+        #[allow(unused_imports)] pub use bindings::WasmIotaTransactionBlockResponseWrapper as NativeTransactionBlockResponse;
         #[allow(unused_imports)] pub use migration_move_calls::MigrationMoveCallsTsSdk as MigrationMoveCallsAdapter;
         #[allow(unused_imports)] pub use transaction_builder::TransactionBuilderTsSdk as TransactionBuilderAdapter;
         
