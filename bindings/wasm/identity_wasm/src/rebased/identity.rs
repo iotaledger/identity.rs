@@ -1,4 +1,4 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::rc::Rc;
@@ -6,9 +6,9 @@ use std::rc::Rc;
 use identity_iota::iota::rebased::migration::CreateIdentityTx;
 use identity_iota::iota::rebased::migration::IdentityBuilder;
 use identity_iota::iota::rebased::migration::OnChainIdentity;
+use identity_iota::iota::rebased::proposals::ProposalResult;
 use identity_iota::iota::rebased::transaction::TransactionInternal;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
-use identity_iota::iota::rebased::proposals::ProposalResult;
 use identity_iota::iota::IotaDocument;
 use iota_interaction_ts::AdapterNativeResponse;
 use tokio::sync::RwLock;
@@ -16,7 +16,6 @@ use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
 use iota_interaction_ts::bindings::WasmIotaObjectData;
-
 
 use crate::error::wasm_error;
 use crate::error::Result;
@@ -27,6 +26,7 @@ use super::client_dummy::ProposalAction;
 // use super::client_dummy::DummySigner;
 // use super::client_dummy::ProposalAction;
 // use super::client_dummy::ProposalBuilder;
+use super::proposals::WasmCreateDeactivateDidProposalTx;
 use super::types::WasmIotaAddress;
 use super::WasmIdentityClient;
 
@@ -86,8 +86,7 @@ impl WasmOnChainIdentity {
     gas_budget: Option<u64>,
   ) -> Result<WasmTransactionOutputInternalOptionalProposalId> {
     let mut identity_lock = self.0.write().await;
-    let builder = identity_lock
-      .update_did_document(updated_doc.0.read().await.clone());
+    let builder = identity_lock.update_did_document(updated_doc.0.read().await.clone());
     let builder = if let Some(exp) = expiration_epoch {
       builder.expiration_epoch(exp)
     } else {
@@ -118,34 +117,8 @@ impl WasmOnChainIdentity {
     &self,
     identity_client: &WasmIdentityClient,
     expiration_epoch: Option<u64>,
-    gas_budget: Option<u64>,
-  ) -> Result<WasmTransactionOutputInternalOptionalProposalId> {
-    let mut identity_lock = self.0.write().await;
-    let builder = identity_lock
-      .deactivate_did();
-    let builder = if let Some(exp) = expiration_epoch {
-      builder.expiration_epoch(exp)
-    } else {
-      builder
-    };
-
-    let tx_output = builder
-      .finish(&identity_client.0)
-      .await
-      .wasm_result()?
-      .execute_with_opt_gas_internal(gas_budget, &identity_client.0)
-      .await
-      .wasm_result()?;
-
-    let maybe_proposal = match tx_output.output {
-      ProposalResult::Pending(proposal) => Some(proposal.id().to_string()),
-      ProposalResult::Executed(_) => None,
-    };
-
-    Ok(WasmTransactionOutputInternalOptionalProposalId {
-      output: maybe_proposal,
-      response: tx_output.response.clone_native_response(),
-    })
+  ) -> WasmCreateDeactivateDidProposalTx {
+    WasmCreateDeactivateDidProposalTx::new(self, expiration_epoch)
   }
 
   #[wasm_bindgen(js_name = getHistory, skip_typescript)] // ts type in custom section below
@@ -280,7 +253,7 @@ impl WasmTransactionOutputInternalOnChainIdentity {
 }
 
 #[wasm_bindgen(js_name = TransactionOutputInternalOptionalProposalId, inspectable, getter_with_clone)]
-pub struct WasmTransactionOutputInternalOptionalProposalId{
+pub struct WasmTransactionOutputInternalOptionalDeactivateDidProposal {
   pub output: Option<String>,
   pub response: AdapterNativeResponse,
 }
