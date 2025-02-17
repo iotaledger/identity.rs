@@ -25,7 +25,7 @@ impl IdentityContainer {
   #[wasm_bindgen(js_name = toFullFledged)]
   pub fn to_full_fledged(&self) -> Option<WasmOnChainIdentity> {
     match self.0.clone() {
-      Identity::FullFledged(v) => Some(WasmOnChainIdentity(v)),
+      Identity::FullFledged(v) => Some(WasmOnChainIdentity::new(v)),
       _ => None,
     }
   }

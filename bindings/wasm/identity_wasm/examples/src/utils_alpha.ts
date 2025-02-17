@@ -15,8 +15,8 @@ import {
 import { IotaClient } from "@iota/iota-sdk/client";
 import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
 
-export const IDENTITY_IOTA_PACKAGE_ID =
-  process.env.IDENTITY_IOTA_PACKAGE_ID || "0xac854096fcbfadcdd8cc8e4b6242d1b35607ef5324bfe54ba7a4be69fa6db36d";
+export const IDENTITY_IOTA_PACKAGE_ID =  
+  process.env.IOTA_IDENTITY_PKG_ID || "0xac854096fcbfadcdd8cc8e4b6242d1b35607ef5324bfe54ba7a4be69fa6db36d";
 export const NETWORK_NAME_FAUCET = "localnet";
 export const NETWORK_URL =
   process.env.NETWORK_URL || "http://127.0.0.1:9000";
@@ -43,7 +43,7 @@ export async function createDocumentForNetwork(storage: Storage, network: string
 
 export async function getClientAndCreateAccount(storage: Storage): Promise<IdentityClient> {
     if (!IDENTITY_IOTA_PACKAGE_ID) {
-        throw new Error(`IDENTITY_IOTA_PACKAGE_ID env variable must be provided to run the examples`);
+        throw new Error(`IOTA_IDENTITY_PKG_ID env variable must be provided to run the examples`);
     }
 
     const iotaClient = new IotaClient({ url: NETWORK_URL });

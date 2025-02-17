@@ -7,6 +7,7 @@ mod multicontroller;
 mod types;
 mod wasm_identity_client;
 mod wasm_identity_client_read_only;
+mod proposals;
 
 pub use identity::*;
 pub use multicontroller::*;

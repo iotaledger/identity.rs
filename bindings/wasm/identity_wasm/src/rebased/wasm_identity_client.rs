@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::rc::Rc;
+use std::ops::Deref;
 
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::ToFromBytes;
@@ -46,6 +47,13 @@ pub struct WasmIotaTransactionBlockResponseEssence {
 
 #[wasm_bindgen(js_name = IdentityClient)]
 pub struct WasmIdentityClient(pub(crate) IdentityClient<WasmTransactionSigner>);
+
+impl Deref for WasmIdentityClient {
+  type Target = IdentityClient<WasmTransactionSigner>;
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
 
 #[wasm_bindgen(js_class = IdentityClient)]
 impl WasmIdentityClient {
