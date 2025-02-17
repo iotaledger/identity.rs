@@ -27,6 +27,8 @@ use super::client_dummy::ProposalAction;
 // use super::client_dummy::ProposalBuilder;
 use super::proposals::WasmCreateDeactivateDidProposalTx;
 use super::proposals::WasmCreateUpdateDidProposalTx;
+use super::proposals::WasmCreateSendProposalTx;
+use super::proposals::StringCouple;
 use super::types::WasmIotaAddress;
 use super::WasmIdentityClient;
 
@@ -78,22 +80,29 @@ impl WasmOnChainIdentity {
   }
 
   #[wasm_bindgen(js_name = updateDidDocument)]
-  pub async fn update_did_document(
+  pub fn update_did_document(
     &self,
     updated_doc: WasmIotaDocument,
-    identity_client: &WasmIdentityClient,
     expiration_epoch: Option<u64>,
   ) -> WasmCreateUpdateDidProposalTx {
     WasmCreateUpdateDidProposalTx::new(self, updated_doc, expiration_epoch)
   }
 
   #[wasm_bindgen(js_name = deactivateDid)]
-  pub async fn deactivate_did(
+  pub fn deactivate_did(
     &self,
-    identity_client: &WasmIdentityClient,
     expiration_epoch: Option<u64>,
   ) -> WasmCreateDeactivateDidProposalTx {
     WasmCreateDeactivateDidProposalTx::new(self, expiration_epoch)
+  }
+
+  #[wasm_bindgen(js_name = sendAssets)]
+  pub fn send_assets(
+    &self,
+    transfer_map: Vec<StringCouple>,
+    expiration_epoch: Option<u64>,
+  ) -> WasmCreateSendProposalTx {
+    WasmCreateSendProposalTx::new(self, transfer_map, expiration_epoch)
   }
 
   #[wasm_bindgen(js_name = getHistory, skip_typescript)] // ts type in custom section below
