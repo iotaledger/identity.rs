@@ -63,10 +63,15 @@ export async function updateIdentity() {
         serviceEndpoint: "https://iota.org/",
     });
     resolved.insertService(service);
-    resolved.setMetadataUpdated(Timestamp.nowUTC());
 
-    let updated = await identityClient
-        .publishDidDocumentUpdate(resolved.clone(), TEST_GAS_BUDGET);
+    let maybePendingProposal = await identity
+        .updateDidDocument(resolved.clone())
+        .withGasBudget(TEST_GAS_BUDGET)
+        .execute(identityClient)
+        .then(result => result.output);
+
+    console.assert(maybePendingProposal === undefined, "the proposal should have been executed right away!");
+    
     // and resolve again to make sure we're looking at the onchain information
     const resolvedAgain = await identityClient.resolveDid(did);
     console.log(`Updated DID document result: ${JSON.stringify(resolvedAgain, null, 2)}`);
