@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod deactivate_did;
+mod update_did;
 
 pub use deactivate_did::*;
+pub use update_did::*;
 
 use wasm_bindgen::prelude::wasm_bindgen;
 

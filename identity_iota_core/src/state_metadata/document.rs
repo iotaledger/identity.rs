@@ -72,6 +72,11 @@ impl StateMetadataDocument {
     Ok(IotaDocument { document, metadata })
   }
 
+  /// Returns the corresponding [`IotaDocument`] with DID replaced by DID placeholder `did:0:0`.
+  pub fn into_iota_document_with_placeholders(self) -> IotaDocument {
+    IotaDocument { document: self.document, metadata: self.metadata }
+  }
+
   /// Pack a [`StateMetadataDocument`] into bytes, suitable for storing in an identity,
   /// according to the given `encoding`.
   pub fn pack(mut self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {

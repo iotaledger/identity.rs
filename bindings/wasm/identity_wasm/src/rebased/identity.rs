@@ -6,7 +6,6 @@ use std::rc::Rc;
 use identity_iota::iota::rebased::migration::CreateIdentityTx;
 use identity_iota::iota::rebased::migration::IdentityBuilder;
 use identity_iota::iota::rebased::migration::OnChainIdentity;
-use identity_iota::iota::rebased::proposals::ProposalResult;
 use identity_iota::iota::rebased::transaction::TransactionInternal;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
 use identity_iota::iota::IotaDocument;
@@ -27,6 +26,7 @@ use super::client_dummy::ProposalAction;
 // use super::client_dummy::ProposalAction;
 // use super::client_dummy::ProposalBuilder;
 use super::proposals::WasmCreateDeactivateDidProposalTx;
+use super::proposals::WasmCreateUpdateDidProposalTx;
 use super::types::WasmIotaAddress;
 use super::WasmIdentityClient;
 
@@ -83,33 +83,8 @@ impl WasmOnChainIdentity {
     updated_doc: WasmIotaDocument,
     identity_client: &WasmIdentityClient,
     expiration_epoch: Option<u64>,
-    gas_budget: Option<u64>,
-  ) -> Result<WasmTransactionOutputInternalOptionalProposalId> {
-    let mut identity_lock = self.0.write().await;
-    let builder = identity_lock.update_did_document(updated_doc.0.read().await.clone());
-    let builder = if let Some(exp) = expiration_epoch {
-      builder.expiration_epoch(exp)
-    } else {
-      builder
-    };
-
-    let tx_output = builder
-      .finish(&identity_client.0)
-      .await
-      .wasm_result()?
-      .execute_with_opt_gas_internal(gas_budget, &identity_client.0)
-      .await
-      .wasm_result()?;
-
-    let maybe_proposal = match tx_output.output {
-      ProposalResult::Pending(proposal) => Some(proposal.id().to_string()),
-      ProposalResult::Executed(_) => None,
-    };
-
-    Ok(WasmTransactionOutputInternalOptionalProposalId {
-      output: maybe_proposal,
-      response: tx_output.response.clone_native_response(),
-    })
+  ) -> WasmCreateUpdateDidProposalTx {
+    WasmCreateUpdateDidProposalTx::new(self, updated_doc, expiration_epoch)
   }
 
   #[wasm_bindgen(js_name = deactivateDid)]
