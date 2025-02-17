@@ -100,8 +100,8 @@ impl WasmProposalSend {
   }
 
   #[wasm_bindgen]
-  pub fn approve(&self, identity: &WasmOnChainIdentity) -> WasmApproveDeativateDidProposalTx {
-    WasmApproveDeativateDidProposalTx::new(self, identity)
+  pub fn approve(&self, identity: &WasmOnChainIdentity) -> WasmApproveSendProposalTx {
+    WasmApproveSendProposalTx::new(self, identity)
   }
 
   #[wasm_bindgen(js_name = intoTx)]
@@ -110,15 +110,15 @@ impl WasmProposalSend {
   }
 }
 
-#[wasm_bindgen(js_name = ApproveDeativateDidProposalTx)]
-pub struct WasmApproveDeativateDidProposalTx {
+#[wasm_bindgen(js_name = ApproveSendProposalTx)]
+pub struct WasmApproveSendProposalTx {
   proposal: WasmProposalSend,
   identity: WasmOnChainIdentity,
   gas_budget: Option<u64>,
 }
 
-#[wasm_bindgen(js_class = ApproveDeativateDidProposalTx)]
-impl WasmApproveDeativateDidProposalTx {
+#[wasm_bindgen(js_class = ApproveSendProposalTx)]
+impl WasmApproveSendProposalTx {
   fn new(proposal: &WasmProposalSend, identity: &WasmOnChainIdentity) -> Self {
     Self {
       proposal: proposal.clone(),
