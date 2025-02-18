@@ -15,7 +15,7 @@
 #![allow(clippy::upper_case_acronyms)]
 
 pub use did::IotaDID;
-#[cfg(all(feature = "iota-client", not(target_arch = "wasm32")))]
+#[cfg(feature = "iota-client")]
 pub use did_resolution::DidResolutionHandler;
 pub use document::*;
 pub use network::NetworkName;
@@ -30,7 +30,7 @@ mod error;
 mod network;
 mod state_metadata;
 
-#[cfg(all(feature = "iota-client", not(target_arch = "wasm32")))]
+#[cfg(feature = "iota-client")]
 mod did_resolution;
 #[cfg(feature = "iota-client")]
 mod iota_interaction_adapter;
