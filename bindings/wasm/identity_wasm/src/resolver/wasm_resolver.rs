@@ -21,11 +21,10 @@ use crate::error::JsValueResult;
 use crate::error::WasmError;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
-use crate::rebased::WasmIdentityClient;
 use crate::resolver::resolver_config::MapResolutionHandler;
 use crate::resolver::resolver_config::ResolverConfig;
 use crate::resolver::PromiseArrayIToCoreDocument;
-use crate::resolver::WasmDidDidResolutionHandler;
+use crate::resolver::WasmDidResolutionHandler;
 
 use super::resolver_types::PromiseIToCoreDocument;
 use crate::error::Result;
@@ -60,7 +59,7 @@ impl WasmResolver {
 
     let mut attached_iota_method = false;
     let resolution_handlers: Option<MapResolutionHandler> = config.handlers();
-    let client: Option<WasmDidDidResolutionHandler> = config.client();
+    let client: Option<WasmDidResolutionHandler> = config.client();
 
     if let Some(handlers) = resolution_handlers {
       let map: &Map = handlers.dyn_ref::<js_sys::Map>().ok_or_else(|| {
@@ -83,11 +82,11 @@ impl WasmResolver {
         ))?;
       }
 
-      let rc_client: Rc<WasmDidDidResolutionHandler> = Rc::new(wasm_client);
+      let rc_client: Rc<WasmDidResolutionHandler> = Rc::new(wasm_client);
       // Take CoreDID (instead of IotaDID) to avoid inconsistent error messages between the
       // cases when the iota handler is attached by passing a client or directly as a handler.
       let handler = move |did: CoreDID| {
-        let rc_client_clone: Rc<WasmDidDidResolutionHandler> = rc_client.clone();
+        let rc_client_clone: Rc<WasmDidResolutionHandler> = rc_client.clone();
         async move {
           let iota_did: IotaDID = IotaDID::parse(did).map_err(identity_iota::iota::Error::DIDSyntaxError)?;
           Self::client_as_handler(rc_client_clone.as_ref(), iota_did.into()).await

@@ -3,7 +3,7 @@
 
 use wasm_bindgen::prelude::*;
 
-use super::WasmDidDidResolutionHandler;
+use super::WasmDidResolutionHandler;
 
 #[wasm_bindgen]
 extern "C" {
@@ -14,7 +14,7 @@ extern "C" {
   pub type ResolverConfig;
 
   #[wasm_bindgen(method, getter)]
-  pub(crate) fn client(this: &ResolverConfig) -> Option<WasmDidDidResolutionHandler>;
+  pub(crate) fn client(this: &ResolverConfig) -> Option<WasmDidResolutionHandler>;
 
   #[wasm_bindgen(method, getter)]
   pub(crate) fn handlers(this: &ResolverConfig) -> Option<MapResolutionHandler>;
@@ -35,7 +35,7 @@ export type ResolverConfig = {
     /**
      * Client for resolving DIDs of the iota method, usually an {@link IdentityClient} or an {@link IdentityClientReadOnly}
      */
-    client?: WasmDidDidResolutionHandler,
+    client?: WasmDidResolutionHandler,
 
     /**
      * Handlers for resolving DIDs from arbitrary DID methods. 

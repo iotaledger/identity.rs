@@ -7,4 +7,4 @@ mod wasm_did_resolution_handler;
 mod wasm_resolver;
 
 pub use resolver_types::*;
-pub use wasm_did_resolution_handler::WasmDidDidResolutionHandler;
+pub use wasm_did_resolution_handler::WasmDidResolutionHandler;

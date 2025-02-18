@@ -14,23 +14,23 @@ use crate::iota::PromiseIotaDocument;
 use crate::iota::WasmIotaDID;
 
 #[wasm_bindgen(typescript_custom_section)]
-const WASM_DID_DID_RESOLUTION_HANDLER: &str = r#"
-interface WasmDidDidResolutionHandler {
+const WASM_DID_RESOLUTION_HANDLER: &str = r#"
+interface WasmDidResolutionHandler {
   resolveDid: (did: IotaDID) => Promise<IotaDocument>;
 }
 "#;
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "WasmDidDidResolutionHandler")]
-  pub type WasmDidDidResolutionHandler;
+  #[wasm_bindgen(typescript_type = "WasmDidResolutionHandler")]
+  pub type WasmDidResolutionHandler;
 
   #[wasm_bindgen(js_name = "resolveDid", method)]
-  pub fn resolve_did(this: &WasmDidDidResolutionHandler, did: WasmIotaDID) -> PromiseIotaDocument;
+  pub fn resolve_did(this: &WasmDidResolutionHandler, did: WasmIotaDID) -> PromiseIotaDocument;
 }
 
 #[async_trait::async_trait(?Send)]
-impl DidResolutionHandler for WasmDidDidResolutionHandler {
+impl DidResolutionHandler for WasmDidResolutionHandler {
   async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument, identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&self.resolve_did(WasmIotaDID(did.clone())));
     let result: JsValueResult = JsFuture::from(promise).await.into();
