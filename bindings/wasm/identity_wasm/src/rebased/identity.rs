@@ -28,6 +28,8 @@ use super::client_dummy::ProposalAction;
 use super::proposals::WasmCreateDeactivateDidProposalTx;
 use super::proposals::WasmCreateUpdateDidProposalTx;
 use super::proposals::WasmCreateSendProposalTx;
+use super::proposals::WasmCreateConfigChangeProposalTx;
+use super::proposals::WasmConfigChange;
 use super::proposals::StringCouple;
 use super::types::WasmIotaAddress;
 use super::WasmIdentityClient;
@@ -94,6 +96,15 @@ impl WasmOnChainIdentity {
     expiration_epoch: Option<u64>,
   ) -> WasmCreateDeactivateDidProposalTx {
     WasmCreateDeactivateDidProposalTx::new(self, expiration_epoch)
+  }
+
+  #[wasm_bindgen(js_name = updateConfig)]
+  pub fn update_config(
+    &self,
+    config: WasmConfigChange,
+    expiration_epoch: Option<u64>,
+  ) -> WasmCreateConfigChangeProposalTx {
+    WasmCreateConfigChangeProposalTx::new(self, config, expiration_epoch)
   }
 
   #[wasm_bindgen(js_name = sendAssets)]

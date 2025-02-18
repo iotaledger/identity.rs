@@ -4,22 +4,36 @@
 mod deactivate_did;
 mod update_did;
 mod send;
+mod config_change;
 
 pub use deactivate_did::*;
 pub use update_did::*;
 pub use send::*;
+pub use config_change::*;
 
+use std::collections::HashMap;
+use std::collections::HashSet;
+
+use identity_iota::iota_interaction::types::base_types::ObjectID;
+use identity_iota::iota_interaction::types::base_types::IotaAddress;
 use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::JsValue;
 use wasm_bindgen::JsCast as _;
 use js_sys::Reflect;
 use js_sys::JsString;
 
 #[wasm_bindgen]
 extern "C" {
+  #[derive(Clone)]
   #[wasm_bindgen(typescript_type = "Set<string>")]
   pub type StringSet;
+
   #[wasm_bindgen(typescript_type = "[string, string]")]
   pub type StringCouple;
+
+  #[derive(Clone)]
+  #[wasm_bindgen(typescript_type = "Map<string, number>")]
+  pub type MapStringNumber;
 }
 
 impl From<StringCouple> for (String, String) {
@@ -40,5 +54,50 @@ impl From<StringCouple> for (String, String) {
 impl From<(String, String)> for StringCouple {
   fn from(value: (String, String)) -> Self {
     serde_wasm_bindgen::to_value(&value).expect("a string couple can be serialized to JS").unchecked_into()
+  }
+}
+
+impl TryFrom<MapStringNumber> for HashMap<IotaAddress, u64> {
+  type Error = JsValue;
+  fn try_from(value: MapStringNumber) -> Result<Self, Self::Error> {
+    Ok(serde_wasm_bindgen::from_value(value.into())?)
+  }
+}
+
+impl TryFrom<&'_ HashMap<IotaAddress, u64>> for MapStringNumber {
+  type Error = JsValue;
+  fn try_from(value: &'_ HashMap<IotaAddress, u64>) -> Result<Self, Self::Error> {
+    let js_value = serde_wasm_bindgen::to_value(value)?;
+    Ok(js_value.dyn_into()?)
+  }
+}
+
+impl TryFrom<MapStringNumber> for HashMap<ObjectID, u64> {
+  type Error = JsValue;
+  fn try_from(value: MapStringNumber) -> Result<Self, Self::Error> {
+    Ok(serde_wasm_bindgen::from_value(value.into())?)
+  }
+}
+
+impl TryFrom<&'_ HashMap<ObjectID, u64>> for MapStringNumber {
+  type Error = JsValue;
+  fn try_from(value: &'_ HashMap<ObjectID, u64>) -> Result<Self, Self::Error> {
+    let js_value = serde_wasm_bindgen::to_value(value)?;
+    Ok(js_value.dyn_into()?)
+  }
+}
+
+impl TryFrom<StringSet> for HashSet<ObjectID> {
+  type Error = JsValue;
+  fn try_from(value: StringSet) -> Result<Self, Self::Error> {
+    Ok(serde_wasm_bindgen::from_value(value.into())?)
+  }
+}
+
+impl TryFrom<&'_ HashSet<ObjectID>> for StringSet {
+  type Error = JsValue;
+  fn try_from(value: &'_ HashSet<ObjectID>) -> Result<Self, Self::Error> {
+    let js_value = serde_wasm_bindgen::to_value(value)?;
+    Ok(js_value.dyn_into()?)
   }
 }
