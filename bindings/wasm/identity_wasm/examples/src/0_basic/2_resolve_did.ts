@@ -74,7 +74,7 @@ export async function resolveIdentity() {
     const resolvedViaReadOnly = await resolverWithReadOnlyClient.resolve(did.toString());
     console.log(`resolverWithReadOnlyClient ${did.toString()} resolves to:\n ${JSON.stringify(resolvedViaReadOnly, null, 2)}`);
 
-    // As our `Resolver<IotaDocument>` instance will only return `IotaDocument` instances, we can directly work with them, w.g.
+    // As our `Resolver<IotaDocument>` instance will only return `IotaDocument` instances, we can directly work with them, e.g.
     console.log(`${did.toString()}'s metadata is ${resolvedViaReadOnly.metadata()}`);
 }
 
