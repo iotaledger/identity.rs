@@ -25,6 +25,7 @@ use identity_iota::credential::SelectiveDisclosurePresentation;
 use identity_iota::credential::Subject;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
+use identity_iota::iota_interaction::OptionalSync;
 
 use identity_iota::iota::rebased::transaction::TransactionOutput;
 use identity_iota::iota::IotaDocument;

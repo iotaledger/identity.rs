@@ -51,6 +51,7 @@ use identity_iota::iota::rebased::transaction::Transaction;
 use identity_iota::iota::rebased::transaction::TransactionOutput;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::NetworkName;
+use identity_iota::iota_interaction::OptionalSync;
 use identity_iota::resolver::Resolver;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
