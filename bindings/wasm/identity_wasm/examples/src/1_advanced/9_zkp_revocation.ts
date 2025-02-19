@@ -21,13 +21,7 @@ import {
     Timestamp,
 } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
-import {
-    createDocumentForNetwork,
-    getFundedClient,
-    getMemstorage,
-    NETWORK_URL,
-    TEST_GAS_BUDGET,
-} from '../util';
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL, TEST_GAS_BUDGET } from "../util";
 
 export async function zkp_revocation() {
     // create new client to connect to IOTA network
@@ -201,7 +195,8 @@ export async function zkp_revocation() {
     // Update the RevocationBitmap service in the issuer's DID Document.
     // This revokes the credential's unique index.
     issuerDocument.revokeCredentials("my-revocation-service", 5);
-    issuerDocument = await issuerClient.publishDidDocumentUpdate(issuerDocument, TEST_GAS_BUDGET);
+    await issuerIdentity.updateDidDocument(issuerDocument).execute(issuerClient);
+    issuerDocument = issuerIdentity.didDocument();
 
     // Holder checks if his credential has been revoked by the Issuer
     try {

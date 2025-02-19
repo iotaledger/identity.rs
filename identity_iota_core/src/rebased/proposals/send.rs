@@ -61,6 +61,12 @@ impl SendAction {
   }
 }
 
+impl AsRef<[(ObjectID, IotaAddress)]> for SendAction {
+  fn as_ref(&self) -> &[(ObjectID, IotaAddress)] {
+    &self.0
+  }
+}
+
 impl ProposalBuilder<'_, SendAction> {
   /// Adds one object to the list of objects to send.
   pub fn object(mut self, object_id: ObjectID, recipient: IotaAddress) -> Self {

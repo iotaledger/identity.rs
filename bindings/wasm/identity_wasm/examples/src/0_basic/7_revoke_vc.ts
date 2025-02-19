@@ -23,10 +23,10 @@ import {
     createDocumentForNetwork,
     getFundedClient,
     getMemstorage,
-    IDENTITY_IOTA_PACKAGE_ID,
+    IOTA_IDENTITY_PKG_ID,
     NETWORK_URL,
     TEST_GAS_BUDGET,
-} from '../util';
+} from "../util";
 
 /**
  * This example shows how to revoke a verifiable credential.
@@ -74,10 +74,10 @@ export async function revokeVC() {
     issuerDocument.insertService(service);
 
     // Publish the updated document.
-    let updatedDocument: IotaDocument = await issuerClient.publishDidDocumentUpdate(
-        issuerDocument,
-        TEST_GAS_BUDGET,
-    );
+    await issuerIdentity
+        .updateDidDocument(issuerDocument)
+        .withGasBudget(TEST_GAS_BUDGET)
+        .execute(issuerClient);
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
     const subject = {
@@ -130,10 +130,10 @@ export async function revokeVC() {
     issuerDocument.revokeCredentials("my-revocation-service", CREDENTIAL_INDEX);
 
     // Publish the changes.
-    let update2: IotaDocument = await issuerClient.publishDidDocumentUpdate(
-        issuerDocument,
-        TEST_GAS_BUDGET,
-    );
+    await issuerIdentity
+        .updateDidDocument(issuerDocument)
+        .withGasBudget(TEST_GAS_BUDGET)
+        .execute(issuerClient);
 
     // Credential verification now fails.
     try {
@@ -160,14 +160,16 @@ export async function revokeVC() {
     await issuerDocument.purgeMethod(issuerStorage, originalMethod.id());
 
     // Publish the changes.
-    issuerDocument = await issuerClient.publishDidDocumentUpdate(
-        issuerDocument,
-        TEST_GAS_BUDGET,
-    );
+    await issuerIdentity
+        .updateDidDocument(issuerDocument)
+        .withGasBudget(TEST_GAS_BUDGET)
+        .execute(issuerClient);
+
+    issuerDocument = issuerIdentity.didDocument();
 
     // We expect the verifiable credential to be revoked.
     const resolver = new Resolver<IotaDocument>({
-        client: await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PACKAGE_ID),
+        client: await IdentityClientReadOnly.createWithPkgId(iotaClient, IOTA_IDENTITY_PKG_ID),
     });
     try {
         // Resolve the issuer's updated DID Document to ensure the key was revoked successfully.

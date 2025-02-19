@@ -10,12 +10,7 @@ import {
     JwtCredentialValidator,
 } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
-import {
-    createDocumentForNetwork,
-    getFundedClient,
-    getMemstorage,
-    NETWORK_URL,
-} from '../util';
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL } from "../util";
 
 /**
  * This example shows how to create a Verifiable Credential and validate it.
