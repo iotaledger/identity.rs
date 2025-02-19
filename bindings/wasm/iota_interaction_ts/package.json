@@ -17,7 +17,7 @@
     "build:web": "npm run build:src && npm run bundle:web && wasm-opt -O web/iota_interaction_ts_bg.wasm -o web/iota_interaction_ts_bg.wasm",
     "build:docs": "typedoc && npm run fix_docs",
     "build:examples:web": "tsc --project ./examples/tsconfig.web.json && node ../build/replace_paths ./examples/tsconfig.web.json ./examples/dist iota_interaction_ts resolve",
-    "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
+    "build": "npm run build:web && npm run build:nodejs",
     "example:node": "ts-node --project tsconfig.node.json -r tsconfig-paths/register ./examples/src/main.ts",
     "test": "npm run test:unit:node && npm run test:readme && npm run test:node && test:browser:parallel",
     "test:node": "ts-mocha -r tsconfig-paths/register -p tsconfig.node.json ./examples/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
