@@ -46,6 +46,7 @@ jobs:
         with:
           os: ${{ runner.os }}
           job: ${{ github.job }}
+          target: wasm32-unknown-unknown
           cargo-cache-enabled: true
           target-cache-enabled: true
           sccache-enabled: true
