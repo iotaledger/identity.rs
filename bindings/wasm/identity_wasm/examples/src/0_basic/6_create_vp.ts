@@ -27,7 +27,7 @@ import {
     createDocumentForNetwork,
     getFundedClient,
     getMemstorage,
-    IDENTITY_IOTA_PACKAGE_ID,
+    IDENTITY_IOTA_PKG_ID,
     NETWORK_URL,
 } from '../util';
 
@@ -164,7 +164,7 @@ export async function createVP() {
     );
 
     const resolver = new Resolver<IotaDocument>({
-        client: await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PACKAGE_ID),
+        client: await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PKG_ID),
     });
     // Resolve the presentation holder.
     const presentationHolderDID: CoreDID = JwtPresentationValidator.extractHolder(presentationJwt);

@@ -12,7 +12,7 @@ Examples can be run against
 - a local IOTA node
 - or an existing network, e.g. the IOTA testnet
 
-When setting up the local node, you'll also need to publish an identity package as described in [Getting Started](../../../../README.md#getting-started), the `IDENTITY_IOTA_PACKAGE_ID`. You'll need this ID to be able to run the examples against the local node.
+When setting up the local node, you'll also need to publish an identity package as described in [Getting Started](../../../../README.md#getting-started), the `IDENTITY_IOTA_PKG_ID`. You'll need this ID to be able to run the examples against the local node.
 
 In case of running the examples against an existing network, this network needs to have a faucet to fund your accounts (the IOTA testnet (`https://api.testnet.iota.cafe`) supports this), and you need to specify this via `NETWORK_URL`.
 
@@ -24,7 +24,7 @@ Summarizing the last point, you'll need one or more of the following environment
 
 | Name                     | Required for local node | Required for testnet | Required for other node |       Comment        |
 | ------------------------ | :---------------------: | :------------------: | :---------------------: | :------------------: |
-| IDENTITY_IOTA_PACKAGE_ID |            x            |                      |            x            |                      |
+| IDENTITY_IOTA_PKG_ID |            x            |                      |            x            |                      |
 | NETWORK_URL              |                         |          x           |            x            |                      |
 | NETWORK_NAME_FAUCET      |                         |          x           |            x            | see assumption above |
 
@@ -45,13 +45,13 @@ npm run build
 Then, run an example using the following command, environment variables depend on you setup, see [Environment variables](#environment-variables).
 
 ```bash
-IDENTITY_IOTA_PACKAGE_ID=0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818 npm run example:node -- <example-name>
+IDENTITY_IOTA_PKG_ID=0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818 npm run example:node -- <example-name>
 ```
 
 For instance, to run the `0_create_did` example with the following (environment variables depend on you setup, see [Environment variables](#environment-variables)):
 
 ```bash
-IDENTITY_IOTA_PACKAGE_ID=0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818 npm run example:node -- 0_create_did
+IDENTITY_IOTA_PKG_ID=0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818 npm run example:node -- 0_create_did
 ```
 
 ## Basic Examples

@@ -20,7 +20,7 @@ import { IotaClient } from "@iota/iota-sdk/client";
 import {
     getFundedClient,
     getMemstorage,
-    IDENTITY_IOTA_PACKAGE_ID,
+    IDENTITY_IOTA_PKG_ID,
     NETWORK_URL,
 } from '../util';
 
@@ -96,7 +96,7 @@ export async function zkp() {
     // Step 4: Holder resolve Issuer's DID, retrieve Issuer's document and validate the Credential
     // ============================================================================================
     const identityClientReadOnly = await IdentityClientReadOnly.createWithPkgId(
-        iotaClient, IDENTITY_IOTA_PACKAGE_ID);
+        iotaClient, IDENTITY_IOTA_PKG_ID);
 
     // Holder resolves issuer's DID.
     let issuerDid = IotaDID.parse(JptCredentialValidatorUtils.extractIssuerFromIssuedJpt(credentialJpt).toString());

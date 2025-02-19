@@ -15,7 +15,7 @@ import {
     createDocumentForNetwork,
     getFundedClient,
     getMemstorage,
-    IDENTITY_IOTA_PACKAGE_ID,
+    IDENTITY_IOTA_PKG_ID,
     NETWORK_URL,
 } from '../util';
 
@@ -65,7 +65,7 @@ export async function resolveIdentity() {
     console.log(`DID ${DID_JWK} resolves to:\n ${JSON.stringify(did_jwk_resolved_doc, null, 2)}`);
 
     // We can also create a resolver with a read-only client
-    const identityClientReadOnly = await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PACKAGE_ID);
+    const identityClientReadOnly = await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PKG_ID);
     // In this case we will only be resolving `IotaDocument` instances, as we don't pass a `handler` configuration.
     // Therefore we can limit the type of the resolved documents to `IotaDocument` when creating the new resolver as well.
     const resolverWithReadOnlyClient = new Resolver<IotaDocument>({ client: identityClientReadOnly });
