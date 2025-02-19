@@ -83,10 +83,12 @@ jobs:
 
       - name: Build WASM bindings
         run: npm run build
+        working-directory: bindings/wasm/identity_wasm
 
       - name: Run Node unit tests
         if: ${{ inputs.run-unit-tests }}
         run: npm run test:unit:node
+        working-directory: bindings/wasm/identity_wasm
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
