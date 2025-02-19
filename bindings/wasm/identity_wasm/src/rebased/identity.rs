@@ -243,9 +243,3 @@ impl WasmTransactionOutputInternalOnChainIdentity {
     self.0.response.clone_native_response()
   }
 }
-
-#[wasm_bindgen(js_name = TransactionOutputInternalOptionalProposalId, inspectable, getter_with_clone)]
-pub struct WasmTransactionOutputInternalOptionalDeactivateDidProposal {
-  pub output: Option<String>,
-  pub response: AdapterNativeResponse,
-}
