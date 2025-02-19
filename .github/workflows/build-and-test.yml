@@ -12,6 +12,7 @@ on:
       - 'support/**'
     paths:
       - '.github/workflows/build-and-test.yml'
+      - '.github/workflows/shared-build-wasm.yml'
       - '.github/actions/**'
       - '**.rs'
       - '**.toml'
@@ -216,7 +217,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: identity-wasm-bindings-build
-          path: bindings/wasm/identity_wasm
+          path: bindings/wasm/
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
@@ -252,7 +253,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: identity-wasm-bindings-build
-          path: bindings/wasm/identity_wasm
+          path: bindings/wasm/
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
@@ -296,7 +297,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: identity-wasm-bindings-build
-          path: bindings/wasm/identity_wasm
+          path: bindings/wasm/
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
