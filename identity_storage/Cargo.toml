@@ -39,7 +39,7 @@ once_cell = { version = "1.18", default-features = false }
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
 
 [features]
-default = ["iota-document", "memstore", "hybrid-liboqs"]
+default = ["iota-document", "memstore"]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
 memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto"]
 # Enables `Send` + `Sync` bounds for the storage traits.
