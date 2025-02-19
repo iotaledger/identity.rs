@@ -4,10 +4,16 @@
 use identity_did::{DIDCompositeJwk, DIDJwk};
 use identity_document::document::CoreDocument;
 use identity_verification::{jwk::{CompositeAlgId, CompositeJwk}, jws::JwsAlgorithm, jwu::encode_b64_json};
-use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use async_trait::async_trait;
+#[cfg(feature = "jpt-bbs-plus")]
+use jsonprooftoken::jpa::algs::ProofAlgorithm;
 
-use crate::{JwkGenOutput, JwkStorage, JwkStorageBbsPlusExt, JwkStorageDocumentError as Error, JwkStoragePQ, KeyId, KeyIdStorage, KeyType, MethodDigest};
+
+use crate::{JwkGenOutput, JwkStorage, JwkStorageDocumentError as Error, KeyId, KeyIdStorage, KeyType, MethodDigest};
+#[cfg(feature = "pqc")]
+use crate::JwkStoragePQ;
+#[cfg(feature = "hybrid")]
+use crate::JwkStorageBbsPlusExt;
 
 use super::{Storage, StorageResult};
 
@@ -101,6 +107,7 @@ impl DidJwkDocumentExt for CoreDocument {
     Ok((document, fragment.to_string()))
   }
 
+  #[cfg(feature = "pqc")]
   async fn new_did_jwk_pqc<K, I>(
 
     storage: &Storage<K, I>,
@@ -144,6 +151,7 @@ impl DidJwkDocumentExt for CoreDocument {
     Ok((document, fragment.to_string()))
   }
 
+  #[cfg(feature = "jpt-bbs-plus")]
   async fn new_did_jwk_zk<K, I>(
     storage: &Storage<K, I>,
     key_type: KeyType,
@@ -184,6 +192,7 @@ impl DidJwkDocumentExt for CoreDocument {
     Ok((document, fragment.to_string()))
   }
 
+  #[cfg(feature = "hybrid")]
   async fn new_did_compositejwk<K, I>(
     storage: &Storage<K, I>,
     alg: CompositeAlgId,
