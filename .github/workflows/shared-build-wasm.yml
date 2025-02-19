@@ -70,6 +70,14 @@ jobs:
 
       - name: Install JS dependencies
         run: npm ci
+        working-directory: bindings/wasm/iota_interaction_ts
+        
+      - name: Build IOTA interaction bindings
+        run: npm run build
+        working-directory: bindings/wasm/iota_interaction_ts
+
+      - name: Install JS dependencies
+        run: npm ci
         working-directory: bindings/wasm/identity_wasm
 
       - name: Build WASM bindings
@@ -78,14 +86,6 @@ jobs:
       - name: Run Node unit tests
         if: ${{ inputs.run-unit-tests }}
         run: npm run test:unit:node
-
-      - name: Install JS dependencies
-        run: npm ci
-        working-directory: bindings/wasm/iota_interaction_ts
-        
-      - name: Build IOTA interaction bindings
-        run: npm run build
-        working-directory: bindings/wasm/iota_interaction_ts
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
