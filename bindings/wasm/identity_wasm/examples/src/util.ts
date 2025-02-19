@@ -16,7 +16,7 @@ import { IotaClient } from "@iota/iota-sdk/client";
 import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
 
 export const IDENTITY_IOTA_PACKAGE_ID =
-    process.env.IDENTITY_IOTA_PACKAGE_ID || "0xac854096fcbfadcdd8cc8e4b6242d1b35607ef5324bfe54ba7a4be69fa6db36d";
+    process.env.IDENTITY_IOTA_PACKAGE_ID || "0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818";
 export const NETWORK_NAME_FAUCET = process.env.NETWORK_NAME_FAUCET || "localnet";
 export const NETWORK_URL =
     process.env.NETWORK_URL || "http://127.0.0.1:9000";

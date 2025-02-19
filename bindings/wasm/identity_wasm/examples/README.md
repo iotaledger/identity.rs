@@ -45,13 +45,13 @@ npm run build
 Then, run an example using the following command, environment variables depend on you setup, see [Environment variables](#environment-variables).
 
 ```bash
-IDENTITY_IOTA_PACKAGE_ID=0xac854096fcbfadcdd8cc8e4b6242d1b35607ef5324bfe54ba7a4be69fa6db36d npm run example:node -- <example-name>
+IDENTITY_IOTA_PACKAGE_ID=0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818 npm run example:node -- <example-name>
 ```
 
 For instance, to run the `0_create_did` example with the following (environment variables depend on you setup, see [Environment variables](#environment-variables)):
 
 ```bash
-IDENTITY_IOTA_PACKAGE_ID=0xac854096fcbfadcdd8cc8e4b6242d1b35607ef5324bfe54ba7a4be69fa6db36d npm run example:node -- 0_create_did
+IDENTITY_IOTA_PACKAGE_ID=0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818 npm run example:node -- 0_create_did
 ```
 
 ## Basic Examples
