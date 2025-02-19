@@ -186,6 +186,7 @@ jobs:
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     uses: './.github/workflows/shared-build-wasm.yml'
     with:
+      run-unit-tests: false
       output-artifact-name: identity-wasm-bindings-build
 
   test-wasm:

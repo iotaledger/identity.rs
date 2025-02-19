@@ -20,6 +20,7 @@ jobs:
   build-wasm: 
     uses: './.github/workflows/shared-build-wasm.yml'
     with:
+      run-unit-tests: false
       ref: ${{ github.event.inputs.branch }}
       output-artifact-name: identity-wasm-bindings-build
 
