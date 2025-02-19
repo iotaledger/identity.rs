@@ -131,7 +131,7 @@ impl ConfigChange {
     self.threshold
   }
 
-  /// Returns the controllers that will be addeded, as the map [IotaAddress] -> [u64].
+  /// Returns the controllers that will be added, as the map [IotaAddress] -> [u64].
   pub fn controllers_to_add(&self) -> &HashMap<IotaAddress, u64> {
     &self.controllers_to_add
   }
