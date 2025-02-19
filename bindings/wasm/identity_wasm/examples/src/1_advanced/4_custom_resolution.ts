@@ -7,7 +7,7 @@ import {
 import { IotaClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
-    getClientAndCreateAccount,
+    getFundedClient,
     getMemstorage,
     NETWORK_URL,
 } from '../util';
@@ -42,7 +42,7 @@ export async function customResolution() {
     const iotaClient = new IotaClient({ url: NETWORK_URL });
     const network = await iotaClient.getChainIdentifier();
     const storage = getMemstorage();
-    const identityClient = await getClientAndCreateAccount(storage);
+    const identityClient = await getFundedClient(storage);
     const [unpublished] = await createDocumentForNetwork(storage, network);
 
     // create new identity for this account and publish document for it, DID of it will be resolved later on

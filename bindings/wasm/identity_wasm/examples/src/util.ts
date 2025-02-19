@@ -41,7 +41,7 @@ export async function createDocumentForNetwork(storage: Storage, network: string
     return [unpublished, verificationMethodFragment];
 }
 
-export async function getClientAndCreateAccount(storage: Storage): Promise<IdentityClient> {
+export async function getFundedClient(storage: Storage): Promise<IdentityClient> {
     if (!IDENTITY_IOTA_PACKAGE_ID) {
         throw new Error(`IDENTITY_IOTA_PACKAGE_ID env variable must be provided to run the examples`);
     }

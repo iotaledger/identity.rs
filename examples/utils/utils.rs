@@ -76,7 +76,7 @@ pub fn random_stronghold_path() -> PathBuf {
   file.to_owned()
 }
 
-pub async fn get_client_and_create_account<K, I>(
+pub async fn get_funded_client<K, I>(
   storage: &Storage<K, I>,
 ) -> Result<IdentityClient<StorageSigner<K, I>>, anyhow::Error>
 where

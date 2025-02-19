@@ -25,7 +25,7 @@ import {
 import { IotaClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
-    getClientAndCreateAccount,
+    getFundedClient,
     getMemstorage,
     IDENTITY_IOTA_PACKAGE_ID,
     NETWORK_URL,
@@ -47,7 +47,7 @@ export async function createVP() {
 
     // create issuer account, create identity, and publish DID document for it
     const issuerStorage = getMemstorage();
-    const issuerClient = await getClientAndCreateAccount(issuerStorage);
+    const issuerClient = await getFundedClient(issuerStorage);
     const [unpublishedIssuerDocument, issuerFragment] = await createDocumentForNetwork(issuerStorage, network);
     const { output: issuerIdentity } = await issuerClient
         .createIdentity(unpublishedIssuerDocument)
@@ -57,7 +57,7 @@ export async function createVP() {
 
     // create holder account, create identity, and publish DID document for it
     const aliceStorage = getMemstorage();
-    const aliceClient = await getClientAndCreateAccount(aliceStorage);
+    const aliceClient = await getFundedClient(aliceStorage);
     const [unpublishedAliceDocument, aliceFragment] = await createDocumentForNetwork(aliceStorage, network);
     const { output: aliceIdentity } = await aliceClient
         .createIdentity(unpublishedAliceDocument)

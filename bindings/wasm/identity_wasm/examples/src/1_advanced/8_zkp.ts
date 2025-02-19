@@ -18,7 +18,7 @@ import {
 } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
 import {
-    getClientAndCreateAccount,
+    getFundedClient,
     getMemstorage,
     IDENTITY_IOTA_PACKAGE_ID,
     NETWORK_URL,
@@ -35,7 +35,7 @@ export async function zkp() {
 
     // Create an identity for the issuer with one verification method `key-1`, and publish DID document for it.
     const issuerStorage = getMemstorage();
-    const issuerClient = await getClientAndCreateAccount(issuerStorage);
+    const issuerClient = await getFundedClient(issuerStorage);
     const unpublishedIssuerDocument = new IotaDocument(network);
     const issuerFragment = await unpublishedIssuerDocument.generateMethodJwp(
         issuerStorage,

@@ -13,7 +13,7 @@ import {
 import { IotaClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
-    getClientAndCreateAccount,
+    getFundedClient,
     getMemstorage,
     IDENTITY_IOTA_PACKAGE_ID,
     NETWORK_URL,
@@ -28,7 +28,7 @@ export async function resolveIdentity() {
     const iotaClient = new IotaClient({ url: NETWORK_URL });
     const network = await iotaClient.getChainIdentifier();
     const storage = getMemstorage();
-    const identityClient = await getClientAndCreateAccount(storage);
+    const identityClient = await getFundedClient(storage);
     const [unpublished] = await createDocumentForNetwork(storage, network);
 
     // create new identity for this account and publish document for it

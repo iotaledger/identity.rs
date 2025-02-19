@@ -23,7 +23,7 @@ import {
 import { IotaClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
-    getClientAndCreateAccount,
+    getFundedClient,
     getMemstorage,
     NETWORK_URL,
     TEST_GAS_BUDGET,
@@ -36,7 +36,7 @@ export async function zkp_revocation() {
 
     // Create an identity for the issuer with one verification method `key-1`, and publish DID document for it.
     const issuerStorage = getMemstorage();
-    const issuerClient = await getClientAndCreateAccount(issuerStorage);
+    const issuerClient = await getFundedClient(issuerStorage);
     const unpublishedIssuerDocument = new IotaDocument(network);
     const issuerFragment = await unpublishedIssuerDocument.generateMethodJwp(
         issuerStorage,
@@ -57,7 +57,7 @@ export async function zkp_revocation() {
 
     // Create an identity for the holder, and publish DID document for it, in this case also the subject.
     const holderStorage = getMemstorage();
-    const holderClient = await getClientAndCreateAccount(holderStorage);
+    const holderClient = await getFundedClient(holderStorage);
     const [unpublishedholderDocument] = await createDocumentForNetwork(holderStorage, network);
     const { output: holderIdentity } = await holderClient
         .createIdentity(unpublishedholderDocument)

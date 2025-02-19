@@ -76,7 +76,7 @@ lazy_static! {
   pub static ref TEST_COIN_TYPE: StructTag = "0x2::coin::Coin<bool>".parse().unwrap();
 }
 
-pub async fn get_client() -> anyhow::Result<TestClient> {
+pub async fn get_funded_test_client() -> anyhow::Result<TestClient> {
   let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| IOTA_LOCAL_NETWORK_URL.to_string());
   let client = IotaClientBuilder::default().build(&api_endpoint).await?;
   let package_id = PACKAGE_ID.get_or_try_init(|| init(&client)).await.copied()?;

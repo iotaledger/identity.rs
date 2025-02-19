@@ -5,7 +5,7 @@ import { IotaDID } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
-    getClientAndCreateAccount,
+    getFundedClient,
     getMemstorage,
     NETWORK_URL,
     TEST_GAS_BUDGET,
@@ -17,7 +17,7 @@ export async function deactivateIdentity() {
     const iotaClient = new IotaClient({ url: NETWORK_URL });
     const network = await iotaClient.getChainIdentifier();
     const storage = getMemstorage();
-    const identityClient = await getClientAndCreateAccount(storage);
+    const identityClient = await getFundedClient(storage);
     const [unpublished] = await createDocumentForNetwork(storage, network);
 
     // create new identity for this account and publish document for it

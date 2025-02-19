@@ -4,7 +4,7 @@
 use std::str::FromStr;
 
 use crate::common;
-use crate::common::get_client as get_test_client;
+use crate::common::get_funded_test_client;
 use crate::common::get_key_data;
 use crate::common::TEST_COIN_TYPE;
 use crate::common::TEST_GAS_BUDGET;
@@ -29,7 +29,7 @@ use move_core_types::language_storage::StructTag;
 
 #[tokio::test]
 async fn identity_deactivation_works() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
 
   let mut identity = identity_client
@@ -53,7 +53,7 @@ async fn identity_deactivation_works() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn updating_onchain_identity_did_doc_with_single_controller_works() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
 
   let mut newly_created_identity = identity_client
@@ -89,7 +89,7 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
 
 #[tokio::test]
 async fn approving_proposal_works() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let alice_client = test_client.new_user_client().await?;
   let bob_client = test_client.new_user_client().await?;
 
@@ -136,7 +136,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn adding_controller_works() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let alice_client = test_client.new_user_client().await?;
   let bob_client = test_client.new_user_client().await?;
 
@@ -171,7 +171,7 @@ async fn adding_controller_works() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn can_get_historical_identity_data() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
 
   let mut newly_created_identity = identity_client
@@ -264,7 +264,7 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn send_proposal_works() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
 
   let mut identity = identity_client
@@ -309,7 +309,7 @@ async fn send_proposal_works() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn borrow_proposal_works() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
 
   let mut identity = identity_client
@@ -351,7 +351,7 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn controller_execution_works() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
 
   let mut identity = identity_client
