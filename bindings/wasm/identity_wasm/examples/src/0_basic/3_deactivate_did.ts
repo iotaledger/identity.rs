@@ -32,8 +32,11 @@ export async function deactivateIdentity() {
     const resolved = await identityClient.resolveDid(did);
     console.log("Resolved DID document:", JSON.stringify(resolved, null, 2));
 
-    // Deactivate the DID by publishing an empty document.
-    await identityClient.deactivateDidOutput(did, TEST_GAS_BUDGET);
+    // Deactivate the DID.
+    await identity
+        .deactivateDid()
+        .withGasBudget(TEST_GAS_BUDGET)
+        .execute(identityClient);
 
     // Resolving a deactivated DID returns an empty DID document
     // with its `deactivated` metadata field set to `true`.
