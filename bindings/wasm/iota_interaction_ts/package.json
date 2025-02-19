@@ -10,9 +10,9 @@
     "example": "examples"
   },
   "scripts": {
-    "build:src": "cargo build --lib --release --target wasm32-unknown-unknown --target-dir ./target",
-    "bundle:nodejs": "wasm-bindgen target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --weak-refs --target nodejs --out-dir node && node ../build/node iota_interaction_ts && tsc --project ./lib/tsconfig.json && node ../build/replace_paths ./lib/tsconfig.json node iota_interaction_ts",
-    "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --target web --out-dir web && node ../build/web iota_interaction_ts && tsc --project ./lib/tsconfig.web.json && node ../build/replace_paths ./lib/tsconfig.web.json web iota_interaction_ts",
+    "build:src": "cargo build --lib --release --target wasm32-unknown-unknown --target-dir ../target",
+    "bundle:nodejs": "wasm-bindgen ../target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --weak-refs --target nodejs --out-dir node && node ../build/node iota_interaction_ts && tsc --project ./lib/tsconfig.json && node ../build/replace_paths ./lib/tsconfig.json node iota_interaction_ts",
+    "bundle:web": "wasm-bindgen ../target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --target web --out-dir web && node ../build/web iota_interaction_ts && tsc --project ./lib/tsconfig.web.json && node ../build/replace_paths ./lib/tsconfig.web.json web iota_interaction_ts",
     "build:nodejs": "npm run build:src && npm run bundle:nodejs && wasm-opt -O node/iota_interaction_ts_bg.wasm -o node/iota_interaction_ts_bg.wasm",
     "build:web": "npm run build:src && npm run bundle:web && wasm-opt -O web/iota_interaction_ts_bg.wasm -o web/iota_interaction_ts_bg.wasm",
     "build:docs": "typedoc && npm run fix_docs",

@@ -23,7 +23,7 @@ jobs:
   build-wasm:
     defaults:
       run:
-        working-directory: bindings/wasm/identity_wasm
+        working-directory: bindings/wasm/
         shell: bash
     runs-on: ubuntu-latest
     strategy:
@@ -50,7 +50,7 @@ jobs:
           target-cache-enabled: true
           sccache-enabled: true
           sccache-path: ${{ matrix.sccache-path }}
-          target-cache-path: bindings/wasm/identity_wasm/target
+          target-cache-path: bindings/wasm/target
 
       # Download a pre-compiled wasm-bindgen binary.
       - name: Install wasm-bindgen-cli
