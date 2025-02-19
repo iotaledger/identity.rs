@@ -68,6 +68,7 @@ jobs:
 
       - name: Install JS dependencies
         run: npm ci
+        working-directory: bindings/wasm/identity_wasm
 
       - name: Build WASM bindings
         run: npm run build
