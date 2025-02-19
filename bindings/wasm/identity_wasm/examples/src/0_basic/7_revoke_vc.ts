@@ -4,6 +4,7 @@
 import {
     Credential,
     FailFast,
+    IdentityClientReadOnly,
     IJwsVerifier,
     IotaDocument,
     Jwk,
@@ -22,6 +23,7 @@ import {
     createDocumentForNetwork,
     getClientAndCreateAccount,
     getMemstorage,
+    IDENTITY_IOTA_PACKAGE_ID,
     NETWORK_URL,
     TEST_GAS_BUDGET,
 } from '../util';
@@ -164,7 +166,9 @@ export async function revokeVC() {
     );
 
     // We expect the verifiable credential to be revoked.
-    const resolver = new Resolver({ client: aliceClient });
+    const resolver = new Resolver<IotaDocument>({
+        client: await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PACKAGE_ID),
+    });
     try {
         // Resolve the issuer's updated DID Document to ensure the key was revoked successfully.
         const resolvedIssuerDoc = await resolver.resolve(

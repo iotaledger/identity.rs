@@ -7,6 +7,8 @@ import {
     Duration,
     EdDSAJwsVerifier,
     FailFast,
+    IdentityClientReadOnly,
+    IotaDocument,
     JwsSignatureOptions,
     JwsVerificationOptions,
     Jwt,
@@ -25,6 +27,7 @@ import {
     createDocumentForNetwork,
     getClientAndCreateAccount,
     getMemstorage,
+    IDENTITY_IOTA_PACKAGE_ID,
     NETWORK_URL,
 } from '../util';
 
@@ -160,7 +163,9 @@ export async function createVP() {
         },
     );
 
-    const resolver = new Resolver({ client: issuerClient });
+    const resolver = new Resolver<IotaDocument>({
+        client: await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PACKAGE_ID),
+    });
     // Resolve the presentation holder.
     const presentationHolderDID: CoreDID = JwtPresentationValidator.extractHolder(presentationJwt);
     const resolvedHolder = await resolver.resolve(
