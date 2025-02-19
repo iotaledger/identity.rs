@@ -16,13 +16,12 @@ export async function createIdentity(): Promise<void>  {
     const iotaClient = new IotaClient({ url: NETWORK_URL });
     const network = await iotaClient.getChainIdentifier();
 
-    const storage = getMemstorage();
-    // TODO: check if we can update storage implementation to a non-owning variant
-    // order is important here as wrapped storage will be set to a null pointer after passing it to a client
-    const [unpublished] = await createDocumentForNetwork(storage, network);
     // create new client that offers identity related functions
+    const storage = getMemstorage();
     const identityClient = await getClientAndCreateAccount(storage);
 
+    // create new unpublished document 
+    const [unpublished] = await createDocumentForNetwork(storage, network);
     console.log(`Unpublished DID document: ${JSON.stringify(unpublished, null, 2)}`); 
     let did: IotaDID;
 

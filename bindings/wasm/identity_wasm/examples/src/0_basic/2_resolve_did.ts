@@ -1,53 +1,81 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO:
-// - [ ] clarify if we need/want a resolver example
-// - [ ] clarify if we need/want the AliasOutput -> ObjectID example
-
-
 import {
     CoreDocument,
     DIDJwk,
+    IdentityClientReadOnly,
+    IotaDID,
     IotaDocument,
-    IotaIdentityClient,
     IToCoreDocument,
-    JwkMemStore,
-    KeyIdMemStore,
     Resolver,
-    Storage,
 } from "@iota/identity-wasm/node";
-import { AliasOutput,  } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
-import { createDidDocument, getClientAndCreateAccount, getMemstorage } from "../utils_alpha";
+import { IotaClient } from "@iota/iota-sdk/client";
+import {
+    createDocumentForNetwork,
+    getClientAndCreateAccount,
+    getMemstorage,
+    IDENTITY_IOTA_PACKAGE_ID,
+    NETWORK_URL,
+} from '../utils_alpha';
 
 const DID_JWK: string =
     "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9";
 
 /** Demonstrates how to resolve an existing DID in an Alias Output. */
 export async function resolveIdentity() {
-    // create new client to interact with chain and get funded account with keys
+    // create new clients and create new account
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
     const storage = getMemstorage();
     const identityClient = await getClientAndCreateAccount(storage);
-  
-    // create new DID document and publish it
-    let [document] = await createDidDocument(identityClient, storage);
-    let did = document.id();
+    const [unpublished] = await createDocumentForNetwork(storage, network);
+
+    // create new identity for this account and publish document for it
+    const { output: identity } = await identityClient
+        .createIdentity(unpublished)
+        .finish()
+        .execute(identityClient);
+    const did = IotaDID.fromAliasId(identity.id(), identityClient.network());
 
     // Resolve the associated Alias Output and extract the DID document from it.
-    const resolved: IotaDocument = await identityClient.resolveDid(did);
+    const resolved = await identityClient.resolveDid(did);
     console.log("Resolved DID document:", JSON.stringify(resolved, null, 2));
 
-    // We can also resolve the Object ID reictly
-    const aliasOutput: AliasOutput = await identityClient.resolveDidOutput(did);
-    console.log("The Alias Output holds " + aliasOutput.getAmount() + " tokens");
+    // We can resolve the Object ID directly
+    const resolvedIdentity = await identityClient.getIdentity(identity.id());
+    console.dir(resolvedIdentity);
+    console.log(`Resolved identity has object ID ${resolvedIdentity.toFullFledged()?.id()}`);
 
-    // did:jwk can be resolved as well.
+    // Or we can resolve it via the `Resolver` api:
+
+    // While at it, define a custom resolver for jwk DIDs as well.
     const handlers = new Map<string, (did: string) => Promise<CoreDocument | IToCoreDocument>>();
     handlers.set("jwk", didJwkHandler);
-    const resolver = new Resolver({ handlers });
+
+    // Create new `Resolver` instance with the client with write capabilities we already have at hand
+    const resolver = new Resolver({ client: identityClient, handlers });
+
+    // and resolve identity DID with it.
+    const resolverResolved = await resolver.resolve(did.toString());
+    console.log(`resolverResolved ${did.toString()} resolves to:\n ${JSON.stringify(resolverResolved, null, 2)}`);
+
+    // We can also resolve via the custom resolver defined before:
     const did_jwk_resolved_doc = await resolver.resolve(DID_JWK);
     console.log(`DID ${DID_JWK} resolves to:\n ${JSON.stringify(did_jwk_resolved_doc, null, 2)}`);
+
+    // We can also create a resolver with a read-only client
+    const identityClientReadOnly = await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PACKAGE_ID);
+    // In this case we will only be resolving `IotaDocument` instances, as we don't pass a `handler` configuration.
+    // Therefore we can limit the type of the resolved documents to `IotaDocument` when creating the new resolver as well.
+    const resolverWithReadOnlyClient = new Resolver<IotaDocument>({ client: identityClientReadOnly });
+
+    // And resolve as before.
+    const resolvedViaReadOnly = await resolverWithReadOnlyClient.resolve(did.toString());
+    console.log(`resolverWithReadOnlyClient ${did.toString()} resolves to:\n ${JSON.stringify(resolvedViaReadOnly, null, 2)}`);
+
+    // As our `Resolver<IotaDocument>` instance will only return `IotaDocument` instances, we can directly work with them, e.g.
+    console.log(`${did.toString()}'s metadata is ${resolvedViaReadOnly.metadata()}`);
 }
 
 const didJwkHandler = async (did: string) => {
