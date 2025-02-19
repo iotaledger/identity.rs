@@ -7,10 +7,10 @@ import {
 import { IotaClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
-    getClientAndCreateAccount,
+    getFundedClient,
     getMemstorage,
     NETWORK_URL,
-} from '../utils_alpha';
+} from '../util';
 
 // Use this external package to avoid implementing the entire did:key method in this example.
 import * as ed25519 from "@transmute/did-key-ed25519";
@@ -32,7 +32,7 @@ export async function customResolution() {
         );
 
         // for demo purposes we'll just inject the custom property into a core document
-        // instead of creating a proper instance
+        // to create a new KeyDocument instance
         let coreDocument = CoreDocument.fromJSON(document.didDocument);
         (coreDocument as unknown as KeyDocument).customProperty = "foobar";
         return coreDocument as unknown as KeyDocument;
@@ -42,9 +42,9 @@ export async function customResolution() {
     const iotaClient = new IotaClient({ url: NETWORK_URL });
     const network = await iotaClient.getChainIdentifier();
     const storage = getMemstorage();
-    const identityClient = await getClientAndCreateAccount(storage);
+    const identityClient = await getFundedClient(storage);
     const [unpublished] = await createDocumentForNetwork(storage, network);
-    
+
     // create new identity for this account and publish document for it, DID of it will be resolved later on
     const { output: identity } = await identityClient
         .createIdentity(unpublished)

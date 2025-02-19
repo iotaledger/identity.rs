@@ -5,15 +5,17 @@ import {
     Credential,
     EdDSAJwsVerifier,
     FailFast,
-    JwkMemStore,
     JwsSignatureOptions,
     JwtCredentialValidationOptions,
     JwtCredentialValidator,
-    KeyIdMemStore,
-    Storage,
 } from "@iota/identity-wasm/node";
-import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+import { IotaClient } from "@iota/iota-sdk/client";
+import {
+    createDocumentForNetwork,
+    getFundedClient,
+    getMemstorage,
+    NETWORK_URL,
+} from '../util';
 
 /**
  * This example shows how to create a Verifiable Credential and validate it.
@@ -22,31 +24,29 @@ import { API_ENDPOINT, createDid } from "../util";
  * This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whomever they please.
  */
 export async function createVC() {
-    const client = new Client({
-        primaryNode: API_ENDPOINT,
-        localPow: true,
-    });
+    // create new client to connect to IOTA network
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
 
-    // Generate a random mnemonic for our wallet.
-    const secretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
+    // Create an identity for the issuer with one verification method `key-1`, and publish DID document for it.
+    const issuerStorage = getMemstorage();
+    const issuerClient = await getFundedClient(issuerStorage);
+    const [unpublishedIssuerDocument, issuerFragment] = await createDocumentForNetwork(issuerStorage, network);
+    const { output: issuerIdentity } = await issuerClient
+        .createIdentity(unpublishedIssuerDocument)
+        .finish()
+        .execute(issuerClient);
+    const issuerDocument = issuerIdentity.didDocument();
 
-    // Create an identity for the issuer with one verification method `key-1`.
-    const issuerStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document: issuerDocument, fragment: issuerFragment } = await createDid(
-        client,
-        secretManager,
-        issuerStorage,
-    );
-
-    // Create an identity for the holder, in this case also the subject.
-    const aliceStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document: aliceDocument } = await createDid(
-        client,
-        secretManager,
-        aliceStorage,
-    );
+    // Create an identity for the holder, and publish DID document for it, in this case also the subject.
+    const aliceStorage = getMemstorage();
+    const aliceClient = await getFundedClient(aliceStorage);
+    const [unpublishedAliceDocument] = await createDocumentForNetwork(aliceStorage, network);
+    const { output: aliceIdentity } = await aliceClient
+        .createIdentity(unpublishedAliceDocument)
+        .finish()
+        .execute(aliceClient);
+    const aliceDocument = aliceIdentity.didDocument();
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
     const subject = {

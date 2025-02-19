@@ -13,11 +13,11 @@ import {
 import { IotaClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
-    getClientAndCreateAccount,
+    getFundedClient,
     getMemstorage,
     IDENTITY_IOTA_PACKAGE_ID,
     NETWORK_URL,
-} from '../utils_alpha';
+} from '../util';
 
 const DID_JWK: string =
     "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9";
@@ -28,7 +28,7 @@ export async function resolveIdentity() {
     const iotaClient = new IotaClient({ url: NETWORK_URL });
     const network = await iotaClient.getChainIdentifier();
     const storage = getMemstorage();
-    const identityClient = await getClientAndCreateAccount(storage);
+    const identityClient = await getFundedClient(storage);
     const [unpublished] = await createDocumentForNetwork(storage, network);
 
     // create new identity for this account and publish document for it
@@ -45,7 +45,7 @@ export async function resolveIdentity() {
     // We can resolve the Object ID directly
     const resolvedIdentity = await identityClient.getIdentity(identity.id());
     console.dir(resolvedIdentity);
-    console.log(`Resolved identity has object ID ${resolvedIdentity.toFullFledged()?.id()}`);
+    console.log(`Identity client resolved identity has object ID ${resolvedIdentity.toFullFledged()?.id()}`);
 
     // Or we can resolve it via the `Resolver` api:
 

@@ -5,11 +5,11 @@ import { IotaDID } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
 import {
     createDocumentForNetwork,
-    getClientAndCreateAccount,
+    getFundedClient,
     getMemstorage,
     NETWORK_URL,
     TEST_GAS_BUDGET,
-} from '../utils_alpha';
+} from '../util';
 
 /** Demonstrates how to deactivate a DID in an Alias Output. */
 export async function deactivateIdentity() {
@@ -17,7 +17,7 @@ export async function deactivateIdentity() {
     const iotaClient = new IotaClient({ url: NETWORK_URL });
     const network = await iotaClient.getChainIdentifier();
     const storage = getMemstorage();
-    const identityClient = await getClientAndCreateAccount(storage);
+    const identityClient = await getFundedClient(storage);
     const [unpublished] = await createDocumentForNetwork(storage, network);
 
     // create new identity for this account and publish document for it
@@ -46,7 +46,7 @@ export async function deactivateIdentity() {
     // Re-activate the DID by publishing a valid DID document.
     console.log("Publishing this:", JSON.stringify(resolved, null, 2));
     await identityClient
-      .publishDidDocumentUpdate(resolved, TEST_GAS_BUDGET);
+        .publishDidDocumentUpdate(resolved, TEST_GAS_BUDGET);
 
     // Resolve the reactivated DID document.
     let resolvedReactivated = await identityClient.resolveDid(did);

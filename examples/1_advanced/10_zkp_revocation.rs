@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung, Fondazione Links
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::get_client_and_create_account;
+use examples::get_funded_client;
 use examples::MemStorage;
 use examples::TEST_GAS_BUDGET;
 
@@ -130,9 +130,9 @@ async fn main() -> anyhow::Result<()> {
 
   let storage_holder: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-  let issuer_identity_client = get_client_and_create_account(&storage_issuer).await?;
+  let issuer_identity_client = get_funded_client(&storage_issuer).await?;
 
-  let holder_identity_client = get_client_and_create_account(&storage_holder).await?;
+  let holder_identity_client = get_funded_client(&storage_holder).await?;
 
   let (mut issuer_document, fragment_issuer): (IotaDocument, String) = create_did(
     &issuer_identity_client,

@@ -7,7 +7,7 @@
 //! cargo run --release --example 7_sd_jwt
 
 use examples::create_did_document;
-use examples::get_client_and_create_account;
+use examples::get_funded_client;
 use examples::get_memstorage;
 use examples::pretty_print_json;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
@@ -42,12 +42,12 @@ async fn main() -> anyhow::Result<()> {
 
   // Create an identity for the issuer with one verification method `key-1`.
   let issuer_storage = get_memstorage()?;
-  let issuer_identity_client = get_client_and_create_account(&issuer_storage).await?;
+  let issuer_identity_client = get_funded_client(&issuer_storage).await?;
   let (issuer_document, issuer_vm_fragment) = create_did_document(&issuer_identity_client, &issuer_storage).await?;
 
   // Create an identity for the holder, in this case also the subject.
   let holder_storage = get_memstorage()?;
-  let holder_identity_client = get_client_and_create_account(&holder_storage).await?;
+  let holder_identity_client = get_funded_client(&holder_storage).await?;
   let (holder_document, holder_vm_fragment) = create_did_document(&holder_identity_client, &holder_storage).await?;
 
   // ===========================================================================

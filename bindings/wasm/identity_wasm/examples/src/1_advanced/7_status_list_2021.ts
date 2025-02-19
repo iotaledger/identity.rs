@@ -5,63 +5,52 @@ import {
     Credential,
     EdDSAJwsVerifier,
     FailFast,
-    JwkMemStore,
     JwsSignatureOptions,
     JwtCredentialValidationOptions,
     JwtCredentialValidator,
-    KeyIdMemStore,
     StatusCheck,
     StatusList2021,
     StatusList2021Credential,
     StatusList2021CredentialBuilder,
     StatusList2021Entry,
     StatusPurpose,
-    Storage,
 } from "@iota/identity-wasm/node";
-import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+import { IotaClient } from "@iota/iota-sdk/client";
+import {
+    createDocumentForNetwork,
+    getFundedClient,
+    getMemstorage,
+    NETWORK_URL,
+} from '../util';
 
 export async function statusList2021() {
     // ===========================================================================
     // Create a Verifiable Credential.
     // ===========================================================================
 
-    const client = new Client({
-        primaryNode: API_ENDPOINT,
-        localPow: true,
-    });
+    // create new client to connect to IOTA network
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
 
-    // Generate a random mnemonic for the issuer.
-    const issuerSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
+    // Create an identity for the issuer with one verification method `key-1`, and publish DID document for it.
+    const issuerStorage = getMemstorage();
+    const issuerClient = await getFundedClient(issuerStorage);
+    const [unpublishedIssuerDocument, issuerFragment] = await createDocumentForNetwork(issuerStorage, network);
+    const { output: issuerIdentity } = await issuerClient
+        .createIdentity(unpublishedIssuerDocument)
+        .finish()
+        .execute(issuerClient);
+    const issuerDocument = issuerIdentity.didDocument();
 
-    // Create an identity for the issuer with one verification method `key-1`.
-    const issuerStorage: Storage = new Storage(
-        new JwkMemStore(),
-        new KeyIdMemStore(),
-    );
-    let { document: issuerDocument, fragment: issuerFragment } = await createDid(
-        client,
-        issuerSecretManager,
-        issuerStorage,
-    );
-
-    // Generate a random mnemonic for Alice.
-    const aliceSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
-
-    // Create an identity for the holder, in this case also the subject.
-    const aliceStorage: Storage = new Storage(
-        new JwkMemStore(),
-        new KeyIdMemStore(),
-    );
-    let { document: aliceDocument } = await createDid(
-        client,
-        aliceSecretManager,
-        aliceStorage,
-    );
+    // Create an identity for the holder, and publish DID document for it, in this case also the subject.
+    const aliceStorage = getMemstorage();
+    const aliceClient = await getFundedClient(aliceStorage);
+    const [unpublishedAliceDocument] = await createDocumentForNetwork(aliceStorage, network);
+    const { output: aliceIdentity } = await aliceClient
+        .createIdentity(unpublishedAliceDocument)
+        .finish()
+        .execute(aliceClient);
+    const aliceDocument = aliceIdentity.didDocument();
 
     // Create a new empty status list. No credentials have been revoked yet.
     const statusList = new StatusList2021();

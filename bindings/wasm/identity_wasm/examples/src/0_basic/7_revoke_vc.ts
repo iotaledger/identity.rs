@@ -3,27 +3,30 @@
 
 import {
     Credential,
-    EdCurve,
     FailFast,
+    IdentityClientReadOnly,
     IJwsVerifier,
     IotaDocument,
-    IotaIdentityClient,
     Jwk,
-    JwkMemStore,
     JwsAlgorithm,
     JwsSignatureOptions,
     JwtCredentialValidationOptions,
     JwtCredentialValidator,
-    KeyIdMemStore,
     Resolver,
     RevocationBitmap,
     Service,
-    Storage,
     VerificationMethod,
     verifyEd25519,
 } from "@iota/identity-wasm/node";
-import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+import { IotaClient } from "@iota/iota-sdk/client";
+import {
+    createDocumentForNetwork,
+    getFundedClient,
+    getMemstorage,
+    IDENTITY_IOTA_PACKAGE_ID,
+    NETWORK_URL,
+    TEST_GAS_BUDGET,
+} from '../util';
 
 /**
  * This example shows how to revoke a verifiable credential.
@@ -38,43 +41,29 @@ export async function revokeVC() {
     // Create a Verifiable Credential.
     // ===========================================================================
 
-    const client = new Client({
-        primaryNode: API_ENDPOINT,
-        localPow: true,
-    });
-    const didClient = new IotaIdentityClient(client);
+    // Create new client to connect to IOTA network.
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
 
-    // Generate a random mnemonic for the issuer.
-    const issuerSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
+    // Create an identity for the issuer with one verification method `key-1`, and publish DID document for it.
+    const issuerStorage = getMemstorage();
+    const issuerClient = await getFundedClient(issuerStorage);
+    const [unpublishedIssuerDocument, issuerFragment] = await createDocumentForNetwork(issuerStorage, network);
+    const { output: issuerIdentity } = await issuerClient
+        .createIdentity(unpublishedIssuerDocument)
+        .finish()
+        .execute(issuerClient);
+    let issuerDocument = issuerIdentity.didDocument();
 
-    // Create an identity for the issuer with one verification method `key-1`.
-    const issuerStorage: Storage = new Storage(
-        new JwkMemStore(),
-        new KeyIdMemStore(),
-    );
-    let { document: issuerDocument, fragment: issuerFragment } = await createDid(
-        client,
-        issuerSecretManager,
-        issuerStorage,
-    );
-
-    // Generate a random mnemonic for Alice.
-    const aliceSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
-
-    // Create an identity for the holder, in this case also the subject.
-    const aliceStorage: Storage = new Storage(
-        new JwkMemStore(),
-        new KeyIdMemStore(),
-    );
-    let { document: aliceDocument } = await createDid(
-        client,
-        aliceSecretManager,
-        aliceStorage,
-    );
+    // create holder account, create identity, and publish DID document for it.
+    const aliceStorage = getMemstorage();
+    const aliceClient = await getFundedClient(aliceStorage);
+    const [unpublishedAliceDocument, aliceFragment] = await createDocumentForNetwork(aliceStorage, network);
+    const { output: aliceIdentity } = await aliceClient
+        .createIdentity(unpublishedAliceDocument)
+        .finish()
+        .execute(aliceClient);
+    const aliceDocument = aliceIdentity.didDocument();
 
     // Create a new empty revocation bitmap. No credential is revoked yet.
     const revocationBitmap = new RevocationBitmap();
@@ -84,25 +73,10 @@ export async function revokeVC() {
     const service: Service = revocationBitmap.toService(serviceId);
     issuerDocument.insertService(service);
 
-    // Resolve the latest output and update it with the given document.
-    let aliasOutput: AliasOutput = await didClient.updateDidOutput(
+    // Publish the updated document.
+    let updatedDocument: IotaDocument = await issuerClient.publishDidDocumentUpdate(
         issuerDocument,
-    );
-
-    // Because the size of the DID document increased, we have to increase the allocated storage deposit.
-    // This increases the deposit amount to the new minimum.
-    let rentStructure: IRent = await didClient.getRentStructure();
-    aliasOutput = await client.buildAliasOutput({
-        ...aliasOutput,
-        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
-        aliasId: aliasOutput.getAliasId(),
-        unlockConditions: aliasOutput.getUnlockConditions(),
-    });
-
-    // Publish the document.
-    issuerDocument = await didClient.publishDidOutput(
-        issuerSecretManager,
-        aliasOutput,
+        TEST_GAS_BUDGET,
     );
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
@@ -156,18 +130,9 @@ export async function revokeVC() {
     issuerDocument.revokeCredentials("my-revocation-service", CREDENTIAL_INDEX);
 
     // Publish the changes.
-    aliasOutput = await didClient.updateDidOutput(issuerDocument);
-    rentStructure = await didClient.getRentStructure();
-    aliasOutput = await client.buildAliasOutput({
-        ...aliasOutput,
-        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
-        aliasId: aliasOutput.getAliasId(),
-        unlockConditions: aliasOutput.getUnlockConditions(),
-    });
-
-    const update2: IotaDocument = await didClient.publishDidOutput(
-        issuerSecretManager,
-        aliasOutput,
+    let update2: IotaDocument = await issuerClient.publishDidDocumentUpdate(
+        issuerDocument,
+        TEST_GAS_BUDGET,
     );
 
     // Credential verification now fails.
@@ -195,22 +160,15 @@ export async function revokeVC() {
     await issuerDocument.purgeMethod(issuerStorage, originalMethod.id());
 
     // Publish the changes.
-    aliasOutput = await didClient.updateDidOutput(issuerDocument);
-    rentStructure = await didClient.getRentStructure();
-    aliasOutput = await client.buildAliasOutput({
-        ...aliasOutput,
-        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
-        aliasId: aliasOutput.getAliasId(),
-        unlockConditions: aliasOutput.getUnlockConditions(),
-    });
-
-    issuerDocument = await didClient.publishDidOutput(
-        issuerSecretManager,
-        aliasOutput,
+    issuerDocument = await issuerClient.publishDidDocumentUpdate(
+        issuerDocument,
+        TEST_GAS_BUDGET,
     );
 
     // We expect the verifiable credential to be revoked.
-    const resolver = new Resolver({ client: didClient });
+    const resolver = new Resolver<IotaDocument>({
+        client: await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PACKAGE_ID),
+    });
     try {
         // Resolve the issuer's updated DID Document to ensure the key was revoked successfully.
         const resolvedIssuerDoc = await resolver.resolve(

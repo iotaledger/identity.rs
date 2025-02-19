@@ -52,6 +52,12 @@ impl WasmOnChainIdentity {
     self.0.id().to_string()
   }
 
+  #[wasm_bindgen(js_name = didDocument)]
+  pub fn did_document(&self) -> WasmIotaDocument {
+    let inner_doc: IotaDocument = self.0.as_ref().clone().into();
+    WasmIotaDocument::from(inner_doc)
+  }
+
   #[wasm_bindgen(js_name = isShared)]
   pub fn is_shared(&self) -> bool {
     self.0.is_shared()
