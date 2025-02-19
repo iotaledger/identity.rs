@@ -4,7 +4,9 @@
 import {
     CoreDocument,
     DIDJwk,
+    IdentityClientReadOnly,
     IotaDID,
+    IotaDocument,
     IToCoreDocument,
     Resolver,
 } from "@iota/identity-wasm/node";
@@ -13,6 +15,7 @@ import {
     createDocumentForNetwork,
     getClientAndCreateAccount,
     getMemstorage,
+    IDENTITY_IOTA_PACKAGE_ID,
     NETWORK_URL,
 } from '../util';
 
@@ -50,16 +53,29 @@ export async function resolveIdentity() {
     const handlers = new Map<string, (did: string) => Promise<CoreDocument | IToCoreDocument>>();
     handlers.set("jwk", didJwkHandler);
 
-    // Create new `Resolver` instance
+    // Create new `Resolver` instance with the client with write capabilities we already have at hand
     const resolver = new Resolver({ client: identityClient, handlers });
 
     // and resolve identity DID with it.
     const resolverResolved = await resolver.resolve(did.toString());
-    console.log(`Resolver resolved document ${DID_JWK} resolves to:\n ${JSON.stringify(resolverResolved, null, 2)}`);
+    console.log(`resolverResolved ${did.toString()} resolves to:\n ${JSON.stringify(resolverResolved, null, 2)}`);
 
     // We can also resolve via the custom resolver defined before:
     const did_jwk_resolved_doc = await resolver.resolve(DID_JWK);
     console.log(`DID ${DID_JWK} resolves to:\n ${JSON.stringify(did_jwk_resolved_doc, null, 2)}`);
+
+    // We can also create a resolver with a read-only client
+    const identityClientReadOnly = await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PACKAGE_ID);
+    // In this case we will only be resolving `IotaDocument` instances, as we don't pass a `handler` configuration.
+    // Therefore we can limit the type of the resolved documents to `IotaDocument` when creating the new resolver as well.
+    const resolverWithReadOnlyClient = new Resolver<IotaDocument>({ client: identityClientReadOnly });
+
+    // And resolve as before.
+    const resolvedViaReadOnly = await resolverWithReadOnlyClient.resolve(did.toString());
+    console.log(`resolverWithReadOnlyClient ${did.toString()} resolves to:\n ${JSON.stringify(resolvedViaReadOnly, null, 2)}`);
+
+    // As our `Resolver<IotaDocument>` instance will only return `IotaDocument` instances, we can directly work with them, e.g.
+    console.log(`${did.toString()}'s metadata is ${resolvedViaReadOnly.metadata()}`);
 }
 
 const didJwkHandler = async (did: string) => {
