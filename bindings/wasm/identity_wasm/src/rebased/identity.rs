@@ -25,12 +25,12 @@ use super::client_dummy::ProposalAction;
 // use super::client_dummy::DummySigner;
 // use super::client_dummy::ProposalAction;
 // use super::client_dummy::ProposalBuilder;
-use super::proposals::WasmCreateDeactivateDidProposalTx;
-use super::proposals::WasmCreateUpdateDidProposalTx;
-use super::proposals::WasmCreateSendProposalTx;
-use super::proposals::WasmCreateConfigChangeProposalTx;
-use super::proposals::WasmConfigChange;
 use super::proposals::StringCouple;
+use super::proposals::WasmConfigChange;
+use super::proposals::WasmCreateConfigChangeProposalTx;
+use super::proposals::WasmCreateDeactivateDidProposalTx;
+use super::proposals::WasmCreateSendProposalTx;
+use super::proposals::WasmCreateUpdateDidProposalTx;
 use super::types::WasmIotaAddress;
 use super::WasmIdentityClient;
 
@@ -91,10 +91,7 @@ impl WasmOnChainIdentity {
   }
 
   #[wasm_bindgen(js_name = deactivateDid)]
-  pub fn deactivate_did(
-    &self,
-    expiration_epoch: Option<u64>,
-  ) -> WasmCreateDeactivateDidProposalTx {
+  pub fn deactivate_did(&self, expiration_epoch: Option<u64>) -> WasmCreateDeactivateDidProposalTx {
     WasmCreateDeactivateDidProposalTx::new(self, expiration_epoch)
   }
 

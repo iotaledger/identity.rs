@@ -1,16 +1,6 @@
-import {
-    CoreDocument,
-    IotaDID,
-    IotaDocument,
-    Resolver,
-} from "@iota/identity-wasm/node";
+import { CoreDocument, IotaDID, IotaDocument, Resolver } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
-import {
-    createDocumentForNetwork,
-    getFundedClient,
-    getMemstorage,
-    NETWORK_URL,
-} from '../util';
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL } from "../util";
 
 // Use this external package to avoid implementing the entire did:key method in this example.
 import * as ed25519 from "@transmute/did-key-ed25519";
@@ -18,7 +8,7 @@ import * as ed25519 from "@transmute/did-key-ed25519";
 type KeyDocument = { customProperty: String } & CoreDocument;
 
 function isKeyDocument(doc: object): doc is KeyDocument {
-    return 'customProperty' in doc;
+    return "customProperty" in doc;
 }
 
 /** Demonstrates how to set up a resolver using custom handlers.

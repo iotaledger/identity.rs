@@ -17,13 +17,7 @@ import {
     Timestamp,
 } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
-import {
-    createDocumentForNetwork,
-    getFundedClient,
-    getMemstorage,
-    NETWORK_URL,
-    TEST_GAS_BUDGET,
-} from '../util';
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL, TEST_GAS_BUDGET } from "../util";
 
 /**
  * Demonstrates how to link a domain and a DID and verify the linkage.
@@ -41,7 +35,7 @@ export async function domainLinkage() {
         .createIdentity(unpublished)
         .finish()
         .execute(identityClient);
-    const document = identity.didDocument();;
+    const document = identity.didDocument();
     const did = document.id();
 
     // =====================================================

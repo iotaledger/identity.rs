@@ -23,10 +23,10 @@ import {
     createDocumentForNetwork,
     getFundedClient,
     getMemstorage,
-    IDENTITY_IOTA_PKG_ID,
+    IOTA_IDENTITY_PKG_ID,
     NETWORK_URL,
     TEST_GAS_BUDGET,
-} from '../util';
+} from "../util";
 
 /**
  * This example shows how to revoke a verifiable credential.
@@ -169,7 +169,7 @@ export async function revokeVC() {
 
     // We expect the verifiable credential to be revoked.
     const resolver = new Resolver<IotaDocument>({
-        client: await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PKG_ID),
+        client: await IdentityClientReadOnly.createWithPkgId(iotaClient, IOTA_IDENTITY_PKG_ID),
     });
     try {
         // Resolve the issuer's updated DID Document to ensure the key was revoked successfully.

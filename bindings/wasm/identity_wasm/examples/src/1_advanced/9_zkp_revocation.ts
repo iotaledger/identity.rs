@@ -21,13 +21,7 @@ import {
     Timestamp,
 } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
-import {
-    createDocumentForNetwork,
-    getFundedClient,
-    getMemstorage,
-    NETWORK_URL,
-    TEST_GAS_BUDGET,
-} from '../util';
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL, TEST_GAS_BUDGET } from "../util";
 
 export async function zkp_revocation() {
     // create new client to connect to IOTA network

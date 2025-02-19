@@ -1,14 +1,9 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IotaDID } from '@iota/identity-wasm/node';
+import { IotaDID } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
-import {
-    createDocumentForNetwork,
-    getFundedClient,
-    getMemstorage,
-    NETWORK_URL,
-} from '../util';
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL } from "../util";
 
 /** Demonstrate how to create a DID Document and publish it. */
 export async function createIdentity(): Promise<void> {
@@ -20,7 +15,7 @@ export async function createIdentity(): Promise<void> {
     const storage = getMemstorage();
     const identityClient = await getFundedClient(storage);
 
-    // create new unpublished document 
+    // create new unpublished document
     const [unpublished] = await createDocumentForNetwork(storage, network);
     console.log(`Unpublished DID document: ${JSON.stringify(unpublished, null, 2)}`);
     let did: IotaDID;
@@ -28,14 +23,14 @@ export async function createIdentity(): Promise<void> {
     // TODO: decide upon wich style to use here
     // so let's go with both for now, to show that both work
     if (Math.random() > .5) {
-        console.log('Creating new identity fully via client flow');
+        console.log("Creating new identity fully via client flow");
         const { output: identity } = await identityClient
             .createIdentity(unpublished)
             .finish()
             .execute(identityClient);
         did = IotaDID.fromAliasId(identity.id(), identityClient.network());
     } else {
-        console.log('Publishing document to identity');
+        console.log("Publishing document to identity");
         const { output: published } = await identityClient
             .publishDidDocument(unpublished)
             .execute(identityClient);

@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    IdentityClient,
+    IdentityClientReadOnly,
     IotaDocument,
     JwkMemStore,
     JwsAlgorithm,
     KeyIdMemStore,
-    IdentityClient,
-    IdentityClientReadOnly,
     MethodScope,
     Storage,
     StorageSigner,
@@ -15,11 +15,10 @@ import {
 import { IotaClient } from "@iota/iota-sdk/client";
 import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
 
-export const IDENTITY_IOTA_PKG_ID =
-    process.env.IDENTITY_IOTA_PKG_ID || "0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818";
+export const IOTA_IDENTITY_PKG_ID = process.env.IOTA_IDENTITY_PKG_ID
+    || "0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818";
 export const NETWORK_NAME_FAUCET = process.env.NETWORK_NAME_FAUCET || "localnet";
-export const NETWORK_URL =
-    process.env.NETWORK_URL || "http://127.0.0.1:9000";
+export const NETWORK_URL = process.env.NETWORK_URL || "http://127.0.0.1:9000";
 export const TEST_GAS_BUDGET = BigInt(50_000_000);
 
 export function getMemstorage(): Storage {
@@ -42,14 +41,16 @@ export async function createDocumentForNetwork(storage: Storage, network: string
 }
 
 export async function getFundedClient(storage: Storage): Promise<IdentityClient> {
-    if (!IDENTITY_IOTA_PKG_ID) {
-        throw new Error(`IDENTITY_IOTA_PKG_ID env variable must be provided to run the examples`);
+    if (!IOTA_IDENTITY_PKG_ID) {
+        throw new Error(`IOTA_IDENTITY_PKG_ID env variable must be provided to run the examples`);
     }
 
     const iotaClient = new IotaClient({ url: NETWORK_URL });
 
     const identityClientReadOnly = await IdentityClientReadOnly.createWithPkgId(
-        iotaClient, IDENTITY_IOTA_PKG_ID);
+        iotaClient,
+        IOTA_IDENTITY_PKG_ID,
+    );
 
     // generate new key
     let generate = await storage.keyStorage().generate("Ed25519", JwsAlgorithm.EdDSA);

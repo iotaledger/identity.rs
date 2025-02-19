@@ -3,13 +3,7 @@
 
 import { IotaDID } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
-import {
-    createDocumentForNetwork,
-    getFundedClient,
-    getMemstorage,
-    NETWORK_URL,
-    TEST_GAS_BUDGET,
-} from '../util';
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL, TEST_GAS_BUDGET } from "../util";
 
 /** Demonstrates how to deactivate a DID in an Alias Output. */
 export async function deactivateIdentity() {
