@@ -48,8 +48,10 @@ export async function deactivateIdentity() {
 
     // Re-activate the DID by publishing a valid DID document.
     console.log("Publishing this:", JSON.stringify(resolved, null, 2));
-    await identityClient
-        .publishDidDocumentUpdate(resolved, TEST_GAS_BUDGET);
+    await identity
+        .updateDidDocument(resolved)
+        .withGasBudget(TEST_GAS_BUDGET)
+        .execute(identityClient);
 
     // Resolve the reactivated DID document.
     let resolvedReactivated = await identityClient.resolveDid(did);

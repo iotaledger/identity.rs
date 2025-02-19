@@ -59,8 +59,9 @@ export async function domainLinkage() {
         domains: [domainFoo, domainBar],
     });
     document.insertService(linkedDomainService.toService());
-    let updatedDidDocument = await await identityClient
-        .publishDidDocumentUpdate(document, TEST_GAS_BUDGET);
+    await identity.updateDidDocument(document).execute(identityClient);
+
+    let updatedDidDocument = identity.didDocument();
     console.log("Updated DID document:", JSON.stringify(updatedDidDocument, null, 2));
 
     // =====================================================
