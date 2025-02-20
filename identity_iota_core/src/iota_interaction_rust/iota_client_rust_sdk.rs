@@ -161,6 +161,10 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
   fn clone_native_response(&self) -> Self::NativeResponse {
     self.response.clone()
   }
+
+  fn digest(&self) -> Result<TransactionDigest, Self::Error> {
+    Ok(self.response.digest)
+  }
 }
 
 pub(crate) struct QuorumDriverAdapter<'a> {
