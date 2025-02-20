@@ -239,8 +239,7 @@ jobs:
 
   test-wasm-firefox:
     needs: build-wasm
-    # if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
-    if: ${{ false }} # disable for now
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -284,8 +283,7 @@ jobs:
 
   test-wasm-chrome:
     needs: build-wasm
-    # if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
-    if: ${{ false }} # disable for now
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
