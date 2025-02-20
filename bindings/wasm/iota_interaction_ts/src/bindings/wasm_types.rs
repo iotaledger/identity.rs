@@ -1,11 +1,13 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+use std::str::FromStr;
 
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::base_types::SequenceNumber;
+use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::execution_status::CommandArgumentError;
 use identity_iota_interaction::types::execution_status::ExecutionStatus;
 use identity_iota_interaction::types::object::Owner;
@@ -39,6 +41,7 @@ const TS_SDK_TYPES: &str = r#"
     GetObjectParams,
     GetOwnedObjectsParams,
     GetTransactionBlockParams,
+    IotaClient,
     IotaObjectData,
     IotaObjectResponse,
     IotaTransactionBlockResponse,
@@ -151,6 +154,10 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<IotaTransactionBlockResponseAdapter>")]
   #[derive(Clone)]
   pub type PromiseIotaTransactionBlockResponseAdapter;
+
+  #[wasm_bindgen(typescript_type = "Parameters<IotaClient['waitForTransaction']>")]
+  #[derive(Clone, Debug)]
+  pub type WasmWaitForTransactionParams;
 }
 
 #[wasm_bindgen(module = "@iota/iota-sdk/transactions")]
@@ -261,6 +268,9 @@ extern "C" {
   #[wasm_bindgen(method)]
   fn effects_created_inner(this: &IotaTransactionBlockResponseAdapter) -> Option<Vec<WasmOwnedObjectRef>>;
 
+  #[wasm_bindgen(method, js_name = "get_digest")]
+  fn digest_inner(this: &IotaTransactionBlockResponseAdapter) -> String;
+
   #[wasm_bindgen(method, js_name = "get_response")]
   fn response(this: &IotaTransactionBlockResponseAdapter) -> WasmIotaTransactionBlockResponse;
 
@@ -361,6 +371,11 @@ impl IotaTransactionBlockResponseAdapter {
         })
         .collect()
     })
+  }
+
+  pub fn digest(&self) -> Result<TransactionDigest, TsSdkError> {
+    TransactionDigest::from_str(&self.digest_inner())
+      .map_err(|err| TsSdkError::WasmError("Failed to parse transaction block digest".to_string(), err.to_string()))
   }
 }
 
