@@ -53,6 +53,16 @@ impl<T> Proposal<T> {
   pub fn into_action(self) -> T {
     self.action
   }
+
+  /// Returns the set of voters' IDs.
+  pub fn voters(&self) -> &HashSet<ObjectID> {
+    &self.voters
+  }
+
+  /// Returns the epoch ID for this proposal's expiration.
+  pub fn expiration_epoch(&self) -> Option<u64> {
+    self.expiration_epoch
+  }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -109,7 +119,7 @@ impl<T> From<Proposal<T>> for IotaProposal<T> {
 }
 
 /// Representation of `identity.rs`'s `multicontroller::Multicontroller` Move type.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(try_from = "IotaMulticontroller::<T>")]
 pub struct Multicontroller<T> {
   controlled_value: T,

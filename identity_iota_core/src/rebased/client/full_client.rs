@@ -27,6 +27,7 @@ use crate::rebased::Error;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::MoveType;
+use identity_iota_interaction::OptionalSync;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 
 use crate::rebased::transaction::TransactionOutputInternal;
@@ -92,7 +93,7 @@ impl<S> Deref for IdentityClient<S> {
 
 impl<S> IdentityClient<S>
 where
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature>,
 {
   /// Create a new [`IdentityClient`].
   pub async fn new(client: IdentityClientReadOnly, signer: S) -> Result<Self, Error> {
@@ -107,7 +108,12 @@ where
       signer,
     })
   }
+}
 
+impl<S> IdentityClient<S>
+where
+  S: Signer<IotaKeySignature> + OptionalSync,
+{
   pub(crate) async fn execute_transaction(
     &self,
     tx_bcs: ProgrammableTransactionBcs,
@@ -192,7 +198,7 @@ impl<S> IdentityClient<S> {
 
 impl<S> IdentityClient<S>
 where
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + OptionalSync,
 {
   /// Returns [`Transaction`] [`PublishDidTx`] that - when executed - will publish a new DID Document on chain.
   pub fn publish_did_document(&self, document: IotaDocument) -> PublishDidTx {
@@ -265,7 +271,7 @@ impl PublishDidTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<IotaDocument>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let TransactionOutputInternal {
       output: identity,
@@ -296,7 +302,7 @@ impl TransactionT for PublishDidTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputT<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     Ok(
       self
@@ -313,7 +319,7 @@ impl TransactionT for PublishDidTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputT<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     self.execute_publish_did_tx_with_opt_gas(gas_budget, client).await
   }

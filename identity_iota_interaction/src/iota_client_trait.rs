@@ -28,7 +28,7 @@ use crate::ProgrammableTransactionBcs;
 use crate::SignatureBcs;
 use crate::TransactionDataBcs;
 use async_trait::async_trait;
-use secret_storage::SignatureScheme;
+use secret_storage::SignatureScheme as SignatureSchemeSecretStorage;
 use secret_storage::Signer;
 use std::boxed::Box;
 use std::option::Option;
@@ -37,12 +37,15 @@ use std::result::Result;
 #[cfg(not(target_arch = "wasm32"))]
 use std::marker::Send;
 
+#[cfg(feature = "send-sync-transaction")]
+use crate::OptionalSync;
+
 pub struct IotaKeySignature {
   pub public_key: PublicKey,
   pub signature: Signature,
 }
 
-impl SignatureScheme for IotaKeySignature {
+impl SignatureSchemeSecretStorage for IotaKeySignature {
   type PublicKey = PublicKey;
   type Signature = Signature;
   type Input = TransactionDataBcs;
@@ -240,7 +243,7 @@ pub trait IotaClientTrait {
     Self::Error,
   >;
   #[cfg(feature = "send-sync-transaction")]
-  async fn execute_transaction<S: Signer<IotaKeySignature> + Sync>(
+  async fn execute_transaction<S: Signer<IotaKeySignature> + OptionalSync>(
     &self,
     tx_bcs: ProgrammableTransactionBcs,
     gas_budget: Option<u64>,

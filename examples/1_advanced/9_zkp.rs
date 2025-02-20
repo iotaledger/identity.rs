@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung, Fondazione Links
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::get_client_and_create_account;
+use examples::get_funded_client;
 
 use examples::get_memstorage;
 use examples::TEST_GAS_BUDGET;
@@ -25,6 +25,7 @@ use identity_iota::credential::SelectiveDisclosurePresentation;
 use identity_iota::credential::Subject;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
+use identity_iota::iota_interaction::OptionalSync;
 
 use identity_iota::iota::rebased::transaction::TransactionOutput;
 use identity_iota::iota::IotaDocument;
@@ -51,7 +52,7 @@ pub async fn create_did<K, I, S>(
 where
   K: identity_storage::JwkStorage + identity_storage::JwkStorageBbsPlusExt,
   I: identity_storage::KeyIdStorage,
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + OptionalSync,
 {
   // Create a new DID document with a placeholder DID.
   let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network());
@@ -77,7 +78,7 @@ async fn main() -> anyhow::Result<()> {
 
   let storage_issuer = get_memstorage()?;
 
-  let identity_client = get_client_and_create_account(&storage_issuer).await?;
+  let identity_client = get_funded_client(&storage_issuer).await?;
 
   let (issuer_document, fragment_issuer): (IotaDocument, String) = create_did(
     &identity_client,

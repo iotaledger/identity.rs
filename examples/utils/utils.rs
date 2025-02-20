@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use identity_iota::iota::IotaDocument;
+use identity_iota::iota_interaction::OptionalSync;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::KeyIdMemstore;
@@ -42,7 +43,7 @@ pub async fn create_did_document<K, I, S>(
 where
   K: identity_storage::JwkStorage,
   I: identity_storage::KeyIdStorage,
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + OptionalSync,
 {
   // Create a new DID document with a placeholder DID.
   let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network());
@@ -74,7 +75,7 @@ pub fn random_stronghold_path() -> PathBuf {
   file.to_owned()
 }
 
-pub async fn get_client_and_create_account<K, I>(
+pub async fn get_funded_client<K, I>(
   storage: &Storage<K, I>,
 ) -> Result<IdentityClient<StorageSigner<K, I>>, anyhow::Error>
 where

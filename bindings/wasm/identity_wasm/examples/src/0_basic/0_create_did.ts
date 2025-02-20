@@ -1,83 +1,43 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    IotaDID,
-    IotaDocument,
-    IotaIdentityClient,
-    JwkMemStore,
-    JwsAlgorithm,
-    KeyIdMemStore,
-    MethodScope,
-    Storage,
-} from "@iota/identity-wasm/node";
-import { AliasOutput, Client, MnemonicSecretManager, SecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
+import { IotaDID } from "@iota/identity-wasm/node";
+import { IotaClient } from "@iota/iota-sdk/client";
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL } from "../util";
 
-/** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
-export async function createIdentity(): Promise<{
-    didClient: IotaIdentityClient;
-    secretManager: SecretManager;
-    walletAddressBech32: string;
-    did: IotaDID;
-}> {
-    const client = new Client({
-        primaryNode: API_ENDPOINT,
-        localPow: true,
-    });
-    const didClient = new IotaIdentityClient(client);
+/** Demonstrate how to create a DID Document and publish it. */
+export async function createIdentity(): Promise<void> {
+    // create new client to connect to IOTA network
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
 
-    // Get the Bech32 human-readable part (HRP) of the network.
-    const networkHrp: string = await didClient.getNetworkHrp();
+    // create new client that offers identity related functions
+    const storage = getMemstorage();
+    const identityClient = await getFundedClient(storage);
 
-    const mnemonicSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
+    // create new unpublished document
+    const [unpublished] = await createDocumentForNetwork(storage, network);
+    console.log(`Unpublished DID document: ${JSON.stringify(unpublished, null, 2)}`);
+    let did: IotaDID;
 
-    // Generate a random mnemonic for our wallet.
-    const secretManager: SecretManager = new SecretManager(mnemonicSecretManager);
+    // TODO: decide upon wich style to use here
+    // so let's go with both for now, to show that both work
+    if (Math.random() > .5) {
+        console.log("Creating new identity fully via client flow");
+        const { output: identity } = await identityClient
+            .createIdentity(unpublished)
+            .finish()
+            .execute(identityClient);
+        did = IotaDID.fromAliasId(identity.id(), identityClient.network());
+    } else {
+        console.log("Publishing document to identity");
+        const { output: published } = await identityClient
+            .publishDidDocument(unpublished)
+            .execute(identityClient);
+        did = published.id();
+    }
 
-    const walletAddressBech32 = (await secretManager.generateEd25519Addresses({
-        accountIndex: 0,
-        range: {
-            start: 0,
-            end: 1,
-        },
-        bech32Hrp: networkHrp,
-    }))[0];
-    console.log("Wallet address Bech32:", walletAddressBech32);
-
-    // Request funds for the wallet, if needed - only works on development networks.
-    await ensureAddressHasFunds(client, walletAddressBech32);
-
-    // Create a new DID document with a placeholder DID.
-    // The DID will be derived from the Alias Id of the Alias Output after publishing.
-    const document = new IotaDocument(networkHrp);
-    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-
-    // Insert a new Ed25519 verification method in the DID document.
-    await document.generateMethod(
-        storage,
-        JwkMemStore.ed25519KeyType(),
-        JwsAlgorithm.EdDSA,
-        "#key-1",
-        MethodScope.VerificationMethod(),
-    );
-
-    // Construct an Alias Output containing the DID document, with the wallet address
-    // set as both the state controller and governor.
-    const address = Utils.parseBech32Address(walletAddressBech32);
-    const aliasOutput: AliasOutput = await didClient.newDidOutput(address, document);
-    console.log("Alias Output:", JSON.stringify(aliasOutput, null, 2));
-
-    // Publish the Alias Output and get the published DID document.
-    const published = await didClient.publishDidOutput(mnemonicSecretManager, aliasOutput);
-    console.log("Published DID document:", JSON.stringify(published, null, 2));
-
-    return {
-        didClient,
-        secretManager,
-        walletAddressBech32,
-        did: published.id(),
-    };
+    // check if we can resolve it via client
+    const resolved = await identityClient.resolveDid(did);
+    console.log(`Resolved DID document: ${JSON.stringify(resolved, null, 2)}`);
 }

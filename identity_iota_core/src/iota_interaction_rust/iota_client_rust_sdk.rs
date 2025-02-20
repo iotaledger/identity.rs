@@ -51,6 +51,7 @@ use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockResponseT;
 use identity_iota_interaction::ProgrammableTransactionBcs;
+use identity_iota_interaction::OptionalSync;
 use identity_iota_interaction::QuorumDriverTrait;
 use identity_iota_interaction::ReadTrait;
 use identity_iota_interaction::SignatureBcs;
@@ -334,7 +335,7 @@ impl IotaClientTrait for IotaClientRustSdk {
     signer: &S,
   ) -> Result<IotaTransactionBlockResponseAdaptedTraitObj, Self::Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let tx = bcs::from_bytes::<ProgrammableTransaction>(tx_bcs.as_slice())?;
     let response = self.sdk_execute_transaction(tx, gas_budget, signer).await?;

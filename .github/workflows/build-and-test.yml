@@ -183,16 +183,16 @@ jobs:
 
   build-wasm:
     needs: check-for-run-condition
-    # if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
-    if: ${{ false }} # disable for now, as the wasm bindings are not yet ready
-    # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@main
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    uses: './.github/workflows/shared-build-wasm.yml'
     with:
+      run-unit-tests: false
       output-artifact-name: identity-wasm-bindings-build
 
   test-wasm:
     needs: build-wasm
-    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    # if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    if: ${{ false }} # disable for now
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -228,7 +228,8 @@ jobs:
 
   test-wasm-firefox:
     needs: build-wasm
-    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    # if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    if: ${{ false }} # disable for now
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -272,7 +273,8 @@ jobs:
 
   test-wasm-chrome:
     needs: build-wasm
-    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    # if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    if: ${{ false }} # disable for now
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false

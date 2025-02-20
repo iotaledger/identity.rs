@@ -25,6 +25,7 @@ use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::transaction::Argument;
 use identity_iota_interaction::types::TypeTag;
 use identity_iota_interaction::MoveType;
+use identity_iota_interaction::OptionalSync;
 use secret_storage::Signer;
 use serde::Deserialize;
 use serde::Serialize;
@@ -161,7 +162,7 @@ where
     client: &IdentityClient<S>,
   ) -> Result<CreateProposalTx<'i, Self::Action>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
@@ -221,7 +222,7 @@ where
     _: &IdentityClient<S>,
   ) -> Result<UserDrivenTx<'i, Self::Action>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let proposal_id = self.id();
     let controller_execution_action = self.into_action();
@@ -282,7 +283,7 @@ where
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let Self {
       identity,

@@ -18,7 +18,7 @@ pub fn into_sdk_type<T: DeserializeOwned, W: Into<JsValue>>(wasm_type_instance: 
       // TODO: Replace all console_log! usages by proper Error management and Result types.
       // Use console_log! only for debug purposes
       console_log!(
-        "[identity_wasm::kinesis::types - fn into_sdk_type]\n   js_value: {:?}\n   Error: {:?}",
+        "[identity_wasm::rebased::types - fn into_sdk_type]\n   js_value: {:?}\n   Error: {:?}",
         js_value,
         e
       );
