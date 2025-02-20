@@ -229,7 +229,7 @@ jobs:
         run: npm ci
         working-directory: bindings/wasm/identity_wasm
 
-      - name: Install JS dependencies # This is problematic: The @iota/iota-sdk seems to not get used from the identity_wasm package
+      - name: Install JS dependencies # This is problematic: @iota/iota-sdk seems to not get used from the identity_wasm package, that is why reinstall deps here
         run: npm ci
         working-directory: bindings/wasm/iota_interaction_ts
 
