@@ -233,10 +233,6 @@ jobs:
         run: npm ci
         working-directory: bindings/wasm/iota_interaction_ts
 
-      - name: Debug
-        run: find . -maxdepth 2 -type d -ls
-        working-directory: bindings/wasm/
-
       - name: Run Wasm examples
         run: npm run test:readme && npm run test:node
         working-directory: bindings/wasm/identity_wasm
