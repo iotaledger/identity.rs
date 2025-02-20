@@ -226,6 +226,10 @@ jobs:
         run: npm ci
         working-directory: bindings/wasm/identity_wasm
 
+      - name: Install JS dependencies
+        run: npm ci
+        working-directory: bindings/wasm/iota_interaction_ts
+
       - name: Debug
         run: find . -maxdepth 2 -type d -ls
         working-directory: bindings/wasm/
