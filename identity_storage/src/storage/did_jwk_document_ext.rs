@@ -11,7 +11,7 @@ use jsonprooftoken::jpa::algs::ProofAlgorithm;
 
 use crate::{JwkGenOutput, JwkStorage, JwkStorageDocumentError as Error, KeyIdStorage, KeyType, MethodDigest};
 #[cfg(feature = "pqc")]
-use crate::{JwkStoragePQ, KeyId};
+use crate::JwkStoragePQ;
 #[cfg(feature = "jpt-bbs-plus")]
 use crate::JwkStorageBbsPlusExt;
 #[cfg(feature = "hybrid")]
@@ -205,6 +205,9 @@ impl DidJwkDocumentExt for CoreDocument {
     K: JwkStorage + JwkStoragePQ,
     I: KeyIdStorage 
   {
+
+    use crate::KeyId; 
+    
     let (pq_key_type, pq_alg, trad_key_type, trad_alg) = match alg {
       CompositeAlgId::IdMldsa44Ed25519Sha512 => (
         KeyType::from_static_str("ML-DSA"),
