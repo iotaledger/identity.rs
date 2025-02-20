@@ -112,6 +112,7 @@ impl IotaDocumentLock {
 /// Note: All methods that involve reading from this class may potentially raise an error
 /// if the object is being concurrently modified.
 #[wasm_bindgen(js_name = IotaDocument, inspectable)]
+#[derive(Clone)]
 pub struct WasmIotaDocument(pub(crate) Rc<IotaDocumentLock>);
 
 #[wasm_bindgen(js_class = IotaDocument)]

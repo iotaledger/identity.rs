@@ -84,10 +84,10 @@ impl WasmOnChainIdentity {
   #[wasm_bindgen(js_name = updateDidDocument)]
   pub fn update_did_document(
     &self,
-    updated_doc: WasmIotaDocument,
+    updated_doc: &WasmIotaDocument,
     expiration_epoch: Option<u64>,
   ) -> WasmCreateUpdateDidProposalTx {
-    WasmCreateUpdateDidProposalTx::new(self, updated_doc, expiration_epoch)
+    WasmCreateUpdateDidProposalTx::new(self, updated_doc.clone(), expiration_epoch)
   }
 
   #[wasm_bindgen(js_name = deactivateDid)]
