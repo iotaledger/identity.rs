@@ -7,8 +7,8 @@ import {
     Duration,
     EdDSAJwsVerifier,
     FailFast,
-    IotaIdentityClient,
-    JwkMemStore,
+    IdentityClientReadOnly,
+    IotaDocument,
     JwsSignatureOptions,
     JwsVerificationOptions,
     Jwt,
@@ -17,15 +17,13 @@ import {
     JwtPresentationOptions,
     JwtPresentationValidationOptions,
     JwtPresentationValidator,
-    KeyIdMemStore,
     Presentation,
     Resolver,
-    Storage,
     SubjectHolderRelationship,
     Timestamp,
 } from "@iota/identity-wasm/node";
-import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+import { IotaClient } from "@iota/iota-sdk/client";
+import { createDocumentForNetwork, getFundedClient, getMemstorage, IOTA_IDENTITY_PKG_ID, NETWORK_URL } from "../util";
 
 /**
  * This example shows how to create a Verifiable Presentation and validate it.
@@ -37,39 +35,29 @@ export async function createVP() {
     // Step 1: Create identities for the issuer and the holder.
     // ===========================================================================
 
-    const client = new Client({
-        primaryNode: API_ENDPOINT,
-        localPow: true,
-    });
-    const didClient = new IotaIdentityClient(client);
+    // create new client to connect to IOTA network
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
 
-    // Creates a new wallet and identity (see "0_create_did" example).
-    const issuerSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
-    const issuerStorage: Storage = new Storage(
-        new JwkMemStore(),
-        new KeyIdMemStore(),
-    );
-    let { document: issuerDocument, fragment: issuerFragment } = await createDid(
-        client,
-        issuerSecretManager,
-        issuerStorage,
-    );
+    // create issuer account, create identity, and publish DID document for it
+    const issuerStorage = getMemstorage();
+    const issuerClient = await getFundedClient(issuerStorage);
+    const [unpublishedIssuerDocument, issuerFragment] = await createDocumentForNetwork(issuerStorage, network);
+    const { output: issuerIdentity } = await issuerClient
+        .createIdentity(unpublishedIssuerDocument)
+        .finish()
+        .execute(issuerClient);
+    const issuerDocument = issuerIdentity.didDocument();
 
-    // Create an identity for the holder, in this case also the subject.
-    const aliceSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
-    const aliceStorage: Storage = new Storage(
-        new JwkMemStore(),
-        new KeyIdMemStore(),
-    );
-    let { document: aliceDocument, fragment: aliceFragment } = await createDid(
-        client,
-        aliceSecretManager,
-        aliceStorage,
-    );
+    // create holder account, create identity, and publish DID document for it
+    const aliceStorage = getMemstorage();
+    const aliceClient = await getFundedClient(aliceStorage);
+    const [unpublishedAliceDocument, aliceFragment] = await createDocumentForNetwork(aliceStorage, network);
+    const { output: aliceIdentity } = await aliceClient
+        .createIdentity(unpublishedAliceDocument)
+        .finish()
+        .execute(aliceClient);
+    const aliceDocument = aliceIdentity.didDocument();
 
     // ===========================================================================
     // Step 2: Issuer creates and signs a Verifiable Credential.
@@ -169,8 +157,8 @@ export async function createVP() {
         },
     );
 
-    const resolver = new Resolver({
-        client: didClient,
+    const resolver = new Resolver<IotaDocument>({
+        client: await IdentityClientReadOnly.createWithPkgId(iotaClient, IOTA_IDENTITY_PKG_ID),
     });
     // Resolve the presentation holder.
     const presentationHolderDID: CoreDID = JwtPresentationValidator.extractHolder(presentationJwt);

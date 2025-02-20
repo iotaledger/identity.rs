@@ -24,6 +24,7 @@ use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::MigrationMoveCalls;
 use identity_iota_interaction::MoveType;
+use identity_iota_interaction::OptionalSync;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 
 use super::get_identity;
@@ -31,7 +32,7 @@ use super::Identity;
 use super::OnChainIdentity;
 
 /// A legacy IOTA Stardust Output type, used to store DID Documents.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UnmigratedAlias {
   /// The ID of the Alias = hash of the Output ID that created the Alias Output in Stardust.
   /// This is the AliasID from Stardust.
@@ -165,7 +166,7 @@ impl TransactionInternal for MigrateLegacyAliasTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let response = self.0.execute_with_opt_gas_internal(gas_budget, client).await?.response;
     // Make sure the tx was successful.

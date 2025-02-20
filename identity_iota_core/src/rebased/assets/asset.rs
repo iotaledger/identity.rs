@@ -27,6 +27,7 @@ use identity_iota_interaction::AssetMoveCalls;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::MoveType;
+use identity_iota_interaction::OptionalSync;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -389,7 +390,7 @@ where
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let tx = AssetMoveCallsAdapter::update(
       self.asset.object_ref(client).await?,
@@ -430,7 +431,7 @@ where
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let asset_ref = self.0.object_ref(client).await?;
     let tx = AssetMoveCallsAdapter::delete::<T>(asset_ref, client.package_id())?;
@@ -457,7 +458,7 @@ where
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let AuthenticatedAssetBuilder {
       inner,
@@ -503,7 +504,7 @@ where
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let tx = AssetMoveCallsAdapter::transfer::<T>(
       self.asset.object_ref(client).await?,
@@ -556,7 +557,7 @@ impl TransactionInternal for AcceptTransferTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     if self.0.done {
       return Err(Error::TransactionBuildingFailed(
@@ -602,7 +603,7 @@ impl TransactionInternal for ConcludeTransferTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let cap = self.0.get_cap("SenderCap", client).await?;
     let (asset_ref, param_type) = self

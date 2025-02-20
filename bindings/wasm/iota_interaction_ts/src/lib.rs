@@ -50,6 +50,8 @@ cfg_if::cfg_if! {
         #[allow(unused_imports)] pub use error::TsSdkError as AdapterError;
         #[allow(unused_imports)] pub use bindings::IotaTransactionBlockResponseAdapter as AdapterNativeResponse;
         #[allow(unused_imports)] pub use bindings::ProgrammableTransaction;
+        #[cfg(feature = "keytool-signer")]
+        pub use bindings::WasmKeytoolSigner;
 
         #[allow(unused_imports)] pub use transaction_builder::NativeTsTransactionBuilderBindingWrapper;
     }

@@ -1,9 +1,14 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { SharedObjectRef } from "@iota/iota.js/dist/cjs/bcs/types";
-import { ObjectRef, Transaction } from "@iota/iota.js/transactions";
-import { getClockRef, getControllerDelegation, putBackDelegationToken } from "../utils";
+import { SharedObjectRef } from "@iota/iota-sdk/dist/cjs/bcs/types";
+import { ObjectRef, Transaction } from "@iota/iota-sdk/transactions";
+import {
+    getClockRef,
+    getControllerDelegation,
+    insertPlaceholders,
+    putBackDelegationToken,
+} from "../utils";
 
 export function proposeUpdate(
     identity: SharedObjectRef,
@@ -26,6 +31,8 @@ export function proposeUpdate(
     });
 
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
+
+    insertPlaceholders(tx);
 
     return tx.build();
 }
