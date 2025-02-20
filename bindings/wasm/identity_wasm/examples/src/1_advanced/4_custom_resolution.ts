@@ -11,18 +11,17 @@ import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 // Use this external package to avoid implementing the entire did:key method in this example.
-import * as ed25519 from "@transmute/did-key-ed25519";
+// @ts-ignore
+import { DidKeyDriver } from "@digitalcredentials/did-method-key";
+const didKeyDriver = new DidKeyDriver();
 
 /** Demonstrates how to set up a resolver using custom handlers.
  */
 export async function customResolution() {
     // Set up a handler for resolving Ed25519 did:key
     const keyHandler = async function(didKey: string): Promise<CoreDocument> {
-        let document = await ed25519.resolve(
-            didKey,
-            { accept: "application/did+ld+json" },
-        );
-        return CoreDocument.fromJSON(document.didDocument);
+        let document = await didKeyDriver.get({ did: didKey });
+        return CoreDocument.fromJSON(document);
     };
 
     // Create a new Client to interact with the IOTA ledger.
