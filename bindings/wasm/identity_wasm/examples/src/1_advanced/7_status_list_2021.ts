@@ -16,12 +16,7 @@ import {
     StatusPurpose,
 } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
-import {
-    createDocumentForNetwork,
-    getFundedClient,
-    getMemstorage,
-    NETWORK_URL,
-} from '../util';
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL } from "../util";
 
 export async function statusList2021() {
     // ===========================================================================

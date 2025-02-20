@@ -23,13 +23,7 @@ import {
     Timestamp,
 } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
-import {
-    createDocumentForNetwork,
-    getFundedClient,
-    getMemstorage,
-    IDENTITY_IOTA_PACKAGE_ID,
-    NETWORK_URL,
-} from '../util';
+import { createDocumentForNetwork, getFundedClient, getMemstorage, IOTA_IDENTITY_PKG_ID, NETWORK_URL } from "../util";
 
 /**
  * This example shows how to create a Verifiable Presentation and validate it.
@@ -164,7 +158,7 @@ export async function createVP() {
     );
 
     const resolver = new Resolver<IotaDocument>({
-        client: await IdentityClientReadOnly.createWithPkgId(iotaClient, IDENTITY_IOTA_PACKAGE_ID),
+        client: await IdentityClientReadOnly.createWithPkgId(iotaClient, IOTA_IDENTITY_PKG_ID),
     });
     // Resolve the presentation holder.
     const presentationHolderDID: CoreDID = JwtPresentationValidator.extractHolder(presentationJwt);
