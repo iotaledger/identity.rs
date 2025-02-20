@@ -222,6 +222,10 @@ jobs:
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
 
+      - name: Install JS dependencies
+        run: npm ci
+        working-directory: bindings/wasm/identity_wasm
+
       - name: Run Wasm examples
         run: npm run test:readme && npm run test:node
         working-directory: bindings/wasm/identity_wasm
