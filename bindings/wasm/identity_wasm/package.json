@@ -58,8 +58,8 @@
   ],
   "devDependencies": {
     "@transmute/did-key-ed25519": "0.3.0-unstable.9",
-    "@types/node": "^22.0.0",
     "@types/mocha": "^9.1.0",
+    "@types/node": "^22.0.0",
     "big-integer": "^1.6.51",
     "copy-webpack-plugin": "^7.0.0",
     "cypress": "^13.12.0",
@@ -74,12 +74,12 @@
     "txm": "^8.1.0",
     "typedoc": "^0.27.6",
     "typedoc-plugin-markdown": "^4.4.1",
-    "typescript": "=5.3.3",
+    "typescript": "^5.7.3",
     "wasm-opt": "^1.3.0"
   },
   "dependencies": {
-    "@iota/iota-sdk": "^0.5.0",
     "@iota/iota-interaction-ts": "file:../iota_interaction_ts/node",
+    "@iota/iota-sdk": "^0.5.0",
     "@noble/ed25519": "^1.7.3",
     "@noble/hashes": "^1.4.0",
     "@types/node-fetch": "^2.6.2",
@@ -87,8 +87,8 @@
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
-    "@iota/sdk-wasm": "^1.0.4",
-    "@iota/iota-sdk": "^0.5.0"
+    "@iota/iota-sdk": "^0.5.0",
+    "@iota/sdk-wasm": "^1.0.4"
   },
   "engines": {
     "node": ">=16"
