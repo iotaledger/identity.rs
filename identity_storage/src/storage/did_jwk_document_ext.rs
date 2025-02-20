@@ -1,19 +1,23 @@
 // Copyright 2024 Fondazione Links
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_did::{DIDCompositeJwk, DIDJwk};
+use identity_did::DIDJwk;
 use identity_document::document::CoreDocument;
-use identity_verification::{jwk::{CompositeAlgId, CompositeJwk}, jws::JwsAlgorithm, jwu::encode_b64_json};
+use identity_verification::{jws::JwsAlgorithm, jwu::encode_b64_json};
 use async_trait::async_trait;
 #[cfg(feature = "jpt-bbs-plus")]
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 
 
-use crate::{JwkGenOutput, JwkStorage, JwkStorageDocumentError as Error, KeyId, KeyIdStorage, KeyType, MethodDigest};
+use crate::{JwkGenOutput, JwkStorage, JwkStorageDocumentError as Error, KeyIdStorage, KeyType, MethodDigest};
 #[cfg(feature = "pqc")]
-use crate::JwkStoragePQ;
-#[cfg(feature = "hybrid")]
+use crate::{JwkStoragePQ, KeyId};
+#[cfg(feature = "jpt-bbs-plus")]
 use crate::JwkStorageBbsPlusExt;
+#[cfg(feature = "hybrid")]
+use identity_verification::jwk::{CompositeAlgId, CompositeJwk};
+#[cfg(feature = "hybrid")]
+use identity_did::DIDCompositeJwk;
 
 use super::{Storage, StorageResult};
 
