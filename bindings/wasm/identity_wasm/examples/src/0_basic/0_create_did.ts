@@ -20,22 +20,12 @@ export async function createIdentity(): Promise<void> {
     console.log(`Unpublished DID document: ${JSON.stringify(unpublished, null, 2)}`);
     let did: IotaDID;
 
-    // TODO: decide upon wich style to use here
-    // so let's go with both for now, to show that both work
-    if (Math.random() > .5) {
-        console.log("Creating new identity fully via client flow");
-        const { output: identity } = await identityClient
-            .createIdentity(unpublished)
-            .finish()
-            .execute(identityClient);
-        did = identity.didDocument().id();
-    } else {
-        console.log("Publishing document to identity");
-        const { output: published } = await identityClient
-            .publishDidDocument(unpublished)
-            .execute(identityClient);
-        did = published.id();
-    }
+    console.log("Creating new identity");
+    const { output: identity } = await identityClient
+        .createIdentity(unpublished)
+        .finish()
+        .execute(identityClient);
+    did = identity.didDocument().id();
 
     // check if we can resolve it via client
     const resolved = await identityClient.resolveDid(did);
