@@ -37,7 +37,8 @@
   "config": {
     "CYPRESS_VERIFY_TIMEOUT": 100000
   },
-  "contributors": [],
+  "contributors": [
+  ],
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/iotaledger/identity.rs/issues"
@@ -52,8 +53,8 @@
   ],
   "devDependencies": {
     "@transmute/did-key-ed25519": "0.3.0-unstable.9",
-    "@types/mocha": "^9.1.0",
     "@types/node": "^22.0.0",
+    "@types/mocha": "^9.1.0",
     "big-integer": "^1.6.51",
     "copy-webpack-plugin": "^7.0.0",
     "cypress": "^13.12.0",

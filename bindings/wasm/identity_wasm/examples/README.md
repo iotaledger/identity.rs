@@ -22,11 +22,11 @@ The examples require you to have the node you want to use in the iota clients "e
 
 Summarizing the last point, you'll need one or more of the following environment variables:
 
-| Name                     | Required for local node | Required for testnet | Required for other node |       Comment        |
-| ------------------------ | :---------------------: | :------------------: | :---------------------: | :------------------: |
+| Name                 | Required for local node | Required for testnet | Required for other node |       Comment        |
+| -------------------- | :---------------------: | :------------------: | :---------------------: | :------------------: |
 | IOTA_IDENTITY_PKG_ID |            x            |                      |            x            |                      |
-| NETWORK_URL              |                         |          x           |            x            |                      |
-| NETWORK_NAME_FAUCET      |                         |          x           |            x            | see assumption above |
+| NETWORK_URL          |                         |          x           |            x            |                      |
+| NETWORK_NAME_FAUCET  |                         |          x           |            x            | see assumption above |
 
 ### Node.js
 
@@ -58,15 +58,15 @@ IOTA_IDENTITY_PKG_ID=0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a5025
 
 The following basic CRUD (Create, Read, Update, Delete) examples are available:
 
-| Name                                                | Information                                                                          |
-|:----------------------------------------------------|:-------------------------------------------------------------------------------------|
-| [0_create_did](src/0_basic/0_create_did.ts)         | Demonstrates how to create a DID Document and publish it in a new Alias Output.      |
-| [1_update_did](src/0_basic/1_update_did.ts)         | Demonstrates how to update a DID document in an existing Alias Output.               |
-| [2_resolve_did](src/0_basic/2_resolve_did.ts)       | Demonstrates how to resolve an existing DID in an Alias Output.                      |
-| [3_deactivate_did](src/0_basic/3_deactivate_did.ts) | Demonstrates how to deactivate a DID in an Alias Output.                             |
-| [5_create_vc](src/0_basic/5_create_vc.ts)           | Demonstrates how to create and verify verifiable credentials.                        |
-| [6_create_vp](src/0_basic/6_create_vp.ts)           | Demonstrates how to create and verify verifiable presentations.                      |
-| [7_revoke_vc](src/0_basic/7_revoke_vc.ts)           | Demonstrates how to revoke a verifiable credential.                                  |
+| Name                                                | Information                                                                 |
+| :-------------------------------------------------- | :-------------------------------------------------------------------------- |
+| [0_create_did](src/0_basic/0_create_did.ts)         | Demonstrates how to create a DID Document and publish it in a new identity. |
+| [1_update_did](src/0_basic/1_update_did.ts)         | Demonstrates how to update a DID document in an existing identity.          |
+| [2_resolve_did](src/0_basic/2_resolve_did.ts)       | Demonstrates how to resolve an existing DID in an identity.                 |
+| [3_deactivate_did](src/0_basic/3_deactivate_did.ts) | Demonstrates how to deactivate a DID in an identity.                        |
+| [5_create_vc](src/0_basic/5_create_vc.ts)           | Demonstrates how to create and verify verifiable credentials.               |
+| [6_create_vp](src/0_basic/6_create_vp.ts)           | Demonstrates how to create and verify verifiable presentations.             |
+| [7_revoke_vc](src/0_basic/7_revoke_vc.ts)           | Demonstrates how to revoke a verifiable credential.                         |
 
 ## Advanced Examples
 

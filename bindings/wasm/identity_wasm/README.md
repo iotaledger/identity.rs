@@ -98,7 +98,7 @@ export async function main() {
     const networkHrp = identityClient.network();
 
     // Create a new DID document with a placeholder DID.
-    // The DID will be derived from the Alias Id of the Alias Output after publishing.
+    // The DID will be derived from the ObjectId of the identity after publishing.
     const document = new IotaDocument(networkHrp);
 
     // Insert a new Ed25519 verification method in the DID document.
@@ -252,7 +252,7 @@ async function createDocument() {
   const networkHrp = await didClient.getNetworkHrp();
 
   // Create a new DID document with a placeholder DID.
-  // The DID will be derived from the Alias Id of the Alias Output after publishing.
+  // The DID will be derived from the ObjectId of the identity after publishing.
   const document = new identity.IotaDocument(networkHrp);
 
   // Insert a new Ed25519 verification method in the DID document.
