@@ -146,7 +146,7 @@ jobs:
       - name: publish IotaIdentity package
         if: matrix.os != 'windows-latest'
         # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
-        run: IOTA_IDENTITY_PKG_ID=$(./publish_identity_package.sh) >> "$GITHUB_ENV"
+        run: echo "IOTA_IDENTITY_PKG_ID=$(./publish_identity_package.sh)"" >> "$GITHUB_ENV"
         working-directory: identity_iota_core/scripts/
 
       - name: Run tests excluding `custom_time` feature
@@ -222,7 +222,7 @@ jobs:
       - name: publish IotaIdentity package
         if: matrix.os != 'windows-latest'
         # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
-        run: IOTA_IDENTITY_PKG_ID=$(./publish_identity_package.sh) >> "$GITHUB_ENV"
+        run: echo "IOTA_IDENTITY_PKG_ID=$(./publish_identity_package.sh)"" >> "$GITHUB_ENV"
         working-directory: identity_iota_core/scripts/
 
       - name: Install JS dependencies
