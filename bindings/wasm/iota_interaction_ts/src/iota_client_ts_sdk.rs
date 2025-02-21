@@ -166,6 +166,10 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
   fn clone_native_response(&self) -> Self::NativeResponse {
     self.response.clone()
   }
+
+  fn digest(&self) -> Result<TransactionDigest, Self::Error> {
+    self.response.digest()
+  }
 }
 
 pub struct ReadAdapter {
@@ -345,13 +349,17 @@ impl IotaClientTrait for IotaClientTsSdk {
       .sdk_execute_transaction(sender_address, sender_public_key, tx, gas_budget, signer)
       .await?;
 
-    // wait a certain amount to time before continuing
-    // a follow up step was fetching an object created with this tx, which - for some reason - wasn't available yet
-    // TODO: check timing issues related to transactions finality here
-    sleep(500)
-        .await
-        .map_err(WasmError::from)
-        .map_err(TsSdkError::from)?;
+    // wait until new transaction block is available
+    self
+      .iota_client
+      .wait_for_transaction(
+        response.digest()?,
+        Some(IotaTransactionBlockResponseOptions::new()),
+        None,
+        None,
+      )
+      .await
+      .unwrap();
 
     Ok(Box::new(response))
   }

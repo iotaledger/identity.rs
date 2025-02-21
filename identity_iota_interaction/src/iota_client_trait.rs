@@ -103,6 +103,9 @@ pub trait IotaTransactionBlockResponseT: OptionalSend {
 
   /// Returns a clone of the wrapped platform specific client sdk response
   fn clone_native_response(&self) -> Self::NativeResponse;
+
+  // Returns digest for transaction block.
+  fn digest(&self) -> Result<TransactionDigest, Self::Error>;
 }
 
 #[cfg_attr(not(feature = "send-sync-transaction"), async_trait(?Send))]
