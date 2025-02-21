@@ -141,13 +141,13 @@ jobs:
         # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
         run: |
           iota move test
-        working-directory: ./identity_iota_core/packages/iota_identity
+        working-directory: identity_iota_core/packages/iota_identity
 
       - name: publish IotaIdentity package
         if: matrix.os != 'windows-latest'
         # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
-        run: ./deploy-package.sh >> "$GITHUB_ENV"
-        working-directory: ./identity_iota_core/packages/iota_identity
+        run: IOTA_IDENTITY_PKG_ID=$(./publish_identity_package.sh) >> "$GITHUB_ENV"
+        working-directory: identity_iota_core/scripts/
 
       - name: Run tests excluding `custom_time` feature
         if: matrix.os != 'windows-latest'
@@ -222,8 +222,8 @@ jobs:
       - name: publish IotaIdentity package
         if: matrix.os != 'windows-latest'
         # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
-        run: ./deploy-package.sh >> "$GITHUB_ENV"
-        working-directory: ./identity_iota_core/packages/iota_identity
+        run: IOTA_IDENTITY_PKG_ID=$(./publish_identity_package.sh) >> "$GITHUB_ENV"
+        working-directory: identity_iota_core/scripts/
 
       - name: Install JS dependencies
         run: npm ci
