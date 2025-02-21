@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    IotaDID,
     JwkMemStore,
     JwsAlgorithm,
     MethodRelationship,
@@ -28,7 +27,7 @@ export async function updateIdentity() {
         .createIdentity(unpublished)
         .finish()
         .execute(identityClient);
-    const did = IotaDID.fromAliasId(identity.id(), identityClient.network());
+    const did = identity.didDocument().id();
 
     // Resolve the latest state of the document.
     // Technically this is equivalent to the document above.
