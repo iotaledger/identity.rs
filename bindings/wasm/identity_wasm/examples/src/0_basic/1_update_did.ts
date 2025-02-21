@@ -13,7 +13,7 @@ import {
 import { IotaClient } from "@iota/iota-sdk/client";
 import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL, TEST_GAS_BUDGET } from "../util";
 
-/** Demonstrates how to update a DID document in an existing Alias Output. */
+/** Demonstrates how to update a DID document in an existing identity. */
 export async function updateIdentity() {
     // create new clients and create new account
     const iotaClient = new IotaClient({ url: NETWORK_URL });

@@ -13,9 +13,6 @@
       "@iota/identity-wasm/node": [
         "../web"
       ],
-      "@iota/sdk-wasm/node": [
-        "@iota/sdk-wasm/web"
-      ]
     }
   },
   "exclude": [

@@ -15,7 +15,7 @@ import { createDocumentForNetwork, getFundedClient, getMemstorage, IOTA_IDENTITY
 const DID_JWK: string =
     "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9";
 
-/** Demonstrates how to resolve an existing DID in an Alias Output. */
+/** Demonstrates how to resolve an existing DID in an identity. */
 export async function resolveIdentity() {
     // create new clients and create new account
     const iotaClient = new IotaClient({ url: NETWORK_URL });
@@ -31,7 +31,7 @@ export async function resolveIdentity() {
         .execute(identityClient);
     const did = identity.didDocument().id();
 
-    // Resolve the associated Alias Output and extract the DID document from it.
+    // Resolve the associated identity and extract the DID document from it.
     const resolved = await identityClient.resolveDid(did);
     console.log("Resolved DID document:", JSON.stringify(resolved, null, 2));
 
