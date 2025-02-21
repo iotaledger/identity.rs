@@ -418,14 +418,14 @@ impl WasmIotaDocument {
   // Publishing
   // ===========================================================================
 
-  /// Serializes the document for inclusion in an Alias Output's state metadata
+  /// Serializes the document for inclusion in an identity's metadata
   /// with the default {@link StateMetadataEncoding}.
   #[wasm_bindgen]
   pub fn pack(&self) -> Result<Vec<u8>> {
     self.0.try_read()?.clone().pack().wasm_result()
   }
 
-  /// Serializes the document for inclusion in an Alias Output's state metadata.
+  /// Serializes the document for inclusion in an identity's metadata.
   #[wasm_bindgen(js_name = packWithEncoding)]
   pub fn pack_with_encoding(&self, encoding: WasmStateMetadataEncoding) -> Result<Vec<u8>> {
     self
