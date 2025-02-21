@@ -1,8 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::rc::Rc;
 use std::ops::Deref;
+use std::rc::Rc;
 
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::ToFromBytes;
@@ -58,7 +58,10 @@ impl Deref for WasmIdentityClient {
 #[wasm_bindgen(js_class = IdentityClient)]
 impl WasmIdentityClient {
   #[wasm_bindgen(js_name = create)]
-  pub async fn new(client: WasmIdentityClientReadOnly, signer: WasmTransactionSigner) -> Result<WasmIdentityClient, JsError> {
+  pub async fn new(
+    client: WasmIdentityClientReadOnly,
+    signer: WasmTransactionSigner,
+  ) -> Result<WasmIdentityClient, JsError> {
     let inner_client = IdentityClient::new(client.0, signer).await?;
     Ok(WasmIdentityClient(inner_client))
   }

@@ -11,7 +11,6 @@ use identity_iota_interaction::generated_types::GetOwnedObjectsParams;
 use identity_iota_interaction::generated_types::GetTransactionBlockParams;
 use identity_iota_interaction::generated_types::QueryEventsParams;
 use identity_iota_interaction::generated_types::SortOrder;
-use identity_iota_interaction::generated_types::TryGetPastObjectParams;
 use identity_iota_interaction::generated_types::WaitForTransactionParams;
 use identity_iota_interaction::rpc_types::CoinPage;
 use identity_iota_interaction::rpc_types::EventFilter;
@@ -58,7 +57,6 @@ use crate::common::PromiseBigint;
 use crate::console_log;
 use crate::error::into_ts_sdk_result;
 use crate::error::TsSdkError;
-use crate::error::WasmResult;
 
 // This file contains the wasm-bindgen 'glue code' providing
 // the interface of the TS Iota client to rust code.
@@ -193,6 +191,7 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
+    #[allow(deprecated)] // will be refactored
     Ok(result.into_serde()?)
   }
 
@@ -218,6 +217,7 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
+    #[allow(deprecated)] // will be refactored
     Ok(result.into_serde()?)
   }
 
@@ -250,6 +250,7 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
+    #[allow(deprecated)] // will be refactored
     Ok(result.into_serde()?)
   }
 
@@ -287,14 +288,15 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
+    #[allow(deprecated)] // will be refactored
     Ok(result.into_serde()?)
   }
 
   pub async fn try_get_parsed_past_object(
     &self,
-    object_id: ObjectID,
-    version: SequenceNumber,
-    options: IotaObjectDataOptions,
+    _object_id: ObjectID,
+    _version: SequenceNumber,
+    _options: IotaObjectDataOptions,
   ) -> IotaRpcResult<IotaPastObjectResponse> {
     // TODO: does not work anymore, find out, why we need to pass a different `SequenceNumber` now
     unimplemented!("try_get_parsed_past_object");
@@ -349,6 +351,7 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
+    #[allow(deprecated)] // will be refactored
     Ok(result.into_serde()?)
   }
 
@@ -380,6 +383,7 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
+    #[allow(deprecated)] // will be refactored
     Ok(result.into_serde()?)
   }
 

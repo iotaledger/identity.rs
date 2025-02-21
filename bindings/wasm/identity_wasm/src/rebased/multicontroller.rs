@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::core::Object;
-use identity_iota::iota::rebased::migration::Proposal;
-use identity_iota::iota::rebased::proposals::{DeactivateDid, UpdateDidDocument};
 
 use super::client_dummy::Multicontroller;
 use wasm_bindgen::prelude::*;
@@ -11,7 +9,6 @@ use wasm_bindgen::prelude::*;
 use crate::common::MapStringAny;
 
 use super::types::WasmObjectID;
-
 
 #[wasm_bindgen(js_name = Multicontroller)]
 pub struct WasmMulticontroller(pub(crate) Multicontroller<Vec<u8>>);

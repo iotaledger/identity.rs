@@ -8,5 +8,4 @@ pub(crate) use identity::*;
 pub(crate) use multicontroller::*;
 
 // dummy types, have to be replaced with actual types later on
-pub(crate) type DummySigner = str;
 pub(crate) type Hashable<T> = Vec<T>;

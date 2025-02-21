@@ -5,13 +5,9 @@ use std::boxed::Box;
 use std::option::Option;
 use std::result::Result;
 
-use fastcrypto::hash::Blake2b256;
-use identity_iota_interaction::shared_crypto::intent::Intent;
-use identity_iota_interaction::shared_crypto::intent::IntentMessage;
 use identity_iota_interaction::types::crypto::SignatureScheme;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::dynamic_field::DynamicFieldName;
-use js_sys::Uint8Array;
 use secret_storage::Signer;
 
 use identity_iota_interaction::error::IotaRpcResult;
@@ -45,7 +41,6 @@ use identity_iota_interaction::TransactionDataBcs;
 
 use crate::bindings::add_gas_data_to_transaction;
 use crate::bindings::get_transaction_digest;
-use crate::bindings::sleep;
 use crate::bindings::IotaTransactionBlockResponseAdapter;
 use crate::bindings::ManagedWasmIotaClient;
 use crate::bindings::WasmIotaClient;
@@ -343,7 +338,10 @@ impl IotaClientTrait for IotaClientTsSdk {
     tx_bcs: ProgrammableTransactionBcs,
     gas_budget: Option<u64>,
     signer: &S,
-  ) -> Result<Box<dyn IotaTransactionBlockResponseT<Error = Self::Error, NativeResponse = Self::NativeResponse>>, Self::Error> {
+  ) -> Result<
+    Box<dyn IotaTransactionBlockResponseT<Error = Self::Error, NativeResponse = Self::NativeResponse>>,
+    Self::Error,
+  > {
     let tx: ProgrammableTransaction = tx_bcs.try_into()?;
     let response = self
       .sdk_execute_transaction(sender_address, sender_public_key, tx, gas_budget, signer)
@@ -366,13 +364,13 @@ impl IotaClientTrait for IotaClientTsSdk {
 
   async fn default_gas_budget(
     &self,
-    sender_address: IotaAddress,
-    tx_bcs: &ProgrammableTransactionBcs,
+    _sender_address: IotaAddress,
+    _tx_bcs: &ProgrammableTransactionBcs,
   ) -> Result<u64, Self::Error> {
     unimplemented!();
   }
 
-  async fn get_previous_version(&self, iod: IotaObjectData) -> Result<Option<IotaObjectData>, Self::Error> {
+  async fn get_previous_version(&self, _iod: IotaObjectData) -> Result<Option<IotaObjectData>, Self::Error> {
     unimplemented!();
   }
 
@@ -407,37 +405,35 @@ impl IotaClientTsSdk {
     sender_public_key: &[u8],
   ) -> Result<Vec<u8>, TsSdkError> {
     let digest = get_transaction_digest(tx_data);
-  
+
     let raw_signature = signer
       .sign(&digest.to_vec())
       .await
-      .map_err(|err| 
-        TsSdkError::TransactionSerializationError(format!("could not sign transaction message; {err}"))
-      )?;
-  
+      .map_err(|err| TsSdkError::TransactionSerializationError(format!("could not sign transaction message; {err}")))?;
+
     let signature_bytes = [
       [SignatureScheme::ED25519.flag()].as_slice(),
       &raw_signature,
       sender_public_key,
     ]
     .concat();
-  
+
     Ok(signature_bytes)
   }
 
   /// Inserts these values into the transaction and replaces placeholder values.
-  /// 
+  ///
   ///   - sender (overwritten as we assume a placeholder to be used in prepared transaction)
   ///   - gas budget (value determined automatically if not provided)
   ///   - gas price (value determined automatically)
   ///   - gas coin / payment object (fetched automatically)
   ///   - gas owner (equals sender)
-  /// 
+  ///
   /// # Arguments
-  /// 
+  ///
   ///   * `iota_client` -  client instance
   ///   * `sender_address` -  transaction sender (and the one paying for it)
-  ///   * `tx_bcs` -  transaction data serialized to bcs, most probably having placeholder values 
+  ///   * `tx_bcs` -  transaction data serialized to bcs, most probably having placeholder values
   ///   * `gas_budget` -  optional fixed gas budget, determined automatically with a dry run if not provided
   async fn replace_transaction_placeholder_values(
     &self,
@@ -445,16 +441,8 @@ impl IotaClientTsSdk {
     sender_address: IotaAddress,
     gas_budget: Option<u64>,
   ) -> Result<Vec<u8>, TsSdkError> {
-    let tx_bcs = tx.0.build()
-      .await
-      .map_err(WasmError::from)?
-      .to_vec();
-    let updated = add_gas_data_to_transaction(
-      &self.iota_client.0,
-      sender_address,
-      tx_bcs,
-      gas_budget,
-    ).await?;
+    let tx_bcs = tx.0.build().await.map_err(WasmError::from)?.to_vec();
+    let updated = add_gas_data_to_transaction(&self.iota_client.0, sender_address, tx_bcs, gas_budget).await?;
 
     Ok(updated)
   }
@@ -471,7 +459,9 @@ impl IotaClientTsSdk {
     gas_budget: Option<u64>,
     signer: &S,
   ) -> Result<IotaTransactionBlockResponseProvider, TsSdkError> {
-    let final_tx = self.replace_transaction_placeholder_values(tx, sender_address, gas_budget).await?;
+    let final_tx = self
+      .replace_transaction_placeholder_values(tx, sender_address, gas_budget)
+      .await?;
     let signature = Self::get_transaction_signature_bytes(signer, &final_tx, sender_public_key).await?;
 
     let wasm_response = self
@@ -482,7 +472,8 @@ impl IotaClientTsSdk {
         Some(IotaTransactionBlockResponseOptions::full_content()),
         Some(ExecuteTransactionRequestType::WaitForLocalExecution),
       )
-      .await.unwrap();
+      .await
+      .unwrap();
     let native = wasm_response.clone_native_response();
 
     Ok(IotaTransactionBlockResponseProvider::new(native))

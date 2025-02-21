@@ -14,8 +14,8 @@ use identity_iota_interaction::types::object::Owner;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Promise;
 use js_sys::Uint8Array;
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
@@ -200,7 +200,8 @@ impl From<ObjectRef> for WasmObjectRef {
       "digest": value.2,
     });
 
-    json_obj.serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+    json_obj
+      .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
       .expect("a JSON object is a JS value")
       // safety: `json_obj` was constructed following TS ObjectRef's interface.
       .unchecked_into()
@@ -215,7 +216,8 @@ impl From<(ObjectID, SequenceNumber, bool)> for WasmSharedObjectRef {
       "mutable": value.2,
     });
 
-    json_obj.serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+    json_obj
+      .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
       .expect("a JSON object is a JS value")
       // safety: `json_obj` was constructed following TS SharedObjectRef's interface.
       .unchecked_into()
@@ -289,11 +291,11 @@ extern "C" {
 
   #[wasm_bindgen(js_name = "addGasDataToTransaction")]
   fn add_gas_data_to_transaction_inner(
-    iota_client: &WasmIotaClient,  // --> TypeScript: IotaClient
-    sender_address: String,        // --> TypeScript: string
-    tx_bcs: Vec<u8>,               // --> TypeScript: Uint8Array,
-    gas_budget: Option<u64>,       // --> TypeScript: optional bigint
-) -> PromiseUint8Array;
+    iota_client: &WasmIotaClient, // --> TypeScript: IotaClient
+    sender_address: String,       // --> TypeScript: string
+    tx_bcs: Vec<u8>,              // --> TypeScript: Uint8Array,
+    gas_budget: Option<u64>,      // --> TypeScript: optional bigint
+  ) -> PromiseUint8Array;
 
   #[wasm_bindgen(js_name = "sleep")]
   fn sleep_inner(ms: i32) -> Promise;
@@ -305,24 +307,24 @@ pub(crate) fn get_transaction_digest(tx_data: &[u8]) -> Vec<u8> {
 }
 
 /// Inserts these values into the transaction and replaces placeholder values.
-/// 
+///
 ///   - sender (overwritten as we assume a placeholder to be used in prepared transaction)
 ///   - gas budget (value determined automatically if not provided)
 ///   - gas price (value determined automatically)
 ///   - gas coin / payment object (fetched automatically)
 ///   - gas owner (equals sender)
-/// 
+///
 /// # Arguments
-/// 
+///
 ///   * `iota_client` -  client instance
 ///   * `sender_address` -  transaction sender (and the one paying for it)
-///   * `tx_bcs` -  transaction data serialized to bcs, most probably having placeholder values 
+///   * `tx_bcs` -  transaction data serialized to bcs, most probably having placeholder values
 ///   * `gas_budget` -  optional fixed gas budget, determined automatically with a dry run if not provided
 pub(crate) async fn add_gas_data_to_transaction(
-    iota_client: &WasmIotaClient,
-    sender_address: IotaAddress,
-    tx_bcs: Vec<u8>,
-    gas_budget: Option<u64>,
+  iota_client: &WasmIotaClient,
+  sender_address: IotaAddress,
+  tx_bcs: Vec<u8>,
+  gas_budget: Option<u64>,
 ) -> Result<Vec<u8>, TsSdkError> {
   let promise: Promise = Promise::resolve(&add_gas_data_to_transaction_inner(
     iota_client,

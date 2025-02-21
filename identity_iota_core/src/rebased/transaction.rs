@@ -70,8 +70,11 @@ pub trait Transaction: Sized {
   }
 }
 
+/// The output type of a [`Transaction`].
 pub struct TransactionOutputInternal<T> {
+  /// The parsed Transaction output. See [`Transaction::Output`].
   pub output: T,
+  /// The "raw" transaction execution response received.
   pub response: IotaTransactionBlockResponseAdaptedTraitObj,
 }
 
@@ -94,17 +97,22 @@ impl<T> From<TransactionOutputInternal<T>> for TransactionOutput<T> {
   }
 }
 
+/// Interface for operations that interact with the ledger through transactions.
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait TransactionInternal: Sized {
+  /// The result of performing the operation.
   type Output;
 
-  async fn execute_with_opt_gas_internal<S: Signer<IotaKeySignature> + OptionalSync,>(
+  /// Executes this operation using the given `client` and an optional `gas_budget`.
+  /// If no value for `gas_budget` is provided, an estimated value will be used.
+  async fn execute_with_opt_gas_internal<S: Signer<IotaKeySignature> + OptionalSync>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>;
 
+  /// Executes this operation using `client`.
   #[cfg(target_arch = "wasm32")]
   async fn execute<S: Signer<IotaKeySignature>>(
     self,
@@ -113,6 +121,7 @@ pub trait TransactionInternal: Sized {
     self.execute_with_opt_gas_internal(None, client).await
   }
 
+  /// Executes this operation using `client` and a well defined `gas_budget`.
   #[cfg(target_arch = "wasm32")]
   async fn execute_with_gas<S: Signer<IotaKeySignature> + OptionalSync>(
     self,
@@ -162,8 +171,8 @@ impl TransactionInternal for ProgrammableTransaction {
   type Output = ();
   async fn execute_with_opt_gas_internal<S>(
     self,
-    gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    _gas_budget: Option<u64>,
+    _client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
     S: Signer<IotaKeySignature> + OptionalSync,
