@@ -15,7 +15,11 @@ use secret_storage::Error as SecretStorageError;
 use secret_storage::Signer;
 use serde_json::Value;
 use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::JsError;
 use wasm_bindgen::JsValue;
+
+use super::WasmIotaSignature;
+use super::WasmPublicKey;
 
 #[wasm_bindgen(module = buffer)]
 extern "C" {
@@ -70,34 +74,18 @@ impl WasmKeytoolSigner {
   }
 
   #[wasm_bindgen(js_name = publicKey)]
-  pub async fn public_key(&self) -> Vec<u8> {
-    self.0.public_key().as_ref().to_owned()
+  pub async fn public_key(&self) -> Result<WasmPublicKey> {
+    self.0.public_key().try_into()
   }
 
   #[wasm_bindgen]
-  pub async fn sign(&self, data: Vec<u8>) -> Result<Vec<u8>> {
-    Signer::sign(self, &data)
+  pub async fn sign(&self, data: Vec<u8>) -> Result<WasmIotaSignature> {
+    self
+      .0
+      .sign(&data)
       .await
-      .map_err(|e| anyhow::Error::from(e))
-      .map(|signature| signature.as_ref().to_owned())
-      .wasm_result()
-  }
-}
-
-#[async_trait(?Send)]
-impl Signer<IotaKeySignature> for WasmKeytoolSigner {
-  type KeyId = IotaAddress;
-
-  fn key_id(&self) -> &Self::KeyId {
-    self.0.key_id()
-  }
-
-  async fn public_key(&self) -> std::result::Result<PublicKey, SecretStorageError> {
-    Ok(self.0.public_key().clone())
-  }
-
-  async fn sign(&self, data: &TransactionDataBcs) -> std::result::Result<Signature, SecretStorageError> {
-    self.0.sign(data).await
+      .map_err(|e| JsError::new(&e.to_string()).into())
+      .and_then(|sig| sig.try_into())
   }
 }
 

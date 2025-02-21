@@ -145,6 +145,27 @@ impl PublicKey {
             PublicKey::Passkey(_) => SignatureScheme::PasskeyAuthenticator,
         }
     }
+
+    pub fn try_from_bytes(
+        curve: SignatureScheme,
+        key_bytes: &[u8],
+    ) -> Result<PublicKey, eyre::Report> {
+        match curve {
+            SignatureScheme::ED25519 => Ok(PublicKey::Ed25519(
+                (&Ed25519PublicKey::from_bytes(key_bytes)?).into(),
+            )),
+            SignatureScheme::Secp256k1 => Ok(PublicKey::Secp256k1(
+                (&Secp256k1PublicKey::from_bytes(key_bytes)?).into(),
+            )),
+            SignatureScheme::Secp256r1 => Ok(PublicKey::Secp256r1(
+                (&Secp256r1PublicKey::from_bytes(key_bytes)?).into(),
+            )),
+            SignatureScheme::PasskeyAuthenticator => Ok(PublicKey::Passkey(
+                (&Secp256r1PublicKey::from_bytes(key_bytes)?).into(),
+            )),
+            _ => Err(eyre::eyre!("Unsupported curve")),
+        }
+    }
 }
 
 pub trait IotaPublicKey: VerifyingKey {

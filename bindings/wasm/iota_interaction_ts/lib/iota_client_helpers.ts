@@ -7,13 +7,14 @@ import {
     IotaClient,
     IotaTransactionBlockResponse,
     OwnedObjectRef,
+    Signature,
 } from "@iota/iota-sdk/client";
-import { messageWithIntent, toSerializedSignature } from "@iota/iota-sdk/cryptography";
+import { messageWithIntent, PublicKey, toSerializedSignature } from "@iota/iota-sdk/cryptography";
 import { Ed25519PublicKey } from "@iota/iota-sdk/keypairs/ed25519";
 import { GasData, TransactionDataBuilder } from "@iota/iota-sdk/transactions";
 import { blake2b } from "@noble/hashes/blake2b";
 
-export type Signer = { sign(data: Uint8Array): Promise<Uint8Array> };
+export type Signer = { sign(data: Uint8Array): Promise<Signature> };
 
 export class IotaTransactionBlockResponseAdapter {
     response: IotaTransactionBlockResponse;
@@ -47,34 +48,6 @@ export class IotaTransactionBlockResponseAdapter {
     get_response(): IotaTransactionBlockResponse {
         return this.response;
     }
-}
-
-/**
- * Builds message with `TransactionData` intent and returns hash of it.
- *
- * @param txBcs transaction data to hash
- * @returns digest/hash of intent message for transaction data
- */
-export function getTransactionDigest(txBcs: Uint8Array): Uint8Array {
-    const intent = "TransactionData";
-    const intentMessage = messageWithIntent(intent, txBcs);
-    return blake2b(intentMessage, { dkLen: 32 });
-}
-
-async function signTransactionData(
-    txBcs: Uint8Array,
-    senderPublicKey: Uint8Array,
-    signer: { sign(data: Uint8Array): Promise<Uint8Array> },
-): Promise<string> {
-    const digest = getTransactionDigest(txBcs);
-    const signerSignature = await signer.sign(digest);
-    const signature = toSerializedSignature({
-        signature: await signerSignature,
-        signatureScheme: "ED25519",
-        publicKey: new Ed25519PublicKey(senderPublicKey),
-    });
-
-    return signature;
 }
 
 async function getCoinForTransaction(iotaClient: IotaClient, senderAddress: string): Promise<CoinStruct> {
@@ -160,18 +133,19 @@ export async function addGasDataToTransaction(
 export async function executeTransaction(
     iotaClient: IotaClient,
     senderAddress: string,
-    senderPublicKey: Uint8Array,
     txBcs: Uint8Array,
     signer: Signer,
     gasBudget?: bigint,
 ): Promise<IotaTransactionBlockResponseAdapter> {
     const txWithGasData = await addGasDataToTransaction(iotaClient, senderAddress, txBcs, gasBudget);
-    const signature = await signTransactionData(txWithGasData, senderPublicKey, signer);
-    console.log(signature);
+    const signature = await signer.sign(txWithGasData) as any;
+    const base64signature = (signature.Ed25519IotaSignature
+        || signature.Secp256r1IotaSignature
+        || signature.Secp256k1IotaSignature) as string;
 
     const response = await iotaClient.executeTransactionBlock({
         transactionBlock: txWithGasData,
-        signature,
+        signature: base64signature,
         options: { // equivalent of `IotaTransactionBlockResponseOptions::full_content()`
             showEffects: true,
             showInput: true,
@@ -192,8 +166,6 @@ export async function executeTransaction(
 
 /**
  * Helper function to pause execution.
- *
- * @param txBcs transaction data to hash
  */ 
 export function sleep(durationMs: number) {
     return new Promise(resolve => setTimeout(resolve, durationMs));

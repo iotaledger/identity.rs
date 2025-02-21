@@ -50,6 +50,11 @@ cfg_if::cfg_if! {
         #[allow(unused_imports)] pub use error::TsSdkError as AdapterError;
         #[allow(unused_imports)] pub use bindings::IotaTransactionBlockResponseAdapter as AdapterNativeResponse;
         #[allow(unused_imports)] pub use bindings::ProgrammableTransaction;
+        #[allow(unused_imports)] pub use bindings::WasmPublicKey;
+        #[allow(unused_imports)] pub use bindings::Ed25519PublicKey as WasmEd25519PublicKey;
+        #[allow(unused_imports)] pub use bindings::Secp256r1PublicKey as WasmSecp256r1PublicKey;
+        #[allow(unused_imports)] pub use bindings::Secp256k1PublicKey as WasmSecp256k1PublicKey;
+        #[allow(unused_imports)] pub use bindings::WasmIotaSignature;
         #[cfg(feature = "keytool-signer")]
         pub use bindings::WasmKeytoolSigner;
 
