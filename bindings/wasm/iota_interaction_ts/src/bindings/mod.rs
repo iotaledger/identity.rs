@@ -7,4 +7,3 @@ mod wasm_types;
 
 pub use types::*;
 pub use wasm_iota_client::*;
-pub use wasm_types::*;

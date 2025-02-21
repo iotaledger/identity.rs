@@ -25,7 +25,6 @@ use identity_iota::storage::storage::JwsSignatureOptions;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
-use iota_sdk::types::TryFromDto;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;

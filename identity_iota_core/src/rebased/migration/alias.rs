@@ -88,6 +88,7 @@ cfg_if::cfg_if! {
 }
 
 impl UnmigratedAlias {
+  #[allow(unused)] // Currently not supported.
   pub(crate) async fn migrate_internal(
     self,
     client: &IdentityClientReadOnly,

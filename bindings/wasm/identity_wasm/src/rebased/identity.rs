@@ -113,6 +113,7 @@ impl WasmOnChainIdentity {
     WasmCreateSendProposalTx::new(self, transfer_map, expiration_epoch)
   }
 
+  #[allow(unused)] // API will be updated in the future
   #[wasm_bindgen(js_name = getHistory, skip_typescript)] // ts type in custom section below
   pub async fn get_history(
     &self,

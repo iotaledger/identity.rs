@@ -1,15 +1,13 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use js_sys::Array;
-use js_sys::Promise;
+use async_trait::async_trait;
 use js_sys::Uint8Array;
 use std::cell::Cell;
 use std::collections::HashSet;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
-use wasm_bindgen_futures::JsFuture;
 
 use crate::bindings::WasmIotaObjectData;
 use crate::bindings::WasmObjectRef;
@@ -217,6 +215,7 @@ extern "C" {
 
 pub struct IdentityMoveCallsTsSdk {}
 
+#[async_trait(?Send)]
 impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
   type Error = TsSdkError;
   type NativeTxBuilder = WasmTransactionBuilder;
@@ -593,12 +592,12 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
   }
 
   fn create_and_execute_send(
-    identity: OwnedObjectRef,
-    capability: ObjectRef,
-    transfer_map: Vec<(ObjectID, IotaAddress)>,
-    expiration: Option<u64>,
-    objects: Vec<(ObjectRef, TypeTag)>,
-    package: ObjectID,
+    _identity: OwnedObjectRef,
+    _capability: ObjectRef,
+    _transfer_map: Vec<(ObjectID, IotaAddress)>,
+    _expiration: Option<u64>,
+    _objects: Vec<(ObjectRef, TypeTag)>,
+    _package: ObjectID,
   ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> {
     todo!()
   }

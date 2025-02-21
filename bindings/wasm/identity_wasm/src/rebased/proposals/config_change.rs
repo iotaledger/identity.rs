@@ -310,9 +310,13 @@ impl WasmCreateConfigChangeProposalTx {
       .add_multiple_controllers(controllers_to_add)
       .remove_multiple_controllers(controllers_to_remove)
       .update_multiple_controllers(controllers_to_update);
-    // identity_ref.deactivate_did();
     let builder = if let Some(exp) = self.expiration_epoch {
       builder.expiration_epoch(exp)
+    } else {
+      builder
+    };
+    let builder = if let Some(tr) = self.threshold {
+      builder.threshold(tr)
     } else {
       builder
     };

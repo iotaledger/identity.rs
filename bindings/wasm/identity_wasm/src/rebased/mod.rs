@@ -10,7 +10,5 @@ mod wasm_identity_client_read_only;
 mod proposals;
 
 pub use identity::*;
-pub use multicontroller::*;
-pub use types::*;
 pub use wasm_identity_client::*;
 pub use wasm_identity_client_read_only::*;

@@ -17,12 +17,12 @@ cfg_if::cfg_if! {
   if #[cfg(not(target_arch = "wasm32"))] {
     use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
     use crate::rebased::transaction::Transaction;
+    use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
   }
 }
 use crate::iota_interaction_adapter::AdapterError;
 use crate::iota_interaction_adapter::AdapterNativeResponse;
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
 
 use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::IotaClientTrait;

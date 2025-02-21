@@ -47,6 +47,8 @@ impl<T> Multicontroller<T> {
   pub fn proposals(&self) -> &HashMap<String, Proposal> {
     &self.proposals
   }
+
+  #[allow(unused)] // API here will be replaced in the future.
   pub fn into_inner(self) -> T {
     self.controlled_value
   }
