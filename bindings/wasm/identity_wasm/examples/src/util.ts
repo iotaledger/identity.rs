@@ -64,7 +64,8 @@ export async function getFundedClient(storage: Storage): Promise<IdentityClient>
 
     // create signer from storage
     let signer = new StorageSigner(storage, keyId, publicKeyJwk);
-    const identityClient = await IdentityClient.create(identityClientReadOnly, signer);
+    const keytoolSigner = await KeytoolSigner.create();
+    const identityClient = await IdentityClient.create(identityClientReadOnly, keytoolSigner);
 
     await requestIotaFromFaucetV0({
         host: getFaucetHost(NETWORK_NAME_FAUCET),

@@ -1,6 +1,8 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use fastcrypto::encoding::Base64;
+use fastcrypto::encoding::Encoding;
 use fastcrypto::traits::EncodeDecodeBase64;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
@@ -161,18 +163,41 @@ extern "C" {
   pub type WasmIotaSignature;
 }
 
+#[derive(Serialize, Deserialize)]
+enum IotaSignatureHelper {
+  Ed25519IotaSignature(String),
+  Secp256k1IotaSignature(String),
+  Secp256r1IotaSignature(String),
+}
+
 impl TryFrom<Signature> for WasmIotaSignature {
   type Error = JsValue;
   fn try_from(sig: Signature) -> Result<Self, Self::Error> {
-    let js_value = serde_wasm_bindgen::to_value(&sig)?;
-    js_value.dyn_into()
+    let base64sig = Base64::encode(&sig);
+    let json_signature = match sig {
+      Signature::Ed25519IotaSignature(_) => IotaSignatureHelper::Ed25519IotaSignature(base64sig),
+      Signature::Secp256r1IotaSignature(_) => IotaSignatureHelper::Secp256r1IotaSignature(base64sig),
+      Signature::Secp256k1IotaSignature(_) => IotaSignatureHelper::Secp256k1IotaSignature(base64sig),
+    };
+
+    json_signature
+      .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+      .map(JsCast::unchecked_into)
+      .map_err(|e| e.into())
   }
 }
 
 impl TryFrom<WasmIotaSignature> for Signature {
   type Error = JsValue;
   fn try_from(sig: WasmIotaSignature) -> Result<Self, Self::Error> {
-    serde_wasm_bindgen::from_value(sig.into()).wasm_result()
+    let sig_helper = serde_wasm_bindgen::from_value(sig.into())?;
+    let base64sig = match sig_helper {
+      IotaSignatureHelper::Ed25519IotaSignature(s) => s,
+      IotaSignatureHelper::Secp256k1IotaSignature(s) => s,
+      IotaSignatureHelper::Secp256r1IotaSignature(s) => s,
+    };
+
+    base64sig.parse().map_err(|e: eyre::Report| JsError::new(&e.to_string()).into())
   }
 }
 

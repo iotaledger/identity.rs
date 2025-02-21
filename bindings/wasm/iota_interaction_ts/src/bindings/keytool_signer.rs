@@ -40,7 +40,7 @@ pub struct WasmKeytoolSigner(pub(crate) KeytoolSigner);
 
 #[wasm_bindgen(js_class = KeytoolSigner)]
 impl WasmKeytoolSigner {
-  #[wasm_bindgen(constructor)]
+  #[wasm_bindgen(js_name = create)]
   pub async fn new(address: Option<String>, iota_bin_location: Option<String>) -> Result<WasmKeytoolSigner> {
     let address = address
       .as_deref()
