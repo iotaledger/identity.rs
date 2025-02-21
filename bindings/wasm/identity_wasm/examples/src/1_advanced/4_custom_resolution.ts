@@ -22,7 +22,7 @@ export async function customResolution() {
 
         // for demo purposes we'll just inject the custom property into a core document
         // to create a new KeyDocument instance
-        let coreDocument = CoreDocument.fromJSON(document.didDocument);
+        let coreDocument = CoreDocument.fromJSON(document);
         (coreDocument as unknown as KeyDocument).customProperty = "foobar";
         return coreDocument as unknown as KeyDocument;
     };
