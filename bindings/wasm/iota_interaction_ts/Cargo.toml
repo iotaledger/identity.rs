@@ -55,4 +55,4 @@ empty_docs = "allow"
 
 [lints.rust]
 # required for current wasm_bindgen version
- unexpected_cfgs = { level = "warn", check-cfg = ['cfg(wasm_bindgen_unstable_test_coverage)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(wasm_bindgen_unstable_test_coverage)'] }

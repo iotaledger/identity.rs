@@ -61,4 +61,4 @@ result_large_err = "allow"
 
 [lints.rust]
 # from local sdk types
- unexpected_cfgs = { level = "warn", check-cfg = ['cfg(msim)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(msim)'] }
