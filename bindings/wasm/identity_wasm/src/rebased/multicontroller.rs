@@ -10,7 +10,6 @@ use crate::common::MapStringAny;
 
 use super::types::WasmObjectID;
 
-
 #[wasm_bindgen(js_name = Multicontroller)]
 pub struct WasmMulticontroller(pub(crate) Multicontroller<Vec<u8>>);
 
