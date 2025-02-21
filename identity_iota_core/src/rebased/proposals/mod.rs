@@ -17,18 +17,19 @@ cfg_if::cfg_if! {
   if #[cfg(not(target_arch = "wasm32"))] {
     use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
     use crate::rebased::transaction::Transaction;
+    use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
   }
 }
 use crate::iota_interaction_adapter::AdapterError;
 use crate::iota_interaction_adapter::AdapterNativeResponse;
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
 
 use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockResponseT;
 use identity_iota_interaction::OptionalSend;
+use identity_iota_interaction::OptionalSync;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 
 use crate::rebased::client::IdentityClientReadOnly;
@@ -91,7 +92,7 @@ pub trait ProposalT: Sized {
     client: &IdentityClient<S>,
   ) -> Result<impl ResultingTransactionT<Output = ProposalResult<Self>>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync;
+    S: Signer<IotaKeySignature> + OptionalSync;
 
   /// Converts the [`Proposal`] into a transaction that can be executed.
   async fn into_tx<'i, S>(
@@ -100,7 +101,7 @@ pub trait ProposalT: Sized {
     client: &IdentityClient<S>,
   ) -> Result<impl ProtoTransaction, Error>
   where
-    S: Signer<IotaKeySignature> + Sync;
+    S: Signer<IotaKeySignature> + OptionalSync;
 
   #[cfg(not(target_arch = "wasm32"))]
   /// Parses the transaction's effects and returns the output of the [`Proposal`].
@@ -169,7 +170,7 @@ impl<'i, A> ProposalBuilder<'i, A> {
   ) -> Result<impl ResultingTransactionT<Output = ProposalResult<Proposal<A>>> + use<'i, 'c, S, A>, Error>
   where
     Proposal<A>: ProposalT<Action = A>,
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
     A: 'c,
     'i: 'c,
   {
@@ -217,7 +218,7 @@ where
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<ProposalResult<Proposal<A>>>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let Self {
       identity,
@@ -286,7 +287,7 @@ where
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let Self { identity, tx, .. } = self;
     let tx_response = client.execute_transaction(tx, gas_budget).await?;
@@ -330,7 +331,7 @@ where
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let Self { proposal, identity, .. } = self;
     let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();

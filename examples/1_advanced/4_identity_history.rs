@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use examples::create_did_document;
-use examples::get_client_and_create_account;
+use examples::get_funded_client;
 use examples::get_memstorage;
 use examples::TEST_GAS_BUDGET;
 use identity_iota::core::json;
@@ -24,7 +24,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
   // NOTE: a permanode is required to fetch older output histories.
   let storage = get_memstorage()?;
-  let identity_client = get_client_and_create_account(&storage).await?;
+  let identity_client = get_funded_client(&storage).await?;
   // create new DID document and publish it
   let (document, vm_fragment_1) = create_did_document(&identity_client, &storage).await?;
   let did: IotaDID = document.id().clone();

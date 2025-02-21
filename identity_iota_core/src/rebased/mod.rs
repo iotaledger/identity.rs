@@ -14,6 +14,7 @@ pub mod proposals;
 /// Module for handling transactions.
 pub mod transaction;
 /// Contains utility functions.
+#[cfg(not(target_arch = "wasm32"))]
 pub mod utils;
 
 pub use assets::*;

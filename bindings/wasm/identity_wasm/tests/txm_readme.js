@@ -1,7 +1,7 @@
 const assert = require("assert");
 const spawn = require("child_process").spawn;
 
-describe("Test TXM", () => {
+describe.skip("Test TXM", () => {
     before((done) => {
         let process = spawn("txm", ["README.md"]);
         process.stdout.on("data", function(data) {

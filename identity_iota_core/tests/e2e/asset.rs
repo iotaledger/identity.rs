@@ -3,7 +3,7 @@
 
 use std::str::FromStr;
 
-use crate::common::get_client as get_test_client;
+use crate::common::get_funded_test_client;
 use crate::common::TEST_GAS_BUDGET;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
@@ -31,7 +31,7 @@ use move_core_types::language_storage::StructTag;
 
 #[tokio::test]
 async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let alice_client = test_client.new_user_client().await?;
 
   let asset = alice_client
@@ -47,7 +47,7 @@ async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn transferring_asset_works() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let alice_client = test_client.new_user_client().await?;
   let bob_client = test_client.new_user_client().await?;
 
@@ -107,7 +107,7 @@ async fn transferring_asset_works() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn accepting_the_transfer_of_an_asset_requires_capability() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let alice_client = test_client.new_user_client().await?;
   let bob_client = test_client.new_user_client().await?;
   let caty_client = test_client.new_user_client().await?;
@@ -140,7 +140,7 @@ async fn accepting_the_transfer_of_an_asset_requires_capability() -> anyhow::Res
 
 #[tokio::test]
 async fn modifying_mutable_asset_works() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let alice_client = test_client.new_user_client().await?;
 
   let mut asset = alice_client
@@ -159,7 +159,7 @@ async fn modifying_mutable_asset_works() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn deleting_asset_works() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let alice_client = test_client.new_user_client().await?;
 
   let asset = alice_client
@@ -187,7 +187,7 @@ async fn deleting_asset_works() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn hosting_vc_works() -> anyhow::Result<()> {
-  let test_client = get_test_client().await?;
+  let test_client = get_funded_test_client().await?;
   let identity_client = test_client.new_user_client().await?;
 
   let newly_created_identity = identity_client

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use examples::create_did_document;
-use examples::get_client_and_create_account;
+use examples::get_funded_client;
 use examples::get_stronghold_storage;
 use examples::random_stronghold_path;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
@@ -25,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
   let storage = get_stronghold_storage(Some(path.clone()))?;
 
   // use stronghold storage to create new client to interact with chain and get funded account with keys
-  let identity_client = get_client_and_create_account(&storage).await?;
+  let identity_client = get_funded_client(&storage).await?;
   // create and publish document with stronghold storage
   let (document, vm_fragment) = create_did_document(&identity_client, &storage).await?;
 

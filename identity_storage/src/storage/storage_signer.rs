@@ -3,6 +3,7 @@
 
 use async_trait::async_trait;
 use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::OptionalSync;
 use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkParams;
 use identity_verification::jwu;
@@ -64,8 +65,8 @@ impl<'a, K, I> StorageSigner<'a, K, I> {
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl<K, I> Signer<IotaKeySignature> for StorageSigner<'_, K, I>
 where
-  K: JwkStorage + Sync,
-  I: KeyIdStorage + Sync,
+  K: JwkStorage + OptionalSync,
+  I: KeyIdStorage + OptionalSync,
 {
   type KeyId = KeyId;
   fn key_id(&self) -> &KeyId {

@@ -94,6 +94,25 @@ impl ProposalBuilder<'_, ConfigChange> {
     self.deref_mut().remove_multiple_controllers(controllers);
     self
   }
+
+  /// Sets a new voting power for a controller.
+  pub fn update_controller(mut self, controller_id: ObjectID, voting_power: u64) -> Self {
+    self.action.controllers_voting_power.insert(controller_id, voting_power);
+    self
+  }
+
+  /// Updates many controllers' voting power.
+  pub fn update_multiple_controllers<I>(mut self, controllers: I) -> Self
+  where
+    I: IntoIterator<Item = (ObjectID, u64)>,
+  {
+    let controllers_to_update = &mut self.action.controllers_voting_power;
+    for (id, vp) in controllers {
+      controllers_to_update.insert(id, vp);
+    }
+
+    self
+  }
 }
 
 impl ConfigChange {
@@ -105,6 +124,26 @@ impl ConfigChange {
   /// Sets the new threshold.
   pub fn set_threshold(&mut self, new_threshold: u64) {
     self.threshold = Some(new_threshold);
+  }
+
+  /// Returns the value for the new threshold.
+  pub fn threshold(&self) -> Option<u64> {
+    self.threshold
+  }
+
+  /// Returns the controllers that will be added, as the map [IotaAddress] -> [u64].
+  pub fn controllers_to_add(&self) -> &HashMap<IotaAddress, u64> {
+    &self.controllers_to_add
+  }
+
+  /// Returns the set of controllers that will be removed.
+  pub fn controllers_to_remove(&self) -> &HashSet<ObjectID> {
+    &self.controllers_to_remove
+  }
+
+  /// Returns the controllers that will be updated as the map [IotaAddress] -> [u64].
+  pub fn controllers_to_update(&self) -> &HashMap<ObjectID, u64> {
+    &self.controllers_voting_power
   }
 
   /// Adds a controller.

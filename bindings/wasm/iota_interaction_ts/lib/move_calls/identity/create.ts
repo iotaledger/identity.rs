@@ -1,10 +1,10 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Transaction } from "@iota/iota.js/transactions";
-import { getClockRef } from "../utils";
+import { Transaction } from "@iota/iota-sdk/transactions";
+import { getClockRef, insertPlaceholders } from "../utils";
 
-export function create(didDoc: Uint8Array, packageId: string): Promise<Uint8Array> {
+export async function create(didDoc: Uint8Array, packageId: string): Promise<Uint8Array> {
     const tx = new Transaction();
     const didDocArg = tx.pure.vector("u8", didDoc);
     const clock = getClockRef(tx);
@@ -13,6 +13,8 @@ export function create(didDoc: Uint8Array, packageId: string): Promise<Uint8Arra
         target: `${packageId}::identity::new`,
         arguments: [didDocArg, clock],
     });
+
+    insertPlaceholders(tx);
 
     return tx.build();
 }
