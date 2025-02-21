@@ -192,11 +192,6 @@ import copy from "rollup-plugin-copy";
 copy({
   targets: [
     {
-      src: "node_modules/@iota/sdk-wasm/web/wasm/iota_sdk_wasm_bg.wasm",
-      dest: "public",
-      rename: "iota_sdk_wasm_bg.wasm",
-    },
-    {
       src: "node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm",
       dest: "public",
       rename: "identity_wasm_bg.wasm",
@@ -222,10 +217,6 @@ const CopyWebPlugin= require('copy-webpack-plugin');
 new CopyWebPlugin({
   patterns: [
     {
-      from: 'node_modules/@iota/sdk-wasm/web/wasm/iota_sdk_wasm_bg.wasm',
-      to: 'iota_sdk_wasm_bg.wasm'
-    },
-    {
       from: 'node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm',
       to: 'identity_wasm_bg.wasm'
     }
@@ -236,7 +227,6 @@ new CopyWebPlugin({
 ### Web Usage
 
 ```typescript
-import init, { Client } from "@iota/sdk-wasm/web";
 import * as identity from "@iota/identity-wasm/web";
 
 // The endpoint of the IOTA node to use.
@@ -290,8 +280,7 @@ async function createDocument() {
   console.log(`Created document `, JSON.stringify(document.toJSON(), null, 2));
 }
 
-init()
-  .then(() => identity.init())
+identity.init()
   .then(() => {
     await createDocument();
   });
@@ -299,7 +288,6 @@ init()
 // or
 
 (async () => {
-  await init();
   await identity.init();
 
   await createDocument();
