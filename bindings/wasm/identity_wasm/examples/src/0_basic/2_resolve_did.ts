@@ -5,7 +5,6 @@ import {
     CoreDocument,
     DIDJwk,
     IdentityClientReadOnly,
-    IotaDID,
     IotaDocument,
     IToCoreDocument,
     Resolver,
@@ -30,7 +29,7 @@ export async function resolveIdentity() {
         .createIdentity(unpublished)
         .finish()
         .execute(identityClient);
-    const did = IotaDID.fromAliasId(identity.id(), identityClient.network());
+    const did = identity.didDocument().id();
 
     // Resolve the associated Alias Output and extract the DID document from it.
     const resolved = await identityClient.resolveDid(did);
