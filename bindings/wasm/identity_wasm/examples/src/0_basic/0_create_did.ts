@@ -28,7 +28,7 @@ export async function createIdentity(): Promise<void> {
             .createIdentity(unpublished)
             .finish()
             .execute(identityClient);
-        did = IotaDID.fromAliasId(identity.id(), identityClient.network());
+        did = identity.didDocument().id();
     } else {
         console.log("Publishing document to identity");
         const { output: published } = await identityClient
