@@ -41,10 +41,28 @@ We provide a collection of experimental [gRPC services](https://github.com/iotal
 ## Documentation and Resources
 
 - API References:
-  - Rust API Reference: Package documentation, build with `RUSTDOCFLAGS='--cfg docsrs' cargo +nightly doc -p identity_iota --all-features --no-deps --open`.
+  - [Rust API Reference](https://iotaledger.github.io/identity.rs/identity_iota/index.html): Package documentation (cargo docs).
   <!-- - [Wasm API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation. -->
 - [Identity Documentation Pages](https://docs.iota.org/iota-identity): Supplementing documentation with context around identity and simple examples on library usage.
 - [Examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples): Practical code snippets to get you started with the library.
+
+## Universal Resolver
+
+IOTA Identity includes a [Universal Resolver](https://github.com/decentralized-identity/universal-resolver/) driver implementation for the `did:iota` method. The Universal Resolver is a crucial component that enables the resolution of DIDs across different DID methods.
+
+Our implementation allows for resolving IOTA DIDs through the standardized Universal Resolver interface, supporting multiple networks including testnet, devnet, and custom networks. The resolver is available as a Docker container for easy deployment and integration.
+
+For more information and implementation details, visit our [Universal Resolver Driver Repository](https://github.com/iotaledger/uni-resolver-driver-iota).
+
+### Quick Start with Docker
+
+```bash
+# Pull and run the Universal Resolver driver
+docker run -p 8080:8080 iotaledger/uni-resolver-driver-iota
+
+# Resolve a DID
+curl -X GET http://localhost:8080/1.0/identifiers/did:iota:0xf4d6f08f5a1b80dd578da7dc1b49c886d580acd4cf7d48119dfeb82b538ad88a
+```
 
 ## Prerequisites
 
@@ -81,7 +99,7 @@ _Cargo.toml_
 Test this example using https://github.com/anko/txm: `txm README.md`
 
 !test program
-cd ../..
+cd ../../..
 mkdir tmp
 cat | sed -e 's#identity_iota = { git = "[^"]*", tag = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
 echo '[workspace]' >>tmp/Cargo.toml

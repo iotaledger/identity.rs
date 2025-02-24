@@ -41,7 +41,7 @@ We provide a collection of experimental [gRPC services](https://github.com/iotal
 ## Documentation and Resources
 
 - API References:
-  - Rust API Reference: Package documentation, build with `RUSTDOCFLAGS='--cfg docsrs' cargo +nightly doc -p identity_iota --all-features --no-deps --open`.
+  - [Rust API Reference](https://iotaledger.github.io/identity.rs/identity_iota/index.html): Package documentation (cargo docs).
   <!-- - [Wasm API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation. -->
 - [Identity Documentation Pages](https://docs.iota.org/iota-identity): Supplementing documentation with context around identity and simple examples on library usage.
 - [Examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples): Practical code snippets to get you started with the library.
