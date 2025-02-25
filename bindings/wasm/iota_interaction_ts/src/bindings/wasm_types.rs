@@ -3,7 +3,6 @@
 
 use fastcrypto::encoding::Base64;
 use fastcrypto::encoding::Encoding;
-use fastcrypto::traits::EncodeDecodeBase64;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
@@ -11,6 +10,7 @@ use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::base_types::SequenceNumber;
 use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::crypto::Signature;
+use identity_iota_interaction::types::crypto::SignatureScheme;
 use identity_iota_interaction::types::execution_status::CommandArgumentError;
 use identity_iota_interaction::types::execution_status::ExecutionStatus;
 use identity_iota_interaction::types::object::Owner;
@@ -197,7 +197,9 @@ impl TryFrom<WasmIotaSignature> for Signature {
       IotaSignatureHelper::Secp256r1IotaSignature(s) => s,
     };
 
-    base64sig.parse().map_err(|e: eyre::Report| JsError::new(&e.to_string()).into())
+    base64sig
+      .parse()
+      .map_err(|e: eyre::Report| JsError::new(&e.to_string()).into())
   }
 }
 
@@ -238,12 +240,16 @@ extern "C" {
   #[wasm_bindgen(typescript_type = PublicKey)]
   pub type WasmPublicKey;
 
-  #[wasm_bindgen(js_name = toIotaPublicKey, method)]
-  pub fn to_iota_public_key(this: &WasmPublicKey) -> String;
+  #[wasm_bindgen(js_name = toRawBytes, method)]
+  pub fn to_raw_bytes(this: &WasmPublicKey) -> Vec<u8>;
+
+  #[wasm_bindgen(method)]
+  pub fn flag(this: &WasmPublicKey) -> u8;
 }
 
 #[wasm_bindgen(module = "@iota/iota-sdk/keypairs/ed25519")]
 extern "C" {
+  #[wasm_bindgen(extends = WasmPublicKey)]
   pub type Ed25519PublicKey;
 
   #[wasm_bindgen(constructor, catch)]
@@ -252,6 +258,7 @@ extern "C" {
 
 #[wasm_bindgen(module = "@iota/iota-sdk/keypairs/secp256r1")]
 extern "C" {
+  #[wasm_bindgen(extends = WasmPublicKey)]
   pub type Secp256r1PublicKey;
 
   #[wasm_bindgen(constructor, catch)]
@@ -260,6 +267,7 @@ extern "C" {
 
 #[wasm_bindgen(module = "@iota/iota-sdk/keypairs/secp256k1")]
 extern "C" {
+  #[wasm_bindgen(extends = WasmPublicKey)]
   pub type Secp256k1PublicKey;
 
   #[wasm_bindgen(constructor, catch)]
@@ -270,12 +278,14 @@ impl TryFrom<&'_ PublicKey> for WasmPublicKey {
   type Error = JsValue;
   fn try_from(pk: &PublicKey) -> Result<Self, Self::Error> {
     let pk_bytes = pk.as_ref();
-    let wasm_pk = match pk {
-      PublicKey::Ed25519(_) => Ed25519PublicKey::new_ed25519_pk(pk_bytes)?.unchecked_into(),
-      PublicKey::Secp256r1(_) => Secp256r1PublicKey::new_secp256r1_pk(pk_bytes)?.unchecked_into(),
-      PublicKey::Secp256k1(_) => Secp256k1PublicKey::new_secp256k1_pk(pk_bytes)?.unchecked_into(),
+    let wasm_pk: WasmPublicKey = match pk {
+      PublicKey::Ed25519(_) => Ed25519PublicKey::new_ed25519_pk(pk_bytes)?.into(),
+      PublicKey::Secp256r1(_) => Secp256r1PublicKey::new_secp256r1_pk(pk_bytes)?.into(),
+      PublicKey::Secp256k1(_) => Secp256k1PublicKey::new_secp256k1_pk(pk_bytes)?.into(),
       _ => return Err(JsError::new("unsupported PublicKey type").into()),
     };
+
+    assert_eq!(pk_bytes, &wasm_pk.to_raw_bytes());
 
     Ok(wasm_pk)
   }
@@ -284,8 +294,14 @@ impl TryFrom<&'_ PublicKey> for WasmPublicKey {
 impl TryFrom<WasmPublicKey> for PublicKey {
   type Error = JsValue;
   fn try_from(pk: WasmPublicKey) -> Result<Self, Self::Error> {
-    let base64_pk = pk.to_iota_public_key();
-    PublicKey::decode_base64(&base64_pk).map_err(|e| JsError::new(&e.to_string()).into())
+    let key_bytes = pk.to_raw_bytes();
+    let key_flag = pk.flag();
+    let signature_scheme = SignatureScheme::from_flag_byte(&key_flag).map_err(|e| JsError::new(&e.to_string()))?;
+    let public_key = PublicKey::try_from_bytes(signature_scheme, &key_bytes).map_err(|e| JsError::new(&e.to_string()))?;
+
+    assert_eq!(&key_bytes, public_key.as_ref());
+
+    Ok(public_key)
   }
 }
 

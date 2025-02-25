@@ -5,6 +5,7 @@ use std::rc::Rc;
 use std::ops::Deref;
 
 use fastcrypto::ed25519::Ed25519PublicKey;
+use fastcrypto::traits::EncodeDecodeBase64;
 use fastcrypto::traits::ToFromBytes;
 
 use identity_iota::iota::rebased::client::IdentityClient;
@@ -13,6 +14,7 @@ use identity_iota::iota::rebased::transaction::TransactionInternal;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
 use identity_iota::iota_interaction::types::base_types::IotaAddress;
 
+use identity_iota::iota_interaction::types::crypto::PublicKey;
 use iota_interaction_ts::bindings::WasmExecutionStatus;
 use iota_interaction_ts::bindings::WasmOwnedObjectRef;
 use iota_interaction_ts::WasmPublicKey;

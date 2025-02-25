@@ -14,7 +14,9 @@ import {
     StorageSigner,
 } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
+import { Ed25519PublicKey } from "@iota/iota-sdk/keypairs/ed25519";
 import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
+import assert = require("assert");
 
 export const IOTA_IDENTITY_PKG_ID = process.env.IOTA_IDENTITY_PKG_ID
     || "0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818";
@@ -60,12 +62,15 @@ export async function getFundedClient(storage: Storage): Promise<IdentityClient>
     if (typeof publicKeyJwk === "undefined") {
         throw new Error("failed to derive public JWK from generated JWK");
     }
+    console.log(publicKeyJwk);
     let keyId = generate.keyId();
 
+    const pk_raw_bytes = Buffer.from(publicKeyJwk.paramsOkp()?.x!, 'base64url');
+    const recreatedPk = new Ed25519PublicKey(pk_raw_bytes);
+    console.log(recreatedPk);
     // create signer from storage
     let signer = new StorageSigner(storage, keyId, publicKeyJwk);
-    const keytoolSigner = await KeytoolSigner.create();
-    const identityClient = await IdentityClient.create(identityClientReadOnly, keytoolSigner);
+    const identityClient = await IdentityClient.create(identityClientReadOnly, signer);
 
     await requestIotaFromFaucetV0({
         host: getFaucetHost(NETWORK_NAME_FAUCET),

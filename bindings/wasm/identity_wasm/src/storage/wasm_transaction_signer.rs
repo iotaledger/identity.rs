@@ -1,6 +1,10 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::cell::LazyCell;
+use std::cell::OnceCell;
+use std::sync::OnceLock;
+
 use async_trait::async_trait;
 use identity_iota::iota::rebased::client::IotaKeySignature;
 use identity_iota::iota_interaction::types::crypto::PublicKey;
@@ -10,6 +14,8 @@ use iota_interaction_ts::WasmPublicKey;
 use secret_storage::Error as SecretStorageError;
 use secret_storage::Signer;
 use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::JsCast;
+use wasm_bindgen::JsError;
 
 use crate::error::Result;
 
@@ -30,15 +36,14 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "TransactionSigner")]
   pub type WasmTransactionSigner;
 
-  #[wasm_bindgen(method, catch)]
+  #[wasm_bindgen(method, structural, catch)]
   pub async fn sign(this: &WasmTransactionSigner, data: &[u8]) -> Result<WasmIotaSignature>;
-  #[wasm_bindgen(js_name = "publicKey", method, catch)]
+
+  #[wasm_bindgen(js_name = "publicKey", method, structural, catch)]
   pub async fn public_key(this: &WasmTransactionSigner) -> Result<WasmPublicKey>;
 
-  // TODO: re-add WasmTransactionSigner::key_id
-  // #[wasm_bindgen(js_name = "keyId", structural, method)]
-  // // pub fn key_id(this: &WasmTransactionSigner) -> js_sys::JsString;
-  // pub fn key_id(this: &WasmTransactionSigner) -> String;
+  #[wasm_bindgen(js_name = "keyId", method, structural)]
+  pub fn key_id(this: &WasmTransactionSigner) -> String;
 }
 
 #[async_trait(?Send)]
@@ -54,14 +59,18 @@ impl Signer<IotaKeySignature> for WasmTransactionSigner {
   }
 
   async fn public_key(&self) -> std::result::Result<PublicKey, SecretStorageError> {
-    self.public_key().await.and_then(|v| v.try_into()).map_err(|err| {
-      let details = err.as_string().map(|v| format!("; {}", v)).unwrap_or_default();
+    self.public_key().await.and_then(|v| {
+      console_log!("WasmTransactionSigner's PK: {:?}", &v.to_raw_bytes());
+      v.try_into()
+    }).map_err(|err| {
+      let details = String::default();
       let message = format!("could not get public key{details}");
       SecretStorageError::KeyNotFound(message)
     })
   }
 
   fn key_id(&self) -> &String {
-    todo!("WasmTransactionSigner::key_id");
+    static KEY_ID: OnceLock<String> = OnceLock::new();
+    KEY_ID.get_or_init(|| self.key_id())
   }
 }
