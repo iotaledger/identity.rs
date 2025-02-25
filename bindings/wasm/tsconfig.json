@@ -1,23 +1,4 @@
 {
-  "$schema": "https://typedoc.org/schema.json",
-  "disableSources": true,
-  "excludePrivate": true,
-  "excludeInternal": true,
-  "excludeNotDocumented": true,
-  "excludeExternals": true,
-  "entryPointStrategy": "expand",
-  "plugin": [
-    "typedoc-plugin-markdown"
-  ],
-  "readme": "none",
-  "githubPages": false,
-  "theme": "markdown",
-  "entryFileName": "api_ref.md",
-  "hideBreadcrumbs": true,
-  "hideGenerator": true,
-  "sort": [
-    "source-order"
-  ],
   "compilerOptions": {
     "lib": [
       "ES2020",
