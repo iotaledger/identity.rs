@@ -14,7 +14,7 @@ import { CoreDocument, IToCoreDocument, Resolver as ResolverInner } from "~ident
  * With the default being `CoreDocument | IToCoreDocument`.
  *
  * Also provides methods for resolving DID Documents associated with
- * verifiable {@link Credential}s and {@link Presentation}s.
+ * verifiable [`Credential`](../../identity_wasm/classes/Credential.md)s and [`Presentation`](../../identity_wasm/classes/Presentation.md)s.
  *
  * # Configuration
  *

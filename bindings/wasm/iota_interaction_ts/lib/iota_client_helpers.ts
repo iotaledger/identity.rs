@@ -197,7 +197,7 @@ export async function executeTransaction(
 /**
  * Helper function to pause execution.
  *
- * @param txBcs transaction data to hash
+ * @param durationMs time to sleep in ms
  */
 export function sleep(durationMs: number) {
     return new Promise(resolve => setTimeout(resolve, durationMs));
