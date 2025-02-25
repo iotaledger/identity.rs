@@ -15,7 +15,7 @@
     "bundle:web": "wasm-bindgen ../target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --target web --out-dir web && node ../build/web iota_interaction_ts && tsc --project ./lib/tsconfig.web.json && node ../build/replace_paths ./lib/tsconfig.web.json web iota_interaction_ts",
     "build:nodejs": "npm run build:src && npm run bundle:nodejs && wasm-opt -O node/iota_interaction_ts_bg.wasm -o node/iota_interaction_ts_bg.wasm",
     "build:web": "npm run build:src && npm run bundle:web && wasm-opt -O web/iota_interaction_ts_bg.wasm -o web/iota_interaction_ts_bg.wasm",
-    "build:docs": "typedoc && npm run fix_docs",
+    "build:docs": "typedoc",
     "build:examples:web": "tsc --project ./examples/tsconfig.web.json && node ../build/replace_paths ./examples/tsconfig.web.json ./examples/dist iota_interaction_ts resolve",
     "build": "npm run build:web && npm run build:nodejs",
     "example:node": "ts-node --project tsconfig.node.json -r tsconfig-paths/register ./examples/src/main.ts",
