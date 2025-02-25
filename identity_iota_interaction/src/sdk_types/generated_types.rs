@@ -132,6 +132,7 @@ pub struct GetTransactionBlockParams {
   /// the digest of the queried transaction
   digest: String,
   /// options for specifying the content to be returned
+  #[serde(skip_serializing_if = "Option::is_none")]
   options: Option<IotaTransactionBlockResponseOptions>,
 }
 
@@ -225,6 +226,40 @@ impl GetCoinsParams {
       coin_type,
       cursor,
       limit,
+    }
+  }
+}
+
+/// Params for `wait_for_transaction` / `wait_for_transaction`.
+///
+/// Be careful when serializing with `serde_wasm_bindgen::to_value`, as `#[serde(flatten)]`
+/// will turn the object into a `Map` instead of a plain object in Js.
+/// Prefer serializing with `serde_wasm_bindgen::Serializer::json_compatible` or perform custom serialization.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WaitForTransactionParams {
+  /// Block digest and options for content that should be returned.
+  #[serde(flatten)]
+  get_transaction_block_params: GetTransactionBlockParams,
+  /// The amount of time to wait for a transaction block. Defaults to one minute.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  timeout: Option<u64>,
+  /// The amount of time to wait between checks for the transaction block. Defaults to 2 seconds.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  poll_interval: Option<u64>,
+}
+
+impl WaitForTransactionParams {
+  pub fn new(
+    digest: String,
+    options: Option<IotaTransactionBlockResponseOptions>,
+    timeout: Option<u64>,
+    poll_interval: Option<u64>,
+  ) -> Self {
+    WaitForTransactionParams {
+      get_transaction_block_params: GetTransactionBlockParams::new(digest, options),
+      timeout,
+      poll_interval,
     }
   }
 }

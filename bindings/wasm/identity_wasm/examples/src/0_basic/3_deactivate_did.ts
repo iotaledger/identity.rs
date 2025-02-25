@@ -1,11 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IotaDID } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
 import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL, TEST_GAS_BUDGET } from "../util";
 
-/** Demonstrates how to deactivate a DID in an Alias Output. */
+/** Demonstrates how to deactivate a DID of an identity. */
 export async function deactivateIdentity() {
     // create new clients and create new account
     const iotaClient = new IotaClient({ url: NETWORK_URL });
@@ -19,7 +18,7 @@ export async function deactivateIdentity() {
         .createIdentity(unpublished)
         .finish()
         .execute(identityClient);
-    const did = IotaDID.fromAliasId(identity.id(), identityClient.network());
+    const did = identity.didDocument().id();
 
     // Resolve the latest state of the document.
     // Technically this is equivalent to the document above.

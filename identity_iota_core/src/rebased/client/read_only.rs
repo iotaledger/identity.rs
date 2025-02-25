@@ -43,8 +43,6 @@ use identity_iota_interaction::IotaClient;
 
 #[cfg(target_arch = "wasm32")]
 use iota_interaction_ts::bindings::WasmIotaClient;
-#[cfg(target_arch = "wasm32")]
-use iota_interaction_ts::iota_client_ts_sdk::IotaClientTsSdk;
 
 /// An [`IotaClient`] enriched with identity-related
 /// functionalities.

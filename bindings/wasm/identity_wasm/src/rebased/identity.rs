@@ -79,10 +79,10 @@ impl WasmOnChainIdentity {
   #[wasm_bindgen(js_name = updateDidDocument)]
   pub fn update_did_document(
     &self,
-    updated_doc: WasmIotaDocument,
+    updated_doc: &WasmIotaDocument,
     expiration_epoch: Option<u64>,
   ) -> WasmCreateUpdateDidProposalTx {
-    WasmCreateUpdateDidProposalTx::new(self, updated_doc, expiration_epoch)
+    WasmCreateUpdateDidProposalTx::new(self, updated_doc.clone(), expiration_epoch)
   }
 
   #[wasm_bindgen(js_name = deactivateDid)]
@@ -108,6 +108,7 @@ impl WasmOnChainIdentity {
     WasmCreateSendProposalTx::new(self, transfer_map, expiration_epoch)
   }
 
+  #[allow(unused)] // API will be updated in the future
   #[wasm_bindgen(js_name = getHistory, skip_typescript)] // ts type in custom section below
   pub async fn get_history(
     &self,

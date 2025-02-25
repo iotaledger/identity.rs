@@ -50,8 +50,8 @@ use identity_iota_interaction::IotaClient;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockResponseT;
-use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::OptionalSync;
+use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::QuorumDriverTrait;
 use identity_iota_interaction::ReadTrait;
 use identity_iota_interaction::SignatureBcs;
@@ -155,6 +155,10 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
 
   fn clone_native_response(&self) -> Self::NativeResponse {
     self.response.clone()
+  }
+
+  fn digest(&self) -> Result<TransactionDigest, Self::Error> {
+    Ok(self.response.digest)
   }
 }
 

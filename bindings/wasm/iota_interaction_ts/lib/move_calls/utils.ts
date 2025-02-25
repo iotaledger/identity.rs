@@ -1,7 +1,7 @@
 import { ObjectRef, Transaction, TransactionArgument } from "@iota/iota-sdk/transactions";
 import { IOTA_CLOCK_OBJECT_ID } from "@iota/iota-sdk/utils";
 
-const PLACEHOLDER_SENDER = '0x00000000000000090807060504030201';
+const PLACEHOLDER_SENDER = "0x00000000000000090807060504030201";
 const PLACEHOLDER_GAS_BUDGET = 9;
 const PLACEHOLDER_GAS_PRICE = 8;
 const PLACEHOLDER_GAS_PAYMENT: ObjectRef[] = [];
@@ -37,7 +37,7 @@ export function putBackDelegationToken(
 
 /**
  * Inserts placeholders related to sender and payment into transaction.
- * 
+ *
  * This is required if wanting to call `tx.build`, as this will check if these values have been set.
  *
  * @param tx transaction to update

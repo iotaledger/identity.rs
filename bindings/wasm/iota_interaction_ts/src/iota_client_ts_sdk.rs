@@ -5,15 +5,9 @@ use std::boxed::Box;
 use std::option::Option;
 use std::result::Result;
 
-use fastcrypto::hash::Blake2b256;
 use fastcrypto::traits::ToFromBytes;
-use identity_iota_interaction::shared_crypto::intent::Intent;
-use identity_iota_interaction::shared_crypto::intent::IntentMessage;
-use identity_iota_interaction::types::crypto::Signature;
-use identity_iota_interaction::types::crypto::SignatureScheme;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::dynamic_field::DynamicFieldName;
-use js_sys::Uint8Array;
 use secret_storage::Signer;
 
 use identity_iota_interaction::error::IotaRpcResult;
@@ -46,7 +40,6 @@ use identity_iota_interaction::SignatureBcs;
 use identity_iota_interaction::TransactionDataBcs;
 
 use crate::bindings::add_gas_data_to_transaction;
-use crate::bindings::sleep;
 use crate::bindings::IotaTransactionBlockResponseAdapter;
 use crate::bindings::ManagedWasmIotaClient;
 use crate::bindings::WasmIotaClient;
@@ -166,6 +159,10 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
 
   fn clone_native_response(&self) -> Self::NativeResponse {
     self.response.clone()
+  }
+
+  fn digest(&self) -> Result<TransactionDigest, Self::Error> {
+    self.response.digest()
   }
 }
 
@@ -345,23 +342,30 @@ impl IotaClientTrait for IotaClientTsSdk {
     let tx: ProgrammableTransaction = tx_bcs.try_into()?;
     let response = self.sdk_execute_transaction(tx, gas_budget, signer).await?;
 
-    // wait a certain amount to time before continuing
-    // a follow up step was fetching an object created with this tx, which - for some reason - wasn't available yet
-    // TODO: check timing issues related to transactions finality here
-    sleep(500).await.map_err(WasmError::from).map_err(TsSdkError::from)?;
+    // wait until new transaction block is available
+    self
+      .iota_client
+      .wait_for_transaction(
+        response.digest()?,
+        Some(IotaTransactionBlockResponseOptions::new()),
+        None,
+        None,
+      )
+      .await
+      .unwrap();
 
     Ok(Box::new(response))
   }
 
   async fn default_gas_budget(
     &self,
-    sender_address: IotaAddress,
-    tx_bcs: &ProgrammableTransactionBcs,
+    _sender_address: IotaAddress,
+    _tx_bcs: &ProgrammableTransactionBcs,
   ) -> Result<u64, Self::Error> {
     unimplemented!();
   }
 
-  async fn get_previous_version(&self, iod: IotaObjectData) -> Result<Option<IotaObjectData>, Self::Error> {
+  async fn get_previous_version(&self, _iod: IotaObjectData) -> Result<Option<IotaObjectData>, Self::Error> {
     unimplemented!();
   }
 

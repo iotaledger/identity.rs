@@ -62,5 +62,9 @@ default = ["send-sync-transaction", "secret-storage/default"]
 send-sync-transaction = ["secret-storage/send-sync-storage"]
 keytool-signer = ["dep:tokio", "dep:jsonpath-rust"]
 
-[lints]
-workspace = true
+[lints.clippy]
+result_large_err = "allow"
+
+[lints.rust]
+# from local sdk types
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(msim)'] }

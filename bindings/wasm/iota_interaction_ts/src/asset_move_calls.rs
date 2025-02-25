@@ -127,12 +127,12 @@ impl AssetMoveCalls for AssetMoveCallsTsSdk {
   }
 
   fn make_tx(
-    proposal: (ObjectID, SequenceNumber),
-    cap: ObjectRef,
-    asset: ObjectRef,
-    asset_type_param: TypeTag,
-    package: ObjectID,
-    function_name: &'static str,
+    _proposal: (ObjectID, SequenceNumber),
+    _cap: ObjectRef,
+    _asset: ObjectRef,
+    _asset_type_param: TypeTag,
+    _package: ObjectID,
+    _function_name: &'static str,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
     unimplemented!();
   }

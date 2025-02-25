@@ -11,7 +11,7 @@ use identity_iota_interaction::generated_types::GetOwnedObjectsParams;
 use identity_iota_interaction::generated_types::GetTransactionBlockParams;
 use identity_iota_interaction::generated_types::QueryEventsParams;
 use identity_iota_interaction::generated_types::SortOrder;
-use identity_iota_interaction::generated_types::TryGetPastObjectParams;
+use identity_iota_interaction::generated_types::WaitForTransactionParams;
 use identity_iota_interaction::rpc_types::CoinPage;
 use identity_iota_interaction::rpc_types::EventFilter;
 use identity_iota_interaction::rpc_types::EventPage;
@@ -31,12 +31,14 @@ use identity_iota_interaction::types::quorum_driver_types::ExecuteTransactionReq
 use identity_iota_interaction::SignatureBcs;
 use identity_iota_interaction::TransactionDataBcs;
 use js_sys::Promise;
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
 use super::wasm_types::IotaTransactionBlockResponseAdapter;
 use super::wasm_types::PromiseIotaTransactionBlockResponse;
 use super::wasm_types::WasmExecuteTransactionBlockParams;
+use super::WasmWaitForTransactionParams;
 
 use crate::bindings::PromiseIotaObjectResponse;
 use crate::bindings::PromiseObjectRead;
@@ -114,6 +116,12 @@ extern "C" {
 
   #[wasm_bindgen(method, js_name = getCoins)]
   pub fn get_coins(this: &WasmIotaClient, input: &WasmGetCoinsParams) -> PromisePaginatedCoins;
+
+  #[wasm_bindgen(method, js_name = waitForTransaction)]
+  pub fn wait_for_transaction(
+    this: &WasmIotaClient,
+    input: &WasmWaitForTransactionParams,
+  ) -> PromiseIotaTransactionBlockResponse;
 }
 
 // Helper struct used to convert TYPESCRIPT types to RUST types
@@ -183,6 +191,7 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
+    #[allow(deprecated)] // will be refactored
     Ok(result.into_serde()?)
   }
 
@@ -208,6 +217,7 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
+    #[allow(deprecated)] // will be refactored
     Ok(result.into_serde()?)
   }
 
@@ -240,6 +250,7 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
+    #[allow(deprecated)] // will be refactored
     Ok(result.into_serde()?)
   }
 
@@ -277,14 +288,15 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
+    #[allow(deprecated)] // will be refactored
     Ok(result.into_serde()?)
   }
 
   pub async fn try_get_parsed_past_object(
     &self,
-    object_id: ObjectID,
-    version: SequenceNumber,
-    options: IotaObjectDataOptions,
+    _object_id: ObjectID,
+    _version: SequenceNumber,
+    _options: IotaObjectDataOptions,
   ) -> IotaRpcResult<IotaPastObjectResponse> {
     // TODO: does not work anymore, find out, why we need to pass a different `SequenceNumber` now
     unimplemented!("try_get_parsed_past_object");
@@ -339,6 +351,7 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
+    #[allow(deprecated)] // will be refactored
     Ok(result.into_serde()?)
   }
 
@@ -370,6 +383,49 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
+    #[allow(deprecated)] // will be refactored
     Ok(result.into_serde()?)
+  }
+
+  /// Wait for a transaction block result to be available over the API.
+  /// This can be used in conjunction with `execute_transaction_block` to wait for the transaction to
+  /// be available via the API.
+  /// This currently polls the `getTransactionBlock` API to check for the transaction.
+  ///
+  /// # Arguments
+  ///
+  /// * `digest` - The digest of the queried transaction.
+  /// * `options` - Options for specifying the content to be returned.
+  /// * `timeout` - The amount of time to wait for a transaction block. Defaults to one minute.
+  /// * `poll_interval` - The amount of time to wait between checks for the transaction block. Defaults to 2 seconds.
+  pub async fn wait_for_transaction(
+    &self,
+    digest: TransactionDigest,
+    options: Option<IotaTransactionBlockResponseOptions>,
+    timeout: Option<u64>,
+    poll_interval: Option<u64>,
+  ) -> IotaRpcResult<IotaTransactionBlockResponseAdapter> {
+    let params_object = WaitForTransactionParams::new(digest.to_string(), options, timeout, poll_interval);
+    let params: WasmWaitForTransactionParams = serde_json::to_value(&params_object)
+      .map_err(|e| {
+        console_log!("Error serializing WaitForTransactionParams to Value: {:?}", e);
+        IotaRpcError::FfiError(format!("{:?}", e))
+      })
+      .and_then(|v| {
+        v.serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+          .map_err(|e| {
+            console_log!("Error serializing Value to WasmWaitForTransactionParams: {:?}", e);
+            IotaRpcError::FfiError(format!("{:?}", e))
+          })
+      })?
+      .into();
+
+    let promise: Promise = Promise::resolve(&WasmIotaClient::wait_for_transaction(&self.0, &params));
+    let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
+      console_log!("Error executing JsFuture::from(promise): {:?}", e);
+      IotaRpcError::FfiError(format!("{:?}", e))
+    })?;
+
+    Ok(IotaTransactionBlockResponseAdapter::new(result.into()))
   }
 }

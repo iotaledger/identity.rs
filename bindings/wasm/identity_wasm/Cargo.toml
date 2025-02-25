@@ -73,6 +73,10 @@ lto = true
 # see https://github.com/rust-lang/rust-clippy/issues/12377
 empty_docs = "allow"
 
+[lints.rust]
+# required for current wasm_bindgen version
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(wasm_bindgen_unstable_test_coverage)'] }
+
 [features]
 default = ["dummy-client"]
 dummy-client = ["dep:iota_interaction_ts"]

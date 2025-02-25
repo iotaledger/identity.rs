@@ -15,10 +15,10 @@
     "bundle:nodejs": "wasm-bindgen ../../../target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --weak-refs --target nodejs --out-dir node && node ../build/node iota_interaction_ts && tsc --project ./lib/tsconfig.json && node ../build/replace_paths ./lib/tsconfig.json node iota_interaction_ts",
     "bundle:web": "wasm-bindgen ../../../target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --target web --out-dir web && node ../build/web iota_interaction_ts && tsc --project ./lib/tsconfig.web.json && node ../build/replace_paths ./lib/tsconfig.web.json web iota_interaction_ts",
     "build:nodejs": "npm run build:src:node && npm run bundle:nodejs",
-    "build:web": "npm run build:src && npm run bundle:web && wasm-opt -O web/iota_interaction_ts_bg.wasm -o web/iota_interaction_ts_bg.wasm",
+    "build:web": "npm run build:src && npm run bundle:web",
     "build:docs": "typedoc && npm run fix_docs",
     "build:examples:web": "tsc --project ./examples/tsconfig.web.json && node ../build/replace_paths ./examples/tsconfig.web.json ./examples/dist iota_interaction_ts resolve",
-    "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
+    "build": "npm run build:web && npm run build:nodejs",
     "example:node": "ts-node --project tsconfig.node.json -r tsconfig-paths/register ./examples/src/main.ts",
     "test": "npm run test:unit:node && npm run test:readme && npm run test:node && test:browser:parallel",
     "test:node": "ts-mocha -r tsconfig-paths/register -p tsconfig.node.json ./examples/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
@@ -82,9 +82,9 @@
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
-    "@iota/sdk-wasm": "^1.0.4"
+    "@iota/iota-sdk": "^0.5.0"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=20"
   }
 }

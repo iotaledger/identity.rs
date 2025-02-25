@@ -1,9 +1,11 @@
-import { CoreDocument, IotaDID, IotaDocument, Resolver } from "@iota/identity-wasm/node";
+import { CoreDocument, IotaDocument, Resolver } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
 import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL } from "../util";
 
 // Use this external package to avoid implementing the entire did:key method in this example.
-import * as ed25519 from "@transmute/did-key-ed25519";
+// @ts-ignore
+import { DidKeyDriver } from "@digitalcredentials/did-method-key";
+const didKeyDriver = new DidKeyDriver();
 
 type KeyDocument = { customProperty: String } & CoreDocument;
 
@@ -16,14 +18,11 @@ function isKeyDocument(doc: object): doc is KeyDocument {
 export async function customResolution() {
     // Set up a handler for resolving Ed25519 did:key
     const keyHandler = async function(didKey: string): Promise<KeyDocument> {
-        let document = await ed25519.resolve(
-            didKey,
-            { accept: "application/did+ld+json" },
-        );
+        let document = await didKeyDriver.get({ did: didKey });
 
         // for demo purposes we'll just inject the custom property into a core document
         // to create a new KeyDocument instance
-        let coreDocument = CoreDocument.fromJSON(document.didDocument);
+        let coreDocument = CoreDocument.fromJSON(document);
         (coreDocument as unknown as KeyDocument).customProperty = "foobar";
         return coreDocument as unknown as KeyDocument;
     };
@@ -40,7 +39,7 @@ export async function customResolution() {
         .createIdentity(unpublished)
         .finish()
         .execute(identityClient);
-    const did = IotaDID.fromAliasId(identity.id(), identityClient.network());
+    const did = identity.didDocument().id();
 
     // Construct a Resolver capable of resolving the did:key and iota methods.
     let handlerMap: Map<string, (did: string) => Promise<IotaDocument | KeyDocument>> = new Map();
