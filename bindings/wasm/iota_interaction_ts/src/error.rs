@@ -166,6 +166,15 @@ impl From<serde_wasm_bindgen::Error> for WasmError<'_> {
   }
 }
 
+impl From<anyhow::Error> for WasmError<'_> {
+  fn from(error: anyhow::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("anyhow::Error"),
+      message: Cow::Owned(error.to_string()),
+    }
+  }
+}
+
 /// Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
 pub fn stringify_js_error<T>(result: Result<T>) -> StdResult<T, String> {
   result.map_err(|js_value| {
@@ -194,6 +203,8 @@ pub enum TsSdkError {
   WasmError(String, String),
   #[error("[TsSdkError] JsSysError: {0}")]
   JsSysError(String),
+  #[error("[TsSdkError] TransactionSerializationError: {0}")]
+  TransactionSerializationError(String),
 }
 
 pub type TsSdkResult<T> = core::result::Result<T, TsSdkError>;

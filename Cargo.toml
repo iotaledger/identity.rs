@@ -43,7 +43,7 @@ result_large_err = "allow"
 
 [profile.release.package.iota_interaction_ts]
 opt-level = 's'
-# Enabling debug for profile.release may lead to more helpfull loged call stacks.
+# Enabling debug for profile.release may lead to more helpful logged call stacks.
 # TODO: Clarify if 'debug = true' facilitates error analysis via console logs.
 #       If not, remove the next line
 #       If yes, describe the helping effect in the comment above

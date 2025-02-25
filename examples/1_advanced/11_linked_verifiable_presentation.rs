@@ -4,7 +4,7 @@
 use anyhow::Context;
 
 use examples::create_did_document;
-use examples::get_client_and_create_account;
+use examples::get_funded_client;
 use examples::get_memstorage;
 use examples::MemStorage;
 use examples::TEST_GAS_BUDGET;
@@ -43,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
 
   let storage = get_memstorage()?;
 
-  let identity_client = get_client_and_create_account(&storage).await?;
+  let identity_client = get_funded_client(&storage).await?;
 
   // create new DID document and publish it
   let (mut did_document, fragment) = create_did_document(&identity_client, &storage).await?;

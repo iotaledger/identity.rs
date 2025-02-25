@@ -1,6 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use async_trait::async_trait;
 use js_sys::Uint8Array;
 use std::cell::Cell;
 use std::collections::HashSet;
@@ -13,6 +14,7 @@ use crate::bindings::WasmObjectRef;
 use crate::bindings::WasmSharedObjectRef;
 use crate::bindings::WasmTransactionArgument;
 use crate::bindings::WasmTransactionBuilder;
+use crate::common::PromiseUint8Array;
 use crate::error::TsSdkError;
 use crate::error::WasmError;
 use crate::transaction_builder::TransactionBuilderTsSdk;
@@ -43,10 +45,10 @@ extern "C" {
   pub(crate) type WasmTxArgumentMap;
 }
 
-#[wasm_bindgen(module = "move_calls/identity")]
+#[wasm_bindgen(module = "@iota/iota-interaction-ts/move_calls/identity")]
 extern "C" {
   #[wasm_bindgen(js_name = "create", catch)]
-  async fn identity_new(did: &[u8], package: &str) -> Result<Uint8Array, JsValue>;
+  fn identity_new(did: &[u8], package: &str) -> Result<PromiseUint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "newWithControllers", catch)]
   async fn identity_new_with_controllers(
@@ -66,12 +68,12 @@ extern "C" {
   ) -> Result<Uint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "proposeDeactivation", catch)]
-  async fn propose_deactivation(
+  fn propose_deactivation(
     identity: WasmSharedObjectRef,
     capability: WasmObjectRef,
     package: &str,
     expiration: Option<u64>,
-  ) -> Result<Uint8Array, JsValue>;
+  ) -> Result<PromiseUint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "executeDeactivation", catch)]
   async fn execute_deactivation(
@@ -116,13 +118,13 @@ extern "C" {
   ) -> Result<Uint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "proposeUpdate", catch)]
-  async fn propose_update(
+  fn propose_update(
     identity: WasmSharedObjectRef,
     capability: WasmObjectRef,
     did_doc: &[u8],
     package: &str,
     expiration: Option<u64>,
-  ) -> Result<Uint8Array, JsValue>;
+  ) -> Result<PromiseUint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "executeUpdate", catch)]
   async fn execute_update(
@@ -213,6 +215,7 @@ extern "C" {
 
 pub struct IdentityMoveCallsTsSdk {}
 
+#[async_trait(?Send)]
 impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
   type Error = TsSdkError;
   type NativeTxBuilder = WasmTransactionBuilder;
@@ -473,12 +476,13 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     .map_err(TsSdkError::from)
   }
 
-  fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
+  async fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
     let package = package_id.to_string();
-    futures::executor::block_on(identity_new(did_doc, &package))
-      .map(|js_arr| js_arr.to_vec())
-      .map_err(WasmError::from)
-      .map_err(TsSdkError::from)
+
+    identity_new(did_doc, &package)
+      .map_err(WasmError::from)?
+      .to_transaction_bcs()
+      .await
   }
 
   fn new_with_controllers<C>(
@@ -503,7 +507,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
       .map_err(TsSdkError::from)
   }
 
-  fn propose_deactivation(
+  async fn propose_deactivation(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     expiration: Option<u64>,
@@ -513,10 +517,10 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     let capability = capability.into();
     let package = package_id.to_string();
 
-    futures::executor::block_on(propose_deactivation(identity, capability, &package, expiration))
-      .map(|js_arr| js_arr.to_vec())
-      .map_err(WasmError::from)
-      .map_err(TsSdkError::from)
+    propose_deactivation(identity, capability, &package, expiration)
+      .map_err(WasmError::from)?
+      .to_transaction_bcs()
+      .await
   }
 
   fn execute_deactivation(
@@ -588,12 +592,12 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
   }
 
   fn create_and_execute_send(
-    identity: OwnedObjectRef,
-    capability: ObjectRef,
-    transfer_map: Vec<(ObjectID, IotaAddress)>,
-    expiration: Option<u64>,
-    objects: Vec<(ObjectRef, TypeTag)>,
-    package: ObjectID,
+    _identity: OwnedObjectRef,
+    _capability: ObjectRef,
+    _transfer_map: Vec<(ObjectID, IotaAddress)>,
+    _expiration: Option<u64>,
+    _objects: Vec<(ObjectRef, TypeTag)>,
+    _package: ObjectID,
   ) -> anyhow::Result<ProgrammableTransactionBcs, Self::Error> {
     todo!()
   }
@@ -621,7 +625,7 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
       .map_err(TsSdkError::from)
   }
 
-  fn propose_update(
+  async fn propose_update(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     did_doc: impl AsRef<[u8]>,
@@ -633,16 +637,10 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     let did_doc = did_doc.as_ref();
     let package_id = package_id.to_string();
 
-    futures::executor::block_on(propose_update(
-      identity,
-      controller_cap,
-      did_doc,
-      &package_id,
-      expiration,
-    ))
-    .map(|js_arr| js_arr.to_vec())
-    .map_err(WasmError::from)
-    .map_err(TsSdkError::from)
+    propose_update(identity, controller_cap, did_doc, &package_id, expiration)
+      .map_err(WasmError::from)?
+      .to_transaction_bcs()
+      .await
   }
 
   fn execute_update(

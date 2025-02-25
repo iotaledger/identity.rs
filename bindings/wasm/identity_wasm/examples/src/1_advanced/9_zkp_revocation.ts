@@ -2,19 +2,15 @@ import {
     Credential,
     Duration,
     FailFast,
-    IotaDID,
     IotaDocument,
-    IotaIdentityClient,
     JptCredentialValidationOptions,
     JptCredentialValidator,
     JptCredentialValidatorUtils,
     JptPresentationValidationOptions,
     JptPresentationValidator,
     JptPresentationValidatorUtils,
-    JwkMemStore,
     JwpCredentialOptions,
     JwpPresentationOptions,
-    KeyIdMemStore,
     MethodScope,
     ProofAlgorithm,
     RevocationBitmap,
@@ -22,104 +18,47 @@ import {
     SelectiveDisclosurePresentation,
     Status,
     StatusCheck,
-    Storage,
     Timestamp,
 } from "@iota/identity-wasm/node";
-import {
-    type Address,
-    AliasOutput,
-    Client,
-    MnemonicSecretManager,
-    SecretManager,
-    SecretManagerType,
-    Utils,
-} from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
+import { IotaClient } from "@iota/iota-sdk/client";
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL, TEST_GAS_BUDGET } from "../util";
 
-/** Creates a DID Document and publishes it in a new Alias Output.
+export async function zkp_revocation() {
+    // create new client to connect to IOTA network
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
 
-Its functionality is equivalent to the "create DID" example
-and exists for convenient calling from the other examples. */
-export async function createDid(client: Client, secretManager: SecretManagerType, storage: Storage): Promise<{
-    address: Address;
-    document: IotaDocument;
-    fragment: string;
-}> {
-    const didClient = new IotaIdentityClient(client);
-    const networkHrp: string = await didClient.getNetworkHrp();
-
-    const secretManagerInstance = new SecretManager(secretManager);
-    const walletAddressBech32 = (await secretManagerInstance.generateEd25519Addresses({
-        accountIndex: 0,
-        range: {
-            start: 0,
-            end: 1,
-        },
-        bech32Hrp: networkHrp,
-    }))[0];
-
-    console.log("Wallet address Bech32:", walletAddressBech32);
-
-    await ensureAddressHasFunds(client, walletAddressBech32);
-
-    const address: Address = Utils.parseBech32Address(walletAddressBech32);
-
-    // Create a new DID document with a placeholder DID.
-    // The DID will be derived from the Alias Id of the Alias Output after publishing.
-    const document = new IotaDocument(networkHrp);
-
-    const fragment = await document.generateMethodJwp(
-        storage,
+    // Create an identity for the issuer with one verification method `key-1`, and publish DID document for it.
+    const issuerStorage = getMemstorage();
+    const issuerClient = await getFundedClient(issuerStorage);
+    const unpublishedIssuerDocument = new IotaDocument(network);
+    const issuerFragment = await unpublishedIssuerDocument.generateMethodJwp(
+        issuerStorage,
         ProofAlgorithm.BLS12381_SHA256,
         undefined,
         MethodScope.VerificationMethod(),
     );
     const revocationBitmap = new RevocationBitmap();
-    const serviceId = document.id().toUrl().join("#my-revocation-service");
+    // add service for revocation
+    const serviceId = unpublishedIssuerDocument.id().toUrl().join("#my-revocation-service");
     const service = revocationBitmap.toService(serviceId);
+    unpublishedIssuerDocument.insertService(service);
+    const { output: issuerIdentity } = await issuerClient
+        .createIdentity(unpublishedIssuerDocument)
+        .finish()
+        .execute(issuerClient);
+    let issuerDocument = issuerIdentity.didDocument();
 
-    document.insertService(service);
-    // Construct an Alias Output containing the DID document, with the wallet address
-    // set as both the state controller and governor.
-    const aliasOutput: AliasOutput = await didClient.newDidOutput(address, document);
+    // Create an identity for the holder, and publish DID document for it, in this case also the subject.
+    const holderStorage = getMemstorage();
+    const holderClient = await getFundedClient(holderStorage);
+    const [unpublishedholderDocument] = await createDocumentForNetwork(holderStorage, network);
+    const { output: holderIdentity } = await holderClient
+        .createIdentity(unpublishedholderDocument)
+        .finish()
+        .execute(holderClient);
+    const holderDocument = holderIdentity.didDocument();
 
-    // Publish the Alias Output and get the published DID document.
-    const published = await didClient.publishDidOutput(secretManager, aliasOutput);
-
-    return { address, document: published, fragment };
-}
-export async function zkp_revocation() {
-    // Create a new client to interact with the IOTA ledger.
-    const client = new Client({
-        primaryNode: API_ENDPOINT,
-        localPow: true,
-    });
-
-    // Creates a new wallet and identity (see "0_create_did" example).
-    const issuerSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
-    const issuerStorage: Storage = new Storage(
-        new JwkMemStore(),
-        new KeyIdMemStore(),
-    );
-    let { document: issuerDocument, fragment: issuerFragment } = await createDid(
-        client,
-        issuerSecretManager,
-        issuerStorage,
-    );
-    const holderSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
-    const holderStorage: Storage = new Storage(
-        new JwkMemStore(),
-        new KeyIdMemStore(),
-    );
-    let { document: holderDocument, fragment: holderFragment } = await createDid(
-        client,
-        holderSecretManager,
-        holderStorage,
-    );
     // =========================================================================================
     // Step 1: Create a new RevocationTimeframeStatus containing the current validityTimeframe
     // =======================================================================================
@@ -132,9 +71,9 @@ export async function zkp_revocation() {
         Timestamp.nowUTC(),
     );
 
-    // Create a credential subject indicating the degree earned by Alice.
+    // Create a credential subject indicating the degree earned by holder.
     const subject = {
-        name: "Alice",
+        name: "holder",
         mainCourses: ["Object-oriented Programming", "Mathematics"],
         degree: {
             type: "BachelorDegree",
@@ -244,7 +183,7 @@ export async function zkp_revocation() {
             StatusCheck.Strict,
         );
     } catch (_) {
-        console.log("successfully expired!");
+        console.log("Successfully expired!");
     }
 
     // ===========================================================================
@@ -253,20 +192,11 @@ export async function zkp_revocation() {
 
     console.log("Issuer decides to revoke the Credential");
 
-    const identityClient = new IotaIdentityClient(client);
-
     // Update the RevocationBitmap service in the issuer's DID Document.
     // This revokes the credential's unique index.
     issuerDocument.revokeCredentials("my-revocation-service", 5);
-    let aliasOutput = await identityClient.updateDidOutput(issuerDocument);
-    const rent = await identityClient.getRentStructure();
-    aliasOutput = await client.buildAliasOutput({
-        ...aliasOutput,
-        amount: Utils.computeStorageDeposit(aliasOutput, rent),
-        aliasId: aliasOutput.getAliasId(),
-        unlockConditions: aliasOutput.getUnlockConditions(),
-    });
-    issuerDocument = await identityClient.publishDidOutput(issuerSecretManager, aliasOutput);
+    await issuerIdentity.updateDidDocument(issuerDocument).execute(issuerClient);
+    issuerDocument = issuerIdentity.didDocument();
 
     // Holder checks if his credential has been revoked by the Issuer
     try {

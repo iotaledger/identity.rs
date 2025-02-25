@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use identity_iota::iota::IotaDocument;
+use identity_iota::iota_interaction::OptionalSync;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::KeyIdMemstore;
@@ -12,8 +13,6 @@ use identity_iota::storage::Storage;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 
-use identity_iota::iota::rebased::client::convert_to_address;
-use identity_iota::iota::rebased::client::get_sender_public_key;
 use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::client::IdentityClientReadOnly;
 use identity_iota::iota::rebased::client::IotaKeySignature;
@@ -24,6 +23,7 @@ use identity_storage::KeyIdStorage;
 use identity_storage::KeyType;
 use identity_storage::StorageSigner;
 use identity_stronghold::StrongholdStorage;
+use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::IotaClientBuilder;
 use iota_sdk::IOTA_LOCAL_NETWORK_URL;
 use iota_sdk_legacy::client::secret::stronghold::StrongholdSecretManager;
@@ -43,7 +43,7 @@ pub async fn create_did_document<K, I, S>(
 where
   K: identity_storage::JwkStorage,
   I: identity_storage::KeyIdStorage,
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + OptionalSync,
 {
   // Create a new DID document with a placeholder DID.
   let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network());
@@ -75,7 +75,7 @@ pub fn random_stronghold_path() -> PathBuf {
   file.to_owned()
 }
 
-pub async fn get_client_and_create_account<K, I>(
+pub async fn get_funded_client<K, I>(
   storage: &Storage<K, I>,
 ) -> Result<IdentityClient<StorageSigner<K, I>>, anyhow::Error>
 where
@@ -94,8 +94,9 @@ where
     .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
     .await?;
   let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
-  let public_key_bytes = get_sender_public_key(&public_key_jwk)?;
-  let sender_address = convert_to_address(&public_key_bytes)?;
+  let signer = StorageSigner::new(storage, generate.key_id, public_key_jwk);
+  let sender_address = IotaAddress::from(&Signer::public_key(&signer).await?);
+
   request_funds(&sender_address).await?;
   let package_id = std::env::var("IOTA_IDENTITY_PKG_ID")
     .map_err(|e| {
@@ -104,8 +105,6 @@ where
     .and_then(|pkg_str| pkg_str.parse().context("invalid package id"))?;
 
   let read_only_client = IdentityClientReadOnly::new_with_pkg_id(iota_client, package_id).await?;
-
-  let signer = StorageSigner::new(storage, generate.key_id, public_key_jwk);
 
   let identity_client = IdentityClient::new(read_only_client, signer).await?;
 

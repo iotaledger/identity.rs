@@ -2,6 +2,7 @@
 // Modifications Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[allow(unused)] // Kept in sync with original source, so keep as is.
 use serde::{Deserialize, Serialize};
 use super::super::move_core_types::{
     account_address::AccountAddress,

@@ -3,7 +3,8 @@
 
 mod resolver_config;
 mod resolver_types;
-#[cfg(feature = "wasm-resolver")]
+mod wasm_did_resolution_handler;
 mod wasm_resolver;
 
 pub use resolver_types::*;
+pub use wasm_did_resolution_handler::WasmDidResolutionHandler;

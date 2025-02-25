@@ -10,39 +10,33 @@ import {
     EdDSAJwsVerifier,
     IotaDID,
     IotaDocument,
-    IotaIdentityClient,
-    JwkMemStore,
     JwsSignatureOptions,
     JwtCredentialValidationOptions,
     JwtDomainLinkageValidator,
-    KeyIdMemStore,
     LinkedDomainService,
-    Storage,
     Timestamp,
 } from "@iota/identity-wasm/node";
-import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+import { IotaClient } from "@iota/iota-sdk/client";
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL, TEST_GAS_BUDGET } from "../util";
 
 /**
  * Demonstrates how to link a domain and a DID and verify the linkage.
  */
 export async function domainLinkage() {
-    const client = new Client({
-        primaryNode: API_ENDPOINT,
-        localPow: true,
-    });
-    const didClient = new IotaIdentityClient(client);
+    // create new clients and create new account
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
+    const storage = getMemstorage();
+    const identityClient = await getFundedClient(storage);
+    const [unpublished, vmFragment1] = await createDocumentForNetwork(storage, network);
 
-    // Generate a random mnemonic for our wallet.
-    const secretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
-
-    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-
-    // Creates a new wallet and identity (see "0_create_did" example).
-    let { document, fragment } = await createDid(client, secretManager, storage);
-    const did: IotaDID = document.id();
+    // create new identity for this account and publish document for it
+    const { output: identity } = await identityClient
+        .createIdentity(unpublished)
+        .finish()
+        .execute(identityClient);
+    const document = identity.didDocument();
+    const did = document.id();
 
     // =====================================================
     // Create Linked Domain service
@@ -59,7 +53,9 @@ export async function domainLinkage() {
         domains: [domainFoo, domainBar],
     });
     document.insertService(linkedDomainService.toService());
-    let updatedDidDocument = await publishDocument(didClient, secretManager, document);
+    await identity.updateDidDocument(document).execute(identityClient);
+
+    let updatedDidDocument = identity.didDocument();
     console.log("Updated DID document:", JSON.stringify(updatedDidDocument, null, 2));
 
     // =====================================================
@@ -81,7 +77,7 @@ export async function domainLinkage() {
     // Sign the credential.
     const credentialJwt = await document.createCredentialJwt(
         storage,
-        fragment,
+        vmFragment1,
         domainLinkageCredential,
         new JwsSignatureOptions(),
     );
@@ -120,7 +116,7 @@ export async function domainLinkage() {
     // Retrieve the issuers of the Domain Linkage Credentials which correspond to the possibly linked DIDs.
     // Note that in this example only the first entry in the credential is validated.
     let issuers: Array<CoreDID> = fetchedConfigurationResource.issuers();
-    const issuerDocument: IotaDocument = await didClient.resolveDid(IotaDID.parse(issuers[0].toString()));
+    const issuerDocument: IotaDocument = await identityClient.resolveDid(IotaDID.parse(issuers[0].toString()));
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
     // Validation succeeds when no error is thrown.
@@ -135,7 +131,7 @@ export async function domainLinkage() {
     // → Case 2: starting from a DID
     // =====================================================
 
-    const didDocument: IotaDocument = await didClient.resolveDid(did);
+    const didDocument: IotaDocument = await identityClient.resolveDid(did);
 
     // Get the Linked Domain Services from the DID Document.
     let linkedDomainServices: LinkedDomainService[] = didDocument
@@ -166,27 +162,4 @@ export async function domainLinkage() {
     );
 
     console.log("Successfully validated Domain Linkage!");
-}
-
-async function publishDocument(
-    client: IotaIdentityClient,
-    secretManager: MnemonicSecretManager,
-    document: IotaDocument,
-): Promise<IotaDocument> {
-    // Resolve the latest output and update it with the given document.
-    let aliasOutput: AliasOutput = await client.updateDidOutput(document);
-
-    // Because the size of the DID document increased, we have to increase the allocated storage deposit.
-    // This increases the deposit amount to the new minimum.
-    const rentStructure: IRent = await client.getRentStructure();
-    aliasOutput = await client.client.buildAliasOutput({
-        ...aliasOutput,
-        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
-        aliasId: aliasOutput.getAliasId(),
-        unlockConditions: aliasOutput.getUnlockConditions(),
-    });
-
-    // Publish the output.
-    const updated: IotaDocument = await client.publishDidOutput(secretManager, aliasOutput);
-    return updated;
 }
