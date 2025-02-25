@@ -1,17 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use async_trait::async_trait;
-use identity_iota::iota_interaction::types::crypto::PublicKey;
-use identity_iota::iota_interaction::types::crypto::Signature;
-use identity_iota::iota_interaction::IotaKeySignature;
 use identity_iota::storage::KeyId;
 use identity_iota::storage::StorageSigner;
-use identity_iota::verification::jwk::JwkParams;
-use identity_iota::verification::jwu;
 use iota_interaction_ts::WasmIotaSignature;
 use iota_interaction_ts::WasmPublicKey;
-use secret_storage::Error as SecretStorageError;
 use secret_storage::Signer;
 use wasm_bindgen::prelude::*;
 
@@ -21,8 +14,6 @@ use crate::jose::WasmJwk;
 use crate::storage::WasmJwkStorage;
 use crate::storage::WasmKeyIdStorage;
 use crate::storage::WasmStorage;
-
-use super::WasmTransactionSigner;
 
 #[wasm_bindgen(js_name = StorageSigner)]
 pub struct WasmStorageSigner {
@@ -67,21 +58,14 @@ impl WasmStorageSigner {
       .and_then(|pk| WasmPublicKey::try_from(&pk))
       .inspect(|wasm_pk| console_log!("WasmStorageSigner's PK: {:?}", &wasm_pk.to_raw_bytes()))
   }
-}
 
-#[async_trait(?Send)]
-impl Signer<IotaKeySignature> for WasmStorageSigner {
-  type KeyId = String;
-
-  async fn sign(&self, data: &Vec<u8>) -> std::result::Result<Signature, SecretStorageError> {
-    self.signer().sign(data).await
-  }
-
-  async fn public_key(&self) -> std::result::Result<PublicKey, SecretStorageError> {
-    Signer::public_key(&self.signer()).await
-  }
-
-  fn key_id(&self) -> &String {
-    todo!()
+  #[wasm_bindgen(js_name = iotaPublicKeyBytes)]
+  pub async fn iota_public_key_bytes(&self) -> Result<Vec<u8>> {
+    Signer::public_key(&self.signer()).await.wasm_result().map(|pk| {
+      let mut bytes: Vec<u8> = Vec::new();
+      bytes.extend_from_slice(&[pk.flag()]);
+      bytes.extend_from_slice(pk.as_ref());
+      bytes
+    })
   }
 }
