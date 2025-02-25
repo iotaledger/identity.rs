@@ -7,10 +7,6 @@
         "../node/identity_wasm",
         "./identity_wasm.js"
       ],
-      "~sdk-wasm": [
-        "../node_modules/@iota/sdk-wasm/node",
-        "@iota/sdk-wasm/node"
-      ],
       "../lib": [
         "."
       ]

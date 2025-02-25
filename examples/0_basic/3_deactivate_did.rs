@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use examples::create_did_document;
-use examples::get_client_and_create_account;
+use examples::get_funded_client;
 use examples::get_memstorage;
 use examples::TEST_GAS_BUDGET;
 use identity_iota::iota::IotaDID;
@@ -13,7 +13,7 @@ use identity_iota::iota::IotaDocument;
 async fn main() -> anyhow::Result<()> {
   // create new client to interact with chain and get funded account with keys
   let storage = get_memstorage()?;
-  let identity_client = get_client_and_create_account(&storage).await?;
+  let identity_client = get_funded_client(&storage).await?;
 
   // create new DID document and publish it
   let (document, _) = create_did_document(&identity_client, &storage).await?;

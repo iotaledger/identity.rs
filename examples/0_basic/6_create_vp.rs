@@ -10,7 +10,7 @@
 use std::collections::HashMap;
 
 use examples::create_did_document;
-use examples::get_client_and_create_account;
+use examples::get_funded_client;
 use examples::get_memstorage;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::Object;
@@ -53,18 +53,18 @@ async fn main() -> anyhow::Result<()> {
 
   // create new issuer account with did document
   let issuer_storage = get_memstorage()?;
-  let issuer_identity_client = get_client_and_create_account(&issuer_storage).await?;
+  let issuer_identity_client = get_funded_client(&issuer_storage).await?;
   let (issuer_document, issuer_vm_fragment) = create_did_document(&issuer_identity_client, &issuer_storage).await?;
 
   // create new holder account with did document
   let holder_storage = get_memstorage()?;
-  let holder_identity_client = get_client_and_create_account(&holder_storage).await?;
+  let holder_identity_client = get_funded_client(&holder_storage).await?;
   let (holder_document, holder_vm_fragment) = create_did_document(&holder_identity_client, &holder_storage).await?;
 
   // create new client for verifier
   // new client actually not necessary, but shows, that client is independent from issuer and holder
   let verifier_storage = &get_memstorage()?;
-  let verifier_client = get_client_and_create_account(verifier_storage).await?;
+  let verifier_client = get_funded_client(verifier_storage).await?;
 
   // ===========================================================================
   // Step 2: Issuer creates and signs a Verifiable Credential.

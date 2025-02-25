@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::iter::IntoIterator;
 
+use async_trait::async_trait;
 use serde::Serialize;
 
 use crate::rpc_types::IotaObjectData;
@@ -86,6 +87,8 @@ impl<T, B> BorrowIntentFnInternalT<B> for T where T: FnOnce(&mut B, &HashMap<Obj
 pub trait ControllerIntentFnInternalT<B>: FnOnce(&mut B, &Argument) {}
 impl<T, B> ControllerIntentFnInternalT<B> for T where T: FnOnce(&mut B, &Argument) {}
 
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait IdentityMoveCalls {
   type Error;
   type NativeTxBuilder;
@@ -172,7 +175,7 @@ pub trait IdentityMoveCalls {
   where
     F: ControllerIntentFnInternalT<Self::NativeTxBuilder>;
 
-  fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error>;
+  async fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
   fn new_with_controllers<C: IntoIterator<Item = (IotaAddress, u64)>>(
     did_doc: &[u8],
@@ -181,7 +184,7 @@ pub trait IdentityMoveCalls {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-  fn propose_deactivation(
+  async fn propose_deactivation(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     expiration: Option<u64>,
@@ -218,10 +221,11 @@ pub trait IdentityMoveCalls {
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-  fn propose_update(
+  async fn propose_update(
     identity: OwnedObjectRef,
     capability: ObjectRef,
-    did_doc: impl AsRef<[u8]>,
+    #[cfg(not(target_arch = "wasm32"))] did_doc: impl AsRef<[u8]> + Send,
+    #[cfg(target_arch = "wasm32")] did_doc: impl AsRef<[u8]>,
     expiration: Option<u64>,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;

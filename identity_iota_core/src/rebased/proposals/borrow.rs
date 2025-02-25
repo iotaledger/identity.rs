@@ -24,6 +24,7 @@ use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::transaction::Argument;
 use identity_iota_interaction::types::TypeTag;
 use identity_iota_interaction::MoveType;
+use identity_iota_interaction::OptionalSync;
 use secret_storage::Signer;
 use serde::Deserialize;
 use serde::Serialize;
@@ -38,7 +39,6 @@ use super::UserDrivenTx;
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
       use iota_interaction_ts::NativeTsTransactionBuilderBindingWrapper as Ptb;
-      use iota_interaction_ts::error::TsSdkError as IotaInteractionError;
       /// Instances of BorrowIntentFnT can be used as user-provided function to describe how
       /// a borrowed assets shall be used.
       pub trait BorrowIntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
@@ -156,7 +156,7 @@ where
     client: &IdentityClient<S>,
   ) -> Result<CreateProposalTx<'i, Self::Action>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
@@ -213,7 +213,7 @@ where
     _: &IdentityClient<S>,
   ) -> Result<UserDrivenTx<'i, Self::Action>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let proposal_id = self.id();
     let borrow_action = self.into_action();
@@ -274,7 +274,7 @@ where
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let Self {
       identity,

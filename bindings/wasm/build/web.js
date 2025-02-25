@@ -1,6 +1,5 @@
 const path = require("path");
 const fs = require("fs");
-const fse = require("fs-extra");
 const { lintAll } = require("./lints");
 const generatePackage = require("./utils/generatePackage");
 
@@ -56,4 +55,4 @@ const newPackage = generatePackage({
     artifact,
 });
 fs.writeFileSync(path.join(RELEASE_FOLDER, "package.json"), JSON.stringify(newPackage, null, 2));
-console.log(`[build/web.js] Finished processing entryFile '${entryFilePathNode}' for artifact '${artifact}'`);
+console.log(`[build/web.js] Finished processing entryFile '${entryFilePathTs}' for artifact '${artifact}'`);

@@ -17,12 +17,12 @@ identity_credential = { version = "=1.4.0", path = "../identity_credential", fea
 identity_did = { version = "=1.4.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.4.0", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=1.4.0", path = "../identity_iota_core", default-features = false }
+identity_resolver = { version = "=1.4.0", path = "../identity_resolver", default-features = false, optional = true }
 identity_storage = { version = "=1.4.0", path = "../identity_storage", default-features = false, features = ["iota-document"] }
 identity_verification = { version = "=1.4.0", path = "../identity_verification", default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 identity_iota_interaction = { version = "=1.4.0", path = "../identity_iota_interaction" }
-identity_resolver = { version = "=1.4.0", path = "../identity_resolver", default-features = false, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 identity_iota_interaction = { version = "=1.4.0", path = "../identity_iota_interaction", default-features = false }

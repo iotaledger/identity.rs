@@ -1,8 +1,8 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { SharedObjectRef } from "@iota/iota.js/dist/cjs/bcs/types";
-import { ObjectRef, Transaction } from "@iota/iota.js/transactions";
+import { SharedObjectRef } from "@iota/iota-sdk/dist/cjs/bcs/types";
+import { ObjectRef, Transaction } from "@iota/iota-sdk/transactions";
 
 export function proposeUpgrade(
     identity: SharedObjectRef,
