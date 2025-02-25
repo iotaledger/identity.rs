@@ -21,6 +21,7 @@ identity_credential = { version = "=1.4.0", path = "../identity_credential", def
 identity_did = { version = "=1.4.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.4.0", path = "../identity_document", default-features = false }
 identity_verification = { version = "=1.4.0", path = "../identity_verification", default-features = false }
+jsonpath-rust = { version = "0.5.1", optional = true }
 num-derive = { version = "0.4", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
@@ -40,7 +41,7 @@ iota-crypto = { version = "0.23", optional = true }
 itertools = { version = "0.13.0", optional = true }
 phf = { version = "0.11.2", features = ["macros"] }
 rand = { version = "0.8.5", optional = true }
-secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.1.0", default-features = false, optional = true }
+secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.2.0", default-features = false, optional = true }
 serde-aux = { version = "4.5.0", optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -65,7 +66,6 @@ proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 # for feature iota-client tests
 identity_iota_core = { path = ".", features = ["iota-client"] } # enable for e2e tests
 identity_storage = { path = "../identity_storage", features = ["send-sync-storage", "storage-signer"] }
-jsonpath-rust = "0.5.1"
 lazy_static = "1.5.0"
 serial_test = "3.1.1"
 
@@ -76,7 +76,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["iota-client", "revocation-bitmap", "send-sync"]
+default = ["iota-client", "revocation-bitmap", "send-sync", "keytool-signer"]
 # Enables the IOTA Client related components, and dependencies.
 iota-client = [
   "dep:async-trait",
@@ -106,6 +106,7 @@ send-sync = ["send-sync-storage", "send-sync-client-ext"]
 send-sync-storage = ["secret-storage?/send-sync-storage"]
 # Enables `Send` + `Sync` bounds for IOTA client interaction traits.
 send-sync-client-ext = []
+keytool-signer = ["identity_iota_interaction/keytool-signer", "iota-client"]
 
 [lints]
 workspace = true

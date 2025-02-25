@@ -17,6 +17,8 @@ use crate::rpc_types::OwnedObjectRef;
 use crate::types::base_types::IotaAddress;
 use crate::types::base_types::ObjectID;
 use crate::types::base_types::SequenceNumber;
+use crate::types::crypto::PublicKey;
+use crate::types::crypto::Signature;
 use crate::types::digests::TransactionDigest;
 use crate::types::dynamic_field::DynamicFieldName;
 use crate::types::event::EventID;
@@ -39,13 +41,14 @@ use std::marker::Send;
 use crate::OptionalSync;
 
 pub struct IotaKeySignature {
-  pub public_key: Vec<u8>,
-  pub signature: Vec<u8>,
+  pub public_key: PublicKey,
+  pub signature: Signature,
 }
 
 impl SignatureSchemeSecretStorage for IotaKeySignature {
-  type PublicKey = Vec<u8>;
-  type Signature = Vec<u8>;
+  type PublicKey = PublicKey;
+  type Signature = Signature;
+  type Input = TransactionDataBcs;
 }
 
 //********************************************************************
@@ -235,8 +238,6 @@ pub trait IotaClientTrait {
   #[cfg(not(feature = "send-sync-transaction"))]
   async fn execute_transaction<S: Signer<IotaKeySignature>>(
     &self,
-    sender_address: IotaAddress,
-    sender_public_key: &[u8],
     tx_bcs: ProgrammableTransactionBcs,
     gas_budget: Option<u64>,
     signer: &S,
@@ -247,8 +248,6 @@ pub trait IotaClientTrait {
   #[cfg(feature = "send-sync-transaction")]
   async fn execute_transaction<S: Signer<IotaKeySignature> + OptionalSync>(
     &self,
-    sender_address: IotaAddress,
-    sender_public_key: &[u8],
     tx_bcs: ProgrammableTransactionBcs,
     gas_budget: Option<u64>,
     signer: &S,

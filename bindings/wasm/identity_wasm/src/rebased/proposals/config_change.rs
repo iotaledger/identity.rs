@@ -310,13 +310,14 @@ impl WasmCreateConfigChangeProposalTx {
       .add_multiple_controllers(controllers_to_add)
       .remove_multiple_controllers(controllers_to_remove)
       .update_multiple_controllers(controllers_to_update);
+
     let builder = if let Some(exp) = self.expiration_epoch {
       builder.expiration_epoch(exp)
     } else {
       builder
     };
-    let builder = if let Some(tr) = self.threshold {
-      builder.threshold(tr)
+    let builder = if let Some(threshold) = self.threshold {
+      builder.threshold(threshold)
     } else {
       builder
     };
