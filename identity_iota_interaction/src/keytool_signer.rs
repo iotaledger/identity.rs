@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use crate::types::base_types::IotaAddress;
 use crate::types::crypto::PublicKey;
 use crate::types::crypto::Signature;
+use crate::types::crypto::SignatureScheme;
 use crate::IotaKeySignature;
 use crate::TransactionDataBcs;
 use anyhow::anyhow;
@@ -14,10 +15,10 @@ use anyhow::Context as _;
 use async_trait::async_trait;
 use fastcrypto::encoding::Base64;
 use fastcrypto::encoding::Encoding;
-use fastcrypto::traits::EncodeDecodeBase64;
 use jsonpath_rust::JsonPathQuery as _;
 use secret_storage::Error as SecretStorageError;
 use secret_storage::Signer;
+use serde::Deserialize;
 use serde_json::Value;
 
 /// Builder structure to ease the creation of a [KeytoolSigner].
@@ -170,9 +171,9 @@ async fn get_active_address(iota_bin: impl AsRef<Path>) -> anyhow::Result<IotaAd
 }
 
 async fn get_key(iota_bin: impl AsRef<Path>, address: IotaAddress) -> anyhow::Result<PublicKey> {
-  let query = format!("$[?(@.iotaAddress==\"{}\")].publicBase64Key", address);
+  let query = format!("$[?(@.iotaAddress==\"{}\")]", address);
 
-  let base64_pk_json = run_iota_cli_command_with_bin(iota_bin, "keytool list")
+  let pk_json_data = run_iota_cli_command_with_bin(iota_bin, "keytool list")
     .await
     .and_then(|json_value| {
       json_value
@@ -182,9 +183,23 @@ async fn get_key(iota_bin: impl AsRef<Path>, address: IotaAddress) -> anyhow::Re
         .context("key not found")
         .map(Value::take)
     })?;
-  let base64_pk = base64_pk_json
-    .as_str()
-    .context("invalid JSON public key representation")?;
+  let Ok(KeytoolPublicKeyHelper {
+    public_base64_key,
+    flag,
+  }) = serde_json::from_value(pk_json_data)
+  else {
+    return Err(anyhow!("invalid key format"));
+  };
 
-  PublicKey::decode_base64(base64_pk).context("failed to decode base64 public key")
+  let signature_scheme = SignatureScheme::from_flag_byte(&flag).context(format!("invalid signature flag `{flag}`"))?;
+  let pk_bytes = Base64::decode(&public_base64_key).context("invalid base64 encoding for key")?;
+
+  PublicKey::try_from_bytes(signature_scheme, &pk_bytes).map_err(|e| anyhow!("{e:?}"))
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct KeytoolPublicKeyHelper {
+  public_base64_key: String,
+  flag: u8,
 }

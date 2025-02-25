@@ -303,7 +303,8 @@ impl TryFrom<WasmPublicKey> for PublicKey {
     let key_bytes = pk.to_raw_bytes();
     let key_flag = pk.flag();
     let signature_scheme = SignatureScheme::from_flag_byte(&key_flag).map_err(|e| JsError::new(&e.to_string()))?;
-    let public_key = PublicKey::try_from_bytes(signature_scheme, &key_bytes).map_err(|e| JsError::new(&e.to_string()))?;
+    let public_key =
+      PublicKey::try_from_bytes(signature_scheme, &key_bytes).map_err(|e| JsError::new(&e.to_string()))?;
 
     assert_eq!(&key_bytes, public_key.as_ref());
 

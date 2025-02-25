@@ -3,8 +3,8 @@
 
 use std::ops::Deref;
 
-use crate::common::TestClient;
 use crate::common::get_funded_test_client;
+use crate::common::TestClient;
 use identity_iota_core::rebased::migration;
 use identity_iota_core::rebased::transaction::Transaction;
 use identity_iota_core::IotaDocument;
