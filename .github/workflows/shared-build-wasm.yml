@@ -85,14 +85,6 @@ jobs:
         run: npm run build
         working-directory: bindings/wasm/identity_wasm
 
-      - name: Debug log directory structure
-        run: find . -maxdepth 2 -type d -ls
-        working-directory: bindings/wasm/identity_wasm
-
-      - name: Debug search for md files
-        run: find ./docs/wasm/ -type f -name '*.md'
-        working-directory: bindings/wasm/identity_wasm
-
       - name: Run Node unit tests
         if: ${{ inputs.run-unit-tests }}
         run: npm run test:unit:node
