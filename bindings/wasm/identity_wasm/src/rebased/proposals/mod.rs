@@ -1,26 +1,26 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod deactivate_did;
-mod update_did;
-mod send;
 mod config_change;
+mod deactivate_did;
+mod send;
+mod update_did;
 
-pub use deactivate_did::*;
-pub use update_did::*;
-pub use send::*;
 pub use config_change::*;
+pub use deactivate_did::*;
+pub use send::*;
+pub use update_did::*;
 
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use identity_iota::iota_interaction::types::base_types::ObjectID;
 use identity_iota::iota_interaction::types::base_types::IotaAddress;
-use wasm_bindgen::prelude::wasm_bindgen;
-use wasm_bindgen::JsValue;
-use wasm_bindgen::JsCast as _;
-use js_sys::Reflect;
+use identity_iota::iota_interaction::types::base_types::ObjectID;
 use js_sys::JsString;
+use js_sys::Reflect;
+use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::JsCast as _;
+use wasm_bindgen::JsValue;
 
 #[wasm_bindgen]
 extern "C" {
@@ -53,7 +53,9 @@ impl From<StringCouple> for (String, String) {
 
 impl From<(String, String)> for StringCouple {
   fn from(value: (String, String)) -> Self {
-    serde_wasm_bindgen::to_value(&value).expect("a string couple can be serialized to JS").unchecked_into()
+    serde_wasm_bindgen::to_value(&value)
+      .expect("a string couple can be serialized to JS")
+      .unchecked_into()
   }
 }
 

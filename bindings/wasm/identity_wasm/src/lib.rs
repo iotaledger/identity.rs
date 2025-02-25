@@ -32,11 +32,11 @@ pub mod storage;
 pub mod verification;
 
 #[cfg(feature = "dummy-client")]
-// Currently it's unclear if this module will be removed or can be used for integration or unit tests.
-pub(crate) mod rebased;
-#[cfg(feature = "dummy-client")]
 // Remove this module when working on [Issue #1445 Replace mocked Identity client with real Identity client]
 pub(crate) mod obsolete;
+#[cfg(feature = "dummy-client")]
+// Currently it's unclear if this module will be removed or can be used for integration or unit tests.
+pub(crate) mod rebased;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]

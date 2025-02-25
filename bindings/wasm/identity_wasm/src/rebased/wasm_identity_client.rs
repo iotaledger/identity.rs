@@ -1,20 +1,14 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::rc::Rc;
 use std::ops::Deref;
-
-use fastcrypto::ed25519::Ed25519PublicKey;
-use fastcrypto::traits::EncodeDecodeBase64;
-use fastcrypto::traits::ToFromBytes;
+use std::rc::Rc;
 
 use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::client::PublishDidTx;
 use identity_iota::iota::rebased::transaction::TransactionInternal;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
-use identity_iota::iota_interaction::types::base_types::IotaAddress;
 
-use identity_iota::iota_interaction::types::crypto::PublicKey;
 use iota_interaction_ts::bindings::WasmExecutionStatus;
 use iota_interaction_ts::bindings::WasmOwnedObjectRef;
 use iota_interaction_ts::WasmPublicKey;
@@ -25,6 +19,8 @@ use iota_interaction_ts::AdapterNativeResponse;
 use super::IdentityContainer;
 use super::WasmIdentityBuilder;
 use super::WasmIdentityClientReadOnly;
+use super::WasmIotaAddress;
+use super::WasmObjectID;
 
 use crate::error::wasm_error;
 use crate::iota::IotaDocumentLock;
@@ -33,9 +29,6 @@ use crate::iota::WasmIotaDocument;
 use crate::storage::WasmTransactionSigner;
 use identity_iota::iota::IotaDocument;
 use wasm_bindgen::prelude::*;
-
-use super::types::WasmIotaAddress;
-use super::types::WasmObjectID;
 
 #[wasm_bindgen(getter_with_clone, inspectable, js_name = IotaTransactionBlockResponseEssence)]
 pub struct WasmIotaTransactionBlockResponseEssence {
@@ -61,7 +54,10 @@ impl Deref for WasmIdentityClient {
 #[wasm_bindgen(js_class = IdentityClient)]
 impl WasmIdentityClient {
   #[wasm_bindgen(js_name = create)]
-  pub async fn new(client: WasmIdentityClientReadOnly, signer: WasmTransactionSigner) -> Result<WasmIdentityClient, JsError> {
+  pub async fn new(
+    client: WasmIdentityClientReadOnly,
+    signer: WasmTransactionSigner,
+  ) -> Result<WasmIdentityClient, JsError> {
     let inner_client = IdentityClient::new(client.0, signer).await?;
     Ok(WasmIdentityClient(inner_client))
   }

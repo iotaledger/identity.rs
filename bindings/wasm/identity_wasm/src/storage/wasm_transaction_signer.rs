@@ -1,8 +1,6 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::OnceLock;
-
 use async_trait::async_trait;
 use identity_iota::iota::rebased::client::IotaKeySignature;
 use identity_iota::iota_interaction::types::crypto::PublicKey;
@@ -77,7 +75,7 @@ impl Signer<IotaKeySignature> for WasmTransactionSigner {
   }
 
   fn key_id(&self) -> &String {
-    static KEY_ID: OnceLock<String> = OnceLock::new();
-    KEY_ID.get_or_init(|| self.key_id())
+    // TODO: Yikes! Find a way to work around this.
+    Box::leak(Box::new(self.key_id()))
   }
 }
