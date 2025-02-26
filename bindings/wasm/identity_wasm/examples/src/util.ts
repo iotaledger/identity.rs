@@ -54,6 +54,7 @@ export async function getFundedClient(storage: Storage): Promise<IdentityClient>
 
     // generate new key
     let generate = await storage.keyStorage().generate("Ed25519", JwsAlgorithm.EdDSA);
+
     let publicKeyJwk = generate.jwk().toPublic();
     if (typeof publicKeyJwk === "undefined") {
         throw new Error("failed to derive public JWK from generated JWK");

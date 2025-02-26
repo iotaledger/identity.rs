@@ -8,6 +8,7 @@ use identity_iota_core::rebased::client::IdentityClient;
 use identity_iota_core::rebased::client::IdentityClientReadOnly;
 use identity_iota_core::rebased::transaction::Transaction;
 use identity_iota_core::rebased::utils::request_funds;
+use identity_iota_core::rebased::KeytoolSigner;
 use identity_iota_core::IotaDID;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::OptionalSync;
@@ -26,17 +27,18 @@ use identity_verification::VerificationMethod;
 use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::crypto::SignatureScheme;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use iota_sdk::IotaClient;
 use iota_sdk::IotaClientBuilder;
 use iota_sdk::IOTA_LOCAL_NETWORK_URL;
-use jsonpath_rust::JsonPathQuery;
 use lazy_static::lazy_static;
 use move_core_types::ident_str;
 use move_core_types::language_storage::StructTag;
 use secret_storage::Signer;
+use serde::Deserialize;
 use serde_json::Value;
 use std::io::Write;
 use std::ops::Deref;
@@ -77,22 +79,7 @@ lazy_static! {
 }
 
 pub async fn get_funded_test_client() -> anyhow::Result<TestClient> {
-  let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| IOTA_LOCAL_NETWORK_URL.to_string());
-  let client = IotaClientBuilder::default().build(&api_endpoint).await?;
-  let package_id = PACKAGE_ID.get_or_try_init(|| init(&client)).await.copied()?;
-  let address = get_active_address().await?;
-
-  request_funds(&address).await?;
-
-  let storage = Arc::new(Storage::new(JwkMemStore::new(), KeyIdMemstore::new()));
-  let identity_client = IdentityClientReadOnly::new_with_pkg_id(client, package_id).await?;
-
-  Ok(TestClient {
-    client: identity_client,
-    package_id,
-    address,
-    storage,
-  })
+  TestClient::new().await
 }
 
 async fn init(iota_client: &IotaClient) -> anyhow::Result<ObjectID> {
@@ -182,30 +169,85 @@ fn get_public_key_bytes(sender_public_jwk: &Jwk) -> Result<Vec<u8>, anyhow::Erro
   identity_jose::jwu::decode_b64(public_key_base_64).map_err(|err| anyhow!("could not decode base64 public key; {err}"))
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct GasObjectHelper {
+  nanos_balance: u64,
+}
+
+async fn get_balance(address: IotaAddress) -> anyhow::Result<u64> {
+  let output = Command::new("iota")
+    .arg("client")
+    .arg("gas")
+    .arg("--json")
+    .arg(address.to_string())
+    .output()
+    .await?;
+
+  if !output.status.success() {
+    let error_msg = String::from_utf8(output.stderr)?;
+    anyhow::bail!("failed to get balance: {error_msg}");
+  }
+
+  let balance = serde_json::from_slice::<Vec<GasObjectHelper>>(&output.stdout)?
+    .into_iter()
+    .map(|gas_info| gas_info.nanos_balance)
+    .sum();
+
+  Ok(balance)
+}
+
 #[derive(Clone)]
 pub struct TestClient {
-  client: IdentityClientReadOnly,
-  package_id: ObjectID,
-  #[allow(dead_code)]
-  address: IotaAddress,
+  client: Arc<IdentityClient<KeytoolSigner>>,
   storage: Arc<MemStorage>,
 }
 
 impl Deref for TestClient {
-  type Target = IdentityClientReadOnly;
+  type Target = IdentityClient<KeytoolSigner>;
   fn deref(&self) -> &Self::Target {
     &self.client
   }
 }
 
 impl TestClient {
+  pub async fn new() -> anyhow::Result<Self> {
+    let active_address = get_active_address().await?;
+    Self::new_from_address(active_address).await
+  }
+
+  pub async fn new_from_address(address: IotaAddress) -> anyhow::Result<Self> {
+    let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| IOTA_LOCAL_NETWORK_URL.to_string());
+    let client = IotaClientBuilder::default().build(&api_endpoint).await?;
+    let package_id = PACKAGE_ID.get_or_try_init(|| init(&client)).await.copied()?;
+
+    let balance = get_balance(address).await?;
+    if balance < TEST_GAS_BUDGET {
+      request_funds(&address).await?;
+    }
+
+    let storage = Arc::new(Storage::new(JwkMemStore::new(), KeyIdMemstore::new()));
+    let identity_client = IdentityClientReadOnly::new_with_pkg_id(client, package_id).await?;
+    let signer = KeytoolSigner::builder().build().await?;
+    let client = IdentityClient::new(identity_client, signer).await?;
+
+    Ok(TestClient {
+      client: Arc::new(client),
+      storage,
+    })
+  }
+
+  pub async fn new_with_key_type(key_type: SignatureScheme) -> anyhow::Result<Self> {
+    let address = make_address(key_type).await?;
+    Self::new_from_address(address).await
+  }
   // Sets the current address to the address controller by this client.
   async fn switch_address(&self) -> anyhow::Result<()> {
     let output = Command::new("iota")
       .arg("client")
       .arg("switch")
       .arg("--address")
-      .arg(self.address.to_string())
+      .arg(self.client.sender_address().to_string())
       .output()
       .await?;
 
@@ -220,50 +262,11 @@ impl TestClient {
   }
 
   pub fn package_id(&self) -> ObjectID {
-    self.package_id
+    self.client.package_id()
   }
 
-  pub async fn new_address(&self) -> anyhow::Result<Self> {
-    let output = Command::new("iota")
-      .arg("client")
-      .arg("new-address")
-      .arg("ed25519")
-      .arg("--json")
-      .output()
-      .await?;
-    let new_address = {
-      let output_str = std::str::from_utf8(&output.stdout).unwrap();
-      let start_of_json = output_str
-        .find('{')
-        .ok_or(anyhow!("No json in output: {}", output_str))?;
-      let json_result = serde_json::from_str::<Value>(output_str[start_of_json..].trim())?;
-      let address_json = json_result
-        .path("$.address")
-        .map_err(|e| anyhow!("failed to parse json output: {e}"))?;
-      serde_json::from_value::<IotaAddress>(address_json)?
-    };
-
-    request_funds(&new_address).await?;
-
-    let mut new_client = self.clone();
-    new_client.address = new_address;
-    Ok(new_client)
-  }
-
-  pub async fn new_user_client(&self) -> anyhow::Result<IdentityClient<MemSigner>> {
-    let generate = self
-      .storage
-      .key_storage()
-      .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
-      .await?;
-    let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
-    let signer = StorageSigner::new(&self.storage, generate.key_id, public_key_jwk);
-
-    let user_client = IdentityClient::new(self.client.clone(), signer).await?;
-
-    request_funds(&user_client.sender_address()).await?;
-
-    Ok(user_client)
+  pub fn signer(&self) -> &KeytoolSigner {
+    self.client.signer()
   }
 
   pub async fn store_key_id_for_verification_method(
@@ -284,6 +287,22 @@ impl TestClient {
       .await?;
 
     Ok(())
+  }
+
+  pub async fn new_user_client(&self) -> anyhow::Result<IdentityClient<MemSigner>> {
+    let generate = self
+      .storage
+      .key_storage()
+      .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
+      .await?;
+    let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
+    let signer = StorageSigner::new(&self.storage, generate.key_id, public_key_jwk);
+
+    let user_client = IdentityClient::new((*self.client).clone(), signer).await?;
+
+    request_funds(&user_client.sender_address()).await?;
+
+    Ok(user_client)
   }
 }
 
@@ -311,4 +330,39 @@ where
     .first()
     .map(|obj| obj.object_id())
     .context("no coins were created")
+}
+
+pub async fn make_address(key_type: SignatureScheme) -> anyhow::Result<IotaAddress> {
+  if !matches!(
+    key_type,
+    SignatureScheme::ED25519 | SignatureScheme::Secp256k1 | SignatureScheme::Secp256r1
+  ) {
+    anyhow::bail!("key type {key_type} is not supported");
+  }
+
+  let output = Command::new("iota")
+    .arg("client")
+    .arg("new-address")
+    .arg(key_type.to_string())
+    .arg("--json")
+    .output()
+    .await?;
+  let new_address = {
+    let output_str = std::str::from_utf8(&output.stdout).unwrap();
+    let start_of_json = output_str
+      .find('{')
+      .ok_or(anyhow!("No json in output: {}", output_str))?;
+    let json_result = serde_json::from_str::<Value>(output_str[start_of_json..].trim())?;
+    let address_str = json_result
+      .get("address")
+      .context("no address in JSON output")?
+      .as_str()
+      .context("address is not a JSON string")?;
+
+    address_str.parse()?
+  };
+
+  request_funds(&new_address).await?;
+
+  Ok(new_address)
 }

@@ -57,7 +57,7 @@ jobs:
       - name: Install wasm-bindgen-cli
         uses: jetli/wasm-bindgen-action@24ba6f9fff570246106ac3f80f35185600c3f6c9
         with:
-          version: '0.2.93'
+          version: '0.2.100'
 
       - name: Setup sccache
         uses: './.github/actions/rust/sccache/setup-sccache'
@@ -67,7 +67,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 16.x
+          node-version: 20.x
 
       - name: Install JS dependencies
         run: npm ci
