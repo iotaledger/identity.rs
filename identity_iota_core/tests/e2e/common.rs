@@ -38,6 +38,7 @@ use lazy_static::lazy_static;
 use move_core_types::ident_str;
 use move_core_types::language_storage::StructTag;
 use secret_storage::Signer;
+use serde::Deserialize;
 use serde_json::Value;
 use std::io::Write;
 use std::ops::Deref;
@@ -168,6 +169,34 @@ fn get_public_key_bytes(sender_public_jwk: &Jwk) -> Result<Vec<u8>, anyhow::Erro
   identity_jose::jwu::decode_b64(public_key_base_64).map_err(|err| anyhow!("could not decode base64 public key; {err}"))
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct GasObjectHelper {
+  nanos_balance: u64,
+}
+
+async fn get_balance(address: IotaAddress) -> anyhow::Result<u64> {
+  let output = Command::new("iota")
+    .arg("client")
+    .arg("gas")
+    .arg("--json")
+    .arg(address.to_string())
+    .output()
+    .await?;
+
+  if !output.status.success() {
+    let error_msg = String::from_utf8(output.stderr)?;
+    anyhow::bail!("failed to get balance: {error_msg}");
+  }
+
+  let balance = serde_json::from_slice::<Vec<GasObjectHelper>>(&output.stdout)?
+    .into_iter()
+    .map(|gas_info| gas_info.nanos_balance)
+    .sum();
+
+  Ok(balance)
+}
+
 #[derive(Clone)]
 pub struct TestClient {
   client: Arc<IdentityClient<KeytoolSigner>>,
@@ -192,7 +221,10 @@ impl TestClient {
     let client = IotaClientBuilder::default().build(&api_endpoint).await?;
     let package_id = PACKAGE_ID.get_or_try_init(|| init(&client)).await.copied()?;
 
-    request_funds(&address).await?;
+    let balance = get_balance(address).await?;
+    if balance < TEST_GAS_BUDGET {
+      request_funds(&address).await?;
+    }
 
     let storage = Arc::new(Storage::new(JwkMemStore::new(), KeyIdMemstore::new()));
     let identity_client = IdentityClientReadOnly::new_with_pkg_id(client, package_id).await?;
