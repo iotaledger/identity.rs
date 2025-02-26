@@ -142,10 +142,8 @@ export async function executeTransaction(
     gasBudget?: bigint,
 ): Promise<IotaTransactionBlockResponseAdapter> {
     const txWithGasData = await addGasDataToTransaction(iotaClient, senderAddress, txBcs, gasBudget);
-    const signature = await signer.sign(txWithGasData) as any;
-    const base64signature = (signature.Ed25519IotaSignature
-        || signature.Secp256r1IotaSignature
-        || signature.Secp256k1IotaSignature) as string;
+    const signature = await signer.sign(txWithGasData);
+    const base64signature = getSignatureValue(signature);
 
     const response = await iotaClient.executeTransactionBlock({
         transactionBlock: txWithGasData,
@@ -166,6 +164,20 @@ export async function executeTransaction(
     }
 
     return new IotaTransactionBlockResponseAdapter(response);
+}
+
+function getSignatureValue(signature: Signature): string {
+    if ("Ed25519IotaSignature" in signature) {
+        return signature.Ed25519IotaSignature;
+    }
+    if ("Secp256k1IotaSignature" in signature) {
+        return signature.Secp256k1IotaSignature;
+    }
+    if ("Secp256r1IotaSignature" in signature) {
+        return signature.Secp256r1IotaSignature;
+    }
+
+    throw new Error("invalid `Signature` value given");
 }
 
 /**
