@@ -5,7 +5,7 @@ use std::boxed::Box;
 use std::option::Option;
 use std::result::Result;
 
-use identity_iota_interaction::types::crypto::SignatureScheme;
+use fastcrypto::traits::ToFromBytes;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::dynamic_field::DynamicFieldName;
 use secret_storage::Signer;
@@ -40,7 +40,6 @@ use identity_iota_interaction::SignatureBcs;
 use identity_iota_interaction::TransactionDataBcs;
 
 use crate::bindings::add_gas_data_to_transaction;
-use crate::bindings::get_transaction_digest;
 use crate::bindings::IotaTransactionBlockResponseAdapter;
 use crate::bindings::ManagedWasmIotaClient;
 use crate::bindings::WasmIotaClient;
@@ -333,8 +332,6 @@ impl IotaClientTrait for IotaClientTsSdk {
 
   async fn execute_transaction<S: Signer<IotaKeySignature>>(
     &self,
-    sender_address: IotaAddress,
-    sender_public_key: &[u8],
     tx_bcs: ProgrammableTransactionBcs,
     gas_budget: Option<u64>,
     signer: &S,
@@ -343,9 +340,7 @@ impl IotaClientTrait for IotaClientTsSdk {
     Self::Error,
   > {
     let tx: ProgrammableTransaction = tx_bcs.try_into()?;
-    let response = self
-      .sdk_execute_transaction(sender_address, sender_public_key, tx, gas_budget, signer)
-      .await?;
+    let response = self.sdk_execute_transaction(tx, gas_budget, signer).await?;
 
     // wait until new transaction block is available
     self
@@ -399,26 +394,15 @@ impl IotaClientTsSdk {
   }
 
   /// Builds message with `TransactionData` intent, hashes it, and constructs full signature.
-  async fn get_transaction_signature_bytes<S: Signer<IotaKeySignature>>(
-    signer: &S,
-    tx_data: &Vec<u8>,
-    sender_public_key: &[u8],
-  ) -> Result<Vec<u8>, TsSdkError> {
-    let digest = get_transaction_digest(tx_data);
-
-    let raw_signature = signer
-      .sign(&digest.to_vec())
+  async fn get_transaction_signature_bytes<S>(signer: &S, tx_data: &[u8]) -> Result<Vec<u8>, TsSdkError>
+  where
+    S: Signer<IotaKeySignature>,
+  {
+    signer
+      .sign(&tx_data.to_vec())
       .await
-      .map_err(|err| TsSdkError::TransactionSerializationError(format!("could not sign transaction message; {err}")))?;
-
-    let signature_bytes = [
-      [SignatureScheme::ED25519.flag()].as_slice(),
-      &raw_signature,
-      sender_public_key,
-    ]
-    .concat();
-
-    Ok(signature_bytes)
+      .map(|sig| sig.as_bytes().to_vec())
+      .map_err(|err| TsSdkError::TransactionSerializationError(format!("could not sign transaction message; {err}")))
   }
 
   /// Inserts these values into the transaction and replaces placeholder values.
@@ -453,16 +437,19 @@ impl IotaClientTsSdk {
   //   - calls execute_transaction_block to submit tx (with signatures created here)
   async fn sdk_execute_transaction<S: Signer<IotaKeySignature>>(
     &self,
-    sender_address: IotaAddress,
-    sender_public_key: &[u8],
     tx: ProgrammableTransaction,
     gas_budget: Option<u64>,
     signer: &S,
   ) -> Result<IotaTransactionBlockResponseProvider, TsSdkError> {
+    let sender_public_key = signer
+      .public_key()
+      .await
+      .map_err(|e| TsSdkError::WasmError(String::from("SecretStorage"), e.to_string()))?;
+    let sender_address = IotaAddress::from(&sender_public_key);
     let final_tx = self
       .replace_transaction_placeholder_values(tx, sender_address, gas_budget)
       .await?;
-    let signature = Self::get_transaction_signature_bytes(signer, &final_tx, sender_public_key).await?;
+    let signature = Self::get_transaction_signature_bytes(signer, &final_tx).await?;
 
     let wasm_response = self
       .quorum_driver_api()

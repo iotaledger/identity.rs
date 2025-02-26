@@ -10,7 +10,7 @@ use identity_iota::iota_interaction::types::base_types::ObjectID;
 use iota_interaction_ts::bindings::WasmIotaClient;
 use wasm_bindgen::prelude::*;
 
-use super::types::WasmObjectID;
+use super::WasmObjectID;
 use super::WasmOnChainIdentity;
 use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDID;
