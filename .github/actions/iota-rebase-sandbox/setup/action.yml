@@ -60,9 +60,9 @@ runs:
         echo "Starting server with log file: $LOGFILE"
 
         if [ "$LOGFILE" = "" ]; then
-          iota start --with-faucet > ${{ inputs.logfile }} 2>&1 &
-        else
           iota start --with-faucet &
+        else
+          iota start --with-faucet > ${{ inputs.logfile }} 2>&1 &
         fi
     - name: Archive server logs
       if: ${{inputs.logfile != ''}}
