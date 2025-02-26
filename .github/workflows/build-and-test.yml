@@ -135,6 +135,7 @@ jobs:
         uses: './.github/actions/iota-rebase-sandbox/setup'
         with:
           platform: ${{ matrix.os == 'ubuntu-24.04' && 'linux' || 'macos' }}
+          logfile: iota-server-logs-build-and-test-${{ matrix.os == 'ubuntu-24.04' && 'linux' || 'macos' }}.txt
 
       - name: test IotaIdentity package
         if: matrix.os != 'windows-latest'
