@@ -175,6 +175,14 @@ jobs:
           npm ci
           npm run test:readme:rust
 
+      - name: Archive server logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: iota-server-logs-build-and-test-${{ matrix.os == 'ubuntu-24.04' && 'linux' || 'macos' }}.txt
+          path: iota-server-logs-build-and-test-${{ matrix.os == 'ubuntu-24.04' && 'linux' || 'macos' }}.txt
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:

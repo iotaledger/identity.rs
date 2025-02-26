@@ -64,11 +64,4 @@ runs:
         else
           iota start --with-faucet ${{ inputs.logfile && format('> {0} 2>&1', inputs.logfile) || '' }} &
         fi
-    - name: Archive server logs
-      if: ${{inputs.logfile != ''}}
-      uses: actions/upload-artifact@v4
-      with:
-          name: ${{ inputs.logfile }}
-          path: ${{ inputs.logfile }}
-          if-no-files-found: error
-          retention-days: 1
+
