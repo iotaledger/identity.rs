@@ -170,7 +170,7 @@ export async function executeTransaction(
 
 /**
  * Helper function to pause execution.
- */ 
+ */
 export function sleep(durationMs: number) {
     return new Promise(resolve => setTimeout(resolve, durationMs));
 }
