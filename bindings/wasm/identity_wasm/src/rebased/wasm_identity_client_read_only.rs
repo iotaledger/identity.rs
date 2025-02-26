@@ -25,7 +25,7 @@ impl IdentityContainer {
   #[wasm_bindgen(js_name = toFullFledged)]
   pub fn to_full_fledged(&self) -> Option<WasmOnChainIdentity> {
     match self.0.clone() {
-      Identity::FullFledged(v) => Some(WasmOnChainIdentity(v)),
+      Identity::FullFledged(v) => Some(WasmOnChainIdentity::new(v)),
       _ => None,
     }
   }
@@ -52,8 +52,12 @@ impl WasmIdentityClientReadOnly {
   }
 
   #[wasm_bindgen(js_name = createWithPkgId)]
-  pub async fn new_new_with_pkg_id(iota_client: WasmIotaClient, iota_identity_pkg_id: String) -> Result<WasmIdentityClientReadOnly, JsError> {
-    let inner_client = IdentityClientReadOnly::new_with_pkg_id(iota_client, ObjectID::from_str(&iota_identity_pkg_id)?).await?;
+  pub async fn new_new_with_pkg_id(
+    iota_client: WasmIotaClient,
+    iota_identity_pkg_id: String,
+  ) -> Result<WasmIdentityClientReadOnly, JsError> {
+    let inner_client =
+      IdentityClientReadOnly::new_with_pkg_id(iota_client, ObjectID::from_str(&iota_identity_pkg_id)?).await?;
     Ok(WasmIdentityClientReadOnly(inner_client))
   }
 

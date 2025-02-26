@@ -1,5 +1,7 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
+use std::rc::Rc;
 
 use identity_iota::iota::rebased::migration::CreateIdentityTx;
 use identity_iota::iota::rebased::migration::IdentityBuilder;
@@ -8,25 +10,29 @@ use identity_iota::iota::rebased::transaction::TransactionInternal;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
 use identity_iota::iota::IotaDocument;
 use iota_interaction_ts::NativeTransactionBlockResponse;
+use tokio::sync::RwLock;
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
 use iota_interaction_ts::bindings::WasmIotaObjectData;
 
-use iota_interaction_ts::iota_client_ts_sdk::IotaClientTsSdk;
-
 use crate::error::wasm_error;
 use crate::error::Result;
+use crate::error::WasmResult;
 use crate::iota::WasmIotaDocument;
 
-use super::client_dummy::DummySigner;
 use super::client_dummy::ProposalAction;
-use super::client_dummy::ProposalBuilder;
-use super::types::into_sdk_type;
+// use super::client_dummy::DummySigner;
+// use super::client_dummy::ProposalAction;
+// use super::client_dummy::ProposalBuilder;
+use super::proposals::StringCouple;
+use super::proposals::WasmConfigChange;
+use super::proposals::WasmCreateConfigChangeProposalTx;
+use super::proposals::WasmCreateDeactivateDidProposalTx;
+use super::proposals::WasmCreateSendProposalTx;
+use super::proposals::WasmCreateUpdateDidProposalTx;
 use super::types::WasmIotaAddress;
-use super::types::WasmObjectID;
 use super::WasmIdentityClient;
-use super::WasmProposal;
 
 /// Helper type for `WasmIdentityBuilder::controllers`.
 /// Has getters to support `Clone` for serialization
@@ -43,42 +49,71 @@ impl ControllerAndVotingPower {
 }
 
 #[wasm_bindgen(js_name = OnChainIdentity)]
-pub struct WasmOnChainIdentity(pub(crate) OnChainIdentity);
+#[derive(Clone)]
+pub struct WasmOnChainIdentity(pub(crate) Rc<RwLock<OnChainIdentity>>);
 
 #[wasm_bindgen(js_class = OnChainIdentity)]
 impl WasmOnChainIdentity {
+  pub(crate) fn new(identity: OnChainIdentity) -> Self {
+    Self(Rc::new(RwLock::new(identity)))
+  }
+
   #[wasm_bindgen]
-  pub fn id(&self) -> String {
-    self.0.id().to_string()
+  pub fn id(&self) -> Result<String> {
+    Ok(self.0.try_read().wasm_result()?.id().to_string())
+  }
+
+  #[wasm_bindgen(js_name = didDocument)]
+  pub fn did_document(&self) -> Result<WasmIotaDocument> {
+    let inner_doc = self.0.try_read().wasm_result()?.did_document().clone();
+    Ok(WasmIotaDocument::from(inner_doc))
   }
 
   #[wasm_bindgen(js_name = isShared)]
-  pub fn is_shared(&self) -> bool {
-    self.0.is_shared()
+  pub fn is_shared(&self) -> Result<bool> {
+    Ok(self.0.try_read().wasm_result()?.is_shared())
   }
 
   #[wasm_bindgen(skip_typescript)] // ts type in custom section below
   pub fn proposals(&self) -> Result<JsValue> {
-    serde_wasm_bindgen::to_value(&self.0.proposals()).map_err(wasm_error)
+    let lock = self.0.try_read().wasm_result()?;
+    let proposals = lock.proposals();
+    serde_wasm_bindgen::to_value(proposals).map_err(wasm_error)
   }
 
   #[wasm_bindgen(js_name = updateDidDocument)]
-  pub fn update_did_document(self, updated_doc: WasmIotaDocument) -> Result<WasmProposalBuilder> {
-    unimplemented!("WasmOnChainIdentity::update_did_document");
-    // let doc: IotaDocument = updated_doc
-    //   .0
-    //   .try_read()
-    //   .map_err(|err| JsError::new(&format!("failed to read DID document; {err:?}")))?
-    //   .clone();
-    // Ok(WasmProposalBuilder(self.0.update_did_document::<IotaClientTsSdk>(doc)))
+  pub fn update_did_document(
+    &self,
+    updated_doc: &WasmIotaDocument,
+    expiration_epoch: Option<u64>,
+  ) -> WasmCreateUpdateDidProposalTx {
+    WasmCreateUpdateDidProposalTx::new(self, updated_doc.clone(), expiration_epoch)
   }
 
   #[wasm_bindgen(js_name = deactivateDid)]
-  pub fn deactivate_did(self) -> WasmProposalBuilder {
-    unimplemented!("WasmOnChainIdentity::deactivate_did");
-    // WasmProposalBuilder(self.0.deactivate_did::<IotaClientTsSdk>())
+  pub fn deactivate_did(&self, expiration_epoch: Option<u64>) -> WasmCreateDeactivateDidProposalTx {
+    WasmCreateDeactivateDidProposalTx::new(self, expiration_epoch)
   }
 
+  #[wasm_bindgen(js_name = updateConfig)]
+  pub fn update_config(
+    &self,
+    config: WasmConfigChange,
+    expiration_epoch: Option<u64>,
+  ) -> WasmCreateConfigChangeProposalTx {
+    WasmCreateConfigChangeProposalTx::new(self, config, expiration_epoch)
+  }
+
+  #[wasm_bindgen(js_name = sendAssets)]
+  pub fn send_assets(
+    &self,
+    transfer_map: Vec<StringCouple>,
+    expiration_epoch: Option<u64>,
+  ) -> WasmCreateSendProposalTx {
+    WasmCreateSendProposalTx::new(self, transfer_map, expiration_epoch)
+  }
+
+  #[allow(unused)] // API will be updated in the future
   #[wasm_bindgen(js_name = getHistory, skip_typescript)] // ts type in custom section below
   pub async fn get_history(
     &self,
@@ -131,41 +166,6 @@ impl From<WasmProposalAction> for ProposalAction {
 // original type, see [here](https://github.com/madonoharu/tsify/issues/43) for an example
 // #[declare]
 // pub type ProposalAction = WasmProposalAction;
-
-#[wasm_bindgen(js_name = ProposalBuilder)]
-pub struct WasmProposalBuilder(pub(crate) ProposalBuilder);
-
-#[wasm_bindgen(js_class = ProposalBuilder)]
-impl WasmProposalBuilder {
-  // #[wasm_bindgen(constructor)]
-  // pub fn new(identity: WasmOnChainIdentity, action: WasmProposalAction) -> Self {
-  //   Self(ProposalBuilder::new(identity.0, action.into()))
-  // }
-
-  #[wasm_bindgen(js_name = expirationEpoch)]
-  pub fn expiration_epoch(self, exp: u64) -> Self {
-    Self(self.0.expiration_epoch(exp))
-  }
-
-  pub fn key(self, key: String) -> Self {
-    Self(self.0.key(key))
-  }
-
-  #[wasm_bindgen(js_name = gasBudget)]
-  pub fn gas_budget(self, amount: u64) -> Self {
-    Self(self.0.gas_budget(amount))
-  }
-
-  pub async fn finish(self, client: &WasmIdentityClient, signer: &DummySigner) -> Result<Option<WasmProposal>> {
-    unimplemented!("WasmProposalBuilder::finish");
-    // self
-    //   .0
-    //   .finish(&client.0, signer)
-    //   .await
-    //   .map(|option| option.map(WasmProposal))
-    //   .map_err(wasm_error)
-  }
-}
 
 #[wasm_bindgen(js_name = IdentityBuilder)]
 pub struct WasmIdentityBuilder(pub(crate) IdentityBuilder);
@@ -236,7 +236,7 @@ pub struct WasmTransactionOutputInternalOnChainIdentity(pub(crate) TransactionOu
 impl WasmTransactionOutputInternalOnChainIdentity {
   #[wasm_bindgen(getter)]
   pub fn output(&self) -> WasmOnChainIdentity {
-    WasmOnChainIdentity(self.0.output.clone())
+    WasmOnChainIdentity(Rc::new(RwLock::new(self.0.output.clone())))
   }
 
   #[wasm_bindgen(getter)]

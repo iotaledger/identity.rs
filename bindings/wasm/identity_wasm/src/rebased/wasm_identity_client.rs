@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
 use std::rc::Rc;
 
 use fastcrypto::ed25519::Ed25519PublicKey;
@@ -47,10 +48,20 @@ pub struct WasmIotaTransactionBlockResponseEssence {
 #[wasm_bindgen(js_name = IdentityClient)]
 pub struct WasmIdentityClient(pub(crate) IdentityClient<WasmTransactionSigner>);
 
+impl Deref for WasmIdentityClient {
+  type Target = IdentityClient<WasmTransactionSigner>;
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
 #[wasm_bindgen(js_class = IdentityClient)]
 impl WasmIdentityClient {
   #[wasm_bindgen(js_name = create)]
-  pub async fn new(client: WasmIdentityClientReadOnly, signer: WasmTransactionSigner) -> Result<WasmIdentityClient, JsError> {
+  pub async fn new(
+    client: WasmIdentityClientReadOnly,
+    signer: WasmTransactionSigner,
+  ) -> Result<WasmIdentityClient, JsError> {
     let inner_client = IdentityClient::new(client.0, signer).await?;
     Ok(WasmIdentityClient(inner_client))
   }

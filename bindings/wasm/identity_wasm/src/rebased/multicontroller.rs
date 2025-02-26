@@ -4,16 +4,11 @@
 use identity_iota::core::Object;
 
 use super::client_dummy::Multicontroller;
-use super::client_dummy::Proposal;
 use wasm_bindgen::prelude::*;
 
 use crate::common::MapStringAny;
 
 use super::types::WasmObjectID;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[wasm_bindgen(js_name = Proposal)]
-pub struct WasmProposal(pub(crate) Proposal);
 
 #[wasm_bindgen(js_name = Multicontroller)]
 pub struct WasmMulticontroller(pub(crate) Multicontroller<Vec<u8>>);

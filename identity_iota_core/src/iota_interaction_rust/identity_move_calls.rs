@@ -1,6 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use async_trait::async_trait;
 use itertools::Itertools;
 
 use std::collections::HashSet;
@@ -303,6 +304,8 @@ fn execute_send_impl(
 #[derive(Clone)]
 pub(crate) struct IdentityMoveCallsRustSdk {}
 
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
   type Error = Error;
   type NativeTxBuilder = PrgrTxBuilder;
@@ -799,7 +802,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
   async fn propose_update(
     identity: OwnedObjectRef,
     capability: ObjectRef,
-    did_doc: impl AsRef<[u8]>,
+    did_doc: impl AsRef<[u8]> + Send,
     expiration: Option<u64>,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {

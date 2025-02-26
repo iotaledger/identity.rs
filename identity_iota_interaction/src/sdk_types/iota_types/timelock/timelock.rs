@@ -6,11 +6,13 @@ use serde::Serialize;
 
 use crate::ident_str;
 
+#[allow(unused)] // Kept in sync with original source, so keep as is.
 use crate::sdk_types::move_types::{
     language_storage::{TypeTag, StructTag},
     identifier::{IdentStr},
 };
 
+#[allow(unused)] // Kept in sync with original source, so keep as is.
 use super::super::{
     IOTA_FRAMEWORK_ADDRESS,
     IOTA_SYSTEM_ADDRESS,
@@ -20,6 +22,8 @@ use super::super::{
     id::UID,
 };
 
+
+#[allow(unused)] // Kept in sync with original source, so keep as is.
 use super::timelocked_staked_iota::{TIMELOCKED_STAKED_IOTA_MODULE_NAME, TIMELOCKED_STAKED_IOTA_STRUCT_NAME};
 
 pub const TIMELOCK_MODULE_NAME: &IdentStr = ident_str!("timelock");

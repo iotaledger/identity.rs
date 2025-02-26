@@ -6,63 +6,51 @@ import {
     DecodedJwtCredential,
     EdDSAJwsVerifier,
     FailFast,
-    JwkMemStore,
     JwsSignatureOptions,
     JwsVerificationOptions,
     JwtCredentialValidationOptions,
     KeyBindingJwtClaims,
     KeyBindingJWTValidationOptions,
-    KeyIdMemStore,
     SdJwt,
     SdJwtCredentialValidator,
     SdObjectEncoder,
-    Storage,
     Timestamp,
 } from "@iota/identity-wasm/node";
-import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+import { IotaClient } from "@iota/iota-sdk/client";
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL } from "../util";
 
 /**
- * Demonstrates how to create a selective disclosure verifiable credential and validate it
- * using the [Selective Disclosure for JWTs (SD-JWT)](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html) specification.
+ * Demonstrates how to create a selective disclosure verifiable credential and validate it * using the [Selective Disclosure for JWTs (SD-JWT)](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html) specification.
  */
 export async function sdJwt() {
     // ===========================================================================
     // Step 1: Create identities for the issuer and the holder.
     // ===========================================================================
 
-    const client = new Client({
-        primaryNode: API_ENDPOINT,
-        localPow: true,
-    });
+    // create new client to connect to IOTA network
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
+    const network = await iotaClient.getChainIdentifier();
 
     // Creates a new wallet and identity (see "0_create_did" example).
-    const issuerSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
-    const issuerStorage: Storage = new Storage(
-        new JwkMemStore(),
-        new KeyIdMemStore(),
-    );
-    let { document: issuerDocument, fragment: issuerFragment } = await createDid(
-        client,
-        issuerSecretManager,
-        issuerStorage,
-    );
+    // Create an identity for the issuer with one verification method `key-1`, and publish DID document for it.
+    const issuerStorage = getMemstorage();
+    const issuerClient = await getFundedClient(issuerStorage);
+    const [unpublishedIssuerDocument, issuerFragment] = await createDocumentForNetwork(issuerStorage, network);
+    const { output: issuerIdentity } = await issuerClient
+        .createIdentity(unpublishedIssuerDocument)
+        .finish()
+        .execute(issuerClient);
+    const issuerDocument = issuerIdentity.didDocument();
 
-    // Create an identity for the holder, in this case also the subject.
-    const aliceSecretManager: MnemonicSecretManager = {
-        mnemonic: Utils.generateMnemonic(),
-    };
-    const aliceStorage: Storage = new Storage(
-        new JwkMemStore(),
-        new KeyIdMemStore(),
-    );
-    let { document: aliceDocument, fragment: aliceFragment } = await createDid(
-        client,
-        aliceSecretManager,
-        aliceStorage,
-    );
+    // Create an identity for the holder, and publish DID document for it, in this case also the subject.
+    const aliceStorage = getMemstorage();
+    const aliceClient = await getFundedClient(aliceStorage);
+    const [unpublishedAliceDocument, aliceFragment] = await createDocumentForNetwork(aliceStorage, network);
+    const { output: aliceIdentity } = await aliceClient
+        .createIdentity(unpublishedAliceDocument)
+        .finish()
+        .execute(aliceClient);
+    const aliceDocument = aliceIdentity.didDocument();
 
     // ===========================================================================
     // Step 2: Issuer creates and signs a selectively disclosable JWT verifiable credential.

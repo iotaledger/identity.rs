@@ -1,15 +1,12 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "target": "ES2020",
     "baseUrl": "./",
     "paths": {
       "~identity_wasm": [
         "../web/identity_wasm",
         "./identity_wasm.js"
-      ],
-      "~sdk-wasm": [
-        "../node_modules/@iota/sdk-wasm/web",
-        "@iota/sdk-wasm/web"
       ],
       "../lib": [
         "."

@@ -5,6 +5,8 @@ use std::process::Output;
 
 use anyhow::Context as _;
 use identity_iota_interaction::types::base_types::ObjectID;
+use iota_sdk::IotaClient;
+use iota_sdk::IotaClientBuilder;
 use serde::Deserialize;
 #[cfg(not(target_arch = "wasm32"))]
 use tokio::process::Command;
@@ -22,20 +24,14 @@ struct CoinOutput {
   nanos_balance: u64,
 }
 
-cfg_if::cfg_if! {
-    if #[cfg(not(target_arch = "wasm32"))] {
-      use iota_sdk::{IotaClientBuilder, IotaClient};
+/// Builds an `IOTA` client for the given network.
+pub async fn get_client(network: &str) -> Result<IotaClient, Error> {
+  let client = IotaClientBuilder::default()
+    .build(network)
+    .await
+    .map_err(|err| Error::Network(format!("failed to connect to {network}"), err))?;
 
-      /// Builds an `IOTA` client for the given network.
-      pub async fn get_client(network: &str) -> Result<IotaClient, Error> {
-        let client = IotaClientBuilder::default()
-          .build(network)
-          .await
-          .map_err(|err| Error::Network(format!("failed to connect to {network}"), err))?;
-
-        Ok(client)
-      }
-  }
+  Ok(client)
 }
 
 fn unpack_command_output(output: &Output, task: &str) -> anyhow::Result<String> {

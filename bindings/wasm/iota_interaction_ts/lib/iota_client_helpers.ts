@@ -47,6 +47,10 @@ export class IotaTransactionBlockResponseWrapper {
     get_response(): IotaTransactionBlockResponse {
         return this.response;
     }
+
+    get_digest(): string {
+        return this.response.digest;
+    }
 }
 
 /**
@@ -97,7 +101,7 @@ async function getCoinForTransaction(iotaClient: IotaClient, senderAddress: stri
  *
  * @param iotaClient client instance
  * @param senderAddress transaction sender (and the one paying for it)
- * @param txBcs transaction data serialized to bcs, most probably having placeholder values 
+ * @param txBcs transaction data serialized to bcs, most probably having placeholder values
  * @param gasBudget optional fixed gas budget, determined automatically with a dry run if not provided
  * @returns updated transaction data
  */
@@ -194,7 +198,7 @@ export async function executeTransaction(
  * Helper function to pause execution.
  *
  * @param txBcs transaction data to hash
- */ 
+ */
 export function sleep(durationMs: number) {
     return new Promise(resolve => setTimeout(resolve, durationMs));
 }

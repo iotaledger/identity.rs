@@ -1,39 +1,35 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IotaDID } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
-import {
-    createDocumentForNetwork,
-    getClientAndCreateAccount,
-    getMemstorage,
-    NETWORK_URL,
-    TEST_GAS_BUDGET,
-} from '../utils_alpha';
+import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL, TEST_GAS_BUDGET } from "../util";
 
-/** Demonstrates how to deactivate a DID in an Alias Output. */
+/** Demonstrates how to deactivate a DID of an identity. */
 export async function deactivateIdentity() {
     // create new clients and create new account
     const iotaClient = new IotaClient({ url: NETWORK_URL });
     const network = await iotaClient.getChainIdentifier();
     const storage = getMemstorage();
-    const [unpublished, vmFragment1] = await createDocumentForNetwork(storage, network);
-    const identityClient = await getClientAndCreateAccount(storage);
+    const identityClient = await getFundedClient(storage);
+    const [unpublished] = await createDocumentForNetwork(storage, network);
 
     // create new identity for this account and publish document for it
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
         .finish()
         .execute(identityClient);
-    const did = IotaDID.fromAliasId(identity.id(), identityClient.network());
+    const did = identity.didDocument().id();
 
     // Resolve the latest state of the document.
     // Technically this is equivalent to the document above.
     const resolved = await identityClient.resolveDid(did);
     console.log("Resolved DID document:", JSON.stringify(resolved, null, 2));
 
-    // Deactivate the DID by publishing an empty document.
-    await identityClient.deactivateDidOutput(did, TEST_GAS_BUDGET);
+    // Deactivate the DID.
+    await identity
+        .deactivateDid()
+        .withGasBudget(TEST_GAS_BUDGET)
+        .execute(identityClient);
 
     // Resolving a deactivated DID returns an empty DID document
     // with its `deactivated` metadata field set to `true`.
@@ -45,8 +41,10 @@ export async function deactivateIdentity() {
 
     // Re-activate the DID by publishing a valid DID document.
     console.log("Publishing this:", JSON.stringify(resolved, null, 2));
-    await identityClient
-      .publishDidDocumentUpdate(resolved, TEST_GAS_BUDGET);
+    await identity
+        .updateDidDocument(resolved)
+        .withGasBudget(TEST_GAS_BUDGET)
+        .execute(identityClient);
 
     // Resolve the reactivated DID document.
     let resolvedReactivated = await identityClient.resolveDid(did);

@@ -78,6 +78,7 @@ impl TryFrom<&Object> for MapStringAny {
     for (key, value) in properties.iter() {
       map.set(
         &JsValue::from_str(key.as_str()),
+        #[allow(deprecated)] // will be refactored
         &JsValue::from_serde(&value).wasm_result()?,
       );
     }

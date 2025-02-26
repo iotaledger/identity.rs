@@ -25,7 +25,6 @@ use identity_iota::storage::storage::JwsSignatureOptions;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
-use iota_sdk::types::TryFromDto;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -112,6 +111,7 @@ impl IotaDocumentLock {
 /// Note: All methods that involve reading from this class may potentially raise an error
 /// if the object is being concurrently modified.
 #[wasm_bindgen(js_name = IotaDocument, inspectable)]
+#[derive(Clone)]
 pub struct WasmIotaDocument(pub(crate) Rc<IotaDocumentLock>);
 
 #[wasm_bindgen(js_class = IotaDocument)]
@@ -417,14 +417,14 @@ impl WasmIotaDocument {
   // Publishing
   // ===========================================================================
 
-  /// Serializes the document for inclusion in an Alias Output's state metadata
+  /// Serializes the document for inclusion in an identity's metadata
   /// with the default {@link StateMetadataEncoding}.
   #[wasm_bindgen]
   pub fn pack(&self) -> Result<Vec<u8>> {
     self.0.try_read()?.clone().pack().wasm_result()
   }
 
-  /// Serializes the document for inclusion in an Alias Output's state metadata.
+  /// Serializes the document for inclusion in an identity's metadata.
   #[wasm_bindgen(js_name = packWithEncoding)]
   pub fn pack_with_encoding(&self, encoding: WasmStateMetadataEncoding) -> Result<Vec<u8>> {
     self
@@ -434,70 +434,6 @@ impl WasmIotaDocument {
       .pack_with_encoding(StateMetadataEncoding::from(encoding))
       .wasm_result()
   }
-
-  // Uncomment this code when working on [Issue #1445 Replace mocked Identity client with real Identity client]
-  //
-  // /// Deserializes the document from an Alias Output.
-  // ///
-  // /// If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
-  // /// if `stateMetadata` is empty.
-  // ///
-  // /// The `tokenSupply` must be equal to the token supply of the network the DID is associated with.
-  // ///
-  // /// NOTE: `did` is required since it is omitted from the serialized DID Document and
-  // /// cannot be inferred from the state metadata. It also indicates the network, which is not
-  // /// encoded in the `AliasId` alone.
-  // #[allow(non_snake_case)]
-  // #[wasm_bindgen(js_name = unpackFromOutput)]
-  // pub fn unpack_from_output(
-  //   did: &WasmIotaDID,
-  //   aliasOutput: WasmAliasOutput,
-  //   allowEmpty: bool,
-  // ) -> Result<WasmIotaDocument> {
-  //   let alias_dto: AliasOutputDto = aliasOutput.into_serde().wasm_result()?;
-  //   let alias_output: AliasOutput = AliasOutput::try_from_dto(alias_dto)
-  //     .map_err(|err| {
-  //       identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {err}"))
-  //     })
-  //     .wasm_result()?;
-  //   IotaDocument::unpack_from_output(&did.0, &alias_output, allowEmpty)
-  //     .map(WasmIotaDocument::from)
-  //     .wasm_result()
-  // }
-
-  // Uncomment this code when working on [Issue #1445 Replace mocked Identity client with real Identity client]
-  //
-  // /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
-  // /// outputs, if any.
-  // ///
-  // /// Errors if any Alias Output does not contain a valid or empty DID Document.
-  // #[allow(non_snake_case)]
-  // #[wasm_bindgen(js_name = unpackFromBlock)]
-  // pub fn unpack_from_block(network: String, block: &WasmBlock) -> Result<ArrayIotaDocument> {
-  //   let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
-  //   let block_dto: iota_sdk::types::block::BlockDto = block
-  //     .into_serde()
-  //     .map_err(|err| {
-  //       identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {err}"))
-  //     })
-  //     .wasm_result()?;
-  //
-  //   let block: iota_sdk::types::block::Block = iota_sdk::types::block::Block::try_from_dto(block_dto)
-  //     .map_err(|err| identity_iota::iota::Error::JsError(
-  //        format!("unpackFromBlock failed to convert BlockDto: {err}")
-  //      ))
-  //     .wasm_result()?;
-  //
-  //   Ok(
-  //     IotaDocument::unpack_from_block(&network_name, &block)
-  //       .wasm_result()?
-  //       .into_iter()
-  //       .map(WasmIotaDocument::from)
-  //       .map(JsValue::from)
-  //       .collect::<js_sys::Array>()
-  //       .unchecked_into::<ArrayIotaDocument>(),
-  //   )
-  // }
 
   // ===========================================================================
   // Metadata
@@ -648,7 +584,9 @@ impl WasmIotaDocument {
   /// Serializes to a plain JS representation.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0.try_read()?.as_ref()).wasm_result()
+    let read_guard = self.0.try_read()?;
+    let iota_document: &IotaDocument = &read_guard;
+    JsValue::from_serde(&iota_document).wasm_result()
   }
 
   /// Deserializes an instance from a plain JS representation.
@@ -1014,17 +952,9 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "IotaDID[]")]
   pub type ArrayIotaDID;
 
+  #[wasm_bindgen(typescript_type = "Promise<IotaDocument>")]
+  pub type PromiseIotaDocument;
+
   #[wasm_bindgen(typescript_type = "IotaDocument[]")]
   pub type ArrayIotaDocument;
-
-  // External interface from `@iota/sdk-wasm`, must be deserialized via BlockDto.
-  #[wasm_bindgen(typescript_type = "Block")]
-  pub type WasmBlock;
-
-  // External interface from `@iota/sdk-wasm`, must be deserialized via ProtocolParameters.
-  #[wasm_bindgen(typescript_type = "INodeInfoProtocol")]
-  pub type INodeInfoProtocol;
 }
-
-#[wasm_bindgen(typescript_custom_section)]
-const TYPESCRIPT_IMPORTS: &'static str = r#"import type { Block, INodeInfoProtocol } from '~sdk-wasm';"#;
