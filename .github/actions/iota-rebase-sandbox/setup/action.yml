@@ -62,7 +62,7 @@ runs:
         if [ "$LOGFILE" = "" ]; then
           iota start --with-faucet &
         else
-          iota start --with-faucet > ${{ inputs.logfile }} 2>&1 &
+          iota start --with-faucet ${{ format('> {0} 2>&1', inputs.logfile) }} &
         fi
     - name: Archive server logs
       if: ${{inputs.logfile != ''}}
