@@ -4,17 +4,14 @@
 use std::ops::Deref;
 use std::rc::Rc;
 
-use fastcrypto::ed25519::Ed25519PublicKey;
-use fastcrypto::traits::ToFromBytes;
-
 use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::client::PublishDidTx;
 use identity_iota::iota::rebased::transaction::TransactionInternal;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
-use identity_iota::iota_interaction::types::base_types::IotaAddress;
 
 use iota_interaction_ts::bindings::WasmExecutionStatus;
 use iota_interaction_ts::bindings::WasmOwnedObjectRef;
+use iota_interaction_ts::WasmPublicKey;
 
 use identity_iota::iota::rebased::Error;
 use iota_interaction_ts::AdapterNativeResponse;
@@ -22,6 +19,8 @@ use iota_interaction_ts::AdapterNativeResponse;
 use super::IdentityContainer;
 use super::WasmIdentityBuilder;
 use super::WasmIdentityClientReadOnly;
+use super::WasmIotaAddress;
+use super::WasmObjectID;
 
 use crate::error::wasm_error;
 use crate::iota::IotaDocumentLock;
@@ -30,9 +29,6 @@ use crate::iota::WasmIotaDocument;
 use crate::storage::WasmTransactionSigner;
 use identity_iota::iota::IotaDocument;
 use wasm_bindgen::prelude::*;
-
-use super::types::WasmIotaAddress;
-use super::types::WasmObjectID;
 
 #[wasm_bindgen(getter_with_clone, inspectable, js_name = IotaTransactionBlockResponseEssence)]
 pub struct WasmIotaTransactionBlockResponseEssence {
@@ -67,8 +63,8 @@ impl WasmIdentityClient {
   }
 
   #[wasm_bindgen(js_name = senderPublicKey)]
-  pub fn sender_public_key(&self) -> Vec<u8> {
-    self.0.sender_public_key().to_vec()
+  pub fn sender_public_key(&self) -> Result<WasmPublicKey, JsValue> {
+    self.0.sender_public_key().try_into()
   }
 
   #[wasm_bindgen(js_name = senderAddress)]
@@ -150,21 +146,6 @@ impl WasmIdentityClient {
 
     Ok(())
   }
-}
-
-// TODO: consider importing function from rebased later on, if possible
-pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error> {
-  let public_key = Ed25519PublicKey::from_bytes(sender_public_key)
-    .map_err(|err| Error::InvalidKey(format!("could not parse public key to Ed25519 public key; {err}")))?;
-
-  Ok(IotaAddress::from(&public_key))
-}
-
-#[wasm_bindgen(js_name = convertToAddress)]
-pub fn wasm_convert_to_address(sender_public_key: &[u8]) -> Result<String, JsError> {
-  convert_to_address(sender_public_key)
-    .map(|v| v.to_string())
-    .map_err(|err| JsError::new(&format!("could not derive address from public key; {err}")))
 }
 
 // TODO: rethink how to organize the following types and impls

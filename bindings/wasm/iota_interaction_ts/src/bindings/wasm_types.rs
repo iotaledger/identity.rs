@@ -2,11 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 use std::str::FromStr;
 
+use fastcrypto::encoding::Base64;
+use fastcrypto::encoding::Encoding;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::base_types::SequenceNumber;
+use identity_iota_interaction::types::crypto::PublicKey;
+use identity_iota_interaction::types::crypto::Signature;
+use identity_iota_interaction::types::crypto::SignatureScheme;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::execution_status::CommandArgumentError;
 use identity_iota_interaction::types::execution_status::ExecutionStatus;
@@ -18,6 +23,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
+use wasm_bindgen::JsError;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
@@ -155,9 +161,52 @@ extern "C" {
   #[derive(Clone)]
   pub type PromiseIotaTransactionBlockResponseAdapter;
 
+  #[wasm_bindgen(typescript_type = "Signature")]
+  pub type WasmIotaSignature;
+
   #[wasm_bindgen(typescript_type = "Parameters<IotaClient['waitForTransaction']>")]
   #[derive(Clone, Debug)]
   pub type WasmWaitForTransactionParams;
+}
+
+#[derive(Serialize, Deserialize)]
+enum IotaSignatureHelper {
+  Ed25519IotaSignature(String),
+  Secp256k1IotaSignature(String),
+  Secp256r1IotaSignature(String),
+}
+
+impl TryFrom<Signature> for WasmIotaSignature {
+  type Error = JsValue;
+  fn try_from(sig: Signature) -> Result<Self, Self::Error> {
+    let base64sig = Base64::encode(&sig);
+    let json_signature = match sig {
+      Signature::Ed25519IotaSignature(_) => IotaSignatureHelper::Ed25519IotaSignature(base64sig),
+      Signature::Secp256r1IotaSignature(_) => IotaSignatureHelper::Secp256r1IotaSignature(base64sig),
+      Signature::Secp256k1IotaSignature(_) => IotaSignatureHelper::Secp256k1IotaSignature(base64sig),
+    };
+
+    json_signature
+      .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+      .map(JsCast::unchecked_into)
+      .map_err(|e| e.into())
+  }
+}
+
+impl TryFrom<WasmIotaSignature> for Signature {
+  type Error = JsValue;
+  fn try_from(sig: WasmIotaSignature) -> Result<Self, Self::Error> {
+    let sig_helper = serde_wasm_bindgen::from_value(sig.into())?;
+    let base64sig = match sig_helper {
+      IotaSignatureHelper::Ed25519IotaSignature(s) => s,
+      IotaSignatureHelper::Secp256k1IotaSignature(s) => s,
+      IotaSignatureHelper::Secp256r1IotaSignature(s) => s,
+    };
+
+    base64sig
+      .parse()
+      .map_err(|e: eyre::Report| JsError::new(&e.to_string()).into())
+  }
 }
 
 #[wasm_bindgen(module = "@iota/iota-sdk/transactions")]
@@ -190,6 +239,77 @@ extern "C" {
 
   // #[wasm_bindgen(js_name = "getData", method, catch)]
   // pub fn get_data(this: &WasmTransactionBuilder) -> Result<JsValue, JsValue>;
+}
+
+#[wasm_bindgen(module = "@iota/iota-sdk/cryptography")]
+extern "C" {
+  #[wasm_bindgen(typescript_type = PublicKey)]
+  pub type WasmPublicKey;
+
+  #[wasm_bindgen(js_name = toRawBytes, method)]
+  pub fn to_raw_bytes(this: &WasmPublicKey) -> Vec<u8>;
+
+  #[wasm_bindgen(method)]
+  pub fn flag(this: &WasmPublicKey) -> u8;
+}
+
+#[wasm_bindgen(module = "@iota/iota-sdk/keypairs/ed25519")]
+extern "C" {
+  #[wasm_bindgen(extends = WasmPublicKey)]
+  pub type Ed25519PublicKey;
+
+  #[wasm_bindgen(constructor, catch)]
+  pub fn new_ed25519_pk(bytes: &[u8]) -> Result<Ed25519PublicKey, JsValue>;
+}
+
+#[wasm_bindgen(module = "@iota/iota-sdk/keypairs/secp256r1")]
+extern "C" {
+  #[wasm_bindgen(extends = WasmPublicKey)]
+  pub type Secp256r1PublicKey;
+
+  #[wasm_bindgen(constructor, catch)]
+  pub fn new_secp256r1_pk(bytes: &[u8]) -> Result<Secp256r1PublicKey, JsValue>;
+}
+
+#[wasm_bindgen(module = "@iota/iota-sdk/keypairs/secp256k1")]
+extern "C" {
+  #[wasm_bindgen(extends = WasmPublicKey)]
+  pub type Secp256k1PublicKey;
+
+  #[wasm_bindgen(constructor, catch)]
+  pub fn new_secp256k1_pk(bytes: &[u8]) -> Result<Secp256k1PublicKey, JsValue>;
+}
+
+impl TryFrom<&'_ PublicKey> for WasmPublicKey {
+  type Error = JsValue;
+  fn try_from(pk: &PublicKey) -> Result<Self, Self::Error> {
+    let pk_bytes = pk.as_ref();
+    let wasm_pk: WasmPublicKey = match pk {
+      PublicKey::Ed25519(_) => Ed25519PublicKey::new_ed25519_pk(pk_bytes)?.into(),
+      PublicKey::Secp256r1(_) => Secp256r1PublicKey::new_secp256r1_pk(pk_bytes)?.into(),
+      PublicKey::Secp256k1(_) => Secp256k1PublicKey::new_secp256k1_pk(pk_bytes)?.into(),
+      _ => return Err(JsError::new("unsupported PublicKey type").into()),
+    };
+
+    assert_eq!(pk_bytes, &wasm_pk.to_raw_bytes());
+
+    Ok(wasm_pk)
+  }
+}
+
+impl TryFrom<WasmPublicKey> for PublicKey {
+  type Error = JsValue;
+  fn try_from(pk: WasmPublicKey) -> Result<Self, Self::Error> {
+    let key_bytes = pk.to_raw_bytes();
+    let key_flag = pk.flag();
+    let signature_scheme = SignatureScheme::from_flag_byte(&key_flag).map_err(|e| JsError::new(&e.to_string()))?;
+    let public_key =
+      PublicKey::try_from_bytes(signature_scheme, &key_bytes).map_err(|e| JsError::new(&e.to_string()))?;
+
+    assert_eq!(&key_bytes, public_key.as_ref());
+
+    Ok(public_key)
+  }
 }
 
 impl From<ObjectRef> for WasmObjectRef {
@@ -280,14 +400,10 @@ extern "C" {
   fn execute_transaction_inner(
     iota_client: &WasmIotaClient, // --> TypeScript: IotaClient
     sender_address: String,       // --> TypeScript: string
-    sender_public_key: Vec<u8>,   // --> TypeScript: Uint8Array
     tx_bcs: Vec<u8>,              // --> TypeScript: Uint8Array,
     signer: WasmStorageSigner,    // --> TypeScript: Signer (iota_client_helpers module)
     gas_budget: Option<u64>,      // --> TypeScript: optional bigint
   ) -> PromiseIotaTransactionBlockResponseAdapter;
-
-  #[wasm_bindgen(js_name = "getTransactionDigest")]
-  fn get_transaction_digest_inner(txBcs: Uint8Array) -> Uint8Array;
 
   #[wasm_bindgen(js_name = "addGasDataToTransaction")]
   fn add_gas_data_to_transaction_inner(
@@ -299,11 +415,6 @@ extern "C" {
 
   #[wasm_bindgen(js_name = "sleep")]
   fn sleep_inner(ms: i32) -> Promise;
-}
-
-/// Builds message with `TransactionData` intent and returns hash of it.
-pub(crate) fn get_transaction_digest(tx_data: &[u8]) -> Vec<u8> {
-  get_transaction_digest_inner(Uint8Array::from(tx_data)).to_vec()
 }
 
 /// Inserts these values into the transaction and replaces placeholder values.
@@ -384,7 +495,6 @@ impl IotaTransactionBlockResponseAdapter {
 pub async fn execute_transaction(
   iota_client: &WasmIotaClient,       // --> Binding: WasmIotaClient
   sender_address: IotaAddress,        // --> Binding: String
-  sender_public_key: &[u8],           // --> Binding: Vec<u8>
   tx_bcs: ProgrammableTransactionBcs, // --> Binding: Vec<u8>
   signer: WasmStorageSigner,          // --> Binding: WasmStorageSigner
   gas_budget: Option<u64>,            // --> Binding: Option<u64>,
@@ -392,7 +502,6 @@ pub async fn execute_transaction(
   let promise: Promise = Promise::resolve(&execute_transaction_inner(
     iota_client,
     sender_address.to_string(),
-    sender_public_key.to_vec(),
     tx_bcs,
     signer,
     gas_budget,

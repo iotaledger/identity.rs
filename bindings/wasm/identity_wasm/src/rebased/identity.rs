@@ -11,7 +11,6 @@ use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
 use identity_iota::iota::IotaDocument;
 use iota_interaction_ts::AdapterNativeResponse;
 use tokio::sync::RwLock;
-use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
 use iota_interaction_ts::bindings::WasmIotaObjectData;
@@ -21,18 +20,14 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use crate::iota::WasmIotaDocument;
 
-use super::client_dummy::ProposalAction;
-// use super::client_dummy::DummySigner;
-// use super::client_dummy::ProposalAction;
-// use super::client_dummy::ProposalBuilder;
 use super::proposals::StringCouple;
 use super::proposals::WasmConfigChange;
 use super::proposals::WasmCreateConfigChangeProposalTx;
 use super::proposals::WasmCreateDeactivateDidProposalTx;
 use super::proposals::WasmCreateSendProposalTx;
 use super::proposals::WasmCreateUpdateDidProposalTx;
-use super::types::WasmIotaAddress;
 use super::WasmIdentityClient;
+use super::WasmIotaAddress;
 
 /// Helper type for `WasmIdentityBuilder::controllers`.
 /// Has getters to support `Clone` for serialization
@@ -117,9 +112,9 @@ impl WasmOnChainIdentity {
   #[wasm_bindgen(js_name = getHistory, skip_typescript)] // ts type in custom section below
   pub async fn get_history(
     &self,
-    client: WasmIdentityClient,
-    last_version: Option<WasmIotaObjectData>,
-    page_size: Option<usize>,
+    _client: WasmIdentityClient,
+    _last_version: Option<WasmIotaObjectData>,
+    _page_size: Option<usize>,
   ) -> Result<JsValue> {
     unimplemented!("WasmOnChainIdentity::get_history");
     // let rs_history = self
@@ -143,23 +138,6 @@ const WASM_ON_CHAIN_IDENTITY_TYPES: &str = r###"
 		getHistory(): Map<String, Proposal>;
 	}
 "###;
-
-#[derive(Tsify, Serialize, Deserialize)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
-#[serde(rename = "ProposalAction")]
-pub enum WasmProposalAction {
-  UpdateDocument(IotaDocument),
-  Deactivate,
-}
-
-impl From<WasmProposalAction> for ProposalAction {
-  fn from(val: WasmProposalAction) -> Self {
-    match val {
-      WasmProposalAction::UpdateDocument(doc) => ProposalAction::UpdateDocument(doc),
-      WasmProposalAction::Deactivate => ProposalAction::Deactivate,
-    }
-  }
-}
 
 // TODO: remove the following comment and commented out code if we don't run into a rename issue
 // -> in case `serde(rename` runs into issues with properties with renamed types still having the
