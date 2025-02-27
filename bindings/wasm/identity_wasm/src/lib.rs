@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![forbid(unsafe_code)]
 #![allow(deprecated)]
 #![allow(clippy::upper_case_acronyms)]
 // wasm_bindgen calls drop on non-Drop types. When/If this is fixed, this can be removed (no issue to link here yet).
@@ -28,6 +27,7 @@ pub mod jpt;
 pub mod resolver;
 pub mod revocation;
 pub mod sd_jwt;
+pub mod sd_jwt_vc;
 pub mod storage;
 pub mod verification;
 
