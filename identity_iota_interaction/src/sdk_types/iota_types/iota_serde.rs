@@ -12,6 +12,7 @@ use std::{
 use std::marker::Sized;
 use std::string::{String, ToString};
 use std::result::Result::Ok;
+#[allow(unused)] // Kept in sync with original source, so keep as is.
 use std::option::Option;
 use std::option::Option::Some;
 
@@ -31,6 +32,7 @@ use super::super::move_core_types::{
     language_storage::{StructTag, TypeTag}
 };
 
+#[allow(unused)] // Kept in sync with original source, so keep as is.
 use super::{IOTA_FRAMEWORK_ADDRESS, MOVE_STDLIB_ADDRESS, IOTA_SYSTEM_ADDRESS,
             STARDUST_ADDRESS, IOTA_SYSTEM_STATE_ADDRESS, IOTA_CLOCK_ADDRESS };
 use super::parse_iota_struct_tag;
@@ -62,6 +64,7 @@ impl ProtocolVersion {
 
     pub const MAX: Self = Self(MAX_PROTOCOL_VERSION);
 
+    #[allow(unused)] // Kept in sync with original source, so keep as is.
     #[cfg(not(msim))]
     const MAX_ALLOWED: Self = Self::MAX;
 

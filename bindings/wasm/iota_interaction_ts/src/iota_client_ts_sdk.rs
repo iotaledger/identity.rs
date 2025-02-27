@@ -5,6 +5,7 @@ use std::boxed::Box;
 use std::option::Option;
 use std::result::Result;
 
+use fastcrypto::traits::ToFromBytes;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::dynamic_field::DynamicFieldName;
 use secret_storage::Signer;
@@ -31,7 +32,6 @@ use identity_iota_interaction::CoinReadTrait;
 use identity_iota_interaction::EventTrait;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
-use identity_iota_interaction::IotaTransactionBlockResponseBcs;
 use identity_iota_interaction::IotaTransactionBlockResponseT;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::QuorumDriverTrait;
@@ -39,10 +39,13 @@ use identity_iota_interaction::ReadTrait;
 use identity_iota_interaction::SignatureBcs;
 use identity_iota_interaction::TransactionDataBcs;
 
+use crate::bindings::add_gas_data_to_transaction;
 use crate::bindings::IotaTransactionBlockResponseAdapter;
 use crate::bindings::ManagedWasmIotaClient;
 use crate::bindings::WasmIotaClient;
 use crate::error::TsSdkError;
+use crate::error::WasmError;
+use crate::ProgrammableTransaction;
 
 #[allow(dead_code)]
 pub trait IotaTransactionBlockResponseAdaptedT:
@@ -157,6 +160,10 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
   fn clone_native_response(&self) -> Self::NativeResponse {
     self.response.clone()
   }
+
+  fn digest(&self) -> Result<TransactionDigest, Self::Error> {
+    self.response.digest()
+  }
 }
 
 pub struct ReadAdapter {
@@ -214,9 +221,9 @@ impl ReadTrait for ReadAdapter {
 
   async fn try_get_parsed_past_object(
     &self,
-    object_id: ObjectID,
-    version: SequenceNumber,
-    options: IotaObjectDataOptions,
+    _object_id: ObjectID,
+    _version: SequenceNumber,
+    _options: IotaObjectDataOptions,
   ) -> IotaRpcResult<IotaPastObjectResponse> {
     // TODO: does not work anymore, find out, why we need to pass a different `SequenceNumber` now
     unimplemented!("try_get_parsed_past_object");
@@ -325,34 +332,40 @@ impl IotaClientTrait for IotaClientTsSdk {
 
   async fn execute_transaction<S: Signer<IotaKeySignature>>(
     &self,
-    sender_address: IotaAddress,
-    sender_public_key: &[u8],
     tx_bcs: ProgrammableTransactionBcs,
     gas_budget: Option<u64>,
     signer: &S,
-  ) -> Result<IotaTransactionBlockResponseAdaptedTraitObj, Self::Error> {
-    unimplemented!();
-    // let wasm_response = execute_transaction(
-    //   &self.iota_client.clone().0,
-    //   sender_address,
-    //   sender_public_key,
-    //   tx_bcs,
-    //   *signer.clone(),
-    //   gas_budget,
-    // )
-    // .await?;
-    // Ok(Box::new(IotaTransactionBlockResponseProvider::new(wasm_response)))
+  ) -> Result<
+    Box<dyn IotaTransactionBlockResponseT<Error = Self::Error, NativeResponse = Self::NativeResponse>>,
+    Self::Error,
+  > {
+    let tx: ProgrammableTransaction = tx_bcs.try_into()?;
+    let response = self.sdk_execute_transaction(tx, gas_budget, signer).await?;
+
+    // wait until new transaction block is available
+    self
+      .iota_client
+      .wait_for_transaction(
+        response.digest()?,
+        Some(IotaTransactionBlockResponseOptions::new()),
+        None,
+        None,
+      )
+      .await
+      .unwrap();
+
+    Ok(Box::new(response))
   }
 
   async fn default_gas_budget(
     &self,
-    sender_address: IotaAddress,
-    tx_bcs: &ProgrammableTransactionBcs,
+    _sender_address: IotaAddress,
+    _tx_bcs: &ProgrammableTransactionBcs,
   ) -> Result<u64, Self::Error> {
     unimplemented!();
   }
 
-  async fn get_previous_version(&self, iod: IotaObjectData) -> Result<Option<IotaObjectData>, Self::Error> {
+  async fn get_previous_version(&self, _iod: IotaObjectData) -> Result<Option<IotaObjectData>, Self::Error> {
     unimplemented!();
   }
 
@@ -378,5 +391,78 @@ impl IotaClientTsSdk {
     Ok(Self {
       iota_client: ManagedWasmIotaClient::new(iota_client),
     })
+  }
+
+  /// Builds message with `TransactionData` intent, hashes it, and constructs full signature.
+  async fn get_transaction_signature_bytes<S>(signer: &S, tx_data: &[u8]) -> Result<Vec<u8>, TsSdkError>
+  where
+    S: Signer<IotaKeySignature>,
+  {
+    signer
+      .sign(&tx_data.to_vec())
+      .await
+      .map(|sig| sig.as_bytes().to_vec())
+      .map_err(|err| TsSdkError::TransactionSerializationError(format!("could not sign transaction message; {err}")))
+  }
+
+  /// Inserts these values into the transaction and replaces placeholder values.
+  ///
+  ///   - sender (overwritten as we assume a placeholder to be used in prepared transaction)
+  ///   - gas budget (value determined automatically if not provided)
+  ///   - gas price (value determined automatically)
+  ///   - gas coin / payment object (fetched automatically)
+  ///   - gas owner (equals sender)
+  ///
+  /// # Arguments
+  ///
+  ///   * `iota_client` -  client instance
+  ///   * `sender_address` -  transaction sender (and the one paying for it)
+  ///   * `tx_bcs` -  transaction data serialized to bcs, most probably having placeholder values
+  ///   * `gas_budget` -  optional fixed gas budget, determined automatically with a dry run if not provided
+  async fn replace_transaction_placeholder_values(
+    &self,
+    tx: ProgrammableTransaction,
+    sender_address: IotaAddress,
+    gas_budget: Option<u64>,
+  ) -> Result<Vec<u8>, TsSdkError> {
+    let tx_bcs = tx.0.build().await.map_err(WasmError::from)?.to_vec();
+    let updated = add_gas_data_to_transaction(&self.iota_client.0, sender_address, tx_bcs, gas_budget).await?;
+
+    Ok(updated)
+  }
+
+  // Submit tx to IOTA client, also:
+  //   - ensures, `gas_budget` is set
+  //   - signs tx
+  //   - calls execute_transaction_block to submit tx (with signatures created here)
+  async fn sdk_execute_transaction<S: Signer<IotaKeySignature>>(
+    &self,
+    tx: ProgrammableTransaction,
+    gas_budget: Option<u64>,
+    signer: &S,
+  ) -> Result<IotaTransactionBlockResponseProvider, TsSdkError> {
+    let sender_public_key = signer
+      .public_key()
+      .await
+      .map_err(|e| TsSdkError::WasmError(String::from("SecretStorage"), e.to_string()))?;
+    let sender_address = IotaAddress::from(&sender_public_key);
+    let final_tx = self
+      .replace_transaction_placeholder_values(tx, sender_address, gas_budget)
+      .await?;
+    let signature = Self::get_transaction_signature_bytes(signer, &final_tx).await?;
+
+    let wasm_response = self
+      .quorum_driver_api()
+      .execute_transaction_block(
+        &final_tx,
+        &vec![signature],
+        Some(IotaTransactionBlockResponseOptions::full_content()),
+        Some(ExecuteTransactionRequestType::WaitForLocalExecution),
+      )
+      .await
+      .unwrap();
+    let native = wasm_response.clone_native_response();
+
+    Ok(IotaTransactionBlockResponseProvider::new(native))
   }
 }

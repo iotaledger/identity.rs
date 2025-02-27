@@ -9,7 +9,7 @@ pub(crate) use number::*;
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct Bag {
   pub id: UID,
   #[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]

@@ -15,6 +15,7 @@ use crate::rebased::client::IdentityClient;
 use crate::rebased::Error;
 use async_trait::async_trait;
 use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::OptionalSync;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use secret_storage::Signer;
 
@@ -45,14 +46,14 @@ pub trait Transaction: Sized {
 
   /// Executes this operation using the given `client` and an optional `gas_budget`.
   /// If no value for `gas_budget` is provided, an estimated value will be used.
-  async fn execute_with_opt_gas<S: Signer<IotaKeySignature> + Sync>(
+  async fn execute_with_opt_gas<S: Signer<IotaKeySignature> + OptionalSync>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutput<Self::Output>, Error>;
 
   /// Executes this operation using `client`.
-  async fn execute<S: Signer<IotaKeySignature> + Sync>(
+  async fn execute<S: Signer<IotaKeySignature> + OptionalSync>(
     self,
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutput<Self::Output>, Error> {
@@ -60,7 +61,7 @@ pub trait Transaction: Sized {
   }
 
   /// Executes this operation using `client` and a well defined `gas_budget`.
-  async fn execute_with_gas<S: Signer<IotaKeySignature> + Sync>(
+  async fn execute_with_gas<S: Signer<IotaKeySignature> + OptionalSync>(
     self,
     gas_budget: u64,
     client: &IdentityClient<S>,
@@ -69,8 +70,11 @@ pub trait Transaction: Sized {
   }
 }
 
-pub(crate) struct TransactionOutputInternal<T> {
+/// The output type of a [`Transaction`].
+pub struct TransactionOutputInternal<T> {
+  /// The parsed Transaction output. See [`Transaction::Output`].
   pub output: T,
+  /// The "raw" transaction execution response received.
   pub response: IotaTransactionBlockResponseAdaptedTraitObj,
 }
 
@@ -93,27 +97,33 @@ impl<T> From<TransactionOutputInternal<T>> for TransactionOutput<T> {
   }
 }
 
+/// Interface for operations that interact with the ledger through transactions.
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-pub(crate) trait TransactionInternal: Sized {
+pub trait TransactionInternal: Sized {
+  /// The result of performing the operation.
   type Output;
 
-  async fn execute_with_opt_gas_internal<S: Signer<IotaKeySignature> + Sync>(
+  /// Executes this operation using the given `client` and an optional `gas_budget`.
+  /// If no value for `gas_budget` is provided, an estimated value will be used.
+  async fn execute_with_opt_gas_internal<S: Signer<IotaKeySignature> + OptionalSync>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>;
 
+  /// Executes this operation using `client`.
   #[cfg(target_arch = "wasm32")]
-  async fn execute<S: Signer<IotaKeySignature> + Sync>(
+  async fn execute<S: Signer<IotaKeySignature>>(
     self,
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error> {
     self.execute_with_opt_gas_internal(None, client).await
   }
 
+  /// Executes this operation using `client` and a well defined `gas_budget`.
   #[cfg(target_arch = "wasm32")]
-  async fn execute_with_gas<S: Signer<IotaKeySignature> + Sync>(
+  async fn execute_with_gas<S: Signer<IotaKeySignature> + OptionalSync>(
     self,
     gas_budget: u64,
     client: &IdentityClient<S>,
@@ -127,7 +137,7 @@ pub(crate) trait TransactionInternal: Sized {
 impl<T: TransactionInternal<Output = O> + Send, O> Transaction for T {
   type Output = O;
 
-  async fn execute_with_opt_gas<S: Signer<IotaKeySignature> + Sync>(
+  async fn execute_with_opt_gas<S: Signer<IotaKeySignature> + OptionalSync>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,
@@ -147,7 +157,7 @@ impl TransactionInternal for ProgrammableTransaction {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let tx_bcs = bcs::to_bytes(&self)?;
     let response = client.execute_transaction(tx_bcs, gas_budget).await?;
@@ -161,11 +171,11 @@ impl TransactionInternal for ProgrammableTransaction {
   type Output = ();
   async fn execute_with_opt_gas_internal<S>(
     self,
-    gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
+    _gas_budget: Option<u64>,
+    _client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     unimplemented!("TransactionInternal::execute_with_opt_gas_internal for ProgrammableTransaction");
   }
@@ -176,7 +186,7 @@ impl TransactionInternal for ProgrammableTransaction {
 impl TransactionInternal for ProgrammableTransactionBcs {
   type Output = ();
 
-  async fn execute_with_opt_gas_internal<S: Signer<IotaKeySignature> + Sync>(
+  async fn execute_with_opt_gas_internal<S: Signer<IotaKeySignature> + OptionalSync>(
     self,
     gas_budget: Option<u64>,
     client: &IdentityClient<S>,

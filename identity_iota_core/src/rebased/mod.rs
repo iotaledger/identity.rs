@@ -14,7 +14,12 @@ pub mod proposals;
 /// Module for handling transactions.
 pub mod transaction;
 /// Contains utility functions.
+#[cfg(not(target_arch = "wasm32"))]
 pub mod utils;
 
 pub use assets::*;
 pub use error::*;
+
+/// Integration with IOTA's Keytool.
+#[cfg(feature = "keytool-signer")]
+pub use identity_iota_interaction::keytool_signer::*;

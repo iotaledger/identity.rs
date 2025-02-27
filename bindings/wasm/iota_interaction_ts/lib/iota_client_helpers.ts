@@ -7,13 +7,14 @@ import {
     IotaClient,
     IotaTransactionBlockResponse,
     OwnedObjectRef,
-} from "@iota/iota.js/client";
-import { messageWithIntent, toSerializedSignature } from "@iota/iota.js/cryptography";
-import { Ed25519PublicKey } from "@iota/iota.js/keypairs/ed25519";
-import { TransactionDataBuilder } from "@iota/iota.js/transactions";
+    Signature,
+} from "@iota/iota-sdk/client";
+import { messageWithIntent, PublicKey, toSerializedSignature } from "@iota/iota-sdk/cryptography";
+import { Ed25519PublicKey } from "@iota/iota-sdk/keypairs/ed25519";
+import { GasData, TransactionDataBuilder } from "@iota/iota-sdk/transactions";
 import { blake2b } from "@noble/hashes/blake2b";
 
-export type Signer = { sign(data: Uint8Array): Promise<Uint8Array> };
+export type Signer = { sign(data: Uint8Array): Promise<Signature> };
 
 export class IotaTransactionBlockResponseAdapter {
     response: IotaTransactionBlockResponse;
@@ -47,36 +48,37 @@ export class IotaTransactionBlockResponseAdapter {
     get_response(): IotaTransactionBlockResponse {
         return this.response;
     }
-}
 
-async function signTransactionData(
-    txBcs: Uint8Array,
-    senderPublicKey: Uint8Array,
-    signer: { sign(data: Uint8Array): Promise<Uint8Array> },
-): Promise<string> {
-    const intent = "TransactionData";
-    const intentMessage = messageWithIntent(intent, txBcs);
-    const digest = blake2b(intentMessage, { dkLen: 32 });
-    const signerSignature = await signer.sign(digest);
-    const signature = toSerializedSignature({
-        signature: await signerSignature,
-        signatureScheme: "ED25519",
-        publicKey: new Ed25519PublicKey(senderPublicKey),
-    });
-
-    return signature;
+    get_digest(): string {
+        return this.response.digest;
+    }
 }
 
 async function getCoinForTransaction(iotaClient: IotaClient, senderAddress: string): Promise<CoinStruct> {
     const coins = await iotaClient.getCoins({ owner: senderAddress });
     if (coins.data.length === 0) {
-        throw new Error("could not find coins for transaction");
+        throw new Error(`could not find coins for transaction with sender ${senderAddress}`);
     }
 
     return coins.data[1];
 }
 
-async function addGasDataToTransaction(
+/**
+ * Inserts these values into the transaction and replaces placeholder values.
+ *
+ *   - sender (overwritten as we assume a placeholder to be used in prepared transaction)
+ *   - gas budget (value determined automatically if not provided)
+ *   - gas price (value determined automatically)
+ *   - gas coin / payment object (fetched automatically)
+ *   - gas owner (equals sender)
+ *
+ * @param iotaClient client instance
+ * @param senderAddress transaction sender (and the one paying for it)
+ * @param txBcs transaction data serialized to bcs, most probably having placeholder values
+ * @param gasBudget optional fixed gas budget, determined automatically with a dry run if not provided
+ * @returns updated transaction data
+ */
+export async function addGasDataToTransaction(
     iotaClient: IotaClient,
     senderAddress: string,
     txBcs: Uint8Array,
@@ -85,7 +87,7 @@ async function addGasDataToTransaction(
     const gasPrice = await iotaClient.getReferenceGasPrice();
     const gasCoin = await getCoinForTransaction(iotaClient, senderAddress);
     const txData = TransactionDataBuilder.fromBytes(txBcs);
-    const gasData = {
+    const gasData: GasData = {
         budget: gasBudget ? gasBudget.toString() : "50000000000", // 50_000_000_000
         owner: senderAddress,
         payment: [{
@@ -95,12 +97,14 @@ async function addGasDataToTransaction(
         }],
         price: gasPrice.toString(),
     };
-    let builtTx = txData.build({
-        overrides: {
-            gasData,
-            sender: senderAddress,
-        },
-    });
+    const overrides = {
+        gasData,
+        sender: senderAddress,
+    };
+    // TODO: check why `.build` with `overrides` doesn't override these values
+    txData.sender = overrides.sender;
+    txData.gasData = overrides.gasData;
+    let builtTx = txData.build({ overrides });
 
     if (!gasBudget) {
         // no budget given, so we have to estimate gas usage
@@ -120,13 +124,10 @@ async function addGasDataToTransaction(
         const maxCost = netUsed > computation ? netUsed : computation;
         const budget = overhead + maxCost;
 
-        gasData.budget = budget.toString();
-        builtTx = txData.build({
-            overrides: {
-                gasData,
-                sender: senderAddress,
-            },
-        });
+        overrides.gasData.budget = budget.toString();
+        txData.gasData.budget = budget.toString();
+
+        builtTx = txData.build({ overrides });
     }
 
     return builtTx;
@@ -136,19 +137,18 @@ async function addGasDataToTransaction(
 export async function executeTransaction(
     iotaClient: IotaClient,
     senderAddress: string,
-    senderPublicKey: Uint8Array,
     txBcs: Uint8Array,
     signer: Signer,
     gasBudget?: bigint,
 ): Promise<IotaTransactionBlockResponseAdapter> {
     const txWithGasData = await addGasDataToTransaction(iotaClient, senderAddress, txBcs, gasBudget);
-    const signature = await signTransactionData(txWithGasData, senderPublicKey, signer);
-    console.log(signature);
+    const signature = await signer.sign(txWithGasData);
+    const base64signature = getSignatureValue(signature);
 
     const response = await iotaClient.executeTransactionBlock({
         transactionBlock: txWithGasData,
-        signature,
-        options: { // `IotaTransactionBlockResponseOptions::full_content()`
+        signature: base64signature,
+        options: { // equivalent of `IotaTransactionBlockResponseOptions::full_content()`
             showEffects: true,
             showInput: true,
             showRawInput: true,
@@ -158,11 +158,33 @@ export async function executeTransaction(
             showRawEffects: false,
         },
     });
-    console.dir(response);
 
     if (response?.effects?.status.status === "failure") {
         throw new Error(`transaction returned an unexpected response; ${response?.effects?.status.error}`);
     }
 
     return new IotaTransactionBlockResponseAdapter(response);
+}
+
+function getSignatureValue(signature: Signature): string {
+    if ("Ed25519IotaSignature" in signature) {
+        return signature.Ed25519IotaSignature;
+    }
+    if ("Secp256k1IotaSignature" in signature) {
+        return signature.Secp256k1IotaSignature;
+    }
+    if ("Secp256r1IotaSignature" in signature) {
+        return signature.Secp256r1IotaSignature;
+    }
+
+    throw new Error("invalid `Signature` value given");
+}
+
+/**
+ * Helper function to pause execution.
+ *
+ * @param durationMs time to sleep in ms
+ */
+export function sleep(durationMs: number) {
+    return new Promise(resolve => setTimeout(resolve, durationMs));
 }

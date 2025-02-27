@@ -65,68 +65,65 @@ cat | sed -e "s#require('@iota/identity-wasm/node')#require('./node')#" | timeou
 <!-- !test check Nodejs Example -->
 
 ```typescript
-const {
-  Jwk,
-  JwkType,
-  EdCurve,
-  MethodScope,
-  IotaDocument,
-  VerificationMethod,
-  Service,
-  MethodRelationship,
-  IotaIdentityClient,
-} = require('@iota/identity-wasm/node');
-const { Client } = require('@iota/sdk-wasm/node');
+import {
+    EdCurve,
+    IdentityClientReadOnly,
+    IotaDocument,
+    Jwk,
+    JwkType,
+    MethodRelationship,
+    MethodScope,
+    Service,
+    VerificationMethod,
+} from '@iota/identity-wasm/node';
+import { IotaClient } from "@iota/iota-sdk/client";
 
 const EXAMPLE_JWK = new Jwk({
-  kty: JwkType.Okp,
-  crv: EdCurve.Ed25519,
-  x: "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+    kty: JwkType.Okp,
+    crv: EdCurve.Ed25519,
+    x: "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
 });
 
 // The endpoint of the IOTA node to use.
-const API_ENDPOINT = "http://localhost";
+const NETWORK_URL = "https://api.testnet.iota.cafe";
 
 /** Demonstrate how to create a DID Document. */
-async function main() {
-  // Create a new client with the given network endpoint.
-  const client = new Client({
-    primaryNode: API_ENDPOINT,
-    localPow: true,
-  });
+export async function main() {
+    // Create a new client with the given network endpoint.
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
 
-  const didClient = new IotaIdentityClient(client);
+    const identityClient = await IdentityClientReadOnly.create(iotaClient);
 
-  // Get the Bech32 human-readable part (HRP) of the network.
-  const networkHrp = await didClient.getNetworkHrp();
+    // Get the Bech32 human-readable part (HRP) of the network.
+    const networkHrp = identityClient.network();
 
-  // Create a new DID document with a placeholder DID.
-  // The DID will be derived from the Alias Id of the Alias Output after publishing.
-  const document = new IotaDocument(networkHrp);
+    // Create a new DID document with a placeholder DID.
+    // The DID will be derived from the ObjectId of the identity after publishing.
+    const document = new IotaDocument(networkHrp);
 
-  // Insert a new Ed25519 verification method in the DID document.
-  const method = VerificationMethod.newFromJwk(
-    document.id(),
-    EXAMPLE_JWK,
-    "#key-1"
-  );
-  document.insertMethod(method, MethodScope.VerificationMethod());
+    // Insert a new Ed25519 verification method in the DID document.
+    const method = VerificationMethod.newFromJwk(
+        document.id(),
+        EXAMPLE_JWK,
+        "#key-1"
+    );
+    document.insertMethod(method, MethodScope.VerificationMethod());
 
-  // Attach a new method relationship to the existing method.
-  document.attachMethodRelationship(
-    document.id().join("#key-1"),
-    MethodRelationship.Authentication
-  );
+    // Attach a new method relationship to the existing method.
+    document.attachMethodRelationship(
+        document.id().join("#key-1"),
+        MethodRelationship.Authentication
+    );
 
-  // Add a new Service.
-  const service = new Service({
-    id: document.id().join("#linked-domain"),
-    type: "LinkedDomains",
-    serviceEndpoint: "https://iota.org/",
-  });
-  document.insertService(service);
+    // Add a new Service.
+    const service = new Service({
+        id: document.id().join("#linked-domain"),
+        type: "LinkedDomains",
+        serviceEndpoint: "https://iota.org/",
+    });
+    document.insertService(service);
 
-  console.log(`Created document `, JSON.stringify(document.toJSON(), null, 2));
+    console.log(`Created document `, JSON.stringify(document.toJSON(), null, 2));
 }
 
 main();
@@ -136,29 +133,35 @@ which prints
 
 ```
 Created document  {
-  "id": "did:iota:tst:0x0000000000000000000000000000000000000000000000000000000000000000",
-  "verificationMethod": [
-    {
-      "id": "did:iota:tst:0x0000000000000000000000000000000000000000000000000000000000000000#key-1",
-      "controller": "did:iota:tst:0x0000000000000000000000000000000000000000000000000000000000000000",
-      "type": "JsonWebKey",
-      "publicKeyJwk": {
-        "kty": "OKP",
-        "crv": "Ed25519",
-        "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"
+  "doc": {
+    "id": "did:iota:testnet:0x0000000000000000000000000000000000000000000000000000000000000000",
+    "verificationMethod": [
+      {
+        "id": "did:iota:testnet:0x0000000000000000000000000000000000000000000000000000000000000000#key-1",
+        "controller": "did:iota:testnet:0x0000000000000000000000000000000000000000000000000000000000000000",
+        "type": "JsonWebKey2020",
+        "publicKeyJwk": {
+          "kty": "OKP",
+          "crv": "Ed25519",
+          "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"
+        }
       }
-    }
-  ],
-  "authentication": [
-    "did:iota:tst:0x0000000000000000000000000000000000000000000000000000000000000000#key-1"
-  ],
-  "service": [
-    {
-      "id": "did:iota:tst:0x0000000000000000000000000000000000000000000000000000000000000000#linked-domain",
-      "type": "LinkedDomains",
-      "serviceEndpoint": "https://iota.org/"
-    }
-  ]
+    ],
+    "authentication": [
+      "did:iota:testnet:0x0000000000000000000000000000000000000000000000000000000000000000#key-1"
+    ],
+    "service": [
+      {
+        "id": "did:iota:testnet:0x0000000000000000000000000000000000000000000000000000000000000000#linked-domain",
+        "type": "LinkedDomains",
+        "serviceEndpoint": "https://iota.org/"
+      }
+    ]
+  },
+  "meta": {
+    "created": "2025-02-19T12:47:28Z",
+    "updated": "2025-02-19T12:47:28Z"
+  }
 }
 ```
 
@@ -189,11 +192,6 @@ import copy from "rollup-plugin-copy";
 copy({
   targets: [
     {
-      src: "node_modules/@iota/sdk-wasm/web/wasm/iota_sdk_wasm_bg.wasm",
-      dest: "public",
-      rename: "iota_sdk_wasm_bg.wasm",
-    },
-    {
       src: "node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm",
       dest: "public",
       rename: "identity_wasm_bg.wasm",
@@ -219,10 +217,6 @@ const CopyWebPlugin= require('copy-webpack-plugin');
 new CopyWebPlugin({
   patterns: [
     {
-      from: 'node_modules/@iota/sdk-wasm/web/wasm/iota_sdk_wasm_bg.wasm',
-      to: 'iota_sdk_wasm_bg.wasm'
-    },
-    {
       from: 'node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm',
       to: 'identity_wasm_bg.wasm'
     }
@@ -233,7 +227,6 @@ new CopyWebPlugin({
 ### Web Usage
 
 ```typescript
-import init, { Client } from "@iota/sdk-wasm/web";
 import * as identity from "@iota/identity-wasm/web";
 
 // The endpoint of the IOTA node to use.
@@ -259,7 +252,7 @@ async function createDocument() {
   const networkHrp = await didClient.getNetworkHrp();
 
   // Create a new DID document with a placeholder DID.
-  // The DID will be derived from the Alias Id of the Alias Output after publishing.
+  // The DID will be derived from the ObjectId of the identity after publishing.
   const document = new identity.IotaDocument(networkHrp);
 
   // Insert a new Ed25519 verification method in the DID document.
@@ -287,8 +280,7 @@ async function createDocument() {
   console.log(`Created document `, JSON.stringify(document.toJSON(), null, 2));
 }
 
-init()
-  .then(() => identity.init())
+identity.init()
   .then(() => {
     await createDocument();
   });
@@ -296,7 +288,6 @@ init()
 // or
 
 (async () => {
-  await init();
   await identity.init();
 
   await createDocument();

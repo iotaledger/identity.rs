@@ -90,7 +90,7 @@ runs:
         rustup show
 
     - name: Cache cargo
-      uses: actions/cache@v2.1.7
+      uses: actions/cache@v4
       if: inputs.cargo-cache-enabled == 'true'
       with:
         # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
@@ -115,7 +115,7 @@ runs:
       shell: bash
 
     - name: Cache build target
-      uses: actions/cache@v2.1.7
+      uses: actions/cache@v4
       if: inputs.target-cache-enabled == 'true'
       with:
         path: ${{ inputs.target-cache-path }}
@@ -127,7 +127,7 @@ runs:
           ${{ inputs.os }}-target-
 
     - name: Cache sccache
-      uses: actions/cache@v2.1.7
+      uses: actions/cache@v4
       if: inputs.sccache-enabled == 'true'
       with:
           path: ${{ inputs.sccache-path }}

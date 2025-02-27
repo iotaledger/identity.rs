@@ -6,14 +6,13 @@ use std::ops::Deref;
 use crate::IotaDID;
 use crate::IotaDocument;
 use async_trait::async_trait;
-use fastcrypto::ed25519::Ed25519PublicKey;
-use fastcrypto::traits::ToFromBytes;
 use identity_iota_interaction::move_types::language_storage::StructTag;
 use identity_iota_interaction::rpc_types::IotaObjectData;
 use identity_iota_interaction::rpc_types::IotaObjectDataFilter;
 use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectRef;
+use identity_iota_interaction::types::crypto::PublicKey;
 use identity_verification::jwk::Jwk;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
@@ -28,6 +27,7 @@ use crate::rebased::Error;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::MoveType;
+use identity_iota_interaction::OptionalSync;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 
 use crate::rebased::transaction::TransactionOutputInternal;
@@ -78,10 +78,8 @@ impl From<KeyId> for String {
 pub struct IdentityClient<S> {
   /// [`IdentityClientReadOnly`] instance, used for read-only operations.
   read_client: IdentityClientReadOnly,
-  /// The address of the client.
-  address: IotaAddress,
   /// The public key of the client.
-  public_key: Vec<u8>,
+  public_key: PublicKey,
   /// The signer of the client.
   signer: S,
 }
@@ -95,7 +93,7 @@ impl<S> Deref for IdentityClient<S> {
 
 impl<S> IdentityClient<S>
 where
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature>,
 {
   /// Create a new [`IdentityClient`].
   pub async fn new(client: IdentityClientReadOnly, signer: S) -> Result<Self, Error> {
@@ -103,16 +101,19 @@ where
       .public_key()
       .await
       .map_err(|e| Error::InvalidKey(e.to_string()))?;
-    let address = convert_to_address(&public_key)?;
 
     Ok(Self {
       public_key,
-      address,
       read_client: client,
       signer,
     })
   }
+}
 
+impl<S> IdentityClient<S>
+where
+  S: Signer<IotaKeySignature> + OptionalSync,
+{
   pub(crate) async fn execute_transaction(
     &self,
     tx_bcs: ProgrammableTransactionBcs,
@@ -126,13 +127,7 @@ where
     //       IotaClientAdapter for readonly.
     self
       .read_client
-      .execute_transaction(
-        self.sender_address(),
-        self.sender_public_key(),
-        tx_bcs,
-        gas_budget,
-        self.signer(),
-      )
+      .execute_transaction(tx_bcs, gas_budget, self.signer())
       .await
       .map_err(rebased_err)
   }
@@ -140,13 +135,14 @@ where
 
 impl<S> IdentityClient<S> {
   /// Returns the bytes of the sender's public key.
-  pub fn sender_public_key(&self) -> &[u8] {
+  pub fn sender_public_key(&self) -> &PublicKey {
     &self.public_key
   }
 
   /// Returns this [`IdentityClient`]'s sender address.
+  #[inline(always)]
   pub fn sender_address(&self) -> IotaAddress {
-    self.address
+    IotaAddress::from(&self.public_key)
   }
 
   /// Returns a reference to this [`IdentityClient`]'s [`Signer`].
@@ -202,7 +198,7 @@ impl<S> IdentityClient<S> {
 
 impl<S> IdentityClient<S>
 where
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + OptionalSync,
 {
   /// Returns [`Transaction`] [`PublishDidTx`] that - when executed - will publish a new DID Document on chain.
   pub fn publish_did_document(&self, document: IotaDocument) -> PublishDidTx {
@@ -263,14 +259,6 @@ pub fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> 
     .map_err(|err| Error::InvalidKey(format!("could not decode base64 public key; {err}")))
 }
 
-/// Utility function to convert a public key's bytes into an [`IotaAddress`].
-pub fn convert_to_address(sender_public_key: &[u8]) -> Result<IotaAddress, Error> {
-  let public_key = Ed25519PublicKey::from_bytes(sender_public_key)
-    .map_err(|err| Error::InvalidKey(format!("could not parse public key to Ed25519 public key; {err}")))?;
-
-  Ok(IotaAddress::from(&public_key))
-}
-
 /// Publishes a new DID Document on-chain. An [`crate::rebased::migration::OnChainIdentity`] will be created to contain
 /// the provided document.
 #[derive(Debug)]
@@ -283,7 +271,7 @@ impl PublishDidTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<IotaDocument>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let TransactionOutputInternal {
       output: identity,
@@ -314,7 +302,7 @@ impl TransactionT for PublishDidTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputT<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     Ok(
       self
@@ -331,7 +319,7 @@ impl TransactionT for PublishDidTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputT<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     self.execute_publish_did_tx_with_opt_gas(gas_budget, client).await
   }

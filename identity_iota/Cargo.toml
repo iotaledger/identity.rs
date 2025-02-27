@@ -17,12 +17,12 @@ identity_credential = { version = "=1.4.0", path = "../identity_credential", fea
 identity_did = { version = "=1.4.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.4.0", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=1.4.0", path = "../identity_iota_core", default-features = false }
+identity_resolver = { version = "=1.4.0", path = "../identity_resolver", default-features = false, optional = true }
 identity_storage = { version = "=1.4.0", path = "../identity_storage", default-features = false, features = ["iota-document"] }
 identity_verification = { version = "=1.4.0", path = "../identity_verification", default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 identity_iota_interaction = { version = "=1.4.0", path = "../identity_iota_interaction" }
-identity_resolver = { version = "=1.4.0", path = "../identity_resolver", default-features = false, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 identity_iota_interaction = { version = "=1.4.0", path = "../identity_iota_interaction", default-features = false }
@@ -31,8 +31,9 @@ identity_iota_interaction = { version = "=1.4.0", path = "../identity_iota_inter
 # required for doc test
 anyhow = "1.0.64"
 identity_iota = { version = "=1.4.0", path = "./", features = ["memstore"] }
-iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.8.1-rc" }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.9.2-rc" }
 rand = "0.8.5"
+secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.2.0" }
 tokio = { version = "1.29.0", features = ["full"] }
 
 [features]

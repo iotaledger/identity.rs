@@ -48,6 +48,11 @@ impl UpdateDidDocument {
   pub fn new(document: IotaDocument) -> Self {
     Self(document.pack().expect("a valid IotaDocument is packable"))
   }
+
+  /// Returns the serialized DID document bytes.
+  pub fn did_document_bytes(&self) -> &[u8] {
+    &self.0
+  }
 }
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
@@ -82,6 +87,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       expiration,
       client.package_id(),
     )
+    .await
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(CreateProposalTx {

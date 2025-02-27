@@ -75,6 +75,7 @@ impl ProposalT for Proposal<DeactivateDid> {
     let chained_execution = sender_vp >= identity.threshold();
     let tx =
       IdentityMoveCallsAdapter::propose_deactivation(identity_ref, controller_cap_ref, expiration, client.package_id())
+        .await
         .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(CreateProposalTx {

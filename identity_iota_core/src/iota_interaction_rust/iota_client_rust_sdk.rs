@@ -7,8 +7,6 @@ use std::marker::Send;
 use std::option::Option;
 use std::result::Result;
 
-use fastcrypto::hash::Blake2b256;
-use fastcrypto::traits::ToFromBytes;
 use secret_storage::Signer;
 
 use crate::rebased::Error;
@@ -35,13 +33,10 @@ use identity_iota_interaction::rpc_types::IotaTransactionBlockResponseOptions;
 use identity_iota_interaction::rpc_types::ObjectChange;
 use identity_iota_interaction::rpc_types::ObjectsPage;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::shared_crypto::intent::Intent;
-use identity_iota_interaction::shared_crypto::intent::IntentMessage;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::SequenceNumber;
 use identity_iota_interaction::types::crypto::Signature;
-use identity_iota_interaction::types::crypto::SignatureScheme;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::dynamic_field::DynamicFieldName;
 use identity_iota_interaction::types::event::EventID;
@@ -55,6 +50,7 @@ use identity_iota_interaction::IotaClient;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockResponseT;
+use identity_iota_interaction::OptionalSync;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::QuorumDriverTrait;
 use identity_iota_interaction::ReadTrait;
@@ -159,6 +155,10 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
 
   fn clone_native_response(&self) -> Self::NativeResponse {
     self.response.clone()
+  }
+
+  fn digest(&self) -> Result<TransactionDigest, Self::Error> {
+    Ok(self.response.digest)
   }
 }
 
@@ -332,18 +332,17 @@ impl IotaClientTrait for IotaClientRustSdk {
     })
   }
 
-  async fn execute_transaction<S: Signer<IotaKeySignature> + Sync>(
+  async fn execute_transaction<S>(
     &self,
-    sender_address: IotaAddress,
-    sender_public_key: &[u8],
     tx_bcs: ProgrammableTransactionBcs,
     gas_budget: Option<u64>,
     signer: &S,
-  ) -> Result<IotaTransactionBlockResponseAdaptedTraitObj, Self::Error> {
+  ) -> Result<IotaTransactionBlockResponseAdaptedTraitObj, Self::Error>
+  where
+    S: Signer<IotaKeySignature> + OptionalSync,
+  {
     let tx = bcs::from_bytes::<ProgrammableTransaction>(tx_bcs.as_slice())?;
-    let response = self
-      .sdk_execute_transaction(sender_address, sender_public_key, tx, gas_budget, signer)
-      .await?;
+    let response = self.sdk_execute_transaction(tx, gas_budget, signer).await?;
     Ok(Box::new(IotaTransactionBlockResponseProvider::new(response)))
   }
 
@@ -445,18 +444,21 @@ impl IotaClientRustSdk {
 
   async fn sdk_execute_transaction<S: Signer<IotaKeySignature>>(
     &self,
-    sender_address: IotaAddress,
-    sender_public_key: &[u8],
     tx: ProgrammableTransaction,
     gas_budget: Option<u64>,
     signer: &S,
   ) -> Result<IotaTransactionBlockResponse, Error> {
+    let public_key = signer
+      .public_key()
+      .await
+      .map_err(|e| Error::TransactionSigningFailed(e.to_string()))?;
+    let sender_address = IotaAddress::from(&public_key);
     let gas_budget = match gas_budget {
       Some(gas) => gas,
       None => self.sdk_default_gas_budget(sender_address, &tx).await?,
     };
     let tx_data = self.get_transaction_data(tx, gas_budget, sender_address).await?;
-    let signature = Self::sign_transaction_data(signer, &tx_data, sender_public_key).await?;
+    let signature = Self::sign_transaction_data(signer, &tx_data).await?;
 
     // execute tx
     let response = self
@@ -548,34 +550,11 @@ impl IotaClientRustSdk {
   async fn sign_transaction_data<S: Signer<IotaKeySignature>>(
     signer: &S,
     tx_data: &TransactionData,
-    sender_public_key: &[u8],
   ) -> Result<Signature, Error> {
-    use fastcrypto::hash::HashFunction;
-
-    let intent = Intent::iota_transaction();
-    let intent_msg = IntentMessage::new(intent, tx_data);
-    let mut hasher = Blake2b256::default();
-    let bcs_bytes = bcs::to_bytes(&intent_msg).map_err(|err| {
-      Error::TransactionSigningFailed(format!("could not serialize transaction message to bcs; {err}"))
-    })?;
-    hasher.update(bcs_bytes);
-    let digest = hasher.finalize().digest;
-
-    let raw_signature = signer
-      .sign(&digest)
+    signer
+      .sign(&bcs::to_bytes(tx_data)?)
       .await
-      .map_err(|err| Error::TransactionSigningFailed(format!("could not sign transaction message; {err}")))?;
-
-    let binding = [
-      [SignatureScheme::ED25519.flag()].as_slice(),
-      &raw_signature,
-      sender_public_key,
-    ]
-    .concat();
-    let signature_bytes: &[u8] = binding.as_slice();
-
-    Signature::from_bytes(signature_bytes)
-      .map_err(|err| Error::TransactionSigningFailed(format!("could not parse signature to IOTA signature; {err}")))
+      .map_err(|err| Error::TransactionSigningFailed(format!("could not sign transaction message; {err}")))
   }
 
   async fn get_coin_for_transaction(&self, sender_address: IotaAddress) -> Result<Coin, Error> {

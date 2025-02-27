@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung, Fondazione Links
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::get_client_and_create_account;
+use examples::get_funded_client;
 use examples::MemStorage;
 use examples::TEST_GAS_BUDGET;
 
@@ -51,6 +51,7 @@ use identity_iota::iota::rebased::transaction::Transaction;
 use identity_iota::iota::rebased::transaction::TransactionOutput;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::NetworkName;
+use identity_iota::iota_interaction::OptionalSync;
 use identity_iota::resolver::Resolver;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
@@ -77,7 +78,7 @@ async fn create_did<K, I, S>(
 where
   K: identity_storage::JwkStorage + identity_storage::JwkStorageBbsPlusExt,
   I: identity_storage::KeyIdStorage,
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + OptionalSync,
 {
   // Get the network name.
   let network_name: &NetworkName = identity_client.network();
@@ -129,9 +130,9 @@ async fn main() -> anyhow::Result<()> {
 
   let storage_holder: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-  let issuer_identity_client = get_client_and_create_account(&storage_issuer).await?;
+  let issuer_identity_client = get_funded_client(&storage_issuer).await?;
 
-  let holder_identity_client = get_client_and_create_account(&storage_holder).await?;
+  let holder_identity_client = get_funded_client(&storage_holder).await?;
 
   let (mut issuer_document, fragment_issuer): (IotaDocument, String) = create_did(
     &issuer_identity_client,

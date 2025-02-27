@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::credential::CompoundJwtPresentationValidationError;
-#[cfg(feature = "wasm-resolver")]
 use identity_iota::resolver;
 use identity_iota::storage::key_id_storage::KeyIdStorageError;
 use identity_iota::storage::key_id_storage::KeyIdStorageErrorKind;
@@ -159,7 +158,6 @@ impl<'a, E: std::error::Error> Display for ErrorMessage<'a, E> {
   }
 }
 
-#[cfg(feature = "wasm-resolver")]
 impl From<resolver::Error> for WasmError<'_> {
   fn from(error: resolver::Error) -> Self {
     Self {
@@ -313,7 +311,7 @@ impl JsValueResult {
     self.stringify_error().map_err(identity_iota::iota::Error::JsError)
   }
 
-  pub fn to_kinesis_client_error(self) -> StdResult<JsValue, identity_iota::iota::rebased::Error> {
+  pub fn to_iota_client_error(self) -> StdResult<JsValue, identity_iota::iota::rebased::Error> {
     self
       .stringify_error()
       .map_err(|e| identity_iota::iota::rebased::Error::FfiError(e.to_string()))
@@ -361,7 +359,7 @@ impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for KeyIdStorageResu
 
 impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for StdResult<T, identity_iota::iota::rebased::Error> {
   fn from(result: JsValueResult) -> Self {
-    result.to_kinesis_client_error().and_then(|js_value| {
+    result.to_iota_client_error().and_then(|js_value| {
       js_value
         .into_serde()
         .map_err(|e| identity_iota::iota::rebased::Error::FfiError(e.to_string()))

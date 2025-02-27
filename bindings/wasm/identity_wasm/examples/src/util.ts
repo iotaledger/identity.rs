@@ -1,139 +1,91 @@
+// Copyright 2020-2025 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 import {
+    IdentityClient,
+    IdentityClientReadOnly,
     IotaDocument,
-    IotaIdentityClient,
     JwkMemStore,
     JwsAlgorithm,
+    KeyIdMemStore,
     MethodScope,
     Storage,
+    StorageSigner,
 } from "@iota/identity-wasm/node";
-import {
-    type Address,
-    AliasOutput,
-    type Client,
-    IOutputsResponse,
-    SecretManager,
-    SecretManagerType,
-    Utils,
-} from "@iota/sdk-wasm/node";
+import { IotaClient } from "@iota/iota-sdk/client";
+import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
 
-export const API_ENDPOINT = "http://localhost";
-export const FAUCET_ENDPOINT = "http://localhost/faucet/api/enqueue";
+export const IOTA_IDENTITY_PKG_ID = process.env.IOTA_IDENTITY_PKG_ID
+    || "0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818";
+export const NETWORK_NAME_FAUCET = process.env.NETWORK_NAME_FAUCET || "localnet";
+export const NETWORK_URL = process.env.NETWORK_URL || "http://127.0.0.1:9000";
+export const TEST_GAS_BUDGET = BigInt(50_000_000);
 
-/** Creates a DID Document and publishes it in a new Alias Output.
+export function getMemstorage(): Storage {
+    return new Storage(new JwkMemStore(), new KeyIdMemStore());
+}
 
-Its functionality is equivalent to the "create DID" example
-and exists for convenient calling from the other examples. */
-export async function createDid(client: Client, secretManager: SecretManagerType, storage: Storage): Promise<{
-    address: Address;
-    document: IotaDocument;
-    fragment: string;
-}> {
-    const didClient = new IotaIdentityClient(client);
-    const networkHrp: string = await didClient.getNetworkHrp();
-
-    const secretManagerInstance = new SecretManager(secretManager);
-    const walletAddressBech32 = (await secretManagerInstance.generateEd25519Addresses({
-        accountIndex: 0,
-        range: {
-            start: 0,
-            end: 1,
-        },
-        bech32Hrp: networkHrp,
-    }))[0];
-
-    console.log("Wallet address Bech32:", walletAddressBech32);
-
-    await ensureAddressHasFunds(client, walletAddressBech32);
-
-    const address: Address = Utils.parseBech32Address(walletAddressBech32);
-
+export async function createDocumentForNetwork(storage: Storage, network: string): Promise<[IotaDocument, string]> {
     // Create a new DID document with a placeholder DID.
-    // The DID will be derived from the Alias Id of the Alias Output after publishing.
-    const document = new IotaDocument(networkHrp);
+    const unpublished = new IotaDocument(network);
 
-    const fragment = await document.generateMethod(
+    const verificationMethodFragment = await unpublished.generateMethod(
         storage,
         JwkMemStore.ed25519KeyType(),
         JwsAlgorithm.EdDSA,
-        "#jwk",
-        MethodScope.AssertionMethod(),
+        "#key-1",
+        MethodScope.VerificationMethod(),
     );
 
-    // Construct an Alias Output containing the DID document, with the wallet address
-    // set as both the state controller and governor.
-    const aliasOutput: AliasOutput = await didClient.newDidOutput(address, document);
-
-    // Publish the Alias Output and get the published DID document.
-    const published = await didClient.publishDidOutput(secretManager, aliasOutput);
-
-    return { address, document: published, fragment };
+    return [unpublished, verificationMethodFragment];
 }
 
-/** Request funds from the faucet API, if needed, and wait for them to show in the wallet. */
-export async function ensureAddressHasFunds(client: Client, addressBech32: string) {
-    let balance = await getAddressBalance(client, addressBech32);
-    if (balance > BigInt(0)) {
-        return;
+export async function getFundedClient(storage: Storage): Promise<IdentityClient> {
+    if (!IOTA_IDENTITY_PKG_ID) {
+        throw new Error(`IOTA_IDENTITY_PKG_ID env variable must be provided to run the examples`);
     }
 
-    await requestFundsFromFaucet(addressBech32);
+    const iotaClient = new IotaClient({ url: NETWORK_URL });
 
-    for (let i = 0; i < 9; i++) {
-        // Wait for the funds to reflect.
-        await new Promise(f => setTimeout(f, 5000));
+    const identityClientReadOnly = await IdentityClientReadOnly.createWithPkgId(
+        iotaClient,
+        IOTA_IDENTITY_PKG_ID,
+    );
 
-        let balance = await getAddressBalance(client, addressBech32);
-        if (balance > BigInt(0)) {
-            break;
-        }
+    // generate new key
+    let generate = await storage.keyStorage().generate("Ed25519", JwsAlgorithm.EdDSA);
+
+    let publicKeyJwk = generate.jwk().toPublic();
+    if (typeof publicKeyJwk === "undefined") {
+        throw new Error("failed to derive public JWK from generated JWK");
     }
+    let keyId = generate.keyId();
+
+    // create signer from storage
+    let signer = new StorageSigner(storage, keyId, publicKeyJwk);
+    const identityClient = await IdentityClient.create(identityClientReadOnly, signer);
+
+    await requestIotaFromFaucetV0({
+        host: getFaucetHost(NETWORK_NAME_FAUCET),
+        recipient: identityClient.senderAddress(),
+    });
+
+    const balance = await iotaClient.getBalance({ owner: identityClient.senderAddress() });
+    if (balance.totalBalance === "0") {
+        throw new Error("Balance is still 0");
+    } else {
+        console.log(`Received gas from faucet: ${balance.totalBalance} for owner ${identityClient.senderAddress()}`);
+    }
+
+    return identityClient;
 }
 
-/** Returns the balance of the given Bech32-encoded address. */
-async function getAddressBalance(client: Client, addressBech32: string): Promise<bigint> {
-    const outputIds: IOutputsResponse = await client.basicOutputIds([
-        { address: addressBech32 },
-        { hasExpiration: false },
-        { hasTimelock: false },
-        { hasStorageDepositReturn: false },
-    ]);
-    const outputs = await client.getOutputs(outputIds.items);
+export async function createDidDocument(
+    identityClient: IdentityClient,
+    unpublished: IotaDocument,
+): Promise<IotaDocument> {
+    let tx = identityClient.publishDidDocument(unpublished);
+    let txOutput = await tx.execute(identityClient);
 
-    let totalAmount = BigInt(0);
-    for (const output of outputs) {
-        totalAmount += output.output.getAmount();
-    }
-
-    return totalAmount;
-}
-
-/** Request tokens from the faucet API. */
-async function requestFundsFromFaucet(addressBech32: string) {
-    const requestObj = JSON.stringify({ address: addressBech32 });
-    let errorMessage, data;
-    try {
-        const response = await fetch(FAUCET_ENDPOINT, {
-            method: "POST",
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-            },
-            body: requestObj,
-        });
-        if (response.status === 202) {
-            errorMessage = "OK";
-        } else if (response.status === 429) {
-            errorMessage = "too many requests, please try again later.";
-        } else {
-            data = await response.json();
-            // @ts-ignore
-            errorMessage = data.error.message;
-        }
-    } catch (error) {
-        errorMessage = error;
-    }
-
-    if (errorMessage != "OK") {
-        throw new Error(`failed to get funds from faucet: ${errorMessage}`);
-    }
+    return txOutput.output;
 }

@@ -33,6 +33,7 @@ use identity_iota_interaction::types::id::UID;
 use identity_iota_interaction::types::object::Owner;
 use identity_iota_interaction::types::TypeTag;
 use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::OptionalSync;
 use secret_storage::Signer;
 use serde;
 use serde::Deserialize;
@@ -72,6 +73,7 @@ pub type IdentityData = (
 );
 
 /// An on-chain object holding a DID Document.
+#[derive(Clone)]
 pub enum Identity {
   /// A legacy IOTA Stardust's Identity.
   Legacy(UnmigratedAlias),
@@ -98,7 +100,7 @@ impl Identity {
 }
 
 /// An on-chain entity that wraps a DID Document.
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct OnChainIdentity {
   id: UID,
   multi_controller: Multicontroller<Vec<u8>>,
@@ -452,7 +454,7 @@ impl TransactionInternal for CreateIdentityTx {
     client: &IdentityClient<S>,
   ) -> Result<TransactionOutputInternal<Self::Output>, Error>
   where
-    S: Signer<IotaKeySignature> + Sync,
+    S: Signer<IotaKeySignature> + OptionalSync,
   {
     let IdentityBuilder {
       did_doc,
@@ -463,7 +465,7 @@ impl TransactionInternal for CreateIdentityTx {
       .pack(StateMetadataEncoding::default())
       .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
     let programmable_transaction = if controllers.is_empty() {
-      IdentityMoveCallsAdapter::new_identity(&did_doc, client.package_id())?
+      IdentityMoveCallsAdapter::new_identity(&did_doc, client.package_id()).await?
     } else {
       let threshold = match threshold {
         Some(t) => t,

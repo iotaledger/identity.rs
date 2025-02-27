@@ -57,7 +57,7 @@ impl WasmStatusList2021Entry {
     self.0.status_list_credential().to_string()
   }
 
-  /// Downcasts {@link this} to {@link Status}
+  /// Downcasts {@link StatusList2021Entry} to {@link Status}
   #[wasm_bindgen(js_name = "toStatus")]
   pub fn to_status(self) -> Result<WasmStatus> {
     Ok(
