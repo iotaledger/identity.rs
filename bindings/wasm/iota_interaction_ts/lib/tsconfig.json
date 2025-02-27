@@ -3,10 +3,6 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "~identity_wasm": [
-        "../node/identity_wasm",
-        "./identity_wasm.js"
-      ],
       "../lib": [
         "."
       ]
