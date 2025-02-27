@@ -175,7 +175,10 @@ pub trait IdentityMoveCalls {
   where
     F: ControllerIntentFnInternalT<Self::NativeTxBuilder>;
 
-  async fn new_identity(did_doc: Option<&[u8]>, package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error>;
+  async fn new_identity(
+    did_doc: Option<&[u8]>,
+    package_id: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
   fn new_with_controllers<C: IntoIterator<Item = (IotaAddress, u64)>>(
     did_doc: Option<&[u8]>,

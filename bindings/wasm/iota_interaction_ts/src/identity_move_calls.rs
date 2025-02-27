@@ -476,7 +476,10 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     .map_err(TsSdkError::from)
   }
 
-  async fn new_identity(did_doc: Option<&[u8]>, package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
+  async fn new_identity(
+    did_doc: Option<&[u8]>,
+    package_id: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error> {
     let package = package_id.to_string();
 
     identity_new(did_doc, &package)
