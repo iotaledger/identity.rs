@@ -182,6 +182,8 @@ function getSignatureValue(signature: Signature): string {
 
 /**
  * Helper function to pause execution.
+ *
+ * @param durationMs time to sleep in ms
  */
 export function sleep(durationMs: number) {
     return new Promise(resolve => setTimeout(resolve, durationMs));
