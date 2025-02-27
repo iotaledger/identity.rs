@@ -55,7 +55,7 @@ module iota_identity::identity {
     }
 
     /// On-chain Identity.
-    public struct Identity has key, store {
+    public struct Identity has key {
         id: UID,
         /// Same as stardust `state_metadata`.
         did_doc: Multicontroller<Option<vector<u8>>>,
@@ -658,7 +658,7 @@ module iota_identity::identity {
 #[test_only]
 module iota_identity::identity_tests {
     use iota::test_scenario;
-    use iota_identity::identity::{new, ENotADidDocument, Identity, new_with_controllers};
+    use iota_identity::identity::{new, ENotADidDocument, Identity, new_with_controllers, EDeletedIdentity};
     use iota_identity::config_proposal::Modify;
     use iota_identity::multicontroller::{EExpiredProposal, EThresholdNotReached};
     use iota_identity::controller::ControllerCap;
@@ -1060,6 +1060,36 @@ module iota_identity::identity_tests {
 
         assert!(identity.deleted());
         identity.delete();
+
+        scenario.end();
+        clock::destroy_for_testing(clock);
+    }
+
+    #[test, expected_failure(abort_code = EDeletedIdentity)]
+    fun updating_did_with_none_deletes_it() {
+        let controller = @0x1;
+        let mut scenario = test_scenario::begin(controller);
+        let clock = clock::create_for_testing(scenario.ctx());
+
+        let _ = new(option::some(b"DID"), &clock, scenario.ctx());
+
+        scenario.next_tx(controller);
+
+        let mut identity = scenario.take_shared<Identity>();
+        let mut cap = scenario.take_from_address<ControllerCap>(controller);
+        let (token, borrow) = cap.borrow();
+        identity.propose_update(&token, option::none(), option::none(), &clock, scenario.ctx());
+
+        assert!(identity.deleted_did());
+
+        scenario.next_tx(controller);
+
+        // This should fail
+        identity.propose_update(&token, option::some(b"DID"), option::none(), &clock, scenario.ctx());
+
+        cap.put_back(token, borrow);
+        test_scenario::return_to_address(controller, cap);
+        test_scenario::return_shared(identity);
 
         scenario.end();
         clock::destroy_for_testing(clock);
