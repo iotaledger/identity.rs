@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build:src": "cargo build --lib --release --target wasm32-unknown-unknown --target-dir ../target",
-    "build:src:node": "cargo build --lib --release --target wasm32-unknown-unknown --features keytool-signer",
+    "build:src:node": "cargo build --lib --release --target wasm32-unknown-unknown --features keytool-signer --target-dir ../target",
     "bundle:nodejs": "wasm-bindgen ../target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --weak-refs --target nodejs --out-dir node && node ../build/node iota_interaction_ts && tsc --project ./lib/tsconfig.json && node ../build/replace_paths ./lib/tsconfig.json node iota_interaction_ts",
     "bundle:web": "wasm-bindgen ../target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --target web --out-dir web && node ../build/web iota_interaction_ts && tsc --project ./lib/tsconfig.web.json && node ../build/replace_paths ./lib/tsconfig.web.json web iota_interaction_ts",
     "build:nodejs": "npm run build:src:node && npm run bundle:nodejs",

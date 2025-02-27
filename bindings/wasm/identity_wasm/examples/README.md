@@ -12,7 +12,10 @@ Examples can be run against
 - a local IOTA node
 - or an existing network, e.g. the IOTA testnet
 
-When setting up the local node, you'll also need to publish an identity package as described in [Getting Started](../../../../README.md#getting-started), the `IOTA_IDENTITY_PKG_ID`. You'll need this ID to be able to run the examples against the local node.
+When setting up the local node, you'll also need to publish an identity package as described in
+[Getting Started](../../../../README.md#getting-started).
+You'll also need to provide an environment variable `IOTA_IDENTITY_PKG_ID` set to the package-id of your locally deployed
+identity package, to be able to run the examples against the local node.
 
 In case of running the examples against an existing network, this network needs to have a faucet to fund your accounts (the IOTA testnet (`https://api.testnet.iota.cafe`) supports this), and you need to specify this via `NETWORK_URL`.
 
@@ -42,7 +45,7 @@ Build the bindings:
 npm run build
 ```
 
-Then, run an example using the following command, environment variables depend on you setup, see [Environment variables](#environment-variables).
+Then, run an example using the following command, environment variables depend on your setup, see [Environment variables](#environment-variables).
 
 ```bash
 IOTA_IDENTITY_PKG_ID=0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818 npm run example:node -- <example-name>
@@ -77,7 +80,7 @@ The following advanced examples are available:
 | [4_custom_resolution](src/1_advanced/4_custom_resolution.ts) | Demonstrates how to set up a resolver using custom handlers.                                             |
 | [5_domain_linkage](src/1_advanced/5_domain_linkage.ts)       | Demonstrates how to link a domain and a DID and verify the linkage.                                      |
 | [6_sd_jwt](src/1_advanced/6_sd_jwt.ts)                       | Demonstrates how to create a selective disclosure verifiable credential                                  |
-| [7_domain_linkage](src/1_advanced/7_status_list_2021.ts)     | Demonstrates how to revoke a credential using `StatusList2021`.                                          |
+| [7_status_list_2021](src/1_advanced/7_status_list_2021.ts)   | Demonstrates how to revoke a credential using `StatusList2021`.                                          |
 | [8_zkp](./1_advanced/8_zkp.ts)                               | Demonstrates how to create an Anonymous Credential with BBS+.                                            |
 | [9_zkp_revocation](./1_advanced/9_zkp_revocation.ts)         | Demonstrates how to revoke a credential.                                                                 |
 
