@@ -10,6 +10,9 @@ inputs:
   input-artifact-name:
     description: "Name used for the input Wasm build artifact"
     required: true
+  working-directory:
+    description: "Directory to publish from"
+    required: true
   dry-run:
     description: "'true' = only log potential result; 'false' = publish'"
     required: true
@@ -33,7 +36,7 @@ runs:
       shell: sh
       env:
         NODE_AUTH_TOKEN: ${{ inputs.npm-token }}
-      working-directory: bindings/wasm
+      working-directory: ${{ inputs.working-directory }}
       # will publish 'latest' tag if no tag is passed
       run: |
         echo "dry-run: '${{ inputs.dry-run }}'"
