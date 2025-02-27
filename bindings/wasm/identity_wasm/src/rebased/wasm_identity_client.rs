@@ -41,6 +41,10 @@ pub struct WasmIotaTransactionBlockResponseEssence {
   pub effects_created: Option<Vec<WasmOwnedObjectRef>>,
 }
 
+/// A client to interact with identities on the IOTA chain.
+///
+/// Used for read and write operations. If you just want read capabilities,
+/// you can also use {@link IdentityClientReadOnly}, which does not need an account and signing capabilities.
 #[wasm_bindgen(js_name = IdentityClient)]
 pub struct WasmIdentityClient(pub(crate) IdentityClient<WasmTransactionSigner>);
 

@@ -20,6 +20,9 @@ use crate::jose::WasmJwkUse;
 use crate::jose::WasmJwsAlgorithm;
 use core::ops::Deref;
 
+/// JSON Web Key.
+///
+/// [More Info](https://tools.ietf.org/html/rfc7517#section-4)
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[wasm_bindgen(js_name = Jwk, inspectable)]
 pub struct WasmJwk(pub(crate) Jwk);
