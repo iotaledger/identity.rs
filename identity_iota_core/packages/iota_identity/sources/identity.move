@@ -30,6 +30,8 @@ module iota_identity::identity {
     const ENoUpgrade: u64 = 4;
     /// Cannot delete identity.
     const ECannotDelete: u64 = 5;
+    /// Identity had been deleted.
+    const EDeletedIdentity: u64 = 6;
 
     const PACKAGE_VERSION: u64 = 0;
 
@@ -239,6 +241,8 @@ module iota_identity::identity {
         clock: &Clock,
         ctx: &mut TxContext,
     ): Option<ID> {
+        assert!(!self.deleted, EDeletedIdentity);
+
         let proposal_id = self.did_doc.create_proposal(
             cap,
             delete_proposal::new(),
@@ -266,6 +270,7 @@ module iota_identity::identity {
         clock: &Clock,
         ctx: &mut TxContext,
     ) {
+        assert!(!self.deleted, EDeletedIdentity);
         let _ = self.execute_proposal<Delete>(
             cap,
             proposal_id,
@@ -286,6 +291,7 @@ module iota_identity::identity {
         expiration: Option<u64>,
         ctx: &mut TxContext,
     ): ID {
+        assert!(!self.deleted, EDeletedIdentity);
         let identity_address = self.id().to_address();
         let proposal_id = self.did_doc.create_proposal(
             cap,
@@ -315,6 +321,7 @@ module iota_identity::identity {
         expiration: Option<u64>,
         ctx: &mut TxContext,
     ): Option<ID> {
+        assert!(!self.deleted, EDeletedIdentity);
         assert!(self.version < PACKAGE_VERSION, ENoUpgrade);
         let proposal_id = self.did_doc.create_proposal(
             cap, 
@@ -342,6 +349,7 @@ module iota_identity::identity {
         proposal_id: ID,
         ctx: &mut TxContext,
     ) {
+        assert!(!self.deleted, EDeletedIdentity);
         self.execute_proposal<Upgrade>(cap, proposal_id, ctx).unwrap();
         self.migrate();
         emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
@@ -364,6 +372,7 @@ module iota_identity::identity {
         clock: &Clock,
         ctx: &mut TxContext,
     ): Option<ID> {
+        assert!(!self.deleted && !self.deleted_did, EDeletedIdentity);
         if (updated_doc.is_some()) {
             let doc = updated_doc.borrow();
             assert!(doc.is_empty() || is_did_output(doc), ENotADidDocument);
@@ -396,6 +405,7 @@ module iota_identity::identity {
         clock: &Clock,
         ctx: &mut TxContext,
     ) {
+        assert!(!self.deleted && !self.deleted_did, EDeletedIdentity);
         let updated_did_value = self
             .execute_proposal<UpdateValue<Option<vector<u8>>>>(cap, proposal_id, ctx)
             .unpack_action()
@@ -424,6 +434,7 @@ module iota_identity::identity {
         controllers_to_update: VecMap<ID, u64>,
         ctx: &mut TxContext,
     ): Option<ID> {
+        assert!(!self.deleted, EDeletedIdentity);
         let proposal_id = config_proposal::propose_modify(
             &mut self.did_doc,
             cap,
@@ -454,6 +465,7 @@ module iota_identity::identity {
         proposal_id: ID,
         ctx: &mut TxContext
     ) {
+        assert!(!self.deleted, EDeletedIdentity);
         config_proposal::execute_modify(
             &mut self.did_doc,
             cap,
@@ -472,6 +484,7 @@ module iota_identity::identity {
         recipients: vector<address>,
         ctx: &mut TxContext,
     ): ID {
+        assert!(!self.deleted, EDeletedIdentity);
         let proposal_id = transfer_proposal::propose_send(
             &mut self.did_doc,
             cap,
@@ -502,6 +515,7 @@ module iota_identity::identity {
         objects: vector<ID>,
         ctx: &mut TxContext,
     ): ID {
+        assert!(!self.deleted, EDeletedIdentity);
         let identity_address = self.id().to_address();
         let proposal_id = borrow_proposal::propose_borrow(
             &mut self.did_doc,
@@ -534,6 +548,7 @@ module iota_identity::identity {
         voting_power: u64,
         ctx: &mut TxContext, 
     ): Option<ID> {
+        assert!(!self.deleted, EDeletedIdentity);
         let mut new_controllers = vec_map::empty();
         new_controllers.insert(new_controller_addr, voting_power);
 
@@ -547,6 +562,7 @@ module iota_identity::identity {
         proposal_id: ID,
         ctx: &mut TxContext,
     ): Action<T> {
+        assert!(!self.deleted, EDeletedIdentity);
         emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
         self.did_doc.execute_proposal(cap, proposal_id, ctx)
     }
