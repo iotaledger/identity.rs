@@ -343,6 +343,7 @@ pub async fn make_address(key_type: SignatureScheme) -> anyhow::Result<IotaAddre
   let output = Command::new("iota")
     .arg("client")
     .arg("new-address")
+    .arg("--key-scheme")
     .arg(key_type.to_string())
     .arg("--json")
     .output()

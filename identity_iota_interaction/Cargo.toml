@@ -22,11 +22,11 @@ serde.workspace = true
 serde_json.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.8.1-rc" }
-move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.8.1-rc" }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.9.2-rc" }
+move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.9.2-rc" }
 tokio = { version = "1", optional = true, default-features = false, features = ["process"] }
 
-shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.8.1-rc" }
+shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.9.2-rc" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 bcs = "0.1.4"
