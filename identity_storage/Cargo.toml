@@ -22,7 +22,6 @@ identity_credential = { version = "=1.5.0", path = "../identity_credential", def
 identity_did = { version = "=1.5.0", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.5.0", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=1.5.0", path = "../identity_iota_core", default-features = false, optional = true }
-identity_iota_interaction = { version = "=1.5.0", path = "../identity_iota_interaction", default-features = false, optional = true }
 identity_verification = { version = "=1.5.0", path = "../identity_verification", default-features = false }
 iota-crypto = { version = "0.23.2", default-features = false, features = ["ed25519", "random"], optional = true }
 json-proof-token = { workspace = true, optional = true }
@@ -34,6 +33,12 @@ serde_json.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync"], optional = true }
 zkryptium = { workspace = true, optional = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+identity_iota_interaction = { version = "=1.5.0", path = "../identity_iota_interaction", optional = true}
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+identity_iota_interaction = { version = "=1.5.0", path = "../identity_iota_interaction", default-features = false, optional = true}
 
 [dev-dependencies]
 identity_credential = { version = "=1.5.0", path = "../identity_credential", features = ["revocation-bitmap"] }
