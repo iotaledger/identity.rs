@@ -21,7 +21,7 @@ cfg_if::cfg_if! {
   }
 }
 use crate::iota_interaction_adapter::AdapterError;
-use crate::iota_interaction_adapter::AdapterNativeResponse;
+use crate::iota_interaction_adapter::NativeTransactionBlockResponse;
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 
 use identity_iota_interaction::IdentityMoveCalls;
@@ -82,7 +82,7 @@ pub trait ProposalT: Sized {
   /// The output of the [`Proposal`]
   type Output;
   /// Platform-agnostic type of the IotaTransactionBlockResponse
-  type Response: IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>;
+  type Response: IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = NativeTransactionBlockResponse>;
 
   /// Creates a new [`Proposal`] with the provided action and expiration.
   async fn create<'i, S>(
@@ -112,7 +112,7 @@ pub trait ProposalT: Sized {
 
   /// For internal platform-agnostic usage only.
   fn parse_tx_effects_internal(
-    tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>,
+    tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = NativeTransactionBlockResponse>,
   ) -> Result<Self::Output, Error>;
 }
 
