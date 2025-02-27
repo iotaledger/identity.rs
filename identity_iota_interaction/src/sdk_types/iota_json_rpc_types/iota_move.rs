@@ -97,7 +97,7 @@ impl From<MoveValue> for IotaMoveValue {
                 IotaMoveValue::Vector(values.into_iter().map(|value| value.into()).collect())
             }
             MoveValue::Struct(value) => {
-                // Best effort Iota core type conversion
+                // Best effort IOTA core type conversion
                 let MoveStruct { type_, fields } = &value;
                 if let Some(value) = try_convert_type(type_, fields) {
                     return value;

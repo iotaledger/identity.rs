@@ -20,8 +20,8 @@ use super::super::{
     balance::Balance,
     governance::StakedIota,
     id::UID,
+    error::IotaError,
 };
-
 
 #[allow(unused)] // Kept in sync with original source, so keep as is.
 use super::timelocked_staked_iota::{TIMELOCKED_STAKED_IOTA_MODULE_NAME, TIMELOCKED_STAKED_IOTA_STRUCT_NAME};
@@ -88,8 +88,10 @@ impl<'de, T> TimeLock<T>
         T: Serialize + Deserialize<'de>,
 {
     /// Create a `TimeLock` from BCS bytes.
-    pub fn from_bcs_bytes(content: &'de [u8]) -> Result<Self, bcs::Error> {
-        bcs::from_bytes(content)
+    pub fn from_bcs_bytes(content: &'de [u8]) -> Result<Self, IotaError> {
+        bcs::from_bytes(content).map_err(|err| IotaError::ObjectDeserialization {
+            error: format!("Unable to deserialize TimeLock object: {:?}", err),
+        })
     }
 
     /// Serialize a `TimeLock` as a `Vec<u8>` of BCS.

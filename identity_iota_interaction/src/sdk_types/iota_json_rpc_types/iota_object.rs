@@ -408,7 +408,7 @@ pub trait IotaData: Sized {
     type ObjectType;
     type PackageType;
     // Code is commented out because MoveObject and MoveStructLayout
-    // introduce too many depencies
+    // introduce too many dependencies
     // fn try_from_object(object: MoveObject, layout: MoveStructLayout)
     // -> Result<Self, anyhow::Error>;
     // fn try_from_package(package: MovePackage) -> Result<Self, anyhow::Error>;
@@ -430,8 +430,8 @@ impl IotaData for IotaRawData {
     type ObjectType = IotaRawMoveObject;
     type PackageType = IotaRawMovePackage;
 
-    // try_from_object() and try_from_package() are not defined her because
-    // MoveObject and MoveStructLayout introduce too many depencies
+    // try_from_object() and try_from_package() are not defined here because
+    // MoveObject and MoveStructLayout introduce too many dependencies
     
     fn try_as_move(&self) -> Option<&Self::ObjectType> {
         match self {
@@ -462,7 +462,6 @@ impl IotaData for IotaRawData {
     }
 }
 
-
 #[derive(Debug, Deserialize, Serialize, Clone, Eq, PartialEq)]
 #[serde(tag = "dataType", rename_all = "camelCase", rename = "Data")]
 pub enum IotaParsedData {
@@ -475,8 +474,8 @@ impl IotaData for IotaParsedData {
     type ObjectType = IotaParsedMoveObject;
     type PackageType = IotaMovePackage;
 
-    // try_from_object() and try_from_package() are not defined her because
-    // MoveObject and MoveStructLayout introduce too many depencies
+    // try_from_object() and try_from_package() are not defined here because
+    // MoveObject and MoveStructLayout introduce too many dependencies
     
     fn try_as_move(&self) -> Option<&Self::ObjectType> {
         match self {
@@ -539,6 +538,9 @@ pub struct IotaParsedMoveObject {
 }
 
 impl IotaParsedMoveObject {
+    // try_from_object_read()is not defined here because
+    // MoveObject introduces too many dependencies
+    
     pub fn read_dynamic_field_value(&self, field_name: &str) -> Option<IotaMoveValue> {
         match &self.fields {
             IotaMoveStruct::WithFields(fields) => fields.get(field_name).cloned(),

@@ -211,7 +211,7 @@ pub trait IotaSignatureInner: Sized + ToFromBytes + PartialEq + Eq + Hash {
 }
 
 /// Defines the compressed version of the public key that we pass around
-/// in Iota
+/// in IOTA.
 #[serde_as]
 #[derive(
 Copy,
@@ -223,7 +223,7 @@ PartialOrd,
 Ord,
 Serialize,
 Deserialize,
-Debug
+Debug // schemars::JsonSchema and AsRef are omitted here, having Debug instead 
 )]
 pub struct AuthorityPublicKeyBytes(
     #[serde_as(as = "Readable<Base64, Bytes>")]

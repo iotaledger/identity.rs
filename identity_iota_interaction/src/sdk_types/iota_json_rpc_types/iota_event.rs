@@ -37,7 +37,7 @@ pub struct IotaEvent {
     #[serde_as(as = "DisplayFromStr")]
     /// Move module where this event was emitted.
     pub transaction_module: Identifier,
-    /// Sender's Iota address.
+    /// Sender's IOTA address.
     pub sender: IotaAddress,
     #[serde_as(as = "IotaStructTag")]
     /// Move event type.

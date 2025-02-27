@@ -38,9 +38,9 @@ pub type CheckpointSequenceNumber = u64;
 
 #[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq, Default)]
 #[serde(
-rename_all = "camelCase",
-rename = "TransactionBlockResponseOptions",
-default
+    rename_all = "camelCase",
+    rename = "TransactionBlockResponseOptions",
+    default
 )]
 pub struct IotaTransactionBlockResponseOptions {
     /// Whether to show transaction input data. Default to be False

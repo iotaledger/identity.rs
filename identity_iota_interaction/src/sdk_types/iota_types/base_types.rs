@@ -117,7 +117,7 @@ pub struct MoveObjectType(MoveObjectType_);
 pub enum MoveObjectType_ {
     /// A type that is not `0x2::coin::Coin<T>`
     Other(StructTag),
-    /// A IOTA coin (i.e., `0x2::coin::Coin<0x2::iota::IOTA>`)
+    /// An IOTA coin (i.e., `0x2::coin::Coin<0x2::iota::IOTA>`)
     GasCoin,
     /// A record of a staked IOTA coin (i.e., `0x3::staking_pool::StakedIota`)
     StakedIota,
@@ -371,7 +371,7 @@ impl From<MoveObjectType> for TypeTag {
     }
 }
 
-/// Type of a Iota object
+/// Type of an IOTA object
 #[derive(Clone, Serialize, Deserialize, Ord, PartialOrd, Eq, PartialEq, Debug)]
 pub enum ObjectType {
     /// Move package containing one or more bytecode modules
