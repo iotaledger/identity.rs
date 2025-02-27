@@ -16,6 +16,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
+/// A service wrapper for a [Linked Verifiable Presentation Service Endpoint](https://identity.foundation/linked-vp/#linked-verifiable-presentation-service-endpoint).
 #[wasm_bindgen(js_name = LinkedVerifiablePresentationService, inspectable)]
 pub struct WasmLinkedVerifiablePresentationService(LinkedVerifiablePresentationService);
 

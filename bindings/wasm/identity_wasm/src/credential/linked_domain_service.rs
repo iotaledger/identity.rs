@@ -16,11 +16,11 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
+/// A service wrapper for a
+/// [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
 #[wasm_bindgen(js_name = LinkedDomainService, inspectable)]
 pub struct WasmLinkedDomainService(LinkedDomainService);
 
-/// A service wrapper for a
-/// [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
 #[wasm_bindgen(js_class = LinkedDomainService)]
 impl WasmLinkedDomainService {
   /// Constructs a new {@link LinkedDomainService} that wraps a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).

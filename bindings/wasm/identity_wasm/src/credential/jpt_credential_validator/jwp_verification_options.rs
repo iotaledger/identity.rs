@@ -6,6 +6,7 @@ use crate::error::WasmResult;
 use identity_iota::document::verifiable::JwpVerificationOptions;
 use wasm_bindgen::prelude::*;
 
+/// Holds additional options for verifying a JWP
 #[wasm_bindgen(js_name = JwpVerificationOptions, inspectable)]
 #[derive(Clone, Debug, Default)]
 pub struct WasmJwpVerificationOptions(pub(crate) JwpVerificationOptions);
