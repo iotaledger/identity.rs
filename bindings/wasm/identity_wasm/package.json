@@ -1,7 +1,10 @@
 {
   "name": "@iota/identity-wasm",
-  "version": "1.4.0",
+  "author": "IOTA Foundation <info@iota.org>",
   "description": "WASM bindings for IOTA Identity - A Self Sovereign Identity Framework implementing the DID and VC standards from W3C. To be used in Javascript/Typescript",
+  "homepage": "https://www.iota.org",
+  "version": "1.4.0",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/iotaledger/identity.rs.git"
@@ -37,18 +40,9 @@
   "config": {
     "CYPRESS_VERIFY_TIMEOUT": 100000
   },
-  "contributors": [
-    "Jelle Millenaar <jelle.millenaar@iota.org>",
-    "Devin Turner <devin.turner@iota.org>",
-    "Tensor <tensordeveloper@gmail.com>",
-    "Thoralf Müller <thoralf.mue@gmail.com>",
-    "Sebastian Heusser <huhn.dev@gmail.com>"
-  ],
-  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/iotaledger/identity.rs/issues"
   },
-  "homepage": "https://www.iota.org",
   "publishConfig": {
     "access": "public"
   },

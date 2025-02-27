@@ -1,7 +1,10 @@
 {
   "name": "@iota/iota-interaction-ts",
-  "version": "0.1.0",
+  "author": "IOTA Foundation <info@iota.org>",
   "description": "WASM bindings importing types from the IOTA Client typescript SDK to be used in Rust",
+  "homepage": "https://www.iota.org",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/iotaledger/identity.rs.git"
@@ -16,12 +19,9 @@
     "build": "npm run build:web && npm run build:nodejs",
     "fmt": "dprint fmt"
   },
-  "contributors": [],
-  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/iotaledger/identity.rs/issues"
   },
-  "homepage": "https://www.iota.org",
   "publishConfig": {
     "access": "public"
   },
