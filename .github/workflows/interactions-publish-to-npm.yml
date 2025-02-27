@@ -1,4 +1,4 @@
-name: Wasm publish to npm
+name: Interaction publish to npm
 
 on:
   workflow_dispatch:
