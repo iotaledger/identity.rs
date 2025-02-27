@@ -106,7 +106,7 @@ impl<T> Credential<T> {
   /// Returns a new `Credential` based on the `CredentialBuilder` configuration.
   pub fn from_builder(builder: CredentialBuilder<T>) -> Result<Self> {
     let this: Self = Self {
-      context: builder.context.into(),
+      context: OneOrMany::Many(builder.context),
       id: builder.id,
       types: builder.types.into(),
       credential_subject: builder.subject.into(),
@@ -199,9 +199,12 @@ where
 
 #[cfg(test)]
 mod tests {
+  use identity_core::common::OneOrMany;
+  use identity_core::common::Url;
   use identity_core::convert::FromJson;
 
   use crate::credential::Credential;
+  use crate::credential::Subject;
 
   const JSON1: &str = include_str!("../../tests/fixtures/credential-1.json");
   const JSON2: &str = include_str!("../../tests/fixtures/credential-2.json");
@@ -230,5 +233,18 @@ mod tests {
     let _credential: Credential = Credential::from_json(JSON10).unwrap();
     let _credential: Credential = Credential::from_json(JSON11).unwrap();
     let _credential: Credential = Credential::from_json(JSON12).unwrap();
+  }
+
+  #[test]
+  fn credential_with_single_context_is_list_of_contexts_with_single_item() {
+    let credential = Credential::builder(serde_json::Value::default())
+      .id(Url::parse("https://example.com/credentials/123").unwrap())
+      .issuer(Url::parse("https://example.com").unwrap())
+      .subject(Subject::with_id(Url::parse("https://example.com/users/123").unwrap()))
+      .build()
+      .unwrap();
+
+    assert!(matches!(credential.context, OneOrMany::Many(_)));
+    assert_eq!(credential.context.len(), 1);
   }
 }
