@@ -128,8 +128,8 @@ module iota_identity::migration_tests {
         controller_a_cap.put_back(token, borrow);
 
         // assert the metadata is b"DID"
-        let did = identity.did_doc().value();
-        assert!(did == b"DID", 0);
+        let did = identity.did_doc().value().borrow();
+        assert!(did == &b"DID", 0);
 
         test_scenario::return_to_address(controller_a, controller_a_cap);
         test_scenario::return_shared(registry);

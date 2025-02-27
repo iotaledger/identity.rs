@@ -970,7 +970,7 @@ module iota_identity::identity_tests {
         let mut cap = scenario.take_from_address<ControllerCap>(controller);
         let (token, borrow) = cap.borrow();
 
-        let _proposal_id = identity.propose_update(&token, b"NOT DID", option::none(), &clock, scenario.ctx());
+        let _proposal_id = identity.propose_update(&token, option::some(b"NOT DID"), option::none(), &clock, scenario.ctx());
         cap.put_back(token, borrow);
 
         test_scenario::return_to_address(controller, cap);
