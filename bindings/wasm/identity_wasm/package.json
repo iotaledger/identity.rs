@@ -13,7 +13,7 @@
     "build:src": "cargo build --lib --release --target wasm32-unknown-unknown --target-dir ../target",
     "bundle:nodejs": "wasm-bindgen ../target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target nodejs --out-dir node && node ../build/node identity_wasm && tsc --project ./lib/tsconfig.json && node ../build/replace_paths ./lib/tsconfig.json node identity_wasm",
     "bundle:web": "wasm-bindgen ../target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --target web --out-dir web && node ../build/web identity_wasm && tsc --project ./lib/tsconfig.web.json && node ../build/replace_paths ./lib/tsconfig.web.json web identity_wasm",
-    "build:nodejs": "npm run build:src && npm run bundle:nodejs", 
+    "build:nodejs": "npm run build:src && npm run bundle:nodejs",
     "build:web": "npm run build:src && npm run bundle:web",
     "build:docs": "typedoc && npm run fix_docs",
     "build:examples:web": "tsc --project ./examples/tsconfig.web.json && node ../build/replace_paths ./examples/tsconfig.web.json ./examples/dist identity_wasm resolve",
@@ -78,7 +78,7 @@
     "wasm-opt": "^1.3.0"
   },
   "dependencies": {
-    "@iota/iota-interaction-ts": "file:../iota_interaction_ts/node",
+    "@iota/iota-interaction-ts": "file:../iota_interaction_ts",
     "@noble/ed25519": "^1.7.3",
     "@noble/hashes": "^1.4.0",
     "@types/node-fetch": "^2.6.2",

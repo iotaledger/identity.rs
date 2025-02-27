@@ -1,6 +1,6 @@
 {
   "name": "@iota/iota-interaction-ts",
-  "version": "1.4.0",
+  "version": "0.1.0",
   "description": "WASM bindings importing types from the IOTA Client typescript SDK to be used in Rust",
   "repository": {
     "type": "git",
