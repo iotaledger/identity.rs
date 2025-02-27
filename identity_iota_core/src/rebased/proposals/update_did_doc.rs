@@ -63,8 +63,8 @@ impl UpdateDidDocument {
   }
 
   /// Returns the serialized DID document bytes.
-  pub fn did_document_bytes(&self) -> &[u8] {
-    &self.0
+  pub fn did_document_bytes(&self) -> Option<&[u8]> {
+    self.0.as_deref()
   }
 }
 
