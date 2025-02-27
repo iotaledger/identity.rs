@@ -151,10 +151,10 @@ jobs:
 
       - name: Run tests excluding `custom_time` feature
         if: matrix.os != 'windows-latest'
-        run: cargo test --workspace --release -- --test-threads=2
+        run: cargo test --workspace --release -- --test-threads=1
 
       - name: Run tests with `custom_time` feature
-        run: cargo test --test custom_time --features="custom_time" -- --test-threads=2
+        run: cargo test --test custom_time --features="custom_time" -- --test-threads=1
 
       - name: Run Rust examples
         # run examples only on ubuntu for now
