@@ -175,26 +175,12 @@ pub trait IdentityMoveCalls {
   where
     F: ControllerIntentFnInternalT<Self::NativeTxBuilder>;
 
-  async fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error>;
+  async fn new_identity(did_doc: Option<&[u8]>, package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
   fn new_with_controllers<C: IntoIterator<Item = (IotaAddress, u64)>>(
-    did_doc: &[u8],
+    did_doc: Option<&[u8]>,
     controllers: C,
     threshold: u64,
-    package_id: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
-
-  async fn propose_deactivation(
-    identity: OwnedObjectRef,
-    capability: ObjectRef,
-    expiration: Option<u64>,
-    package_id: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
-
-  fn execute_deactivation(
-    identity: OwnedObjectRef,
-    capability: ObjectRef,
-    proposal_id: ObjectID,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
@@ -224,8 +210,7 @@ pub trait IdentityMoveCalls {
   async fn propose_update(
     identity: OwnedObjectRef,
     capability: ObjectRef,
-    #[cfg(not(target_arch = "wasm32"))] did_doc: impl AsRef<[u8]> + Send,
-    #[cfg(target_arch = "wasm32")] did_doc: impl AsRef<[u8]>,
+    did_doc: Option<&[u8]>,
     expiration: Option<u64>,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;

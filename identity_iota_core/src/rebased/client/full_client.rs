@@ -283,7 +283,7 @@ impl PublishDidTx {
       .await?;
 
     Ok(TransactionOutputInternal {
-      output: identity.did_doc,
+      output: identity.did_doc.expect("the created identity has DID Document"),
       response,
     })
   }
