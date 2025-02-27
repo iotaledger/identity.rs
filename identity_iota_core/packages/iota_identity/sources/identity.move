@@ -10,14 +10,13 @@ module iota_identity::identity {
     use iota_identity::{
         multicontroller::{Self, Multicontroller, Action},
         controller::{DelegationToken, ControllerCap},
-        update_value_proposal,
+        update_value_proposal::{Self, UpdateValue},
         config_proposal,
         transfer_proposal::{Self, Send},
         borrow_proposal::{Self, Borrow},
-        did_deactivation_proposal::{Self, DidDeactivation},
         controller_proposal::{Self, ControllerExecution},
         upgrade_proposal::{Self, Upgrade},
-        did_deletion_proposal::{Self, DidDeletion},
+        delete_proposal::{Self, Delete},
     };
 
     const ENotADidDocument: u64 = 0;
@@ -32,7 +31,7 @@ module iota_identity::identity {
     /// Cannot delete identity.
     const ECannotDelete: u64 = 5;
 
-    const PACKAGE_VERSION: u64 = 1;
+    const PACKAGE_VERSION: u64 = 0;
 
     // ===== Events ======
     /// Event emitted when an `identity`'s `Proposal` with `ID` `proposal` is created or executed by `controller`.
@@ -57,7 +56,7 @@ module iota_identity::identity {
     public struct Identity has key, store {
         id: UID,
         /// Same as stardust `state_metadata`.
-        did_doc: Multicontroller<vector<u8>>,
+        did_doc: Multicontroller<Option<vector<u8>>>,
         /// If this `Identity` has been migrated from a Stardust
         /// AliasOutput, this field must be set with its AliasID.
         legacy_id: Option<ID>,
@@ -69,11 +68,14 @@ module iota_identity::identity {
         version: u64,
         /// Flag to verify if this Identity has been deleted.
         deleted: bool,
+        /// Set when the DID Document of this Identity has been deleted.
+        /// Once a DID Document has been deleted it CANNOT be activated again.
+        deleted_did: bool,
     }
 
     /// Creates an `Identity` with a single controller.
     public fun new(
-        doc: vector<u8>,
+        doc: Option<vector<u8>>,
         clock: &Clock,
         ctx: &mut TxContext
     ): ID {
@@ -83,7 +85,7 @@ module iota_identity::identity {
     /// Creates an identity specifying its `created` timestamp.
     /// Should only be used for migration!
     public(package) fun new_with_migration_data(
-        doc: vector<u8>,
+        doc: Option<vector<u8>>,
         creation_timestamp: u64,
         legacy_id: ID,
         clock: &Clock,
@@ -101,6 +103,7 @@ module iota_identity::identity {
             updated: now,
             version: PACKAGE_VERSION,
             deleted: false,
+            deleted_did: false,
         };
         let id = object::id(&identity);
         transfer::share_object(identity);
@@ -111,7 +114,7 @@ module iota_identity::identity {
     /// Creates a new `Identity` wrapping DID DOC `doc` and controller by
     /// a single address `controller`.
     public fun new_with_controller(
-        doc: vector<u8>,
+        doc: Option<vector<u8>>,
         controller: address,
         can_delegate: bool,
         clock: &Clock,
@@ -129,6 +132,7 @@ module iota_identity::identity {
             updated: now,
             version: PACKAGE_VERSION,
             deleted: false,
+            deleted_did: false,
         };
         let id = object::id(&identity);
         transfer::share_object(identity);
@@ -140,16 +144,18 @@ module iota_identity::identity {
     /// The `weights` vectors is used to create a vector of `ControllerCap`s `controller_caps`,
     /// where `controller_caps[i].weight = weights[i]` for all `i`s in `[0, weights.length())`.
     public fun new_with_controllers(
-        doc: vector<u8>,
+        doc: Option<vector<u8>>,
         controllers: VecMap<address, u64>,
         controllers_that_can_delegate: VecMap<address, u64>,
         threshold: u64,
         clock: &Clock,
         ctx: &mut TxContext,
     ): ID {
-        assert!(is_did_output(&doc), ENotADidDocument);
         assert!(threshold >= 1, EInvalidThreshold);
         assert!(controllers.size() > 0, EInvalidControllersList);
+        if (doc.is_some()) {
+            assert!(is_did_output(doc.borrow()), ENotADidDocument);
+        };
 
         let now = clock.timestamp_ms();
         let id = object::new(ctx);
@@ -162,6 +168,7 @@ module iota_identity::identity {
             updated: now,
             version: PACKAGE_VERSION,
             deleted: false,
+            deleted_did: false,
         };
         let id = object::id(&identity);
 
@@ -193,9 +200,14 @@ module iota_identity::identity {
         self.updated
     }
 
-    /// Returns the value of flag `deleted`.
+    /// Returns the value of the flag `deleted`.
     public fun deleted(self: &Identity): bool {
         self.deleted
+    }
+
+    /// Returns the value of the flag `deleted_did`.
+    public fun deleted_did(self: &Identity): bool {
+        self.deleted_did
     }
 
     /// Returns this `Identity`'s threshold.
@@ -219,33 +231,6 @@ module iota_identity::identity {
         }
     }
 
-    /// Proposes the deactivation of the DID Document contained in this `Identity`.
-    public fun propose_deactivation(
-        self: &mut Identity,
-        cap: &DelegationToken,
-        expiration: Option<u64>,
-        clock: &Clock,
-        ctx: &mut TxContext,
-    ): Option<ID> {
-        let proposal_id = self.did_doc.create_proposal(
-            cap,
-            did_deactivation_proposal::new(),
-            expiration,
-            ctx,
-        );
-        let is_approved = self
-            .did_doc
-            .is_proposal_approved<_, DidDeactivation>(proposal_id);
- 
-        if (is_approved) {
-            self.execute_deactivation(cap, proposal_id, clock, ctx);
-            option::none()
-        } else {
-            emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, false);
-            option::some(proposal_id)
-        }
-    }
-
     /// Proposes the deletion of this `Identity`.
     public fun propose_deletion(
         self: &mut Identity,
@@ -256,13 +241,13 @@ module iota_identity::identity {
     ): Option<ID> {
         let proposal_id = self.did_doc.create_proposal(
             cap,
-            did_deletion_proposal::new(),
+            delete_proposal::new(),
             expiration,
             ctx,
         );
         let is_approved = self
             .did_doc
-            .is_proposal_approved<_, DidDeletion>(proposal_id);
+            .is_proposal_approved<_, Delete>(proposal_id);
  
         if (is_approved) {
             self.execute_deletion(cap, proposal_id, clock, ctx);
@@ -273,26 +258,7 @@ module iota_identity::identity {
         }
     }
 
-    /// Executes a proposal to deactivate this `Identity`'s DID document.
-    public fun execute_deactivation(
-        self: &mut Identity,
-        cap: &DelegationToken,
-        proposal_id: ID,
-        clock: &Clock,
-        ctx: &mut TxContext,
-    ) {
-        let _ = self.did_doc.execute_proposal<vector<u8>, DidDeactivation>(
-            cap,
-            proposal_id,
-            ctx,
-        ).unwrap();
-        self.did_doc.set_controlled_value(vector[]);
-        self.updated = clock.timestamp_ms();
-
-        emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
-    }
-
-    /// Executes a proposal to deactivate this `Identity`'s DID document.
+    /// Executes a proposal to delete this `Identity`'s DID document.
     public fun execute_deletion(
         self: &mut Identity,
         cap: &DelegationToken,
@@ -300,13 +266,13 @@ module iota_identity::identity {
         clock: &Clock,
         ctx: &mut TxContext,
     ) {
-        let _ = self.did_doc.execute_proposal<vector<u8>, DidDeletion>(
+        let _ = self.execute_proposal<Delete>(
             cap,
             proposal_id,
             ctx,
         ).unwrap();
         self.deleted = true;
-        self.did_doc.set_controlled_value(vector[]);
+        self.did_doc.set_controlled_value(option::none());
         self.updated = clock.timestamp_ms();
 
         emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
@@ -393,12 +359,15 @@ module iota_identity::identity {
     public fun propose_update(
         self: &mut Identity,
         cap: &DelegationToken,
-        updated_doc: vector<u8>,
+        updated_doc: Option<vector<u8>>,
         expiration: Option<u64>,
         clock: &Clock,
         ctx: &mut TxContext,
     ): Option<ID> {
-        assert!(is_did_output(&updated_doc), ENotADidDocument);
+        if (updated_doc.is_some()) {
+            let doc = updated_doc.borrow();
+            assert!(doc.is_empty() || is_did_output(doc), ENotADidDocument);
+        };
         let proposal_id = update_value_proposal::propose_update(
             &mut self.did_doc,
             cap,
@@ -409,7 +378,7 @@ module iota_identity::identity {
 
         let is_approved = self
             .did_doc
-            .is_proposal_approved<_, update_value_proposal::UpdateValue<vector<u8>>>(proposal_id);
+            .is_proposal_approved<_, update_value_proposal::UpdateValue<Option<vector<u8>>>>(proposal_id);
         if (is_approved) {
             self.execute_update(cap, proposal_id, clock, ctx);
             option::none()
@@ -427,12 +396,16 @@ module iota_identity::identity {
         clock: &Clock,
         ctx: &mut TxContext,
     ) {
-        update_value_proposal::execute_update(
-            &mut self.did_doc,
-            cap,
-            proposal_id,
-            ctx,
-        );
+        let updated_did_value = self
+            .execute_proposal<UpdateValue<Option<vector<u8>>>>(cap, proposal_id, ctx)
+            .unpack_action()
+            .into_inner();
+
+        if (updated_did_value.is_none()) {
+            self.deleted_did = true;
+        };
+
+        self.did_doc.set_controlled_value(updated_did_value);
 
         self.updated = clock.timestamp_ms();
         emit_proposal_event(self.id().to_inner(), cap.id(), proposal_id, true);
@@ -641,7 +614,7 @@ module iota_identity::identity {
             data[2] == 0x44     // b'D'
     }
 
-    public(package) fun did_doc(self: &Identity): &Multicontroller<vector<u8>> {
+    public(package) fun did_doc(self: &Identity): &Multicontroller<Option<vector<u8>>> {
         &self.did_doc
     }
 
@@ -686,7 +659,7 @@ module iota_identity::identity_tests {
 
         // Create a DID document with no funds and 1 controller with a weight of 1 and a threshold of 1.
         // Share the document and send the controller capability to `controller1`.
-        let _identity_id = new(b"DID", &clock, scenario.ctx());
+        let _identity_id = new(option::some(b"DID"), &clock, scenario.ctx());
 
         scenario.next_tx(controller1);
 
@@ -729,7 +702,7 @@ module iota_identity::identity_tests {
 
         // Create an identity shared by `controller1`, `controller2`, `controller3`.
         let _identity_id = new_with_controllers(
-            b"DID",
+            option::some(b"DID"),
             controllers,
             vec_map::empty(),
             2,
@@ -803,7 +776,7 @@ module iota_identity::identity_tests {
         // Controller A can execute config changes
         {
             let _ = new_with_controllers(
-                b"DID",
+                option::some(b"DID"),
                 controllers,
                 vec_map::empty(),
                 10,
@@ -838,7 +811,7 @@ module iota_identity::identity_tests {
         // Controller B alone should not be able to make changes.
         {
             let _ = new_with_controllers(
-            b"DID",
+            option::some(b"DID"),
             controllers,
             vec_map::empty(),
             10,
@@ -889,7 +862,7 @@ module iota_identity::identity_tests {
         // === First transaction ===
         // Controller B & C can execute config changes
         let _ = new_with_controllers(
-            b"DID",
+            option::some(b"DID"),
             controllers,
             vec_map::empty(),
             10,
@@ -937,7 +910,7 @@ module iota_identity::identity_tests {
         let mut scenario = test_scenario::begin(controller_a);
         let clock = clock::create_for_testing(scenario.ctx());
 
-        let _ = new(b"DID", &clock, scenario.ctx());
+        let _ = new(option::some(b"DID"), &clock, scenario.ctx());
 
         scenario.next_tx(controller_a);
         let first_identity = scenario.take_shared<Identity>();
@@ -947,7 +920,7 @@ module iota_identity::identity_tests {
 
         // Create a second identity.
         let _ = new_with_controllers(
-            b"DID",
+            option::some(b"DID"),
             controllers,
             vec_map::empty(),
             10,
@@ -988,7 +961,7 @@ module iota_identity::identity_tests {
         let mut scenario = test_scenario::begin(controller);
         let clock = clock::create_for_testing(scenario.ctx());
 
-        let _ = new(b"DID", &clock, scenario.ctx());
+        let _ = new(option::some(b"DID"), &clock, scenario.ctx());
 
         scenario.next_tx(controller);
 
@@ -1020,7 +993,7 @@ module iota_identity::identity_tests {
         controllers.insert(controller_a, 1);
         controllers.insert(controller_b, 1);
 
-        let _ = new_with_controllers(b"DID", controllers, vec_map::empty(), 2, &clock, scenario.ctx());
+        let _ = new_with_controllers(option::some(b"DID"), controllers, vec_map::empty(), 2, &clock, scenario.ctx());
 
         scenario.next_tx(controller_a);
 
@@ -1056,7 +1029,7 @@ module iota_identity::identity_tests {
         let mut scenario = test_scenario::begin(controller);
         let clock = clock::create_for_testing(scenario.ctx());
 
-        let _ = new(b"DID", &clock, scenario.ctx());
+        let _ = new(option::some(b"DID"), &clock, scenario.ctx());
 
         scenario.next_tx(controller);
 

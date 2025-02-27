@@ -26,7 +26,7 @@ module iota_identity::migration {
         assert!(state_metadata.is_some() && identity::is_did_output(state_metadata.borrow()), ENotADidOutput);
 
         let identity_id = identity::new_with_migration_data(
-            state_metadata.extract(),
+            option::some(state_metadata.extract()),
             creation_timestamp,
             alias_id,
             clock,

@@ -26,11 +26,14 @@ module iota_identity::update_value_proposal {
         proposal_id: ID,
         ctx: &mut TxContext,
     ) {
-
-
         let action = multi.execute_proposal(cap, proposal_id, ctx);
         let UpdateValue { new_value } = action.unpack_action();
 
         multi.set_controlled_value(new_value)
+    }
+
+    public(package) fun into_inner<V: store>(self: UpdateValue<V>): V {
+        let UpdateValue { new_value } = self;
+        new_value
     }
 }
