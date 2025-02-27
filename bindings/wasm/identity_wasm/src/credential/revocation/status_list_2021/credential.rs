@@ -53,7 +53,9 @@ impl From<WasmCredentialStatus> for CredentialStatus {
 #[wasm_bindgen(js_name = StatusPurpose)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum WasmStatusPurpose {
+  /// Used for revocation.
   Revocation = 0,
+  /// Used for suspension.
   Suspension = 1,
 }
 

@@ -21,6 +21,7 @@ use crate::credential::WasmUnknownCredentialContainer;
 use crate::error::Result;
 use crate::error::WasmResult;
 
+/// Represents a bundle of one or more {@link Credential}s.
 #[wasm_bindgen(js_name = Presentation, inspectable)]
 pub struct WasmPresentation(pub(crate) Presentation<UnknownCredential>);
 

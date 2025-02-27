@@ -8,6 +8,7 @@ use identity_iota::core::Url;
 use identity_iota::storage::JwsSignatureOptions;
 use wasm_bindgen::prelude::*;
 
+/// Options for creating a JSON Web Signature.
 #[wasm_bindgen(js_name = JwsSignatureOptions, inspectable)]
 pub struct WasmJwsSignatureOptions(pub(crate) JwsSignatureOptions);
 

@@ -29,6 +29,7 @@ use crate::credential::WasmProof;
 use crate::error::Result;
 use crate::error::WasmResult;
 
+/// Represents a set of claims describing an entity.
 #[wasm_bindgen(js_name = Credential, inspectable)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct WasmCredential(pub(crate) Credential);
