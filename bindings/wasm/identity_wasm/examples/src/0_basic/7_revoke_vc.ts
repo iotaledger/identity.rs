@@ -53,7 +53,7 @@ export async function revokeVC() {
         .createIdentity(unpublishedIssuerDocument)
         .finish()
         .execute(issuerClient);
-    let issuerDocument = issuerIdentity.didDocument();
+    let issuerDocument = issuerIdentity.didDocument()!;
 
     // create holder account, create identity, and publish DID document for it.
     const aliceStorage = getMemstorage();
@@ -63,7 +63,7 @@ export async function revokeVC() {
         .createIdentity(unpublishedAliceDocument)
         .finish()
         .execute(aliceClient);
-    const aliceDocument = aliceIdentity.didDocument();
+    const aliceDocument = aliceIdentity.didDocument()!;
 
     // Create a new empty revocation bitmap. No credential is revoked yet.
     const revocationBitmap = new RevocationBitmap();
@@ -165,7 +165,7 @@ export async function revokeVC() {
         .withGasBudget(TEST_GAS_BUDGET)
         .execute(issuerClient);
 
-    issuerDocument = issuerIdentity.didDocument();
+    issuerDocument = issuerIdentity.didDocument()!;
 
     // We expect the verifiable credential to be revoked.
     const resolver = new Resolver<IotaDocument>({

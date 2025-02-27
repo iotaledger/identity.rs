@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::rc::Rc;
-use std::sync::Arc;
 
 use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
@@ -633,7 +632,7 @@ impl WasmIotaDocument {
   ) -> Result<PromiseString> {
     let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
-    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let scope: MethodScope = scope.0;
     let promise: Promise = future_to_promise(async move {
       let method_fragment: String = document_lock_clone
@@ -651,7 +650,7 @@ impl WasmIotaDocument {
   /// the given `storage`.
   #[wasm_bindgen(js_name = purgeMethod)]
   pub fn purge_method(&mut self, storage: &WasmStorage, id: &WasmDIDUrl) -> Result<PromiseVoid> {
-    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let id: DIDUrl = id.0.clone();
     let promise: Promise = future_to_promise(async move {
@@ -682,7 +681,7 @@ impl WasmIotaDocument {
     payload: String,
     options: &WasmJwsSignatureOptions,
   ) -> Result<PromiseJws> {
-    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
@@ -711,7 +710,7 @@ impl WasmIotaDocument {
     payload: String,
     options: &WasmJwsSignatureOptions,
   ) -> Result<PromiseJws> {
-    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
@@ -744,7 +743,7 @@ impl WasmIotaDocument {
     options: &WasmJwsSignatureOptions,
     custom_claims: Option<RecordStringAny>,
   ) -> Result<PromiseJwt> {
-    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let credential_clone: Credential = credential.0.clone();
@@ -779,7 +778,7 @@ impl WasmIotaDocument {
     signature_options: &WasmJwsSignatureOptions,
     presentation_options: &WasmJwtPresentationOptions,
   ) -> Result<PromiseJwt> {
-    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = signature_options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let presentation_clone: Presentation<UnknownCredential> = presentation.0.clone();
@@ -812,7 +811,7 @@ impl WasmIotaDocument {
     scope: WasmMethodScope,
   ) -> Result<PromiseString> {
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
-    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let promise: Promise = future_to_promise(async move {
       let method_fragment: String = document_lock_clone
         .write()
@@ -842,7 +841,7 @@ impl WasmIotaDocument {
   ) -> Result<PromiseString> {
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let jpt_claims = jpt_claims.into_serde().wasm_result()?;
-    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options = options.into();
     let promise: Promise = future_to_promise(async move {
       let jwp: String = document_lock_clone
@@ -890,7 +889,7 @@ impl WasmIotaDocument {
     custom_claims: Option<MapStringAny>,
   ) -> Result<PromiseJpt> {
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
-    let storage_clone: Arc<WasmStorageInner> = storage.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options = options.into();
     let custom_claims = custom_claims.and_then(|claims| claims.into_serde().ok());
     let promise: Promise = future_to_promise(async move {

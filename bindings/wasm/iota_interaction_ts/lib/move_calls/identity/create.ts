@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Transaction } from "@iota/iota-sdk/transactions";
+import { bcs } from "@iota/iota-sdk/bcs";
 import { getClockRef, insertPlaceholders } from "../utils";
 
-export async function create(didDoc: Uint8Array, packageId: string): Promise<Uint8Array> {
+export async function create(didDoc: Uint8Array | undefined, packageId: string): Promise<Uint8Array> {
     const tx = new Transaction();
-    const didDocArg = tx.pure.vector("u8", didDoc);
+    const didDocArg = tx.pure(bcs.option(bcs.vector(bcs.U8)).serialize(didDoc));
     const clock = getClockRef(tx);
 
     tx.moveCall({
@@ -20,7 +21,7 @@ export async function create(didDoc: Uint8Array, packageId: string): Promise<Uin
 }
 
 export function newWithControllers(
-    didDoc: Uint8Array,
+    didDoc: Uint8Array | undefined,
     controllers: [string, number][],
     threshold: number,
     packageId: string,
@@ -38,7 +39,7 @@ export function newWithControllers(
         typeArguments: ["address", "u64"],
         arguments: [],
     });
-    const didDocArg = tx.pure.vector("u8", didDoc);
+    const didDocArg = tx.pure(bcs.option(bcs.vector(bcs.U8)).serialize(didDoc));
     const clock = getClockRef(tx);
     const thresholdArg = tx.pure.u64(threshold);
 

@@ -3,12 +3,13 @@
 
 import { SharedObjectRef } from "@iota/iota-sdk/dist/cjs/bcs/types";
 import { ObjectRef, Transaction } from "@iota/iota-sdk/transactions";
+import { bcs } from "@iota/iota-sdk/bcs";
 import { getClockRef, getControllerDelegation, insertPlaceholders, putBackDelegationToken } from "../utils";
 
 export function proposeUpdate(
     identity: SharedObjectRef,
     capability: ObjectRef,
-    didDoc: Uint8Array,
+    didDoc: Uint8Array | undefined,
     packageId: string,
     expiration?: number,
 ): Promise<Uint8Array> {
@@ -17,7 +18,7 @@ export function proposeUpdate(
     const [delegationToken, borrow] = getControllerDelegation(tx, cap, packageId);
     const identityArg = tx.sharedObjectRef(identity);
     const exp = tx.pure.option("u64", expiration);
-    const doc = tx.pure.vector("u8", didDoc);
+    const doc = tx.pure(bcs.option(bcs.vector(bcs.U8)).serialize(didDoc));
     const clock = getClockRef(tx);
 
     tx.moveCall({

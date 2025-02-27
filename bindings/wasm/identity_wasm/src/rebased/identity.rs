@@ -23,7 +23,6 @@ use crate::iota::WasmIotaDocument;
 use super::proposals::StringCouple;
 use super::proposals::WasmConfigChange;
 use super::proposals::WasmCreateConfigChangeProposalTx;
-use super::proposals::WasmCreateDeactivateDidProposalTx;
 use super::proposals::WasmCreateSendProposalTx;
 use super::proposals::WasmCreateUpdateDidProposalTx;
 use super::WasmIdentityClient;
@@ -59,9 +58,9 @@ impl WasmOnChainIdentity {
   }
 
   #[wasm_bindgen(js_name = didDocument)]
-  pub fn did_document(&self) -> Result<WasmIotaDocument> {
-    let inner_doc = self.0.try_read().wasm_result()?.did_document().clone();
-    Ok(WasmIotaDocument::from(inner_doc))
+  pub fn did_document(&self) -> Result<Option<WasmIotaDocument>> {
+    let inner_doc = self.0.try_read().wasm_result()?.did_document().cloned();
+    Ok(inner_doc.map(WasmIotaDocument::from))
   }
 
   #[wasm_bindgen(js_name = isShared)]
@@ -86,8 +85,8 @@ impl WasmOnChainIdentity {
   }
 
   #[wasm_bindgen(js_name = deactivateDid)]
-  pub fn deactivate_did(&self, expiration_epoch: Option<u64>) -> WasmCreateDeactivateDidProposalTx {
-    WasmCreateDeactivateDidProposalTx::new(self, expiration_epoch)
+  pub fn deactivate_did(&self, expiration_epoch: Option<u64>) -> WasmCreateUpdateDidProposalTx {
+    WasmCreateUpdateDidProposalTx::deactivate(self, expiration_epoch)
   }
 
   #[wasm_bindgen(js_name = updateConfig)]

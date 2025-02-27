@@ -35,7 +35,7 @@ export async function domainLinkage() {
         .createIdentity(unpublished)
         .finish()
         .execute(identityClient);
-    const document = identity.didDocument();
+    const document = identity.didDocument()!;
     const did = document.id();
 
     // =====================================================

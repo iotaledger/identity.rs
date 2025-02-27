@@ -281,10 +281,10 @@ impl WasmCreateSendProposalTx {
     };
 
     let tx_output = builder
-      .finish(&client)
+      .finish(client)
       .await
       .wasm_result()?
-      .execute_with_opt_gas_internal(self.gas_budget, &client)
+      .execute_with_opt_gas_internal(self.gas_budget, client)
       .await
       .wasm_result()?;
 

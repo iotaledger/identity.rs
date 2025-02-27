@@ -42,7 +42,7 @@ export async function zkp() {
         .createIdentity(unpublishedIssuerDocument)
         .finish()
         .execute(issuerClient);
-    const issuerDocument = issuerIdentity.didDocument();
+    const issuerDocument = issuerIdentity.didDocument()!;
 
     // ===========================================================================
     // Step 2: Issuer creates and signs a Verifiable Credential with BBS algorithm.

@@ -27,7 +27,7 @@ export async function updateIdentity() {
         .createIdentity(unpublished)
         .finish()
         .execute(identityClient);
-    const did = identity.didDocument().id();
+    const did = identity.didDocument()!.id();
 
     // Resolve the latest state of the document.
     // Technically this is equivalent to the document above.

@@ -79,7 +79,7 @@ impl From<&ArrayIToCoreDocument> for Vec<ImportedDocumentLock> {
 
 pub(crate) struct ImportedDocumentReadGuard<'a>(tokio::sync::RwLockReadGuard<'a, CoreDocument>);
 
-impl<'a> AsRef<CoreDocument> for ImportedDocumentReadGuard<'a> {
+impl AsRef<CoreDocument> for ImportedDocumentReadGuard<'_> {
   fn as_ref(&self) -> &CoreDocument {
     self.0.as_ref()
   }

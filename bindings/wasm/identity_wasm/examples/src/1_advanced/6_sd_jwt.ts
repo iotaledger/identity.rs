@@ -40,7 +40,7 @@ export async function sdJwt() {
         .createIdentity(unpublishedIssuerDocument)
         .finish()
         .execute(issuerClient);
-    const issuerDocument = issuerIdentity.didDocument();
+    const issuerDocument = issuerIdentity.didDocument()!;
 
     // Create an identity for the holder, and publish DID document for it, in this case also the subject.
     const aliceStorage = getMemstorage();
@@ -50,7 +50,7 @@ export async function sdJwt() {
         .createIdentity(unpublishedAliceDocument)
         .finish()
         .execute(aliceClient);
-    const aliceDocument = aliceIdentity.didDocument();
+    const aliceDocument = aliceIdentity.didDocument()!;
 
     // ===========================================================================
     // Step 2: Issuer creates and signs a selectively disclosable JWT verifiable credential.

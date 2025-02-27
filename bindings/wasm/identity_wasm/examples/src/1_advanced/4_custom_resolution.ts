@@ -39,7 +39,7 @@ export async function customResolution() {
         .createIdentity(unpublished)
         .finish()
         .execute(identityClient);
-    const did = identity.didDocument().id();
+    const did = identity.didDocument()!.id();
 
     // Construct a Resolver capable of resolving the did:key and iota methods.
     let handlerMap: Map<string, (did: string) => Promise<IotaDocument | KeyDocument>> = new Map();
