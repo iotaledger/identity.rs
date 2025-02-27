@@ -108,7 +108,7 @@ async fn main() -> anyhow::Result<()> {
   let validator: JwtCredentialValidator<EdDSAJwsVerifier> =
     JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
 
-  // The validator has no way of retriving the status list to check for the
+  // The validator has no way of retrieving the status list to check for the
   // revocation of the credential. Let's skip that pass and perform the operation manually.
   let mut validation_options = JwtCredentialValidationOptions::default();
   validation_options.status = StatusCheck::SkipUnsupported;
