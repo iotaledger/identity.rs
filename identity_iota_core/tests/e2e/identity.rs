@@ -102,9 +102,6 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     .execute(&alice_client)
     .await?
     .output;
-
-  dbg!("identity created");
-
   let did_doc = {
     let did = IotaDID::parse(format!("did:iota:{}", identity.id()))?;
     let mut doc = IotaDocument::new_with_id(did.clone());
@@ -128,9 +125,6 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
   else {
     anyhow::bail!("the proposal is executed");
   };
-
-  dbg!(&proposal);
-
   proposal.approve(&identity).execute(&bob_client).await?;
 
   assert_eq!(proposal.votes(), 2);
