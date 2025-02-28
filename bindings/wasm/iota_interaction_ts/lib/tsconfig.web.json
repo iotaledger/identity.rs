@@ -4,10 +4,6 @@
     "target": "ES2020",
     "baseUrl": "./",
     "paths": {
-      "~identity_wasm": [
-        "../web/identity_wasm",
-        "./identity_wasm.js"
-      ],
       "../lib": [
         "."
       ]

@@ -5,9 +5,6 @@
     "paths": {
       "@iota/identity-wasm/*": [
         "./*"
-      ],
-      "@iota/iota-interaction-ts/*": [
-        "../iota_interaction_ts/*"
       ]
     }
   }

@@ -233,6 +233,10 @@ jobs:
         run: npm ci
         working-directory: bindings/wasm/iota_interaction_ts
 
+      - name: Setup link
+        run: npm link ../iota_interaction_ts
+        working-directory: bindings/wasm/identity_wasm
+
       - name: Run Wasm examples
         run: npm run test:readme && npm run test:node
         working-directory: bindings/wasm/identity_wasm
