@@ -34,7 +34,7 @@ impl TryFrom<u8> for IntentVersion {
 }
 
 /// This enums specifies the application ID. Two intents in two different
-/// applications (i.e., Iota, Ethereum etc) should never collide, so
+/// applications (i.e., IOTA, Ethereum etc) should never collide, so
 /// that even when a signing key is reused, nobody can take a signature
 /// designated for app_1 and present it as a valid signature for an (any) intent
 /// in app_2.
@@ -158,7 +158,7 @@ impl Intent {
 }
 
 /// Intent Message is a wrapper around a message with its intent. The message
-/// can be any type that implements [trait Serialize]. *ALL* signatures in Iota
+/// can be any type that implements [trait Serialize]. *ALL* signatures in IOTA
 /// must commits to the intent message, not the message itself. This guarantees
 /// any intent message signed in the system cannot collide with another since
 /// they are domain separated by intent.
@@ -192,7 +192,7 @@ pub(crate) mod private {
     impl<T> SealedIntent for IntentMessage<T> {}
 }
 
-/// A 1-byte domain separator for hashing Object ID in Iota. It is starting from
+/// A 1-byte domain separator for hashing Object ID in IOTA. It is starting from
 /// 0xf0 to ensure no hashing collision for any ObjectID vs IotaAddress which is
 /// derived as the hash of `flag || pubkey`. See
 /// `iota_types::crypto::SignatureScheme::flag()`.

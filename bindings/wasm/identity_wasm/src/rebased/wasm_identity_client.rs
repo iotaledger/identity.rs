@@ -14,7 +14,7 @@ use iota_interaction_ts::bindings::WasmOwnedObjectRef;
 use iota_interaction_ts::WasmPublicKey;
 
 use identity_iota::iota::rebased::Error;
-use iota_interaction_ts::AdapterNativeResponse;
+use iota_interaction_ts::NativeTransactionBlockResponse;
 
 use super::IdentityContainer;
 use super::WasmIdentityBuilder;
@@ -41,6 +41,10 @@ pub struct WasmIotaTransactionBlockResponseEssence {
   pub effects_created: Option<Vec<WasmOwnedObjectRef>>,
 }
 
+/// A client to interact with identities on the IOTA chain.
+///
+/// Used for read and write operations. If you just want read capabilities,
+/// you can also use {@link IdentityClientReadOnly}, which does not need an account and signing capabilities.
 #[wasm_bindgen(js_name = IdentityClient)]
 pub struct WasmIdentityClient(pub(crate) IdentityClient<WasmTransactionSigner>);
 
@@ -172,7 +176,7 @@ impl WasmTransactionOutputPublishDid {
   }
 
   #[wasm_bindgen(getter)]
-  pub fn response(&self) -> AdapterNativeResponse {
+  pub fn response(&self) -> NativeTransactionBlockResponse {
     self.0.response.clone_native_response()
   }
 }

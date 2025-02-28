@@ -20,5 +20,8 @@
   ],
   "compilerOptions": {
     "skipLibCheck": true
+  },
+  "validation": {
+    "notDocumented": true,
   }
 }

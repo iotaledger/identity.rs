@@ -8,7 +8,9 @@ pub(crate) mod migration_move_calls;
 pub(crate) mod transaction_builder;
 mod utils;
 
+pub(crate) use super::rebased::Error as AdapterError;
 pub(crate) use asset_move_calls::AssetMoveCallsRustSdk as AssetMoveCallsAdapter;
+pub(crate) use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse as NativeTransactionBlockResponse;
 pub(crate) use identity_move_calls::IdentityMoveCallsRustSdk as IdentityMoveCallsAdapter;
 pub(crate) use iota_client_rust_sdk::IotaClientRustSdk as IotaClientAdapter;
 pub(crate) use iota_client_rust_sdk::IotaTransactionBlockResponseProvider as IotaTransactionBlockResponseAdapter;
@@ -40,8 +42,3 @@ pub(crate) use iota_client_rust_sdk::QuorumDriverApiAdaptedTraitObj;
 pub(crate) use iota_client_rust_sdk::ReadApiAdaptedT;
 #[allow(unused_imports)]
 pub(crate) use iota_client_rust_sdk::ReadApiAdaptedTraitObj;
-
-#[allow(unused_imports)]
-pub(crate) use super::rebased::Error as AdapterError;
-#[allow(unused_imports)]
-pub(crate) use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse as AdapterNativeResponse;

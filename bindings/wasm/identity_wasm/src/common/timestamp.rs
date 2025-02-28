@@ -14,6 +14,7 @@ extern "C" {
   pub type OptionTimestamp;
 }
 
+/// A parsed Timestamp.
 #[wasm_bindgen(js_name = Timestamp, inspectable)]
 pub struct WasmTimestamp(pub(crate) Timestamp);
 

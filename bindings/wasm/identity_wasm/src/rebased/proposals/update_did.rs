@@ -10,7 +10,7 @@ use identity_iota::iota::rebased::proposals::UpdateDidDocument;
 use identity_iota::iota::rebased::transaction::TransactionInternal;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
 use identity_iota::iota::StateMetadataDocument;
-use iota_interaction_ts::AdapterNativeResponse;
+use iota_interaction_ts::NativeTransactionBlockResponse;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::JsCast;
@@ -150,7 +150,7 @@ impl WasmApproveUpdateDidDocumentProposalTx {
   }
 
   #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<AdapterNativeResponse> {
+  pub async fn execute(self, client: &WasmIdentityClient) -> Result<NativeTransactionBlockResponse> {
     let identity_ref = self.identity.0.read().await;
     self
       .proposal
@@ -194,7 +194,7 @@ impl WasmExecuteUpdateDidDocumentProposalTx {
   }
 
   #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<AdapterNativeResponse> {
+  pub async fn execute(self, client: &WasmIdentityClient) -> Result<NativeTransactionBlockResponse> {
     let mut identity_ref = self.identity.0.write().await;
     let proposal = Rc::into_inner(self.proposal.0)
       .ok_or_else(|| js_sys::Error::new("cannot consume proposal; try to drop all other references to it"))?
@@ -214,7 +214,7 @@ impl WasmExecuteUpdateDidDocumentProposalTx {
 #[wasm_bindgen(js_name = CreateUpdateDidProposalTxOutput, inspectable, getter_with_clone)]
 pub struct WasmCreateUpdateDidProposalTxOutput {
   pub output: Option<WasmProposalUpdateDid>,
-  pub response: AdapterNativeResponse,
+  pub response: NativeTransactionBlockResponse,
 }
 
 impl From<TransactionOutputInternal<ProposalResult<Proposal<UpdateDidDocument>>>>

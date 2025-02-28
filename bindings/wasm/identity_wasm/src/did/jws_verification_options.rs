@@ -9,6 +9,7 @@ use wasm_bindgen::prelude::*;
 
 use super::WasmDIDUrl;
 
+/// Holds additional options for verifying a JWS with {@link CoreDocument.verifyJws}.
 #[wasm_bindgen(js_name = JwsVerificationOptions, inspectable)]
 pub struct WasmJwsVerificationOptions(pub(crate) JwsVerificationOptions);
 

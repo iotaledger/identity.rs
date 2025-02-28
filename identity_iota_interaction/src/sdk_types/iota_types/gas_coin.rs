@@ -19,7 +19,7 @@ use super::id::UID;
 use super::balance::{Balance, Supply};
 use std::fmt::{Display, Formatter};
 
-/// The number of Nanos per Iota token
+/// The number of Nanos per IOTA token
 pub const NANOS_PER_IOTA: u64 = 1_000_000_000;
 
 /// Total supply in IOTA at genesis, after the migration from a Stardust ledger,

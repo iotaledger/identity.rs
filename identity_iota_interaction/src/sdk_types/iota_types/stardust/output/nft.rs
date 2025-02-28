@@ -6,7 +6,7 @@ use crate::ident_str;
 use crate::sdk_types::move_types::language_storage::StructTag;
 use crate::sdk_types::move_types::identifier::IdentStr;
 
-use super::super::super::STARDUST_PACKAGE_ID;
+use super::super::super::STARDUST_ADDRESS;
 
 pub const IRC27_MODULE_NAME: &IdentStr = ident_str!("irc27");
 pub const NFT_MODULE_NAME: &IdentStr = ident_str!("nft");
@@ -24,7 +24,7 @@ impl Nft {
     /// [`Nft`] in its move package.
     pub fn tag() -> StructTag {
         StructTag {
-            address: STARDUST_PACKAGE_ID.into(),
+            address: STARDUST_ADDRESS.into(),
             module: NFT_MODULE_NAME.to_owned(),
             name: NFT_STRUCT_NAME.to_owned(),
             type_params: Vec::new(),

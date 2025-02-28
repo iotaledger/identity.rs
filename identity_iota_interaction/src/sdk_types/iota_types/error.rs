@@ -531,7 +531,9 @@ pub enum IotaError {
 
     #[error("Authority Error: {error:?}")]
     GenericAuthority { error: String },
-
+    
+    // GenericBridge is not available
+    
     #[error("Failed to dispatch subscription: {error:?}")]
     FailedToDispatchSubscription { error: String },
 
@@ -586,8 +588,8 @@ pub enum IotaError {
     // Epoch related errors.
     #[error("Validator temporarily stopped processing transactions due to epoch change")]
     ValidatorHaltedAtEpochEnd,
-    #[error("Validator has stopped operations for this epoch")]
-    EpochEnded,
+    #[error("Operations for epoch {0} have ended")]
+    EpochEnded(EpochId),
     #[error("Error when advancing epoch: {:?}", error)]
     AdvanceEpoch { error: String },
 
@@ -599,6 +601,10 @@ pub enum IotaError {
     #[error("{1} - {0}")]
     Rpc(String, String),
 
+    #[error("Method not allowed")]
+    InvalidRpcMethod,
+
+    // TODO: We should fold this into UserInputError::Unsupported.
     #[error("Use of disabled feature: {:?}", error)]
     UnsupportedFeature { error: String },
 
@@ -626,6 +632,9 @@ pub enum IotaError {
     #[error("Failed to read or deserialize system state related data structures on-chain: {0}")]
     IotaSystemStateRead(String),
 
+    #[error("Failed to read or deserialize bridge related data structures on-chain: {0}")]
+    IotaBridgeRead(String),
+
     #[error("Unexpected version error: {0}")]
     UnexpectedVersion(String),
 
@@ -648,10 +657,16 @@ pub enum IotaError {
         "Validator cannot handle the request at the moment. Please retry after at least {retry_after_secs} seconds."
     )]
     ValidatorOverloadedRetryAfter { retry_after_secs: u64 },
+
+    #[error("Too many requests")]
+    TooManyRequests,
+
+    #[error("The request did not contain a certificate")]
+    NoCertificateProvided,
 }
 
 #[repr(u64)]
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 /// Sub-status codes for the `UNKNOWN_VERIFICATION_ERROR` VM Status Code which
 /// provides more context TODO: add more Vm Status errors. We use
@@ -662,7 +677,7 @@ pub enum VMMVerifierErrorSubStatusCode {
 }
 
 #[repr(u64)]
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 /// Sub-status codes for the `MEMORY_LIMIT_EXCEEDED` VM Status Code which
 /// provides more context
@@ -680,11 +695,15 @@ pub enum VMMemoryLimitExceededSubStatusCode {
 pub type IotaResult<T = ()> = Result<T, IotaError>;
 pub type UserInputResult<T = ()> = Result<T, UserInputError>;
 
+// iota_protocol_config::Error is not available
+
 impl From<ExecutionError> for IotaError {
     fn from(error: ExecutionError) -> Self {
         IotaError::Execution(error.to_string())
     }
 }
+
+// Status, TypedStoreError, crate::storage::error::Error are not available
 
 impl From<ExecutionErrorKind> for IotaError {
     fn from(kind: ExecutionErrorKind) -> Self {
@@ -697,6 +716,12 @@ impl From<&str> for IotaError {
         IotaError::GenericAuthority {
             error: error.to_string(),
         }
+    }
+}
+
+impl From<String> for IotaError {
+    fn from(error: String) -> Self {
+        IotaError::GenericAuthority { error }
     }
 }
 
@@ -738,13 +763,13 @@ impl IotaError {
     /// errors in logs.
     pub fn is_retryable(&self) -> (bool, bool) {
         let retryable = match self {
-            // Network error
             IotaError::Rpc { .. } => true,
 
             // Reconfig error
             IotaError::ValidatorHaltedAtEpochEnd => true,
             IotaError::MissingCommitteeAtEpoch(..) => true,
             IotaError::WrongEpoch { .. } => true,
+            IotaError::EpochEnded { .. } => true,
 
             IotaError::UserInput { error } => {
                 match error {
@@ -771,6 +796,11 @@ impl IotaError {
             IotaError::TxAlreadyFinalizedWithDifferentUserSigs => false,
             IotaError::FailedToVerifyTxCertWithExecutedEffects { .. } => false,
             IotaError::ObjectLockConflict { .. } => false,
+
+            // NB: This is not an internal overload, but instead an imposed rate
+            // limit / blocking of a client. It must be non-retryable otherwise
+            // we will make the threat worse through automatic retries.
+            IotaError::TooManyRequests => false,
 
             // For all un-categorized errors, return here with categorized = false.
             _ => return (false, false),
@@ -804,6 +834,13 @@ impl IotaError {
 
     pub fn is_retryable_overload(&self) -> bool {
         matches!(self, IotaError::ValidatorOverloadedRetryAfter { .. })
+    }
+
+    pub fn retry_after_secs(&self) -> u64 {
+        match self {
+            IotaError::ValidatorOverloadedRetryAfter { retry_after_secs } => *retry_after_secs,
+            _ => 0,
+        }
     }
 }
 
