@@ -69,6 +69,7 @@ module iota_identity::identity {
         /// Package version used by this object.
         version: u64,
         /// Flag to verify if this Identity has been deleted.
+        /// Once an Identity has been deleted it CANNOT be activated again.
         deleted: bool,
         /// Set when the DID Document of this Identity has been deleted.
         /// Once a DID Document has been deleted it CANNOT be activated again.
