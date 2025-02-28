@@ -20,7 +20,7 @@ async fn can_create_an_identity() -> anyhow::Result<()> {
     .await?
     .output;
 
-  let did = identity.did_document().unwrap().id();
+  let did = identity.did_document().id();
   assert_eq!(did.network_str(), identity_client.network().as_ref());
 
   Ok(())

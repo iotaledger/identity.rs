@@ -81,7 +81,7 @@ pub enum Identity {
 
 impl Identity {
   /// Returns the [`IotaDocument`] DID Document stored inside this [`Identity`].
-  pub fn did_document(&self, network: &NetworkName) -> Result<Option<IotaDocument>, Error> {
+  pub fn did_document(&self, network: &NetworkName) -> Result<IotaDocument, Error> {
     match self {
       Self::FullFledged(onchain_identity) => Ok(onchain_identity.did_doc.clone()),
       Self::Legacy(alias) => {
@@ -92,7 +92,6 @@ impl Identity {
         StateMetadataDocument::unpack(state_metadata)
           .and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(&did))
           .map_err(|e| Error::DidDocParsingFailed(e.to_string()))
-          .map(Some)
       }
     }
   }
@@ -103,7 +102,7 @@ impl Identity {
 pub struct OnChainIdentity {
   id: UID,
   multi_controller: Multicontroller<Option<Vec<u8>>>,
-  pub(crate) did_doc: Option<IotaDocument>,
+  pub(crate) did_doc: IotaDocument,
   version: u64,
 }
 
@@ -114,12 +113,12 @@ impl OnChainIdentity {
   }
 
   /// Returns the [`IotaDocument`] contained in this [`OnChainIdentity`].
-  pub fn did_document(&self) -> Option<&IotaDocument> {
-    self.did_doc.as_ref()
+  pub fn did_document(&self) -> &IotaDocument {
+    &self.did_doc
   }
 
-  pub(crate) fn did_document_mut(&mut self) -> Option<&mut IotaDocument> {
-    self.did_doc.as_mut()
+  pub(crate) fn did_document_mut(&mut self) -> &mut IotaDocument {
+    &mut self.did_doc
   }
 
   /// Returns true if this [`OnChainIdentity`] is shared between multiple controllers.
@@ -298,7 +297,8 @@ pub async fn get_identity(
     .as_deref()
     .map(|did_doc_bytes| IotaDocument::from_iota_document_data(did_doc_bytes, true, &did, legacy_did, created, updated))
     .transpose()
-    .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?;
+    .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?
+    .ok_or_else(|| Error::DIDResolutionError("The requested Identity contains no DID Document".to_string()))?;
 
   Ok(Some(OnChainIdentity {
     id,

@@ -245,8 +245,7 @@ impl IdentityClientReadOnly {
     self
       .get_identity(get_object_id_from_did(did)?)
       .await?
-      .did_document(self.network())?
-      .ok_or_else(|| Error::DIDResolutionError("request DID Document doesn't exist".to_string()))
+      .did_document(self.network())
   }
 
   /// Resolves an [`Identity`] from its ID `object_id`.
@@ -358,18 +357,17 @@ async fn resolve_migrated(client: &IdentityClientReadOnly, object_id: ObjectID) 
   };
   let object_id_str = object_id.to_string();
   let queried_did = IotaDID::from_object_id(&object_id_str, &client.network);
-  if let Some(doc) = onchain_identity.did_document_mut() {
-    let identity_did = doc.id().clone();
-    // When querying a migrated identity we obtain a DID document with DID `identity_did` and the `alsoKnownAs`
-    // property containing `queried_did`. Since we are resolving `queried_did`, lets replace in the document these
-    // values. `queried_id` becomes the DID Document ID.
-    *doc.core_document_mut().id_mut_unchecked() = queried_did.clone().into();
-    // The DID Document `alsoKnownAs` property is cleaned of its `queried_did` entry,
-    // which gets replaced by `identity_did`.
-    doc
-      .also_known_as_mut()
-      .replace::<Url>(&queried_did.into_url().into(), identity_did.into_url().into());
-  }
+  let doc = onchain_identity.did_document_mut();
+  let identity_did = doc.id().clone();
+  // When querying a migrated identity we obtain a DID document with DID `identity_did` and the `alsoKnownAs`
+  // property containing `queried_did`. Since we are resolving `queried_did`, lets replace in the document these
+  // values. `queried_id` becomes the DID Document ID.
+  *doc.core_document_mut().id_mut_unchecked() = queried_did.clone().into();
+  // The DID Document `alsoKnownAs` property is cleaned of its `queried_did` entry,
+  // which gets replaced by `identity_did`.
+  doc
+    .also_known_as_mut()
+    .replace::<Url>(&queried_did.into_url().into(), identity_did.into_url().into());
 
   Ok(Some(Identity::FullFledged(onchain_identity)))
 }

@@ -46,7 +46,7 @@ async fn identity_deactivation_works() -> anyhow::Result<()> {
     .execute(&identity_client)
     .await?;
 
-  assert!(identity.did_document().unwrap().metadata.deactivated == Some(true));
+  assert!(identity.did_document().metadata.deactivated == Some(true));
 
   Ok(())
 }

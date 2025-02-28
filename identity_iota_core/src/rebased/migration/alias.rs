@@ -95,9 +95,7 @@ impl UnmigratedAlias {
   ) -> Result<impl TransactionInternal<Output = OnChainIdentity>, Error> {
     // Try to parse a StateMetadataDocument out of this alias.
     let identity = Identity::Legacy(self);
-    let did_doc = identity
-      .did_document(client.network())?
-      .expect("DID output stores a DID Document");
+    let did_doc = identity.did_document(client.network())?;
     let Identity::Legacy(alias) = identity else {
       unreachable!("alias was wrapped by us")
     };
