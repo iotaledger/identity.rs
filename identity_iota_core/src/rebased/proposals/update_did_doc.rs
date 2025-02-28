@@ -32,26 +32,39 @@ use super::ProposalT;
 
 /// Proposal's action for updating a DID Document.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(into = "UpdateValue::<Vec<u8>>", from = "UpdateValue::<Vec<u8>>")]
-pub struct UpdateDidDocument(Vec<u8>);
+#[serde(into = "UpdateValue::<Option<Vec<u8>>>", from = "UpdateValue::<Option<Vec<u8>>>")]
+pub struct UpdateDidDocument(Option<Vec<u8>>);
 
 impl MoveType for UpdateDidDocument {
   fn move_type(package: ObjectID) -> TypeTag {
     use std::str::FromStr;
 
-    TypeTag::from_str(&format!("{package}::update_value_proposal::UpdateValue<vector<u8>>")).expect("valid TypeTag")
+    TypeTag::from_str(&format!(
+      "{package}::update_value_proposal::UpdateValue<0x1::option::Option<vector<u8>>>"
+    ))
+    .expect("valid TypeTag")
   }
 }
 
 impl UpdateDidDocument {
   /// Creates a new [`UpdateDidDocument`] action.
   pub fn new(document: IotaDocument) -> Self {
-    Self(document.pack().expect("a valid IotaDocument is packable"))
+    Self(Some(document.pack().expect("a valid IotaDocument is packable")))
+  }
+
+  /// Creates a new [`UpdateDidDocument`] action to deactivate the DID Document.
+  pub fn deactivate() -> Self {
+    Self(Some(vec![]))
+  }
+
+  /// Creates a new [`UpdateDidDocument`] action to delete the DID Document.
+  pub fn delete() -> Self {
+    Self(None)
   }
 
   /// Returns the serialized DID document bytes.
-  pub fn did_document_bytes(&self) -> &[u8] {
-    &self.0
+  pub fn did_document_bytes(&self) -> Option<&[u8]> {
+    self.0.as_deref()
   }
 }
 
@@ -83,7 +96,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
     let tx = IdentityMoveCallsAdapter::propose_update(
       identity_ref,
       controller_cap_ref,
-      action.0,
+      action.0.as_deref(),
       expiration,
       client.package_id(),
     )
@@ -139,14 +152,14 @@ struct UpdateValue<V> {
   new_value: V,
 }
 
-impl From<UpdateDidDocument> for UpdateValue<Vec<u8>> {
+impl From<UpdateDidDocument> for UpdateValue<Option<Vec<u8>>> {
   fn from(value: UpdateDidDocument) -> Self {
     Self { new_value: value.0 }
   }
 }
 
-impl From<UpdateValue<Vec<u8>>> for UpdateDidDocument {
-  fn from(value: UpdateValue<Vec<u8>>) -> Self {
+impl From<UpdateValue<Option<Vec<u8>>>> for UpdateDidDocument {
+  fn from(value: UpdateValue<Option<Vec<u8>>>) -> Self {
     UpdateDidDocument(value.new_value)
   }
 }

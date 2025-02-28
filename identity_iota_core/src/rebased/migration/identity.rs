@@ -3,7 +3,6 @@
 
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::ops::Deref;
 use std::str::FromStr;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
@@ -44,7 +43,6 @@ use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::proposals::BorrowAction;
 use crate::rebased::proposals::ConfigChange;
 use crate::rebased::proposals::ControllerExecution;
-use crate::rebased::proposals::DeactivateDid;
 use crate::rebased::proposals::ProposalBuilder;
 use crate::rebased::proposals::SendAction;
 use crate::rebased::proposals::UpdateDidDocument;
@@ -65,7 +63,7 @@ const HISTORY_DEFAULT_PAGE_SIZE: usize = 10;
 /// The data stored in an on-chain identity.
 pub type IdentityData = (
   UID,
-  Multicontroller<Vec<u8>>,
+  Multicontroller<Option<Vec<u8>>>,
   Option<ObjectID>,
   Timestamp,
   Timestamp,
@@ -99,20 +97,13 @@ impl Identity {
   }
 }
 
-/// An on-chain entity that wraps a DID Document.
-#[derive(Clone, Debug, Serialize)]
+/// An on-chain entity that wraps an optional DID Document.
+#[derive(Debug, Clone, Serialize)]
 pub struct OnChainIdentity {
   id: UID,
-  multi_controller: Multicontroller<Vec<u8>>,
+  multi_controller: Multicontroller<Option<Vec<u8>>>,
   pub(crate) did_doc: IotaDocument,
   version: u64,
-}
-
-impl Deref for OnChainIdentity {
-  type Target = IotaDocument;
-  fn deref(&self) -> &Self::Target {
-    &self.did_doc
-  }
 }
 
 impl OnChainIdentity {
@@ -123,7 +114,7 @@ impl OnChainIdentity {
 
   /// Returns the [`IotaDocument`] contained in this [`OnChainIdentity`].
   pub fn did_document(&self) -> &IotaDocument {
-    self
+    &self.did_doc
   }
 
   pub(crate) fn did_document_mut(&mut self) -> &mut IotaDocument {
@@ -155,7 +146,7 @@ impl OnChainIdentity {
     self.multi_controller.controller_voting_power(controller_id)
   }
 
-  pub(crate) fn multicontroller(&self) -> &Multicontroller<Vec<u8>> {
+  pub(crate) fn multicontroller(&self) -> &Multicontroller<Option<Vec<u8>>> {
     &self.multi_controller
   }
 
@@ -181,8 +172,8 @@ impl OnChainIdentity {
   }
 
   /// Deactivates the DID Document represented by this [`OnChainIdentity`].
-  pub fn deactivate_did(&mut self) -> ProposalBuilder<'_, DeactivateDid> {
-    ProposalBuilder::new(self, DeactivateDid::new())
+  pub fn deactivate_did(&mut self) -> ProposalBuilder<'_, UpdateDidDocument> {
+    ProposalBuilder::new(self, UpdateDidDocument::deactivate())
   }
 
   /// Upgrades this [`OnChainIdentity`]'s version to match the package's.
@@ -301,15 +292,13 @@ pub async fn get_identity(
   };
   let legacy_did = legacy_id.map(|legacy_id| IotaDID::from_object_id(&legacy_id.to_string(), client.network()));
 
-  let did_doc = IotaDocument::from_iota_document_data(
-    multi_controller.controlled_value(),
-    true,
-    &did,
-    legacy_did,
-    created,
-    updated,
-  )
-  .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?;
+  let did_doc = multi_controller
+    .controlled_value()
+    .as_deref()
+    .map(|did_doc_bytes| IotaDocument::from_iota_document_data(did_doc_bytes, true, &did, legacy_did, created, updated))
+    .transpose()
+    .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?
+    .ok_or_else(|| Error::DIDResolutionError("The requested Identity contains no DID Document".to_string()))?;
 
   Ok(Some(OnChainIdentity {
     id,
@@ -347,7 +336,7 @@ pub(crate) fn unpack_identity_data(did: &IotaDID, data: &IotaObjectData) -> Resu
   #[derive(Deserialize)]
   struct TempOnChainIdentity {
     id: UID,
-    did_doc: Multicontroller<Vec<u8>>,
+    did_doc: Multicontroller<Option<Vec<u8>>>,
     legacy_id: Option<ObjectID>,
     created: Number<u64>,
     updated: Number<u64>,
@@ -465,7 +454,7 @@ impl TransactionInternal for CreateIdentityTx {
       .pack(StateMetadataEncoding::default())
       .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
     let programmable_transaction = if controllers.is_empty() {
-      IdentityMoveCallsAdapter::new_identity(&did_doc, client.package_id()).await?
+      IdentityMoveCallsAdapter::new_identity(Some(&did_doc), client.package_id()).await?
     } else {
       let threshold = match threshold {
         Some(t) => t,
@@ -479,7 +468,7 @@ impl TransactionInternal for CreateIdentityTx {
           ))
         }
       };
-      IdentityMoveCallsAdapter::new_with_controllers(&did_doc, controllers, threshold, client.package_id())?
+      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), controllers, threshold, client.package_id())?
     };
 
     let response = client.execute_transaction(programmable_transaction, gas_budget).await?;

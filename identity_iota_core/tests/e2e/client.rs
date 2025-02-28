@@ -1,8 +1,6 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::Deref;
-
 use crate::common::get_funded_test_client;
 use crate::common::TestClient;
 use identity_iota_core::rebased::migration;
@@ -22,7 +20,7 @@ async fn can_create_an_identity() -> anyhow::Result<()> {
     .await?
     .output;
 
-  let did = identity.deref().id();
+  let did = identity.did_document().id();
   assert_eq!(did.network_str(), identity_client.network().as_ref());
 
   Ok(())

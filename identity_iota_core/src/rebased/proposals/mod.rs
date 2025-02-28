@@ -4,7 +4,6 @@
 mod borrow;
 mod config_change;
 mod controller;
-mod deactivate_did;
 mod send;
 mod update_did_doc;
 mod upgrade;
@@ -41,7 +40,6 @@ use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
 pub use controller::*;
-pub use deactivate_did::*;
 use identity_iota_interaction::rpc_types::IotaExecutionStatus;
 use identity_iota_interaction::rpc_types::IotaObjectData;
 use identity_iota_interaction::rpc_types::IotaObjectDataOptions;

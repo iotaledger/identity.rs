@@ -583,7 +583,10 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
 
-  async fn new_identity(did_doc: &[u8], package_id: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error> {
+  async fn new_identity(
+    did_doc: Option<&[u8]>,
+    package_id: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error> {
     let mut ptb = PrgrTxBuilder::new();
     let doc_arg = utils::ptb_pure(&mut ptb, "did_doc", did_doc)?;
     let clock = utils::get_clock_ref(&mut ptb);
@@ -601,7 +604,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
   }
 
   fn new_with_controllers<C>(
-    did_doc: &[u8],
+    did_doc: Option<&[u8]>,
     controllers: C,
     threshold: u64,
     package_id: ObjectID,
@@ -649,58 +652,6 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
         clock,
       ],
     );
-
-    Ok(bcs::to_bytes(&ptb.finish())?)
-  }
-
-  async fn propose_deactivation(
-    identity: OwnedObjectRef,
-    capability: ObjectRef,
-    expiration: Option<u64>,
-    package_id: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = PrgrTxBuilder::new();
-    let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
-    let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
-    let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
-    let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id).map_err(rebased_err)?;
-    let clock = utils::get_clock_ref(&mut ptb);
-
-    let _proposal_id = ptb.programmable_move_call(
-      package_id,
-      ident_str!("identity").into(),
-      ident_str!("propose_deactivation").into(),
-      vec![],
-      vec![identity_arg, delegation_token, exp_arg, clock],
-    );
-
-    utils::put_back_delegation_token(&mut ptb, cap_arg, delegation_token, borrow, package_id);
-
-    Ok(bcs::to_bytes(&ptb.finish())?)
-  }
-
-  fn execute_deactivation(
-    identity: OwnedObjectRef,
-    capability: ObjectRef,
-    proposal_id: ObjectID,
-    package_id: ObjectID,
-  ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let mut ptb = PrgrTxBuilder::new();
-    let cap_arg = ptb.obj(ObjectArg::ImmOrOwnedObject(capability)).map_err(rebased_err)?;
-    let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
-    let proposal_id = ptb.pure(proposal_id).map_err(rebased_err)?;
-    let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
-    let clock = utils::get_clock_ref(&mut ptb);
-
-    let _ = ptb.programmable_move_call(
-      package_id,
-      ident_str!("identity").into(),
-      ident_str!("execute_deactivation").into(),
-      vec![],
-      vec![identity_arg, delegation_token, proposal_id, clock],
-    );
-
-    utils::put_back_delegation_token(&mut ptb, cap_arg, delegation_token, borrow, package_id);
 
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
@@ -802,7 +753,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
   async fn propose_update(
     identity: OwnedObjectRef,
     capability: ObjectRef,
-    did_doc: impl AsRef<[u8]> + Send,
+    did_doc: Option<&[u8]>,
     expiration: Option<u64>,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
@@ -811,7 +762,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     let (delegation_token, borrow) = utils::get_controller_delegation(&mut ptb, cap_arg, package_id);
     let identity_arg = utils::owned_ref_to_shared_object_arg(identity, &mut ptb, true).map_err(rebased_err)?;
     let exp_arg = utils::option_to_move(expiration, &mut ptb, package_id).map_err(rebased_err)?;
-    let doc_arg = ptb.pure(did_doc.as_ref()).map_err(rebased_err)?;
+    let doc_arg = ptb.pure(did_doc).map_err(rebased_err)?;
     let clock = utils::get_clock_ref(&mut ptb);
 
     let _proposal_id = ptb.programmable_move_call(

@@ -23,61 +23,64 @@ use crate::rebased::WasmIdentityClient;
 use crate::rebased::WasmOnChainIdentity;
 
 #[wasm_bindgen(js_name = UpdateDid)]
-pub struct WasmUpdateDid(pub(crate) WasmIotaDocument);
+pub struct WasmUpdateDid(pub(crate) UpdateDidDocument);
 
 #[wasm_bindgen(js_class = UpdateDid)]
 impl WasmUpdateDid {
-  #[wasm_bindgen(getter, js_name = didDocument)]
-  pub fn did_document(&self) -> Result<WasmIotaDocument> {
-    self.0.deep_clone()
+  #[wasm_bindgen(js_name = isDeactivation)]
+  pub fn is_deactivation(&self) -> bool {
+    matches!(self.0.did_document_bytes(), Some(&[]))
   }
-}
 
-impl Clone for WasmUpdateDid {
-  fn clone(&self) -> Self {
-    Self(self.0.shallow_clone())
+  #[wasm_bindgen(getter, js_name = didDocument)]
+  pub fn did_document(&self) -> Result<Option<WasmIotaDocument>> {
+    self
+      .0
+      .did_document_bytes()
+      .filter(|bytes| !bytes.is_empty())
+      .map(|did_doc_bytes| {
+        StateMetadataDocument::unpack(did_doc_bytes)
+          .map(StateMetadataDocument::into_iota_document_with_placeholders)
+          .map(WasmIotaDocument::from)
+      })
+      .transpose()
+      .wasm_result()
   }
 }
 
 #[wasm_bindgen(js_name = UpdateDidProposal)]
 #[derive(Clone)]
-pub struct WasmProposalUpdateDid {
-  inner_proposal: Rc<RwLock<Proposal<UpdateDidDocument>>>,
-  action: WasmUpdateDid,
-}
+pub struct WasmProposalUpdateDid(pub(crate) Rc<RwLock<Proposal<UpdateDidDocument>>>);
 
 #[wasm_bindgen(js_class = UpdatedDidProposal)]
 impl WasmProposalUpdateDid {
   fn new(proposal: Proposal<UpdateDidDocument>) -> Self {
-    let updated_iota_document = StateMetadataDocument::unpack(proposal.action().did_document_bytes())
-      .expect("valid encoded IOTA DID document")
-      .into_iota_document_with_placeholders();
-    let action = WasmUpdateDid(updated_iota_document.into());
-
-    Self {
-      inner_proposal: Rc::new(RwLock::new(proposal)),
-      action,
-    }
+    Self(Rc::new(RwLock::new(proposal)))
   }
 
   #[wasm_bindgen(getter)]
   pub fn id(&self) -> Result<String> {
     self
-      .inner_proposal
+      .0
       .try_read()
       .wasm_result()
       .map(|proposal| proposal.id().to_string())
   }
 
   #[wasm_bindgen(getter)]
-  pub fn action(&self) -> WasmUpdateDid {
-    self.action.clone()
+  pub fn action(&self) -> Result<WasmUpdateDid> {
+    self
+      .0
+      .try_read()
+      .wasm_result()
+      .map(|proposal| proposal.action().clone())
+      .map(WasmUpdateDid)
   }
 
   #[wasm_bindgen(getter)]
   pub fn expiration_epoch(&self) -> Result<Option<u64>> {
     self
-      .inner_proposal
+      .0
       .try_read()
       .wasm_result()
       .map(|proposal| proposal.expiration_epoch())
@@ -85,17 +88,13 @@ impl WasmProposalUpdateDid {
 
   #[wasm_bindgen(getter)]
   pub fn votes(&self) -> Result<u64> {
-    self
-      .inner_proposal
-      .try_read()
-      .wasm_result()
-      .map(|proposal| proposal.votes())
+    self.0.try_read().wasm_result().map(|proposal| proposal.votes())
   }
 
   #[wasm_bindgen(getter)]
   pub fn voters(&self) -> Result<StringSet> {
     let js_set = self
-      .inner_proposal
+      .0
       .try_read()
       .wasm_result()?
       .voters()
@@ -155,7 +154,7 @@ impl WasmApproveUpdateDidDocumentProposalTx {
     let identity_ref = self.identity.0.read().await;
     self
       .proposal
-      .inner_proposal
+      .0
       .write()
       .await
       .approve(&identity_ref)
@@ -197,7 +196,7 @@ impl WasmExecuteUpdateDidDocumentProposalTx {
   #[wasm_bindgen]
   pub async fn execute(self, client: &WasmIdentityClient) -> Result<NativeTransactionBlockResponse> {
     let mut identity_ref = self.identity.0.write().await;
-    let proposal = Rc::into_inner(self.proposal.inner_proposal)
+    let proposal = Rc::into_inner(self.proposal.0)
       .ok_or_else(|| js_sys::Error::new("cannot consume proposal; try to drop all other references to it"))?
       .into_inner();
 
@@ -234,7 +233,9 @@ impl From<TransactionOutputInternal<ProposalResult<Proposal<UpdateDidDocument>>>
 #[wasm_bindgen(js_name = CreateUpdateDidProposalTx)]
 pub struct WasmCreateUpdateDidProposalTx {
   identity: WasmOnChainIdentity,
-  updated_did_doc: WasmIotaDocument,
+  updated_did_doc: Option<WasmIotaDocument>,
+  #[allow(dead_code)]
+  delete: bool,
   expiration_epoch: Option<u64>,
   gas_budget: Option<u64>,
 }
@@ -248,8 +249,19 @@ impl WasmCreateUpdateDidProposalTx {
   ) -> Self {
     Self {
       identity: identity.clone(),
-      updated_did_doc,
+      updated_did_doc: Some(updated_did_doc),
+      delete: false,
       expiration_epoch,
+      gas_budget: None,
+    }
+  }
+
+  pub(crate) fn deactivate(identity: &WasmOnChainIdentity, expiration_epoch: Option<u64>) -> Self {
+    Self {
+      identity: identity.clone(),
+      expiration_epoch,
+      updated_did_doc: None,
+      delete: false,
       gas_budget: None,
     }
   }
@@ -267,9 +279,12 @@ impl WasmCreateUpdateDidProposalTx {
 
   #[wasm_bindgen]
   pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmCreateUpdateDidProposalTxOutput> {
-    let updated_did_doc = self.updated_did_doc.0.read().await.clone();
     let mut identity_ref = self.identity.0.write().await;
-    let builder = identity_ref.update_did_document(updated_did_doc);
+    let builder = if let Some(updated_did_document) = self.updated_did_doc {
+      identity_ref.update_did_document(updated_did_document.0.read().await.clone())
+    } else {
+      identity_ref.deactivate_did()
+    };
     let builder = if let Some(exp) = self.expiration_epoch {
       builder.expiration_epoch(exp)
     } else {
@@ -277,10 +292,10 @@ impl WasmCreateUpdateDidProposalTx {
     };
 
     let tx_output = builder
-      .finish(&client)
+      .finish(client)
       .await
       .wasm_result()?
-      .execute_with_opt_gas_internal(self.gas_budget, &client)
+      .execute_with_opt_gas_internal(self.gas_budget, client)
       .await
       .wasm_result()?;
 

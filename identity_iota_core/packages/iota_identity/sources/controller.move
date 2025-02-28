@@ -6,6 +6,7 @@ module iota_identity::controller {
   public use fun delete_controller_cap as ControllerCap.delete;
   public use fun delete_delegation_token as DelegationToken.delete;
   public use fun delegation_token_id as DelegationToken.id;
+  public use fun delegation_token_controller_of as DelegationToken.controller_of;
 
   /// This `ControllerCap` cannot delegate access.
   const ECannotDelegate: u64 = 0;
@@ -23,12 +24,18 @@ module iota_identity::controller {
   /// Capability that allows to access mutative APIs of a `Multicontroller`.
   public struct ControllerCap has key {
     id: UID,
+    controller_of: ID,
     can_delegate: bool,
     access_token: Referent<DelegationToken>,
   }
 
   public fun id(self: &ControllerCap): &UID {
     &self.id
+  }
+
+  /// Returns the ID of the object controller by this token.
+  public fun controller_of(self: &ControllerCap): ID {
+    self.controller_of
   }
 
   /// Borrows this `ControllerCap`'s access token.
@@ -46,13 +53,13 @@ module iota_identity::controller {
   /// specific permissions.
   public fun delegate(self: &ControllerCap, ctx: &mut TxContext): DelegationToken {
     assert!(self.can_delegate, ECannotDelegate);
-    new_delegation_token(self.id.to_inner(), permissions::all(), ctx)
+    new_delegation_token(self.id.to_inner(), self.controller_of, permissions::all(), ctx)
   }
 
   /// Creates a delegation token for this controller, specifying the delegate's permissions.
   public fun delegate_with_permissions(self: &ControllerCap, permissions: u32, ctx: &mut TxContext): DelegationToken {
     assert!(self.can_delegate, ECannotDelegate);
-    new_delegation_token(self.id.to_inner(), permissions, ctx)
+    new_delegation_token(self.id.to_inner(), self.controller_of, permissions, ctx)
   }
 
   /// A token that allows an entity to act in a Controller's stead.
@@ -60,6 +67,7 @@ module iota_identity::controller {
     id: UID,
     permissions: u32,
     controller: ID,
+    controller_of: ID,
   }
 
   /// Returns the ID of this `DelegationToken`.
@@ -70,6 +78,10 @@ module iota_identity::controller {
   /// Returns the controller's ID of this `DelegationToken`.
   public fun controller(self: &DelegationToken): ID {
     self.controller
+  }
+
+  public fun delegation_token_controller_of(self: &DelegationToken): ID {
+    self.controller_of
   }
 
   /// Returns the permissions of this `DelegationToken`.
@@ -88,13 +100,19 @@ module iota_identity::controller {
   }
 
   /// Creates a new `ControllerCap`.
-  public(package) fun new(can_delegate: bool, ctx: &mut TxContext): ControllerCap {
+  public(package) fun new(can_delegate: bool, controller_of: ID, ctx: &mut TxContext): ControllerCap {
     let id = object::new(ctx);
-    let access_token = borrow::new(new_delegation_token(id.to_inner(), permissions::all(), ctx), ctx);
+    let access_token = borrow::new(new_delegation_token(
+      id.to_inner(), 
+      controller_of, 
+      permissions::all(), 
+      ctx
+    ), ctx);
 
     ControllerCap {
       id,
       access_token,
+      controller_of,
       can_delegate,
     }
   }
@@ -111,6 +129,7 @@ module iota_identity::controller {
 
   public(package) fun new_delegation_token(
     controller: ID,
+    controller_of: ID,
     permissions: u32,
     ctx: &mut TxContext
   ): DelegationToken {
@@ -125,6 +144,7 @@ module iota_identity::controller {
     DelegationToken {
       id,
       controller,
+      controller_of,
       permissions,
     }
   }
@@ -156,12 +176,16 @@ module iota_identity::controller_tests {
   use iota_identity::permissions;
   use iota_identity::multicontroller::{Self, Multicontroller};
 
+  fun controllee_id(): ID {
+    object::id_from_address(@0x123456)
+  }
+
   #[test, expected_failure(abort_code = ECannotDelegate)]
   fun test_only_delegatable_controllers_can_create_delegation_tokens() {
     let owner = @0x1;
     let mut scenario = test_scenario::begin(owner);
 
-    let non_delegatable = controller::new(false, scenario.ctx());
+    let non_delegatable = controller::new(false, controllee_id(), scenario.ctx());
     let delegation_token = non_delegatable.delegate(scenario.ctx());
 
     delegation_token.delete();
@@ -174,7 +198,7 @@ module iota_identity::controller_tests {
     let controller = @0x1;
     let mut scenario = test_scenario::begin(controller);
 
-    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, scenario.ctx());
+    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, controllee_id(), scenario.ctx());
     scenario.next_tx(controller);
 
     let controller_cap = scenario.take_from_address<ControllerCap>(controller);
@@ -200,7 +224,7 @@ module iota_identity::controller_tests {
     let controller = @0x1;
     let mut scenario = test_scenario::begin(controller);
 
-    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, scenario.ctx());
+    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, controllee_id(), scenario.ctx());
     scenario.next_tx(controller);
 
     let controller_cap = scenario.take_from_address<ControllerCap>(controller);
@@ -232,7 +256,7 @@ module iota_identity::controller_tests {
     let controller = @0x1;
     let mut scenario = test_scenario::begin(controller);
 
-    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, scenario.ctx());
+    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, controllee_id(), scenario.ctx());
     scenario.next_tx(controller);
 
     let controller_cap = scenario.take_from_address<ControllerCap>(controller);
@@ -263,7 +287,7 @@ module iota_identity::controller_tests {
     let controller = @0x1;
     let mut scenario = test_scenario::begin(controller);
 
-    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, scenario.ctx());
+    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, controllee_id(), scenario.ctx());
     scenario.next_tx(controller);
 
     let controller_cap = scenario.take_from_address<ControllerCap>(controller);
@@ -294,7 +318,7 @@ module iota_identity::controller_tests {
     let controller = @0x1;
     let mut scenario = test_scenario::begin(controller);
 
-    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, scenario.ctx());
+    let mut multicontroller: Multicontroller<u64> = multicontroller::new(0, true, controllee_id(), scenario.ctx());
     scenario.next_tx(controller);
 
     let controller_cap = scenario.take_from_address<ControllerCap>(controller);
@@ -320,6 +344,7 @@ module iota_identity::controller_tests {
     multicontroller.delete_proposal<_, u64>(
       &delegation_token,
       proposal_id,
+      scenario.ctx()
     );
 
     abort(0)

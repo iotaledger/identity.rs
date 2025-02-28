@@ -1,6 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-use std::sync::Arc;
+use std::rc::Rc;
 
 use identity_iota::storage::storage::Storage;
 
@@ -14,7 +14,7 @@ pub(crate) type WasmStorageInner = Storage<WasmJwkStorage, WasmKeyIdStorage>;
 /// working with storage backed DID documents.
 #[wasm_bindgen(js_name = Storage)]
 #[derive(Clone)]
-pub struct WasmStorage(pub(crate) Arc<WasmStorageInner>);
+pub struct WasmStorage(pub(crate) Rc<WasmStorageInner>);
 
 #[wasm_bindgen(js_class = Storage)]
 impl WasmStorage {
@@ -22,7 +22,7 @@ impl WasmStorage {
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
   pub fn new(jwkStorage: WasmJwkStorage, keyIdStorage: WasmKeyIdStorage) -> WasmStorage {
-    WasmStorage(Arc::new(Storage::new(jwkStorage, keyIdStorage)))
+    WasmStorage(Rc::new(Storage::new(jwkStorage, keyIdStorage)))
   }
 
   /// Obtain the wrapped `KeyIdStorage`.

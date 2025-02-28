@@ -443,14 +443,11 @@ mod client_document {
         .try_into()
         .expect("did's network is a valid NetworkName");
       let legacy_did = legacy_id.map(|id| IotaDID::new(&id.into_bytes(), &did_network));
-      let did_doc = Self::from_iota_document_data(
-        multi_controller.controlled_value(),
-        allow_empty,
-        did,
-        legacy_did,
-        created,
-        updated,
-      )?;
+      let did_doc_bytes = multi_controller
+        .controlled_value()
+        .as_deref()
+        .ok_or_else(|| Error::DIDResolutionError("requested DID Document doesn't exist".to_string()))?;
+      let did_doc = Self::from_iota_document_data(did_doc_bytes, allow_empty, did, legacy_did, created, updated)?;
 
       Ok(did_doc)
     }

@@ -23,7 +23,6 @@ use crate::iota::WasmIotaDocument;
 use super::proposals::StringCouple;
 use super::proposals::WasmConfigChange;
 use super::proposals::WasmCreateConfigChangeProposalTx;
-use super::proposals::WasmCreateDeactivateDidProposalTx;
 use super::proposals::WasmCreateSendProposalTx;
 use super::proposals::WasmCreateUpdateDidProposalTx;
 use super::WasmIdentityClient;
@@ -86,8 +85,8 @@ impl WasmOnChainIdentity {
   }
 
   #[wasm_bindgen(js_name = deactivateDid)]
-  pub fn deactivate_did(&self, expiration_epoch: Option<u64>) -> WasmCreateDeactivateDidProposalTx {
-    WasmCreateDeactivateDidProposalTx::new(self, expiration_epoch)
+  pub fn deactivate_did(&self, expiration_epoch: Option<u64>) -> WasmCreateUpdateDidProposalTx {
+    WasmCreateUpdateDidProposalTx::deactivate(self, expiration_epoch)
   }
 
   #[wasm_bindgen(js_name = updateConfig)]
