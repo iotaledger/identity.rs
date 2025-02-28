@@ -47,7 +47,7 @@ export async function zkp_revocation() {
         .createIdentity(unpublishedIssuerDocument)
         .finish()
         .execute(issuerClient);
-    let issuerDocument = issuerIdentity.didDocument()!;
+    let issuerDocument = issuerIdentity.didDocument();
 
     // Create an identity for the holder, and publish DID document for it, in this case also the subject.
     const holderStorage = getMemstorage();
@@ -57,7 +57,7 @@ export async function zkp_revocation() {
         .createIdentity(unpublishedholderDocument)
         .finish()
         .execute(holderClient);
-    const holderDocument = holderIdentity.didDocument()!;
+    const holderDocument = holderIdentity.didDocument();
 
     // =========================================================================================
     // Step 1: Create a new RevocationTimeframeStatus containing the current validityTimeframe
@@ -196,7 +196,7 @@ export async function zkp_revocation() {
     // This revokes the credential's unique index.
     issuerDocument.revokeCredentials("my-revocation-service", 5);
     await issuerIdentity.updateDidDocument(issuerDocument).execute(issuerClient);
-    issuerDocument = issuerIdentity.didDocument()!;
+    issuerDocument = issuerIdentity.didDocument();
 
     // Holder checks if his credential has been revoked by the Issuer
     try {

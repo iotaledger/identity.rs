@@ -58,9 +58,9 @@ impl WasmOnChainIdentity {
   }
 
   #[wasm_bindgen(js_name = didDocument)]
-  pub fn did_document(&self) -> Result<Option<WasmIotaDocument>> {
-    let inner_doc = self.0.try_read().wasm_result()?.did_document().cloned();
-    Ok(inner_doc.map(WasmIotaDocument::from))
+  pub fn did_document(&self) -> Result<WasmIotaDocument> {
+    let inner_doc = self.0.try_read().wasm_result()?.did_document().clone();
+    Ok(WasmIotaDocument::from(inner_doc))
   }
 
   #[wasm_bindgen(js_name = isShared)]

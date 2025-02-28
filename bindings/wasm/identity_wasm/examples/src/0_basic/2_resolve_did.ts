@@ -29,7 +29,7 @@ export async function resolveIdentity() {
         .createIdentity(unpublished)
         .finish()
         .execute(identityClient);
-    const did = identity.didDocument()!.id();
+    const did = identity.didDocument().id();
 
     // Resolve the associated identity and extract the DID document from it.
     const resolved = await identityClient.resolveDid(did);

@@ -47,7 +47,7 @@ export async function createVP() {
         .createIdentity(unpublishedIssuerDocument)
         .finish()
         .execute(issuerClient);
-    const issuerDocument = issuerIdentity.didDocument()!;
+    const issuerDocument = issuerIdentity.didDocument();
 
     // create holder account, create identity, and publish DID document for it
     const aliceStorage = getMemstorage();
@@ -57,7 +57,7 @@ export async function createVP() {
         .createIdentity(unpublishedAliceDocument)
         .finish()
         .execute(aliceClient);
-    const aliceDocument = aliceIdentity.didDocument()!;
+    const aliceDocument = aliceIdentity.didDocument();
 
     // ===========================================================================
     // Step 2: Issuer creates and signs a Verifiable Credential.
