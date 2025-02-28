@@ -40,9 +40,9 @@ use identity_iota_interaction::SignatureBcs;
 use identity_iota_interaction::TransactionDataBcs;
 
 use crate::bindings::add_gas_data_to_transaction;
-use crate::bindings::WasmIotaTransactionBlockResponseWrapper;
 use crate::bindings::ManagedWasmIotaClient;
 use crate::bindings::WasmIotaClient;
+use crate::bindings::WasmIotaTransactionBlockResponseWrapper;
 use crate::error::TsSdkError;
 use crate::error::WasmError;
 use crate::ProgrammableTransaction;
@@ -74,7 +74,10 @@ pub type QuorumDriverApiAdaptedTraitObj =
   Box<dyn QuorumDriverTrait<Error = TsSdkError, NativeResponse = WasmIotaTransactionBlockResponseWrapper>>;
 
 #[allow(dead_code)]
-pub trait ReadApiAdaptedT: ReadTrait<Error = TsSdkError, NativeResponse = WasmIotaTransactionBlockResponseWrapper> {}
+pub trait ReadApiAdaptedT:
+  ReadTrait<Error = TsSdkError, NativeResponse = WasmIotaTransactionBlockResponseWrapper>
+{
+}
 impl<T> ReadApiAdaptedT for T where
   T: ReadTrait<Error = TsSdkError, NativeResponse = WasmIotaTransactionBlockResponseWrapper>
 {

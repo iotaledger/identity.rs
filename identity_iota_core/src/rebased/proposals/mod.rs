@@ -21,8 +21,8 @@ cfg_if::cfg_if! {
   }
 }
 use crate::iota_interaction_adapter::AdapterError;
-use crate::iota_interaction_adapter::NativeTransactionBlockResponse;
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::NativeTransactionBlockResponse;
 
 use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::IotaClientTrait;
@@ -112,7 +112,10 @@ pub trait ProposalT: Sized {
 
   /// For internal platform-agnostic usage only.
   fn parse_tx_effects_internal(
-    tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = NativeTransactionBlockResponse>,
+    tx_response: &dyn IotaTransactionBlockResponseT<
+      Error = AdapterError,
+      NativeResponse = NativeTransactionBlockResponse,
+    >,
   ) -> Result<Self::Output, Error>;
 }
 

@@ -35,9 +35,9 @@ use serde::Serialize;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
-use super::wasm_types::WasmIotaTransactionBlockResponseWrapper;
 use super::wasm_types::PromiseIotaTransactionBlockResponse;
 use super::wasm_types::WasmExecuteTransactionBlockParams;
+use super::wasm_types::WasmIotaTransactionBlockResponseWrapper;
 use super::WasmWaitForTransactionParams;
 
 use crate::bindings::PromiseIotaObjectResponse;

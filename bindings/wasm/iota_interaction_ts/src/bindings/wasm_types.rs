@@ -368,7 +368,7 @@ impl WasmSharedObjectRef {
 
 #[wasm_bindgen(module = "/lib/iota_client_helpers.ts")]
 extern "C" {
-  // Please note: For unclear reasons the `typescript_type` name and the `pub type` name defined 
+  // Please note: For unclear reasons the `typescript_type` name and the `pub type` name defined
   // in wasm_bindgen extern "C" scopes must be equal. Otherwise, the JS constructor will not be
   // found in the generated js code.
   #[wasm_bindgen(typescript_type = "WasmIotaTransactionBlockResponseWrapper")]
