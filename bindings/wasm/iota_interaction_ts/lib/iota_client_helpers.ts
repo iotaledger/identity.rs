@@ -16,7 +16,7 @@ import { blake2b } from "@noble/hashes/blake2b";
 
 export type Signer = { sign(data: Uint8Array): Promise<Signature> };
 
-export class IotaTransactionBlockResponseWrapper {
+export class WasmIotaTransactionBlockResponseWrapper {
     response: IotaTransactionBlockResponse;
 
     constructor(response: IotaTransactionBlockResponse) {
@@ -140,7 +140,7 @@ export async function executeTransaction(
     txBcs: Uint8Array,
     signer: Signer,
     gasBudget?: bigint,
-): Promise<IotaTransactionBlockResponseWrapper> {
+): Promise<WasmIotaTransactionBlockResponseWrapper> {
     const txWithGasData = await addGasDataToTransaction(iotaClient, senderAddress, txBcs, gasBudget);
     const signature = await signer.sign(txWithGasData);
     const base64signature = getSignatureValue(signature);
@@ -163,7 +163,7 @@ export async function executeTransaction(
         throw new Error(`transaction returned an unexpected response; ${response?.effects?.status.error}`);
     }
 
-    return new IotaTransactionBlockResponseWrapper(response);
+    return new WasmIotaTransactionBlockResponseWrapper(response);
 }
 
 function getSignatureValue(signature: Signature): string {

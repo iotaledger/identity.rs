@@ -62,7 +62,7 @@ const TS_SDK_TYPES: &str = r#"
   import { bcs } from "@iota/iota-sdk/bcs";
   import {
     executeTransaction,
-    IotaTransactionBlockResponseWrapper,
+    WasmIotaTransactionBlockResponseWrapper,
   } from "./iota_client_helpers"
 "#;
 
@@ -157,7 +157,7 @@ extern "C" {
   #[derive(Clone)]
   pub type PromisePaginatedCoins;
 
-  #[wasm_bindgen(typescript_type = "Promise<IotaTransactionBlockResponseWrapper>")]
+  #[wasm_bindgen(typescript_type = "Promise<WasmIotaTransactionBlockResponseWrapper>")]
   #[derive(Clone)]
   pub type PromiseIotaTransactionBlockResponseWrapper;
 
@@ -368,7 +368,10 @@ impl WasmSharedObjectRef {
 
 #[wasm_bindgen(module = "/lib/iota_client_helpers.ts")]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "IotaTransactionBlockResponseWrapper")]
+  // Please note: For unclear reasons the `typescript_type` name and the `pub type` name defined 
+  // in wasm_bindgen extern "C" scopes must be equal. Otherwise, the JS constructor will not be
+  // found in the generated js code.
+  #[wasm_bindgen(typescript_type = "WasmIotaTransactionBlockResponseWrapper")]
   #[derive(Clone)]
   pub type WasmIotaTransactionBlockResponseWrapper;
 
