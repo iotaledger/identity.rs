@@ -11,8 +11,8 @@ use crate::NetworkName;
 pub(crate) static IOTA_NETWORKS: Map<&str, IdentityNetworkMetadata> = phf_map! {
   "e678123a" => IdentityNetworkMetadata::new(
     Some("devnet"),
-    &["0x156dfa0c4d4e576f5675de7d4bbe161c767947ffceefd7498cb39c406bc1cb67"],
-    "0x0247da7f3b8708fc1d326f70153c01b7caf52a19a6f42dd3b868ac8777486b11",
+    &["0x03242ae6b87406bd0eb5d669fbe874ed4003694c0be9c6a9ee7c315e6461a553"],
+    "0x0x940ae1c2c48dade9ec01cc1eebab33ab6fecadda422ea18b105c47839fc64425",
   ),
   "2304aa97" => IdentityNetworkMetadata::new(
     Some("testnet"),
