@@ -203,6 +203,7 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
 
+  use crate::credential::credential::BASE_CONTEXT;
   use crate::credential::Credential;
   use crate::credential::Subject;
 
@@ -237,7 +238,7 @@ mod tests {
 
   #[test]
   fn credential_with_single_context_is_list_of_contexts_with_single_item() {
-    let credential = Credential::builder(serde_json::Value::default())
+    let mut credential = Credential::builder(serde_json::Value::default())
       .id(Url::parse("https://example.com/credentials/123").unwrap())
       .issuer(Url::parse("https://example.com").unwrap())
       .subject(Subject::with_id(Url::parse("https://example.com/users/123").unwrap()))
@@ -246,5 +247,10 @@ mod tests {
 
     assert!(matches!(credential.context, OneOrMany::Many(_)));
     assert_eq!(credential.context.len(), 1);
+    assert!(credential.check_structure().is_ok());
+
+    // Check backward compatibility with previously created credentials.
+    credential.context = OneOrMany::One(BASE_CONTEXT.clone());
+    assert!(credential.check_structure().is_ok());
   }
 }
