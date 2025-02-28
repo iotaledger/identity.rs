@@ -4,9 +4,9 @@
 use std::marker::PhantomData;
 
 use crate::iota_interaction_adapter::AdapterError;
-use crate::iota_interaction_adapter::AdapterNativeResponse;
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
+use crate::iota_interaction_adapter::NativeTransactionBlockResponse;
 use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockResponseT;
@@ -235,7 +235,10 @@ where
   }
 
   fn parse_tx_effects_internal(
-    _tx_response: &dyn IotaTransactionBlockResponseT<Error = AdapterError, NativeResponse = AdapterNativeResponse>,
+    _tx_response: &dyn IotaTransactionBlockResponseT<
+      Error = AdapterError,
+      NativeResponse = NativeTransactionBlockResponse,
+    >,
   ) -> Result<Self::Output, Error> {
     Ok(())
   }

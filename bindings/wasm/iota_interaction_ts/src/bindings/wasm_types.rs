@@ -62,7 +62,7 @@ const TS_SDK_TYPES: &str = r#"
   import { bcs } from "@iota/iota-sdk/bcs";
   import {
     executeTransaction,
-    IotaTransactionBlockResponseAdapter,
+    WasmIotaTransactionBlockResponseWrapper,
   } from "./iota_client_helpers"
 "#;
 
@@ -157,9 +157,9 @@ extern "C" {
   #[derive(Clone)]
   pub type PromisePaginatedCoins;
 
-  #[wasm_bindgen(typescript_type = "Promise<IotaTransactionBlockResponseAdapter>")]
+  #[wasm_bindgen(typescript_type = "Promise<WasmIotaTransactionBlockResponseWrapper>")]
   #[derive(Clone)]
-  pub type PromiseIotaTransactionBlockResponseAdapter;
+  pub type PromiseIotaTransactionBlockResponseWrapper;
 
   #[wasm_bindgen(typescript_type = "Signature")]
   pub type WasmIotaSignature;
@@ -368,33 +368,36 @@ impl WasmSharedObjectRef {
 
 #[wasm_bindgen(module = "/lib/iota_client_helpers.ts")]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "IotaTransactionBlockResponseAdapter")]
+  // Please note: For unclear reasons the `typescript_type` name and the `pub type` name defined
+  // in wasm_bindgen extern "C" scopes must be equal. Otherwise, the JS constructor will not be
+  // found in the generated js code.
+  #[wasm_bindgen(typescript_type = "WasmIotaTransactionBlockResponseWrapper")]
   #[derive(Clone)]
-  pub type IotaTransactionBlockResponseAdapter;
+  pub type WasmIotaTransactionBlockResponseWrapper;
 
   #[wasm_bindgen(constructor)]
-  pub fn new(response: WasmIotaTransactionBlockResponse) -> IotaTransactionBlockResponseAdapter;
+  pub fn new(response: WasmIotaTransactionBlockResponse) -> WasmIotaTransactionBlockResponseWrapper;
 
   #[wasm_bindgen(method)]
-  pub fn effects_is_none(this: &IotaTransactionBlockResponseAdapter) -> bool;
+  pub fn effects_is_none(this: &WasmIotaTransactionBlockResponseWrapper) -> bool;
 
   #[wasm_bindgen(method)]
-  pub fn effects_is_some(this: &IotaTransactionBlockResponseAdapter) -> bool;
+  pub fn effects_is_some(this: &WasmIotaTransactionBlockResponseWrapper) -> bool;
 
   #[wasm_bindgen(method)]
-  pub fn to_string(this: &IotaTransactionBlockResponseAdapter) -> String;
+  pub fn to_string(this: &WasmIotaTransactionBlockResponseWrapper) -> String;
 
   #[wasm_bindgen(method)]
-  fn effects_execution_status_inner(this: &IotaTransactionBlockResponseAdapter) -> Option<WasmExecutionStatus>;
+  fn effects_execution_status_inner(this: &WasmIotaTransactionBlockResponseWrapper) -> Option<WasmExecutionStatus>;
 
   #[wasm_bindgen(method)]
-  fn effects_created_inner(this: &IotaTransactionBlockResponseAdapter) -> Option<Vec<WasmOwnedObjectRef>>;
+  fn effects_created_inner(this: &WasmIotaTransactionBlockResponseWrapper) -> Option<Vec<WasmOwnedObjectRef>>;
 
   #[wasm_bindgen(method, js_name = "get_digest")]
-  fn digest_inner(this: &IotaTransactionBlockResponseAdapter) -> String;
+  fn digest_inner(this: &WasmIotaTransactionBlockResponseWrapper) -> String;
 
   #[wasm_bindgen(method, js_name = "get_response")]
-  fn response(this: &IotaTransactionBlockResponseAdapter) -> WasmIotaTransactionBlockResponse;
+  fn response(this: &WasmIotaTransactionBlockResponseWrapper) -> WasmIotaTransactionBlockResponse;
 
   #[wasm_bindgen(js_name = executeTransaction)]
   fn execute_transaction_inner(
@@ -403,7 +406,7 @@ extern "C" {
     tx_bcs: Vec<u8>,              // --> TypeScript: Uint8Array,
     signer: WasmStorageSigner,    // --> TypeScript: Signer (iota_client_helpers module)
     gas_budget: Option<u64>,      // --> TypeScript: optional bigint
-  ) -> PromiseIotaTransactionBlockResponseAdapter;
+  ) -> PromiseIotaTransactionBlockResponseWrapper;
 
   #[wasm_bindgen(js_name = "addGasDataToTransaction")]
   fn add_gas_data_to_transaction_inner(
@@ -466,11 +469,11 @@ struct WasmExecutionStatusAdapter {
   status: ExecutionStatus,
 }
 
-impl IotaTransactionBlockResponseAdapter {
+impl WasmIotaTransactionBlockResponseWrapper {
   pub fn effects_execution_status(&self) -> Option<ExecutionStatus> {
     self.effects_execution_status_inner().map(|s| {
       let state: WasmExecutionStatusAdapter =
-        into_sdk_type(s).expect("[IotaTransactionBlockResponseAdapter] Failed to convert WasmExecutionStatus");
+        into_sdk_type(s).expect("[WasmIotaTransactionBlockResponseWrapper] Failed to convert WasmExecutionStatus");
       state.status
     })
   }
@@ -480,7 +483,7 @@ impl IotaTransactionBlockResponseAdapter {
       vex_obj_ref
         .into_iter()
         .map(|obj| {
-          into_sdk_type(obj).expect("[IotaTransactionBlockResponseAdapter] Failed to convert WasmOwnedObjectRef")
+          into_sdk_type(obj).expect("[WasmIotaTransactionBlockResponseWrapper] Failed to convert WasmOwnedObjectRef")
         })
         .collect()
     })
@@ -498,7 +501,7 @@ pub async fn execute_transaction(
   tx_bcs: ProgrammableTransactionBcs, // --> Binding: Vec<u8>
   signer: WasmStorageSigner,          // --> Binding: WasmStorageSigner
   gas_budget: Option<u64>,            // --> Binding: Option<u64>,
-) -> Result<IotaTransactionBlockResponseAdapter, TsSdkError> {
+) -> Result<WasmIotaTransactionBlockResponseWrapper, TsSdkError> {
   let promise: Promise = Promise::resolve(&execute_transaction_inner(
     iota_client,
     sender_address.to_string(),
@@ -513,7 +516,7 @@ pub async fn execute_transaction(
     TsSdkError::WasmError(message.to_string(), details.to_string())
   })?;
 
-  Ok(IotaTransactionBlockResponseAdapter::new(result.into()))
+  Ok(WasmIotaTransactionBlockResponseWrapper::new(result.into()))
 }
 
 #[derive(Deserialize)]
