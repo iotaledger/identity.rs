@@ -21,7 +21,7 @@ let changedFile = entryFile
     )
     // Create an init function which imports the wasm file.
     .concat(
-        "let __initializedIotaWasm = false\r\n\r\nexport function init(path) {\r\n    if (__initializedIotaWasm) {\r\n        return Promise.resolve(wasm)\r\n    }\r\n    return __wbg_init(path || 'identity_wasm_bg.wasm').then(() => {\r\n        __initializedIotaWasm = true\r\n        return wasm\r\n    })\r\n}\r\n",
+        `let __initializedIotaWasm = false\r\n\r\nexport function init(path) {\r\n    if (__initializedIotaWasm) {\r\n        return Promise.resolve(wasm)\r\n    }\r\n    return __wbg_init(path || '${artifact}_bg.wasm').then(() => {\r\n        __initializedIotaWasm = true\r\n        return wasm\r\n    })\r\n}\r\n`,
     );
 
 fs.writeFileSync(
