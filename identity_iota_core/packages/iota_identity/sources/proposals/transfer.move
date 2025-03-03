@@ -10,7 +10,7 @@ module iota_identity::transfer_proposal {
     const EUnsentAssets: u64 = 1;
     const EInvalidObject: u64 = 2;
 
-    public struct Send has store {
+    public struct Send has store, drop {
         objects: vector<ID>,
         recipients: vector<address>,
     }

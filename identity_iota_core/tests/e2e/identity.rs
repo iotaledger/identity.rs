@@ -46,7 +46,7 @@ async fn identity_deactivation_works() -> anyhow::Result<()> {
     .execute(&identity_client)
     .await?;
 
-  assert!(identity.metadata.deactivated == Some(true));
+  assert!(identity.did_document().metadata.deactivated == Some(true));
 
   Ok(())
 }
@@ -102,7 +102,6 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     .execute(&alice_client)
     .await?
     .output;
-
   let did_doc = {
     let did = IotaDID::parse(format!("did:iota:{}", identity.id()))?;
     let mut doc = IotaDocument::new_with_id(did.clone());
@@ -126,7 +125,6 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
   else {
     anyhow::bail!("the proposal is executed");
   };
-
   proposal.approve(&identity).execute(&bob_client).await?;
 
   assert_eq!(proposal.votes(), 2);

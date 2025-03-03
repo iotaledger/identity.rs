@@ -9,7 +9,7 @@ use identity_iota::iota::rebased::migration::OnChainIdentity;
 use identity_iota::iota::rebased::transaction::TransactionInternal;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
 use identity_iota::iota::IotaDocument;
-use iota_interaction_ts::AdapterNativeResponse;
+use iota_interaction_ts::NativeTransactionBlockResponse;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::*;
 
@@ -23,7 +23,6 @@ use crate::iota::WasmIotaDocument;
 use super::proposals::StringCouple;
 use super::proposals::WasmConfigChange;
 use super::proposals::WasmCreateConfigChangeProposalTx;
-use super::proposals::WasmCreateDeactivateDidProposalTx;
 use super::proposals::WasmCreateSendProposalTx;
 use super::proposals::WasmCreateUpdateDidProposalTx;
 use super::WasmIdentityClient;
@@ -86,8 +85,8 @@ impl WasmOnChainIdentity {
   }
 
   #[wasm_bindgen(js_name = deactivateDid)]
-  pub fn deactivate_did(&self, expiration_epoch: Option<u64>) -> WasmCreateDeactivateDidProposalTx {
-    WasmCreateDeactivateDidProposalTx::new(self, expiration_epoch)
+  pub fn deactivate_did(&self, expiration_epoch: Option<u64>) -> WasmCreateUpdateDidProposalTx {
+    WasmCreateUpdateDidProposalTx::deactivate(self, expiration_epoch)
   }
 
   #[wasm_bindgen(js_name = updateConfig)]
@@ -218,7 +217,7 @@ impl WasmTransactionOutputInternalOnChainIdentity {
   }
 
   #[wasm_bindgen(getter)]
-  pub fn response(&self) -> AdapterNativeResponse {
+  pub fn response(&self) -> NativeTransactionBlockResponse {
     self.0.response.clone_native_response()
   }
 }

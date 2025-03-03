@@ -11,7 +11,7 @@ module iota_identity::borrow_proposal {
   const EUnreturnedObjects: u64 = 2;
   
   /// Action used to "borrow" assets in a transaction - enforcing their return.
-  public struct Borrow has store {
+  public struct Borrow has store, drop {
     objects: vector<ID>,
     objects_to_return: vector<ID>,
     owner: address,

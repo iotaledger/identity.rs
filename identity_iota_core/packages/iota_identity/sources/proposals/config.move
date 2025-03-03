@@ -9,7 +9,7 @@ module iota_identity::config_proposal {
     const ENotMember: u64 = 0;
     const EInvalidThreshold: u64 = 1;
 
-    public struct Modify has store {
+    public struct Modify has store, drop {
         threshold: Option<u64>,
         controllers_to_add: VecMap<address, u64>,
         controllers_to_remove: vector<ID>,

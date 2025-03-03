@@ -2,12 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod config_change;
-mod deactivate_did;
 mod send;
 mod update_did;
 
 pub use config_change::*;
-pub use deactivate_did::*;
 pub use send::*;
 pub use update_did::*;
 
@@ -70,7 +68,7 @@ impl TryFrom<&'_ HashMap<IotaAddress, u64>> for MapStringNumber {
   type Error = JsValue;
   fn try_from(value: &'_ HashMap<IotaAddress, u64>) -> Result<Self, Self::Error> {
     let js_value = serde_wasm_bindgen::to_value(value)?;
-    Ok(js_value.dyn_into()?)
+    js_value.dyn_into()
   }
 }
 
@@ -85,7 +83,7 @@ impl TryFrom<&'_ HashMap<ObjectID, u64>> for MapStringNumber {
   type Error = JsValue;
   fn try_from(value: &'_ HashMap<ObjectID, u64>) -> Result<Self, Self::Error> {
     let js_value = serde_wasm_bindgen::to_value(value)?;
-    Ok(js_value.dyn_into()?)
+    js_value.dyn_into()
   }
 }
 
@@ -100,6 +98,6 @@ impl TryFrom<&'_ HashSet<ObjectID>> for StringSet {
   type Error = JsValue;
   fn try_from(value: &'_ HashSet<ObjectID>) -> Result<Self, Self::Error> {
     let js_value = serde_wasm_bindgen::to_value(value)?;
-    Ok(js_value.dyn_into()?)
+    js_value.dyn_into::<StringSet>()
   }
 }

@@ -11,7 +11,7 @@ use identity_iota::iota::rebased::proposals::ProposalResult;
 use identity_iota::iota::rebased::proposals::ProposalT;
 use identity_iota::iota::rebased::transaction::TransactionInternal;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
-use iota_interaction_ts::AdapterNativeResponse;
+use iota_interaction_ts::NativeTransactionBlockResponse;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::JsCast;
@@ -165,7 +165,7 @@ impl WasmApproveConfigChangeProposalTx {
   }
 
   #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<AdapterNativeResponse> {
+  pub async fn execute(self, client: &WasmIdentityClient) -> Result<NativeTransactionBlockResponse> {
     let identity_ref = self.identity.0.read().await;
     self
       .proposal
@@ -209,7 +209,7 @@ impl WasmExecuteConfigChangeProposalTx {
   }
 
   #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<AdapterNativeResponse> {
+  pub async fn execute(self, client: &WasmIdentityClient) -> Result<NativeTransactionBlockResponse> {
     let mut identity_ref = self.identity.0.write().await;
     let proposal = Rc::into_inner(self.proposal.0)
       .ok_or_else(|| js_sys::Error::new("cannot consume proposal; try to drop all other references to it"))?
@@ -229,7 +229,7 @@ impl WasmExecuteConfigChangeProposalTx {
 #[wasm_bindgen(js_name = CreateConfigChangeProposalTxOutput, inspectable, getter_with_clone)]
 pub struct WasmCreateConfigChangeProposalTxOutput {
   pub output: Option<WasmConfigChangeProposal>,
-  pub response: AdapterNativeResponse,
+  pub response: NativeTransactionBlockResponse,
 }
 
 impl From<TransactionOutputInternal<ProposalResult<Proposal<ConfigChange>>>>
@@ -323,10 +323,10 @@ impl WasmCreateConfigChangeProposalTx {
     };
 
     let tx_output = builder
-      .finish(&client)
+      .finish(client)
       .await
       .wasm_result()?
-      .execute_with_opt_gas_internal(self.gas_budget, &client)
+      .execute_with_opt_gas_internal(self.gas_budget, client)
       .await
       .wasm_result()?;
 

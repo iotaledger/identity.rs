@@ -21,7 +21,7 @@ extern "C" {
 #[macro_export]
 macro_rules! console_log {
   ($($tt:tt)*) => {
-    crate::macros::console_log((format!($($tt)*)).as_str())
+    $crate::macros::console_log((format!($($tt)*)).as_str())
   }
 }
 
