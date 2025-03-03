@@ -9,6 +9,9 @@ on:
         description: 'Version to publish docs under (e.g. `v1.2.3-dev.1`)'
         required: true
 
+env:
+  GH_TOKEN: ${{ github.token }}
+
 permissions:
   actions: 'write'
 

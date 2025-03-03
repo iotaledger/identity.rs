@@ -1,9 +1,9 @@
 {
   "name": "@iota/identity-wasm",
+  "version": "1.5.0",
   "author": "IOTA Foundation <info@iota.org>",
   "description": "WASM bindings for IOTA Identity - A Self Sovereign Identity Framework implementing the DID and VC standards from W3C. To be used in Javascript/Typescript",
   "homepage": "https://www.iota.org",
-  "version": "1.4.0",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -52,6 +52,7 @@
   ],
   "devDependencies": {
     "@digitalcredentials/did-method-key": "^2.0.3",
+    "@types/jsonwebtoken": "^9.0.7",
     "@types/mocha": "^9.1.0",
     "@types/node": "^22.0.0",
     "big-integer": "^1.6.51",
@@ -77,6 +78,7 @@
     "@noble/hashes": "^1.4.0",
     "@types/node-fetch": "^2.6.2",
     "base64-arraybuffer": "^1.0.2",
+    "jose": "^5.9.6",
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
