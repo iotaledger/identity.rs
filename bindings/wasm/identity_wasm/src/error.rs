@@ -109,7 +109,8 @@ impl_wasm_error_from!(
   identity_iota::credential::KeyBindingJwtError,
   identity_iota::credential::status_list_2021::StatusListError,
   identity_iota::credential::status_list_2021::StatusList2021CredentialError,
-  identity_iota::iota::rebased::Error
+  identity_iota::iota::rebased::Error,
+  identity_iota::sd_jwt_rework::Error
 );
 
 // Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
@@ -172,6 +173,15 @@ impl From<serde_json::Error> for WasmError<'_> {
     Self {
       name: Cow::Borrowed("serde_json::Error"), // the exact error code is embedded in the message
       message: Cow::Owned(error.to_string()),
+    }
+  }
+}
+
+impl From<anyhow::Error> for WasmError<'_> {
+  fn from(value: anyhow::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("Generic Error"),
+      message: Cow::Owned(value.to_string()),
     }
   }
 }
@@ -279,6 +289,15 @@ impl From<secret_storage::Error> for WasmError<'_> {
   fn from(error: secret_storage::Error) -> Self {
     Self {
       name: Cow::Borrowed("secret_storage::Error"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<identity_iota::credential::sd_jwt_vc::Error> for WasmError<'_> {
+  fn from(error: identity_iota::credential::sd_jwt_vc::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("SdJwtVcError"),
       message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }

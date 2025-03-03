@@ -46,14 +46,14 @@ macro_rules! impl_wasm_json {
     impl $wasm_class {
       /// Serializes this to a JSON object.
       #[wasm_bindgen(js_name = toJSON)]
-      pub fn to_json(&self) -> $crate::error::Result<JsValue> {
+      pub fn to_json(&self) -> $crate::error::Result<wasm_bindgen::JsValue> {
         use $crate::error::WasmResult;
-        JsValue::from_serde(&self.0).wasm_result()
+        wasm_bindgen::JsValue::from_serde(&self.0).wasm_result()
       }
 
       /// Deserializes an instance from a JSON object.
       #[wasm_bindgen(js_name = fromJSON)]
-      pub fn from_json(json: &JsValue) -> $crate::error::Result<$wasm_class> {
+      pub fn from_json(json: &wasm_bindgen::JsValue) -> $crate::error::Result<$wasm_class> {
         use $crate::error::WasmResult;
         json.into_serde().map(Self).wasm_result()
       }
