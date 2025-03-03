@@ -1,25 +1,17 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::path::PathBuf;
 use std::str::FromStr;
 
 use crate::error::Result;
 use crate::error::WasmResult;
-use async_trait::async_trait;
 use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::crypto::PublicKey;
-use identity_iota_interaction::types::crypto::Signature;
-use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::KeytoolSigner;
 use identity_iota_interaction::KeytoolSignerBuilder;
-use identity_iota_interaction::TransactionDataBcs;
-use secret_storage::Error as SecretStorageError;
 use secret_storage::Signer;
 use serde_json::Value;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsError;
-use wasm_bindgen::JsValue;
 
 use super::WasmIotaSignature;
 use super::WasmPublicKey;
@@ -89,6 +81,15 @@ impl WasmKeytoolSigner {
       .await
       .map_err(|e| JsError::new(&e.to_string()).into())
       .and_then(|sig| sig.try_into())
+  }
+
+  #[wasm_bindgen(js_name = iotaPublicKeyBytes)]
+  pub async fn iota_public_key_bytes(&self) -> Vec<u8> {
+    let pk = self.0.public_key();
+    let mut bytes = vec![pk.flag()];
+    bytes.extend_from_slice(pk.as_ref());
+
+    bytes
   }
 }
 
