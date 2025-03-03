@@ -1,12 +1,17 @@
 # Changelog
 
-## [v1.6.0-alpha.1](https://github.com/iotaledger/identity.rs/tree/v1.6.0-alpha.1) (2024-14-04)
+## [v1.5.0](https://github.com/iotaledger/identity.rs/tree/v1.5.0) (2025-01-20)
 
-[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v1.4.0...v1.6.0-alpha.1)
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v1.4.0...v1.5.0)
 
-This release is targeting IOTA Rebased networks and is meant for early testing. We still expect minor changes in the API and potentially in the on-chain objects.
+### Added
 
-Identities created on IOTA Stardust networks can be migrated via the [Stardust package](https://docs.iota.org/developer/stardust/stardust-migration)
+- SD-JWT VC implementation [\#1413](https://github.com/iotaledger/identity.rs/pull/1413)
+
+### Patch
+
+- Support %-encoded characters in DID URL [\#1496](https://github.com/iotaledger/identity.rs/pull/1496)
+- fix: serialization of status list [\#1423](https://github.com/iotaledger/identity.rs/pull/1423)
 
 ## [v1.4.0](https://github.com/iotaledger/identity.rs/tree/v1.4.0) (2024-09-23)
 
@@ -14,16 +19,16 @@ Identities created on IOTA Stardust networks can be migrated via the [Stardust p
 
 ### Added
 
-- Add feature to support custom `now_utc` implementations [\#1397](https://github.com/iotaledger/identity.rs/pull/1397)
+- Add support for custom JWS algorithms [\#1410](https://github.com/iotaledger/identity.rs/pull/1410)
 - Add support for `did:jwk` resolution [\#1404](https://github.com/iotaledger/identity.rs/pull/1404)
 - Linked Verifiable Presentations [\#1398](https://github.com/iotaledger/identity.rs/pull/1398)
-- Add support for custom JWS algorithms [\#1410](https://github.com/iotaledger/identity.rs/pull/1410)
+- Add feature to support custom `now_utc` implementations [\#1397](https://github.com/iotaledger/identity.rs/pull/1397)
 
 ### Patch
 
-- Make `bls12_381_plus` dependency more flexible again [\#1393](https://github.com/iotaledger/identity.rs/pull/1393)
-- Mark `js-sys` as optional for identity_core [\#1405](https://github.com/iotaledger/identity.rs/pull/1405)
 - Remove dependency on `identity_core` default features [\#1408](https://github.com/iotaledger/identity.rs/pull/1408)
+- Mark `js-sys` as optional for identity\_core [\#1405](https://github.com/iotaledger/identity.rs/pull/1405)
+- Make `bls12_381_plus` dependency more flexible again [\#1393](https://github.com/iotaledger/identity.rs/pull/1393)
 
 ## [v1.3.1](https://github.com/iotaledger/identity.rs/tree/v1.3.1) (2024-06-12)
 

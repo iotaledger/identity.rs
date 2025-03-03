@@ -23,7 +23,7 @@
 ---
 
 > [!NOTE]
-> This version of the library is compatible with IOTA Rebased networks and in active development, for a version of the library compatible with IOTA Stardust networks check [here](https://github.com/iotaledger/identity.rs/)
+> This version of the library is compatible with IOTA Stardust networks, for a version of the library compatible with IOTA Rebased networks check [here](https://github.com/iotaledger/identity.rs/tree/feat/identity-rebased-alpha/)
 
 ## Introduction
 
@@ -75,7 +75,7 @@ If you want to include IOTA Identity in your project, simply add it as a depende
 
 ```toml
 [dependencies]
-identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha" }
+identity_iota = { version = "1.5.0" }
 ```
 
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples), you can also do this:
@@ -113,6 +113,9 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
+identity_iota = { version = "1.5.0", features = ["memstore"] }
+iota-sdk = { version = "1.0.2", default-features = true, features = ["tls", "client", "stronghold"] }
+tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.62"
 identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha", features = ["memstore"] }
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.9.2-rc" }

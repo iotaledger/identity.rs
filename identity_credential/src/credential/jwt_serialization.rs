@@ -80,7 +80,7 @@ impl<'credential, T> CredentialJwtClaims<'credential, T>
 where
   T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
 {
-  pub(super) fn new(credential: &'credential Credential<T>, custom: Option<Object>) -> Result<Self> {
+  pub(crate) fn new(credential: &'credential Credential<T>, custom: Option<Object>) -> Result<Self> {
     let Credential {
       context,
       id,
