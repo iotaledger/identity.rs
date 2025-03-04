@@ -83,7 +83,7 @@ jobs:
         ${{
           matrix.os != 'windows-latest' &&
             format(
-              'iota-server-logs-build-and-test-{0}-{1}-{2}-{3}.txt',
+              'iota-server-logs-build-and-test-{0}-{1}-{2}-{3}.log',
               matrix.os == 'ubuntu-24.04' && 'linux' || 'macos',
               github.run_id,
               github.run_number,
