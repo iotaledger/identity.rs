@@ -82,6 +82,9 @@ sd-jwt-vc = ["identity_credential/sd-jwt-vc"]
 # Enables zero knowledge selective disclosurable VCs
 jpt-bbs-plus = ["identity_storage/jpt-bbs-plus", "identity_credential/jpt-bbs-plus"]
 
+# Enables IOTA Keytool integration.
+keytool-signer = ["identity_iota_interaction/keytool-signer"]
+
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
