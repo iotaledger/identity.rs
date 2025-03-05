@@ -55,7 +55,7 @@ static CLIENT: OnceCell<TestClient> = OnceCell::const_new();
 const SCRIPT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/scripts/");
 const CACHED_PKG_ID: &str = "/tmp/iota_identity_pkg_id.txt";
 
-pub const TEST_GAS_BUDGET: u64 = 50_000_000;
+pub const TEST_GAS_BUDGET: u64 = 10_000_000;
 pub const TEST_DOC: &[u8] = &[
   68, 73, 68, 1, 0, 131, 1, 123, 34, 100, 111, 99, 34, 58, 123, 34, 105, 100, 34, 58, 34, 100, 105, 100, 58, 48, 58,
   48, 34, 44, 34, 118, 101, 114, 105, 102, 105, 99, 97, 116, 105, 111, 110, 77, 101, 116, 104, 111, 100, 34, 58, 91,

@@ -45,7 +45,7 @@ use tokio::process::Command;
 use tokio::sync::OnceCell;
 use tokio::task::JoinHandle;
 use tonic::transport::Uri;
-const TEST_GAS_BUDGET: u64 = 50_000_000;
+const TEST_GAS_BUDGET: u64 = 10_000_000;
 
 type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
