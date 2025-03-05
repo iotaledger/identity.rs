@@ -20,7 +20,7 @@ use identity_iota_interaction::AssetMoveCalls;
 use identity_iota_interaction::MoveType;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 
-#[wasm_bindgen(module = "move_calls/asset")]
+#[wasm_bindgen(module = "@iota/iota-interaction-ts/move_calls/asset")]
 extern "C" {
   #[wasm_bindgen(js_name = "create", catch)]
   pub(crate) async fn new_asset(
