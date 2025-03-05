@@ -68,7 +68,9 @@ async function getCoinForTransaction(iotaClient: IotaClient, senderAddress: stri
     do {
         const response = await iotaClient.getCoins({ owner: senderAddress, cursor });
         if (response.data.length === 0) {
-            throw new Error(`no coin found with minimum required balance of ${MINIMUM_BALANCE_FOR_COIN} for address ${senderAddress}"`);
+            throw new Error(
+                `no coin found with minimum required balance of ${MINIMUM_BALANCE_FOR_COIN} for address ${senderAddress}"`,
+            );
         }
 
         let sortedValidCoins = response.data
@@ -83,7 +85,9 @@ async function getCoinForTransaction(iotaClient: IotaClient, senderAddress: stri
         cursor = response.nextCursor;
     } while (cursor)
 
-    throw new Error(`no coin found with minimum required balance of ${MINIMUM_BALANCE_FOR_COIN} for address ${senderAddress}"`);
+    throw new Error(
+        `no coin found with minimum required balance of ${MINIMUM_BALANCE_FOR_COIN} for address ${senderAddress}"`,
+    );
 }
 
 /**
