@@ -19,7 +19,7 @@ export const IOTA_IDENTITY_PKG_ID = process.env.IOTA_IDENTITY_PKG_ID
     || "0x7a67dd504eb1291958495c71a07d20985951648dd5ebf01ac921a50257346818";
 export const NETWORK_NAME_FAUCET = process.env.NETWORK_NAME_FAUCET || "localnet";
 export const NETWORK_URL = process.env.NETWORK_URL || "http://127.0.0.1:9000";
-export const TEST_GAS_BUDGET = BigInt(10_000_000);
+export const TEST_GAS_BUDGET = BigInt(50_000_000);
 
 export function getMemstorage(): Storage {
     return new Storage(new JwkMemStore(), new KeyIdMemStore());

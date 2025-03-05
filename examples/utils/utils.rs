@@ -32,7 +32,7 @@ use rand::distributions::DistString;
 use secret_storage::Signer;
 use serde_json::Value;
 
-pub const TEST_GAS_BUDGET: u64 = 10_000_000;
+pub const TEST_GAS_BUDGET: u64 = 50_000_000;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 

@@ -115,7 +115,7 @@ export async function addGasDataToTransaction(
     const gasCoin = await getCoinForTransaction(iotaClient, senderAddress);
     const txData = TransactionDataBuilder.fromBytes(txBcs);
     const gasData: GasData = {
-        budget: gasBudget ? gasBudget.toString() : "10000000000", // 10_000_000_000
+        budget: gasBudget ? gasBudget.toString() : "50000000", // 50_000_000
         owner: senderAddress,
         payment: [{
             objectId: gasCoin.coinObjectId,

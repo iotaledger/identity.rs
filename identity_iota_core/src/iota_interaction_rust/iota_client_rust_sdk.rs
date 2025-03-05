@@ -499,7 +499,7 @@ impl IotaClientRustSdk {
       sender_address,
       vec![gas_coin.object_ref()],
       tx.clone(),
-      10_000_000,
+      50_000_000,
       gas_price,
     );
     let dry_run_gas_result = self
