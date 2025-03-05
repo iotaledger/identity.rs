@@ -83,7 +83,7 @@ async function getCoinForTransaction(iotaClient: IotaClient, senderAddress: stri
         }
 
         cursor = response.nextCursor;
-    } while (cursor)
+    } while (cursor);
 
     throw new Error(
         `no coin found with minimum required balance of ${MINIMUM_BALANCE_FOR_COIN} for address ${senderAddress}"`,
