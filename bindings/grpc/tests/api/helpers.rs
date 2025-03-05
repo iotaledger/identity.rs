@@ -367,20 +367,19 @@ async fn publish_package(active_address: IotaAddress) -> anyhow::Result<ObjectID
     .arg("publish_identity_package.sh")
     .output()
     .await?;
+  let stdout = std::str::from_utf8(&output.stdout).unwrap();
 
   if !output.status.success() {
-    anyhow::bail!(
-      "Failed to publish move package: \n\n{}\n\n{}",
-      std::str::from_utf8(&output.stdout).unwrap(),
-      std::str::from_utf8(&output.stderr).unwrap()
-    );
+    let stderr = std::str::from_utf8(&output.stderr).unwrap();
+    anyhow::bail!("Failed to publish move package: \n\n{stdout}\n\n{stderr}");
   }
 
   let package_id: ObjectID = {
-    let output_str = std::str::from_utf8(&output.stdout).unwrap().trim();
-    ObjectID::from_str(output_str).context(format!(
-      "failed to find IDENTITY_IOTA_PKG_ID in response from: {output_str}"
-    ))?
+    let stdout_trimmed = stdout.trim();
+    ObjectID::from_str(stdout_trimmed).with_context(|| {
+      let stderr = std::str::from_utf8(&output.stderr).unwrap();
+      format!("failed to find IDENTITY_IOTA_PKG_ID in response from: '{stdout_trimmed}'; {stderr}")
+    })?
   };
 
   // Persist package ID in order to avoid publishing the package for every test.

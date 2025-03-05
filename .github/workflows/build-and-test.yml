@@ -79,6 +79,18 @@ jobs:
     env:
       SCCACHE_DIR: ${{ matrix.sccache-path }}
       RUSTC_WRAPPER: sccache
+      IOTA_SERVER_LOGFILE: >-
+        ${{
+          matrix.os != 'windows-latest' &&
+            format(
+              'iota-server-logs-build-and-test-{0}-{1}-{2}-{3}.log',
+              matrix.os == 'ubuntu-24.04' && 'linux' || 'macos',
+              github.run_id,
+              github.run_number,
+              github.run_attempt
+            ) ||
+            ''
+        }}
 
     steps:
       - uses: actions/checkout@v3
@@ -135,6 +147,7 @@ jobs:
         uses: './.github/actions/iota-rebase-sandbox/setup'
         with:
           platform: ${{ matrix.os == 'ubuntu-24.04' && 'linux' || 'macos' }}
+          logfile: ${{ env.IOTA_SERVER_LOGFILE }}
 
       - name: test IotaIdentity package
         if: matrix.os != 'windows-latest'
@@ -173,6 +186,15 @@ jobs:
           cd bindings/wasm/identity_wasm
           npm ci
           npm run test:readme:rust
+
+      - name: Archive server logs
+        if: ${{ env.IOTA_SERVER_LOGFILE }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.IOTA_SERVER_LOGFILE }}
+          path: iota/${{ env.IOTA_SERVER_LOGFILE }}
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
