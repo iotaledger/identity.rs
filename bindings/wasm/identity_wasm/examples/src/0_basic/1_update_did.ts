@@ -7,7 +7,6 @@ import {
     MethodRelationship,
     MethodScope,
     Service,
-    Timestamp,
     VerificationMethod,
 } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";

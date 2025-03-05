@@ -117,7 +117,7 @@ impl WasmIdentityClient {
       .map_err(|err| JsError::new(&format!("failed to read DID document; {err:?}")))?
       .clone();
 
-    Ok(WasmPublishDidTx(self.0.publish_did_document(doc)))
+    Ok(WasmPublishDidTx::new(self.0.publish_did_document(doc)))
   }
 
   #[wasm_bindgen(js_name = publishDidDocumentUpdate)]
@@ -154,13 +154,35 @@ impl WasmIdentityClient {
 
 // TODO: rethink how to organize the following types and impls
 #[wasm_bindgen(js_name = PublishDidTx)]
-pub struct WasmPublishDidTx(pub(crate) PublishDidTx);
+pub struct WasmPublishDidTx {
+  pub(crate) tx: PublishDidTx,
+  gas_budget: Option<u64>,
+}
 
 #[wasm_bindgen(js_class = PublishDidTx)]
 impl WasmPublishDidTx {
-  #[wasm_bindgen(js_name = execute)]
+  fn new(tx: PublishDidTx) -> Self {
+    Self { tx, gas_budget: None }
+  }
+
+  #[wasm_bindgen(js_name = withGasBudget)]
+  pub fn with_gas_budget(mut self, budget: u64) -> Self {
+    self.gas_budget = Some(budget);
+    self
+  }
+
+  #[wasm_bindgen(setter, js_name = gasBudget)]
+  pub fn set_gas_budget(&mut self, budget: u64) {
+    self.gas_budget = Some(budget);
+  }
+
+  #[wasm_bindgen]
   pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionOutputPublishDid, JsValue> {
-    let output = self.0.execute(&client.0).await.map_err(wasm_error)?;
+    let output = self
+      .tx
+      .execute_with_opt_gas_internal(self.gas_budget, &client.0)
+      .await
+      .map_err(wasm_error)?;
     Ok(WasmTransactionOutputPublishDid(output))
   }
 }
