@@ -9,12 +9,11 @@ import {
     OwnedObjectRef,
     Signature,
 } from "@iota/iota-sdk/client";
-import { messageWithIntent, PublicKey, toSerializedSignature } from "@iota/iota-sdk/cryptography";
-import { Ed25519PublicKey } from "@iota/iota-sdk/keypairs/ed25519";
 import { GasData, TransactionDataBuilder } from "@iota/iota-sdk/transactions";
-import { blake2b } from "@noble/hashes/blake2b";
 
 export type Signer = { sign(data: Uint8Array): Promise<Signature> };
+
+const MINIMUM_BALANCE_FOR_COIN = BigInt(1_000_000_000);
 
 export class WasmIotaTransactionBlockResponseWrapper {
     response: IotaTransactionBlockResponse;
@@ -54,13 +53,37 @@ export class WasmIotaTransactionBlockResponseWrapper {
     }
 }
 
-async function getCoinForTransaction(iotaClient: IotaClient, senderAddress: string): Promise<CoinStruct> {
-    const coins = await iotaClient.getCoins({ owner: senderAddress });
-    if (coins.data.length === 0) {
-        throw new Error(`could not find coins for transaction with sender ${senderAddress}`);
+function byHighestBalance<T extends { balance: BigInt }>({ balance: a }: T, { balance: b }: T) {
+    if (a > b) {
+        return -1;
     }
+    if (a < b) {
+        return 1;
+    }
+    return 0;
+}
 
-    return coins.data[1];
+async function getCoinForTransaction(iotaClient: IotaClient, senderAddress: string): Promise<CoinStruct> {
+    let cursor: string | null | undefined = undefined;
+    do {
+        const response = await iotaClient.getCoins({ owner: senderAddress, cursor });
+        if (response.data.length === 0) {
+            throw new Error(`no coin found with minimum required balance of ${MINIMUM_BALANCE_FOR_COIN} for address ${senderAddress}"`);
+        }
+
+        let sortedValidCoins = response.data
+            .map((coin) => ({ coin, balance: BigInt(coin.balance) }))
+            .filter(({ balance }) => balance >= MINIMUM_BALANCE_FOR_COIN)
+            .sort(byHighestBalance);
+
+        if (sortedValidCoins.length >= 1) {
+            return sortedValidCoins[0].coin;
+        }
+
+        cursor = response.nextCursor;
+    } while (cursor)
+
+    throw new Error(`no coin found with minimum required balance of ${MINIMUM_BALANCE_FOR_COIN} for address ${senderAddress}"`);
 }
 
 /**
