@@ -14,7 +14,9 @@
   },
   "scripts": {
     "build:src": "cargo build --lib --release --target wasm32-unknown-unknown --target-dir ../target",
+    "prebundle:nodejs": "rimraf node",
     "bundle:nodejs": "wasm-bindgen ../target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target nodejs --out-dir node && node ../build/node identity_wasm && tsc --project ./lib/tsconfig.json && node ../build/replace_paths ./lib/tsconfig.json node identity_wasm",
+    "prebundle:web": "rimraf web",
     "bundle:web": "wasm-bindgen ../target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --target web --out-dir web && node ../build/web identity_wasm && tsc --project ./lib/tsconfig.web.json && node ../build/replace_paths ./lib/tsconfig.web.json web identity_wasm",
     "build:nodejs": "npm run build:src && npm run bundle:nodejs",
     "build:web": "npm run build:src && npm run bundle:web",
@@ -63,6 +65,7 @@
     "fs-extra": "^10.1.0",
     "jsdoc-to-markdown": "^7.1.1",
     "mocha": "^9.2.0",
+    "rimraf": "^6.0.1",
     "ts-mocha": "^9.0.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.1.0",

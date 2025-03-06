@@ -3,7 +3,6 @@
   "entryPoints": [
     "./node/"
   ],
-  "tsconfig": "./tsconfig.typedoc.json",
   "out": "./docs/wasm",
   "compilerOptions": {
     "baseUrl": ".",
@@ -11,9 +10,6 @@
       "@iota/iota-interaction-ts/*": [
         "./*"
       ],
-      "@iota/identity-wasm/*": [
-        "../identity_wasm/*"
-      ]
     }
   }
 }

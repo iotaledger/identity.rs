@@ -12,7 +12,9 @@
   "scripts": {
     "build:src": "cargo build --lib --release --target wasm32-unknown-unknown --target-dir ../target",
     "build:src:node": "cargo build --lib --release --target wasm32-unknown-unknown --features keytool-signer --target-dir ../target",
+    "prebundle:nodejs": "rimraf node",
     "bundle:nodejs": "wasm-bindgen ../target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --weak-refs --target nodejs --out-dir node && node ../build/node iota_interaction_ts && tsc --project ./lib/tsconfig.json && node ../build/replace_paths ./lib/tsconfig.json node iota_interaction_ts",
+    "prebundle:web": "rimraf web",
     "bundle:web": "wasm-bindgen ../target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --target web --out-dir web && node ../build/web iota_interaction_ts && tsc --project ./lib/tsconfig.web.json && node ../build/replace_paths ./lib/tsconfig.web.json web iota_interaction_ts",
     "build:nodejs": "npm run build:src:node && npm run bundle:nodejs",
     "build:web": "npm run build:src && npm run bundle:web",
@@ -32,6 +34,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "dprint": "^0.33.0",
+    "rimraf": "^6.0.1",
     "tsconfig-paths": "^4.1.0",
     "typescript": "^5.7.3",
     "wasm-opt": "^1.4.0"
