@@ -16,6 +16,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::JsCast;
 
 use super::StringSet;
+use super::WasmTransactionInternalOutputVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::iota::WasmIotaDocument;
@@ -149,7 +150,7 @@ impl WasmApproveUpdateDidDocumentProposalTx {
   }
 
   #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<NativeTransactionBlockResponse> {
+  pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionInternalOutputVoid> {
     let identity_ref = self.identity.0.read().await;
     self
       .proposal
@@ -160,7 +161,7 @@ impl WasmApproveUpdateDidDocumentProposalTx {
       .execute_with_opt_gas_internal(self.gas_budget, &client.0)
       .await
       .wasm_result()
-      .map(|tx_output| tx_output.response.clone_native_response())
+      .map(|tx_output| WasmTransactionInternalOutputVoid::new(tx_output.response.clone_native_response()))
   }
 }
 
@@ -193,7 +194,7 @@ impl WasmExecuteUpdateDidDocumentProposalTx {
   }
 
   #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<NativeTransactionBlockResponse> {
+  pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionInternalOutputVoid> {
     let mut identity_ref = self.identity.0.write().await;
     let proposal = Rc::into_inner(self.proposal.0)
       .ok_or_else(|| js_sys::Error::new("cannot consume proposal; try to drop all other references to it"))?
@@ -206,7 +207,7 @@ impl WasmExecuteUpdateDidDocumentProposalTx {
       .execute_with_opt_gas_internal(self.gas_budget, client)
       .await
       .wasm_result()
-      .map(|tx_output| tx_output.response.clone_native_response())
+      .map(|tx_output| WasmTransactionInternalOutputVoid::new(tx_output.response.clone_native_response()))
   }
 }
 

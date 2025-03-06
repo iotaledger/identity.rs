@@ -77,7 +77,7 @@ impl WasmOnChainIdentity {
 
   #[wasm_bindgen(
     js_name = updateDidDocument,
-    unchecked_return_type = "TransactionInternal<Proposal<UpdateDid> | undefined>",
+    unchecked_return_type = "TransactionInternal<Proposal<UpdateDid> | void>",
   )]
   pub fn update_did_document(
     &self,
