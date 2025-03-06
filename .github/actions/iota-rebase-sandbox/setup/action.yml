@@ -6,6 +6,10 @@ inputs:
     description: "Platform to download binary for (linux or macos)"
     required: true
     default: "linux"
+  logfile:
+    description: "Optional log file to store server log as workflow artifact"
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -49,5 +53,10 @@ runs:
       run: |
         # Clear previous configuration
         rm -rf ~/.iota || true 
+
+        # Check log file arg
+        LOGFILE="${{ inputs.logfile }}"
+        echo "Starting server with log file: $LOGFILE"
+
         # Start the network
-        iota start --with-faucet &
+        iota start --with-faucet ${{ inputs.logfile && format('> {0} 2>&1', inputs.logfile) || '' }} &

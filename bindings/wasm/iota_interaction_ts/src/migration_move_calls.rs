@@ -15,7 +15,7 @@ use crate::bindings::WasmSharedObjectRef;
 use crate::error::TsSdkError;
 use crate::error::WasmError;
 
-#[wasm_bindgen(module = "move_calls")]
+#[wasm_bindgen(module = "@iota/iota-interaction-ts/move_calls")]
 extern "C" {
   #[wasm_bindgen(js_name = "migrateDidOutput", catch)]
   async fn migrate_did_output_impl(

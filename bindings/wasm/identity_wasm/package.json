@@ -35,7 +35,7 @@
     "test:unit:node": "ts-mocha -p tsconfig.node.json ./tests/*.ts --parallel --exit",
     "cypress": "cypress open",
     "fmt": "dprint fmt",
-    "fix_docs": "find ./docs/wasm/ -type f -name '*.md' -exec sed -Ei 's/(\\.md?#([^#]*)?)#/\\1/' {} +"
+    "fix_docs": "find ./docs/wasm/ -type f -name '*.md' -exec sed -E -i.bak -e 's/(\\.md?#([^#]*)?)#/\\1/' {} ';' -exec rm {}.bak ';'"
   },
   "config": {
     "CYPRESS_VERIFY_TIMEOUT": 100000
