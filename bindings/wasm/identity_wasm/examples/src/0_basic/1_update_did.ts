@@ -62,7 +62,7 @@ export async function updateIdentity() {
         .execute(identityClient)
         .then(result => result.output);
 
-    console.assert(maybePendingProposal === undefined, "the proposal should have been executed right away!");
+    console.assert(maybePendingProposal == null, "the proposal should have been executed right away!");
 
     // and resolve again to make sure we're looking at the onchain information
     const resolvedAgain = await identityClient.resolveDid(did);
