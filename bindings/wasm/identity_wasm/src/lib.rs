@@ -47,5 +47,5 @@ pub fn start() -> Result<(), JsValue> {
 #[wasm_bindgen(typescript_custom_section)]
 const CUSTOM_IMPORTS: &'static str = r#"
 import { JwsAlgorithm, JwkOperation, JwkUse, JwkType } from '../lib/jose/index';
-import { Proposal, TransactionInternal, TransactionInternalOutput } from '../lib/index';
+import { Proposal, ProposalOutput, TransactionInternal, TransactionInternalOutput } from '../lib/index';
 "#;
