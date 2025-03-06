@@ -4,7 +4,6 @@
     "../typedoc.json"
   ],
   "entryPoints": [
-    "../iota_interaction_ts/node/",
     "./node/"
   ],
   "tsconfig": "./tsconfig.typedoc.json",
