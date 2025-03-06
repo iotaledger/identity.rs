@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.node.json",
   "include": [
-    "../iota_interaction_ts/node/**/*",
     "node/**/*"
   ]
 }
