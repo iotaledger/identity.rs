@@ -27,6 +27,10 @@ index.html
 *.hodl
 *.hodl.*
 
-!/bindings/wasm/static/index.html
+!/bindings/wasm/identity_wasm/static/index.html
 
 docs
+# ignore IOTA build artifacts & package locks
+build
+identity_iota_core/packages/*/Move.lock
+

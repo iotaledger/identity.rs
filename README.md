@@ -23,33 +23,51 @@
 ---
 
 > [!NOTE]
-> This version of the library is compatible with IOTA Stardust networks, for a version of the library compatible with IOTA Rebased networks check [here](https://github.com/iotaledger/identity.rs/tree/feat/identity-rebased-alpha/)
+> This version of the library is compatible with IOTA Rebased networks and in active development, for a version of the library compatible with IOTA Stardust networks check [here](https://github.com/iotaledger/identity.rs/)
 
 ## Introduction
 
-IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) specifications. This library can be used to create, resolve and authenticate digital identities and to create verifiable credentials and presentations in order to share information in a verifiable manner and establish trust in the digital world. It does so while supporting secure storage of cryptographic keys, which can be implemented for your preferred key management system. Many of the individual libraries (Rust crates) are agnostic over the concrete DID method, with the exception of some libraries dedicated to implement the [IOTA DID method](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec/), which is an implementation of decentralized digital identity on the IOTA and Shimmer networks. Written in stable Rust, IOTA Identity has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
+IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) specifications. This library can be used to create, resolve and authenticate digital identities and to create verifiable credentials and presentations in order to share information in a verifiable manner and establish trust in the digital world. It does so while supporting secure storage of cryptographic keys, which can be implemented for your preferred key management system. Many of the individual libraries (Rust crates) are agnostic over the concrete DID method, with the exception of some libraries dedicated to implement the [IOTA DID method](https://docs.iota.org/references/iota-identity/iota-did-method-spec/), which is an implementation of decentralized digital identity on IOTA Rebased networks. Written in stable Rust, IOTA Identity has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
-## Bindings
+<!-- ## Bindings
 
 [Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages:
 
-- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm/) (JavaScript/TypeScript)
+- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/bindings/wasm/identity_wasm/) (JavaScript/TypeScript) -->
 
 ## gRPC
 
-We provide a collection of experimental [gRPC services](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/grpc/)
+We provide a collection of experimental [gRPC services](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/bindings/grpc/)
 ## Documentation and Resources
 
 - API References:
-  - [Rust API Reference](https://docs.rs/identity_iota/latest/identity_iota/): Package documentation (cargo docs).
-  - [Wasm API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation.
-- [Identity Documentation Pages](https://wiki.iota.org/identity.rs/introduction): Supplementing documentation with context around identity and simple examples on library usage.
-- [Examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples): Practical code snippets to get you started with the library.
+  - [Rust API Reference](https://iotaledger.github.io/identity.rs/identity_iota/index.html): Package documentation (cargo docs).
+  <!-- - [Wasm API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation. -->
+- [Identity Documentation Pages](https://docs.iota.org/iota-identity): Supplementing documentation with context around identity and simple examples on library usage.
+- [Examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples): Practical code snippets to get you started with the library.
+
+## Universal Resolver
+
+IOTA Identity includes a [Universal Resolver](https://github.com/decentralized-identity/universal-resolver/) driver implementation for the `did:iota` method. The Universal Resolver is a crucial component that enables the resolution of DIDs across different DID methods.
+
+Our implementation allows for resolving IOTA DIDs through the standardized Universal Resolver interface, supporting multiple networks including testnet, devnet, and custom networks. The resolver is available as a Docker container for easy deployment and integration.
+
+For more information and implementation details, visit our [Universal Resolver Driver Repository](https://github.com/iotaledger/uni-resolver-driver-iota).
+
+### Quick Start with Docker
+
+```bash
+# Pull and run the Universal Resolver driver
+docker run -p 8080:8080 iotaledger/uni-resolver-driver-iota
+
+# Resolve a DID
+curl -X GET http://localhost:8080/1.0/identifiers/did:iota:0xf4d6f08f5a1b80dd578da7dc1b49c886d580acd4cf7d48119dfeb82b538ad88a
+```
 
 ## Prerequisites
 
-- [Rust](https://www.rust-lang.org/) (>= 1.65)
-- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.65)
+- [Rust](https://www.rust-lang.org/) (>= 1.83)
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.83)
 
 ## Getting Started
 
@@ -57,19 +75,23 @@ If you want to include IOTA Identity in your project, simply add it as a depende
 
 ```toml
 [dependencies]
-identity_iota = { version = "1.5.0" }
+identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha" }
 ```
 
-To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
+To try out the [examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples), you can also do this:
 
 1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs`
-2. Start IOTA Sandbox as described in the [next section](#example-creating-an-identity)
-3. Run the example to create a DID using `cargo run --release --example 0_create_did`
+2. Get the [IOTA binaries](https://github.com/iotaledger/iota/releases).
+3. Start a local network for testing with `iota start --force-regenesis --with-faucet`.
+4. Request funds with `iota client faucet`.
+5. Publish a test identity package to your local network: `./identity_iota_core/scripts/publish_identity_package.sh`.
+6. Get the `packageId` value from the output (the entry with `"type": "published"`) and pass this as `IOTA_IDENTITY_PKG_ID` env value.
+7. Run the example to create a DID using `IOTA_IDENTITY_PKG_ID=(the value from previous step)  run --release --example 0_create_did`
 
 ## Example: Creating an Identity
 
 The following code creates and publishes a new IOTA DID Document to a locally running private network.
-See the [instructions](https://github.com/iotaledger/iota-sandbox) on running your own private network for development.
+See the [instructions](https://github.com/iotaledger/iota/docker/iota-private-network) on running your own private network for development.
 
 _Cargo.toml_
 
@@ -77,9 +99,9 @@ _Cargo.toml_
 Test this example using https://github.com/anko/txm: `txm README.md`
 
 !test program
-cd ../..
+cd ../../..
 mkdir tmp
-cat | sed -e 's#identity_iota = { version = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
+cat | sed -e 's#identity_iota = { git = "[^"]*", tag = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
 echo '[workspace]' >>tmp/Cargo.toml
 -->
 <!-- !test check Cargo Example -->
@@ -91,11 +113,11 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { version = "1.5.0", features = ["memstore"] }
-iota-sdk = { version = "1.0.2", default-features = true, features = ["tls", "client", "stronghold"] }
-tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.62"
+identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "v1.6.0-alpha", features = ["memstore"] }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.9.2-rc" }
 rand = "0.8.5"
+tokio = { version = "1", features = ["full"] }
 ```
 
 _main._<span></span>_rs_
@@ -112,78 +134,62 @@ timeout 360 cargo build || (echo "Process timed out after 360 seconds" && exit 1
 -->
 <!-- !test check Rust Example -->
 
-
 ```rust,no_run
-use identity_iota::core::ToJson;
-use identity_iota::iota::IotaClientExt;
+use anyhow::Context;
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::iota::NetworkName;
+use identity_iota::iota::rebased::client::convert_to_address;
+use identity_iota::iota::rebased::client::get_sender_public_key;
+use identity_iota::iota::rebased::client::IdentityClient;
+use identity_iota::iota::rebased::client::IdentityClientReadOnly;
+use identity_iota::iota::rebased::transaction::Transaction;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::JwkStorage;
 use identity_iota::storage::KeyIdMemstore;
+use identity_iota::storage::KeyType;
 use identity_iota::storage::Storage;
+use identity_iota::storage::StorageSigner;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
-use iota_sdk::client::api::GetAddressesOptions;
-use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
-use iota_sdk::client::secret::SecretManager;
-use iota_sdk::client::Client;
-use iota_sdk::crypto::keys::bip39;
-use iota_sdk::types::block::address::Bech32Address;
-use iota_sdk::types::block::output::AliasOutput;
-use iota_sdk::types::block::output::dto::AliasOutputDto;
+use iota_sdk::IotaClientBuilder;
 use tokio::io::AsyncReadExt;
 
-// The endpoint of the IOTA node to use.
-static API_ENDPOINT: &str = "http://localhost";
-
-/// Demonstrates how to create a DID Document and publish it in a new Alias Output.
+/// Demonstrates how to create a DID Document and publish it in a new identity.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder()
-    .with_primary_node(API_ENDPOINT, None)?
-    .finish()
+  let iota_client = IotaClientBuilder::default()
+    .build_localnet()
+    .await
+    .map_err(|err| anyhow::anyhow!(format!("failed to connect to network; {}", err)))?;
+
+  // Create new storage and generate new key.
+  let storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let generate = storage
+    .key_storage()
+    .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
     .await?;
+  let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
+  let public_key_bytes = get_sender_public_key(&public_key_jwk)?;
+  let sender_address = convert_to_address(&public_key_bytes)?;
+  let package_id = std::env::var("IOTA_IDENTITY_PKG_ID")
+    .map_err(|e| {
+      anyhow::anyhow!("env variable IOTA_IDENTITY_PKG_ID must be set in order to run the examples").context(e)
+    })
+    .and_then(|pkg_str| pkg_str.parse().context("invalid package id"))?;
 
-  // Create a new Stronghold.
-  let stronghold = StrongholdSecretManager::builder()
-    .password("secure_password".to_owned())
-    .build("./example-strong.hodl")?;
+  // Create identity client with signing capabilities.
+  let read_only_client = IdentityClientReadOnly::new_with_pkg_id(iota_client, package_id).await?;
+  let signer = StorageSigner::new(&storage, generate.key_id, public_key_jwk);
+  let identity_client = IdentityClient::new(read_only_client, signer).await?;
 
-  // Generate a mnemonic and store it in the Stronghold.
-  let random: [u8; 32] = rand::random();
-  let mnemonic =
-    bip39::wordlist::encode(random.as_ref(), &bip39::wordlist::ENGLISH).map_err(|err| anyhow::anyhow!("{err:?}"))?;
-  stronghold.store_mnemonic(mnemonic).await?;
-
-  // Create a new secret manager backed by the Stronghold.
-  let secret_manager: SecretManager = SecretManager::Stronghold(stronghold);
-
-  // Get the Bech32 human-readable part (HRP) of the network.
-  let network_name: NetworkName = client.network_name().await?;
-
-  // Get an address from the secret manager.
-  let address: Bech32Address = secret_manager
-  .generate_ed25519_addresses(
-    GetAddressesOptions::default()
-      .with_range(0..1)
-      .with_bech32_hrp((&network_name).try_into()?),
-  )
-  .await?[0];
-
-  println!("Your wallet address is: {}", address);
-  println!("Please request funds from http://localhost/faucet/, wait for a couple of seconds and then press Enter.");
+  println!("Your wallet address is: {}", sender_address);
+  println!("Please request funds from http://127.0.0.1:9123/gas, wait for a couple of seconds and then press Enter.");
   tokio::io::stdin().read_u8().await?;
 
   // Create a new DID document with a placeholder DID.
-  // The DID will be derived from the Alias Id of the Alias Output after publishing.
-  let mut document: IotaDocument = IotaDocument::new(&network_name);
-
-  // Insert a new Ed25519 verification method in the DID document.
-  let storage: Storage<JwkMemStore, KeyIdMemstore> = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
-  document
+  let mut unpublished: IotaDocument = IotaDocument::new(identity_client.network());
+  unpublished
     .generate_method(
       &storage,
       JwkMemStore::ED25519_KEY_TYPE,
@@ -193,13 +199,13 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-  // Construct an Alias Output containing the DID document, with the wallet address
-  // set as both the state controller and governor.
-  let alias_output: AliasOutput = client.new_did_output(address.into(), document, None).await?;
-  println!("Alias Output: {}", AliasOutputDto::from(&alias_output).to_json_pretty()?);
+  // Publish new DID document.
+  let document = identity_client
+    .publish_did_document(unpublished)
+    .execute(&identity_client)
+    .await?
+    .output;
 
-  // Publish the Alias Output and get the published DID document.
-  let document: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
   println!("Published DID document: {:#}", document);
 
   Ok(())
@@ -230,8 +236,6 @@ _Example output_
   "meta": {
     "created": "2023-08-29T14:47:26Z",
     "updated": "2023-08-29T14:47:26Z",
-    "governorAddress": "tst1qqd7kyu8xadzx9vutznu72336npqpj92jtp27uyu2tj2sa5hx6n3k0vrzwv",
-    "stateControllerAddress": "tst1qqd7kyu8xadzx9vutznu72336npqpj92jtp27uyu2tj2sa5hx6n3k0vrzwv"
   }
 }
 ```
