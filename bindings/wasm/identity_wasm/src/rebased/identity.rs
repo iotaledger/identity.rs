@@ -75,7 +75,10 @@ impl WasmOnChainIdentity {
     serde_wasm_bindgen::to_value(proposals).map_err(wasm_error)
   }
 
-  #[wasm_bindgen(js_name = updateDidDocument)]
+  #[wasm_bindgen(
+    js_name = updateDidDocument,
+    unchecked_return_type = "TransactionInternal<Proposal<UpdateDid> | undefined>",
+  )]
   pub fn update_did_document(
     &self,
     updated_doc: &WasmIotaDocument,

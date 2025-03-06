@@ -110,7 +110,6 @@ impl WasmProposalUpdateDid {
     Ok(js_set)
   }
 
-  #[wasm_bindgen]
   pub fn approve(&self, identity: &WasmOnChainIdentity) -> WasmApproveUpdateDidDocumentProposalTx {
     WasmApproveUpdateDidDocumentProposalTx::new(self, identity)
   }
