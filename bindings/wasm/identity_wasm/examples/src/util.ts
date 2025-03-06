@@ -84,8 +84,9 @@ export async function createDidDocument(
     identityClient: IdentityClient,
     unpublished: IotaDocument,
 ): Promise<IotaDocument> {
-    let tx = identityClient.publishDidDocument(unpublished);
-    let txOutput = await tx.execute(identityClient);
+    let txOutput = await identityClient
+        .publishDidDocument(unpublished)
+        .execute(identityClient);
 
     return txOutput.output;
 }
