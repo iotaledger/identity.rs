@@ -190,18 +190,40 @@ impl WasmIdentityBuilder {
 
   #[wasm_bindgen]
   pub fn finish(self) -> WasmCreateIdentityTx {
-    WasmCreateIdentityTx(self.0.finish())
+    WasmCreateIdentityTx::new(self.0.finish())
   }
 }
 
 #[wasm_bindgen(js_name = CreateIdentityTx)]
-pub struct WasmCreateIdentityTx(pub(crate) CreateIdentityTx);
+pub struct WasmCreateIdentityTx {
+  pub(crate) tx: CreateIdentityTx,
+  gas_budget: Option<u64>,
+}
 
 #[wasm_bindgen(js_class = CreateIdentityTx)]
 impl WasmCreateIdentityTx {
+  fn new(tx: CreateIdentityTx) -> Self {
+    Self { tx, gas_budget: None }
+  }
+
+  #[wasm_bindgen(js_name = withGasBudget)]
+  pub fn with_gas_budget(mut self, budget: u64) -> Self {
+    self.gas_budget = Some(budget);
+    self
+  }
+
+  #[wasm_bindgen(setter, js_name = gasBudget)]
+  pub fn set_gas_budget(&mut self, budget: u64) {
+    self.gas_budget = Some(budget);
+  }
+
   #[wasm_bindgen]
   pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionOutputInternalOnChainIdentity> {
-    let output = self.0.execute(&client.0).await.map_err(wasm_error)?;
+    let output = self
+      .tx
+      .execute_with_opt_gas_internal(self.gas_budget, &client.0)
+      .await
+      .map_err(wasm_error)?;
     Ok(WasmTransactionOutputInternalOnChainIdentity(output))
   }
 }
