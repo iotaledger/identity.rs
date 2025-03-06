@@ -19,6 +19,7 @@ use wasm_bindgen::JsValue;
 
 use super::MapStringNumber;
 use super::StringSet;
+use super::WasmTransactionInternalOutputVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::rebased::WasmIdentityClient;
@@ -165,7 +166,7 @@ impl WasmApproveConfigChangeProposalTx {
   }
 
   #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<NativeTransactionBlockResponse> {
+  pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionInternalOutputVoid> {
     let identity_ref = self.identity.0.read().await;
     self
       .proposal
@@ -177,6 +178,7 @@ impl WasmApproveConfigChangeProposalTx {
       .await
       .wasm_result()
       .map(|tx_output| tx_output.response.clone_native_response())
+      .map(WasmTransactionInternalOutputVoid::new)
   }
 }
 
@@ -209,7 +211,7 @@ impl WasmExecuteConfigChangeProposalTx {
   }
 
   #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<NativeTransactionBlockResponse> {
+  pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionInternalOutputVoid> {
     let mut identity_ref = self.identity.0.write().await;
     let proposal = Rc::into_inner(self.proposal.0)
       .ok_or_else(|| js_sys::Error::new("cannot consume proposal; try to drop all other references to it"))?
@@ -223,6 +225,7 @@ impl WasmExecuteConfigChangeProposalTx {
       .await
       .wasm_result()
       .map(|tx_output| tx_output.response.clone_native_response())
+      .map(WasmTransactionInternalOutputVoid::new)
   }
 }
 
