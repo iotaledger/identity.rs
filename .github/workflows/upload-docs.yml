@@ -42,9 +42,7 @@ jobs:
           echo VERSION=$VERSION >> $GITHUB_OUTPUT
       - name: Compress generated docs
         run: |
-          pwd
-          find . -maxdepth 2 -ls
-          tar czvf wasm.tar.gz docs/*
+          tar czvf wasm.tar.gz identity_wasm/docs/*
 
       - name: Upload docs to AWS S3
         env:
