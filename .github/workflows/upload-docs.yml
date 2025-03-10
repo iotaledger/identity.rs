@@ -43,7 +43,7 @@ jobs:
       - name: Compress generated docs
         run: |
           pwd
-          find . -maxdepth 1 -type d -ls
+          find . -maxdepth 2 -ls
           tar czvf wasm.tar.gz docs/*
 
       - name: Upload docs to AWS S3
