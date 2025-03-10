@@ -1,59 +1,79 @@
 # IOTA Identity WASM
 
-> This is the 1.0 version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
-
 ## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
 
 ## [Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/identity_wasm/examples/README.md)
 
-## Install the library:
+## Install the Library
 
-Latest Release: this version matches the `main` branch of this repository.
+If your project does not contain it already, install the peer dependency `@iota/iota-sdk` as well.
 
-```bash
-npm install @iota/identity-wasm
+```bash npm2yarn
+npm install @iota/iota-sdk
 ```
 
-## Build
+You can install the latest alpha version of the library by running the following command:
+
+```bash npm2yarn
+npm install @iota/identity-wasm@alpha
+```
+
+## Build the Library
 
 Alternatively, you can build the bindings yourself if you have Rust installed. If not, refer
 to [rustup.rs](https://rustup.rs) for the installation.
 
-Install [`wasm-bindgen-cli`](https://github.com/rustwasm/wasm-bindgen). A manual installation is required because we use
-the [Weak References](https://rustwasm.github.io/wasm-bindgen/reference/weak-references.html) feature, which [
-`wasm-pack` does not expose](https://github.com/rustwasm/wasm-pack/issues/930).
+### Requirements
+
+- [Node.js](https://nodejs.org/en) (>= `v20`)
+- [Rust](https://www.rust-lang.org/) (>= 1.65)
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.65)
+- for running example: a local network node with the IOTA identity package deployed as described [here](./local-network-setup.md)
+
+### 1. Install `wasm-bindgen-cli`
+
+If you want to build the library from source,
+you will first need to manually install [`wasm-bindgen-cli`](https://github.com/rustwasm/wasm-bindgen).
+A manual installation is required because we use the [Weak References](https://rustwasm.github.io/wasm-bindgen/reference/weak-references.html) feature,
+which [`wasm-pack` does not expose](https://github.com/rustwasm/wasm-pack/issues/930).
 
 ```bash
 cargo install --force wasm-bindgen-cli
 ```
 
-Then, install the necessary dependencies using:
+### 2. Install Dependencies
+
+After installing `wasm-bindgen-cli`, you can install the necessary dependencies using the following command:
 
 ```bash
 npm install
 ```
 
-and build the bindings for `node.js` with
+### 3. Build
 
-```bash
+You can build the bindings for `node.js` using the following command:
+
+```bash npm2yarn
 npm run build:nodejs
 ```
 
-or for the `web` with
+<!--
 
-```bash
+You can build the bindings for the `web` using the following command:
+
+```bash npm2yarn
 npm run build:web
 ```
 
-## Minimum Requirements
+-->
 
-The minimum supported version for node is: `v16`
+## Usage
 
-## NodeJS Usage
+### NodeJS Usage
 
-The following code creates a new IOTA DID Document suitable for publishing to a locally running private network.
-See the [instructions](https://github.com/iotaledger/hornet/tree/develop/private_tangle) on running your own private
-network.
+#### Example
+
+The following code creates a new IOTA DID Document suitable for publishing to a locally running test network.  See the [instructions](./local-network-setup.md) on running your own test network.
 
 <!--
 Test this example using https://github.com/anko/txm: `txm README.md`
@@ -84,15 +104,23 @@ const EXAMPLE_JWK = new Jwk({
     x: "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
 });
 
-// The endpoint of the IOTA node to use.
-const NETWORK_URL = "https://api.testnet.iota.cafe";
+// The endpoint of the IOTA node to use (local network).
+const NETWORK_URL = "http://127.0.0.1:9000";
+// The IOTA identity package ID in local network.
+const { IOTA_IDENTITY_PKG_ID } = process.env;
+if (!IOTA_IDENTITY_PKG_ID) {
+    throw new Error('IOTA_IDENTITY_PKG_ID env variable must be set');
+}
 
 /** Demonstrate how to create a DID Document. */
 export async function main() {
     // Create a new client with the given network endpoint.
     const iotaClient = new IotaClient({ url: NETWORK_URL });
 
-    const identityClient = await IdentityClientReadOnly.create(iotaClient);
+    const identityClient = await IdentityClientReadOnly.createWithPkgId(
+        iotaClient,
+        IOTA_IDENTITY_PKG_ID,
+    );
 
     // Get the Bech32 human-readable part (HRP) of the network.
     const networkHrp = identityClient.network();
@@ -134,11 +162,11 @@ which prints
 ```
 Created document  {
   "doc": {
-    "id": "did:iota:testnet:0x0000000000000000000000000000000000000000000000000000000000000000",
+    "id": "did:iota:8d4f16c9:0x0000000000000000000000000000000000000000000000000000000000000000",
     "verificationMethod": [
       {
-        "id": "did:iota:testnet:0x0000000000000000000000000000000000000000000000000000000000000000#key-1",
-        "controller": "did:iota:testnet:0x0000000000000000000000000000000000000000000000000000000000000000",
+        "id": "did:iota:8d4f16c9:0x0000000000000000000000000000000000000000000000000000000000000000#key-1",
+        "controller": "did:iota:8d4f16c9:0x0000000000000000000000000000000000000000000000000000000000000000",
         "type": "JsonWebKey2020",
         "publicKeyJwk": {
           "kty": "OKP",
@@ -148,19 +176,19 @@ Created document  {
       }
     ],
     "authentication": [
-      "did:iota:testnet:0x0000000000000000000000000000000000000000000000000000000000000000#key-1"
+      "did:iota:8d4f16c9:0x0000000000000000000000000000000000000000000000000000000000000000#key-1"
     ],
     "service": [
       {
-        "id": "did:iota:testnet:0x0000000000000000000000000000000000000000000000000000000000000000#linked-domain",
+        "id": "did:iota:8d4f16c9:0x0000000000000000000000000000000000000000000000000000000000000000#linked-domain",
         "type": "LinkedDomains",
         "serviceEndpoint": "https://iota.org/"
       }
     ]
   },
   "meta": {
-    "created": "2025-02-19T12:47:28Z",
-    "updated": "2025-02-19T12:47:28Z"
+    "created": "2025-03-07T09:04:37Z",
+    "updated": "2025-03-07T09:04:37Z"
   }
 }
 ```
@@ -169,12 +197,14 @@ Created document  {
 the [examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/identity_wasm/examples/README.md) for
 how to publish an IOTA DID Document.**
 
-## Web Setup
+<!--
+
+### Web Setup
 
 The library loads the WASM file with an HTTP GET request, so the .wasm file must be copied to the root of the dist
 folder.
 
-### Rollup
+#### Rollup
 
 - Install `rollup-plugin-copy`:
 
@@ -200,7 +230,7 @@ copy({
 });
 ```
 
-### Webpack
+#### Webpack
 
 - Install `copy-webpack-plugin`:
 
@@ -224,7 +254,7 @@ new CopyWebPlugin({
 }),
 ```
 
-### Web Usage
+#### Web Usage
 
 ```typescript
 import * as identity from "@iota/identity-wasm/web";
@@ -303,6 +333,8 @@ if not available, because of that it will only be slow for the first time.
 **NOTE: see
 the [examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/identity_wasm/examples/README.md) for
 how to publish an IOTA DID Document.**
+
+-->
 
 ## Examples in the Wild
 

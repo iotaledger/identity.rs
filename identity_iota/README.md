@@ -81,12 +81,8 @@ identity_iota = { git = "https://github.com/iotaledger/identity.rs.git", tag = "
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples), you can also do this:
 
 1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs`
-2. Get the [IOTA binaries](https://github.com/iotaledger/iota/releases).
-3. Start a local network for testing with `iota start --force-regenesis --with-faucet`.
-4. Request funds with `iota client faucet`.
-5. Publish a test identity package to your local network: `./identity_iota_core/scripts/publish_identity_package.sh`.
-6. Get the `packageId` value from the output (the entry with `"type": "published"`) and pass this as `IOTA_IDENTITY_PKG_ID` env value.
-7. Run the example to create a DID using `IOTA_IDENTITY_PKG_ID=(the value from previous step)  run --release --example 0_create_did`
+2. Follow the instructions to setup a local test network [here](../local-network-setup.md)
+3. Run the example to create a DID using `IOTA_IDENTITY_PKG_ID=(the value from previous step)  run --release --example 0_create_did`
 
 ## Example: Creating an Identity
 
