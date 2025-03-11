@@ -79,6 +79,18 @@ impl Identifier {
         }
     }
 
+    /// Creates a new `Identifier` from a string without checking if it is a
+    /// valid identifier. This should not be used under normal
+    /// circumstances, but is used in cases where we need to
+    /// preserve backwards compatibility.
+    ///
+    /// # Safety
+    ///
+    /// Only use this function when preserving backwards compatibility.
+    pub unsafe fn new_unchecked(s: impl Into<Box<str>>) -> Self {
+        Self(s.into())
+    }
+
     /// Returns true if this string is a valid identifier.
     pub fn is_valid(s: impl AsRef<str>) -> bool {
         is_valid(s.as_ref())
@@ -207,6 +219,12 @@ impl IdentStr {
 impl Borrow<IdentStr> for Identifier {
     fn borrow(&self) -> &IdentStr {
         self
+    }
+}
+
+impl Borrow<str> for Identifier {
+    fn borrow(&self) -> &str {
+        &self.0
     }
 }
 
