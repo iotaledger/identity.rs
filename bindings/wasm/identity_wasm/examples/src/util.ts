@@ -83,14 +83,3 @@ export async function getFundedClient(storage: Storage): Promise<IdentityClient>
 
     return identityClient;
 }
-
-export async function createDidDocument(
-    identityClient: IdentityClient,
-    unpublished: IotaDocument,
-): Promise<IotaDocument> {
-    let txOutput = await identityClient
-        .publishDidDocument(unpublished)
-        .execute(identityClient);
-
-    return txOutput.output;
-}
