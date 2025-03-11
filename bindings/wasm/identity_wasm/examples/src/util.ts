@@ -16,12 +16,12 @@ import { IotaClient } from "@iota/iota-sdk/client";
 import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
 
 export const {
-    IOTA_IDENTITY_PKG_ID = '',
+    IOTA_IDENTITY_PKG_ID = "",
     NETWORK_NAME_FAUCET = "localnet",
     NETWORK_URL = "http://127.0.0.1:9000",
 } = process.env;
 if (!IOTA_IDENTITY_PKG_ID) {
-    throw new Error('IOTA_IDENTITY_PKG_ID env variable must be set to run the examples');
+    throw new Error("IOTA_IDENTITY_PKG_ID env variable must be set to run the examples");
 }
 export const TEST_GAS_BUDGET = BigInt(50_000_000);
 
