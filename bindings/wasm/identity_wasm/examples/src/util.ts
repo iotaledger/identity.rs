@@ -15,8 +15,8 @@ import {
 import { IotaClient } from "@iota/iota-sdk/client";
 import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
 
-const {
-    IOTA_IDENTITY_PKG_ID,
+export const {
+    IOTA_IDENTITY_PKG_ID = '',
     NETWORK_NAME_FAUCET = "localnet",
     NETWORK_URL = "http://127.0.0.1:9000",
 } = process.env;
