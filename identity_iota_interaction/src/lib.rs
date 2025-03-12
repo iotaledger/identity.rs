@@ -8,7 +8,7 @@
 mod iota_client_trait;
 mod iota_verifiable_credential;
 #[cfg(feature = "keytool-signer")]
-pub mod keytool_signer;
+pub mod keytool;
 mod move_call_traits;
 mod move_type;
 mod transaction_builder_trait;
@@ -16,7 +16,7 @@ mod transaction_builder_trait;
 pub use iota_client_trait::*;
 pub use iota_verifiable_credential::*;
 #[cfg(feature = "keytool-signer")]
-pub use keytool_signer::*;
+pub use keytool::KeytoolSigner;
 pub use move_call_traits::*;
 pub use move_type::*;
 pub use transaction_builder_trait::*;

@@ -22,4 +22,4 @@ pub use error::*;
 
 /// Integration with IOTA's Keytool.
 #[cfg(feature = "keytool-signer")]
-pub use identity_iota_interaction::keytool_signer::*;
+pub use identity_iota_interaction::keytool::*;
