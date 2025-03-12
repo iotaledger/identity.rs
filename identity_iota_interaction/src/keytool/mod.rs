@@ -3,5 +3,7 @@
 
 mod internal;
 mod signer;
+mod storage;
 
 pub use signer::*;
+pub use storage::*;

@@ -60,7 +60,7 @@ impl KeytoolSignerBuilder {
       iota_cli_wrapper.get_active_address()?
     };
 
-    let public_key = iota_cli_wrapper.get_key(address)?.context("key doens't exist")?;
+    let public_key = iota_cli_wrapper.get_key(address)?.context("key doens't exist")?.0;
 
     Ok(KeytoolSigner {
       public_key,

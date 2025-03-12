@@ -38,6 +38,11 @@ impl IotaCliWrapper {
     }
   }
 
+  /// Returns the location of the iota binary used.
+  pub fn iota_bin(&self) -> &Path {
+    &self.iota_bin
+  }
+
   /// Executes a given "iota" command with the provided string-encoded args.
   /// Returns the parsed JSON output.
   pub fn run_command(&self, args: &str) -> anyhow::Result<Value> {
@@ -55,7 +60,12 @@ impl IotaCliWrapper {
         return Err(anyhow!("failed to run \"iota client active-address\": {err_msg}"));
       }
 
-      serde_json::from_slice(&output.stdout).context("invalid JSON object in command output")
+      let trimmed_output = {
+        let start_of_json = output.stdout.iter().enumerate().find_map(|(i, b)| (*b == b'{' || *b == b'[').then_some(i)).context("no JSON in command output")?;
+        &output.stdout[start_of_json..]
+      };
+
+      serde_json::from_slice(trimmed_output).context("invalid JSON object in command output")
       } else {
         extern "Rust" {
           fn __wasm_exec_iota_cmd(cmd: &str) -> anyhow::Result<Value>;
@@ -74,13 +84,10 @@ impl IotaCliWrapper {
       .and_then(|value| serde_json::from_value(value).context("failed to parse IotaAddress from output"))
   }
 
-  /// Returns the public key of a given address, if any.
-  pub fn get_key(&self, address: IotaAddress) -> anyhow::Result<Option<PublicKey>> {
-    let query = format!("$[?(@.iotaAddress==\"{}\")]", address);
-
+  fn get_key_impl(&self, json_path_query: &str) -> anyhow::Result<Option<(PublicKey, String)>> {
     let Some(pk_json_data) = self
       .run_command("keytool list")?
-      .path(&query)
+      .path(json_path_query)
       .map_err(|e| anyhow!("failed to query JSON output: {e}"))?
       .get_mut(0)
       .map(Value::take)
@@ -88,31 +95,39 @@ impl IotaCliWrapper {
       return Ok(None);
     };
 
-    let Ok(KeytoolPublicKeyHelper {
+    let KeytoolPublicKeyHelper {
       public_base64_key,
       flag,
+      alias,
       ..
-    }) = serde_json::from_value(pk_json_data)
-    else {
-      return Err(anyhow!("invalid key format"));
-    };
+    } = serde_json::from_value(pk_json_data)?;
 
     let signature_scheme =
       SignatureScheme::from_flag_byte(&flag).context(format!("invalid signature flag `{flag}`"))?;
     let pk_bytes = Base64::decode(&public_base64_key).context("invalid base64 encoding for key")?;
 
-    PublicKey::try_from_bytes(signature_scheme, &pk_bytes)
-      .map_err(|e| anyhow!("{e:?}"))
-      .map(Some)
+    let pk = PublicKey::try_from_bytes(signature_scheme, &pk_bytes).map_err(|e| anyhow!("{e:?}"))?;
+
+    Ok(Some((pk, alias)))
+  }
+
+  /// Returns the public key of a given address, if any.
+  pub fn get_key(&self, address: IotaAddress) -> anyhow::Result<Option<(PublicKey, String)>> {
+    let query = format!("$[?(@.iotaAddress==\"{}\")]", address);
+    self.get_key_impl(&query)
+  }
+
+  /// Returns the public key with the given alias, if any.
+  pub fn get_key_by_alias(&self, alias: &str) -> anyhow::Result<Option<(PublicKey, String)>> {
+    let query = format!("$[?(@.alias==\"{}\")]", alias);
+    self.get_key_impl(&query)
   }
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(dead_code)]
 struct KeytoolPublicKeyHelper {
   alias: String,
-  iota_address: IotaAddress,
   public_base64_key: String,
   flag: u8,
 }
