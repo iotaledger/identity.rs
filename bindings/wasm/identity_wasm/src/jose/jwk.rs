@@ -88,6 +88,12 @@ impl WasmJwk {
     self.0.kid().map(ToOwned::to_owned)
   }
 
+  /// Sets a value for the key ID property (kid).
+  #[wasm_bindgen(js_name = setKid)]
+  pub fn set_kid(&mut self, kid: String) {
+    self.0.set_kid(kid);
+  }
+
   /// Returns the value of the X.509 URL property (x5u).
   #[wasm_bindgen]
   pub fn x5u(&self) -> Option<String> {
@@ -166,6 +172,16 @@ impl WasmJwk {
     } else {
       Ok(None)
     }
+  }
+
+  /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
+  ///
+  /// `SHA2-256` is used as the hash function *H*.
+  ///
+  /// The thumbprint is returned as a base64url-encoded string.
+  #[wasm_bindgen(js_name = thumbprintSha256B64)]
+  pub fn thumbprint_sha256_b64(&self) -> String {
+    self.0.thumbprint_sha256_b64()
   }
 
   /// Returns a clone of the {@link Jwk} with _all_ private key components unset.
