@@ -5,6 +5,7 @@ use std::path::Path;
 
 use anyhow::anyhow;
 use anyhow::Context as _;
+use iota_sdk::types::crypto::IotaKeyPair;
 use serde::Deserialize;
 
 use crate::types::base_types::IotaAddress;
@@ -61,6 +62,19 @@ impl KeytoolStorage {
       .0;
 
     Ok((pk, alias))
+  }
+
+  /// Inserts a new key in this keytool.
+  /// Returns the alias assigned to the inserted key.
+  pub fn insert_key(&self, key: IotaKeyPair) -> anyhow::Result<String> {
+    let bech32_encoded_key = key.encode().map_err(|e| anyhow!("{e:?}"))?;
+    let key_scheme = key.public().scheme().to_string();
+    let cmd = format!("keytool import {bech32_encoded_key} {key_scheme}");
+
+    let json_output = self.iota_cli_wrapper.run_command(&cmd)?;
+    let KeyGenOutput { alias, .. } = serde_json::from_value(json_output)?;
+
+    Ok(alias)
   }
 
   /// Updates an alias from `old_alias` to `new_alias`
