@@ -32,6 +32,7 @@ runs:
           DOWNLOAD_URL="https://github.com/iotaledger/iota/releases/download/v0.9.2-rc/iota-v0.9.2-rc-linux-x86_64.tgz"
         elif [ "$PLATFORM" = "macos" ]; then
           DOWNLOAD_URL="https://github.com/iotaledger/iota/releases/download/v0.9.2-rc/iota-v0.9.2-rc-macos-arm64.tgz"
+          brew reinstall libpq
         else
           echo "not binaries for platform: $PLATFORM"
           exit 1
