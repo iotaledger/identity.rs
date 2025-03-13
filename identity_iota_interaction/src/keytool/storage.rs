@@ -82,7 +82,7 @@ impl KeytoolStorage {
 
   /// Returns the [PublicKey] that has the given alias, if any.
   pub fn get_key_by_alias(&self, alias: &str) -> anyhow::Result<Option<PublicKey>> {
-    Ok(self.iota_cli_wrapper.get_key_by_alias(alias)?.map(|(pk, _)| pk))
+    self.iota_cli_wrapper.get_key_by_alias(alias)
   }
 }
 

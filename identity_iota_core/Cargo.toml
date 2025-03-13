@@ -74,7 +74,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["iota-client", "revocation-bitmap", "send-sync", "keytool-signer"]
+default = ["iota-client", "revocation-bitmap", "send-sync", "keytool"]
 # Enables the IOTA Client related components, and dependencies.
 iota-client = [
   "dep:async-trait",
@@ -104,7 +104,7 @@ send-sync = ["send-sync-storage", "send-sync-client-ext"]
 send-sync-storage = ["secret-storage?/send-sync-storage"]
 # Enables `Send` + `Sync` bounds for IOTA client interaction traits.
 send-sync-client-ext = []
-keytool-signer = ["identity_iota_interaction/keytool-signer", "iota-client"]
+keytool = ["identity_iota_interaction/keytool", "iota-client"]
 
 [lints]
 workspace = true

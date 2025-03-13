@@ -118,9 +118,9 @@ impl IotaCliWrapper {
   }
 
   /// Returns the public key with the given alias, if any.
-  pub fn get_key_by_alias(&self, alias: &str) -> anyhow::Result<Option<(PublicKey, String)>> {
+  pub fn get_key_by_alias(&self, alias: &str) -> anyhow::Result<Option<PublicKey>> {
     let query = format!("$[?(@.alias==\"{}\")]", alias);
-    self.get_key_impl(&query)
+    Ok(self.get_key_impl(&query)?.map(|(pk, _)| pk))
   }
 }
 

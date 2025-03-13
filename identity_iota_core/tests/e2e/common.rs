@@ -8,7 +8,7 @@ use identity_iota_core::rebased::client::IdentityClient;
 use identity_iota_core::rebased::client::IdentityClientReadOnly;
 use identity_iota_core::rebased::transaction::Transaction;
 use identity_iota_core::rebased::utils::request_funds;
-use identity_iota_core::rebased::KeytoolSigner;
+use identity_iota_core::rebased::keytool::KeytoolSigner;
 use identity_iota_core::IotaDID;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::OptionalSync;
