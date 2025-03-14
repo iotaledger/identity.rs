@@ -14,7 +14,7 @@ use syn::ItemStruct;
 
 #[derive(Debug, FromMeta)]
 struct InterfaceArguments {
-  /// Name of the Typescript interface. Otherwise use the struct identifier.
+  /// Name of the TypeScript interface. Otherwise use the struct identifier.
   name: Option<String>,
 
   /// Whether all fields should be marked as optional. Can be overridden per field.
@@ -26,9 +26,9 @@ struct InterfaceArguments {
 #[derive(Debug, FromField)]
 #[darling(attributes(typescript))]
 struct FieldArguments {
-  /// Name of the Typescript field. Otherwise use the field identifier.
+  /// Name of the TypeScript field. Otherwise use the field identifier.
   name: Option<String>,
-  /// Type of the Typescript field.
+  /// Type of the TypeScript field.
   #[darling(rename = "type")]
   ts_type: Option<String>,
   /// Whether the field should be marked as an optional property with a question mark.

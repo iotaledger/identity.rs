@@ -8,10 +8,10 @@ The `build` folder provides build scripts needed to build the artifacts.
 Here is an overview of the existing artifacts:
 
 * `identity_wasm`<br>
-  Exports the IdentityClient to Typescript using wasm-bindgen generated wasm bindings
+  Exports the IdentityClient to TypeScript using wasm-bindgen generated wasm bindings
 
 * `iota_interaction_ts`<br>
-  Imports Typescript IOTA Client SDK types using wasm-bindgen generated wasm bindings
+  Imports TypeScript IOTA Client SDK types using wasm-bindgen generated wasm bindings
   and implements identity_iota_interaction traits (among others, IotaClient and MoveCall traits) for wasm32 platforms.
 
 ## Building an Artifact
@@ -38,7 +38,7 @@ Each artifact is located in its own artifact folder (see above) containing the f
 * `examples` folder<br>
   Example code
 
-The build process is defined by run scripts contained in the artifacts `package.json` file .
+The build process is defined by run scripts contained in the artifacts `package.json` file.
 The build process for the `nodejs` and `web` runtimes, consists of the following steps:
 
 * cargo build of the crate with target wasm32-unknown-unknown
@@ -97,9 +97,3 @@ It is used by the following run tasks for the following tsconfig files and distr
 | `bundle:nodejs`      | `./lib/tsconfig.json`          | `node`              |
 | `bundle:web`         | `./lib/tsconfig.web.json`      | `web`               |
 | `build:examples:web` | `./examples/tsconfig.web.json` | `./examples/dist`   |
-
-
-
-
-
-
