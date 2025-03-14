@@ -8,6 +8,8 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 use crypto::signatures::ed25519::SecretKey;
+use fastcrypto::ed25519::Ed25519Signature;
+use fastcrypto::traits::Signer;
 use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkType;
@@ -19,7 +21,7 @@ use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 
 use super::ed25519::encode_jwk;
-use super::ed25519::expand_secret_jwk;
+use super::ed25519::jwk_to_keypair;
 use super::jwk_gen_output::JwkGenOutput;
 use super::KeyId;
 use super::KeyStorageError;
@@ -168,8 +170,8 @@ impl JwkStorage for JwkMemStore {
     let jwk: &Jwk = jwk_store
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
-    let secret_key = expand_secret_jwk(jwk)?;
-    Ok(secret_key.sign(data).to_bytes().to_vec())
+    let secret_key = jwk_to_keypair(jwk)?;
+    Ok(Signer::<Ed25519Signature>::sign(&secret_key, data).as_ref().to_vec())
   }
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {

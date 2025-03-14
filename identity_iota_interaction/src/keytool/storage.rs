@@ -5,6 +5,10 @@ use std::path::Path;
 
 use anyhow::anyhow;
 use anyhow::Context as _;
+use fastcrypto::ed25519::Ed25519Signature;
+use fastcrypto::secp256k1::Secp256k1Signature;
+use fastcrypto::secp256r1::Secp256r1Signature;
+use fastcrypto::traits::Signer;
 use iota_sdk::types::crypto::IotaKeyPair;
 use serde::Deserialize;
 
@@ -77,6 +81,34 @@ impl KeytoolStorage {
     Ok(alias)
   }
 
+  /// Uses the private key corresponding to [IotaAddress] `address` to sign `data`.
+  /// ## Notes
+  /// - SHA-512 is used to produce signatures when the key is ed25519.
+  /// - SHA-256 is used otherwise.
+  pub fn sign_raw(&self, address: IotaAddress, data: impl AsRef<[u8]>) -> anyhow::Result<Vec<u8>> {
+    let cmd = format!("keytool export {address} --json");
+    let keypair = {
+      let json_output = self.iota_cli_wrapper.run_command(&cmd)?;
+      let KeyExportOutput {
+        exported_private_key: bech32_encoded_sk,
+      } = serde_json::from_value(json_output)?;
+
+      IotaKeyPair::decode(&bech32_encoded_sk).map_err(|e| anyhow!("failed to decode private key: {e:?}"))?
+    };
+    let data = data.as_ref();
+
+    let sig = match keypair {
+      IotaKeyPair::Ed25519(sk) => Signer::<Ed25519Signature>::sign(&sk, data).sig.to_bytes().to_vec(),
+      IotaKeyPair::Secp256r1(sk) => Signer::<Secp256r1Signature>::sign(&sk, data).sig.to_vec(),
+      IotaKeyPair::Secp256k1(sk) => {
+        let sig = Signer::<Secp256k1Signature>::sign(&sk, data);
+        sig.as_ref().to_vec()
+      }
+    };
+
+    Ok(sig)
+  }
+
   /// Updates an alias from `old_alias` to `new_alias`
   /// If no value for `new_alias` is provided, a randomly generated one will be used.
   pub fn update_alias(&self, old_alias: &str, new_alias: Option<&str>) -> anyhow::Result<()> {
@@ -104,4 +136,10 @@ impl KeytoolStorage {
 struct KeyGenOutput {
   alias: String,
   address: IotaAddress,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct KeyExportOutput {
+  exported_private_key: String,
 }

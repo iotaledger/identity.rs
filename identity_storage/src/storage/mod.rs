@@ -55,3 +55,15 @@ impl<K, I> Storage<K, I> {
     &self.key_id_storage
   }
 }
+
+#[cfg(feature = "keytool")]
+mod keytool {
+  use super::Storage;
+  use identity_iota_interaction::KeytoolStorage as Keytool;
+
+  /// An unsecure [Storage] that leverages IOTA Keytool.
+  pub type KeytoolStorage = Storage<Keytool, Keytool>;
+}
+
+#[cfg(feature = "keytool")]
+pub use keytool::*;

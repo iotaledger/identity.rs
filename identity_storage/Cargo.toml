@@ -33,6 +33,8 @@ serde_json.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.43", default-features = false, features = ["macros", "sync"], optional = true }
 zkryptium = { workspace = true, optional = true }
+k256 = { version = "0.13.3", default-features = false, features = ["std", "ecdsa", "ecdsa-core", "jwk"], optional = true }
+p256 = { version = "0.13.2", default-features = false, features = ["std", "ecdsa", "ecdsa-core", "jwk"], optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 identity_iota_interaction = { version = "=1.5.0", path = "../identity_iota_interaction", optional = true }
@@ -47,7 +49,7 @@ once_cell = { version = "1.18", default-features = false }
 tokio = { version = "1.43", default-features = false, features = ["macros", "sync", "rt"] }
 
 [features]
-default = ["iota-document", "memstore"]
+default = ["iota-document", "memstore", "keytool"]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
 memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto"]
 # Enables `Send` + `Sync` bounds for the storage traits.
@@ -68,6 +70,13 @@ jpt-bbs-plus = [
   "dep:zkryptium",
   "dep:bls12_381_plus",
   "dep:json-proof-token",
+]
+# Enables integration with IOTA Keytool
+keytool = [
+  "dep:identity_iota_interaction",
+  "identity_iota_interaction/keytool",
+  "k256",
+  "p256"
 ]
 
 [lints]
