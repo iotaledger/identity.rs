@@ -243,6 +243,7 @@ extern "C" {
 
 #[wasm_bindgen(module = "@iota/iota-sdk/cryptography")]
 extern "C" {
+  #[derive(Clone)]
   #[wasm_bindgen(typescript_type = PublicKey)]
   pub type WasmPublicKey;
 

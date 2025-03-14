@@ -9,12 +9,13 @@ use anyhow::anyhow;
 use anyhow::Context as _;
 use fastcrypto::encoding::Base64;
 use fastcrypto::encoding::Encoding as _;
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::crypto::PublicKey;
-use iota_sdk::types::crypto::SignatureScheme;
 use jsonpath_rust::JsonPathQuery as _;
 use serde::Deserialize;
 use serde_json::Value;
+
+use crate::types::base_types::IotaAddress;
+use crate::types::crypto::PublicKey;
+use crate::types::crypto::SignatureScheme;
 
 #[derive(Debug, Clone)]
 pub(super) struct IotaCliWrapper {

@@ -13,8 +13,8 @@ use serde_json::Value;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsError;
 
-use super::WasmIotaSignature;
-use super::WasmPublicKey;
+use crate::bindings::WasmIotaSignature;
+use crate::bindings::WasmPublicKey;
 
 #[wasm_bindgen(module = buffer)]
 extern "C" {
@@ -35,8 +35,8 @@ pub struct WasmKeytoolSigner(pub(crate) KeytoolSigner);
 
 #[wasm_bindgen(js_class = KeytoolSigner)]
 impl WasmKeytoolSigner {
-  #[wasm_bindgen(js_name = create)]
-  pub async fn new(address: Option<String>, iota_bin_location: Option<String>) -> Result<WasmKeytoolSigner> {
+  #[wasm_bindgen(constructor)]
+  pub fn new(address: Option<String>, iota_bin_location: Option<String>) -> Result<WasmKeytoolSigner> {
     let address = address
       .as_deref()
       .map(IotaAddress::from_str)
@@ -52,7 +52,7 @@ impl WasmKeytoolSigner {
       builder
     };
 
-    Ok(WasmKeytoolSigner(builder.build().await.wasm_result()?))
+    Ok(WasmKeytoolSigner(builder.build().wasm_result()?))
   }
 
   #[wasm_bindgen]
