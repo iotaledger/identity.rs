@@ -36,7 +36,8 @@ impl JwkStorage for KeytoolStorage {
       .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(e))?;
 
     let address = IotaAddress::from(&pk);
-    let jwk = encode_public_key_to_jwk(&pk)?;
+    let mut jwk = encode_public_key_to_jwk(&pk)?;
+    jwk.set_kid(jwk.thumbprint_sha256_b64());
 
     Ok(JwkGenOutput {
       key_id: KeyId::new(address.to_string()),
@@ -103,7 +104,7 @@ fn encode_public_key_to_jwk(pk: &PublicKey) -> KeyStorageResult<Jwk> {
     PublicKey::Ed25519(pk) => ed25519::pk_to_jwk(pk),
     PublicKey::Secp256r1(pk) => secp256r1::pk_to_jwk(pk),
     PublicKey::Secp256k1(pk) => secp256k1::pk_to_jwk(pk),
-    _ => return Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType).into()),
+    _ => return Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)),
   };
 
   Ok(jwk)
@@ -119,4 +120,84 @@ fn jwk_to_keypair(jwk: &Jwk) -> KeyStorageResult<IotaKeyPair> {
     .map(IotaKeyPair::from);
 
   maybe_ed22519.or(maybe_secp256k1).or(maybe_secp256r1)
+}
+
+#[cfg(test)]
+mod tests {
+  use crate::JwkDocumentExt as _;
+  use crate::JwsSignatureOptions;
+  use crate::KeyIdStorage as _;
+  use crate::KeyType;
+  use crate::KeytoolStorage;
+  use crate::MethodDigest;
+  use anyhow::anyhow;
+  use identity_credential::credential::CredentialBuilder;
+  use identity_credential::credential::Subject;
+  use identity_credential::validator::FailFast;
+  use identity_credential::validator::JwtCredentialValidationOptions;
+  use identity_credential::validator::JwtCredentialValidator;
+  use identity_did::DID;
+  use identity_ecdsa_verifier::EcDSAJwsVerifier;
+  use identity_iota_core::IotaDocument;
+  use identity_iota_core::NetworkName;
+  use identity_iota_interaction::KeytoolStorage as Keytool;
+  use identity_verification::jws::JwsAlgorithm;
+  use identity_verification::MethodScope;
+  use serde_json::Value;
+
+  fn make_storage() -> KeytoolStorage {
+    let keytool = Keytool::default();
+    KeytoolStorage::new(keytool.clone(), keytool)
+  }
+
+  #[tokio::test]
+  async fn keytool_storage_works() -> anyhow::Result<()> {
+    let storage = make_storage();
+
+    let mut did_doc = IotaDocument::new(&NetworkName::try_from("iota".to_string())?);
+    let fragment = did_doc
+      .generate_method(
+        &storage,
+        KeyType::from_static_str("secp256r1"),
+        JwsAlgorithm::ES256,
+        None,
+        MethodScope::VerificationMethod,
+      )
+      .await?;
+    let vm = did_doc.resolve_method(&fragment, None).expect("just created it");
+
+    let address_of_vm_key = storage
+      .key_id_storage()
+      .get_key_id(&MethodDigest::new(vm)?)
+      .await?
+      .as_str()
+      .parse()?;
+
+    let (_pk, alias) = storage
+      .key_storage()
+      .get_key(address_of_vm_key)?
+      .ok_or_else(|| anyhow!("something wrong with the new VM key!!"))?;
+
+    assert!(alias.starts_with("identity__"));
+
+    let credential = CredentialBuilder::new(Value::default())
+      .id("https://example.com/credentials/42".parse()?)
+      .issuer(did_doc.id().to_url())
+      .subject(Subject::with_id("https://example.com/users/123".parse()?))
+      .build()?;
+
+    let jwt = did_doc
+      .create_credential_jwt(&credential, &storage, &fragment, &JwsSignatureOptions::default(), None)
+      .await?;
+
+    let validator = JwtCredentialValidator::with_signature_verifier(EcDSAJwsVerifier::default());
+    validator.validate::<IotaDocument, Value>(
+      &jwt,
+      &did_doc,
+      &JwtCredentialValidationOptions::default(),
+      FailFast::FirstError,
+    )?;
+
+    Ok(())
+  }
 }

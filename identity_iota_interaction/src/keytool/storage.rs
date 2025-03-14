@@ -86,7 +86,7 @@ impl KeytoolStorage {
   /// - SHA-512 is used to produce signatures when the key is ed25519.
   /// - SHA-256 is used otherwise.
   pub fn sign_raw(&self, address: IotaAddress, data: impl AsRef<[u8]>) -> anyhow::Result<Vec<u8>> {
-    let cmd = format!("keytool export {address} --json");
+    let cmd = format!("keytool export {address}");
     let keypair = {
       let json_output = self.iota_cli_wrapper.run_command(&cmd)?;
       let KeyExportOutput {

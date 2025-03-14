@@ -13,7 +13,8 @@ use super::MethodDigest;
 
 const IDENTITY_VERIFICATION_METHOD_PREFIX: &str = "identity__";
 
-#[async_trait]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 impl KeyIdStorage for KeytoolStorage {
   async fn insert_key_id(&self, method_digest: MethodDigest, key_id: KeyId) -> KeyIdStorageResult<()> {
     let current_alias = key_id_to_alias(self, &key_id)?;
@@ -29,7 +30,7 @@ impl KeyIdStorage for KeytoolStorage {
     let pk = self
       .get_key_by_alias(&alias)
       .map_err(|e| KeyIdStorageError::new(KeyIdStorageErrorKind::RetryableIOFailure).with_source(e))?
-      .ok_or_else(|| KeyIdStorageErrorKind::KeyIdNotFound)?;
+      .ok_or(KeyIdStorageErrorKind::KeyIdNotFound)?;
     let address = IotaAddress::from(&pk);
 
     Ok(KeyId::new(address.to_string()))
@@ -52,12 +53,12 @@ fn key_id_to_alias(keytool: &KeytoolStorage, key_id: &KeyId) -> KeyIdStorageResu
   let (_, alias) = keytool
     .get_key(address)
     .map_err(|e| KeyIdStorageError::new(KeyIdStorageErrorKind::RetryableIOFailure).with_source(e))?
-    .ok_or_else(|| KeyIdStorageErrorKind::KeyIdNotFound)?;
+    .ok_or(KeyIdStorageErrorKind::KeyIdNotFound)?;
 
   Ok(alias)
 }
 
 fn encode_method_digest(method_digest: &MethodDigest) -> String {
-  let b64_method_digest = encode_b64(&method_digest.pack());
+  let b64_method_digest = encode_b64(method_digest.pack());
   format!("{IDENTITY_VERIFICATION_METHOD_PREFIX}{b64_method_digest}")
 }

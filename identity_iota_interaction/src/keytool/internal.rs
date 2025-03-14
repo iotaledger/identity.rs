@@ -57,11 +57,11 @@ impl IotaCliWrapper {
       if !output.status.success() {
         let err_msg =
           String::from_utf8(output.stderr).map_err(|e| anyhow!("command failed with non-utf8 error message: {e}"))?;
-        return Err(anyhow!("failed to run \"iota client active-address\": {err_msg}"));
+        return Err(anyhow!("failed to run keytool cmd: {err_msg}"));
       }
 
       let trimmed_output = {
-        let start_of_json = output.stdout.iter().enumerate().find_map(|(i, b)| (*b == b'{' || *b == b'[').then_some(i)).context("no JSON in command output")?;
+        let start_of_json = output.stdout.iter().enumerate().find_map(|(i, b)| matches!(*b, b'[' | b'{' | b'\"').then_some(i)).context("no JSON in command output")?;
         &output.stdout[start_of_json..]
       };
 

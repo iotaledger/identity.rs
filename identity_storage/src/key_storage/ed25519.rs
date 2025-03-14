@@ -62,12 +62,18 @@ pub(crate) fn encode_jwk(private_key: &SecretKey, public_key: &crypto::signature
   Jwk::from_params(params)
 }
 
+#[cfg(feature = "keytool")]
 pub(crate) fn pk_to_jwk(pk: &Ed25519PublicKeyAsBytes) -> Jwk {
+  use identity_verification::jws::JwsAlgorithm;
+
   let params = JwkParamsOkp {
     crv: EdCurve::Ed25519.to_string(),
-    x: encode_b64(&pk.0),
+    x: encode_b64(pk.0),
     d: None,
   };
 
-  Jwk::from_params(params)
+  let mut jwk = Jwk::from_params(params);
+  jwk.set_alg(JwsAlgorithm::EdDSA.name());
+
+  jwk
 }
