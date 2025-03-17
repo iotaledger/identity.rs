@@ -14,20 +14,20 @@ When setting up the local node, you'll also need to publish an identity package 
 [Local Network Setup](https://docs.iota.org/iota-identity/getting-started/local-network-setup) in the documentation portal.
 You'll also need to provide an environment variable `IOTA_IDENTITY_PKG_ID` set to the package-id of your locally deployed
 identity package, to be able to run the examples against the local node.
+If running the examples on `testnet`, use the `IOTA_IDENTITY_PKG_ID` `0x222741bbdff74b42df48a7b4733185e9b24becb8ccfbafe8eac864ab4e4cc555`.
 
-In case of running the examples against an existing network, this network needs to have a faucet to fund your accounts (the IOTA testnet (`https://api.testnet.iota.cafe`) supports this), and you need to specify this via `NETWORK_URL`.
+In case of running the examples against an existing network, this network needs to have a faucet to fund your accounts (the IOTA testnet (`https://api.testnet.iota.cafe`) supports this), and you need to specify this via `API_ENDPOINT`.
 
-The examples require you to have the node you want to use in the iota clients "envs" (`iota client env`) configuration. If this node is configured as `localnet`, you don't have to provide it when running the examples, if not, provide its name as `NETWORK_NAME_FAUCET`. The table below assumes - in case you're running a local node - you have it configured as `localnet` in your IOTA clients "env" setting.
+The examples require you to have the node you want to use in the iota clients "envs" (`iota client env`) configuration, as the client is used to request funds from the configured network's faucet.
 
 ### Environment variables
 
 Summarizing the last point, you'll need one or more of the following environment variables:
 
-| Name                 | Required for local node | Required for testnet | Required for other node |       Comment        |
-| -------------------- | :---------------------: | :------------------: | :---------------------: | :------------------: |
-| IOTA_IDENTITY_PKG_ID |            x            |                      |            x            |                      |
-| NETWORK_URL          |                         |          x           |            x            |                      |
-| NETWORK_NAME_FAUCET  |                         |          x           |            x            | see assumption above |
+| Name                 | Required for local node | Required for testnet | Required for other node |
+| -------------------- | :---------------------: | :------------------: | :---------------------: |
+| IOTA_IDENTITY_PKG_ID |            x            |          x           |            x            |
+| API_ENDPOINT         |                         |          x           |            x            |
 
 ### Running examples
 
