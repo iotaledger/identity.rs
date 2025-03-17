@@ -1,3 +1,6 @@
+// Copyright 2020-2025 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use fastcrypto::secp256k1::Secp256k1KeyPair;
 use fastcrypto::secp256k1::Secp256k1PublicKeyAsBytes;
 use fastcrypto::traits::ToFromBytes;
