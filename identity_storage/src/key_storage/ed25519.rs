@@ -3,18 +3,27 @@
 
 use fastcrypto::ed25519::Ed25519KeyPair;
 use fastcrypto::ed25519::Ed25519PrivateKey;
+use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::ed25519::Ed25519PublicKeyAsBytes;
+use fastcrypto::traits::KeyPair as _;
 use fastcrypto::traits::SigningKey;
 use fastcrypto::traits::ToFromBytes;
 use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkParamsOkp;
 use identity_verification::jose::jwu;
+use identity_verification::jwu::decode_b64;
 use identity_verification::jwu::encode_b64;
 
 use crate::key_storage::KeyStorageError;
 use crate::key_storage::KeyStorageErrorKind;
 use crate::key_storage::KeyStorageResult;
+
+#[allow(dead_code)]
+pub(crate) fn from_public_jwk(jwk: &Jwk) -> anyhow::Result<Ed25519PublicKey> {
+  let bytes = decode_b64(&jwk.try_okp_params()?.x)?;
+  Ok(Ed25519PublicKey::from_bytes(&bytes)?)
+}
 
 pub(crate) fn jwk_to_keypair(jwk: &Jwk) -> KeyStorageResult<Ed25519KeyPair> {
   let params: &JwkParamsOkp = jwk.try_okp_params().unwrap();
@@ -52,13 +61,9 @@ pub(crate) fn jwk_to_keypair(jwk: &Jwk) -> KeyStorageResult<Ed25519KeyPair> {
     .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("invalid key"))
 }
 
-#[cfg(any(test, feature = "memstore"))]
-pub(crate) fn encode_jwk(
-  private_key: &crypto::signatures::ed25519::SecretKey,
-  public_key: &crypto::signatures::ed25519::PublicKey,
-) -> Jwk {
-  let x = jwu::encode_b64(public_key.as_ref());
-  let d = jwu::encode_b64(private_key.to_bytes().as_ref());
+pub(crate) fn encode_jwk(key_pair: Ed25519KeyPair) -> Jwk {
+  let x = jwu::encode_b64(key_pair.public().as_ref());
+  let d = jwu::encode_b64(key_pair.private().as_ref());
   let mut params = JwkParamsOkp::new();
   params.x = x;
   params.d = Some(d);
@@ -66,7 +71,7 @@ pub(crate) fn encode_jwk(
   Jwk::from_params(params)
 }
 
-#[cfg(feature = "keytool")]
+#[allow(dead_code)]
 pub(crate) fn pk_to_jwk(pk: &Ed25519PublicKeyAsBytes) -> Jwk {
   use identity_verification::jws::JwsAlgorithm;
 

@@ -78,6 +78,7 @@ keytool = [
   "identity_iota_interaction/keytool",
   "k256",
   "p256",
+  "dep:fastcrypto",
 ]
 
 [lints]

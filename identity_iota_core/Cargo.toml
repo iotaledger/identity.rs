@@ -62,8 +62,8 @@ iota-crypto = { version = "0.23", default-features = false, features = ["bip39",
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 
 # for feature iota-client tests
-identity_iota_core = { path = ".", features = ["iota-client"] } # enable for e2e tests
-identity_storage = { path = "../identity_storage", features = ["send-sync-storage", "storage-signer"] }
+identity_iota_core = { path = ".", features = ["iota-client", "keytool"] } # enable for e2e tests
+identity_storage = { path = "../identity_storage", features = ["send-sync-storage", "storage-signer", "keytool"] }
 lazy_static = "1.5.0"
 serial_test = "3.1.1"
 
