@@ -4,7 +4,7 @@
 
 ## [Getting started with the IOTA Identity WASM Library.](https://docs.iota.org/iota-identity/getting-started/wasm)
 
-## [API Reference](https://docs.iota.org/iota-identity/references/wasm)
+## [API Reference](https://docs.iota.org/references/iota-identity/wasm/api_ref.md)
 
 ## [Examples](https://github.com/iotaledger/identity.rs/blob/wasm-v1.6.0-alpha/bindings/wasm/identity_wasm/examples/README.md)
 
