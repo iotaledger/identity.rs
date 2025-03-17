@@ -1,3 +1,6 @@
+// Copyright 2020-2025 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use async_trait::async_trait;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::KeytoolStorage;
