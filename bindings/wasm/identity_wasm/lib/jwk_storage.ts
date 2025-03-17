@@ -99,13 +99,16 @@ async function encodeJwk(privateKey: Ed25519PrivateKey, alg: JwsAlgorithm): Prom
     let x = encodeB64(publicKey);
     let d = encodeB64(privateKey);
 
-    return new Jwk({
+    const jwk = new Jwk({
         "kty": JwkType.Okp,
         "crv": "Ed25519",
         d,
         x,
         alg,
     });
+    jwk.setKid(jwk.thumbprintSha256B64());
+
+    return jwk;
 }
 
 function decodeJwk(jwk: Jwk): [Ed25519PrivateKey, Ed25519PublicKey] {
