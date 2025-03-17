@@ -9,5 +9,8 @@ export * from "./key_id_storage";
 
 export * from "~identity_wasm";
 
+export * from "./proposal";
+export * from "./transaction_internal";
+
 // keep this export last to override the original `Resolver` from `identity_wasm` in the exports
 export { Resolver } from "./resolver";

@@ -109,7 +109,10 @@ impl WasmIdentityClient {
     Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(document))))
   }
 
-  #[wasm_bindgen(js_name = publishDidDocument)]
+  #[wasm_bindgen(
+    js_name = publishDidDocument,
+    unchecked_return_type = "TransactionInternal<IotaDocument>"
+  )]
   pub fn publish_did_document(&self, document: &WasmIotaDocument) -> Result<WasmPublishDidTx, JsError> {
     let doc: IotaDocument = document
       .0
