@@ -13,7 +13,7 @@ Examples can be run against
 - or an existing network, e.g. the IOTA testnet
 
 When setting up the local node, you'll also need to publish an identity package as described in
-[Local Network Setup](https://docs.iota.org/iota-identity/getting-started/local-network-setup) in the wiki.
+[Local Network Setup](https://docs.iota.org/iota-identity/getting-started/local-network-setup) in the documentation portal.
 You'll also need to provide an environment variable `IOTA_IDENTITY_PKG_ID` set to the package-id of your locally deployed
 identity package, to be able to run the examples against the local node.
 
