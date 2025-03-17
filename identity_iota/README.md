@@ -32,7 +32,7 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 - [Identity Documentation Pages](https://docs.iota.org/iota-identity): Supplementing documentation with context around identity and simple examples on library usage.
 - API References:
   - [Rust API Reference](https://iotaledger.github.io/identity.rs/identity_iota/index.html): Package documentation (cargo docs).
-  - [Wasm API Reference](https://docs.iota.org/references/iota-identity/wasm/api_ref.md): Wasm Package documentation.
+  - [Wasm API Reference](https://docs.iota.org/references/iota-identity/wasm/api_ref): Wasm Package documentation.
 - Examples:
   - [Rust Examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples): Practical code snippets to get you started with the library in Rust.
   - [Wasm Examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/bindings/wasm/identity_wasm/examples): Practical code snippets to get you started with the library in TypeScript/JavaScript.
