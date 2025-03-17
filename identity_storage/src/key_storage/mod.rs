@@ -9,7 +9,7 @@
 #[cfg(feature = "jpt-bbs-plus")]
 /// BLS12381 utils.
 pub mod bls;
-#[cfg(feature = "memstore")]
+#[cfg(any(feature = "memstore", feature = "keytool"))]
 mod ed25519;
 mod jwk_gen_output;
 mod jwk_storage;

@@ -1,9 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::signatures::ed25519::SecretKey;
 use fastcrypto::ed25519::Ed25519KeyPair;
+use fastcrypto::ed25519::Ed25519PrivateKey;
 use fastcrypto::ed25519::Ed25519PublicKeyAsBytes;
+use fastcrypto::traits::SigningKey;
 use fastcrypto::traits::ToFromBytes;
 use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
@@ -29,7 +30,7 @@ pub(crate) fn jwk_to_keypair(jwk: &Jwk) -> KeyStorageResult<Ed25519KeyPair> {
     );
   }
 
-  let sk: [u8; SecretKey::LENGTH] = params
+  let sk: [u8; Ed25519PrivateKey::LENGTH] = params
     .d
     .as_deref()
     .map(jwu::decode_b64)
@@ -44,7 +45,7 @@ pub(crate) fn jwk_to_keypair(jwk: &Jwk) -> KeyStorageResult<Ed25519KeyPair> {
     .try_into()
     .map_err(|_| {
       KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-        .with_custom_message(format!("expected key of length {}", SecretKey::LENGTH))
+        .with_custom_message(format!("expected key of length {}", Ed25519PrivateKey::LENGTH))
     })?;
 
   Ed25519KeyPair::from_bytes(&sk)
@@ -52,7 +53,10 @@ pub(crate) fn jwk_to_keypair(jwk: &Jwk) -> KeyStorageResult<Ed25519KeyPair> {
 }
 
 #[cfg(any(test, feature = "memstore"))]
-pub(crate) fn encode_jwk(private_key: &SecretKey, public_key: &crypto::signatures::ed25519::PublicKey) -> Jwk {
+pub(crate) fn encode_jwk(
+  private_key: &crypto::signatures::ed25519::SecretKey,
+  public_key: &crypto::signatures::ed25519::PublicKey,
+) -> Jwk {
   let x = jwu::encode_b64(public_key.as_ref());
   let d = jwu::encode_b64(private_key.to_bytes().as_ref());
   let mut params = JwkParamsOkp::new();

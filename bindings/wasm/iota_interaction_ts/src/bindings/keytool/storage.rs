@@ -19,9 +19,15 @@ use super::signer::WasmKeytoolSigner;
 pub struct WasmPublicKeyAndAlias(pub WasmPublicKey, pub String);
 
 /// IOTA Keytool CLI wrapper.
-#[derive(Default)]
+#[derive(Default, Clone)]
 #[wasm_bindgen(js_name = KeytoolStorage)]
 pub struct WasmKeytoolStorage(pub(crate) KeytoolStorage);
+
+impl AsRef<KeytoolStorage> for WasmKeytoolStorage {
+  fn as_ref(&self) -> &KeytoolStorage {
+    &self.0
+  }
+}
 
 #[wasm_bindgen(js_class = KeytoolStorage)]
 impl WasmKeytoolStorage {
