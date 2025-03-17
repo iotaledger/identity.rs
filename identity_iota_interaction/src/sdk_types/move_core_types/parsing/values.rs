@@ -6,7 +6,7 @@ use std::fmt::{self, Display};
 
 use anyhow::bail;
 
-use super::super::move_core_types::{
+use super::super::{
     account_address::AccountAddress,
     identifier,
     runtime_value::{MoveStruct, MoveValue},
@@ -44,13 +44,13 @@ pub enum ValueToken {
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub enum ParsedValue<Extra: ParsableValue = ()> {
     Address(ParsedAddress),
-    InferredNum(U256),
+    InferredNum(U256),  // Imported at the top of this file
     U8(u8),
     U16(u16),
     U32(u32),
     U64(u64),
     U128(u128),
-    U256(U256),
+    U256(U256), // Imported at the top of this file
     Bool(bool),
     Vector(Vec<ParsedValue<Extra>>),
     Struct(Vec<ParsedValue<Extra>>),
