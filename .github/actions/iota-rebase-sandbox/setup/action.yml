@@ -32,6 +32,7 @@ runs:
           DOWNLOAD_URL="https://github.com/iotaledger/iota/releases/download/v0.10.3-rc/iota-v0.10.3-rc-linux-x86_64.tgz"
         elif [ "$PLATFORM" = "macos" ]; then
           DOWNLOAD_URL="https://github.com/iotaledger/iota/releases/download/v0.10.3-rc/iota-v0.10.3-rc-macos-arm64.tgz"
+          brew install postgresql
           brew reinstall libpq
         else
           echo "not binaries for platform: $PLATFORM"
