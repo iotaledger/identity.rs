@@ -47,16 +47,16 @@ IOTA_IDENTITY_PKG_ID=0x222741bbdff74b42df48a7b4733185e9b24becb8ccfbafe8eac864ab4
 
 The following basic CRUD (Create, Read, Update, Delete) examples are available:
 
-| Name                                                      | Information                                                                   |
-| :-------------------------------------------------------- | :---------------------------------------------------------------------------- |
-| [0_create_did](src/0_basic/0_create_did.rs)               | Demonstrates how to create a DID Document and publish it in a new identity.   |
-| [1_update_did](src/0_basic/1_update_did.rs)               | Demonstrates how to update a DID document in an existing identity.            |
-| [2_resolve_did](src/0_basic/2_resolve_did.rs)             | Demonstrates how to resolve an existing DID in an identity.                   |
-| [3_deactivate_did](src/0_basic/3_deactivate_did.rs)       | Demonstrates how to deactivate a DID in an identity.                          |
-| [5_create_vc](src/0_basic/5_create_vc.rs)                 | Demonstrates how to create and verify verifiable credentials.                 |
-| [6_create_vp](src/0_basic/6_create_vp.rs)                 | Demonstrates how to create and verify verifiable presentations.               |
-| [7_revoke_vc](src/0_basic/7_revoke_vc.rs)                 | Demonstrates how to revoke a verifiable credential.                           |
-| [8_legacy_stronghold](./0_basic/8_legacy_stronghold.rs)   | Demonstrates how to use stronghold for secure storage.                        |
+| Name                                                    | Information                                                                 |
+| :------------------------------------------------------ | :-------------------------------------------------------------------------- |
+| [0_create_did](./0_basic/0_create_did.rs)               | Demonstrates how to create a DID Document and publish it in a new identity. |
+| [1_update_did](./0_basic/1_update_did.rs)               | Demonstrates how to update a DID document in an existing identity.          |
+| [2_resolve_did](./0_basic/2_resolve_did.rs)             | Demonstrates how to resolve an existing DID in an identity.                 |
+| [3_deactivate_did](./0_basic/3_deactivate_did.rs)       | Demonstrates how to deactivate a DID in an identity.                        |
+| [5_create_vc](./0_basic/5_create_vc.rs)                 | Demonstrates how to create and verify verifiable credentials.               |
+| [6_create_vp](./0_basic/6_create_vp.rs)                 | Demonstrates how to create and verify verifiable presentations.             |
+| [7_revoke_vc](./0_basic/7_revoke_vc.rs)                 | Demonstrates how to revoke a verifiable credential.                         |
+| [8_legacy_stronghold](./0_basic/8_legacy_stronghold.rs) | Demonstrates how to use stronghold for secure storage.                      |                     |
 
 ## Advanced Examples
 
