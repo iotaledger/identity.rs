@@ -247,6 +247,9 @@ extern "C" {
   #[wasm_bindgen(typescript_type = PublicKey)]
   pub type WasmPublicKey;
 
+  #[wasm_bindgen(js_name = toIotaPublicKey, method)]
+  pub fn to_iota_public_key(this: &WasmPublicKey) -> String;
+
   #[wasm_bindgen(js_name = toRawBytes, method)]
   pub fn to_raw_bytes(this: &WasmPublicKey) -> Vec<u8>;
 

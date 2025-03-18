@@ -61,6 +61,7 @@ pub(crate) fn jwk_to_keypair(jwk: &Jwk) -> KeyStorageResult<Ed25519KeyPair> {
     .map_err(|_| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("invalid key"))
 }
 
+#[allow(dead_code)]
 pub(crate) fn encode_jwk(key_pair: Ed25519KeyPair) -> Jwk {
   let x = jwu::encode_b64(key_pair.public().as_ref());
   let d = jwu::encode_b64(key_pair.private().as_ref());

@@ -7,6 +7,7 @@ use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::crypto::IotaKeyPair;
 use identity_iota_interaction::types::crypto::SignatureScheme;
 use identity_iota_interaction::KeytoolStorage;
+use js_sys::Array;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
@@ -15,8 +16,26 @@ use crate::WasmPublicKey;
 
 use super::signer::WasmKeytoolSigner;
 
-#[wasm_bindgen(skip_typescript, inspectable, getter_with_clone)]
+#[wasm_bindgen(skip_typescript, getter_with_clone)]
 pub struct WasmPublicKeyAndAlias(pub WasmPublicKey, pub String);
+
+#[wasm_bindgen(js_class = PublicKeyAndAlias)]
+impl WasmPublicKeyAndAlias {
+  #[wasm_bindgen(
+    js_name = toJSON,
+    unchecked_return_type = "[PublicKey, string]",
+  )]
+  pub fn to_json(&self) -> JsValue {
+    let arr = Array::new_with_length(2);
+    arr.push(self.0.as_ref());
+    arr.push(&JsValue::from_str(&self.1));
+    arr.into()
+  }
+  #[wasm_bindgen(js_name = toString)]
+  pub fn to_string(&self) -> String {
+    format!("[{},{}]", self.0.to_iota_public_key(), &self.1)
+  }
+}
 
 /// IOTA Keytool CLI wrapper.
 #[derive(Default, Clone)]
