@@ -47,7 +47,7 @@ impl<V: JwsVerifier> JwtDomainLinkageValidator<V> {
   /// # Note:
   /// - Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
   ///   is supported.
-  /// - Only the Credentials issued by `issuer` are verified.
+  /// - Only the Credentials issued by `issuer` are verified. All other credentials are ignored.
   ///
   /// # Errors
   ///  - Semantic structure of `configuration` is invalid.
@@ -59,24 +59,20 @@ impl<V: JwsVerifier> JwtDomainLinkageValidator<V> {
     domain: &Url,
     validation_options: &JwtCredentialValidationOptions,
   ) -> DomainLinkageValidationResult {
-    let (oks, errors): (Vec<_>, Vec<_>) = self
+    let (ok_results, error_results): (Vec<_>, Vec<_>) = self
       .validate_linkage_iter(issuer, configuration, domain, validation_options)?
       .partition(Result::is_ok);
 
-    if !oks.is_empty() {
+    if !ok_results.is_empty() {
       Ok(())
-    } else if !errors.is_empty() {
+    } else if !error_results.is_empty() {
+      let errors = error_results
+        .into_iter()
+        .map(Result::unwrap_err) // Safety: `errors` is a list of prefiltered `Err(_)`.
+        .collect();
       Err(DomainLinkageValidationError {
         cause: DomainLinkageValidationErrorCause::List,
-        source: Some(
-          DomainLinkageValidationErrorList::new(
-            errors
-              .into_iter()
-              .map(|r| Result::unwrap_err(r)) // safe as errors are a list of pre-filtered errors
-              .collect(),
-          )
-          .into(),
-        ),
+        source: Some(DomainLinkageValidationErrorList::new(errors).into()),
       })
     } else {
       // this _should_ not be the case, as `validate_linkage_iter` should throw an error if no issuer matches
@@ -114,7 +110,7 @@ impl<V: JwsVerifier> JwtDomainLinkageValidator<V> {
     configuration: &'a DomainLinkageConfiguration,
     domain: &'a Url,
     validation_options: &'a JwtCredentialValidationOptions,
-  ) -> Result<impl Iterator<Item = DomainLinkageValidationResult> + 'a, DomainLinkageValidationError> {
+  ) -> Result<impl Iterator<Item = DomainLinkageValidationResult> + use<'a, DOC, V>, DomainLinkageValidationError> {
     // perform checks about overall structure:
     // all issuers can be parsed
     let issuers: Vec<CoreDID> = configuration.issuers().map_err(|err| DomainLinkageValidationError {
