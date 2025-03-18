@@ -1,6 +1,6 @@
 [package]
 name = "identity_iota_interaction"
-version = "1.5.0"
+version = "1.6.0-alpha"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true

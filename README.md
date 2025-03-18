@@ -32,7 +32,7 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 - [Identity Documentation Pages](https://docs.iota.org/iota-identity): Supplementing documentation with context around identity and simple examples on library usage.
 - API References:
   - [Rust API Reference](https://iotaledger.github.io/identity.rs/identity_iota/index.html): Package documentation (cargo docs).
-  - [Wasm API Reference](https://wiki.iota.org/identity.rs/references/wasm/api_ref/): Wasm Package documentation.
+  - [Wasm API Reference](https://docs.iota.org/references/iota-identity/wasm/api_ref): Wasm Package documentation.
 - Examples:
   - [Rust Examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/examples): Practical code snippets to get you started with the library in Rust.
   - [Wasm Examples](https://github.com/iotaledger/identity.rs/blob/feat/identity-rebased-alpha/bindings/wasm/identity_wasm/examples): Practical code snippets to get you started with the library in TypeScript/JavaScript.
@@ -55,7 +55,7 @@ For detailed development progress, see the IOTA Identity development [kanban boa
 
 We would love to have you help us with the development of IOTA Identity. Each and every contribution is greatly valued!
 
-Please review the [contribution](https://wiki.iota.org/identity.rs/contribute) and [workflow](https://wiki.iota.org/identity.rs/workflow) sections in the [IOTA Wiki](https://wiki.iota.org/).
+Please review the [contribution](https://docs.iota.org/iota-identity/contribute) sections in the [IOTA Docs Portal](https://docs.iota.org/iota-identity).
 
 To contribute directly to the repository, simply fork the project, push your changes to your fork and create a pull request to get them included!
 
