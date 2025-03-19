@@ -426,6 +426,7 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
     .execute(&client)
     .await?
     .output;
+  let did = identity.did_document().id().clone();
 
   let ProposalResult::Executed(_) = identity
     .delete_did()
@@ -447,6 +448,10 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
     .finish(&client)
     .await;
   assert!(matches!(err, Err(identity_iota_core::rebased::Error::Identity(_))));
+
+  // Resolution of the DID document through its DID must fail.
+  let err = client.resolve_did(&did).await.unwrap_err();
+  assert!(matches!(err, identity_iota_core::rebased::Error::DIDResolutionError(_)));
 
   Ok(())
 }
