@@ -48,8 +48,8 @@ We provide a collection of experimental [gRPC services](https://github.com/iotal
 
 ## Prerequisites
 
-- [Rust](https://www.rust-lang.org/) (>= 1.65)
-- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.65)
+- [Rust](https://www.rust-lang.org/) (latest)
+- [Cargo](https://doc.rust-lang.org/cargo/) (latest)
 
 ## Getting Started
 
