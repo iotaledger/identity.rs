@@ -416,3 +416,37 @@ async fn controller_execution_works() -> anyhow::Result<()> {
 
   Ok(())
 }
+
+#[tokio::test]
+async fn identity_delete_did_works() -> anyhow::Result<()> {
+  let client = get_funded_test_client().await?;
+  let mut identity = client
+    .create_identity(IotaDocument::new(client.network()))
+    .finish()
+    .execute(&client)
+    .await?
+    .output;
+
+  let ProposalResult::Executed(_) = identity
+    .delete_did()
+    .finish(&client)
+    .await?
+    .execute(&client)
+    .await?
+    .output
+  else {
+    anyhow::bail!("proposal should have been executed right away!");
+  };
+
+  assert!(identity.has_deleted_did());
+  assert_eq!(identity.did_document().metadata.deactivated, Some(true));
+
+  // Trying to update a deleted DID Document must fail.
+  let err = identity
+    .update_did_document(IotaDocument::new(client.network()))
+    .finish(&client)
+    .await;
+  assert!(matches!(err, Err(identity_iota_core::rebased::Error::Identity(_))));
+
+  Ok(())
+}

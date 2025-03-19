@@ -61,14 +61,16 @@ const NAME: &str = "Identity";
 const HISTORY_DEFAULT_PAGE_SIZE: usize = 10;
 
 /// The data stored in an on-chain identity.
-pub type IdentityData = (
-  UID,
-  Multicontroller<Option<Vec<u8>>>,
-  Option<ObjectID>,
-  Timestamp,
-  Timestamp,
-  u64,
-);
+pub(crate) struct IdentityData {
+  pub(crate) id: UID,
+  pub(crate) multicontroller: Multicontroller<Option<Vec<u8>>>,
+  pub(crate) legacy_id: Option<ObjectID>,
+  pub(crate) created: Timestamp,
+  pub(crate) updated: Timestamp,
+  pub(crate) version: u64,
+  pub(crate) deleted: bool,
+  pub(crate) deleted_did: bool,
+}
 
 /// An on-chain object holding a DID Document.
 #[derive(Clone)]
@@ -104,6 +106,8 @@ pub struct OnChainIdentity {
   multi_controller: Multicontroller<Option<Vec<u8>>>,
   pub(crate) did_doc: IotaDocument,
   version: u64,
+  deleted: bool,
+  deleted_did: bool,
 }
 
 impl OnChainIdentity {
@@ -119,6 +123,15 @@ impl OnChainIdentity {
 
   pub(crate) fn did_document_mut(&mut self) -> &mut IotaDocument {
     &mut self.did_doc
+  }
+
+  /// Returns whether the [IotaDocument] contained in this [OnChainIdentity] has been deleted.
+  /// Once a DID Document is deleted, it cannot be reactivated.
+  ///
+  /// When calling [OnChainIdentity::did_document] on an Identity whose DID Document
+  /// had been deleted, an *empty* and *deactivated* [IotaDocument] will be returned.
+  pub fn has_deleted_did(&self) -> bool {
+    self.deleted_did
   }
 
   /// Returns true if this [`OnChainIdentity`] is shared between multiple controllers.
@@ -174,6 +187,11 @@ impl OnChainIdentity {
   /// Deactivates the DID Document represented by this [`OnChainIdentity`].
   pub fn deactivate_did(&mut self) -> ProposalBuilder<'_, UpdateDidDocument> {
     ProposalBuilder::new(self, UpdateDidDocument::deactivate())
+  }
+
+  /// Deletes the DID Document contained in this [OnChainIdentity].
+  pub fn delete_did(&mut self) -> ProposalBuilder<'_, UpdateDidDocument> {
+    ProposalBuilder::new(self, UpdateDidDocument::delete())
   }
 
   /// Upgrades this [`OnChainIdentity`]'s version to match the package's.
@@ -286,25 +304,43 @@ pub async fn get_identity(
     return Ok(None);
   };
 
-  let did = IotaDID::from_object_id(&object_id.to_string(), client.network());
-  let Some((id, multi_controller, legacy_id, created, updated, version)) = unpack_identity_data(&did, &data)? else {
+  let network = client.network();
+  let did = IotaDID::from_object_id(&object_id.to_string(), network);
+  let Some(IdentityData {
+    id,
+    multicontroller,
+    legacy_id,
+    created,
+    updated,
+    version,
+    deleted,
+    deleted_did,
+  }) = unpack_identity_data(&did, &data)?
+  else {
     return Ok(None);
   };
   let legacy_did = legacy_id.map(|legacy_id| IotaDID::from_object_id(&legacy_id.to_string(), client.network()));
 
-  let did_doc = multi_controller
+  let did_doc = multicontroller
     .controlled_value()
     .as_deref()
     .map(|did_doc_bytes| IotaDocument::from_iota_document_data(did_doc_bytes, true, &did, legacy_did, created, updated))
     .transpose()
     .map_err(|e| Error::DidDocParsingFailed(e.to_string()))?
-    .ok_or_else(|| Error::DIDResolutionError("The requested Identity contains no DID Document".to_string()))?;
+    .unwrap_or_else(|| {
+      let mut empty_did_doc = IotaDocument::new(network);
+      empty_did_doc.metadata.deactivated = Some(true);
+
+      empty_did_doc
+    });
 
   Ok(Some(OnChainIdentity {
     id,
-    multi_controller,
+    multi_controller: multicontroller,
     did_doc,
     version,
+    deleted,
+    deleted_did,
   }))
 }
 
@@ -341,15 +377,19 @@ pub(crate) fn unpack_identity_data(did: &IotaDID, data: &IotaObjectData) -> Resu
     created: Number<u64>,
     updated: Number<u64>,
     version: Number<u64>,
+    deleted: bool,
+    deleted_did: bool,
   }
 
   let TempOnChainIdentity {
     id,
-    did_doc: multi_controller,
+    did_doc: multicontroller,
     legacy_id,
     created,
     updated,
     version,
+    deleted,
+    deleted_did,
   } = serde_json::from_value::<TempOnChainIdentity>(value.fields.to_json_value())
     .map_err(|err| Error::ObjectLookup(format!("could not parse identity document with DID {did}; {err}")))?;
 
@@ -366,7 +406,16 @@ pub(crate) fn unpack_identity_data(did: &IotaDID, data: &IotaObjectData) -> Resu
   };
   let version = version.try_into().expect("Move string-encoded u64 are valid u64");
 
-  Ok(Some((id, multi_controller, legacy_id, created, updated, version)))
+  Ok(Some(IdentityData {
+    id,
+    multicontroller,
+    legacy_id,
+    created,
+    updated,
+    version,
+    deleted,
+    deleted_did,
+  }))
 }
 
 /// Builder-style struct to create a new [`OnChainIdentity`].
