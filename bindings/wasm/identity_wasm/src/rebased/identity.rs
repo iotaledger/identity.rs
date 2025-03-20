@@ -75,7 +75,10 @@ impl WasmOnChainIdentity {
     serde_wasm_bindgen::to_value(proposals).map_err(wasm_error)
   }
 
-  #[wasm_bindgen(js_name = updateDidDocument)]
+  #[wasm_bindgen(
+    js_name = updateDidDocument,
+    unchecked_return_type = "TransactionInternal<Proposal<UpdateDid> | ProposalOutput<UpdateDid>>",
+  )]
   pub fn update_did_document(
     &self,
     updated_doc: &WasmIotaDocument,
@@ -84,12 +87,18 @@ impl WasmOnChainIdentity {
     WasmCreateUpdateDidProposalTx::new(self, updated_doc.clone(), expiration_epoch)
   }
 
-  #[wasm_bindgen(js_name = deactivateDid)]
+  #[wasm_bindgen(
+    js_name = deactivateDid,
+    unchecked_return_type = "TransactionInternal<Proposal<UpdateDid> | ProposalOutput<UpdateDid>>",
+  )]
   pub fn deactivate_did(&self, expiration_epoch: Option<u64>) -> WasmCreateUpdateDidProposalTx {
     WasmCreateUpdateDidProposalTx::deactivate(self, expiration_epoch)
   }
 
-  #[wasm_bindgen(js_name = updateConfig)]
+  #[wasm_bindgen(
+    js_name = updateConfig,
+    unchecked_return_type = "TransactionInternal<Proposal<ConfigChange> | ProposalOutput<ConfigChange>>",
+  )]
   pub fn update_config(
     &self,
     config: WasmConfigChange,
@@ -98,7 +107,10 @@ impl WasmOnChainIdentity {
     WasmCreateConfigChangeProposalTx::new(self, config, expiration_epoch)
   }
 
-  #[wasm_bindgen(js_name = sendAssets)]
+  #[wasm_bindgen(
+    js_name = sendAssets,
+    unchecked_return_type = "TransactionInternal<Proposal<SendAction> | ProposalOutput<SendAction>>",
+  )]
   pub fn send_assets(
     &self,
     transfer_map: Vec<StringCouple>,
@@ -188,7 +200,7 @@ impl WasmIdentityBuilder {
     )
   }
 
-  #[wasm_bindgen]
+  #[wasm_bindgen(unchecked_return_type = "TransactionInternal<OnChainIdentity>")]
   pub fn finish(self) -> WasmCreateIdentityTx {
     WasmCreateIdentityTx::new(self.0.finish())
   }

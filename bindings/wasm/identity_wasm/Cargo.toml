@@ -1,6 +1,6 @@
 [package]
 name = "identity_wasm"
-version = "1.6.0-alpha.2"
+version = "1.6.0-alpha.3"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -33,7 +33,7 @@ serde-wasm-bindgen = "0.6.5"
 serde_json = { version = "1.0", default-features = false }
 serde_repr = { version = "0.1", default-features = false }
 # Want to use the nice API of tokio::sync::RwLock for now even though we can't use threads.
-tokio = { version = "=1.39.2", default-features = false, features = ["sync"] }
+tokio = { version = "1.43", default-features = false, features = ["sync"] }
 tsify = "0.4.5"
 wasm-bindgen = { version = "0.2.100", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
@@ -63,7 +63,7 @@ getrandom = { version = "0.2", default-features = false, features = ["js"] }
 [profile.release]
 opt-level = 's'
 lto = true
-# Enabling debug for profile.release may lead to more helpfull loged call stacks.
+# Enabling debug for profile.release may lead to more helpful logged call stacks.
 # TODO: Clarify if 'debug = true' facilitates error analysis via console logs.
 #       If not, remove the next line
 #       If yes, describe the helping effect in the comment above

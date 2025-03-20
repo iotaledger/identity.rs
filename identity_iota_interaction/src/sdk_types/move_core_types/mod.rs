@@ -8,9 +8,9 @@ pub mod annotated_value;
 pub mod annotated_visitor;
 pub mod identifier;
 pub mod language_storage;
-pub mod parser;
 pub mod runtime_value;
 pub mod u256;
+pub mod parsing;
 
 use std::fmt;
 

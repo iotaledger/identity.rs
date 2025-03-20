@@ -6,10 +6,10 @@ use std::{fmt, hash::Hash};
 use std::option::Option::{self, Some, None};
 use std::string::String;
 
-use num_bigint::BigUint;
 use anyhow::anyhow;
 
-use super::super::move_core_types::account_address::AccountAddress;
+use super::super::account_address::AccountAddress;
+use super::super::u256::U256;
 use super::parser::{NumberFormat, parse_address_number};
 
 // Parsed Address, either a name or a numerical address
@@ -67,10 +67,7 @@ impl NumericalAddress {
 
     pub fn parse_str(s: &str) -> Result<NumericalAddress, String> {
         match parse_address_number(s) {
-            Some((n, format)) => Ok(NumericalAddress {
-                bytes: AccountAddress::new(n),
-                format,
-            }),
+            Some((n, format)) => Ok(NumericalAddress { bytes: n, format }),
             None =>
             // TODO the kind of error is in an unstable nightly API
             // But currently the only way this should fail is if the number is too long
@@ -95,7 +92,7 @@ impl fmt::Display for NumericalAddress {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.format {
             NumberFormat::Decimal => {
-                let n = BigUint::from_bytes_be(self.bytes.as_ref());
+                let n = U256::from_be_bytes(&self.bytes);
                 write!(f, "{}", n)
             }
             NumberFormat::Hex => write!(f, "{:#X}", self),
@@ -183,6 +180,16 @@ impl PartialEq for NumericalAddress {
     }
 }
 impl Eq for NumericalAddress {}
+
+impl PartialEq<AccountAddress> for NumericalAddress {
+    fn eq(&self, other: &AccountAddress) -> bool {
+        let Self {
+            bytes: self_bytes,
+            format: _,
+        } = self;
+        self_bytes == other
+    }
+}
 
 impl Hash for NumericalAddress {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {

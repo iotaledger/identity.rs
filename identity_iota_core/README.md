@@ -2,7 +2,7 @@ IOTA Identity
 ===
 
 ## About
-This crate provides the core data structures for the [IOTA DID Method Specification](https://wiki.iota.org/identity.rs/references/specifications/iota-did-method-spec/). It provides interfaces for publishing and resolving DID Documents according to the IOTA DID Method Specification.
+This crate provides the core data structures for the [IOTA DID Method Specification](https://docs.iota.org/iota-identity). It provides interfaces for publishing and resolving DID Documents according to the IOTA DID Method Specification.
 
 ## Running the tests
 You can run the tests as usual with:

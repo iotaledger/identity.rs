@@ -33,20 +33,16 @@ export async function updateIdentity() {
     const resolved = await identityClient.resolveDid(did);
 
     // Insert a new Ed25519 verification method in the DID document.
-    await resolved.generateMethod(
+    const vmFragment2 = await resolved.generateMethod(
         storage,
         JwkMemStore.ed25519KeyType(),
         JwsAlgorithm.EdDSA,
-        "#key-2",
+        null,
         MethodScope.VerificationMethod(),
     );
 
     // Attach a new method relationship to the inserted method.
-    resolved.attachMethodRelationship(did.join("#key-2"), MethodRelationship.Authentication);
-
-    // Remove a verification method.
-    let originalMethod = resolved.resolveMethod(vmFragment1) as VerificationMethod;
-    await resolved.purgeMethod(storage, originalMethod?.id());
+    resolved.attachMethodRelationship(did.join(`#${vmFragment2}`), MethodRelationship.Authentication);
 
     // Add a new Service.
     const service: Service = new Service({
@@ -56,13 +52,17 @@ export async function updateIdentity() {
     });
     resolved.insertService(service);
 
+    // Remove a verification method.
+    let originalMethod = resolved.resolveMethod(vmFragment1) as VerificationMethod;
+    await resolved.purgeMethod(storage, originalMethod?.id());
+
     let maybePendingProposal = await identity
         .updateDidDocument(resolved.clone())
         .withGasBudget(TEST_GAS_BUDGET)
         .execute(identityClient)
         .then(result => result.output);
 
-    console.assert(maybePendingProposal === undefined, "the proposal should have been executed right away!");
+    console.assert(maybePendingProposal == null, "the proposal should have been executed right away!");
 
     // and resolve again to make sure we're looking at the onchain information
     const resolvedAgain = await identityClient.resolveDid(did);

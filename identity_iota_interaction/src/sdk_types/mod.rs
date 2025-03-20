@@ -8,7 +8,6 @@ pub mod types;
 #[path = "move_core_types/mod.rs"]
 pub mod move_types;
 
-pub mod move_command_line_common;
 pub mod shared_crypto;
 pub mod error;
 pub mod generated_types;

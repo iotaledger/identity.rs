@@ -65,7 +65,7 @@ const fn builtin_address(suffix: u16) -> AccountAddress {
 /// matches this format exactly, with no remaining input. This function is
 /// intended for use within the authority codebase.
 pub fn parse_iota_struct_tag(s: &str) -> anyhow::Result<StructTag> {
-    use super::super::move_command_line_common::types::ParsedStructType;
+    use super::super::move_core_types::parsing::types::ParsedStructType;
     ParsedStructType::parse(s)?.into_struct_tag(&resolve_address)
 }
 
@@ -74,7 +74,7 @@ pub fn parse_iota_struct_tag(s: &str) -> anyhow::Result<StructTag> {
 /// only if `s` matches this format exactly, with no remaining input. This
 /// function is intended for use within the authority codebase.
 pub fn parse_iota_type_tag(s: &str) -> anyhow::Result<TypeTag> {
-    use super::super::move_command_line_common::types::ParsedType;
+    use super::super::move_core_types::parsing::types::ParsedType;
     ParsedType::parse(s)?.into_type_tag(&resolve_address)
 }
 

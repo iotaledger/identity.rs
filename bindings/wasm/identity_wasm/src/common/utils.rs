@@ -11,7 +11,7 @@ use crate::error::WasmResult;
 /// object `{}`. This uses a [`js_sys::Object`] as an intermediate representation to convert
 /// to the required struct via JSON.
 ///
-/// Useful for deserializing properties fields which have the Typescript type:
+/// Useful for deserializing properties fields which have the TypeScript type:
 /// `Map<string, any> | Record<string, any>`
 pub(crate) fn deserialize_map_or_any<T>(value: &JsValue) -> Result<T>
 where
