@@ -298,7 +298,7 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v6.2.0
         with:
-          context: bindings/wasm/identity_wasm/
+          context: bindings/wasm/
           file: bindings/wasm/identity_wasm/cypress/Dockerfile
           push: false
           tags: cypress-test:latest
@@ -342,7 +342,7 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v6.2.0
         with:
-          context: bindings/wasm/identity_wasm/
+          context: bindings/wasm/
           file: bindings/wasm/identity_wasm/cypress/Dockerfile
           push: false
           tags: cypress-test:latest

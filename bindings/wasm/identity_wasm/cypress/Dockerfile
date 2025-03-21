@@ -2,7 +2,7 @@ FROM cypress/browsers:latest
 
 COPY ./ /e2e
 
-WORKDIR /e2e
+WORKDIR /e2e/identity_wasm
 
 RUN npm ci
 
