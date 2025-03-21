@@ -1,20 +1,19 @@
 import { defineConfig } from "vite";
 
 export default defineConfig(({ command, mode }) => {
-    
     // variables will be set during build time
     const EXPOSED_ENVS = [
         "IOTA_IDENTITY_PKG_ID",
         "NETWORK_NAME_FAUCET",
-        "NETWORK_URL"
+        "NETWORK_URL",
     ];
 
     return {
         define: EXPOSED_ENVS.reduce((prev, env_var) => {
             const var_value = globalThis?.process?.env?.[env_var];
-            if(var_value) {
-                console.log("exposing",env_var, var_value)
-                prev[`process.env.${env_var}`] = JSON.stringify(var_value)
+            if (var_value) {
+                console.log("exposing", env_var, var_value);
+                prev[`process.env.${env_var}`] = JSON.stringify(var_value);
             }
             return prev;
         }, {}),
