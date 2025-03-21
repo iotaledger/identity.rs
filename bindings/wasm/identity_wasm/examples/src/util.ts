@@ -15,9 +15,9 @@ import {
 import { IotaClient } from "@iota/iota-sdk/client";
 import { getFaucetHost, requestIotaFromFaucetV0 } from "@iota/iota-sdk/faucet";
 
-export const IOTA_IDENTITY_PKG_ID = globalThis?.process?.env?.IOTA_IDENTITY_PKG_ID ?? "";
-export const NETWORK_NAME_FAUCET = globalThis?.process?.env?.NETWORK_NAME_FAUCET ?? "localnet";
-export const NETWORK_URL = globalThis?.process?.env?.NETWORK_URL ?? "http://127.0.0.1:9000";
+export const IOTA_IDENTITY_PKG_ID = globalThis?.process?.env?.IOTA_IDENTITY_PKG_ID || "";
+export const NETWORK_NAME_FAUCET = globalThis?.process?.env?.NETWORK_NAME_FAUCET || "localnet";
+export const NETWORK_URL = globalThis?.process?.env?.NETWORK_URL || "http://127.0.0.1:9000";
 
 if (!IOTA_IDENTITY_PKG_ID) {
     throw new Error("IOTA_IDENTITY_PKG_ID env variable must be set to run the examples");

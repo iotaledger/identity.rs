@@ -1,13 +1,23 @@
 import { defineConfig } from "vite";
 
 export default defineConfig(({ command, mode }) => {
+    
+    // variables will be set during build time
+    const EXPOSED_ENVS = [
+        "IOTA_IDENTITY_PKG_ID",
+        "NETWORK_NAME_FAUCET",
+        "NETWORK_URL"
+    ];
+
     return {
-        define: {
-            // variables will be set during build time
-            "process.env.IOTA_IDENTITY_PKG_ID": JSON.stringify(process.env.IOTA_IDENTITY_PKG_ID),
-            "process.env.NETWORK_NAME_FAUCET": JSON.stringify(process.env.NETWORK_NAME_FAUCET),
-            "process.env.NETWORK_URL": JSON.stringify(process.env.NETWORK_URL),
-        },
+        define: EXPOSED_ENVS.reduce((prev, env_var) => {
+            const var_value = globalThis?.process?.env?.[env_var];
+            if(var_value) {
+                console.log("exposing ",env_var, var_value)
+                prev[env_var] = JSON.stringify(var_value)
+            }
+            return prev;
+        }, {}),
         server: {
             // open on default port or fail to make CI consistent
             strictPort: true,
