@@ -401,6 +401,7 @@ mod client_document {
   use identity_iota_interaction::rpc_types::IotaObjectData;
 
   use crate::rebased::migration::unpack_identity_data;
+  use crate::rebased::migration::IdentityData;
 
   use super::*;
 
@@ -428,7 +429,13 @@ mod client_document {
           None,
         ))
       })?;
-      let (_, multi_controller, legacy_id, created, updated, _) = match unpacked {
+      let IdentityData {
+        multicontroller,
+        legacy_id,
+        created,
+        updated,
+        ..
+      } = match unpacked {
         Some(data) => data,
         None => {
           return Err(Error::InvalidDoc(identity_document::Error::InvalidDocument(
@@ -443,7 +450,7 @@ mod client_document {
         .try_into()
         .expect("did's network is a valid NetworkName");
       let legacy_did = legacy_id.map(|id| IotaDID::new(&id.into_bytes(), &did_network));
-      let did_doc_bytes = multi_controller
+      let did_doc_bytes = multicontroller
         .controlled_value()
         .as_deref()
         .ok_or_else(|| Error::DIDResolutionError("requested DID Document doesn't exist".to_string()))?;

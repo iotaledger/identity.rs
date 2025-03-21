@@ -63,6 +63,20 @@ impl WasmOnChainIdentity {
     Ok(WasmIotaDocument::from(inner_doc))
   }
 
+  /// Returns whether the {@link IotaDocument} contained in this {@link OnChainIdentity} has been deleted.
+  /// Once a DID Document is deleted, it cannot be reactivated.
+  ///
+  /// When calling {@link OnChainIdentity.did_document} on an Identity whose DID Document
+  /// had been deleted, an *empty* and *deactivated* {@link IotaDocument} will be returned.
+  #[wasm_bindgen(js_name = hasDeletedDid)]
+  pub fn has_deleted_did(&self) -> Result<bool> {
+    self
+      .0
+      .try_read()
+      .wasm_result()
+      .map(|identity| identity.has_deleted_did())
+  }
+
   #[wasm_bindgen(js_name = isShared)]
   pub fn is_shared(&self) -> Result<bool> {
     Ok(self.0.try_read().wasm_result()?.is_shared())
@@ -93,6 +107,14 @@ impl WasmOnChainIdentity {
   )]
   pub fn deactivate_did(&self, expiration_epoch: Option<u64>) -> WasmCreateUpdateDidProposalTx {
     WasmCreateUpdateDidProposalTx::deactivate(self, expiration_epoch)
+  }
+
+  #[wasm_bindgen(
+    js_name = deleteDid,
+    unchecked_return_type = "TransactionInternal<Proposal<UpdateDid> | ProposalOutput<UpdateDid>>",
+  )]
+  pub fn delete_did(&self, expiration_epoch: Option<u64>) -> WasmCreateUpdateDidProposalTx {
+    WasmCreateUpdateDidProposalTx::delete(self, expiration_epoch)
   }
 
   #[wasm_bindgen(
@@ -149,12 +171,6 @@ const WASM_ON_CHAIN_IDENTITY_TYPES: &str = r###"
 		getHistory(): Map<String, Proposal>;
 	}
 "###;
-
-// TODO: remove the following comment and commented out code if we don't run into a rename issue
-// -> in case `serde(rename` runs into issues with properties with renamed types still having the
-// original type, see [here](https://github.com/madonoharu/tsify/issues/43) for an example
-// #[declare]
-// pub type ProposalAction = WasmProposalAction;
 
 #[wasm_bindgen(js_name = IdentityBuilder)]
 pub struct WasmIdentityBuilder(pub(crate) IdentityBuilder);
