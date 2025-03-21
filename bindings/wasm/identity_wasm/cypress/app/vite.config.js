@@ -13,8 +13,8 @@ export default defineConfig(({ command, mode }) => {
         define: EXPOSED_ENVS.reduce((prev, env_var) => {
             const var_value = globalThis?.process?.env?.[env_var];
             if(var_value) {
-                console.log("exposing ",env_var, var_value)
-                prev[env_var] = JSON.stringify(var_value)
+                console.log("exposing",env_var, var_value)
+                prev[`process.env.${env_var}`] = JSON.stringify(var_value)
             }
             return prev;
         }, {}),
