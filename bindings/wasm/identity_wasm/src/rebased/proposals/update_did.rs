@@ -266,6 +266,16 @@ impl WasmCreateUpdateDidProposalTx {
     }
   }
 
+  pub(crate) fn delete(identity: &WasmOnChainIdentity, expiration_epoch: Option<u64>) -> Self {
+    Self {
+      identity: identity.clone(),
+      expiration_epoch,
+      updated_did_doc: None,
+      delete: true,
+      gas_budget: None,
+    }
+  }
+
   #[wasm_bindgen(js_name = withGasBudget)]
   pub fn with_gas_budget(mut self, budget: u64) -> Self {
     self.gas_budget = Some(budget);
@@ -282,6 +292,8 @@ impl WasmCreateUpdateDidProposalTx {
     let mut identity_ref = self.identity.0.write().await;
     let builder = if let Some(updated_did_document) = self.updated_did_doc {
       identity_ref.update_did_document(updated_did_document.0.read().await.clone())
+    } else if self.delete {
+      identity_ref.delete_did()
     } else {
       identity_ref.deactivate_did()
     };
