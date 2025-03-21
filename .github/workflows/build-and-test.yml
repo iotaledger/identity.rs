@@ -295,6 +295,11 @@ jobs:
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
 
+      - name: publish IotaIdentity package
+        # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
+        run: echo "IOTA_IDENTITY_PKG_ID=$(./publish_identity_package.sh)" >> "$GITHUB_ENV"
+        working-directory: identity_iota_core/scripts/
+
       - name: Build Docker image
         uses: docker/build-push-action@v6.2.0
         with:
@@ -303,6 +308,8 @@ jobs:
           push: false
           tags: cypress-test:latest
           load: true
+          build-args: |
+            IOTA_IDENTITY_PKG_ID=${{ env.IOTA_IDENTITY_PKG_ID }}
 
       - name: Run cypress
         run: docker run --network host cypress-test test:browser:firefox
@@ -339,6 +346,11 @@ jobs:
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
 
+      - name: publish IotaIdentity package
+        # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
+        run: echo "IOTA_IDENTITY_PKG_ID=$(./publish_identity_package.sh)" >> "$GITHUB_ENV"
+        working-directory: identity_iota_core/scripts/
+
       - name: Build Docker image
         uses: docker/build-push-action@v6.2.0
         with:
@@ -347,6 +359,8 @@ jobs:
           push: false
           tags: cypress-test:latest
           load: true
+          build-args: |
+            IOTA_IDENTITY_PKG_ID=${{ env.IOTA_IDENTITY_PKG_ID }}
 
       - name: Run cypress
         run: docker run --network host cypress-test test:browser:chrome
