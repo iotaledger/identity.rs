@@ -8,6 +8,7 @@ describe(
             "1_update_did",
             "2_resolve_did",
             "3_deactivate_did",
+            "4_delete_did",
             "5_create_vc",
             "6_create_vp",
             "7_revoke_vc",
