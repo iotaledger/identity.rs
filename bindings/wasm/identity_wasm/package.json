@@ -21,7 +21,7 @@
     "build:nodejs": "npm run build:src && npm run bundle:nodejs",
     "build:web": "npm run build:src && npm run bundle:web",
     "build:docs": "typedoc && npm run fix_docs",
-    "build:examples:web": "tsc --project ./examples/tsconfig.web.json || node ../build/replace_paths ./tsconfig.web.json dist identity_wasm/examples resolve",
+    "build:examples:web": "tsc --project ./examples/tsconfig.web.json && node ../build/replace_paths ./tsconfig.web.json dist identity_wasm/examples resolve",
     "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
     "example:node": "ts-node --project tsconfig.node.json -r tsconfig-paths/register ./examples/src/main.ts",
     "example:web": "npm i --prefix ./cypress/app/ && npm run dev --prefix ./cypress/app/ -- --host",
