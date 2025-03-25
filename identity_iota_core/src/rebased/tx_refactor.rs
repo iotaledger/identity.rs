@@ -26,26 +26,18 @@ use super::client::IdentityClientReadOnly;
 use super::transaction::TransactionOutput;
 use super::Error;
 
-#[async_trait]
-pub trait IntoProgrammableTransaction {
-  async fn into_programmable_transaction(
-    self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error>;
-}
-
-#[async_trait]
-impl IntoProgrammableTransaction for ProgrammableTransaction {
-  async fn into_programmable_transaction(self, _client: &IdentityClientReadOnly) -> Result<Self, Error> {
-    Ok(self)
-  }
-}
-
 /// Effects of a transaction to local context.
 #[async_trait]
 pub trait TxEffect {
   /// Output type for the effect.
   type Output;
+
+  /// Encode this operation into a [ProgrammableTransaction].
+  async fn build_programmable_transaction(
+    &self,
+    client: &IdentityClientReadOnly,
+  ) -> Result<ProgrammableTransaction, Error>;
+
   /// Parses a transaction result in order to compute this effect.
   async fn apply(
     self,
@@ -96,27 +88,27 @@ impl TryFrom<PartialGasData> for GasData {
 }
 
 /// Builds an executable transaction on a step by step manner.
-pub struct TxBuilder<T, Effect> {
-  programmable_tx: T,
+pub struct TxBuilder<Effect> {
+  programmable_tx: Option<ProgrammableTransaction>,
   sender: Option<IotaAddress>,
   gas: PartialGasData,
   signatures: Vec<Signature>,
   effect: Effect,
 }
 
-impl<T, Effect> TxBuilder<T, Effect>
+impl<Effect> TxBuilder<Effect>
 where
-  T: IntoProgrammableTransaction,
+  Effect: TxEffect,
 {
   /// Starts the creation of a transaction by supplying the transaction's data
   /// together with its local effect.
-  pub fn new(into_pt: T, effect: Effect) -> Self {
+  pub fn new(effect: Effect) -> Self {
     Self {
-      programmable_tx: into_pt,
       effect,
       gas: PartialGasData::default(),
       signatures: vec![],
       sender: None,
+      programmable_tx: None,
     }
   }
 
@@ -125,7 +117,11 @@ where
     self,
     client: &IdentityClientReadOnly,
   ) -> Result<(ProgrammableTransaction, Effect), Error> {
-    let pt = self.programmable_tx.into_programmable_transaction(client).await?;
+    let pt = if let Some(pt) = self.programmable_tx {
+      pt
+    } else {
+      self.effect.build_programmable_transaction(client).await?
+    };
     Ok((pt, self.effect))
   }
 
@@ -134,28 +130,30 @@ where
     self,
     client: &IdentityClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
-    self.programmable_tx.into_programmable_transaction(client).await
+    if let Some(pt) = self.programmable_tx {
+      Ok(pt)
+    } else {
+      self.effect.build_programmable_transaction(client).await
+    }
   }
 
-  // async fn transaction_data(&self, client: &IdentityClientReadOnly) -> anyhow::Result<TransactionData> {
-  //   let sender = self.sender.context("missing sender")?;
-  //   let gas_data = self.gas.clone().try_into()?;
+  async fn transaction_data(&mut self, client: &IdentityClientReadOnly) -> anyhow::Result<TransactionData> {
+    let sender = self.sender.context("missing sender")?;
+    let gas_data = self.gas.clone().try_into()?;
+    let pt = self.get_or_init_programmable_tx(client).await?.clone();
 
-  //   Ok(TransactionData::new_with_gas_data(
-  //     TransactionKind::ProgrammableTransaction(self.programmable_tx.into_programmable_transaction(client).await?),
-  //     sender,
-  //     gas_data,
-  //   ))
-  // }
+    Ok(TransactionData::new_with_gas_data(
+      TransactionKind::ProgrammableTransaction(pt),
+      sender,
+      gas_data,
+    ))
+  }
 
   /// Adds `signer`'s signature to this this transaction's signatures list.
   /// # Notes
   /// This methods asserts that `signer`'s address matches the address of
   /// either this transaction's sender or the gas owner - failing otherwise.
-  pub async fn with_signature<S>(
-    mut self,
-    client: &IdentityClient<S>,
-  ) -> Result<TxBuilder<ProgrammableTransaction, Effect>, Error>
+  pub async fn with_signature<S>(mut self, client: &IdentityClient<S>) -> Result<Self, Error>
   where
     S: Signer<IotaKeySignature>,
   {
@@ -173,13 +171,7 @@ where
       )));
     }
 
-    let tx_data = {
-      let sender = self.sender.context("missing sender")?;
-      let gas_data = self.gas.clone().try_into()?;
-      let pt = self.programmable_tx.into_programmable_transaction(&client).await?;
-
-      TransactionData::new_with_gas_data(TransactionKind::ProgrammableTransaction(pt), sender, gas_data)
-    };
+    let tx_data = self.transaction_data(client).await?;
     let tx_data_bcs = bcs::to_bytes(&tx_data)?;
 
     let sig = client
@@ -189,103 +181,20 @@ where
       .map_err(|e| Error::TransactionSigningFailed(e.to_string()))?;
     self.signatures.push(sig);
 
-    TxBuilder::try_from_signed_transaction(tx_data, self.signatures, self.effect)
+    Ok(self)
   }
-}
 
-impl<Effect> TxBuilder<ProgrammableTransaction, Effect> {
-  /// Starts the creation of a transaction by supplying the transaction's data
-  /// together with its local effect.
-  pub fn from_programmable_transaction(pt: ProgrammableTransaction, effect: Effect) -> Self {
-    Self {
-      programmable_tx: pt,
-      effect,
-      gas: PartialGasData::default(),
-      signatures: vec![],
-      sender: None,
+  async fn get_or_init_programmable_tx(
+    &mut self,
+    client: &IdentityClientReadOnly,
+  ) -> Result<&ProgrammableTransaction, Error> {
+    if self.programmable_tx.is_none() {
+      self.programmable_tx = Some(self.effect.build_programmable_transaction(client).await?);
     }
+
+    Ok(self.programmable_tx.as_ref().unwrap())
   }
 
-  /// Returns this transaction's [ProgrammableTransaction] together with its effect,
-  /// consuming all other information.
-  pub fn into_programmable_transaction_and_effect(self) -> (ProgrammableTransaction, Effect) {
-    (self.programmable_tx, self.effect)
-  }
-
-  /// Returns this transaction's [ProgrammableTransaction], consuming all other information.
-  pub fn into_programmable_transaction(self) -> ProgrammableTransaction {
-    self.programmable_tx
-  }
-}
-
-impl<T, Effect> TxBuilder<T, Effect> {
-  /// Sets the address that will execute the transaction.
-  pub fn with_sender(mut self, sender: IotaAddress) -> Self {
-    self.sender = Some(sender);
-    self
-  }
-
-  /// Sets the gas budget for this transaction.
-  pub fn with_gas_budget(mut self, budget: u64) -> Self {
-    self.gas.budget = Some(budget);
-    self
-  }
-
-  /// Sets the coins to use to cover the gas cost.
-  pub fn with_gas_payment(mut self, coins: Vec<ObjectRef>) -> Self {
-    self.gas.payment = coins;
-    self
-  }
-
-  /// Sets the gas owner.
-  pub fn with_gas_owner(mut self, address: IotaAddress) -> Self {
-    self.gas.owner = Some(address);
-    self
-  }
-
-  /// Sets the gas price.
-  pub fn with_gas_price(mut self, price: u64) -> Self {
-    self.gas.price = Some(price);
-    self
-  }
-
-  /// Sets the gas information that must be used to execute this transaction.
-  pub fn with_gas_data(mut self, gas_data: GasData) -> Self {
-    self.gas = gas_data.into();
-    self
-  }
-}
-
-impl<Effect> TxBuilder<ProgrammableTransaction, Effect> {
-  /// Attempts to construct a [TxBuilder] from a whole transaction.
-  pub fn try_from_signed_transaction(
-    tx_data: TransactionData,
-    signatures: Vec<Signature>,
-    effect: Effect,
-  ) -> Result<Self, Error> {
-    let TransactionKind::ProgrammableTransaction(pt) = tx_data.kind().clone() else {
-      return Err(Error::TransactionBuildingFailed(
-        "only programmable transactions are supported".to_string(),
-      ));
-    };
-    let sender = tx_data.sender();
-    let gas = tx_data.gas_data().clone().into();
-
-    Ok(Self {
-      programmable_tx: pt,
-      sender: Some(sender),
-      gas,
-      signatures,
-      effect,
-    })
-  }
-}
-
-impl<T, Effect> TxBuilder<T, Effect>
-where
-  T: IntoProgrammableTransaction,
-  Effect: TxEffect,
-{
   /// Attempts to execute this transaction using `client` in a best effort manner:
   /// - when no sender had been supplied, client's address is used;
   /// - when gas information is incomplete, the client will attempt to fill it, making use of whatever funds its address
@@ -296,11 +205,12 @@ where
   /// ## Notes
   /// This method *DOES NOT* remove nor checks for invalid signatures.
   /// Transaction with invalid signatures will fail after attempting to execute them.
-  pub async fn execute<S>(self, client: &IdentityClient<S>) -> Result<TransactionOutput<Effect::Output>, Error>
+  pub async fn execute<S>(mut self, client: &IdentityClient<S>) -> Result<TransactionOutput<Effect::Output>, Error>
   where
     S: Signer<IotaKeySignature>,
   {
-    let programmable_tx = self.programmable_tx.into_programmable_transaction(client).await?;
+    self.get_or_init_programmable_tx(client).await?;
+    let programmable_tx = self.programmable_tx.unwrap();
     let client_address = client.sender_address();
     let sender = self.sender.unwrap_or(client_address);
     let gas_data = complete_gas_data_for_tx(&programmable_tx, self.gas, client)
@@ -350,6 +260,79 @@ where
     let output = self.effect.apply(tx_effects, client).await?;
 
     Ok(TransactionOutput { output, response })
+  }
+}
+
+impl<Effect> TxBuilder<Effect> {
+  /// Starts the creation of a transaction by supplying the transaction's data
+  /// together with its local effect.
+  pub fn from_programmable_transaction(pt: ProgrammableTransaction, effect: Effect) -> Self {
+    Self {
+      programmable_tx: Some(pt),
+      effect,
+      gas: PartialGasData::default(),
+      signatures: vec![],
+      sender: None,
+    }
+  }
+
+  /// Sets the address that will execute the transaction.
+  pub fn with_sender(mut self, sender: IotaAddress) -> Self {
+    self.sender = Some(sender);
+    self
+  }
+
+  /// Sets the gas budget for this transaction.
+  pub fn with_gas_budget(mut self, budget: u64) -> Self {
+    self.gas.budget = Some(budget);
+    self
+  }
+
+  /// Sets the coins to use to cover the gas cost.
+  pub fn with_gas_payment(mut self, coins: Vec<ObjectRef>) -> Self {
+    self.gas.payment = coins;
+    self
+  }
+
+  /// Sets the gas owner.
+  pub fn with_gas_owner(mut self, address: IotaAddress) -> Self {
+    self.gas.owner = Some(address);
+    self
+  }
+
+  /// Sets the gas price.
+  pub fn with_gas_price(mut self, price: u64) -> Self {
+    self.gas.price = Some(price);
+    self
+  }
+
+  /// Sets the gas information that must be used to execute this transaction.
+  pub fn with_gas_data(mut self, gas_data: GasData) -> Self {
+    self.gas = gas_data.into();
+    self
+  }
+
+  /// Attempts to construct a [TxBuilder] from a whole transaction.
+  pub fn try_from_signed_transaction(
+    tx_data: TransactionData,
+    signatures: Vec<Signature>,
+    effect: Effect,
+  ) -> Result<Self, Error> {
+    let TransactionKind::ProgrammableTransaction(pt) = tx_data.kind().clone() else {
+      return Err(Error::TransactionBuildingFailed(
+        "only programmable transactions are supported".to_string(),
+      ));
+    };
+    let sender = tx_data.sender();
+    let gas = tx_data.gas_data().clone().into();
+
+    Ok(Self {
+      programmable_tx: Some(pt),
+      sender: Some(sender),
+      gas,
+      signatures,
+      effect,
+    })
   }
 }
 
@@ -415,10 +398,13 @@ mod tests {
   use super::*;
 
   #[derive(Debug)]
-  pub struct PublishDidDocumentEffect;
+  pub struct PublishDidDocument {
+    controller: IotaAddress,
+    did_document: IotaDocument,
+  }
 
   #[async_trait]
-  impl TxEffect for PublishDidDocumentEffect {
+  impl TxEffect for PublishDidDocument {
     type Output = IotaDocument;
     async fn apply(
       self,
@@ -436,35 +422,23 @@ mod tests {
 
       Ok(identity.did_document(client.network())?)
     }
-  }
 
-  #[derive(Debug)]
-  pub struct PublishDidDocumentPtb {
-    controller: IotaAddress,
-    did_document: IotaDocument,
-  }
-
-  impl PublishDidDocumentPtb {
-    pub fn new(controller: IotaAddress, did_document: IotaDocument) -> Self {
-      Self {
-        controller,
-        did_document,
-      }
-    }
-  }
-
-  #[async_trait]
-  impl IntoProgrammableTransaction for PublishDidDocumentPtb {
-    async fn into_programmable_transaction(
-      self,
-      client: &IdentityClientReadOnly,
-    ) -> Result<ProgrammableTransaction, Error> {
-      let did_doc = StateMetadataDocument::from(self.did_document)
+    async fn build_programmable_transaction(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+      let did_doc = StateMetadataDocument::from(self.did_document.clone())
         .pack(StateMetadataEncoding::Json)
         .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
       let programmable_tx_bcs =
         IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), [(self.controller, 1)], 1, client.package_id())?;
       Ok(bcs::from_bytes(&programmable_tx_bcs)?)
+    }
+  }
+
+  impl PublishDidDocument {
+    pub fn new(controller: IotaAddress, did_document: IotaDocument) -> Self {
+      Self {
+        controller,
+        did_document,
+      }
     }
   }
 
@@ -475,9 +449,8 @@ mod tests {
     pub fn publish_did_document_builder_api(
       &self,
       did_doc: IotaDocument,
-    ) -> TxBuilder<PublishDidDocumentPtb, PublishDidDocumentEffect> {
-      let tx = PublishDidDocumentPtb::new(self.sender_address(), did_doc);
-      TxBuilder::new(tx, PublishDidDocumentEffect)
+    ) -> TxBuilder<PublishDidDocument> {
+      TxBuilder::new(PublishDidDocument::new(self.sender_address(), did_doc))
     }
   }
 }
