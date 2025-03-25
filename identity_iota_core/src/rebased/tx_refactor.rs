@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockResponseOptions;
 use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::crypto::Signature;
 use identity_iota_interaction::types::crypto::SignatureScheme;
@@ -38,12 +39,53 @@ pub trait TxEffect {
   ) -> Result<Self::Output, Error>;
 }
 
+#[derive(Debug, Default, Clone)]
+struct PartialGasData {
+  payment: Vec<ObjectRef>,
+  owner: Option<IotaAddress>,
+  price: Option<u64>,
+  budget: Option<u64>,
+}
+
+impl From<GasData> for PartialGasData {
+  fn from(value: GasData) -> Self {
+    Self {
+      payment: value.payment,
+      owner: Some(value.owner),
+      price: Some(value.price),
+      budget: Some(value.price),
+    }
+  }
+}
+
+impl TryFrom<PartialGasData> for GasData {
+  type Error = Error;
+  fn try_from(value: PartialGasData) -> Result<Self, Self::Error> {
+    let owner = value
+      .owner
+      .ok_or_else(|| Error::GasIssue("missing gas owner".to_owned()))?;
+    let price = value
+      .price
+      .ok_or_else(|| Error::GasIssue("missing gas price".to_owned()))?;
+    let budget = value
+      .budget
+      .ok_or_else(|| Error::GasIssue("missing gas budget".to_owned()))?;
+
+    Ok(GasData {
+      payment: value.payment,
+      owner,
+      price,
+      budget,
+    })
+  }
+}
+
 /// Builds an executable transaction on a step by step manner.
 #[derive(Debug)]
 pub struct TxBuilder<Effect> {
   programmable_tx: ProgrammableTransaction,
   sender: Option<IotaAddress>,
-  gas: Option<GasData>,
+  gas: PartialGasData,
   signatures: Vec<Signature>,
   effect: Effect,
 }
@@ -55,7 +97,7 @@ impl<Effect> TxBuilder<Effect> {
     Self {
       programmable_tx: pt,
       effect,
-      gas: None,
+      gas: PartialGasData::default(),
       signatures: vec![],
       sender: None,
     }
@@ -73,12 +115,12 @@ impl<Effect> TxBuilder<Effect> {
       ));
     };
     let sender = tx_data.sender();
-    let gas = tx_data.gas_data().clone();
+    let gas = tx_data.gas_data().clone().into();
 
     Ok(Self {
       programmable_tx: pt,
       sender: Some(sender),
-      gas: Some(gas),
+      gas,
       signatures,
       effect,
     })
@@ -90,15 +132,39 @@ impl<Effect> TxBuilder<Effect> {
     self
   }
 
+  /// Sets the gas budget for this transaction.
+  pub fn with_gas_budget(mut self, budget: u64) -> Self {
+    self.gas.budget = Some(budget);
+    self
+  }
+
+  /// Sets the coins to use to cover the gas cost.
+  pub fn with_gas_payment(mut self, coins: Vec<ObjectRef>) -> Self {
+    self.gas.payment = coins;
+    self
+  }
+
+  /// Sets the gas owner.
+  pub fn with_gas_owner(mut self, address: IotaAddress) -> Self {
+    self.gas.owner = Some(address);
+    self
+  }
+
+  /// Sets the gas price.
+  pub fn with_gas_price(mut self, price: u64) -> Self {
+    self.gas.price = Some(price);
+    self
+  }
+
   /// Sets the gas information that must be used to execute this transaction.
   pub fn with_gas_data(mut self, gas_data: GasData) -> Self {
-    self.gas = Some(gas_data);
+    self.gas = gas_data.into();
     self
   }
 
   fn transaction_data(&self) -> anyhow::Result<TransactionData> {
     let sender = self.sender.context("missing sender")?;
-    let gas_data = self.gas.clone().context("missing gas data")?;
+    let gas_data = self.gas.clone().try_into()?;
 
     Ok(TransactionData::new_with_gas_data(
       TransactionKind::ProgrammableTransaction(self.programmable_tx.clone()),
@@ -121,7 +187,7 @@ impl<Effect> TxBuilder<Effect> {
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
     let signer_address = IotaAddress::from(&pk);
     let matches_sender = self.sender.is_none_or(|sender| sender == signer_address);
-    let matches_gas_owner = self.gas.as_ref().is_none_or(|gas| gas.owner == signer_address);
+    let matches_gas_owner = self.gas.owner.is_none_or(|owner| owner == signer_address);
     if !(matches_sender || matches_gas_owner) {
       return Err(Error::TransactionBuildingFailed(format!(
         "signer's address {signer_address} doesn't match the address of either the transaction sender or the gas owner"
@@ -160,12 +226,13 @@ where
 {
   /// Attempts to execute this transaction using `client` in a best effort manner:
   /// - when no sender had been supplied, client's address is used;
-  /// - when no gas data had been supplied, the client will provide it, making use of whatever funds its address has;
+  /// - when gas information is incomplete, the client will attempt to fill it, making use of whatever funds its address
+  ///   has, if possible;
   /// - when signatures are missing, the client will provide its own if possible;
   ///
   /// After the transaction has been successfully executed, the transaction's effect will be computed.
   /// ## Notes
-  /// This method *DO NOT* removes nor checks for invalid signatures.
+  /// This method *DOES NOT* remove nor checks for invalid signatures.
   /// Transaction with invalid signatures will fail after attempting to execute them.
   pub async fn execute<S>(self, client: &IdentityClient<S>) -> Result<TransactionOutput<Effect::Output>, Error>
   where
@@ -173,13 +240,9 @@ where
   {
     let client_address = client.sender_address();
     let sender = self.sender.unwrap_or(client_address);
-    let gas_data = if let Some(gas_data) = self.gas {
-      gas_data
-    } else {
-      default_gas_data_for_tx(&self.programmable_tx, client)
-        .await
-        .map_err(|e| Error::GasIssue(e.to_string()))?
-    };
+    let gas_data = complete_gas_data_for_tx(&self.programmable_tx, self.gas, client)
+      .await
+      .map_err(|e| Error::GasIssue(e.to_string()))?;
 
     let tx_data = TransactionData::new_with_gas_data(
       TransactionKind::ProgrammableTransaction(self.programmable_tx),
@@ -227,21 +290,38 @@ where
   }
 }
 
-/// Returns a best effort [GasData] for the given transaction and client.
+/// Returns a best effort [GasData] for the given transaction, partial gas information, and client.
 /// ## Notes
+/// If a field is missing from gas data:
 /// - client's address is set as the gas owner;
 /// - current gas price is fetched from a node;
 /// - budget is calculated by dry running the transaction;
-/// - payment is set to whatever IOTA coins client's address owns that satisfy the tx's budget;
-async fn default_gas_data_for_tx<S>(pt: &ProgrammableTransaction, client: &IdentityClient<S>) -> anyhow::Result<GasData>
+/// - payment is set to whatever IOTA coins the gas owner has, that satisfy the tx's budget;
+async fn complete_gas_data_for_tx<S>(
+  pt: &ProgrammableTransaction,
+  partial_gas_data: PartialGasData,
+  client: &IdentityClient<S>,
+) -> anyhow::Result<GasData>
 where
   S: Signer<IotaKeySignature>,
 {
-  let owner = client.sender_address();
-  let price = client.read_api().get_reference_gas_price().await?;
-  let pt_bcs = bcs::to_bytes(pt)?;
-  let budget = client.default_gas_budget(owner, &pt_bcs).await?;
-  let payment = client.get_iota_coins_with_at_least_balance(owner, budget).await?;
+  let owner = partial_gas_data.owner.unwrap_or(client.sender_address());
+  let price = if let Some(price) = partial_gas_data.price {
+    price
+  } else {
+    client.read_api().get_reference_gas_price().await?
+  };
+  let budget = if let Some(budget) = partial_gas_data.budget {
+    budget
+  } else {
+    let pt_bcs = bcs::to_bytes(pt)?;
+    client.default_gas_budget(owner, &pt_bcs).await?
+  };
+  let payment = if !partial_gas_data.payment.is_empty() {
+    partial_gas_data.payment
+  } else {
+    client.get_iota_coins_with_at_least_balance(owner, budget).await?
+  };
 
   Ok(GasData {
     owner,
