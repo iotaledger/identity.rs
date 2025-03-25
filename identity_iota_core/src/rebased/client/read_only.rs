@@ -203,6 +203,32 @@ impl IdentityClientReadOnly {
       .map_err(Error::from)
   }
 
+  pub(crate) async fn get_iota_coins_with_at_least_balance(
+    &self,
+    owner: IotaAddress,
+    balance: u64,
+  ) -> anyhow::Result<Vec<ObjectRef>> {
+    let mut coins = self
+      .coin_read_api()
+      .get_coins(owner, Some(String::from("0x2::iota::IOTA")), None, None)
+      .await?
+      .data;
+    coins.sort_unstable_by_key(|coin| coin.balance);
+
+    let mut needed_coins = vec![];
+    let mut needed_coins_balance = 0;
+    while let Some(coin) = coins.pop() {
+      needed_coins_balance += coin.balance;
+      needed_coins.push(coin.object_ref());
+
+      if needed_coins_balance >= balance {
+        return Ok(needed_coins);
+      }
+    }
+
+    anyhow::bail!("address {owner} does not have enough coins to form a balance of {balance}");
+  }
+
   /// Queries the object owned by this sender address and returns the first one
   /// that matches `tag` and for which `predicate` returns `true`.
   pub async fn find_owned_ref_for_address<P>(
