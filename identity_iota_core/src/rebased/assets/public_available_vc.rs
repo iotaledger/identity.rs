@@ -18,7 +18,6 @@ use secret_storage::Signer;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::transaction::TransactionInternal;
 
 use super::AuthenticatedAsset;
 use super::AuthenticatedAssetBuilder;
@@ -60,14 +59,19 @@ impl PublicAvailableVC {
   {
     let jwt_bytes = String::from(jwt).into_bytes();
     let credential = parse_jwt_credential(&jwt_bytes)?;
-    let asset = AuthenticatedAssetBuilder::new(IotaVerifiableCredential::new(jwt_bytes))
+    let tx_builder = AuthenticatedAssetBuilder::new(IotaVerifiableCredential::new(jwt_bytes))
       .transferable(false)
       .mutable(true)
       .deletable(true)
-      .finish()
-      .execute_with_opt_gas_internal(gas_budget, client)
-      .await?
-      .output;
+      .finish();
+
+    let tx_builder = if let Some(gas_budget) = gas_budget {
+      tx_builder.with_gas_budget(gas_budget)
+    } else {
+      tx_builder
+    };
+
+    let asset = tx_builder.build_and_execute(client).await?.output;
 
     Ok(Self { credential, asset })
   }

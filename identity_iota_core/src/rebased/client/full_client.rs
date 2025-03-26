@@ -25,7 +25,6 @@ use identity_iota_interaction::IdentityMoveCalls as _;
 use identity_verification::jwk::Jwk;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
-use serde::Serialize;
 use tokio::sync::OnceCell;
 
 use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdaptedTraitObj;
@@ -165,7 +164,7 @@ impl<S> IdentityClient<S> {
   /// Returns a new [`IdentityBuilder`] in order to build a new [`crate::rebased::migration::OnChainIdentity`].
   pub fn create_authenticated_asset<T>(&self, content: T) -> AuthenticatedAssetBuilder<T>
   where
-    T: MoveType + Serialize + DeserializeOwned,
+    T: MoveType + DeserializeOwned + Send + Sync,
   {
     AuthenticatedAssetBuilder::new(content)
   }
