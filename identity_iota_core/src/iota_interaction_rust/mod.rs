@@ -1,44 +1,50 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub(crate) mod asset_move_calls;
-pub(crate) mod identity_move_calls;
-pub(crate) mod iota_client_rust_sdk;
-pub(crate) mod migration_move_calls;
-pub(crate) mod transaction_builder;
+/// IOTA Rust SDK based implementation of the identity_iota_interaction::AssetMoveCalls trait
+pub mod asset_move_calls;
+/// IOTA Rust SDK based implementation of the identity_iota_interaction::IdentityMoveCalls trait
+pub mod identity_move_calls;
+/// IOTA Rust SDK based implementation of the identity_iota_interaction::IotaClientTrait trait
+pub mod iota_client_rust_sdk;
+/// IOTA Rust SDK based implementation of the identity_iota_interaction::MigrationMoveCalls trait
+pub mod migration_move_calls;
+/// IOTA Rust SDK based implementation of the identity_iota_interaction::TransactionBuilderT trait
+pub mod transaction_builder;
+
 mod utils;
 
-pub(crate) use super::rebased::Error as AdapterError;
-pub(crate) use asset_move_calls::AssetMoveCallsRustSdk as AssetMoveCallsAdapter;
-pub(crate) use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse as NativeTransactionBlockResponse;
-pub(crate) use identity_move_calls::IdentityMoveCallsRustSdk as IdentityMoveCallsAdapter;
-pub(crate) use iota_client_rust_sdk::IotaClientRustSdk as IotaClientAdapter;
-pub(crate) use iota_client_rust_sdk::IotaTransactionBlockResponseProvider as IotaTransactionBlockResponseAdapter;
-pub(crate) use migration_move_calls::MigrationMoveCallsRustSdk as MigrationMoveCallsAdapter;
+pub use super::rebased::Error as AdapterError;
+pub use asset_move_calls::AssetMoveCallsRustSdk as AssetMoveCallsAdapter;
+pub use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse as NativeTransactionBlockResponse;
+pub use identity_move_calls::IdentityMoveCallsRustSdk as IdentityMoveCallsAdapter;
+pub use iota_client_rust_sdk::IotaClientRustSdk as IotaClientAdapter;
+pub use iota_client_rust_sdk::IotaTransactionBlockResponseProvider as IotaTransactionBlockResponseAdapter;
+pub use migration_move_calls::MigrationMoveCallsRustSdk as MigrationMoveCallsAdapter;
 #[allow(unused_imports)]
-pub(crate) use transaction_builder::TransactionBuilderRustSdk as TransactionBuilderAdapter;
+pub use transaction_builder::TransactionBuilderRustSdk as TransactionBuilderAdapter;
 
 #[allow(unused_imports)]
-pub(crate) use iota_client_rust_sdk::CoinReadApiAdaptedT;
+pub use iota_client_rust_sdk::CoinReadApiAdaptedT;
 #[allow(unused_imports)]
-pub(crate) use iota_client_rust_sdk::CoinReadApiAdaptedTraitObj;
+pub use iota_client_rust_sdk::CoinReadApiAdaptedTraitObj;
 #[allow(unused_imports)]
-pub(crate) use iota_client_rust_sdk::EventApiAdaptedT;
+pub use iota_client_rust_sdk::EventApiAdaptedT;
 #[allow(unused_imports)]
-pub(crate) use iota_client_rust_sdk::EventApiAdaptedTraitObj;
+pub use iota_client_rust_sdk::EventApiAdaptedTraitObj;
 #[allow(unused_imports)]
-pub(crate) use iota_client_rust_sdk::IotaClientAdaptedT;
+pub use iota_client_rust_sdk::IotaClientAdaptedT;
 #[allow(unused_imports)]
-pub(crate) use iota_client_rust_sdk::IotaClientAdaptedTraitObj;
+pub use iota_client_rust_sdk::IotaClientAdaptedTraitObj;
 #[allow(unused_imports)]
-pub(crate) use iota_client_rust_sdk::IotaTransactionBlockResponseAdaptedT;
+pub use iota_client_rust_sdk::IotaTransactionBlockResponseAdaptedT;
 #[allow(unused_imports)]
-pub(crate) use iota_client_rust_sdk::IotaTransactionBlockResponseAdaptedTraitObj;
+pub use iota_client_rust_sdk::IotaTransactionBlockResponseAdaptedTraitObj;
 #[allow(unused_imports)]
-pub(crate) use iota_client_rust_sdk::QuorumDriverApiAdaptedT;
+pub use iota_client_rust_sdk::QuorumDriverApiAdaptedT;
 #[allow(unused_imports)]
-pub(crate) use iota_client_rust_sdk::QuorumDriverApiAdaptedTraitObj;
+pub use iota_client_rust_sdk::QuorumDriverApiAdaptedTraitObj;
 #[allow(unused_imports)]
-pub(crate) use iota_client_rust_sdk::ReadApiAdaptedT;
+pub use iota_client_rust_sdk::ReadApiAdaptedT;
 #[allow(unused_imports)]
-pub(crate) use iota_client_rust_sdk::ReadApiAdaptedTraitObj;
+pub use iota_client_rust_sdk::ReadApiAdaptedTraitObj;

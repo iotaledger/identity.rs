@@ -16,7 +16,7 @@ use crate::rebased::Error;
 
 use super::utils;
 
-pub(crate) struct MigrationMoveCallsRustSdk {}
+pub struct MigrationMoveCallsRustSdk {}
 
 impl MigrationMoveCalls for MigrationMoveCallsRustSdk {
   type Error = Error;

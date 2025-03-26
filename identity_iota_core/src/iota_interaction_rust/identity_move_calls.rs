@@ -302,7 +302,7 @@ fn execute_send_impl(
 }
 
 #[derive(Clone)]
-pub(crate) struct IdentityMoveCallsRustSdk {}
+pub struct IdentityMoveCallsRustSdk {}
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]

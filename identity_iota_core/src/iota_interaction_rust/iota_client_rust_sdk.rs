@@ -58,7 +58,7 @@ use identity_iota_interaction::SignatureBcs;
 use identity_iota_interaction::TransactionDataBcs;
 
 /// The minimum balance required to execute a transaction.
-pub(crate) const MINIMUM_BALANCE: u64 = 1_000_000_000;
+pub const MINIMUM_BALANCE: u64 = 1_000_000_000;
 
 #[allow(unreachable_pub, dead_code)]
 pub trait IotaTransactionBlockResponseAdaptedT:
@@ -116,7 +116,7 @@ pub struct IotaTransactionBlockResponseProvider {
 }
 
 impl IotaTransactionBlockResponseProvider {
-  pub(crate) fn new(response: IotaTransactionBlockResponse) -> Self {
+  pub fn new(response: IotaTransactionBlockResponse) -> Self {
     IotaTransactionBlockResponseProvider { response }
   }
 }
@@ -162,7 +162,7 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
   }
 }
 
-pub(crate) struct QuorumDriverAdapter<'a> {
+pub struct QuorumDriverAdapter<'a> {
   api: &'a QuorumDriverApi,
 }
 
@@ -192,7 +192,7 @@ impl QuorumDriverTrait for QuorumDriverAdapter<'_> {
   }
 }
 
-pub(crate) struct ReadAdapter<'a> {
+pub struct ReadAdapter<'a> {
   api: &'a ReadApi,
 }
 
@@ -258,7 +258,7 @@ impl ReadTrait for ReadAdapter<'_> {
   }
 }
 
-pub(crate) struct CoinReadAdapter<'a> {
+pub struct CoinReadAdapter<'a> {
   api: &'a CoinReadApi,
 }
 
@@ -277,7 +277,7 @@ impl CoinReadTrait for CoinReadAdapter<'_> {
   }
 }
 
-pub(crate) struct EventAdapter<'a> {
+pub struct EventAdapter<'a> {
   api: &'a EventApi,
 }
 

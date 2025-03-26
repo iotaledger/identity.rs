@@ -42,7 +42,7 @@ fn try_to_argument<T: MoveType + Serialize>(
   }
 }
 
-pub(crate) struct AssetMoveCallsRustSdk {}
+pub struct AssetMoveCallsRustSdk {}
 
 impl AssetMoveCalls for AssetMoveCallsRustSdk {
   type Error = Error;

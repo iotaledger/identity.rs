@@ -17,7 +17,7 @@ use identity_iota_interaction::MoveType;
 use serde::Serialize;
 
 /// Adds a reference to the on-chain clock to `ptb`'s arguments.
-pub(crate) fn get_clock_ref(ptb: &mut Ptb) -> Argument {
+pub fn get_clock_ref(ptb: &mut Ptb) -> Argument {
   ptb
     .obj(ObjectArg::SharedObject {
       id: IOTA_CLOCK_OBJECT_ID,
@@ -27,7 +27,7 @@ pub(crate) fn get_clock_ref(ptb: &mut Ptb) -> Argument {
     .expect("network has a singleton clock instantiated")
 }
 
-pub(crate) fn get_controller_delegation(
+pub fn get_controller_delegation(
   ptb: &mut Ptb,
   controller_cap: Argument,
   package: ObjectID,
@@ -45,7 +45,7 @@ pub(crate) fn get_controller_delegation(
   (Argument::NestedResult(idx, 0), Argument::NestedResult(idx, 1))
 }
 
-pub(crate) fn put_back_delegation_token(
+pub fn put_back_delegation_token(
   ptb: &mut Ptb,
   controller_cap: Argument,
   delegation_token: Argument,
@@ -61,7 +61,7 @@ pub(crate) fn put_back_delegation_token(
   );
 }
 
-pub(crate) fn owned_ref_to_shared_object_arg(
+pub fn owned_ref_to_shared_object_arg(
   owned_ref: OwnedObjectRef,
   ptb: &mut Ptb,
   mutable: bool,
@@ -76,7 +76,7 @@ pub(crate) fn owned_ref_to_shared_object_arg(
   })
 }
 
-pub(crate) fn option_to_move<T: MoveType + Serialize>(
+pub fn option_to_move<T: MoveType + Serialize>(
   option: Option<T>,
   ptb: &mut Ptb,
   package: ObjectID,
@@ -103,7 +103,7 @@ pub(crate) fn option_to_move<T: MoveType + Serialize>(
   Ok(arg)
 }
 
-pub(crate) fn ptb_pure<T>(ptb: &mut Ptb, name: &str, value: T) -> Result<Argument, Error>
+pub fn ptb_pure<T>(ptb: &mut Ptb, name: &str, value: T) -> Result<Argument, Error>
 where
   T: Serialize + core::fmt::Debug,
 {
@@ -115,7 +115,7 @@ where
 }
 
 #[allow(dead_code)]
-pub(crate) fn ptb_obj(ptb: &mut Ptb, name: &str, value: ObjectArg) -> Result<Argument, Error> {
+pub fn ptb_obj(ptb: &mut Ptb, name: &str, value: ObjectArg) -> Result<Argument, Error> {
   ptb
     .obj(value)
     .map_err(|err| Error::InvalidArgument(format!("could not serialize object {name} {value:?}; {err}")))
