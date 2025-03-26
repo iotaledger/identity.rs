@@ -69,21 +69,17 @@ impl From<GasData> for PartialGasData {
   }
 }
 
-/// A reference to [TransactionData] that only allows to mutate its [GasData].
-pub struct MutGasDataRef<'tx>(&'tx mut TransactionData);
-impl<'tx> Deref for MutGasDataRef<'tx> {
-  type Target = TransactionData;
-  fn deref(&self) -> &Self::Target {
-    &self.0
+impl PartialGasData {
+  fn into_gas_data_with_defaults(self) -> GasData {
+    GasData {
+      payment: self.payment,
+      owner: self.owner.unwrap_or_default(),
+      price: self.price.unwrap_or_default(),
+      budget: self.price.unwrap_or_default(),
+    }
   }
 }
 
-impl<'tx> MutGasDataRef<'tx> {
-  /// Returns a mutable reference to [GasData].
-  pub fn gas_data_mut(&mut self) -> &mut GasData {
-    self.0.gas_data_mut()
-  }
-}
 
 impl TryFrom<PartialGasData> for GasData {
   type Error = Error;
@@ -104,6 +100,22 @@ impl TryFrom<PartialGasData> for GasData {
       price,
       budget,
     })
+  }
+}
+
+/// A reference to [TransactionData] that only allows to mutate its [GasData].
+pub struct MutGasDataRef<'tx>(&'tx mut TransactionData);
+impl<'tx> Deref for MutGasDataRef<'tx> {
+  type Target = TransactionData;
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
+impl<'tx> MutGasDataRef<'tx> {
+  /// Returns a mutable reference to [GasData].
+  pub fn gas_data_mut(&mut self) -> &mut GasData {
+    self.0.gas_data_mut()
   }
 }
 
@@ -158,8 +170,19 @@ where
   }
 
   async fn transaction_data(&mut self, client: &IdentityClientReadOnly) -> anyhow::Result<TransactionData> {
+    // Make sure the partial gas information is actually complete to create a whole GasData.
+    let gas_data: GasData = std::mem::take(&mut self.gas).try_into()?;
+    self.gas = gas_data.into();
+
+    // Forward call to "with_partial_gas" knowing no defaults will be used.
+    self.transaction_data_with_partial_gas(client).await
+  }
+
+  /// Same as [Self::transaction_data] but will not fail with incomplete gas information.
+  /// Missing gas data is filled with default values through [PartialGasData::into_gas_data_with_defaults].
+  async fn transaction_data_with_partial_gas(&mut self, client: &IdentityClientReadOnly) -> anyhow::Result<TransactionData> {
     let sender = self.sender.context("missing sender")?;
-    let gas_data = self.gas.clone().try_into()?;
+    let gas_data = self.gas.clone().into_gas_data_with_defaults();
     let pt = self.get_or_init_programmable_tx(client).await?.clone();
 
     Ok(TransactionData::new_with_gas_data(
@@ -205,11 +228,14 @@ where
   }
 
   /// Attempts to sponsor this transaction by having another party supply [GasData] and gas owner signature.
+  /// ## Notes
+  /// The [TransactionData] passed to `sponsor_tx` can be constructed from partial gas data; the sponsor is
+  /// tasked with setting the gas information appropriately before signing.
   pub async fn with_sponsor<F>(mut self, client: &IdentityClientReadOnly, sponsor_tx: F) -> Result<Self, Error>
   where
     F: AsyncFnOnce(MutGasDataRef<'_>) -> anyhow::Result<Signature>,
   {
-    let mut tx_data = self.transaction_data(client).await?;
+    let mut tx_data = self.transaction_data_with_partial_gas(client).await?;
     let signature = sponsor_tx(MutGasDataRef(&mut tx_data))
       .await
       .map_err(|e| Error::GasIssue(format!("failed to sponsor transaction: {e}")))?;
