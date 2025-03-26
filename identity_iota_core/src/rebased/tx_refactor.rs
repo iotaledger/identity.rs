@@ -1,15 +1,17 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
+
 use anyhow::Context as _;
 use async_trait::async_trait;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockResponseOptions;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectRef;
+use identity_iota_interaction::types::crypto::IotaSignature as _;
 use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::crypto::Signature;
-use identity_iota_interaction::types::crypto::SignatureScheme;
 use identity_iota_interaction::types::quorum_driver_types::ExecuteTransactionRequestType;
 use identity_iota_interaction::types::transaction::GasData;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
@@ -20,6 +22,8 @@ use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
 use itertools::Itertools;
 use secret_storage::Signer;
+use shared_crypto::intent::Intent;
+use shared_crypto::intent::IntentMessage;
 
 use super::client::IdentityClient;
 use super::client::IdentityClientReadOnly;
@@ -62,6 +66,22 @@ impl From<GasData> for PartialGasData {
       price: Some(value.price),
       budget: Some(value.price),
     }
+  }
+}
+
+/// A reference to [TransactionData] that only allows to mutate its [GasData].
+pub struct MutGasDataRef<'tx>(&'tx mut TransactionData);
+impl<'tx> Deref for MutGasDataRef<'tx> {
+  type Target = TransactionData;
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
+impl<'tx> MutGasDataRef<'tx> {
+  /// Returns a mutable reference to [GasData].
+  pub fn gas_data_mut(&mut self) -> &mut GasData {
+    self.0.gas_data_mut()
   }
 }
 
@@ -181,6 +201,26 @@ where
       .map_err(|e| Error::TransactionSigningFailed(e.to_string()))?;
     self.signatures.push(sig);
 
+    Ok(self)
+  }
+
+  /// Attempts to sponsor this transaction by having another party supply [GasData] and gas owner signature.
+  pub async fn with_sponsor<F>(mut self, client: &IdentityClientReadOnly, sponsor_tx: F) -> Result<Self, Error>
+  where
+    F: AsyncFnOnce(MutGasDataRef<'_>) -> anyhow::Result<Signature>,
+  {
+    let mut tx_data = self.transaction_data(client).await?;
+    let signature = sponsor_tx(MutGasDataRef(&mut tx_data))
+      .await
+      .map_err(|e| Error::GasIssue(format!("failed to sponsor transaction: {e}")))?;
+
+    let gas_owner = tx_data.gas_owner();
+    let intent_msg = IntentMessage::new(Intent::iota_transaction(), tx_data);
+    signature
+      .verify_secure(&intent_msg, gas_owner, signature.scheme())
+      .map_err(|e| Error::TransactionBuildingFailed(format!("invalid sponsor signature: {e}")))?;
+
+    self.signatures.push(signature);
     Ok(self)
   }
 
@@ -379,9 +419,8 @@ where
 
 /// Extract the signer's address from an IOTA [Signature].
 fn address_from_signature(signature: &Signature) -> IotaAddress {
-  let scheme_bytes_flag = signature.as_ref()[0];
-  let scheme = SignatureScheme::from_flag_byte(&scheme_bytes_flag).expect("valid signature");
-  let pk_bytes = &signature.as_ref()[65..]; // flag || sig || pk -> flag is 1 bytes, sig is 64 bytes.
+  let scheme = signature.scheme();
+  let pk_bytes = signature.public_key_bytes();
   let pk = PublicKey::try_from_bytes(scheme, pk_bytes).expect("valid signature hence valid key");
 
   IotaAddress::from(&pk)
@@ -423,7 +462,10 @@ mod tests {
       Ok(identity.did_document(client.network())?)
     }
 
-    async fn build_programmable_transaction(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+    async fn build_programmable_transaction(
+      &self,
+      client: &IdentityClientReadOnly,
+    ) -> Result<ProgrammableTransaction, Error> {
       let did_doc = StateMetadataDocument::from(self.did_document.clone())
         .pack(StateMetadataEncoding::Json)
         .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
@@ -446,10 +488,7 @@ mod tests {
   where
     S: Signer<IotaKeySignature>,
   {
-    pub fn publish_did_document_builder_api(
-      &self,
-      did_doc: IotaDocument,
-    ) -> TxBuilder<PublishDidDocument> {
+    pub fn publish_did_document_builder_api(&self, did_doc: IotaDocument) -> TxBuilder<PublishDidDocument> {
       TxBuilder::new(PublishDidDocument::new(self.sender_address(), did_doc))
     }
   }
