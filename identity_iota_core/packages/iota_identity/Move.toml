@@ -1,0 +1,20 @@
+# Copyright (c) 2024 IOTA Stiftung
+# SPDX-License-Identifier: Apache-2.0
+
+[package]
+name = "IotaIdentity"
+edition = "2024.beta"
+
+[dependencies]
+# 'tag' keyword not supported here, therefore use rev instead
+# 'tag = "v0.8.1-rc"' equals 'rev = "92e66937111c27820e09502dbcb75382835a56e6"', which we use here
+MoveStdlib = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/move-stdlib", rev = "45df8ac5533251237ce34f7c6e5cbc099805895e" }
+Iota = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/iota-framework", rev = "45df8ac5533251237ce34f7c6e5cbc099805895e" }
+Stardust = { git = "https://github.com/iotaledger/iota.git", subdir = "crates/iota-framework/packages/stardust", rev = "45df8ac5533251237ce34f7c6e5cbc099805895e" }
+
+[addresses]
+iota_identity = "0x0"
+
+[dev-dependencies]
+
+[dev-addresses]
