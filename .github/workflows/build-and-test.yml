@@ -169,8 +169,7 @@ jobs:
   build-wasm:
     needs: check-for-run-condition
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
-    # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@main
+    uses: './.github/workflows/shared-build-wasm.yml'
     with:
       output-artifact-name: identity-wasm-bindings-build
 
@@ -191,7 +190,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 16.x
+          node-version: 20.x
 
       - name: Install JS dependencies
         run: npm ci
@@ -231,7 +230,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 16.x
+          node-version: 20.x
   
       - name: Install JS dependencies
         run: npm ci
@@ -279,7 +278,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 16.x
+          node-version: 20.x
 
       - name: Install JS dependencies
         run: npm ci

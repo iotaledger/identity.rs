@@ -44,7 +44,7 @@ npm run build:web
 
 ## Minimum Requirements
 
-The minimum supported version for node is: `v16`
+The minimum supported version for node is: `v20`
 
 ## NodeJS Usage
 
