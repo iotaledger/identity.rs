@@ -3,20 +3,30 @@
 
 use std::ops::Deref;
 
+use crate::iota_interaction_rust::IdentityMoveCallsAdapter;
+use crate::rebased::tx_refactor::Transaction;
+use crate::rebased::tx_refactor::TransactionBuilder;
 use crate::IotaDID;
 use crate::IotaDocument;
+use crate::StateMetadataDocument;
+use crate::StateMetadataEncoding;
 use async_trait::async_trait;
 use identity_iota_interaction::move_types::language_storage::StructTag;
 use identity_iota_interaction::rpc_types::IotaObjectData;
 use identity_iota_interaction::rpc_types::IotaObjectDataFilter;
 use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::crypto::PublicKey;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
+use identity_iota_interaction::IdentityMoveCalls as _;
 use identity_verification::jwk::Jwk;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use tokio::sync::OnceCell;
 
 use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdaptedTraitObj;
 use crate::rebased::assets::AuthenticatedAssetBuilder;
@@ -30,15 +40,12 @@ use identity_iota_interaction::MoveType;
 use identity_iota_interaction::OptionalSync;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 
-use crate::rebased::transaction::TransactionOutputInternal;
 cfg_if::cfg_if! {
   if #[cfg(target_arch = "wasm32")] {
     use crate::rebased::transaction::TransactionInternal as TransactionT;
     type TransactionOutputT<T> = TransactionOutputInternal<T>;
   } else {
-    use crate::rebased::transaction::TransactionInternal;
     use crate::rebased::transaction::Transaction as TransactionT;
-    use crate::rebased::transaction::TransactionOutput as TransactionOutputT;
   }
 }
 
@@ -200,9 +207,9 @@ impl<S> IdentityClient<S>
 where
   S: Signer<IotaKeySignature> + OptionalSync,
 {
-  /// Returns [`Transaction`] [`PublishDidTx`] that - when executed - will publish a new DID Document on chain.
-  pub fn publish_did_document(&self, document: IotaDocument) -> PublishDidTx {
-    PublishDidTx(document)
+  /// Returns a [PublishDidDocument] transaction wrapped by a [TransactionBuilder].
+  pub fn publish_did_document(&self, document: IotaDocument) -> TransactionBuilder<PublishDidDocument> {
+    TransactionBuilder::new(PublishDidDocument::new(document, self.sender_address()))
   }
 
   // TODO: define what happens for (legacy|migrated|new) documents
@@ -262,65 +269,68 @@ pub fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> 
 /// Publishes a new DID Document on-chain. An [`crate::rebased::migration::OnChainIdentity`] will be created to contain
 /// the provided document.
 #[derive(Debug)]
-pub struct PublishDidTx(IotaDocument);
+pub struct PublishDidDocument {
+  did_document: IotaDocument,
+  controller: IotaAddress,
+  cached_ptb: OnceCell<ProgrammableTransaction>,
+}
 
-impl PublishDidTx {
-  async fn execute_publish_did_tx_with_opt_gas<S>(
-    self,
-    gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
-  ) -> Result<TransactionOutputInternal<IotaDocument>, Error>
-  where
-    S: Signer<IotaKeySignature> + OptionalSync,
-  {
-    let TransactionOutputInternal {
-      output: identity,
-      response,
-    } = client
-      .create_identity(self.0)
-      .finish()
-      .execute_with_opt_gas_internal(gas_budget, client)
-      .await?;
+impl PublishDidDocument {
+  /// Creates a new [PublishDidDocument] transaction.
+  pub fn new(did_document: IotaDocument, controller: IotaAddress) -> Self {
+    Self {
+      did_document,
+      controller,
+      cached_ptb: OnceCell::new(),
+    }
+  }
 
-    Ok(TransactionOutputInternal {
-      output: identity.did_doc,
-      response,
-    })
+  fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+    let did_doc = StateMetadataDocument::from(self.did_document.clone())
+      .pack(StateMetadataEncoding::Json)
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let programmable_tx_bcs =
+      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), [(self.controller, 1)], 1, client.package_id())?;
+    Ok(bcs::from_bytes(&programmable_tx_bcs)?)
   }
 }
 
-// #[cfg(not(target_arch = "wasm32"))]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-impl TransactionT for PublishDidTx {
+impl Transaction for PublishDidDocument {
   type Output = IotaDocument;
-
-  #[cfg(not(target_arch = "wasm32"))]
-  async fn execute_with_opt_gas<S>(
-    self,
-    gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
-  ) -> Result<TransactionOutputT<Self::Output>, Error>
-  where
-    S: Signer<IotaKeySignature> + OptionalSync,
-  {
-    Ok(
-      self
-        .execute_publish_did_tx_with_opt_gas(gas_budget, client)
-        .await?
-        .into(),
-    )
+  async fn build_programmable_transaction(
+    &self,
+    client: &IdentityClientReadOnly,
+  ) -> Result<ProgrammableTransaction, Error> {
+    self
+      .cached_ptb
+      .get_or_try_init(|| async { self.make_ptb(client) })
+      .await
+      .cloned()
   }
-
-  #[cfg(target_arch = "wasm32")]
-  async fn execute_with_opt_gas_internal<S>(
+  async fn apply(
     self,
-    gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
-  ) -> Result<TransactionOutputT<Self::Output>, Error>
-  where
-    S: Signer<IotaKeySignature> + OptionalSync,
-  {
-    self.execute_publish_did_tx_with_opt_gas(gas_budget, client).await
+    effects: &IotaTransactionBlockEffects,
+    client: &IdentityClientReadOnly,
+  ) -> Result<Self::Output, Error> {
+    if effects.status().is_err() {
+      return Err(Error::TransactionUnexpectedResponse(
+        "unsuccessfull transaction".to_owned(),
+      ));
+    }
+
+    let controller = self.controller;
+    let identity_id = effects
+      .created()
+      .iter()
+      .find(|obj| obj.owner == controller)
+      .map(|obj_ref| obj_ref.object_id())
+      .ok_or_else(|| {
+        Error::TransactionUnexpectedResponse(format!("no object was created for controller {controller}"))
+      })?;
+    let identity = client.get_identity(identity_id).await?;
+
+    Ok(identity.did_document(client.network())?)
   }
 }
