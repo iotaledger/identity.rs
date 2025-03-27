@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::error::IotaRpcResult;
+use crate::iota_json_rpc_types::IotaTransactionBlockEffects;
 use crate::rpc_types::CoinPage;
 use crate::rpc_types::EventFilter;
 use crate::rpc_types::EventPage;
@@ -82,22 +83,11 @@ pub trait IotaTransactionBlockResponseT: OptionalSend {
   /// The response type used in the platform specific client sdk
   type NativeResponse;
 
-  /// Indicates if IotaTransactionBlockResponse::effects is None
-  fn effects_is_none(&self) -> bool;
-  /// Indicates if there are Some(effects)
-  fn effects_is_some(&self) -> bool;
-
   /// Returns Debug representation of the IotaTransactionBlockResponse
   fn to_string(&self) -> String;
 
-  /// If effects_is_some(), returns a clone of the IotaTransactionBlockEffectsAPI::status()
-  /// Otherwise, returns None
-  fn effects_execution_status(&self) -> Option<IotaExecutionStatus>;
-
-  /// If effects_is_some(), returns IotaTransactionBlockEffectsAPI::created()
-  /// as owned Vec.
-  /// Otherwise, returns None
-  fn effects_created(&self) -> Option<Vec<OwnedObjectRef>>;
+  /// Returns the effects of this transaction
+  fn effects(&self) -> Option<IotaTransactionBlockEffects>;
 
   /// Returns a reference to the platform specific client sdk response instance wrapped by this adapter
   fn as_native_response(&self) -> &Self::NativeResponse;

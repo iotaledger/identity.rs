@@ -4,6 +4,7 @@
 
 use std::fmt;
 
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_with::{serde_as, Bytes};
@@ -14,8 +15,9 @@ use super::iota_serde::Readable;
 
 /// A representation of a 32 byte digest
 #[serde_as]
-#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema)]
 pub struct Digest(
+    #[schemars(with = "Base58")]
     #[serde_as(as = "Readable<Base58, Bytes>")]
     [u8; 32],
 );
@@ -209,7 +211,7 @@ impl fmt::UpperHex for CheckpointContentsDigest {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema)]
 pub struct TransactionDigest(Digest);
 
 impl Default for TransactionDigest {
@@ -394,7 +396,7 @@ impl fmt::UpperHex for TransactionEffectsDigest {
 }
 
 #[serde_as]
-#[derive(Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash, Serialize, Deserialize, JsonSchema)]
 pub struct TransactionEventsDigest(Digest);
 
 impl TransactionEventsDigest {
@@ -452,7 +454,7 @@ impl std::str::FromStr for TransactionEventsDigest {
 }
 
 // Each object has a unique digest
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema)]
 pub struct ObjectDigest(Digest);
 
 impl fmt::Display for ObjectDigest {
