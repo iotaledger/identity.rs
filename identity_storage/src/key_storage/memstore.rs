@@ -325,7 +325,7 @@ fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: &JwsAlgorithm) ->
 mod pqc_liboqs {
   use std::str::FromStr;
   use async_trait::async_trait;
-  use crypto::signatures::ed25519::SecretKey;
+  //use crypto::signatures::ed25519::SecretKey;
   use identity_verification::jose::jwk::Jwk;
   use identity_verification::jose::jwk::JwkType;
   use identity_verification::jose::jws::JwsAlgorithm;
@@ -349,9 +349,9 @@ mod pqc_liboqs {
 
   fn check_pq_alg_compatibility(alg: JwsAlgorithm) -> KeyStorageResult<Algorithm> {
     match alg {
-      JwsAlgorithm::ML_DSA_44 => Ok(Algorithm::Dilithium2),
-      JwsAlgorithm::ML_DSA_65 => Ok(Algorithm::Dilithium3),
-      JwsAlgorithm::ML_DSA_87 => Ok(Algorithm::Dilithium5),
+      JwsAlgorithm::ML_DSA_44 => Ok(Algorithm::MlDsa44),
+      JwsAlgorithm::ML_DSA_65 => Ok(Algorithm::MlDsa65),
+      JwsAlgorithm::ML_DSA_87 => Ok(Algorithm::MlDsa87),
       JwsAlgorithm::SLH_DSA_SHA2_128s => Ok(Algorithm::SphincsSha2128sSimple),
       JwsAlgorithm::SLH_DSA_SHAKE_128s => Ok(Algorithm::SphincsShake128sSimple),
       JwsAlgorithm::SLH_DSA_SHA2_128f => Ok(Algorithm::SphincsSha2128fSimple),
@@ -377,7 +377,6 @@ mod pqc_liboqs {
     }
   }
 
-  //TODO: PQ - JwkStoragePQ
   /// JwkStoragePQ implementation for JwkMemStore
   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
   #[cfg_attr(feature = "send-sync-storage", async_trait)]
@@ -396,7 +395,7 @@ mod pqc_liboqs {
       let oqs_alg = check_pq_alg_compatibility(alg)?;
       oqs::init(); //TODO: check what this function does
 
-      let scheme = Sig::new(oqs_alg).map_err(|err| {
+       let scheme = Sig::new(oqs_alg).map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
           .with_custom_message(format!("signature scheme init failed"))
           .with_source(err)
@@ -517,7 +516,7 @@ mod pqc_liboqs {
 
       let params = jwk.try_pq_params().unwrap();
 
-      let sk = params
+      let sk_bytes = params
         .private
         .as_deref()
         .map(jwu::decode_b64)
@@ -530,27 +529,26 @@ mod pqc_liboqs {
             .with_custom_message("unable to decode `d` param")
             .with_source(err)
         })?;
+        oqs::init(); //TODO: check what this function does
 
-      oqs::init(); //TODO: check what this function does
-
-      let scheme = Sig::new(oqs_alg).map_err(|err| {
-        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("signature scheme init failed"))
-          .with_source(err)
-      })?;
-
-      let secret_key = scheme.secret_key_from_bytes(&sk).ok_or(
-        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("expected key of length {}", SecretKey::LENGTH)),
-      )?;
-
-      let signature = scheme.sign(&data, secret_key).map_err(|err| {
-        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("signature computation failed"))
-          .with_source(err)
-      })?;
-
-      Ok(signature.into_vec())
+        let scheme = Sig::new(oqs_alg).map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+            .with_custom_message(format!("signature scheme init failed"))
+            .with_source(err)
+        })?;
+  
+        let secret_key = scheme.secret_key_from_bytes(&sk_bytes).ok_or(
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+            .with_custom_message(format!("wrong key length")),
+        )?;
+  
+        let signature = scheme.sign(&data, secret_key).map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+            .with_custom_message(format!("signature computation failed"))
+            .with_source(err)
+        })?;
+  
+        Ok(signature.into_vec())
     }
   }
 }

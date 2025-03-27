@@ -1,13 +1,23 @@
 // Copyright 2024 Fondazione Links
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_did::{DIDCompositeJwk, DIDJwk};
+use identity_did::DIDJwk;
 use identity_document::document::CoreDocument;
-use identity_verification::{jwk::{CompositeAlgId, CompositeJwk}, jws::JwsAlgorithm, jwu::encode_b64_json};
-use jsonprooftoken::jpa::algs::ProofAlgorithm;
+use identity_verification::{jws::JwsAlgorithm, jwu::encode_b64_json};
 use async_trait::async_trait;
+#[cfg(feature = "jpt-bbs-plus")]
+use jsonprooftoken::jpa::algs::ProofAlgorithm;
 
-use crate::{JwkGenOutput, JwkStorage, JwkStorageBbsPlusExt, JwkStorageDocumentError as Error, JwkStoragePQ, KeyId, KeyIdStorage, KeyType, MethodDigest};
+
+use crate::{JwkGenOutput, JwkStorage, JwkStorageDocumentError as Error, KeyIdStorage, KeyType, MethodDigest};
+#[cfg(feature = "pqc")]
+use crate::JwkStoragePQ;
+#[cfg(feature = "jpt-bbs-plus")]
+use crate::JwkStorageBbsPlusExt;
+#[cfg(feature = "hybrid")]
+use identity_verification::jwk::{CompositeAlgId, CompositeJwk};
+#[cfg(feature = "hybrid")]
+use identity_did::DIDCompositeJwk;
 
 use super::{Storage, StorageResult};
 
@@ -101,6 +111,7 @@ impl DidJwkDocumentExt for CoreDocument {
     Ok((document, fragment.to_string()))
   }
 
+  #[cfg(feature = "pqc")]
   async fn new_did_jwk_pqc<K, I>(
 
     storage: &Storage<K, I>,
@@ -144,6 +155,7 @@ impl DidJwkDocumentExt for CoreDocument {
     Ok((document, fragment.to_string()))
   }
 
+  #[cfg(feature = "jpt-bbs-plus")]
   async fn new_did_jwk_zk<K, I>(
     storage: &Storage<K, I>,
     key_type: KeyType,
@@ -184,6 +196,7 @@ impl DidJwkDocumentExt for CoreDocument {
     Ok((document, fragment.to_string()))
   }
 
+  #[cfg(feature = "hybrid")]
   async fn new_did_compositejwk<K, I>(
     storage: &Storage<K, I>,
     alg: CompositeAlgId,
@@ -192,6 +205,9 @@ impl DidJwkDocumentExt for CoreDocument {
     K: JwkStorage + JwkStoragePQ,
     I: KeyIdStorage 
   {
+
+    use crate::KeyId; 
+    
     let (pq_key_type, pq_alg, trad_key_type, trad_alg) = match alg {
       CompositeAlgId::IdMldsa44Ed25519Sha512 => (
         KeyType::from_static_str("ML-DSA"),

@@ -372,7 +372,7 @@ mod iota_handler {
   }
 }
 
-
+#[cfg(feature = "did-web")]
 mod web_handler {
   use crate::ErrorCause;
   use super::Resolver;
