@@ -12,6 +12,7 @@ use std::option::Option::Some;
 use std::str::FromStr;
 use std::string::String;
 
+use schemars::JsonSchema;
 use Result;
 
 use rand::Rng;
@@ -83,6 +84,7 @@ pub type TypeParameterIndex = u16;
     Debug,
     Serialize,
     Deserialize,
+    JsonSchema,
 )]
 pub struct SequenceNumber(u64);
 
@@ -95,8 +97,9 @@ impl fmt::Display for SequenceNumber {
 pub type AuthorityName = AuthorityPublicKeyBytes;
 
 #[serde_as]
-#[derive(Eq, PartialEq, Clone, Copy, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Copy, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema)]
 pub struct ObjectID(
+    #[schemars(with = "Hex")]
     #[serde_as(as = "Readable<HexAccountAddress, _>")]
     AccountAddress,
 );
@@ -449,8 +452,9 @@ impl From<&ObjectInfo> for ObjectRef {
 pub const IOTA_ADDRESS_LENGTH: usize = ObjectID::LENGTH;
 
 #[serde_as]
-#[derive(Eq, Default, PartialEq, Ord, PartialOrd, Copy, Clone, Hash, Serialize, Deserialize)]
+#[derive(Eq, Default, PartialEq, Ord, PartialOrd, Copy, Clone, Hash, Serialize, Deserialize, JsonSchema)]
 pub struct IotaAddress(
+    #[schemars(with = "Hex")]
     #[serde_as(as = "Readable<Hex, _>")]
     [u8; IOTA_ADDRESS_LENGTH],
 );

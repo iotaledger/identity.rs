@@ -37,7 +37,6 @@ use identity_iota::verification::MethodScope;
 
 use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::client::IotaKeySignature;
-use identity_iota::iota::rebased::transaction::Transaction;
 use identity_storage::Storage;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use secret_storage::Signer;
@@ -63,7 +62,8 @@ where
 
   let TransactionOutput::<IotaDocument> { output: document, .. } = identity_client
     .publish_did_document(unpublished)
-    .execute_with_gas(TEST_GAS_BUDGET, identity_client)
+    .with_gas_budget(TEST_GAS_BUDGET)
+    .build_and_execute(identity_client)
     .await?;
 
   Ok((document, verification_method_fragment))

@@ -23,7 +23,7 @@ pub trait AssetMoveCalls {
   type Error;
 
   fn new_asset<T: Serialize + MoveType>(
-    inner: T,
+    inner: &T,
     mutable: bool,
     transferable: bool,
     deletable: bool,
@@ -65,7 +65,7 @@ pub trait AssetMoveCalls {
 
   fn update<T: MoveType + Serialize>(
     asset: ObjectRef,
-    new_content: T,
+    new_content: &T,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 }
