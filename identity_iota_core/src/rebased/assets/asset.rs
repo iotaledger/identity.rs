@@ -536,7 +536,7 @@ where
 
     let asset_id = effects
       .created()
-      .get(0)
+      .first()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("no objects were created in this transaction".to_owned()))?
       .object_id();
 

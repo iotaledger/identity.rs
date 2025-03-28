@@ -292,7 +292,7 @@ impl<'i, F> ProtoTransaction for UserDrivenTx<'i, ControllerExecution<F>> {
   }
 }
 
-impl<'i, F> UserDrivenTx<'i, ControllerExecutionWithIntent<F>>
+impl<F> UserDrivenTx<'_, ControllerExecutionWithIntent<F>>
 where 
   F: ControllerIntentFnT + Send,
 {

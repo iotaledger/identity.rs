@@ -1,6 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::fmt::Debug;
 use std::future::Future;
 use std::ops::Deref;
 use std::pin::Pin;
@@ -241,13 +242,15 @@ impl IdentityClientReadOnly {
       .to_string()
       .parse()
       .expect("type tag is a valid struct tag");
-    let filter = IotaObjectResponseQuery::new_with_filter(IotaObjectDataFilter::StructType(tag));
-
+    let filter = IotaObjectResponseQuery::new(
+      Some(IotaObjectDataFilter::StructType(tag)),
+      Some(IotaObjectDataOptions::default().with_content()),
+    );
     let mut cursor = None;
     loop {
       let mut page = self
         .read_api()
-        .get_owned_objects(address, Some(filter.clone()), cursor, None)
+        .get_owned_objects(address, Some(filter.clone()), cursor, Some(25))
         .await?;
       let maybe_obj = std::mem::take(&mut page.data)
         .into_iter()
