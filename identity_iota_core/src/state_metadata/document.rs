@@ -82,11 +82,7 @@ impl StateMetadataDocument {
 
   /// Pack a [`StateMetadataDocument`] into bytes, suitable for storing in an identity,
   /// according to the given `encoding`.
-  pub fn pack(mut self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
-    // Unset Governor and State Controller Addresses to avoid bloating the payload
-    self.metadata.governor_address = None;
-    self.metadata.state_controller_address = None;
-
+  pub fn pack(self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
     let encoded_message_data: Vec<u8> = match encoding {
       StateMetadataEncoding::Json => self
         .to_json_vec()
@@ -370,7 +366,6 @@ mod tests {
     let packed_bytes: Vec<u8> = state_metadata_doc.clone().pack(StateMetadataEncoding::Json).unwrap();
 
     let unpacked_doc = StateMetadataDocument::unpack(&packed_bytes).unwrap();
-    // Controller and State Controller are set to None when packing
     assert_eq!(state_metadata_doc.metadata.created, unpacked_doc.metadata.created);
     assert_eq!(state_metadata_doc.metadata.updated, unpacked_doc.metadata.updated);
     assert_eq!(
@@ -414,11 +409,8 @@ mod tests {
   fn test_pack_format() {
     // Changing the serialization is a breaking change!
     let TestSetup { document, .. } = test_document();
-    let mut state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document);
+    let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document);
     let packed: Vec<u8> = state_metadata_doc.clone().pack(StateMetadataEncoding::Json).unwrap();
-    // Governor and State Controller are set to None when packing
-    state_metadata_doc.metadata.governor_address = None;
-    state_metadata_doc.metadata.state_controller_address = None;
     let expected_payload: String = format!(
       "{{\"doc\":{},\"meta\":{}}}",
       state_metadata_doc.document, state_metadata_doc.metadata

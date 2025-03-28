@@ -782,13 +782,11 @@ mod tests {
     )
     .is_err());
 
-    // Ensure re-packing keeps the controller, state controller address, and governor address as None
+    // Ensure re-packing keeps the controller as None
     let packed: Vec<u8> = document.pack_with_encoding(StateMetadataEncoding::Json).unwrap();
     let state_metadata_document: StateMetadataDocument = StateMetadataDocument::unpack(&packed).unwrap();
     let unpacked_document: IotaDocument = state_metadata_document.into_iota_document(&did).unwrap();
     assert!(unpacked_document.document.controller().is_none());
-    assert!(unpacked_document.metadata.state_controller_address.is_none());
-    assert!(unpacked_document.metadata.governor_address.is_none());
   }
 
   #[test]
@@ -878,9 +876,7 @@ mod tests {
     },
     "meta": {
       "created": "2023-01-25T15:48:09Z",
-      "updated": "2023-01-25T15:48:09Z",
-      "governorAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu",
-      "stateControllerAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu"
+      "updated": "2023-01-25T15:48:09Z"
     }
   }
   "#;
@@ -905,9 +901,7 @@ mod tests {
   },
   "meta": {
     "created": "2023-01-25T15:48:09Z",
-    "updated": "2023-01-25T15:48:09Z",
-    "governorAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu",
-    "stateControllerAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu"
+    "updated": "2023-01-25T15:48:09Z"
   }
 }
 "#;
@@ -943,9 +937,7 @@ mod tests {
     },
     "meta": {
       "created": "2023-01-25T15:48:09Z",
-      "updated": "2023-01-25T15:48:09Z",
-      "governorAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu",
-      "stateControllerAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu"
+      "updated": "2023-01-25T15:48:09Z"
     }
   }
   "#;
