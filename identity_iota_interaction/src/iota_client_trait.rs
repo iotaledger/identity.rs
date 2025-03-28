@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::error::IotaRpcResult;
-use crate::iota_json_rpc_types::IotaTransactionBlockEffects;
+use crate::rpc_types::IotaTransactionBlockEffects;
 use crate::rpc_types::CoinPage;
 use crate::rpc_types::EventFilter;
 use crate::rpc_types::EventPage;
-use crate::rpc_types::IotaExecutionStatus;
 use crate::rpc_types::IotaObjectData;
 use crate::rpc_types::IotaObjectDataOptions;
 use crate::rpc_types::IotaObjectResponse;
@@ -14,7 +13,6 @@ use crate::rpc_types::IotaObjectResponseQuery;
 use crate::rpc_types::IotaPastObjectResponse;
 use crate::rpc_types::IotaTransactionBlockResponseOptions;
 use crate::rpc_types::ObjectsPage;
-use crate::rpc_types::OwnedObjectRef;
 use crate::types::base_types::IotaAddress;
 use crate::types::base_types::ObjectID;
 use crate::types::base_types::SequenceNumber;
@@ -24,7 +22,6 @@ use crate::types::digests::TransactionDigest;
 use crate::types::dynamic_field::DynamicFieldName;
 use crate::types::event::EventID;
 use crate::types::quorum_driver_types::ExecuteTransactionRequestType;
-use crate::types::transaction::TransactionData;
 use crate::OptionalSend;
 use crate::ProgrammableTransactionBcs;
 use crate::SignatureBcs;
@@ -87,7 +84,7 @@ pub trait IotaTransactionBlockResponseT: OptionalSend {
   fn to_string(&self) -> String;
 
   /// Returns the effects of this transaction
-  fn effects(&self) -> Option<IotaTransactionBlockEffects>;
+  fn effects(&self) -> Option<&IotaTransactionBlockEffects>;
 
   /// Returns a reference to the platform specific client sdk response instance wrapped by this adapter
   fn as_native_response(&self) -> &Self::NativeResponse;

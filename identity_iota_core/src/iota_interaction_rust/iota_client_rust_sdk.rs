@@ -32,7 +32,6 @@ use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockResponseOptions;
 use identity_iota_interaction::rpc_types::ObjectChange;
 use identity_iota_interaction::rpc_types::ObjectsPage;
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::SequenceNumber;
@@ -125,24 +124,12 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
   type Error = Error;
   type NativeResponse = IotaTransactionBlockResponse;
 
-  fn effects_is_none(&self) -> bool {
-    self.response.effects.is_none()
-  }
-
-  fn effects_is_some(&self) -> bool {
-    self.response.effects.is_some()
+  fn effects(&self) -> Option<&IotaTransactionBlockEffects> {
+    self.response.effects.as_ref()
   }
 
   fn to_string(&self) -> String {
     format!("{:?}", self.response)
-  }
-
-  fn effects_execution_status(&self) -> Option<IotaExecutionStatus> {
-    self.response.effects.as_ref().map(|effects| effects.status().clone())
-  }
-
-  fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
-    self.response.effects.as_ref().map(|effects| effects.created().to_vec())
   }
 
   fn as_native_response(&self) -> &Self::NativeResponse {

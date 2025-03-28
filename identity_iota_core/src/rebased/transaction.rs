@@ -19,6 +19,8 @@ use identity_iota_interaction::OptionalSync;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use secret_storage::Signer;
 
+use super::tx_refactor::TransactionBuilder;
+
 /// The output type of a [`Transaction`].
 #[cfg(not(target_arch = "wasm32"))]
 #[derive(Debug, Clone)]
@@ -216,9 +218,9 @@ pub trait ProtoTransaction {
 
 // Every Transaction is a QuasiTransaction that requires no input
 // and that has itself as its next state.
-impl<T> ProtoTransaction for T
+impl<T> ProtoTransaction for TransactionBuilder<T>
 where
-  T: TransactionInternal,
+  T: super::tx_refactor::Transaction,
 {
   type Input = ();
   type Tx = Self;

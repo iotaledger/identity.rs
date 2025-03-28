@@ -3,10 +3,13 @@
 
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::str::FromStr;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::rebased::tx_refactor::Transaction;
+use crate::rebased::tx_refactor::TransactionBuilder;
 use identity_iota_interaction::IdentityMoveCalls;
+use iota_sdk::types::transaction::ProgrammableTransaction;
+use tokio::sync::OnceCell;
 
 use crate::rebased::iota::types::Number;
 use crate::rebased::proposals::Upgrade;
@@ -19,21 +22,19 @@ use async_trait::async_trait;
 use identity_core::common::Timestamp;
 use identity_iota_interaction::ident_str;
 use identity_iota_interaction::move_types::language_storage::StructTag;
+use identity_iota_interaction::rpc_types::IotaExecutionStatus;
 use identity_iota_interaction::rpc_types::IotaObjectData;
 use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
 use identity_iota_interaction::rpc_types::IotaParsedData;
 use identity_iota_interaction::rpc_types::IotaParsedMoveObject;
 use identity_iota_interaction::rpc_types::IotaPastObjectResponse;
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::id::UID;
 use identity_iota_interaction::types::object::Owner;
 use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::IotaKeySignature;
-use identity_iota_interaction::OptionalSync;
-use secret_storage::Signer;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -47,12 +48,11 @@ use crate::rebased::proposals::ProposalBuilder;
 use crate::rebased::proposals::SendAction;
 use crate::rebased::proposals::UpdateDidDocument;
 use crate::rebased::rebased_err;
-use crate::rebased::transaction::TransactionInternal;
-use crate::rebased::transaction::TransactionOutputInternal;
 use crate::rebased::Error;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::MoveType;
 
+use super::ControllerToken;
 use super::Multicontroller;
 use super::UnmigratedAlias;
 
@@ -146,57 +146,91 @@ impl OnChainIdentity {
     self.multi_controller.controller_voting_power(controller_id)
   }
 
+  /// Returns a [ControllerToken] owned by `address` that grants access to this Identity.
+  /// ## Notes
+  /// [None] is returned if `address` doens't own a valid [ControllerToken].
+  pub async fn get_controller_token_for_address(
+    &self,
+    address: IotaAddress,
+    client: &IdentityClientReadOnly,
+  ) -> Result<Option<ControllerToken>, Error> {
+    client
+      .find_object_for_address::<ControllerToken, _>(address, |token| token.controller_of() == self.id())
+      .await
+  }
+
+  /// Returns a [ControllerToken], owned by `client`'s sender address, that grants access to this Identity.
+  /// ## Notes
+  /// [None] is returned if `client`'s sender address doens't own a valid [ControllerToken].
+  pub async fn get_controller_token<S>(&self, client: &IdentityClient<S>) -> Result<Option<ControllerToken>, Error> {
+    self
+      .get_controller_token_for_address(client.sender_address(), client)
+      .await
+  }
+
   pub(crate) fn multicontroller(&self) -> &Multicontroller<Option<Vec<u8>>> {
     &self.multi_controller
   }
 
-  pub(crate) async fn get_controller_cap<S>(&self, client: &IdentityClient<S>) -> Result<ObjectRef, Error> {
-    let controller_cap_tag = StructTag::from_str(&format!("{}::controller::ControllerCap", client.package_id()))
-      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
-    client
-      .find_owned_ref(controller_cap_tag, |obj_data| {
-        self.multi_controller.has_member(obj_data.object_id)
-      })
-      .await?
-      .ok_or_else(|| Error::Identity("this address has no control over the requested identity".to_string()))
-  }
-
   /// Updates this [`OnChainIdentity`]'s DID Document.
-  pub fn update_did_document(&mut self, updated_doc: IotaDocument) -> ProposalBuilder<'_, UpdateDidDocument> {
-    ProposalBuilder::new(self, UpdateDidDocument::new(updated_doc))
+  pub fn update_did_document<'i, 'c>(
+    &'i mut self,
+    updated_doc: IotaDocument,
+    controller_token: &'c ControllerToken,
+  ) -> ProposalBuilder<'i, 'c, UpdateDidDocument> {
+    ProposalBuilder::new(self, controller_token, UpdateDidDocument::new(updated_doc))
   }
 
   /// Updates this [`OnChainIdentity`]'s configuration.
-  pub fn update_config(&mut self) -> ProposalBuilder<'_, ConfigChange> {
-    ProposalBuilder::new(self, ConfigChange::default())
+  pub fn update_config<'i, 'c>(
+    &'i mut self,
+    controller_token: &'c ControllerToken,
+  ) -> ProposalBuilder<'i, 'c, ConfigChange> {
+    ProposalBuilder::new(self, controller_token, ConfigChange::default())
   }
 
   /// Deactivates the DID Document represented by this [`OnChainIdentity`].
-  pub fn deactivate_did(&mut self) -> ProposalBuilder<'_, UpdateDidDocument> {
-    ProposalBuilder::new(self, UpdateDidDocument::deactivate())
+  pub fn deactivate_did<'i, 'c>(
+    &'i mut self,
+    controller_token: &'c ControllerToken,
+  ) -> ProposalBuilder<'i, 'c, UpdateDidDocument> {
+    ProposalBuilder::new(self, controller_token, UpdateDidDocument::deactivate())
   }
 
   /// Upgrades this [`OnChainIdentity`]'s version to match the package's.
-  pub fn upgrade_version(&mut self) -> ProposalBuilder<'_, Upgrade> {
-    ProposalBuilder::new(self, Upgrade)
+  pub fn upgrade_version<'i, 'c>(
+    &'i mut self,
+    controller_token: &'c ControllerToken,
+  ) -> ProposalBuilder<'i, 'c, Upgrade> {
+    ProposalBuilder::new(self, controller_token, Upgrade)
   }
 
   /// Sends assets owned by this [`OnChainIdentity`] to other addresses.
-  pub fn send_assets(&mut self) -> ProposalBuilder<'_, SendAction> {
-    ProposalBuilder::new(self, SendAction::default())
+  pub fn send_assets<'i, 'c>(
+    &'i mut self,
+    controller_token: &'c ControllerToken,
+  ) -> ProposalBuilder<'i, 'c, SendAction> {
+    ProposalBuilder::new(self, controller_token, SendAction::default())
   }
 
   /// Borrows assets owned by this [`OnChainIdentity`] to use them in a custom transaction.
-  pub fn borrow_assets(&mut self) -> ProposalBuilder<'_, BorrowAction> {
-    ProposalBuilder::new(self, BorrowAction::default())
+  pub fn borrow_assets<'i, 'c>(
+    &'i mut self,
+    controller_token: &'c ControllerToken,
+  ) -> ProposalBuilder<'i, 'c, BorrowAction> {
+    ProposalBuilder::new(self, controller_token, BorrowAction::default())
   }
 
   /// Borrows a `ControllerCap` with ID `controller_cap` owned by this identity in a transaction.
   /// This proposal is used to perform operation on a sub-identity controlled
   /// by this one.
-  pub fn controller_execution(&mut self, controller_cap: ObjectID) -> ProposalBuilder<'_, ControllerExecution> {
+  pub fn controller_execution<'i, 'c>(
+    &'i mut self,
+    controller_cap: ObjectID,
+    controller_token: &'c ControllerToken,
+  ) -> ProposalBuilder<'i, 'c, ControllerExecution> {
     let action = ControllerExecution::new(controller_cap, self);
-    ProposalBuilder::new(self, action)
+    ProposalBuilder::new(self, controller_token, action)
   }
 
   /// Returns historical data for this [`OnChainIdentity`].
@@ -321,8 +355,9 @@ fn is_identity(value: &IotaParsedMoveObject) -> bool {
 /// * parsing identity data from object fails
 pub(crate) fn unpack_identity_data(did: &IotaDID, data: &IotaObjectData) -> Result<Option<IdentityData>, Error> {
   let content = data
-    .clone()
     .content
+    .as_ref()
+    .cloned()
     .ok_or_else(|| Error::ObjectLookup(format!("no content in retrieved object in object id {did}")))?;
   let IotaParsedData::MoveObject(value) = content else {
     return Err(Error::ObjectLookup(format!(
@@ -413,8 +448,8 @@ impl IdentityBuilder {
   }
 
   /// Turns this builder into a [`Transaction`], ready to be executed.
-  pub fn finish(self) -> CreateIdentityTx {
-    CreateIdentityTx(self)
+  pub fn finish(self) -> TransactionBuilder<CreateIdentity> {
+    TransactionBuilder::new(CreateIdentity::new(self))
   }
 }
 
@@ -431,34 +466,35 @@ impl MoveType for OnChainIdentity {
 
 /// A [`Transaction`] for creating a new [`OnChainIdentity`] from an [`IdentityBuilder`].
 #[derive(Debug)]
-pub struct CreateIdentityTx(IdentityBuilder);
+pub struct CreateIdentity {
+  builder: IdentityBuilder,
+  cached_ptb: OnceCell<ProgrammableTransaction>,
+}
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-impl TransactionInternal for CreateIdentityTx {
-  type Output = OnChainIdentity;
-  async fn execute_with_opt_gas_internal<S>(
-    self,
-    gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
-  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
-  where
-    S: Signer<IotaKeySignature> + OptionalSync,
-  {
+impl CreateIdentity {
+  /// Returns a new [CreateIdentity] [Transaction] from an [IdentityBuilder]
+  pub fn new(builder: IdentityBuilder) -> CreateIdentity {
+    Self {
+      builder,
+      cached_ptb: OnceCell::new(),
+    }
+  }
+
+  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let IdentityBuilder {
       did_doc,
       threshold,
       controllers,
-    } = self.0;
-    let did_doc = StateMetadataDocument::from(did_doc)
+    } = &self.builder;
+    let did_doc = StateMetadataDocument::from(did_doc.clone())
       .pack(StateMetadataEncoding::default())
       .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
-    let programmable_transaction = if controllers.is_empty() {
+    let pt_bcs = if controllers.is_empty() {
       IdentityMoveCallsAdapter::new_identity(Some(&did_doc), client.package_id()).await?
     } else {
       let threshold = match threshold {
         Some(t) => t,
-        None if controllers.len() == 1 => *controllers
+        None if controllers.len() == 1 => controllers
           .values()
           .next()
           .ok_or_else(|| Error::Identity("could not get controller".to_string()))?,
@@ -468,41 +504,50 @@ impl TransactionInternal for CreateIdentityTx {
           ))
         }
       };
-      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), controllers, threshold, client.package_id())?
+      IdentityMoveCallsAdapter::new_with_controllers(
+        Some(&did_doc),
+        controllers.clone(),
+        *threshold,
+        client.package_id(),
+      )?
     };
 
-    let response = client.execute_transaction(programmable_transaction, gas_budget).await?;
+    Ok(bcs::from_bytes(&pt_bcs)?)
+  }
+}
 
-    let created = response.effects_created().ok_or_else(|| {
-      Error::TransactionUnexpectedResponse("could not find effects_created in transaction".to_string())
-    })?;
-    let new_identities: Vec<OwnedObjectRef> = created
-      .into_iter()
-      .filter(|elem| {
-        matches!(
-          elem.owner,
-          Owner::Shared {
-            initial_shared_version: _,
-          }
-        )
-      })
-      .collect();
-    let new_identity_id = match &new_identities[..] {
-      [value] => value.object_id(),
-      _ => {
-        return Err(Error::TransactionUnexpectedResponse(format!(
-          "could not find new identity in response: {}",
-          response.to_string()
-        )));
-      }
-    };
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl Transaction for CreateIdentity {
+  type Output = OnChainIdentity;
+  async fn build_programmable_transaction(
+    &self,
+    client: &IdentityClientReadOnly,
+  ) -> Result<ProgrammableTransaction, Error> {
+    self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
+  }
+  async fn apply(
+    self,
+    effects: &IotaTransactionBlockEffects,
+    client: &IdentityClientReadOnly,
+  ) -> Result<Self::Output, Error> {
+    if let IotaExecutionStatus::Failure { error } = effects.status() {
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
+    }
 
-    get_identity(client, new_identity_id)
+    let created_objects = effects
+      .created()
+      .iter()
+      .filter(|elem| matches!(elem.owner, Owner::Shared { .. }))
+      .map(|obj| obj.object_id())
+      .collect::<Vec<_>>();
+    let created_identity = created_objects
+      .first()
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find new identity in response".to_owned()))
+      .copied()?;
+
+    get_identity(client, created_identity)
       .await
-      .and_then(|identity| identity.ok_or_else(|| Error::ObjectLookup(new_identity_id.to_string())))
-      .map(move |identity| TransactionOutputInternal {
-        output: identity,
-        response,
-      })
+      .and_then(|identity| identity.ok_or_else(|| Error::ObjectLookup(created_identity.to_string())))
   }
 }

@@ -39,15 +39,6 @@ use identity_iota_interaction::MoveType;
 use identity_iota_interaction::OptionalSync;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 
-cfg_if::cfg_if! {
-  if #[cfg(target_arch = "wasm32")] {
-    use crate::rebased::transaction::TransactionInternal as TransactionT;
-    type TransactionOutputT<T> = TransactionOutputInternal<T>;
-  } else {
-    use crate::rebased::transaction::Transaction as TransactionT;
-  }
-}
-
 use super::get_object_id_from_did;
 use super::IdentityClientReadOnly;
 
@@ -225,11 +216,20 @@ where
         return Err(Error::Identity("only new identities can be updated".to_string()));
       };
 
+    let controller_token = oci.get_controller_token(self).await?.ok_or_else(|| {
+      Error::Identity(format!(
+        "address {} has no control over Identity {}",
+        self.sender_address(),
+        oci.id()
+      ))
+    })?;
+
     oci
-      .update_did_document(document.clone())
+      .update_did_document(document.clone(), &controller_token)
       .finish(self)
       .await?
-      .execute_with_gas(gas_budget, self)
+      .with_gas_budget(gas_budget)
+      .build_and_execute(self)
       .await?;
 
     Ok(document)
@@ -243,11 +243,20 @@ where
       return Err(Error::Identity("only new identities can be deactivated".to_string()));
     };
 
+    let controller_token = oci.get_controller_token(self).await?.ok_or_else(|| {
+      Error::Identity(format!(
+        "address {} has no control over Identity {}",
+        self.sender_address(),
+        oci.id()
+      ))
+    })?;
+
     oci
-      .deactivate_did()
+      .deactivate_did(&controller_token)
       .finish(self)
       .await?
-      .execute_with_gas(gas_budget, self)
+      .with_gas_budget(gas_budget)
+      .build_and_execute(self)
       .await?;
 
     Ok(())

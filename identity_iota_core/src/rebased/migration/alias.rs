@@ -4,28 +4,26 @@
 use async_trait::async_trait;
 use identity_iota_interaction::rpc_types::IotaExecutionStatus;
 use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::id::UID;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::types::TypeTag;
 use identity_iota_interaction::types::STARDUST_PACKAGE_ID;
-use secret_storage::Signer;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
+use tokio::sync::OnceCell;
 
 use crate::iota_interaction_adapter::MigrationMoveCallsAdapter;
-use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::transaction::TransactionInternal;
-use crate::rebased::transaction::TransactionOutputInternal;
+use crate::rebased::tx_refactor::Transaction;
 use crate::rebased::Error;
 use identity_iota_interaction::IotaClientTrait;
-use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::MigrationMoveCalls;
 use identity_iota_interaction::MoveType;
-use identity_iota_interaction::OptionalSync;
-use identity_iota_interaction::ProgrammableTransactionBcs;
 
 use super::get_identity;
 use super::Identity;
@@ -71,30 +69,25 @@ pub async fn get_alias(client: &IdentityClientReadOnly, object_id: ObjectID) -> 
   }
 }
 
-cfg_if::cfg_if! {
-  if #[cfg(target_arch = "wasm32")] {
-    // Add wasm32 compatible migrate() function wrapper here
-  } else {
-    use crate::rebased::transaction::Transaction;
-    impl UnmigratedAlias {
-      /// Returns a transaction that when executed migrates a legacy `Alias`
-      /// containing a DID Document to a new [`OnChainIdentity`].
-      pub async fn migrate(self, client: &IdentityClientReadOnly)
-      -> Result<impl Transaction<Output = OnChainIdentity>, Error> {
-        self.migrate_internal(client).await
-      }
-    }
-  }
+/// A [Transaction] that migrates a legacy Identity to
+/// a new [OnChainIdentity].
+pub struct MigrateLegacyIdentity {
+  alias: UnmigratedAlias,
+  cached_ptb: OnceCell<ProgrammableTransaction>,
 }
 
-impl UnmigratedAlias {
-  #[allow(unused)] // Currently not supported.
-  pub(crate) async fn migrate_internal(
-    self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<impl TransactionInternal<Output = OnChainIdentity>, Error> {
+impl MigrateLegacyIdentity {
+  /// Returns a new [MigrateLegacyIdentity] transaction.
+  pub fn new(alias: UnmigratedAlias) -> Self {
+    Self {
+      alias,
+      cached_ptb: OnceCell::new(),
+    }
+  }
+
+  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     // Try to parse a StateMetadataDocument out of this alias.
-    let identity = Identity::Legacy(self);
+    let identity = Identity::Legacy(self.alias.clone());
     let did_doc = identity.did_document(client.network())?;
     let Identity::Legacy(alias) = identity else {
       unreachable!("alias was wrapped by us")
@@ -150,49 +143,38 @@ impl UnmigratedAlias {
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
-    Ok(MigrateLegacyAliasTx(tx))
+    Ok(bcs::from_bytes(&tx)?)
   }
 }
 
-#[derive(Debug)]
-struct MigrateLegacyAliasTx(ProgrammableTransactionBcs);
-
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-impl TransactionInternal for MigrateLegacyAliasTx {
+impl Transaction for MigrateLegacyIdentity {
   type Output = OnChainIdentity;
-  async fn execute_with_opt_gas_internal<S>(
+  async fn build_programmable_transaction(
+    &self,
+    client: &IdentityClientReadOnly,
+  ) -> Result<ProgrammableTransaction, Error> {
+    self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
+  }
+  async fn apply(
     self,
-    gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
-  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
-  where
-    S: Signer<IotaKeySignature> + OptionalSync,
-  {
-    let response = self.0.execute_with_opt_gas_internal(gas_budget, client).await?.response;
-    // Make sure the tx was successful.
-    let effects_execution_status = response
-      .effects_execution_status()
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("transaction had no effects_execution_status".to_string()))?;
-    if let IotaExecutionStatus::Failure { error } = effects_execution_status {
-      Err(Error::TransactionUnexpectedResponse(error.to_string()))
-    } else {
-      let effects_created = response
-        .effects_created()
-        .ok_or_else(|| Error::TransactionUnexpectedResponse("transaction had no effects_created".to_string()))?;
-      let identity_ref = effects_created
-        .iter()
-        .find(|obj_ref| obj_ref.owner.is_shared())
-        .ok_or_else(|| {
-          Error::TransactionUnexpectedResponse("Identity not found in transaction's results".to_string())
-        })?;
-
-      get_identity(client, identity_ref.object_id())
-        .await
-        .map(move |identity| TransactionOutputInternal {
-          output: identity.expect("identity exists on-chain"),
-          response,
-        })
+    effects: &IotaTransactionBlockEffects,
+    client: &IdentityClientReadOnly,
+  ) -> Result<Self::Output, Error> {
+    if let IotaExecutionStatus::Failure { error } = effects.status() {
+      return Err(Error::TransactionUnexpectedResponse(error.to_string()));
     }
+
+    let identity_ref = effects
+      .created()
+      .iter()
+      .find(|obj_ref| obj_ref.owner.is_shared())
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("Identity not found in transaction's results".to_string()))?;
+
+    get_identity(client, identity_ref.object_id())
+      .await
+      .transpose()
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("failed to retrieve the newly created Identity".to_owned()))?
   }
 }

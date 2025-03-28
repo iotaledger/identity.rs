@@ -314,7 +314,7 @@ where
       .map(|sig| bcs::to_bytes(&sig))
       .collect::<Result<Vec<_>, _>>()?;
 
-    let response = client
+    let dyn_tx_block = client
       .quorum_driver_api()
       .execute_transaction_block(
         &tx_data_bcs,
@@ -322,15 +322,14 @@ where
         Some(IotaTransactionBlockResponseOptions::full_content()),
         Some(ExecuteTransactionRequestType::WaitForLocalExecution),
       )
-      .await?
-      .clone_native_response();
+      .await?;
 
-    let tx_effects = response
-      .effects
-      .as_ref()
+    let tx_effects = dyn_tx_block
+      .effects()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects in response".to_owned()))?;
     let output = tx.apply(tx_effects, client).await?;
-
+    let response = dyn_tx_block.clone_native_response();
+      
     Ok(TransactionOutput { output, response })
   }
 }

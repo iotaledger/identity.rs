@@ -3,20 +3,16 @@
 
 use std::marker::PhantomData;
 
-use crate::iota_interaction_adapter::AdapterError;
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
-use crate::iota_interaction_adapter::NativeTransactionBlockResponse;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::IotaKeySignature;
-use identity_iota_interaction::IotaTransactionBlockResponseT;
-use identity_iota_interaction::OptionalSync;
 
-use crate::rebased::client::IdentityClient;
+use crate::iota_interaction_rust::IdentityMoveCallsAdapter;
+use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::migration::ControllerToken;
+use crate::rebased::tx_refactor::TransactionBuilder;
 use async_trait::async_trait;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::TypeTag;
-use secret_storage::Signer;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -25,8 +21,8 @@ use crate::rebased::migration::Proposal;
 use crate::rebased::Error;
 use identity_iota_interaction::MoveType;
 
-use super::CreateProposalTx;
-use super::ExecuteProposalTx;
+use super::CreateProposal;
+use super::ExecuteProposal;
 use super::ProposalT;
 
 /// Action for upgrading the version of an on-chain identity to the package's version.
@@ -50,27 +46,35 @@ impl MoveType for Upgrade {
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl ProposalT for Proposal<Upgrade> {
   type Action = Upgrade;
   type Output = ();
-  type Response = IotaTransactionBlockResponseAdapter;
 
-  async fn create<'i, S>(
+  async fn create<'i>(
     _action: Self::Action,
     expiration: Option<u64>,
     identity: &'i mut OnChainIdentity,
-    client: &IdentityClient<S>,
-  ) -> Result<CreateProposalTx<'i, Self::Action>, Error>
-  where
-    S: Signer<IotaKeySignature> + OptionalSync,
-  {
+    controller_token: &ControllerToken,
+    client: &IdentityClientReadOnly,
+  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error> {
+    if identity.id() != controller_token.controller_of() {
+      return Err(Error::Identity(format!(
+        "token {} doesn't grant access to identity {}",
+        controller_token.id(),
+        identity.id()
+      )));
+    }
+
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = identity.get_controller_cap(client).await?;
+    let controller_cap_ref = client
+      .get_object_ref_by_id(controller_token.id())
+      .await?
+      .expect("token exists")
+      .reference
+      .to_object_ref();
     let sender_vp = identity
       .controller_voting_power(controller_cap_ref.0)
       .expect("controller exists");
@@ -79,46 +83,52 @@ impl ProposalT for Proposal<Upgrade> {
       IdentityMoveCallsAdapter::propose_upgrade(identity_ref, controller_cap_ref, expiration, client.package_id())
         .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
-    Ok(CreateProposalTx {
+    Ok(TransactionBuilder::new(CreateProposal {
       identity,
-      tx,
+      ptb: bcs::from_bytes(&tx)?,
       chained_execution,
       _action: PhantomData,
-    })
+    }))
   }
 
-  async fn into_tx<'i, S>(
+  async fn into_tx<'i>(
     self,
     identity: &'i mut OnChainIdentity,
-    client: &IdentityClient<S>,
-  ) -> Result<ExecuteProposalTx<'i, Self::Action>, Error>
-  where
-    S: Signer<IotaKeySignature> + OptionalSync,
-  {
+    controller_token: &ControllerToken,
+    client: &IdentityClientReadOnly,
+  ) -> Result<TransactionBuilder<ExecuteProposal<'i, Self::Action>>, Error> {
+    if identity.id() != controller_token.controller_of() {
+      return Err(Error::Identity(format!(
+        "token {} doesn't grant access to identity {}",
+        controller_token.id(),
+        identity.id()
+      )));
+    }
+
     let proposal_id = self.id();
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = identity.get_controller_cap(client).await?;
+    let controller_cap_ref = client
+      .get_object_ref_by_id(controller_token.id())
+      .await?
+      .expect("token exists")
+      .reference
+      .to_object_ref();
 
     let tx =
       IdentityMoveCallsAdapter::execute_upgrade(identity_ref, controller_cap_ref, proposal_id, client.package_id())
         .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
-    Ok(ExecuteProposalTx {
+    Ok(TransactionBuilder::new(ExecuteProposal {
       identity,
-      tx,
+      ptb: bcs::from_bytes(&tx)?,
       _action: PhantomData,
-    })
+    }))
   }
 
-  fn parse_tx_effects_internal(
-    _tx_response: &dyn IotaTransactionBlockResponseT<
-      Error = AdapterError,
-      NativeResponse = NativeTransactionBlockResponse,
-    >,
-  ) -> Result<Self::Output, Error> {
+  fn parse_tx_effects(_effects: &IotaTransactionBlockEffects) -> Result<Self::Output, Error> {
     Ok(())
   }
 }
