@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build:src": "cargo build --lib --release --target wasm32-unknown-unknown --target-dir ../target",
-    "build:src:node": "cargo build --lib --release --target wasm32-unknown-unknown --features keytool-signer --target-dir ../target",
+    "build:src:node": "cargo build --lib --release --target wasm32-unknown-unknown --features keytool --target-dir ../target",
     "prebundle:nodejs": "rimraf node",
     "bundle:nodejs": "wasm-bindgen ../target/wasm32-unknown-unknown/release/iota_interaction_ts.wasm --typescript --weak-refs --target nodejs --out-dir node && node ../build/node iota_interaction_ts && tsc --project ./lib/tsconfig.json && node ../build/replace_paths ./lib/tsconfig.json node iota_interaction_ts",
     "prebundle:web": "rimraf web",
