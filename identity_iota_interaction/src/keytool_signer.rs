@@ -106,8 +106,8 @@ impl KeytoolSigner {
 impl Signer<IotaKeySignature> for KeytoolSigner {
   type KeyId = IotaAddress;
 
-  fn key_id(&self) -> &Self::KeyId {
-    &self.address
+  fn key_id(&self) -> Self::KeyId {
+    self.address
   }
 
   async fn public_key(&self) -> Result<PublicKey, SecretStorageError> {

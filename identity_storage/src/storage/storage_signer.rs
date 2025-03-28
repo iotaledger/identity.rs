@@ -79,8 +79,8 @@ where
 {
   type KeyId = KeyId;
 
-  fn key_id(&self) -> &KeyId {
-    &self.key_id
+  fn key_id(&self) -> KeyId {
+    self.key_id.clone()
   }
 
   async fn public_key(&self) -> Result<PublicKey, SecretStorageError> {
