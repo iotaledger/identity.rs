@@ -175,7 +175,6 @@ impl WasmResolver {
         .await
         .map_err(WasmError::from)
         .map_err(JsValue::from)
-        .map(JsValue::from)
     });
 
     Ok(promise.unchecked_into::<PromiseIToCoreDocument>())
@@ -223,7 +222,6 @@ impl WasmResolver {
         .map(|documents| {
           documents
             .into_iter()
-            .map(JsValue::from)
             .collect::<js_sys::Array>()
             .unchecked_into::<JsValue>()
         })
