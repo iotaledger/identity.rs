@@ -13,7 +13,7 @@ use identity_iota_interaction::MoveType;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::iota_interaction_rust::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::migration::OnChainIdentity;

@@ -47,11 +47,11 @@ identity_iota_interaction = { version = "=1.6.0-alpha", path = "../identity_iota
 iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config", tag = "v0.10.3-rc", optional = true }
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.10.3-rc", optional = true }
 move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.10.3-rc", optional = true }
-shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.10.3-rc", optional = true }
-tokio = { version = "1.43", default-features = false, optional = true, features = ["macros", "sync", "rt", "process"] }
+tokio = { version = "1.43", default-features = false, features = ["macros", "sync", "rt", "process"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 identity_iota_interaction = { version = "=1.6.0-alpha", path = "../identity_iota_interaction", default-features = false, optional = true }
+tokio = { version = "1.43", default-features = false, features = ["sync"] }
 # Dependency iota_interaction_ts is always used on wasm32 platform. It is not controlled by the "iota-client" feature
 # because it's unclear how to implement this. wasm32 build will most probably always use the "iota-client" feature
 # so this seems to be tolerable for now.
@@ -74,7 +74,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["iota-client", "revocation-bitmap", "send-sync", "keytool-signer"]
+default = ["iota-client", "revocation-bitmap", "send-sync"]
 # Enables the IOTA Client related components, and dependencies.
 iota-client = [
   "dep:async-trait",
@@ -91,8 +91,6 @@ iota-client = [
   "dep:rand",
   "dep:secret-storage",
   "dep:serde-aux",
-  "dep:shared-crypto",
-  "dep:tokio",
 ]
 
 # Enables revocation with `RevocationBitmap2022`.

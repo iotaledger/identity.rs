@@ -8,7 +8,7 @@ use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::tx_refactor::Transaction;
 use crate::rebased::tx_refactor::TransactionBuilder;
 use identity_iota_interaction::IdentityMoveCalls;
-use iota_sdk::types::transaction::ProgrammableTransaction;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use tokio::sync::OnceCell;
 
 use crate::rebased::iota::types::Number;

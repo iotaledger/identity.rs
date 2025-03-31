@@ -8,6 +8,7 @@ import {
     IotaTransactionBlockResponse,
     OwnedObjectRef,
     Signature,
+    TransactionEffects,
 } from "@iota/iota-sdk/client";
 import { GasData, TransactionDataBuilder } from "@iota/iota-sdk/transactions";
 
@@ -22,31 +23,18 @@ export class WasmIotaTransactionBlockResponseWrapper {
         this.response = response;
     }
 
-    effects_is_none(): boolean {
-        return this.response.effects == null;
-    }
-
-    effects_is_some(): boolean {
-        return !(typeof this.response.effects == null);
-    }
-
     to_string(): string {
         return JSON.stringify(this.response);
     }
 
-    effects_execution_status_inner(): null | ExecutionStatus {
-        return this.response.effects != null ? this.response.effects.status : null;
-    }
-
-    effects_created_inner(): null | OwnedObjectRef[] {
-        return this.response.effects != null && this.response.effects.created != null
-            ? this.response.effects.created
-            : null;
+    get_effects(): TransactionEffects | null | undefined {
+        return this.response.effects;
     }
 
     get_response(): IotaTransactionBlockResponse {
         return this.response;
     }
+
 
     get_digest(): string {
         return this.response.digest;

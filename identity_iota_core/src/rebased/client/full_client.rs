@@ -3,7 +3,7 @@
 
 use std::ops::Deref;
 
-use crate::iota_interaction_rust::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::tx_refactor::Transaction;
 use crate::rebased::tx_refactor::TransactionBuilder;
 use crate::IotaDID;

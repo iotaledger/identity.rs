@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::IdentityMoveCalls;
 
-use crate::iota_interaction_rust::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::tx_refactor::TransactionBuilder;

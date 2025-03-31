@@ -6,6 +6,7 @@ use std::option::Option;
 use std::result::Result;
 
 use fastcrypto::traits::ToFromBytes;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::dynamic_field::DynamicFieldName;
 use secret_storage::Signer;
@@ -14,7 +15,6 @@ use identity_iota_interaction::error::IotaRpcResult;
 use identity_iota_interaction::rpc_types::CoinPage;
 use identity_iota_interaction::rpc_types::EventFilter;
 use identity_iota_interaction::rpc_types::EventPage;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
 use identity_iota_interaction::rpc_types::IotaObjectData;
 use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
 use identity_iota_interaction::rpc_types::IotaObjectResponse;
@@ -22,7 +22,6 @@ use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
 use identity_iota_interaction::rpc_types::IotaPastObjectResponse;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockResponseOptions;
 use identity_iota_interaction::rpc_types::ObjectsPage;
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::SequenceNumber;
@@ -113,11 +112,16 @@ pub type IotaClientAdaptedTraitObj =
 
 pub struct IotaTransactionBlockResponseProvider {
   response: WasmIotaTransactionBlockResponseWrapper,
+  effects: Option<IotaTransactionBlockEffects>,
 }
 
 impl IotaTransactionBlockResponseProvider {
   pub fn new(response: WasmIotaTransactionBlockResponseWrapper) -> Self {
-    IotaTransactionBlockResponseProvider { response }
+    let effects = response.effects().map(Into::into);
+    IotaTransactionBlockResponseProvider { 
+      response,
+      effects,
+    }
   }
 }
 
@@ -126,30 +130,12 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
   type Error = TsSdkError;
   type NativeResponse = WasmIotaTransactionBlockResponseWrapper;
 
-  fn effects_is_none(&self) -> bool {
-    self.response.effects_is_none()
-  }
-
-  fn effects_is_some(&self) -> bool {
-    self.response.effects_is_some()
-  }
-
   fn to_string(&self) -> String {
     format!("{:?}", self.response.to_string())
   }
 
-  fn effects_execution_status(&self) -> Option<IotaExecutionStatus> {
-    self
-      .response
-      .effects_execution_status()
-      .map(|wasm_status| wasm_status.into())
-  }
-
-  fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
-    self
-      .response
-      .effects_created()
-      .map(|wasm_o_ref_vec| wasm_o_ref_vec.into())
+  fn effects(&self) -> Option<&IotaTransactionBlockEffects> {
+    self.effects.as_ref()
   }
 
   fn as_native_response(&self) -> &Self::NativeResponse {

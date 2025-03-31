@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use fastcrypto::encoding::Base64;
 use fastcrypto::encoding::Encoding;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
@@ -14,7 +15,6 @@ use identity_iota_interaction::types::crypto::Signature;
 use identity_iota_interaction::types::crypto::SignatureScheme;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::execution_status::CommandArgumentError;
-use identity_iota_interaction::types::execution_status::ExecutionStatus;
 use identity_iota_interaction::types::object::Owner;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Promise;
@@ -28,7 +28,6 @@ use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::bindings::WasmIotaClient;
-use crate::common::into_sdk_type;
 use crate::common::PromiseUint8Array;
 use crate::console_log;
 use crate::error::TsSdkError;
@@ -88,6 +87,9 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "IotaTransactionBlockResponse")]
   #[derive(Clone)]
   pub type WasmIotaTransactionBlockResponse;
+
+  #[wasm_bindgen(typescript_type = "TransactionEffects")]
+  pub type WasmIotaTransactionBlockEffects;
 
   #[wasm_bindgen(typescript_type = "GetDynamicFieldObjectParams")]
   #[derive(Clone)]
@@ -167,6 +169,12 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Parameters<IotaClient['waitForTransaction']>")]
   #[derive(Clone, Debug)]
   pub type WasmWaitForTransactionParams;
+}
+
+impl From<WasmIotaTransactionBlockEffects> for IotaTransactionBlockEffects {
+  fn from(value: WasmIotaTransactionBlockEffects) -> Self {
+    serde_wasm_bindgen::from_value(value.into()).expect("have the same repr")
+  }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -378,20 +386,11 @@ extern "C" {
   #[wasm_bindgen(constructor)]
   pub fn new(response: WasmIotaTransactionBlockResponse) -> WasmIotaTransactionBlockResponseWrapper;
 
-  #[wasm_bindgen(method)]
-  pub fn effects_is_none(this: &WasmIotaTransactionBlockResponseWrapper) -> bool;
-
-  #[wasm_bindgen(method)]
-  pub fn effects_is_some(this: &WasmIotaTransactionBlockResponseWrapper) -> bool;
+  #[wasm_bindgen(method, js_name = get_effects)]
+  pub fn effects(this: &WasmIotaTransactionBlockResponseWrapper) -> Option<WasmIotaTransactionBlockEffects>;
 
   #[wasm_bindgen(method)]
   pub fn to_string(this: &WasmIotaTransactionBlockResponseWrapper) -> String;
-
-  #[wasm_bindgen(method)]
-  fn effects_execution_status_inner(this: &WasmIotaTransactionBlockResponseWrapper) -> Option<WasmExecutionStatus>;
-
-  #[wasm_bindgen(method)]
-  fn effects_created_inner(this: &WasmIotaTransactionBlockResponseWrapper) -> Option<Vec<WasmOwnedObjectRef>>;
 
   #[wasm_bindgen(method, js_name = "get_digest")]
   fn digest_inner(this: &WasmIotaTransactionBlockResponseWrapper) -> String;
@@ -464,31 +463,7 @@ pub async fn sleep(duration_ms: i32) -> Result<(), JsValue> {
   Ok(())
 }
 
-#[derive(Deserialize)]
-struct WasmExecutionStatusAdapter {
-  status: ExecutionStatus,
-}
-
 impl WasmIotaTransactionBlockResponseWrapper {
-  pub fn effects_execution_status(&self) -> Option<ExecutionStatus> {
-    self.effects_execution_status_inner().map(|s| {
-      let state: WasmExecutionStatusAdapter =
-        into_sdk_type(s).expect("[WasmIotaTransactionBlockResponseWrapper] Failed to convert WasmExecutionStatus");
-      state.status
-    })
-  }
-
-  pub fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
-    self.effects_created_inner().map(|vex_obj_ref| {
-      vex_obj_ref
-        .into_iter()
-        .map(|obj| {
-          into_sdk_type(obj).expect("[WasmIotaTransactionBlockResponseWrapper] Failed to convert WasmOwnedObjectRef")
-        })
-        .collect()
-    })
-  }
-
   pub fn digest(&self) -> Result<TransactionDigest, TsSdkError> {
     TransactionDigest::from_str(&self.digest_inner())
       .map_err(|err| TsSdkError::WasmError("Failed to parse transaction block digest".to_string(), err.to_string()))

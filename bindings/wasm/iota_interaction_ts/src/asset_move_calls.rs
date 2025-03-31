@@ -76,13 +76,13 @@ impl AssetMoveCalls for AssetMoveCallsTsSdk {
   type Error = TsSdkError;
 
   fn new_asset<T: Serialize + MoveType>(
-    inner: T,
+    inner: &T,
     mutable: bool,
     transferable: bool,
     deletable: bool,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
-    let inner_bytes = bcs::to_bytes(&inner).map_err(|_| CommandArgumentError::InvalidBCSBytes)?;
+    let inner_bytes = bcs::to_bytes(inner).map_err(|_| CommandArgumentError::InvalidBCSBytes)?;
     let inner_type = T::move_type(package).to_string();
     let package = package.to_string();
 
@@ -177,12 +177,12 @@ impl AssetMoveCalls for AssetMoveCallsTsSdk {
 
   fn update<T: MoveType + Serialize>(
     asset: ObjectRef,
-    new_content: T,
+    new_content: &T,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
     let asset = asset.into();
     let content_type = T::move_type(package).to_string();
-    let content = bcs::to_bytes(&new_content).map_err(|_| CommandArgumentError::InvalidBCSBytes)?;
+    let content = bcs::to_bytes(new_content).map_err(|_| CommandArgumentError::InvalidBCSBytes)?;
     let package = package.to_string();
 
     futures::executor::block_on(update(asset, &content, &content_type, &package))

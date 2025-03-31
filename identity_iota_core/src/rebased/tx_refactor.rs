@@ -5,8 +5,11 @@ use std::ops::Deref;
 
 use anyhow::Context as _;
 use async_trait::async_trait;
+use cfg_if::cfg_if;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockResponseOptions;
+use identity_iota_interaction::shared_crypto::intent::Intent;
+use identity_iota_interaction::shared_crypto::intent::IntentMessage;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::crypto::IotaSignature as _;
@@ -23,12 +26,13 @@ use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::OptionalSync;
 use itertools::Itertools;
 use secret_storage::Signer;
-use shared_crypto::intent::Intent;
-use shared_crypto::intent::IntentMessage;
 
 use super::client::IdentityClient;
 use super::client::IdentityClientReadOnly;
+#[cfg(not(target_arch = "wasm32"))]
 use super::transaction::TransactionOutput;
+#[cfg(target_arch = "wasm32")]
+use super::transaction::TransactionOutputInternal as TransactionOutput;
 use super::Error;
 
 /// An operation that combines a transaction with its off-chain effects.
@@ -328,8 +332,16 @@ where
       .effects()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects in response".to_owned()))?;
     let output = tx.apply(tx_effects, client).await?;
-    let response = dyn_tx_block.clone_native_response();
-      
+    let response = {
+      cfg_if! {
+        if #[cfg(target_arch = "wasm32")] {
+          dyn_tx_block
+        } else {
+          dyn_tx_block.clone_native_response()
+        }
+      }
+    };
+
     Ok(TransactionOutput { output, response })
   }
 }
@@ -382,6 +394,7 @@ impl<Tx> TransactionBuilder<Tx> {
     signatures: Vec<Signature>,
     effect: Tx,
   ) -> Result<Self, Error> {
+    #[allow(irrefutable_let_patterns)]
     let TransactionKind::ProgrammableTransaction(pt) = tx_data.kind().clone() else {
       return Err(Error::TransactionBuildingFailed(
         "only programmable transactions are supported".to_string(),
