@@ -6,8 +6,8 @@ use std::ops::Deref;
 #[cfg(not(target_arch = "wasm32"))]
 use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
 
-use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdaptedTraitObj;
 use super::transaction_builder::TransactionBuilder;
+use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdaptedTraitObj;
 
 /// The output type of a [`Transaction`].
 #[cfg(not(target_arch = "wasm32"))]

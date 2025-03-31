@@ -4,12 +4,18 @@
 
 use anyhow::anyhow;
 use anyhow::Context;
+use async_trait::async_trait;
 use identity_iota_core::rebased::client::IdentityClient;
 use identity_iota_core::rebased::client::IdentityClientReadOnly;
-use identity_iota_core::rebased::transaction::Transaction;
+use identity_iota_core::rebased::transaction_builder::Transaction;
+use identity_iota_core::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_core::rebased::utils::request_funds;
+use identity_iota_core::rebased::Error;
 use identity_iota_core::rebased::KeytoolSigner;
 use identity_iota_core::IotaDID;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::OptionalSync;
 use identity_jose::jwk::Jwk;
@@ -24,7 +30,6 @@ use identity_storage::MethodDigest;
 use identity_storage::Storage;
 use identity_storage::StorageSigner;
 use identity_verification::VerificationMethod;
-use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::crypto::SignatureScheme;
@@ -309,26 +314,11 @@ pub async fn get_test_coin<S>(recipient: IotaAddress, client: &IdentityClient<S>
 where
   S: Signer<IotaKeySignature> + OptionalSync,
 {
-  let mut ptb = ProgrammableTransactionBuilder::new();
-  let coin = ptb.programmable_move_call(
-    IOTA_FRAMEWORK_PACKAGE_ID,
-    ident_str!("coin").into(),
-    ident_str!("zero").into(),
-    vec![TypeTag::Bool],
-    vec![],
-  );
-  ptb.transfer_args(recipient, vec![coin]);
-  ptb
-    .finish()
-    .execute(client)
-    .await?
-    .response
-    .effects
-    .expect("tx should have had effects")
-    .created()
-    .first()
-    .map(|obj| obj.object_id())
-    .context("no coins were created")
+  TransactionBuilder::new(GetTestCoin { recipient })
+    .build_and_execute(client)
+    .await
+    .context("failed to get test coins")
+    .map(|tx_output| tx_output.output)
 }
 
 pub async fn make_address(key_type: SignatureScheme) -> anyhow::Result<IotaAddress> {
@@ -366,4 +356,41 @@ pub async fn make_address(key_type: SignatureScheme) -> anyhow::Result<IotaAddre
   request_funds(&new_address).await?;
 
   Ok(new_address)
+}
+
+struct GetTestCoin {
+  recipient: IotaAddress,
+}
+
+#[async_trait]
+impl Transaction for GetTestCoin {
+  type Output = ObjectID;
+
+  async fn build_programmable_transaction(
+    &self,
+    _client: &IdentityClientReadOnly,
+  ) -> Result<ProgrammableTransaction, Error> {
+    let mut ptb = ProgrammableTransactionBuilder::new();
+    let coin = ptb.programmable_move_call(
+      IOTA_FRAMEWORK_PACKAGE_ID,
+      ident_str!("coin").into(),
+      ident_str!("zero").into(),
+      vec![TypeTag::Bool],
+      vec![],
+    );
+    ptb.transfer_args(self.recipient, vec![coin]);
+    Ok(ptb.finish())
+  }
+
+  async fn apply(
+    self,
+    effects: &IotaTransactionBlockEffects,
+    _client: &IdentityClientReadOnly,
+  ) -> Result<Self::Output, Error> {
+    effects
+      .created()
+      .first()
+      .map(|obj_ref| obj_ref.object_id())
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("no coins were created".to_owned()))
+  }
 }

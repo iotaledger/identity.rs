@@ -15,12 +15,12 @@ use identity_iota_interaction::IdentityMoveCalls;
 
 use crate::rebased::migration::Proposal;
 use async_trait::async_trait;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::collection_types::Entry;
 use identity_iota_interaction::types::collection_types::VecMap;
 use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -227,8 +227,7 @@ impl ProposalT for Proposal<ConfigChange> {
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
     client: &IdentityClientReadOnly,
-  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error>
-  {
+  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error> {
     // Check the validity of the proposed changes.
     action.validate(identity)?;
 
@@ -244,7 +243,12 @@ impl ProposalT for Proposal<ConfigChange> {
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client.get_object_ref_by_id(controller_token.id()).await?.expect("token exists").reference.to_object_ref();
+    let controller_cap_ref = client
+      .get_object_ref_by_id(controller_token.id())
+      .await?
+      .expect("token exists")
+      .reference
+      .to_object_ref();
     let sender_vp = identity
       .controller_voting_power(controller_cap_ref.0)
       .expect("controller exists");
@@ -274,8 +278,7 @@ impl ProposalT for Proposal<ConfigChange> {
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
     client: &IdentityClientReadOnly,
-  ) -> Result<TransactionBuilder<ExecuteProposal<'i, Self::Action>>, Error>
-  {
+  ) -> Result<TransactionBuilder<ExecuteProposal<'i, Self::Action>>, Error> {
     if identity.id() != controller_token.controller_of() {
       return Err(Error::Identity(format!(
         "token {} doesn't grant access to identity {}",
@@ -289,7 +292,12 @@ impl ProposalT for Proposal<ConfigChange> {
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client.get_object_ref_by_id(controller_token.id()).await?.expect("token exists").reference.to_object_ref();
+    let controller_cap_ref = client
+      .get_object_ref_by_id(controller_token.id())
+      .await?
+      .expect("token exists")
+      .reference
+      .to_object_ref();
 
     let tx = IdentityMoveCallsAdapter::execute_config_change(
       identity_ref,
@@ -306,9 +314,7 @@ impl ProposalT for Proposal<ConfigChange> {
     }))
   }
 
-  fn parse_tx_effects(
-    _effects: &IotaTransactionBlockEffects,
-  ) -> Result<Self::Output, Error> {
+  fn parse_tx_effects(_effects: &IotaTransactionBlockEffects) -> Result<Self::Output, Error> {
     Ok(())
   }
 }

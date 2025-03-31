@@ -293,7 +293,7 @@ impl<'i, F> ProtoTransaction for UserDrivenTx<'i, ControllerExecution<F>> {
 }
 
 impl<F> UserDrivenTx<'_, ControllerExecutionWithIntent<F>>
-where 
+where
   F: ControllerIntentFnT + Send,
 {
   async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
@@ -355,11 +355,7 @@ where
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply(
-    self,
-    effects: &IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
-  ) -> Result<(), Error> {
+  async fn apply(self, effects: &IotaTransactionBlockEffects, _client: &IdentityClientReadOnly) -> Result<(), Error> {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }

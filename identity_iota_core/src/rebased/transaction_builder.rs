@@ -36,8 +36,8 @@ use super::transaction::TransactionOutputInternal as TransactionOutput;
 use super::Error;
 
 /// An operation that combines a transaction with its off-chain effects.
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(feature = "send-sync", async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 pub trait Transaction {
   /// Output type for this transaction.
   type Output;
@@ -429,7 +429,7 @@ where
   let budget = if let Some(budget) = partial_gas_data.budget {
     budget
   } else {
-    client.default_gas_budget(owner, &pt).await?
+    client.default_gas_budget(owner, pt).await?
   };
   let payment = if !partial_gas_data.payment.is_empty() {
     partial_gas_data.payment

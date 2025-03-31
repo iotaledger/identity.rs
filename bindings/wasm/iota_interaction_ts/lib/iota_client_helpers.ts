@@ -35,7 +35,6 @@ export class WasmIotaTransactionBlockResponseWrapper {
         return this.response;
     }
 
-
     get_digest(): string {
         return this.response.digest;
     }

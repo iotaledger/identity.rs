@@ -123,7 +123,10 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     doc
   };
 
-  let alice_token = identity.get_controller_token(&alice_client).await?.expect("alice is a controller");
+  let alice_token = identity
+    .get_controller_token(&alice_client)
+    .await?
+    .expect("alice is a controller");
   let ProposalResult::Pending(mut proposal) = identity
     .update_did_document(did_doc, &alice_token)
     .finish(&alice_client)
@@ -134,8 +137,14 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
   else {
     anyhow::bail!("the proposal is executed");
   };
-  let bob_token = identity.get_controller_token(&bob_client).await?.expect("bob is a controller");
-  proposal.approve(&identity, &bob_token)?.build_and_execute(&bob_client).await?;
+  let bob_token = identity
+    .get_controller_token(&bob_client)
+    .await?
+    .expect("bob is a controller");
+  proposal
+    .approve(&identity, &bob_token)?
+    .build_and_execute(&bob_client)
+    .await?;
 
   assert_eq!(proposal.votes(), 2);
 
@@ -155,7 +164,10 @@ async fn adding_controller_works() -> anyhow::Result<()> {
     .await?
     .output;
 
-  let alice_token = identity.get_controller_token(&alice_client).await?.expect("alice is a controller");
+  let alice_token = identity
+    .get_controller_token(&alice_client)
+    .await?
+    .expect("alice is a controller");
   // Alice proposes to add Bob as a controller. Since Alice has enough voting power the proposal
   // is executed directly after creation.
   identity
@@ -166,7 +178,10 @@ async fn adding_controller_works() -> anyhow::Result<()> {
     .build_and_execute(&alice_client)
     .await?;
 
-  let _bob_token = identity.get_controller_token(&bob_client).await?.expect("bob is a controller");
+  let _bob_token = identity
+    .get_controller_token(&bob_client)
+    .await?
+    .expect("bob is a controller");
 
   Ok(())
 }
@@ -195,7 +210,10 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
     doc
   };
 
-  let token = newly_created_identity.get_controller_token(&identity_client).await?.expect("is a controller");
+  let token = newly_created_identity
+    .get_controller_token(&identity_client)
+    .await?
+    .expect("is a controller");
   newly_created_identity
     .update_did_document(updated_did_doc, &token)
     .finish(&identity_client)
@@ -275,12 +293,15 @@ async fn send_proposal_works() -> anyhow::Result<()> {
   let mut identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
     .finish()
-    .with_gas_budget(TEST_GAS_BUDGET) 
+    .with_gas_budget(TEST_GAS_BUDGET)
     .build_and_execute(&identity_client)
     .await?
     .output;
   let identity_address = identity.id().into();
-  let token = identity.get_controller_token(&identity_client).await?.expect("is a controller");
+  let token = identity
+    .get_controller_token(&identity_client)
+    .await?
+    .expect("is a controller");
 
   // Let's give the identity 2 coins in order to have something to move.
   let coin1 = common::get_test_coin(identity_address, &identity_client).await?;
@@ -327,7 +348,10 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
     .output;
   let identity_address = identity.id().into();
 
-  let token = identity.get_controller_token(&identity_client).await?.expect("is a controller");
+  let token = identity
+    .get_controller_token(&identity_client)
+    .await?
+    .expect("is a controller");
 
   let coin1 = common::get_test_coin(identity_address, &identity_client).await?;
   let coin2 = common::get_test_coin(identity_address, &identity_client).await?;
@@ -396,7 +420,10 @@ async fn controller_execution_works() -> anyhow::Result<()> {
     panic!("identity2 is shared")
   };
 
-  let token = identity.get_controller_token(&identity_client).await?.expect("is a controller");
+  let token = identity
+    .get_controller_token(&identity_client)
+    .await?
+    .expect("is a controller");
   // Perform an action on `identity2` as a controller of `identity`.
   let result = identity
     .controller_execution(controller_cap.0, &token)

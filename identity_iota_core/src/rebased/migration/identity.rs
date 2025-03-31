@@ -7,8 +7,8 @@ use std::collections::HashSet;
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
-use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
+use identity_iota_interaction::IdentityMoveCalls;
 use tokio::sync::OnceCell;
 
 use crate::rebased::iota::types::Number;
