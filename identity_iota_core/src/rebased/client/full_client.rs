@@ -4,8 +4,8 @@
 use std::ops::Deref;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::tx_refactor::Transaction;
-use crate::rebased::tx_refactor::TransactionBuilder;
+use crate::rebased::transaction_builder::Transaction;
+use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::StateMetadataDocument;
@@ -27,17 +27,14 @@ use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 use tokio::sync::OnceCell;
 
-use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdaptedTraitObj;
 use crate::rebased::assets::AuthenticatedAssetBuilder;
 use crate::rebased::migration::Identity;
 use crate::rebased::migration::IdentityBuilder;
-use crate::rebased::rebased_err;
 use crate::rebased::Error;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::MoveType;
 use identity_iota_interaction::OptionalSync;
-use identity_iota_interaction::ProgrammableTransactionBcs;
 
 use super::get_object_id_from_did;
 use super::IdentityClientReadOnly;
@@ -104,29 +101,6 @@ where
       read_client: client,
       signer,
     })
-  }
-}
-
-impl<S> IdentityClient<S>
-where
-  S: Signer<IotaKeySignature> + OptionalSync,
-{
-  pub(crate) async fn execute_transaction(
-    &self,
-    tx_bcs: ProgrammableTransactionBcs,
-    gas_budget: Option<u64>,
-  ) -> Result<IotaTransactionBlockResponseAdaptedTraitObj, Error> {
-    // This code looks like we would call execute_transaction() on
-    // self.read_client (which is an IdentityClientReadOnly).
-    // Actually we call execute_transaction() on self.read_client.iota_client
-    // which is an IotaClientAdapter instance now, provided via the Deref trait.
-    // TODO: Find a more transparent way to reference the
-    //       IotaClientAdapter for readonly.
-    self
-      .read_client
-      .execute_transaction(tx_bcs, gas_budget, self.signer())
-      .await
-      .map_err(rebased_err)
   }
 }
 

@@ -19,7 +19,7 @@ use tokio::sync::OnceCell;
 
 use crate::iota_interaction_adapter::MigrationMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::tx_refactor::Transaction;
+use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::Error;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::MigrationMoveCalls;

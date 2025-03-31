@@ -17,7 +17,7 @@ use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::migration::OnChainIdentity;
-use crate::rebased::tx_refactor::TransactionBuilder;
+use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::rebased::Error;
 
 use super::CreateProposal;

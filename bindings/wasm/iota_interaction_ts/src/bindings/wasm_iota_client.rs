@@ -24,12 +24,12 @@ use identity_iota_interaction::rpc_types::ObjectsPage;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::SequenceNumber;
+use identity_iota_interaction::types::crypto::Signature;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::dynamic_field::DynamicFieldName;
 use identity_iota_interaction::types::event::EventID;
 use identity_iota_interaction::types::quorum_driver_types::ExecuteTransactionRequestType;
-use identity_iota_interaction::SignatureBcs;
-use identity_iota_interaction::TransactionDataBcs;
+use identity_iota_interaction::types::transaction::TransactionData;
 use js_sys::Promise;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
@@ -141,13 +141,13 @@ impl ManagedWasmIotaClient {
 
   pub async fn execute_transaction_block(
     &self,
-    tx_data_bcs: &TransactionDataBcs,
-    signatures: &[SignatureBcs],
+    tx_data: TransactionData,
+    signatures: Vec<Signature>,
     options: Option<IotaTransactionBlockResponseOptions>,
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> IotaRpcResult<WasmIotaTransactionBlockResponseWrapper> {
     let ex_tx_params: WasmExecuteTransactionBlockParams = serde_wasm_bindgen::to_value(
-      &ExecuteTransactionBlockParams::new(tx_data_bcs, signatures, options, request_type),
+      &ExecuteTransactionBlockParams::new(tx_data, signatures, options, request_type),
     )
     .map_err(|e| {
       console_log!(

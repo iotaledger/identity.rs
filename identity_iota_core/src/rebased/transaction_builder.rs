@@ -206,11 +206,10 @@ where
     }
 
     let tx_data = self.transaction_data(client).await?;
-    let tx_data_bcs = bcs::to_bytes(&tx_data)?;
 
     let sig = client
       .signer()
-      .sign(&tx_data_bcs)
+      .sign(&tx_data)
       .await
       .map_err(|e| Error::TransactionSigningFailed(e.to_string()))?;
     self.signatures.push(sig);
@@ -278,7 +277,6 @@ where
       sender,
       gas_data,
     );
-    let tx_data_bcs = bcs::to_bytes(&tx_data)?;
 
     let mut signatures = self.signatures;
     let needs_client_signature = client_address == sender
@@ -287,7 +285,7 @@ where
     if needs_client_signature {
       let signature = client
         .signer()
-        .sign(&tx_data_bcs)
+        .sign(&tx_data)
         .await
         .map_err(|e| Error::TransactionSigningFailed(e.to_string()))?;
       signatures.push(signature);
@@ -311,18 +309,12 @@ where
     S: Signer<IotaKeySignature> + OptionalSync,
   {
     let (tx_data, signatures, tx) = self.build(client).await?;
-    let tx_data_bcs = bcs::to_bytes(&tx_data)?;
-
-    let signatures_bcs = signatures
-      .into_iter()
-      .map(|sig| bcs::to_bytes(&sig))
-      .collect::<Result<Vec<_>, _>>()?;
 
     let dyn_tx_block = client
       .quorum_driver_api()
       .execute_transaction_block(
-        &tx_data_bcs,
-        &signatures_bcs,
+        tx_data,
+        signatures,
         Some(IotaTransactionBlockResponseOptions::full_content()),
         Some(ExecuteTransactionRequestType::WaitForLocalExecution),
       )
@@ -437,8 +429,7 @@ where
   let budget = if let Some(budget) = partial_gas_data.budget {
     budget
   } else {
-    let pt_bcs = bcs::to_bytes(pt)?;
-    client.default_gas_budget(owner, &pt_bcs).await?
+    client.default_gas_budget(owner, &pt).await?
   };
   let payment = if !partial_gas_data.payment.is_empty() {
     partial_gas_data.payment

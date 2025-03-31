@@ -5,8 +5,8 @@ use std::str::FromStr as _;
 
 use crate::iota_interaction_adapter::AssetMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::tx_refactor::Transaction;
-use crate::rebased::tx_refactor::TransactionBuilder;
+use crate::rebased::transaction_builder::Transaction;
+use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::rebased::Error;
 use anyhow::anyhow;
 use anyhow::Context;

@@ -19,13 +19,12 @@ use crate::types::base_types::SequenceNumber;
 use crate::types::crypto::PublicKey;
 use crate::types::crypto::Signature;
 use crate::types::digests::TransactionDigest;
+use crate::types::transaction::TransactionData;
+use crate::types::transaction::ProgrammableTransaction;
 use crate::types::dynamic_field::DynamicFieldName;
 use crate::types::event::EventID;
 use crate::types::quorum_driver_types::ExecuteTransactionRequestType;
 use crate::OptionalSend;
-use crate::ProgrammableTransactionBcs;
-use crate::SignatureBcs;
-use crate::TransactionDataBcs;
 use async_trait::async_trait;
 use secret_storage::SignatureScheme as SignatureSchemeSecretStorage;
 use secret_storage::Signer;
@@ -47,7 +46,7 @@ pub struct IotaKeySignature {
 impl SignatureSchemeSecretStorage for IotaKeySignature {
   type PublicKey = PublicKey;
   type Signature = Signature;
-  type Input = TransactionDataBcs;
+  type Input = TransactionData;
 }
 
 //********************************************************************
@@ -109,8 +108,8 @@ pub trait QuorumDriverTrait {
 
   async fn execute_transaction_block(
     &self,
-    tx_data_bcs: &TransactionDataBcs,
-    signatures: &[SignatureBcs],
+    tx_data: TransactionData,
+    signatures: Vec<Signature>,
     options: Option<IotaTransactionBlockResponseOptions>,
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> IotaRpcResult<Box<dyn IotaTransactionBlockResponseT<Error = Self::Error, NativeResponse = Self::NativeResponse>>>;
@@ -226,8 +225,7 @@ pub trait IotaClientTrait {
   #[cfg(not(feature = "send-sync-transaction"))]
   async fn execute_transaction<S: Signer<IotaKeySignature>>(
     &self,
-    tx_bcs: ProgrammableTransactionBcs,
-    gas_budget: Option<u64>,
+    tx_data: TransactionData,
     signer: &S,
   ) -> Result<
     Box<dyn IotaTransactionBlockResponseT<Error = Self::Error, NativeResponse = Self::NativeResponse>>,
@@ -236,8 +234,7 @@ pub trait IotaClientTrait {
   #[cfg(feature = "send-sync-transaction")]
   async fn execute_transaction<S: Signer<IotaKeySignature> + OptionalSync>(
     &self,
-    tx_bcs: ProgrammableTransactionBcs,
-    gas_budget: Option<u64>,
+    tx_data: TransactionData,
     signer: &S,
   ) -> Result<
     Box<dyn IotaTransactionBlockResponseT<Error = Self::Error, NativeResponse = Self::NativeResponse>>,
@@ -247,7 +244,7 @@ pub trait IotaClientTrait {
   async fn default_gas_budget(
     &self,
     sender_address: IotaAddress,
-    tx_bcs: &ProgrammableTransactionBcs,
+    tx: &ProgrammableTransaction,
   ) -> Result<u64, Self::Error>;
 
   async fn get_previous_version(&self, iod: IotaObjectData) -> Result<Option<IotaObjectData>, Self::Error>;
