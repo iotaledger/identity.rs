@@ -33,7 +33,9 @@ mod state_metadata;
 #[cfg(feature = "iota-client")]
 mod did_resolution;
 #[cfg(feature = "iota-client")]
-mod iota_interaction_adapter;
+/// Switches the used types from iota_interaction_rust and iota_interaction_ts depending on the used
+/// platform 
+pub mod iota_interaction_adapter;
 #[cfg(all(feature = "iota-client", not(target_arch = "wasm32")))]
 /// IOTA Rust SDK based implementation of the identity_iota_interaction interface for non wasm targets.
 pub mod iota_interaction_rust;
