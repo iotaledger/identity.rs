@@ -27,8 +27,7 @@ pub use self::error::Result;
 mod did;
 mod document;
 mod error;
-/// Provides utils to manage IOTA networks
-pub mod network;
+mod network;
 mod state_metadata;
 
 #[cfg(feature = "iota-client")]
