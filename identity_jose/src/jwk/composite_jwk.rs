@@ -68,7 +68,7 @@ impl FromStr for CompositeAlgId {
       "id-MLDSA44-Ed25519-SHA512" => Ok(Self::IdMldsa44Ed25519Sha512),
       "id-MLDSA65-Ed25519-SHA512" => Ok(Self::IdMldsa65Ed25519Sha512),
       #[cfg(not(feature = "custom_alg"))]
-      _ => Err(crate::error::Error::JwsAlgorithmParsingError),
+      &_ => Err(crate::error::Error::JwsAlgorithmParsingError),
     }
   }
 }
