@@ -8,7 +8,7 @@ use phf::Map;
 use crate::NetworkName;
 
 /// A Mapping `network_id` -> metadata needed by the library.
-pub(crate) static IOTA_NETWORKS: Map<&str, IdentityNetworkMetadata> = phf_map! {
+pub static IOTA_NETWORKS: Map<&str, IdentityNetworkMetadata> = phf_map! {
   "e678123a" => IdentityNetworkMetadata::new(
     Some("devnet"),
     &["0x03242ae6b87406bd0eb5d669fbe874ed4003694c0be9c6a9ee7c315e6461a553"],
@@ -23,7 +23,7 @@ pub(crate) static IOTA_NETWORKS: Map<&str, IdentityNetworkMetadata> = phf_map! {
 
 /// `iota_identity` package information for a given network.
 #[derive(Debug)]
-pub(crate) struct IdentityNetworkMetadata {
+pub struct IdentityNetworkMetadata {
   pub alias: Option<&'static str>,
   /// `package[0]` is the current version, `package[1]`
   /// is the version before, and so forth.
@@ -32,7 +32,7 @@ pub(crate) struct IdentityNetworkMetadata {
 }
 
 /// Returns the [`IdentityNetworkMetadata`] for a given network, if any.
-pub(crate) fn network_metadata(network_id: &str) -> Option<&'static IdentityNetworkMetadata> {
+pub fn network_metadata(network_id: &str) -> Option<&'static IdentityNetworkMetadata> {
   IOTA_NETWORKS.get(network_id)
 }
 
@@ -47,7 +47,7 @@ impl IdentityNetworkMetadata {
   }
 
   /// Returns the latest `IotaIdentity` package ID on this network.
-  pub(crate) fn latest_pkg_id(&self) -> ObjectID {
+  pub fn latest_pkg_id(&self) -> ObjectID {
     self
       .package
       .first()
@@ -57,12 +57,12 @@ impl IdentityNetworkMetadata {
   }
 
   /// Returns the ID for the `MigrationRegistry` on this network.
-  pub(crate) fn migration_registry(&self) -> ObjectID {
+  pub fn migration_registry(&self) -> ObjectID {
     self.migration_registry.parse().expect("valid ObjectID")
   }
 
   /// Returns a [`NetworkName`] if `alias` is set.
-  pub(crate) fn network_alias(&self) -> Option<NetworkName> {
+  pub fn network_alias(&self) -> Option<NetworkName> {
     self.alias.map(|alias| {
       NetworkName::try_from(alias).expect("an hardcoded network alias is valid (unless a dev messed it up)")
     })
