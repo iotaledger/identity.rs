@@ -6,8 +6,7 @@ pub mod assets;
 /// Module for handling client operations.
 pub mod client;
 mod error;
-/// Platform-agnostic code to communicate with the IOTA network
-pub mod iota;
+mod iota;
 /// Module for handling migration operations.
 pub mod migration;
 /// Contains the operations of proposals.
