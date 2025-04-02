@@ -10,7 +10,7 @@ import { createVC } from "./0_basic/5_create_vc";
 import { createVP } from "./0_basic/6_create_vp";
 import { revokeVC } from "./0_basic/7_revoke_vc";
 import { sdJwtVc } from "./1_advanced/10_sd_jwt_vc";
-// import { customResolution } from "./1_advanced/4_custom_resolution";
+import { customResolution } from "./1_advanced/4_custom_resolution";
 import { domainLinkage } from "./1_advanced/5_domain_linkage";
 import { sdJwt } from "./1_advanced/6_sd_jwt";
 import { statusList2021 } from "./1_advanced/7_status_list_2021";
@@ -18,7 +18,6 @@ import { zkp } from "./1_advanced/8_zkp";
 import { zkp_revocation } from "./1_advanced/9_zkp_revocation";
 
 export async function main(example?: string) {
-    
     // Extract example name.
     const argument = example ?? process.argv?.[2]?.toLowerCase();
     if (!argument) {
@@ -42,8 +41,8 @@ export async function main(example?: string) {
             return await createVP();
         case "7_revoke_vc":
             return await revokeVC();
-        // case "4_custom_resolution":
-        //     return await customResolution();
+        case "4_custom_resolution":
+            return await customResolution();
         case "5_domain_linkage":
             return await domainLinkage();
         case "6_sd_jwt":

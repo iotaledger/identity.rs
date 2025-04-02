@@ -2,11 +2,6 @@ import { CoreDocument, IotaDocument, Resolver } from "@iota/identity-wasm/node";
 import { IotaClient } from "@iota/iota-sdk/client";
 import { createDocumentForNetwork, getFundedClient, getMemstorage, NETWORK_URL } from "../util";
 
-// Use this external package to avoid implementing the entire did:key method in this example.
-// @ts-ignore
-import { DidKeyDriver } from "@digitalcredentials/did-method-key";
-const didKeyDriver = new DidKeyDriver();
-
 type KeyDocument = { customProperty: String } & CoreDocument;
 
 function isKeyDocument(doc: object): doc is KeyDocument {
@@ -18,13 +13,47 @@ function isKeyDocument(doc: object): doc is KeyDocument {
 export async function customResolution() {
     // Set up a handler for resolving Ed25519 did:key
     const keyHandler = async function(didKey: string): Promise<KeyDocument> {
-        let document = await didKeyDriver.get({ did: didKey });
+        // statically return DID document, implement custom resolution here
+        let document = JSON.parse(`
+        {
+            "@context": [
+                "https://www.w3.org/ns/did/v1",
+                "https://w3id.org/security/suites/ed25519-2020/v1",
+                "https://w3id.org/security/suites/x25519-2020/v1"
+            ],
+            "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+            "verificationMethod": [{
+                "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+                "type": "Ed25519VerificationKey2020",
+                "controller": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+                "publicKeyMultibase": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+            }],
+            "authentication": [
+                "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+            ],
+            "assertionMethod": [
+                "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+            ],
+            "capabilityDelegation": [
+                "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+            ],
+            "capabilityInvocation": [
+                "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+            ],
+            "keyAgreement": [{
+                "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6LSj72tK8brWgZja8NLRwPigth2T9QRiG1uH9oKZuKjdh9p",
+                "type": "X25519KeyAgreementKey2020",
+                "controller": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+                "publicKeyMultibase": "z6LSj72tK8brWgZja8NLRwPigth2T9QRiG1uH9oKZuKjdh9p"
+            }]
+        }`);
 
         // for demo purposes we'll just inject the custom property into a core document
         // to create a new KeyDocument instance
-        let coreDocument = CoreDocument.fromJSON(document);
-        (coreDocument as unknown as KeyDocument).customProperty = "foobar";
-        return coreDocument as unknown as KeyDocument;
+        return CoreDocument.fromJSON({
+            ...document,
+            customProperty: "foobar",
+        }) as KeyDocument;
     };
 
     // create new clients and create new account

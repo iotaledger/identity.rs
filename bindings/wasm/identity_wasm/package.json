@@ -51,7 +51,6 @@
     "node/*"
   ],
   "devDependencies": {
-    "@digitalcredentials/did-method-key": "^2.0.3",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/mocha": "^9.1.0",
     "@types/node": "^22.0.0",

@@ -12,7 +12,7 @@ describe(
             "5_create_vc",
             "6_create_vp",
             "7_revoke_vc",
-            // "4_custom_resolution",
+            "4_custom_resolution",
             "5_domain_linkage",
             "6_sd_jwt",
             "7_status_list_2021",
