@@ -18,12 +18,12 @@ import { zkp } from "./1_advanced/8_zkp";
 import { zkp_revocation } from "./1_advanced/9_zkp_revocation";
 
 export async function main(example?: string) {
+    
     // Extract example name.
-    if (!example || (process && process.argv && process.argv.length != 3)) {
+    const argument = example ?? process.argv?.[2]?.toLowerCase();
+    if (!argument) {
         throw "Please specify an example name, e.g. '0_create_did'";
     }
-
-    const argument = example ?? process.argv[2].toLowerCase();
 
     switch (argument) {
         case "0_create_did":
