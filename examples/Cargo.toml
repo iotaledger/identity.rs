@@ -12,7 +12,6 @@ identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-feature
 identity_iota = { path = "../identity_iota", default-features = false, features = ["iota-client", "client", "memstore", "domain-linkage", "revocation-bitmap", "status-list-2021", "jpt-bbs-plus", "hybrid-liboqs", "resolver"] }
 identity_stronghold = { path = "../identity_stronghold", default-features = false, features = ["bbs-plus"] }
 iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
-reqwest = { version = "0.12.4", default-features = false, features = ["rustls-tls", "json", "hickory-dns"]}
 json-proof-token.workspace = true
 primitive-types = "0.12.1"
 rand = "0.8.5"
@@ -21,9 +20,6 @@ serde_json = { version = "1.0", default-features = false }
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
 identity_pqc_verifier = { path = "../identity_pqc_verifier", default-features = true }
 serde.workspace = true
-colored = "2.1.0"
-
-identity_resolver = { path = "../identity_resolver", default-features = false }
 
 [lib]
 path = "utils/utils.rs"
@@ -119,29 +115,3 @@ name = "12_pq"
 [[example]]
 path = "1_advanced/13_hybrid.rs"
 name = "13_hybrid"
-
-[[example]]
-path = "1_advanced/14_did_web.rs"
-name = "14_did_web"
-
-[[example]]
-path = "2_pqc/0_pq.rs"
-name = "0_pq"
-
-[[example]]
-path = "2_pqc/1_hybrid.rs"
-name = "1_hybrid"
-
-[[example]]
-path = "2_pqc/traditional.rs"
-name = "traditional"
-
-[[example]]
-path = "2_pqc/traditional_zk.rs"
-name = "traditional_zk"
-
-[[example]]
-path = "2_pqc/revocation_zk.rs"
-name = "revocation_zk"
-
-

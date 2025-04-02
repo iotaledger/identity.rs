@@ -332,7 +332,7 @@ impl IotaDocument {
   /// Returns the first [`Service`] with an `id` property matching the provided `service_query`, if present.
   // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
   // services whose ids are of the form <did different from this document's>#<fragment>.
-  pub fn resolve_service<'query, 'me, Q>(&'me self, service_query: Q) -> Option<&Service>
+  pub fn resolve_service<'query, 'me, Q>(&'me self, service_query: Q) -> Option<&'me Service>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
@@ -347,7 +347,7 @@ impl IotaDocument {
     &'me self,
     method_query: Q,
     scope: Option<MethodScope>,
-  ) -> Option<&VerificationMethod>
+  ) -> Option<&'me VerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
@@ -512,8 +512,6 @@ impl AsRef<CoreDocument> for IotaDocument {
   }
 }
 
-
-//TODO: Web DID - how to handle revocation? I think this code should be repeated for WebDocument. This can be avoided?
 #[cfg(feature = "revocation-bitmap")]
 mod iota_document_revocation {
   use identity_credential::revocation::RevocationDocumentExt;

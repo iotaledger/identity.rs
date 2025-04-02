@@ -18,7 +18,7 @@ members = [
   "examples",
 ]
 
-exclude = ["bindings/wasm", "bindings/grpc", "examples/demo/server"]
+exclude = ["bindings/wasm", "bindings/grpc"]
 
 [workspace.dependencies]
 bls12_381_plus = { version = "0.8.17" }

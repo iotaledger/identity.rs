@@ -1,6 +1,28 @@
 # Changelog
 
-## [wasm-v1.3.1](https://github.com/iotaledger/identity.rs/tree/wasm-v1.3.1) (2024-06-27)
+## [wasm-v1.5.0](https://github.com/iotaledger/identity.rs/tree/wasm-v1.5.0) (2025-01-20)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v1.4.0...wasm-v1.5.0)
+
+### Added
+
+- SD-JWT VC implementation [\#1413](https://github.com/iotaledger/identity.rs/pull/1413)
+
+### Patch
+
+- Support %-encoded characters in DID URL [\#1496](https://github.com/iotaledger/identity.rs/pull/1496)
+- fix: serialization of status list [\#1423](https://github.com/iotaledger/identity.rs/pull/1423)
+
+## [wasm-v1.4.0](https://github.com/iotaledger/identity.rs/tree/wasm-v1.4.0) (2024-09-23)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v1.3.1...wasm-v1.4.0)
+
+### Added
+
+- Add support for `did:jwk` resolution [\#1404](https://github.com/iotaledger/identity.rs/pull/1404)
+- Linked Verifiable Presentations [\#1398](https://github.com/iotaledger/identity.rs/pull/1398)
+
+## [wasm-v1.3.1](https://github.com/iotaledger/identity.rs/tree/wasm-v1.3.1) (2024-06-28)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v1.3.0...wasm-v1.3.1)
 
