@@ -25,7 +25,6 @@ mod did;
 mod did_jwk;
 mod did_url;
 mod error;
-mod did_web;
 mod did_compositejwk;
 
 pub use crate::did_url::DIDUrl;
@@ -35,5 +34,4 @@ pub use did::CoreDID;
 pub use did::DID;
 pub use did_jwk::*;
 pub use error::Error;
-pub use did_web::*;
 pub use did_compositejwk::*;

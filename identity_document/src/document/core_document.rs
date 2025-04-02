@@ -13,7 +13,6 @@ use std::convert::Infallible;
 
 use identity_did::DIDCompositeJwk;
 use identity_did::DIDJwk;
-use identity_did::WebDID;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::DecodedJws;
 use identity_verification::jose::jws::Decoder;
@@ -1069,19 +1068,6 @@ impl CoreDocument {
       .capability_invocation(verification_method_id.clone())
       .capability_delegation(verification_method_id.clone())
       .build()
-  }
-}
-
-impl CoreDocument {
-  /// Creates a [`CoreDocument`] from a url following the did:web method.
-  pub fn new_from_url(url: &str) -> Result<Self, Error>{
-    let id = WebDID::new(url).map_err(|_| Error::InvalidDocument("Invalid DID Web", None))?;
-    let document: CoreDocument = CoreDocument::builder(Object::default())
-      .id(id.into())
-      .build()
-      .map_err(|_| Error::InvalidDocument("empty Document construction failed", None))?;
-
-    Ok(document)
   }
 }
 
