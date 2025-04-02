@@ -29,5 +29,4 @@ book
 docs
 # ignore IOTA build artifacts & package locks
 build
-identity_iota_core/packages/*/Move.lock
 
