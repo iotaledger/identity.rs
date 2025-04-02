@@ -50,10 +50,9 @@ export async function customResolution() {
 
         // for demo purposes we'll just inject the custom property into a core document
         // to create a new KeyDocument instance
-        return CoreDocument.fromJSON({
-            ...document,
-            customProperty: "foobar",
-        }) as KeyDocument;
+        const doc = CoreDocument.fromJSON(document) as KeyDocument;
+        doc.customProperty = "foobar";
+        return doc;
     };
 
     // create new clients and create new account
