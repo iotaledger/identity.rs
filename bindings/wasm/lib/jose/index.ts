@@ -4,3 +4,4 @@ export * from "./jwk_operation";
 export * from "./jwk_type";
 export * from "./jwk_use";
 export * from "./jws_algorithm";
+export * from "./composite_jwk";

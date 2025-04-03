@@ -24,6 +24,9 @@ pub enum JwkStorageDocumentError {
   /// Caused by the usage of a non-JWK method where a JWK method is expected.
   #[error("invalid method data format: expected publicKeyJwk")]
   NotPublicKeyJwk,
+  /// Caused by the usage of a non-Composite method where a Composite method is expected.
+  #[error("invalid method data format: expected compositePublicKey")]
+  NotCompositePublicKey, //TODO: hybrid - new error
   /// Caused by an invalid JWS algorithm.
   #[error("invalid JWS algorithm")]
   InvalidJwsAlgorithm,

@@ -1,8 +1,13 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use core::str;
 use std::borrow::Cow;
+use std::ops::Deref;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -15,6 +20,8 @@ use crate::jwu::decode_b64_json;
 use crate::jwu::filter_non_empty_bytes;
 use crate::jwu::parse_utf8;
 use crate::jwu::validate_jws_headers;
+use crypto::hashes::Digest;
+
 
 use super::JwsVerifier;
 use super::VerificationInput;
@@ -167,6 +174,99 @@ impl<'a> JwsValidationItem<'a> {
     // Call verifier
     verifier
       .verify(input, public_key)
+      .map_err(Error::SignatureVerificationError)?;
+
+    Ok(DecodedJws {
+      protected,
+      unprotected,
+      claims,
+    })
+  }
+
+  ///Hybrid verify
+  pub fn verify_hybrid<TRV, PQV>(
+    self,
+    traditional_verifier: &TRV,
+    pq_verifier: &PQV,
+    traditional_pk: &Jwk,
+    pq_pk: &Jwk,
+  ) -> Result<DecodedJws<'a>>
+  where
+    TRV: JwsVerifier,
+    PQV: JwsVerifier,
+  {
+    // Destructure data
+    let JwsValidationItem {
+      headers,
+      claims,
+      signing_input,
+      decoded_signature,
+    } = self;
+
+    let (protected, unprotected): (JwsHeader, Option<Box<JwsHeader>>) = match headers {
+      DecodedHeaders::Protected(protected) => (protected, None),
+      DecodedHeaders::Both { protected, unprotected } => (protected, Some(unprotected)),
+      DecodedHeaders::Unprotected(_) => return Err(Error::MissingHeader("missing protected header")),
+    };
+
+    // Extract and validate alg from the protected header.
+    let alg: JwsAlgorithm = protected.alg().ok_or(Error::ProtectedHeaderWithoutAlg)?;
+    let (t_alg, pq_alg, signing_input, traditional_signature_len) = match alg {
+      JwsAlgorithm::IdMldsa44Ed25519Sha512 => {
+        //TODO: hybrid - DER OID
+        let mut input = vec![
+          0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x03,
+        ];
+        input.extend(crypto::hashes::sha::Sha512::digest(signing_input).deref().to_vec());
+        (
+          JwsAlgorithm::EdDSA,
+          JwsAlgorithm::ML_DSA_44,
+          input,
+          crypto::signatures::ed25519::Signature::LENGTH,
+        )
+      }
+      JwsAlgorithm::IdMldsa65Ed25519Sha512 => {
+        let mut input = vec![
+          0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x0A,
+        ];
+        input.extend(crypto::hashes::sha::Sha512::digest(signing_input).deref().to_vec());
+        (
+          JwsAlgorithm::EdDSA,
+          JwsAlgorithm::ML_DSA_65,
+          input,
+          crypto::signatures::ed25519::Signature::LENGTH,
+        )
+      }
+      _ => return Err(Error::JwsAlgorithmParsingError),
+    };
+
+    traditional_pk.check_alg(t_alg.name())?;
+    pq_pk.check_alg(pq_alg.name())?;
+
+    let extracted_signature_t = &decoded_signature[..traditional_signature_len];
+    let extracted_signature_pq = &decoded_signature[traditional_signature_len..];
+
+    // println!("SIGN 2 = {:#?}", signing_input);
+    // Construct verification input
+    let input1 = VerificationInput {
+      alg: t_alg,
+      signing_input: signing_input.clone().into(),
+      decoded_signature: extracted_signature_t.into(),
+    };
+
+    // Call verifier
+    traditional_verifier
+      .verify(input1, traditional_pk)
+      .map_err(Error::SignatureVerificationError)?;
+
+    let input2 = VerificationInput {
+      alg: pq_alg,
+      signing_input: signing_input.into(),
+      decoded_signature: extracted_signature_pq.into(),
+    };
+    // Call verifier
+    pq_verifier
+      .verify(input2, pq_pk)
       .map_err(Error::SignatureVerificationError)?;
 
     Ok(DecodedJws {
