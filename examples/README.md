@@ -1,3 +1,5 @@
+![banner](./../documentation/static/img/Banner/banner_identity.svg)
+
 # IOTA Identity Examples
 
 This folder provides code examples to learn how IOTA Identity can be used.
@@ -13,6 +15,8 @@ For instance, to run the example `0_create_did`, use:
 ```rust
 cargo run --release --example 0_create_did
 ```
+
+### Note: Running the examples with the release flag will be significantly faster due to stronghold performance issues in debug mode.
 
 ## Basic Examples
 
@@ -47,19 +51,8 @@ The following advanced examples are available:
 | [9_zkp](./1_advanced/9_zkp.rs)                                                         | Demonstrates how to generate, present and verify a ZK VC (BBS+) with Selective Disclosure.               |
 | [10_zkp_revocation](./1_advanced/10_zkp_revocation.rs)                                 | Demonstrates how to revoke a ZK VC (BBS+).                                                               |
 | [11_linked_verifiable_presentation](./1_advanced/11_linked_verifiable_presentation.rs) | Demonstrates how to link a public Verifiable Presentation to an identity and how it can be verified.     |
+| [12_pq](./1_advanced/12_pq.rs) | Demonstrates how to generate, present and verify a VC with pure PQ signature.     |
+| [13_hybrid](./1_advanced/13_hybrid.rs)                                                        | Demonstrates how to generate, present and verify a VC with PQ/T hybrid signature |
 
 #### Note: Running the examples with the release flag will be significantly faster due to stronghold performance issues in debug mode.
 
-## PQC Examples
-
-The following Post-Quantum (PQ) and Post-Quantum/Traditional (PQ/T) hybrid examples are available:
-| Name                                                                                   | Information                                                                                              |
-| :------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
-| [0_pq](./2_pqc/0_pq.rs)                                                                | Demonstrates how to generate, present and verify a VC with pure PQ signature. This example uses did:jwk  |
-| [1_hybrid](./2_pqc/1_hybrid.rs)                                                        | Demonstrates how to generate, present and verify a VC with PQ/T hybrid signature. This example uses [did:compositejwk](https://github.com/Cybersecurity-LINKS/did-compositejwk/blob/main/spec.md) |
-                                                                                                         
-#### **Note**: The PQC examples are configured with the Issuer using the [did:web](https://w3c-ccg.github.io/did-method-web/) method. To run these examples, you must have a server instance that hosts the Issuer's DID Document. You can use the default server provided in the `example/2_pqc/server` folder, or configure one yourself. However, ensure that the following variables in `utils.rs` are correctly set to point to your server instance:
-> ```rust
-> pub static DID_URL: &str = "https://localhost:4443/.well-known/";
-> pub static PATH_DID_FILE: &str = "C:/Projects/did-web-server/.well-known/";
-> ```
