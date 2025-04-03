@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.node.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "../lib": [
+        "."
+      ],
+      "~iota_interaction_ts": [
+        "../node/iota_interaction_ts",
+        "./iota_interaction_ts.js"
+      ]
+    },
+    "outDir": "../node",
+    "declarationDir": "../node"
+  }
+}

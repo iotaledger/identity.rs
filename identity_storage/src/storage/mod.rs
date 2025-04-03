@@ -12,6 +12,8 @@ mod signature_options;
 #[cfg(feature = "jpt-bbs-plus")]
 mod timeframe_revocation_ext;
 
+#[cfg(feature = "storage-signer")]
+mod storage_signer;
 #[cfg(all(test, feature = "memstore"))]
 pub(crate) mod tests;
 
@@ -21,6 +23,8 @@ pub use jwk_document_ext::*;
 #[cfg(feature = "jpt-bbs-plus")]
 pub use jwp_document_ext::*;
 pub use signature_options::*;
+#[cfg(feature = "storage-signer")]
+pub use storage_signer::*;
 #[cfg(feature = "jpt-bbs-plus")]
 pub use timeframe_revocation_ext::*;
 
