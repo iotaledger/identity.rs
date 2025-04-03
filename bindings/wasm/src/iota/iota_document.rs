@@ -1021,7 +1021,6 @@ impl WasmIotaDocument {
         .generate_method_pqc(&storage_clone, KeyType::from(keyType), alg, fragment.as_deref(), scope)
         .await
         .wasm_result()?;
-      web_sys::console::log_1(&method_fragment.clone().into());
       Ok(JsValue::from(method_fragment))
     });
     Ok(promise.unchecked_into())
