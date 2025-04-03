@@ -210,7 +210,7 @@ impl ConfigChange {
       }
     }
     // check whether the new threshold allows to interact with the identity
-    if new_threshold > controllers.values().sum() {
+    if new_threshold > controllers.values().sum::<u64>() {
       return Err(Error::InvalidConfig(
         "the resulting configuration will result in an unaccessible identity".to_string(),
       ));
