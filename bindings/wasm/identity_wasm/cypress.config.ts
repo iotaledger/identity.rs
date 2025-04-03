@@ -9,6 +9,7 @@ export default defineConfig({
         runMode: 3,
     },
     e2e: {
+        baseUrl: "http://localhost:5173",
         supportFile: false,
         setupNodeEvents(on, config) {
             on("before:browser:launch", (browser, launchOptions) => {

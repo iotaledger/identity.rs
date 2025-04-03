@@ -17,12 +17,12 @@ import { statusList2021 } from "./1_advanced/7_status_list_2021";
 import { zkp } from "./1_advanced/8_zkp";
 import { zkp_revocation } from "./1_advanced/9_zkp_revocation";
 
-async function main() {
+export async function main(example?: string) {
     // Extract example name.
-    if (process.argv.length != 3) {
+    const argument = example ?? process.argv?.[2]?.toLowerCase();
+    if (!argument) {
         throw "Please specify an example name, e.g. '0_create_did'";
     }
-    const argument = process.argv[2].toLowerCase();
 
     switch (argument) {
         case "0_create_did":

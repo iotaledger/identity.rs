@@ -90,7 +90,7 @@ const vc_metadata: TypeMetadataHelper = JSON.parse(`{
 }`);
 
 const keypair_jwk = async (): Promise<[JWK, JWK]> => {
-    const [sk, pk] = await generateKeyPair("ES256").then(res => [res.privateKey, res.publicKey]);
+    const [sk, pk] = await generateKeyPair("ES256", { extractable: true }).then(res => [res.privateKey, res.publicKey]);
     const sk_jwk = await exportJWK(sk);
     const pk_jwk = await exportJWK(pk);
 
