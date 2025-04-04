@@ -2,19 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ApproveUpdateDidDocumentProposal, CreateUpdateDidProposal, ExecuteUpdateDidProposal, IdentityClient, UpdateDid, /*, SendAction, UpdateDid, ConfigChange */ } from "~identity_wasm";
-import { TransactionBuilder } from "./transaction_internal";
+import { Transaction, TransactionBuilder } from "./transaction_internal";
 
 export type Action = UpdateDid; //| SendAction | ConfigChange;
-
-export type ApproveProposal = ApproveUpdateDidDocumentProposal;
-export type ExecuteProposal<A extends Action> = A extends UpdateDid ? ExecuteUpdateDidProposal
-    : never;
-export type CreateProposal<A extends Action> = A extends UpdateDid ? CreateUpdateDidProposal
+export type ProposalOutput<A extends Action> = A extends UpdateDid ? void
     : never;
 export type ProposalResult<A extends Action> = ProposalOutput<A> | Proposal<A>;
 
-export type ProposalOutput<A extends Action> = A extends UpdateDid ? void
-    : never;
+export type ApproveProposal = Transaction<void>;
+export type ExecuteProposal<A extends Action> = Transaction<ProposalOutput<A>>;
+export type CreateProposal<A extends Action> = Transaction<ProposalResult<A>>;
 export interface Proposal<A extends Action> {
     id: string;
     get action(): A;
