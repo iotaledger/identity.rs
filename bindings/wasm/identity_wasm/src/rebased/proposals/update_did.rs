@@ -113,8 +113,16 @@ impl WasmProposalUpdateDid {
   }
 
   #[wasm_bindgen(unchecked_return_type = "TransactionBuilder<ApproveProposal>")]
-  pub fn approve(&self, identity: &WasmOnChainIdentity, controller_token: &WasmControllerToken) -> Result<WasmTransactionBuilder> {
-    let js_tx = JsValue::from(WasmApproveUpdateDidDocumentProposal::new(self, identity, controller_token));
+  pub fn approve(
+    &self,
+    identity: &WasmOnChainIdentity,
+    controller_token: &WasmControllerToken,
+  ) -> Result<WasmTransactionBuilder> {
+    let js_tx = JsValue::from(WasmApproveUpdateDidDocumentProposal::new(
+      self,
+      identity,
+      controller_token,
+    ));
     Ok(WasmTransactionBuilder::new(js_tx.unchecked_into()))
   }
 
@@ -164,6 +172,20 @@ impl WasmApproveUpdateDidDocumentProposal {
       .into_inner();
     let pt = tx.build_programmable_transaction(&client.0).await.wasm_result()?;
     bcs::to_bytes(&pt).wasm_result()
+  }
+
+  pub async fn apply(
+    &self,
+    effects: &WasmIotaTransactionBlockEffects,
+    client: &WasmIdentityClientReadOnly,
+  ) -> Result<()> {
+    let mut proposal = self.proposal.0.write().await;
+    let identity = self.identity.0.read().await;
+    let tx = proposal
+      .approve(&identity, &self.controller_token.0)
+      .wasm_result()?
+      .into_inner();
+    tx.apply(&effects.clone().into(), &client.0).await.wasm_result()
   }
 }
 

@@ -9,14 +9,8 @@ export type Action = UpdateDid; //| SendAction | ConfigChange;
 export type ApproveProposal = ApproveUpdateDidDocumentProposal;
 export type ExecuteProposal<A extends Action> = A extends UpdateDid ? ExecuteUpdateDidProposal
     : never;
-export type ExecuteProposalOutput<E extends ExecuteProposal<Action>> = E extends ExecuteProposal<UpdateDid> ? ProposalOutput<UpdateDid>
-    : never;
-
 export type CreateProposal<A extends Action> = A extends UpdateDid ? CreateUpdateDidProposal
     : never;
-export type CreateProposalOutput<C extends CreateProposal<Action>> = C extends CreateProposal<UpdateDid> ? Proposal<UpdateDid> | ProposalOutput<UpdateDid>
-    : never;
-
 export type ProposalResult<A extends Action> = ProposalOutput<A> | Proposal<A>;
 
 export type ProposalOutput<A extends Action> = A extends UpdateDid ? void
