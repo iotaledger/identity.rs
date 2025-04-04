@@ -146,6 +146,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
 
     let tx =
       IdentityMoveCallsAdapter::execute_update(identity_ref, controller_cap_ref, proposal_id, client.package_id())
+        .await
         .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     let ptb = bcs::from_bytes(&tx)?;

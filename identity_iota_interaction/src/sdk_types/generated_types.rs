@@ -43,15 +43,14 @@ pub struct ExecuteTransactionBlockParams {
 impl ExecuteTransactionBlockParams {
   pub fn new(
     tx_data: TransactionData,
-    signature: Vec<Signature>,
+    signatures: Vec<Signature>,
     options: Option<IotaTransactionBlockResponseOptions>,
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> Self {
     let tx_data_bcs = bcs::to_bytes(&tx_data).expect("this serialization cannot fail");
-    let signatures_b64 = signature
+    let signatures_b64 = signatures
       .into_iter()
-      .map(|sig| bcs::to_bytes(&sig).expect("this serialization cannot fail"))
-      .map(|sig_bytes| Base64::from_bytes(&sig_bytes))
+      .map(|sig| Base64::from_bytes(sig.as_ref()))
       .collect();
     ExecuteTransactionBlockParams {
       transaction_block: Base64::from_bytes(&tx_data_bcs),

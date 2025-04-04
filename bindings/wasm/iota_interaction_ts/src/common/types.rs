@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
+use identity_iota_interaction::types::transaction::TransactionKind;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Promise;
 use js_sys::Uint8Array;
@@ -94,12 +95,28 @@ impl Default for MapStringAny {
 
 impl PromiseUint8Array {
   /// Helper function to convert Uint8 arrays from contract calls to the internal `ProgrammableTransactionBcs` type.
-  pub async fn to_transaction_bcs(&self) -> TsSdkResult<ProgrammableTransactionBcs> {
+  pub async fn to_programmable_transaction_bcs(&self) -> TsSdkResult<ProgrammableTransactionBcs> {
     let promise: Promise = Promise::resolve(self);
-    JsFuture::from(promise)
+    let tx_kind_bcs = JsFuture::from(promise)
       .await
       .map(|v| Uint8Array::from(v).to_vec())
-      .map_err(WasmError::from)
-      .map_err(TsSdkError::from)
+      .map_err(WasmError::from)?;
+
+    let tx_kind = bcs::from_bytes(&tx_kind_bcs).map_err(|e| {
+      TsSdkError::TransactionSerializationError(format!("failed to deserialize BCS TransactionKind: {e}"))
+    })?;
+
+    #[allow(irrefutable_let_patterns)]
+    let TransactionKind::ProgrammableTransaction(pt) = tx_kind
+    else {
+      return Err(TsSdkError::WasmError(
+        "TransactionKind variant".to_owned(),
+        "only programmable transactions can be used within this library".to_owned(),
+      ));
+    };
+
+    bcs::to_bytes(&pt).map_err(|e| {
+      TsSdkError::TransactionSerializationError(format!("failed to BCS serialize programmable transaction: {e}"))
+    })
   }
 }

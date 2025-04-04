@@ -13,12 +13,15 @@ use identity_iota_interaction::types::base_types::SequenceNumber;
 use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::crypto::Signature;
 use identity_iota_interaction::types::crypto::SignatureScheme;
+use identity_iota_interaction::types::digests::ObjectDigest;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::execution_status::CommandArgumentError;
 use identity_iota_interaction::types::object::Owner;
+use identity_iota_interaction::types::transaction::TransactionData;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Promise;
 use js_sys::Uint8Array;
+use serde::de::Error;
 use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -88,6 +91,18 @@ extern "C" {
   #[derive(Clone)]
   pub type WasmIotaTransactionBlockResponse;
 
+  #[wasm_bindgen(typescript_type = "Promise<DryRunTransactionBlockResponse>")]
+  pub type PromiseDryRunTransactionBlockResponse;
+
+  #[wasm_bindgen(typescript_type = "DryRunTransactionBlockResponse")]
+  #[derive(Clone)]
+  pub type WasmDryRunTransactionBlockResponse;
+
+  #[wasm_bindgen(typescript_type = "DryRunTransactionBlockParams")]
+  #[derive(Clone)]
+  pub type WasmDryRunTransactionBlockParams;
+
+  #[derive(Clone)]
   #[wasm_bindgen(typescript_type = "TransactionEffects")]
   pub type WasmIotaTransactionBlockEffects;
 
@@ -131,9 +146,18 @@ extern "C" {
   #[derive(Clone)]
   pub type WasmExecutionStatus;
 
-  #[wasm_bindgen(typescript_type = "ObjectRef")]
+  #[wasm_bindgen(typescript_type = "IotaObjectRef")]
   #[derive(Clone)]
   pub type WasmObjectRef;
+
+  #[wasm_bindgen(method, getter, js_name = objectId)]
+  pub fn object_id(this: &WasmObjectRef) -> String;
+
+  #[wasm_bindgen(method, getter, js_name = digest)]
+  pub fn digest(this: &WasmObjectRef) -> String;
+
+  #[wasm_bindgen(method, getter, js_name = version)]
+  pub fn version(this: &WasmObjectRef) -> String;
 
   #[wasm_bindgen(typescript_type = "SharedObjectRef")]
   #[derive(Clone)]
@@ -174,6 +198,15 @@ extern "C" {
 impl From<WasmIotaTransactionBlockEffects> for IotaTransactionBlockEffects {
   fn from(value: WasmIotaTransactionBlockEffects) -> Self {
     serde_wasm_bindgen::from_value(value.into()).expect("have the same repr")
+  }
+}
+
+impl From<&'_ IotaTransactionBlockEffects> for WasmIotaTransactionBlockEffects {
+  fn from(value: &'_ IotaTransactionBlockEffects) -> Self {
+    value
+      .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+      .expect("same representation")
+      .unchecked_into()
   }
 }
 
@@ -228,6 +261,9 @@ extern "C" {
   #[wasm_bindgen(method, structural, catch)]
   pub async fn build(this: &WasmTransactionBuilder) -> Result<Uint8Array, JsValue>;
 
+  #[derive(Clone)]
+  #[wasm_bindgen(typescript_type = "TransactionData")]
+  pub type WasmTransactionData;
   // TODO: decide if we need the following functions: "yagni" or not?
 
   // #[wasm_bindgen(js_name = "setSender", method, catch)]
@@ -247,6 +283,21 @@ extern "C" {
 
   // #[wasm_bindgen(js_name = "getData", method, catch)]
   // pub fn get_data(this: &WasmTransactionBuilder) -> Result<JsValue, JsValue>;
+}
+
+impl TryFrom<TransactionData> for WasmTransactionData {
+  type Error = serde_wasm_bindgen::Error;
+  fn try_from(value: TransactionData) -> Result<Self, Self::Error> {
+    let js_value = serde_wasm_bindgen::to_value(&value)?;
+    Ok(js_value.unchecked_into())
+  }
+}
+
+impl TryFrom<WasmTransactionData> for TransactionData {
+  type Error = serde_wasm_bindgen::Error;
+  fn try_from(value: WasmTransactionData) -> Result<Self, Self::Error> {
+    serde_wasm_bindgen::from_value(value.into())
+  }
 }
 
 #[wasm_bindgen(module = "@iota/iota-sdk/cryptography")]
@@ -317,6 +368,20 @@ impl TryFrom<WasmPublicKey> for PublicKey {
     assert_eq!(&key_bytes, public_key.as_ref());
 
     Ok(public_key)
+  }
+}
+
+impl TryFrom<WasmObjectRef> for ObjectRef {
+  type Error = anyhow::Error;
+  fn try_from(value: WasmObjectRef) -> Result<Self, Self::Error> {
+    let digest = serde_json::from_value(serde_json::Value::String(value.digest()))?;
+    let version = {
+      let version_number = serde_json::Number::from_str(&value.version())?;
+      serde_json::from_value(serde_json::Value::Number(version_number))?
+    };
+    let object_id = value.object_id().parse()?;
+
+    Ok((object_id, version, digest))
   }
 }
 
@@ -396,7 +461,7 @@ extern "C" {
   fn digest_inner(this: &WasmIotaTransactionBlockResponseWrapper) -> String;
 
   #[wasm_bindgen(method, js_name = "get_response")]
-  fn response(this: &WasmIotaTransactionBlockResponseWrapper) -> WasmIotaTransactionBlockResponse;
+  pub fn response(this: &WasmIotaTransactionBlockResponseWrapper) -> WasmIotaTransactionBlockResponse;
 
   #[wasm_bindgen(js_name = executeTransaction)]
   fn execute_transaction_inner(

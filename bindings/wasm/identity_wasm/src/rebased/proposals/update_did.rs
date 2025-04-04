@@ -7,21 +7,22 @@ use identity_iota::iota::rebased::migration::Proposal;
 use identity_iota::iota::rebased::proposals::ProposalResult;
 use identity_iota::iota::rebased::proposals::ProposalT;
 use identity_iota::iota::rebased::proposals::UpdateDidDocument;
-use identity_iota::iota::rebased::transaction::TransactionInternal;
-use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
+use identity_iota::iota::rebased::transaction_builder::Transaction;
 use identity_iota::iota::StateMetadataDocument;
-use iota_interaction_ts::NativeTransactionBlockResponse;
+use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::JsCast;
+use wasm_bindgen::JsValue;
 
 use super::StringSet;
-use super::WasmTransactionInternalOutputVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::iota::WasmIotaDocument;
-use crate::rebased::WasmIdentityClient;
+use crate::rebased::WasmControllerToken;
+use crate::rebased::WasmIdentityClientReadOnly;
 use crate::rebased::WasmOnChainIdentity;
+use crate::rebased::WasmTransactionBuilder;
 
 #[wasm_bindgen(js_name = UpdateDid)]
 pub struct WasmUpdateDid(pub(crate) UpdateDidDocument);
@@ -111,140 +112,128 @@ impl WasmProposalUpdateDid {
     Ok(js_set)
   }
 
-  pub fn approve(&self, identity: &WasmOnChainIdentity) -> WasmApproveUpdateDidDocumentProposalTx {
-    WasmApproveUpdateDidDocumentProposalTx::new(self, identity)
+  #[wasm_bindgen(unchecked_return_type = "TransactionBuilder<ApproveProposal>")]
+  pub fn approve(&self, identity: &WasmOnChainIdentity, controller_token: &WasmControllerToken) -> Result<WasmTransactionBuilder> {
+    let js_tx = JsValue::from(WasmApproveUpdateDidDocumentProposal::new(self, identity, controller_token));
+    Ok(WasmTransactionBuilder::new(js_tx.unchecked_into()))
   }
 
   #[wasm_bindgen(js_name = intoTx)]
-  pub fn into_tx(self, identity: &WasmOnChainIdentity) -> WasmExecuteUpdateDidDocumentProposalTx {
-    WasmExecuteUpdateDidDocumentProposalTx::new(self, identity)
+  pub fn into_tx(
+    self,
+    identity: &WasmOnChainIdentity,
+    controller_token: &WasmControllerToken,
+  ) -> WasmTransactionBuilder {
+    let js_tx = JsValue::from(WasmExecuteUpdateDidDocumentProposal::new(
+      self,
+      identity,
+      controller_token,
+    ));
+    WasmTransactionBuilder::new(js_tx.unchecked_into())
   }
 }
 
-#[wasm_bindgen(js_name = ApproveUpdateDidDocumentProposalTx)]
-pub struct WasmApproveUpdateDidDocumentProposalTx {
+#[wasm_bindgen(js_name = ApproveUpdateDidDocumentProposal)]
+pub struct WasmApproveUpdateDidDocumentProposal {
   proposal: WasmProposalUpdateDid,
   identity: WasmOnChainIdentity,
-  gas_budget: Option<u64>,
+  controller_token: WasmControllerToken,
 }
 
-#[wasm_bindgen(js_class = ApproveUpdateDidDocumentProposalTx)]
-impl WasmApproveUpdateDidDocumentProposalTx {
-  fn new(proposal: &WasmProposalUpdateDid, identity: &WasmOnChainIdentity) -> Self {
+#[wasm_bindgen(js_class = ApproveUpdateDidDocumentProposal)]
+impl WasmApproveUpdateDidDocumentProposal {
+  fn new(
+    proposal: &WasmProposalUpdateDid,
+    identity: &WasmOnChainIdentity,
+    controller_token: &WasmControllerToken,
+  ) -> Self {
     Self {
       proposal: proposal.clone(),
       identity: identity.clone(),
-      gas_budget: None,
+      controller_token: controller_token.clone(),
     }
   }
 
-  #[wasm_bindgen(js_name = withGasBudget)]
-  pub fn with_gas_budget(mut self, budget: u64) -> Self {
-    self.gas_budget = Some(budget);
-    self
-  }
-
-  #[wasm_bindgen(setter, js_name = gasBudget)]
-  pub fn set_gas_budget(&mut self, budget: u64) {
-    self.gas_budget = Some(budget);
-  }
-
-  #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionInternalOutputVoid> {
-    let identity_ref = self.identity.0.read().await;
-    self
-      .proposal
-      .0
-      .write()
-      .await
-      .approve(&identity_ref)
-      .execute_with_opt_gas_internal(self.gas_budget, &client.0)
-      .await
-      .wasm_result()
-      .map(|tx_output| WasmTransactionInternalOutputVoid::new(tx_output.response.clone_native_response()))
+  #[wasm_bindgen(js_name = buildProgrammableTransaction)]
+  pub async fn build_programmable_transaction(&self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
+    let mut proposal = self.proposal.0.write().await;
+    let identity = self.identity.0.read().await;
+    let tx = proposal
+      .approve(&identity, &self.controller_token.0)
+      .wasm_result()?
+      .into_inner();
+    let pt = tx.build_programmable_transaction(&client.0).await.wasm_result()?;
+    bcs::to_bytes(&pt).wasm_result()
   }
 }
 
-#[wasm_bindgen(js_name = ExecuteUpdateDidProposalTx)]
-pub struct WasmExecuteUpdateDidDocumentProposalTx {
+#[wasm_bindgen(js_name = ExecuteUpdateDidProposal)]
+pub struct WasmExecuteUpdateDidDocumentProposal {
   proposal: WasmProposalUpdateDid,
   identity: WasmOnChainIdentity,
-  gas_budget: Option<u64>,
+  controller_token: WasmControllerToken,
 }
 
-#[wasm_bindgen(js_class = ExecuteUpdateDidProposalTx)]
-impl WasmExecuteUpdateDidDocumentProposalTx {
-  fn new(proposal: WasmProposalUpdateDid, identity: &WasmOnChainIdentity) -> Self {
+#[wasm_bindgen(js_class = ExecuteUpdateDidProposal)]
+impl WasmExecuteUpdateDidDocumentProposal {
+  pub fn new(
+    proposal: WasmProposalUpdateDid,
+    identity: &WasmOnChainIdentity,
+    controller_token: &WasmControllerToken,
+  ) -> Self {
     Self {
       proposal,
       identity: identity.clone(),
-      gas_budget: None,
+      controller_token: controller_token.clone(),
     }
   }
 
-  #[wasm_bindgen(js_name = withGasBudget)]
-  pub fn with_gas_budget(mut self, budget: u64) -> Self {
-    self.gas_budget = Some(budget);
-    self
-  }
-
-  #[wasm_bindgen(setter, js_name = gasBudget)]
-  pub fn set_gas_budget(&mut self, budget: u64) {
-    self.gas_budget = Some(budget);
-  }
-
-  #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionInternalOutputVoid> {
-    let mut identity_ref = self.identity.0.write().await;
-    let proposal = Rc::into_inner(self.proposal.0)
-      .ok_or_else(|| js_sys::Error::new("cannot consume proposal; try to drop all other references to it"))?
-      .into_inner();
-
-    proposal
-      .into_tx(&mut identity_ref, client)
+  #[wasm_bindgen(js_name = buildProgrammableTransaction)]
+  pub async fn build_programmable_transaction(&self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
+    let proposal = self.proposal.0.read().await.clone();
+    let mut identity = self.identity.0.write().await;
+    let tx = proposal
+      .into_tx(&mut identity, &self.controller_token.0, &client.0)
       .await
       .wasm_result()?
-      .execute_with_opt_gas_internal(self.gas_budget, client)
+      .into_inner();
+    bcs::to_bytes(tx.ptb()).wasm_result()
+  }
+
+  pub async fn apply(
+    self,
+    effects: &WasmIotaTransactionBlockEffects,
+    client: &WasmIdentityClientReadOnly,
+  ) -> Result<()> {
+    let proposal = self.proposal.0.read().await.clone();
+    let mut identity = self.identity.0.write().await;
+    let tx = proposal
+      .into_tx(&mut identity, &self.controller_token.0, &client.0)
       .await
-      .wasm_result()
-      .map(|tx_output| WasmTransactionInternalOutputVoid::new(tx_output.response.clone_native_response()))
+      .wasm_result()?
+      .into_inner();
+    tx.apply(&effects.clone().into(), &client.0).await.wasm_result()?;
+
+    Ok(())
   }
 }
 
-#[wasm_bindgen(js_name = CreateUpdateDidProposalTxOutput, inspectable, getter_with_clone)]
-pub struct WasmCreateUpdateDidProposalTxOutput {
-  pub output: Option<WasmProposalUpdateDid>,
-  pub response: NativeTransactionBlockResponse,
-}
-
-impl From<TransactionOutputInternal<ProposalResult<Proposal<UpdateDidDocument>>>>
-  for WasmCreateUpdateDidProposalTxOutput
-{
-  fn from(tx_output: TransactionOutputInternal<ProposalResult<Proposal<UpdateDidDocument>>>) -> Self {
-    let output = match tx_output.output {
-      ProposalResult::Pending(proposal) => Some(WasmProposalUpdateDid::new(proposal)),
-      ProposalResult::Executed(_) => None,
-    };
-    let response = tx_output.response.clone_native_response();
-    Self { output, response }
-  }
-}
-
-#[wasm_bindgen(js_name = CreateUpdateDidProposalTx)]
-pub struct WasmCreateUpdateDidProposalTx {
+#[wasm_bindgen(js_name = CreateUpdateDidProposal)]
+pub struct WasmCreateUpdateDidProposal {
   identity: WasmOnChainIdentity,
   updated_did_doc: Option<WasmIotaDocument>,
+  controller_token: WasmControllerToken,
   #[allow(dead_code)]
   delete: bool,
   expiration_epoch: Option<u64>,
-  gas_budget: Option<u64>,
 }
 
-#[wasm_bindgen(js_class = CreateUpdateDidProposalTx)]
-impl WasmCreateUpdateDidProposalTx {
+#[wasm_bindgen(js_class = CreateUpdateDidProposal)]
+impl WasmCreateUpdateDidProposal {
   pub(crate) fn new(
     identity: &WasmOnChainIdentity,
     updated_did_doc: WasmIotaDocument,
+    controller_token: WasmControllerToken,
     expiration_epoch: Option<u64>,
   ) -> Self {
     Self {
@@ -252,53 +241,81 @@ impl WasmCreateUpdateDidProposalTx {
       updated_did_doc: Some(updated_did_doc),
       delete: false,
       expiration_epoch,
-      gas_budget: None,
+      controller_token,
     }
   }
 
-  pub(crate) fn deactivate(identity: &WasmOnChainIdentity, expiration_epoch: Option<u64>) -> Self {
+  pub(crate) fn deactivate(
+    identity: &WasmOnChainIdentity,
+    controller_token: WasmControllerToken,
+    expiration_epoch: Option<u64>,
+  ) -> Self {
     Self {
       identity: identity.clone(),
       expiration_epoch,
       updated_did_doc: None,
       delete: false,
-      gas_budget: None,
+      controller_token,
     }
   }
 
-  #[wasm_bindgen(js_name = withGasBudget)]
-  pub fn with_gas_budget(mut self, budget: u64) -> Self {
-    self.gas_budget = Some(budget);
-    self
-  }
-
-  #[wasm_bindgen(setter, js_name = gasBudget)]
-  pub fn set_gas_budget(&mut self, budget: u64) {
-    self.gas_budget = Some(budget);
-  }
-
-  #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmCreateUpdateDidProposalTxOutput> {
-    let mut identity_ref = self.identity.0.write().await;
-    let builder = if let Some(updated_did_document) = self.updated_did_doc {
-      identity_ref.update_did_document(updated_did_document.0.read().await.clone())
+  #[wasm_bindgen(js_name = buildProgrammableTransaction)]
+  pub async fn build_programmable_transaction(&self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
+    let action = if let Some(did_doc) = self.updated_did_doc.as_ref() {
+      let did_doc = did_doc.0.read().await.clone();
+      UpdateDidDocument::new(did_doc)
+    } else if self.delete {
+      UpdateDidDocument::deactivate()
     } else {
-      identity_ref.deactivate_did()
-    };
-    let builder = if let Some(exp) = self.expiration_epoch {
-      builder.expiration_epoch(exp)
-    } else {
-      builder
+      UpdateDidDocument::delete()
     };
 
-    let tx_output = builder
-      .finish(client)
-      .await
-      .wasm_result()?
-      .execute_with_opt_gas_internal(self.gas_budget, client)
-      .await
-      .wasm_result()?;
+    let mut identity_lock = self.identity.0.write().await;
+    let tx = Proposal::<UpdateDidDocument>::create(
+      action,
+      self.expiration_epoch,
+      &mut identity_lock,
+      &self.controller_token.0,
+      &client.0,
+    )
+    .await
+    .wasm_result()?
+    .into_inner();
 
-    Ok(tx_output.into())
+    bcs::to_bytes(tx.ptb()).wasm_result()
+  }
+
+  #[wasm_bindgen(unchecked_return_type = "ProposalResult<UpdateDid>")]
+  pub async fn apply(
+    self,
+    effects: &WasmIotaTransactionBlockEffects,
+    client: &WasmIdentityClientReadOnly,
+  ) -> Result<Option<WasmProposalUpdateDid>> {
+    let action = if let Some(did_doc) = self.updated_did_doc.as_ref() {
+      let did_doc = did_doc.0.read().await.clone();
+      UpdateDidDocument::new(did_doc)
+    } else if self.delete {
+      UpdateDidDocument::deactivate()
+    } else {
+      UpdateDidDocument::delete()
+    };
+
+    let mut identity_lock = self.identity.0.write().await;
+    let tx = Proposal::<UpdateDidDocument>::create(
+      action,
+      self.expiration_epoch,
+      &mut identity_lock,
+      &self.controller_token.0,
+      &client.0,
+    )
+    .await
+    .wasm_result()?
+    .into_inner();
+
+    let ProposalResult::Pending(proposal) = tx.apply(&effects.clone().into(), &client.0).await.wasm_result()? else {
+      return Ok(None);
+    };
+
+    Ok(Some(WasmProposalUpdateDid::new(proposal)))
   }
 }

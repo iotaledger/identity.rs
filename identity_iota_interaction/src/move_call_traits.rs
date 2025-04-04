@@ -180,7 +180,7 @@ pub trait IdentityMoveCalls {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-  fn new_with_controllers<C: IntoIterator<Item = (IotaAddress, u64)>>(
+  async fn new_with_controllers<C: IntoIterator<Item = (IotaAddress, u64)>>(
     did_doc: Option<&[u8]>,
     controllers: C,
     threshold: u64,
@@ -218,7 +218,7 @@ pub trait IdentityMoveCalls {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-  fn execute_update(
+  async fn execute_update(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,

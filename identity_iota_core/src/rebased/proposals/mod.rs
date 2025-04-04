@@ -171,6 +171,13 @@ pub struct CreateProposal<'i, A> {
   _action: PhantomData<A>,
 }
 
+impl<'i, A> CreateProposal<'i, A> {
+  /// Returns this [Transaction]'s [ProgrammableTransaction].
+  pub fn ptb(&self) -> &ProgrammableTransaction {
+    &self.ptb
+  }
+}
+
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl<A> Transaction for CreateProposal<'_, A>
@@ -233,6 +240,13 @@ pub struct ExecuteProposal<'i, A> {
   ptb: ProgrammableTransaction,
   identity: &'i mut OnChainIdentity,
   _action: PhantomData<A>,
+}
+
+impl<'i, A> ExecuteProposal<'i, A> {
+  /// Returns this [Transaction]'s [ProgrammableTransaction].
+  pub fn ptb(&self) -> &ProgrammableTransaction {
+    &self.ptb
+  }
 }
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]

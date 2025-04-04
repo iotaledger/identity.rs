@@ -12,6 +12,7 @@ use identity_iota_interaction::types::dynamic_field::DynamicFieldName;
 use identity_iota_interaction::types::transaction::TransactionData;
 use secret_storage::Signer;
 
+use identity_iota_interaction::error::Error as IotaRpcError;
 use identity_iota_interaction::error::IotaRpcResult;
 use identity_iota_interaction::rpc_types::CoinPage;
 use identity_iota_interaction::rpc_types::EventFilter;
@@ -237,6 +238,17 @@ impl QuorumDriverTrait for QuorumDriverAdapter {
       .client
       .execute_transaction_block(tx_data, signatures, options, request_type)
       .await?;
+
+    let digest = wasm_response
+      .digest()
+      .map_err(|e| IotaRpcError::FfiError(e.to_string()))?;
+
+    self
+      .client
+      .wait_for_transaction(digest, Some(IotaTransactionBlockResponseOptions::new()), None, None)
+      .await
+      .unwrap();
+
     Ok(Box::new(IotaTransactionBlockResponseProvider::new(wasm_response)))
   }
 }
@@ -343,7 +355,7 @@ impl IotaClientTrait for IotaClientTsSdk {
     _sender_address: IotaAddress,
     _tx: &ProgrammableTransactionSdk,
   ) -> Result<u64, Self::Error> {
-    unimplemented!();
+    Ok(50_000_000)
   }
 
   async fn get_previous_version(&self, _iod: IotaObjectData) -> Result<Option<IotaObjectData>, Self::Error> {

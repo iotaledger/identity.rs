@@ -509,7 +509,7 @@ impl CreateIdentity {
         controllers.clone(),
         *threshold,
         client.package_id(),
-      )?
+      ).await?
     };
 
     Ok(bcs::from_bytes(&pt_bcs)?)

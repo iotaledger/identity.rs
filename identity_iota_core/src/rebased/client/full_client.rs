@@ -4,6 +4,7 @@
 use std::ops::Deref;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::rebased::migration::get_identity;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::IotaDID;
@@ -20,6 +21,7 @@ use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::crypto::PublicKey;
+use identity_iota_interaction::types::object::Owner;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::IdentityMoveCalls as _;
 use identity_verification::jwk::Jwk;
@@ -250,7 +252,7 @@ pub fn get_sender_public_key(sender_public_jwk: &Jwk) -> Result<Vec<u8>, Error> 
 
 /// Publishes a new DID Document on-chain. An [`crate::rebased::migration::OnChainIdentity`] will be created to contain
 /// the provided document.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PublishDidDocument {
   did_document: IotaDocument,
   controller: IotaAddress,
@@ -267,12 +269,13 @@ impl PublishDidDocument {
     }
   }
 
-  fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let did_doc = StateMetadataDocument::from(self.did_document.clone())
       .pack(StateMetadataEncoding::Json)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
     let programmable_tx_bcs =
-      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), [(self.controller, 1)], 1, client.package_id())?;
+      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), [(self.controller, 1)], 1, client.package_id())
+        .await?;
     Ok(bcs::from_bytes(&programmable_tx_bcs)?)
   }
 }
@@ -285,11 +288,7 @@ impl Transaction for PublishDidDocument {
     &self,
     client: &IdentityClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
-    self
-      .cached_ptb
-      .get_or_try_init(|| async { self.make_ptb(client) })
-      .await
-      .cloned()
+    self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
   async fn apply(
     self,
@@ -306,13 +305,16 @@ impl Transaction for PublishDidDocument {
     let identity_id = effects
       .created()
       .iter()
-      .find(|obj| obj.owner == controller)
-      .map(|obj_ref| obj_ref.object_id())
+      .find(|obj| matches!(obj.owner, Owner::Shared { .. }))
       .ok_or_else(|| {
         Error::TransactionUnexpectedResponse(format!("no object was created for controller {controller}"))
-      })?;
-    let identity = client.get_identity(identity_id).await?;
+      })?
+      .object_id();
+    let mut identity = get_identity(client, identity_id)
+      .await?
+      .expect("Identity was created in this transaction");
+    let did_document = std::mem::replace(identity.did_document_mut(), IotaDocument::new(client.network()));
 
-    Ok(identity.did_document(client.network())?)
+    Ok(did_document)
   }
 }
