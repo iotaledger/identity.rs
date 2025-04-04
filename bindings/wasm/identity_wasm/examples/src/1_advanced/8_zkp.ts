@@ -41,7 +41,7 @@ export async function zkp() {
     const { output: issuerIdentity } = await issuerClient
         .createIdentity(unpublishedIssuerDocument)
         .finish()
-        .execute(issuerClient);
+        .buildAndExecute(issuerClient);
     const issuerDocument = issuerIdentity.didDocument();
 
     // ===========================================================================

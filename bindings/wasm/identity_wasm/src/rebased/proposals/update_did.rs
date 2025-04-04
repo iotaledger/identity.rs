@@ -126,7 +126,10 @@ impl WasmProposalUpdateDid {
     Ok(WasmTransactionBuilder::new(js_tx.unchecked_into()))
   }
 
-  #[wasm_bindgen(js_name = intoTx)]
+  #[wasm_bindgen(
+    js_name = intoTx,
+    unchecked_return_type = "TransactionBuilder<ExecuteProposal<UpdateDid>>"
+  )]
   pub fn into_tx(
     self,
     identity: &WasmOnChainIdentity,
