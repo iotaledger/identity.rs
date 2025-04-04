@@ -290,9 +290,9 @@ impl WasmCreateUpdateDidProposal {
       let did_doc = did_doc.0.read().await.clone();
       UpdateDidDocument::new(did_doc)
     } else if self.delete {
-      UpdateDidDocument::deactivate()
-    } else {
       UpdateDidDocument::delete()
+    } else {
+      UpdateDidDocument::deactivate()
     };
 
     let mut identity_lock = self.identity.0.write().await;
