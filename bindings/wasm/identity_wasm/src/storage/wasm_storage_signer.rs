@@ -4,9 +4,9 @@
 use identity_iota::iota_interaction::types::transaction::TransactionData;
 use identity_iota::storage::KeyId;
 use identity_iota::storage::StorageSigner;
+use iota_interaction_ts::bindings::WasmTransactionData;
 use iota_interaction_ts::WasmIotaSignature;
 use iota_interaction_ts::WasmPublicKey;
-use iota_interaction_ts::bindings::WasmTransactionData;
 use secret_storage::Signer;
 use wasm_bindgen::prelude::*;
 

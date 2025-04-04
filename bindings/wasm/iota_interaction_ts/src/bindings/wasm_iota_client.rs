@@ -155,8 +155,13 @@ impl ManagedWasmIotaClient {
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> IotaRpcResult<WasmIotaTransactionBlockResponseWrapper> {
     let params = ExecuteTransactionBlockParams::new(tx_data, signatures, options, request_type);
-    let wasm_params = params.serialize(&serde_wasm_bindgen::Serializer::json_compatible())
-      .map_err(|e| IotaRpcError::FfiError(format!("failed to convert ExecuteTransactionBlockParams to JS value: {e}")))?
+    let wasm_params = params
+      .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+      .map_err(|e| {
+        IotaRpcError::FfiError(format!(
+          "failed to convert ExecuteTransactionBlockParams to JS value: {e}"
+        ))
+      })?
       .into();
 
     let promise: Promise = Promise::resolve(&WasmIotaClient::execute_transaction_block(&self.0, &wasm_params));

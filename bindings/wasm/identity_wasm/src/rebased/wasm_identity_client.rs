@@ -18,8 +18,8 @@ use iota_interaction_ts::WasmPublicKey;
 use identity_iota::iota::rebased::Error;
 use iota_interaction_ts::NativeTransactionBlockResponse;
 
-use super::IdentityContainer;
 use super::identity::WasmIdentityBuilder;
+use super::IdentityContainer;
 use super::WasmIdentityClientReadOnly;
 use super::WasmIotaAddress;
 use super::WasmObjectID;
@@ -62,10 +62,7 @@ impl Deref for WasmIdentityClient {
 #[wasm_bindgen(js_class = IdentityClient)]
 impl WasmIdentityClient {
   #[wasm_bindgen(js_name = create)]
-  pub async fn new(
-    client: WasmIdentityClientReadOnly,
-    signer: WasmTransactionSigner,
-  ) -> Result<WasmIdentityClient> {
+  pub async fn new(client: WasmIdentityClientReadOnly, signer: WasmTransactionSigner) -> Result<WasmIdentityClient> {
     let inner_client = IdentityClient::new(client.0, signer).await.wasm_result()?;
     Ok(WasmIdentityClient(inner_client))
   }
@@ -92,13 +89,24 @@ impl WasmIdentityClient {
 
   #[wasm_bindgen(js_name = createIdentity)]
   pub fn create_identity(&self, iota_document: &WasmIotaDocument) -> Result<WasmIdentityBuilder> {
-    Ok(WasmIdentityBuilder::new(iota_document)
-      .map_err(|err| JsError::new(&format!("failed to initialize new identity builder; {err:?}")))?)
+    Ok(
+      WasmIdentityBuilder::new(iota_document)
+        .map_err(|err| JsError::new(&format!("failed to initialize new identity builder; {err:?}")))?,
+    )
   }
 
   #[wasm_bindgen(js_name = getIdentity)]
   pub async fn get_identity(&self, object_id: WasmObjectID) -> Result<IdentityContainer> {
-    let inner_value = self.0.get_identity(object_id.parse().map_err(|e| anyhow!("failed to parse ObjectID out of string: {e}")).wasm_result()?).await.unwrap();
+    let inner_value = self
+      .0
+      .get_identity(
+        object_id
+          .parse()
+          .map_err(|e| anyhow!("failed to parse ObjectID out of string: {e}"))
+          .wasm_result()?,
+      )
+      .await
+      .unwrap();
     Ok(IdentityContainer(inner_value))
   }
 
@@ -117,7 +125,11 @@ impl WasmIdentityClient {
     js_name = publishDidDocument,
     unchecked_return_type = "TransactionBuilder<PublishDidDocument>"
   )]
-  pub fn publish_did_document(&self, document: &WasmIotaDocument, controller: WasmIotaAddress) -> Result<WasmTransactionBuilder> {
+  pub fn publish_did_document(
+    &self,
+    document: &WasmIotaDocument,
+    controller: WasmIotaAddress,
+  ) -> Result<WasmTransactionBuilder> {
     let js_value: JsValue = WasmPublishDidDocument::new(document, controller)?.into();
     Ok(WasmTransactionBuilder::new(js_value.unchecked_into()))
   }
@@ -177,7 +189,12 @@ pub struct WasmPublishDidDocument(pub(crate) PublishDidDocument);
 impl WasmPublishDidDocument {
   #[wasm_bindgen(constructor)]
   pub fn new(did_document: &WasmIotaDocument, controller: WasmIotaAddress) -> Result<Self> {
-    let did_document = did_document.0.try_read().map_err(|_| anyhow!("failed to access IotaDocument")).wasm_result()?.clone();
+    let did_document = did_document
+      .0
+      .try_read()
+      .map_err(|_| anyhow!("failed to access IotaDocument"))
+      .wasm_result()?
+      .clone();
     let controller = controller.parse().wasm_result()?;
 
     Ok(Self(PublishDidDocument::new(did_document, controller)))

@@ -17,8 +17,10 @@ use crate::error::wasm_error;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::iota::WasmIotaDocument;
+use crate::rebased::proposals::WasmCreateConfigChangeProposal;
 use crate::rebased::proposals::WasmCreateUpdateDidProposal;
 
+use super::proposals::WasmConfigChange;
 use super::WasmIdentityClient;
 // use super::proposals::StringCouple;
 // use super::proposals::WasmConfigChange;
@@ -133,19 +135,26 @@ impl WasmOnChainIdentity {
     let create_proposal_tx = WasmCreateUpdateDidProposal::deactivate(self, controller_token.clone(), expiration_epoch);
     WasmTransactionBuilder::new(JsValue::from(create_proposal_tx).unchecked_into())
   }
-}
-//   #[wasm_bindgen(
-//     js_name = updateConfig,
-//     unchecked_return_type = "TransactionInternal<Proposal<ConfigChange> | ProposalOutput<ConfigChange>>",
-//   )]
-//   pub fn update_config(
-//     &self,
-//     config: WasmConfigChange,
-//     expiration_epoch: Option<u64>,
-//   ) -> WasmCreateConfigChangeProposalTx {
-//     WasmCreateConfigChangeProposalTx::new(self, config, expiration_epoch)
-//   }
 
+  #[wasm_bindgen(
+    js_name = updateConfig,
+    unchecked_return_type = "TransactionBuilder<CreateProposal<ConfigChange>>",
+  )]
+  pub fn update_config(
+    &self,
+    controller_token: &WasmControllerToken,
+    config: WasmConfigChange,
+    expiration_epoch: Option<u64>,
+  ) -> WasmTransactionBuilder {
+    let tx = JsValue::from(WasmCreateConfigChangeProposal::new(
+      self,
+      controller_token,
+      config,
+      expiration_epoch,
+    ));
+    WasmTransactionBuilder::new(tx.unchecked_into())
+  }
+}
 //   #[wasm_bindgen(
 //     js_name = sendAssets,
 //     unchecked_return_type = "TransactionInternal<Proposal<SendAction> | ProposalOutput<SendAction>>",
