@@ -13,7 +13,6 @@ use identity_iota_interaction::types::base_types::SequenceNumber;
 use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::crypto::Signature;
 use identity_iota_interaction::types::crypto::SignatureScheme;
-use identity_iota_interaction::types::digests::ObjectDigest;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::execution_status::CommandArgumentError;
 use identity_iota_interaction::types::object::Owner;
@@ -21,7 +20,6 @@ use identity_iota_interaction::types::transaction::TransactionData;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Promise;
 use js_sys::Uint8Array;
-use serde::de::Error;
 use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -472,14 +470,6 @@ extern "C" {
     gas_budget: Option<u64>,      // --> TypeScript: optional bigint
   ) -> PromiseIotaTransactionBlockResponseWrapper;
 
-  #[wasm_bindgen(js_name = "addGasDataToTransaction")]
-  fn add_gas_data_to_transaction_inner(
-    iota_client: &WasmIotaClient, // --> TypeScript: IotaClient
-    sender_address: String,       // --> TypeScript: string
-    tx_bcs: Vec<u8>,              // --> TypeScript: Uint8Array,
-    gas_budget: Option<u64>,      // --> TypeScript: optional bigint
-  ) -> PromiseUint8Array;
-
   #[wasm_bindgen(js_name = "sleep")]
   fn sleep_inner(ms: i32) -> Promise;
 }
@@ -561,7 +551,7 @@ pub async fn execute_transaction(
 
 #[derive(Deserialize)]
 #[serde(try_from = "Vec<u8>")]
-pub struct ProgrammableTransaction(pub(crate) WasmTransactionBuilder);
+pub struct ProgrammableTransaction(#[allow(dead_code)] pub(crate) WasmTransactionBuilder);
 impl TryFrom<Vec<u8>> for ProgrammableTransaction {
   type Error = TsSdkError;
   fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {

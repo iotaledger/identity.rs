@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use identity_iota_interaction::types::transaction::TransactionData;
-use identity_iota_interaction::types::transaction::TransactionDataAPI as _;
-use identity_iota_interaction::types::transaction::TransactionKind;
 use js_sys::Uint8Array;
 use std::cell::Cell;
 use std::collections::HashSet;
@@ -18,7 +15,6 @@ use crate::bindings::WasmSharedObjectRef;
 use crate::bindings::WasmTransactionArgument;
 use crate::bindings::WasmTransactionBuilder;
 use crate::common::PromiseUint8Array;
-use crate::console_log;
 use crate::error::TsSdkError;
 use crate::error::WasmError;
 use crate::transaction_builder::TransactionBuilderTsSdk;
