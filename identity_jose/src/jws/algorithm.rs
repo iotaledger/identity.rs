@@ -48,8 +48,6 @@ pub enum JwsAlgorithm {
   NONE,
   /// EdDSA signature algorithms
   EdDSA,
-
-  //TODO: PQC - new PQ JwsAlgorithms
   /// JSON Web Signature Algorithm for ML-DSA-44
   /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium#name-the-ml-dsa-algorithm-family)
   #[serde(rename = "ML-DSA-44")]
@@ -74,7 +72,6 @@ pub enum JwsAlgorithm {
   /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-sphincs-plus#name-the-slh-dsa-algorithm-famil)
   #[serde(rename = "SLH-DSA-SHA2-128f")]
   SLH_DSA_SHA2_128f,
-
   ///SLH_DSA_SHAKE_128f
   #[serde(rename = "SLH-DSA-SHAKE-128f")]
   SLH_DSA_SHAKE_128f,
@@ -102,17 +99,16 @@ pub enum JwsAlgorithm {
   ///SLH-DSA-SHAKE-256f
   #[serde(rename = "SLH-DSA-SHAKE-256f")]
   SLH_DSA_SHAKE_256f,
-
   ///FALCON512
   FALCON512,
   ///FALCON1024
   FALCON1024,
-  ///id-MLDSA44-Ed25519-SHA512
-  #[serde(rename = "id-MLDSA44-Ed25519-SHA512")]
-  IdMldsa44Ed25519Sha512,
-  ///id-MLDSA65-Ed25519-SHA512
-  #[serde(rename = "id-MLDSA65-Ed25519-SHA512")]
-  IdMldsa65Ed25519Sha512,
+  ///id-MLDSA44-Ed25519
+  #[serde(rename = "id-MLDSA44-Ed25519")]
+  IdMldsa44Ed25519,
+  ///id-MLDSA65-Ed25519
+  #[serde(rename = "id-MLDSA65-Ed25519")]
+  IdMldsa65Ed25519,
   /// Custom algorithm
   #[cfg(feature = "custom_alg")]
   #[serde(untagged)]
@@ -159,8 +155,8 @@ impl JwsAlgorithm {
     Self::SLH_DSA_SHAKE_256f,
     Self::FALCON512,
     Self::FALCON1024,
-    Self::IdMldsa44Ed25519Sha512,
-    Self::IdMldsa65Ed25519Sha512,
+    Self::IdMldsa44Ed25519,
+    Self::IdMldsa65Ed25519,
   ];
 
   /// Returns the JWS algorithm as a `str` slice.
@@ -188,7 +184,6 @@ impl JwsAlgorithm {
       Self::SLH_DSA_SHA2_128s => "SLH-DSA-SHA2-128s",
       Self::SLH_DSA_SHAKE_128s => "SLH-DSA-SHAKE-128s",
       Self::SLH_DSA_SHA2_128f => "SLH-DSA-SHA2-128f",
-
       Self::SLH_DSA_SHAKE_128f => "SLH-DSA-SHAKE-128f",
       Self::SLH_DSA_SHA2_192s => "SLH-DSA-SHA2-192s",
       Self::SLH_DSA_SHAKE_192s => "SLH-DSA-SHAKE-192s",
@@ -198,12 +193,10 @@ impl JwsAlgorithm {
       Self::SLH_DSA_SHAKE_256s => "SLH-DSA-SHAKE-256s",
       Self::SLH_DSA_SHA2_256f => "SLH-DSA-SHA2-256f",
       Self::SLH_DSA_SHAKE_256f => "SLH-DSA-SHAKE-256f",
-
       Self::FALCON512 => "FALCON512",
       Self::FALCON1024 => "FALCON1024",
-
-      Self::IdMldsa44Ed25519Sha512 => "id-MLDSA44-Ed25519-SHA512",
-      Self::IdMldsa65Ed25519Sha512 => "id-MLDSA65-Ed25519-SHA512",
+      Self::IdMldsa44Ed25519 => "id-MLDSA44-Ed25519",
+      Self::IdMldsa65Ed25519 => "id-MLDSA65-Ed25519",
     }
   }
 
@@ -243,8 +236,8 @@ impl JwsAlgorithm {
       Self::SLH_DSA_SHAKE_256f => "SLH-DSA-SHAKE-256f".to_string(),
       Self::FALCON512 => "FALCON512".to_string(),
       Self::FALCON1024 => "FALCON1024".to_string(),
-      Self::IdMldsa44Ed25519Sha512 => "id-MLDSA44-Ed25519-SHA512".to_string(),
-      Self::IdMldsa65Ed25519Sha512 => "id-MLDSA65-Ed25519-SHA512".to_string(),
+      Self::IdMldsa44Ed25519 => "id-MLDSA44-Ed25519".to_string(),
+      Self::IdMldsa65Ed25519 => "id-MLDSA65-Ed25519".to_string(),
       Self::Custom(name) => name.clone(),
     }
   }
@@ -276,7 +269,6 @@ impl FromStr for JwsAlgorithm {
       "SLH-DSA-SHA2-128s" => Ok(Self::SLH_DSA_SHA2_128s),
       "SLH-DSA-SHAKE-128s" => Ok(Self::SLH_DSA_SHAKE_128s),
       "SLH-DSA-SHA2-128f" => Ok(Self::SLH_DSA_SHA2_128f),
-
       "SLH-DSA-SHAKE-128f" => Ok(Self::SLH_DSA_SHAKE_128f),
       "SLH-DSA-SHA2-192s" => Ok(Self::SLH_DSA_SHA2_192s),
       "SLH-DSA-SHAKE-192s" => Ok(Self::SLH_DSA_SHAKE_192s),
@@ -286,12 +278,10 @@ impl FromStr for JwsAlgorithm {
       "SLH-DSA-SHAKE-256s" => Ok(Self::SLH_DSA_SHAKE_256s),
       "SLH-DSA-SHA2-256f" => Ok(Self::SLH_DSA_SHA2_256f),
       "SLH-DSA-SHAKE-256f" => Ok(Self::SLH_DSA_SHAKE_256f),
-
       "FALCON512" => Ok(Self::FALCON512),
       "FALCON1024" => Ok(Self::FALCON1024),
-
-      "id-MLDSA44-Ed25519-SHA512" => Ok(Self::IdMldsa44Ed25519Sha512),
-      "id-MLDSA65-Ed25519-SHA512" => Ok(Self::IdMldsa65Ed25519Sha512),
+      "id-MLDSA44-Ed25519" => Ok(Self::IdMldsa44Ed25519),
+      "id-MLDSA65-Ed25519" => Ok(Self::IdMldsa65Ed25519),
       #[cfg(feature = "custom_alg")]
       value => Ok(Self::Custom(value.to_string())),
       #[cfg(not(feature = "custom_alg"))]

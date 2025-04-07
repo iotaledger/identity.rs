@@ -53,13 +53,13 @@ macro_rules! generate_method_hybrid_for_document_type {
       I: KeyIdStorage,
     {
       let (pq_key_type, pq_alg, trad_key_type, trad_alg) = match alg_id {
-        CompositeAlgId::IdMldsa44Ed25519Sha512 => (
+        CompositeAlgId::IdMldsa44Ed25519 => (
           KeyType::from_static_str("ML-DSA"),
           JwsAlgorithm::ML_DSA_44,
           KeyType::from_static_str("Ed25519"),
           JwsAlgorithm::EdDSA,
         ),
-        CompositeAlgId::IdMldsa65Ed25519Sha512 => (
+        CompositeAlgId::IdMldsa65Ed25519 => (
           KeyType::from_static_str("ML-DSA"),
           JwsAlgorithm::ML_DSA_65,
           KeyType::from_static_str("Ed25519"),
@@ -310,7 +310,7 @@ impl JwkDocumentExtHybrid for CoreDocument {
       .map_err(|err| Error::EncodingError(err.into()))?;
 
     let signing_input = match alg {
-      JwsAlgorithm::IdMldsa44Ed25519Sha512 => {
+      JwsAlgorithm::IdMldsa44Ed25519 => {
         //TODO: hybrid - DER OID
         let mut input = vec![
           0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x03,
@@ -322,7 +322,7 @@ impl JwkDocumentExtHybrid for CoreDocument {
         );
         input
       }
-      JwsAlgorithm::IdMldsa65Ed25519Sha512 => {
+      JwsAlgorithm::IdMldsa65Ed25519 => {
         let mut input = vec![
           0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x0A,
         ];

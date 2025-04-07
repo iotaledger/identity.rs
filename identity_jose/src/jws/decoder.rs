@@ -212,10 +212,9 @@ impl<'a> JwsValidationItem<'a> {
     // Extract and validate alg from the protected header.
     let alg: JwsAlgorithm = protected.alg().ok_or(Error::ProtectedHeaderWithoutAlg)?;
     let (t_alg, pq_alg, signing_input, traditional_signature_len) = match alg {
-      JwsAlgorithm::IdMldsa44Ed25519Sha512 => {
-        //TODO: hybrid - DER OID
+      JwsAlgorithm::IdMldsa44Ed25519 => {
         let mut input = vec![
-          0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x03,
+          0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x3E
         ];
         input.extend(crypto::hashes::sha::Sha512::digest(signing_input).deref().to_vec());
         (
@@ -225,9 +224,9 @@ impl<'a> JwsValidationItem<'a> {
           crypto::signatures::ed25519::Signature::LENGTH,
         )
       }
-      JwsAlgorithm::IdMldsa65Ed25519Sha512 => {
+      JwsAlgorithm::IdMldsa65Ed25519 => {
         let mut input = vec![
-          0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x0A,
+          0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x47,
         ];
         input.extend(crypto::hashes::sha::Sha512::digest(signing_input).deref().to_vec());
         (
@@ -246,7 +245,6 @@ impl<'a> JwsValidationItem<'a> {
     let extracted_signature_t = &decoded_signature[..traditional_signature_len];
     let extracted_signature_pq = &decoded_signature[traditional_signature_len..];
 
-    // println!("SIGN 2 = {:#?}", signing_input);
     // Construct verification input
     let input1 = VerificationInput {
       alg: t_alg,

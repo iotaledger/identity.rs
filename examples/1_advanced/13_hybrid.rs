@@ -118,7 +118,7 @@ async fn main() -> anyhow::Result<()> {
     &client,
     &mut secret_manager_issuer,
     &storage_issuer,
-    CompositeAlgId::IdMldsa65Ed25519Sha512,
+    CompositeAlgId::IdMldsa65Ed25519,
   )
   .await?;
 
@@ -134,7 +134,7 @@ async fn main() -> anyhow::Result<()> {
     &client,
     &mut secret_manager_holder,
     &storage_holder,
-    CompositeAlgId::IdMldsa65Ed25519Sha512,
+    CompositeAlgId::IdMldsa65Ed25519,
   )
   .await?;
 

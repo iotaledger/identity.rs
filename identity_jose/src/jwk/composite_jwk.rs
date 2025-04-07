@@ -5,23 +5,24 @@ use std::str::FromStr;
 
 use crate::jwk::Jwk;
 
-/// Mame of algorithms used to generate the hybrid signature. Values taken from [here](https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-02#name-domain-separators).
+/// Mame of algorithms used to generate the hybrid signature. Values taken from 
+/// [here](https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-domain-separators).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 pub enum CompositeAlgId {
-  /// DER encoded value in hex = 060B6086480186FA6B50080103
-  #[serde(rename = "id-MLDSA44-Ed25519-SHA512")]
-  IdMldsa44Ed25519Sha512,
-  /// DER encoded value in hex = 060B6086480186FA6B5008010A
-  #[serde(rename = "id-MLDSA65-Ed25519-SHA512")]
-  IdMldsa65Ed25519Sha512,
+  /// DER encoded value in hex = 060B6086480186FA6B5008013E
+  #[serde(rename = "id-MLDSA44-Ed25519")]
+  IdMldsa44Ed25519,
+  /// DER encoded value in hex = 060B6086480186FA6B50080147
+  #[serde(rename = "id-MLDSA65-Ed25519")]
+  IdMldsa65Ed25519,
 }
 
 impl CompositeAlgId {
   /// Returns the JWS algorithm as a `str` slice.
   pub const fn name(self) -> &'static str {
     match self {
-      Self::IdMldsa44Ed25519Sha512 => "id-MLDSA44-Ed25519-SHA512",
-      Self::IdMldsa65Ed25519Sha512 => "id-MLDSA65-Ed25519-SHA512",
+      Self::IdMldsa44Ed25519 => "id-MLDSA44-Ed25519",
+      Self::IdMldsa65Ed25519 => "id-MLDSA65-Ed25519",
     }
   }
 }
@@ -65,8 +66,8 @@ impl FromStr for CompositeAlgId {
 
   fn from_str(string: &str) -> std::result::Result<Self, Self::Err> {
     match string {
-      "id-MLDSA44-Ed25519-SHA512" => Ok(Self::IdMldsa44Ed25519Sha512),
-      "id-MLDSA65-Ed25519-SHA512" => Ok(Self::IdMldsa65Ed25519Sha512),
+      "id-MLDSA44-Ed25519" => Ok(Self::IdMldsa44Ed25519),
+      "id-MLDSA65-Ed25519" => Ok(Self::IdMldsa65Ed25519),
       #[cfg(not(feature = "custom_alg"))]
       &_ => Err(crate::error::Error::JwsAlgorithmParsingError),
     }
