@@ -70,7 +70,7 @@ impl From<GasData> for PartialGasData {
       payment: value.payment,
       owner: Some(value.owner),
       price: Some(value.price),
-      budget: Some(value.price),
+      budget: Some(value.budget),
     }
   }
 }
@@ -81,7 +81,7 @@ impl PartialGasData {
       payment: self.payment,
       owner: self.owner.unwrap_or_default(),
       price: self.price.unwrap_or_default(),
-      budget: self.price.unwrap_or_default(),
+      budget: self.budget.unwrap_or_default(),
     }
   }
 }
@@ -231,12 +231,23 @@ where
       .map_err(|e| Error::GasIssue(format!("failed to sponsor transaction: {e}")))?;
 
     let gas_owner = tx_data.gas_owner();
-    let intent_msg = IntentMessage::new(Intent::iota_transaction(), tx_data);
+    let mut intent_msg = IntentMessage::new(Intent::iota_transaction(), tx_data);
     signature
       .verify_secure(&intent_msg, gas_owner, signature.scheme())
       .map_err(|e| Error::TransactionBuildingFailed(format!("invalid sponsor signature: {e}")))?;
+    let gas_data = std::mem::replace(
+      intent_msg.value.gas_data_mut(),
+      GasData {
+        payment: vec![],
+        owner: IotaAddress::ZERO,
+        price: 0,
+        budget: 0,
+      },
+    );
 
     self.signatures.push(signature);
+    self.gas = gas_data.into();
+
     Ok(self)
   }
 
