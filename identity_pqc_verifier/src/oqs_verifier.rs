@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_jose::jwk::Jwk;
-use identity_jose::jwk::JwkParamsPQ;
+use identity_jose::jwk::JwkParamsAKP;
 use identity_jose::jws::SignatureVerificationError;
 use identity_jose::jws::SignatureVerificationErrorKind;
 use identity_jose::jws::VerificationInput;
@@ -19,8 +19,8 @@ impl OQSVerifier {
   /// Verify a JWS signature secured with the on the [`Algorithm`] defined in liboqs.
   pub fn verify(input: VerificationInput, public_key: &Jwk, alg: Algorithm) -> Result<(), SignatureVerificationError> {
     // Obtain an ML-DSA-44 public key.
-    let params: &JwkParamsPQ = public_key
-      .try_pq_params()
+    let params: &JwkParamsAKP = public_key
+      .try_akp_params()
       .map_err(|_| SignatureVerificationErrorKind::UnsupportedKeyType)?;
 
     let pk = identity_jose::jwu::decode_b64(params.public.as_str()).map_err(|_| {

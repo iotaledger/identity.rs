@@ -17,7 +17,7 @@ use crate::jose::WasmJwkParamsEc;
 use crate::jose::WasmJwkParamsOct;
 use crate::jose::WasmJwkParamsOkp;
 use crate::jose::WasmJwkParamsRsa;
-use crate::jose::WasmJwkParamsMLDSA;
+use crate::jose::WasmJwkParamsAkp;
 use crate::jose::WasmJwkType;
 use crate::jose::WasmJwkUse;
 use crate::jose::WasmJwsAlgorithm;
@@ -168,11 +168,12 @@ impl WasmJwk {
     }
   }
 
-  #[wasm_bindgen(js_name = paramsMldsa)]
-  pub fn params_mldsa(&self) -> crate::error::Result<Option<WasmJwkParamsMLDSA>> {
-    if let JwkParams::MLDSA(params_mldsa) = self.0.params() {
+  /// If this JWK is of kty AKP, returns those parameters.
+  #[wasm_bindgen(js_name = paramsAkp)]
+  pub fn params_akp(&self) -> crate::error::Result<Option<WasmJwkParamsAkp>> {
+    if let JwkParams::Akp(params_akp) = self.0.params() {
       // WARNING: this does not validate the return type. Check carefully.
-      Ok(Some(JsValue::from_serde(params_mldsa).wasm_result()?.unchecked_into()))
+      Ok(Some(JsValue::from_serde(params_akp).wasm_result()?.unchecked_into()))
     } else {
       Ok(None)
     }
@@ -215,7 +216,7 @@ impl_wasm_clone!(WasmJwk, Jwk);
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWK: &'static str = r#"
-type IJwkParams = IJwkEc | IJwkRsa | IJwkOkp | IJwkOct | IJwkMLDSA
+type IJwkParams = IJwkEc | IJwkRsa | IJwkOkp | IJwkOct | IJwkAkp
 /** A JSON Web Key with EC params. */
 export interface IJwkEc extends IJwk, JwkParamsEc {
   kty: JwkType.Ec
@@ -232,8 +233,9 @@ export interface IJwkOkp extends IJwk, JwkParamsOkp {
 export interface IJwkOct extends IJwk, JwkParamsOct {
   kty: JwkType.Oct
 }
-export interface IJwkMLDSA extends IJwk, JwkParamsPQ {
-  kty: JwkType.MLDSA
+/** A JSON Web Key with AKP params. */
+export interface IJwkAkp extends IJwk, JwkParamsAkp {
+  kty: JwkType.Akp
 }
 "#;
 
@@ -421,8 +423,11 @@ interface JwkParamsOct {
 
 
 #[wasm_bindgen(typescript_custom_section)]
-const IJWK_PARAMS_PQ: &str = r#"
-interface JwkParamsPQ {
+const IJWK_PARAMS_AKP: &str = r#"
+/** Parameters for Algorithm Key Pair (AKP).
+ * 
+ * [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium-06#name-algorithm-key-pair-type) */
+interface JwkParamsAkp {
   pub: string,
   priv?: string
 }"#;

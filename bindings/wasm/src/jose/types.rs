@@ -29,8 +29,8 @@ extern "C" {
   pub type WasmJwkParamsRsa;
   #[wasm_bindgen(typescript_type = "JwkParamsOct")]
   pub type WasmJwkParamsOct;
-  #[wasm_bindgen(typescript_type = "JwkParamsPQ")]
-  pub type WasmJwkParamsMLDSA;
+  #[wasm_bindgen(typescript_type = "JwkParamsAkp")]
+  pub type WasmJwkParamsAkp;
   #[wasm_bindgen(typescript_type = "CompositeAlgId")]
   pub type WasmCompositeAlgId;
 }

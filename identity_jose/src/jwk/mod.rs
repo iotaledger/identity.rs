@@ -9,7 +9,7 @@
 
 mod curve;
 mod jwk_ext;
-mod jwk_pq;
+mod jwk_akp;
 mod key;
 mod key_operation;
 mod key_params;
@@ -19,7 +19,7 @@ mod key_use;
 mod composite_jwk;
 
 pub use self::curve::*;
-pub use self::jwk_pq::*;
+pub use self::jwk_akp::*;
 pub use self::key::*;
 pub use self::key_operation::*;
 pub use self::key_params::*;

@@ -317,13 +317,10 @@ fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: &JwsAlgorithm) ->
   }
 }
 
-//TODO: PQ
-
 #[cfg(feature = "pqc-liboqs")]
 mod pqc_liboqs {
   use std::str::FromStr;
   use async_trait::async_trait;
-  //use crypto::signatures::ed25519::SecretKey;
   use identity_verification::jose::jwk::Jwk;
   use identity_verification::jose::jwk::JwkType;
   use identity_verification::jose::jws::JwsAlgorithm;
@@ -391,7 +388,7 @@ mod pqc_liboqs {
       }
 
       let oqs_alg = check_pq_alg_compatibility(alg)?;
-      oqs::init(); //TODO: check what this function does
+      oqs::init();
 
        let scheme = Sig::new(oqs_alg).map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
@@ -410,23 +407,23 @@ mod pqc_liboqs {
       let private = jwu::encode_b64(sk.into_vec());
 
       let mut jwk_params = match alg {
-        JwsAlgorithm::ML_DSA_44 => JwkParams::new(JwkType::MLDSA),
-        JwsAlgorithm::ML_DSA_65 => JwkParams::new(JwkType::MLDSA),
-        JwsAlgorithm::ML_DSA_87 => JwkParams::new(JwkType::MLDSA),
-        JwsAlgorithm::SLH_DSA_SHA2_128s => JwkParams::new(JwkType::SLHDSA),
-        JwsAlgorithm::SLH_DSA_SHAKE_128s => JwkParams::new(JwkType::SLHDSA),
-        JwsAlgorithm::SLH_DSA_SHA2_128f => JwkParams::new(JwkType::SLHDSA),
-        JwsAlgorithm::SLH_DSA_SHAKE_128f => JwkParams::new(JwkType::SLHDSA),
-        JwsAlgorithm::SLH_DSA_SHA2_192s => JwkParams::new(JwkType::SLHDSA),
-        JwsAlgorithm::SLH_DSA_SHAKE_192s => JwkParams::new(JwkType::SLHDSA),
-        JwsAlgorithm::SLH_DSA_SHA2_192f => JwkParams::new(JwkType::SLHDSA),
-        JwsAlgorithm::SLH_DSA_SHAKE_192f => JwkParams::new(JwkType::SLHDSA),
-        JwsAlgorithm::SLH_DSA_SHA2_256s => JwkParams::new(JwkType::SLHDSA),
-        JwsAlgorithm::SLH_DSA_SHAKE_256s => JwkParams::new(JwkType::SLHDSA),
-        JwsAlgorithm::SLH_DSA_SHA2_256f => JwkParams::new(JwkType::SLHDSA),
-        JwsAlgorithm::SLH_DSA_SHAKE_256f => JwkParams::new(JwkType::SLHDSA),
-        JwsAlgorithm::FALCON512 => JwkParams::new(JwkType::FALCON),
-        JwsAlgorithm::FALCON1024 => JwkParams::new(JwkType::FALCON),
+        JwsAlgorithm::ML_DSA_44 => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::ML_DSA_65 => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::ML_DSA_87 => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::SLH_DSA_SHA2_128s => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::SLH_DSA_SHAKE_128s => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::SLH_DSA_SHA2_128f => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::SLH_DSA_SHAKE_128f => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::SLH_DSA_SHA2_192s => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::SLH_DSA_SHAKE_192s => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::SLH_DSA_SHA2_192f => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::SLH_DSA_SHAKE_192f => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::SLH_DSA_SHA2_256s => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::SLH_DSA_SHAKE_256s => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::SLH_DSA_SHA2_256f => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::SLH_DSA_SHAKE_256f => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::FALCON512 => JwkParams::new(JwkType::Akp),
+        JwsAlgorithm::FALCON1024 => JwkParams::new(JwkType::Akp),
         other => {
           return Err(
             KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
@@ -436,11 +433,7 @@ mod pqc_liboqs {
       };
 
       match jwk_params {
-        JwkParams::MLDSA(ref mut params) => {
-          params.public = public;
-          params.private = Some(private);
-        }
-        JwkParams::SLHDSA(ref mut params) => {
+        JwkParams::Akp(ref mut params) => {
           params.public = public;
           params.private = Some(private);
         }
@@ -476,7 +469,7 @@ mod pqc_liboqs {
 
       let oqs_alg = check_pq_alg_compatibility(alg)?;
 
-      // Check that `kty` is `ML-DSA`or `SLH-DSA` or `FALCON`.
+      // Check that `kty` is `AKP`.
       match alg {
         JwsAlgorithm::ML_DSA_44
         | JwsAlgorithm::ML_DSA_65
@@ -494,9 +487,9 @@ mod pqc_liboqs {
         | JwsAlgorithm::SLH_DSA_SHA2_256f
         | JwsAlgorithm::SLH_DSA_SHAKE_256f
         | JwsAlgorithm::FALCON512
-        | JwsAlgorithm::FALCON1024 => public_key.try_pq_params().map_err(|err| {
+        | JwsAlgorithm::FALCON1024 => public_key.try_akp_params().map_err(|err| {
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-            .with_custom_message(format!("expected a Jwk with ML-DSA params in order to sign with {alg}"))
+            .with_custom_message(format!("expected a Jwk with AKP params in order to sign with {alg}"))
             .with_source(err)
         })?,
         other => {
@@ -512,7 +505,7 @@ mod pqc_liboqs {
         .get(key_id)
         .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
 
-      let params = jwk.try_pq_params().unwrap();
+      let params = jwk.try_akp_params().unwrap();
 
       let sk_bytes = params
         .private
@@ -527,7 +520,7 @@ mod pqc_liboqs {
             .with_custom_message("unable to decode `d` param")
             .with_source(err)
         })?;
-        oqs::init(); //TODO: check what this function does
+        oqs::init();
 
         let scheme = Sig::new(oqs_alg).map_err(|err| {
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)

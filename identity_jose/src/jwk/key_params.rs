@@ -8,7 +8,7 @@
 use zeroize::Zeroize;
 
 use super::BlsCurve;
-use super::JwkParamsPQ;
+use super::JwkParamsAKP;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::EcCurve;
@@ -32,13 +32,8 @@ pub enum JwkParams {
   Oct(JwkParamsOct),
   /// Octet Key Pairs parameters.
   Okp(JwkParamsOkp),
-
-  /// ML-DSA parameters
-  MLDSA(JwkParamsPQ),
-  /// SLH-DSA parameters
-  SLHDSA(JwkParamsPQ),
-  /// FALCON parameters
-  FALCON(JwkParamsPQ),
+  /// Algorithm Key Pair Type parameters
+  Akp(JwkParamsAKP),
 }
 
 impl JwkParams {
@@ -49,9 +44,7 @@ impl JwkParams {
       JwkType::Rsa => Self::Rsa(JwkParamsRsa::new()),
       JwkType::Oct => Self::Oct(JwkParamsOct::new()),
       JwkType::Okp => Self::Okp(JwkParamsOkp::new()),
-      JwkType::MLDSA => Self::MLDSA(JwkParamsPQ::new()),
-      JwkType::SLHDSA => Self::SLHDSA(JwkParamsPQ::new()),
-      JwkType::FALCON => Self::FALCON(JwkParamsPQ::new()),
+      JwkType::Akp => Self::Akp(JwkParamsAKP::new())
     }
   }
 
@@ -62,9 +55,7 @@ impl JwkParams {
       Self::Rsa(inner) => inner.kty(),
       Self::Oct(inner) => inner.kty(),
       Self::Okp(inner) => inner.kty(),
-      Self::MLDSA(_) => JwkType::MLDSA,
-      Self::SLHDSA(_) => JwkType::SLHDSA,
-      Self::FALCON(_) => JwkType::FALCON,
+      Self::Akp(_) => JwkType::Akp
     }
   }
 
@@ -77,9 +68,7 @@ impl JwkParams {
       Self::Ec(inner) => Some(Self::Ec(inner.to_public())),
       Self::Rsa(inner) => Some(Self::Rsa(inner.to_public())),
       Self::Oct(_) => None,
-      Self::MLDSA(inner) => Some(Self::MLDSA(inner.to_public())),
-      Self::SLHDSA(inner) => Some(Self::SLHDSA(inner.to_public())),
-      Self::FALCON(inner) => Some(Self::FALCON(inner.to_public())),
+      Self::Akp(inner) => Some(Self::Akp(inner.to_public()))
     }
   }
 
@@ -90,9 +79,7 @@ impl JwkParams {
       Self::Ec(value) => value.is_public(),
       Self::Rsa(value) => value.is_public(),
       Self::Oct(value) => value.is_public(),
-      Self::MLDSA(value) => value.is_public(),
-      Self::SLHDSA(value) => value.is_public(),
-      Self::FALCON(value) => value.is_public(),
+      Self::Akp(value) => value.is_public()
     }
   }
 }

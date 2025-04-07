@@ -21,11 +21,10 @@ use crate::jwk::JwkParamsEc;
 use crate::jwk::JwkParamsOct;
 use crate::jwk::JwkParamsOkp;
 use crate::jwk::JwkParamsRsa;
+use crate::jwk::JwkParamsAKP;
 use crate::jwk::JwkType;
 use crate::jwk::JwkUse;
 use crate::jwu::encode_b64;
-
-use super::JwkParamsPQ;
 
 /// A SHA256 JSON Web Key Thumbprint.
 pub type JwkThumbprintSha256 = [u8; SHA256_LEN];
@@ -345,23 +344,19 @@ impl Jwk {
     }
   }
 
-  /// Returns the [`JwkParamsPQ`] in this JWK if it is of type `ML-DSA` or `SLH-DSA`.
-  pub fn try_pq_params(&self) -> Result<&JwkParamsPQ> {
+  /// Returns the [`JwkParamsAkp`] in this JWK if it is of type `Akp`.
+  pub fn try_akp_params(&self) -> Result<&JwkParamsAKP> {
     match self.params() {
-      JwkParams::MLDSA(params) => Ok(params),
-      JwkParams::SLHDSA(params) => Ok(params),
-      JwkParams::FALCON(params) => Ok(params),
-      _ => Err(Error::KeyError("PQ")),
+      JwkParams::Akp(params) => Ok(params),
+      _ => Err(Error::KeyError("Akp")),
     }
   }
 
-  /// Returns a mutable reference to the [`JwkParamsPQ`] in this JWK if it is of type `ML-DSA` or `SLH-DSA`.
-  pub fn try_pq_params_mut(&mut self) -> Result<&mut JwkParamsPQ> {
+  /// Returns a mutable reference to the [`JwkParamsAkp`] in this JWK if it is of type `Akp`.
+  pub fn try_akp_params_mut(&mut self) -> Result<&mut JwkParamsAKP> {
     match self.params_mut() {
-      JwkParams::MLDSA(params) => Ok(params),
-      JwkParams::SLHDSA(params) => Ok(params),
-      JwkParams::FALCON(params) => Ok(params),
-      _ => Err(Error::KeyError("PQ")),
+      JwkParams::Akp(params) => Ok(params),
+      _ => Err(Error::KeyError("Akp")),
     }
   }
 
@@ -413,14 +408,7 @@ impl Jwk {
       JwkParams::Okp(JwkParamsOkp { crv, x, .. }) => {
         format!(r#"{{"crv":"{crv}","kty":"{kty}","x":"{x}"}}"#)
       }
-      //TODO: PQ - thumbprint for PQ keys
-      JwkParams::MLDSA(JwkParamsPQ { public, .. }) => {
-        format!(r#"{{"kty":"{kty}","pub":"{public}"}}"#)
-      }
-      JwkParams::SLHDSA(JwkParamsPQ { public, .. }) => {
-        format!(r#"{{"kty":"{kty}","pub":"{public}"}}"#)
-      }
-      JwkParams::FALCON(JwkParamsPQ { public, .. }) => {
+      JwkParams::Akp(JwkParamsAKP { public, .. }) => {
         format!(r#"{{"kty":"{kty}","pub":"{public}"}}"#)
       }
     }
@@ -475,9 +463,7 @@ impl Jwk {
       JwkParams::Rsa(params) => params.is_private(),
       JwkParams::Oct(_) => true,
       JwkParams::Okp(params) => params.is_private(),
-      JwkParams::MLDSA(params) => params.is_private(), //TODO: PQ - is_private Jwk method
-      JwkParams::SLHDSA(params) => params.is_private(),
-      JwkParams::FALCON(params) => params.is_private(),
+      JwkParams::Akp(params) => params.is_private(),
     }
   }
 

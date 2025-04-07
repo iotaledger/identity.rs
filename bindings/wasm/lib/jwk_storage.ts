@@ -159,7 +159,7 @@ async function encodeJwk(
         });
     } else if (alg === JwsAlgorithm.MLDSA44 || alg === JwsAlgorithm.MLDSA65 || alg === JwsAlgorithm.MLDSA87) {
         return new Jwk({
-            "kty": JwkType.MLDSA,
+            "kty": JwkType.Akp,
             pub: x,
             priv: d,
             alg,
@@ -191,7 +191,7 @@ function decodeJwk(jwk: Jwk): [Uint8Array, Uint8Array] {
             throw new Error("expected Okp params");
         }
     } else if (jwk.alg()! === JwsAlgorithm.MLDSA44 || jwk.alg()! === JwsAlgorithm.MLDSA65 || jwk.alg()! === JwsAlgorithm.MLDSA87) {
-        const paramsPQ = jwk.paramsMldsa();
+        const paramsPQ = jwk.paramsAkp();
         if (paramsPQ) {
             const priv = paramsPQ.priv;
 
