@@ -7,20 +7,21 @@ use identity_iota::iota::rebased::migration::Proposal;
 use identity_iota::iota::rebased::proposals::ProposalResult;
 use identity_iota::iota::rebased::proposals::ProposalT;
 use identity_iota::iota::rebased::proposals::SendAction;
-use identity_iota::iota::rebased::transaction::TransactionInternal;
-use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
-use iota_interaction_ts::NativeTransactionBlockResponse;
+use identity_iota::iota::rebased::transaction_builder::Transaction;
+use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::JsCast;
+use wasm_bindgen::JsValue;
 
 use super::StringCouple;
 use super::StringSet;
-use super::WasmTransactionInternalOutputVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::rebased::WasmIdentityClient;
+use crate::rebased::WasmControllerToken;
+use crate::rebased::WasmIdentityClientReadOnly;
 use crate::rebased::WasmOnChainIdentity;
+use crate::rebased::WasmTransactionBuilder;
 
 #[wasm_bindgen(js_name = SendAction)]
 #[derive(Clone)]
@@ -100,165 +101,149 @@ impl WasmProposalSend {
     Ok(js_set)
   }
 
-  #[wasm_bindgen]
-  pub fn approve(&self, identity: &WasmOnChainIdentity) -> WasmApproveSendProposalTx {
-    WasmApproveSendProposalTx::new(self, identity)
+  #[wasm_bindgen(unchecked_return_type = "TransactionBuilder<ApproveProposal>")]
+  pub fn approve(
+    &self,
+    identity: &WasmOnChainIdentity,
+    controller_token: &WasmControllerToken,
+  ) -> WasmTransactionBuilder {
+    let tx = WasmApproveSendProposal::new(self, identity, controller_token);
+    WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into())
   }
 
   #[wasm_bindgen(js_name = intoTx)]
-  pub fn into_tx(self, identity: &WasmOnChainIdentity) -> WasmExecuteSendProposalTx {
-    WasmExecuteSendProposalTx::new(self, identity)
+  pub fn into_tx(
+    self,
+    identity: &WasmOnChainIdentity,
+    controller_token: &WasmControllerToken,
+  ) -> WasmTransactionBuilder {
+    let tx = WasmExecuteSendProposal::new(self, identity, controller_token);
+    WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into())
   }
 }
 
-#[wasm_bindgen(js_name = ApproveSendProposalTx)]
-pub struct WasmApproveSendProposalTx {
+#[wasm_bindgen(js_name = ApproveSendProposal)]
+pub struct WasmApproveSendProposal {
   proposal: WasmProposalSend,
   identity: WasmOnChainIdentity,
-  gas_budget: Option<u64>,
+  controller_token: WasmControllerToken,
 }
 
-#[wasm_bindgen(js_class = ApproveSendProposalTx)]
-impl WasmApproveSendProposalTx {
-  fn new(proposal: &WasmProposalSend, identity: &WasmOnChainIdentity) -> Self {
+#[wasm_bindgen(js_class = ApproveSendProposal)]
+impl WasmApproveSendProposal {
+  fn new(proposal: &WasmProposalSend, identity: &WasmOnChainIdentity, controller_token: &WasmControllerToken) -> Self {
     Self {
       proposal: proposal.clone(),
       identity: identity.clone(),
-      gas_budget: None,
+      controller_token: controller_token.clone(),
     }
   }
 
-  #[wasm_bindgen(js_name = withGasBudget)]
-  pub fn with_gas_budget(mut self, budget: u64) -> Self {
-    self.gas_budget = Some(budget);
-    self
-  }
+  #[wasm_bindgen(js_name = buildProgrammableTransaction)]
+  pub async fn build_programmable_transaction(self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
+    let identity_ref = self.identity.0.read().await;
+    let mut proposal_ref = self.proposal.0.write().await;
+    let tx = proposal_ref
+      .approve(&identity_ref, &self.controller_token.0)
+      .wasm_result()?
+      .into_inner();
 
-  #[wasm_bindgen(setter, js_name = gasBudget)]
-  pub fn set_gas_budget(&mut self, budget: u64) {
-    self.gas_budget = Some(budget);
+    let pt = tx.build_programmable_transaction(&client.0).await.wasm_result()?;
+    bcs::to_bytes(&pt).wasm_result()
   }
 
   #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionInternalOutputVoid> {
-    let identity_ref = self.identity.0.read().await;
-    self
+  pub async fn apply(
+    self,
+    effects: &WasmIotaTransactionBlockEffects,
+    client: &WasmIdentityClientReadOnly,
+  ) -> Result<()> {
+    let mut identity_ref = self.identity.0.write().await;
+    let tx = self
       .proposal
       .0
       .write()
       .await
-      .approve(&identity_ref)
-      .execute_with_opt_gas_internal(self.gas_budget, &client.0)
+      .clone()
+      .into_tx(&mut identity_ref, &self.controller_token.0, &client.0)
       .await
-      .wasm_result()
-      .map(|tx_output| tx_output.response.clone_native_response())
-      .map(WasmTransactionInternalOutputVoid::new)
+      .wasm_result()?
+      .into_inner();
+    tx.apply(&effects.clone().into(), &client.0).await.wasm_result()
   }
 }
 
-#[wasm_bindgen(js_name = ExecuteSendProposalTx)]
-pub struct WasmExecuteSendProposalTx {
+#[wasm_bindgen(js_name = ExecuteSendProposal)]
+pub struct WasmExecuteSendProposal {
   proposal: WasmProposalSend,
   identity: WasmOnChainIdentity,
-  gas_budget: Option<u64>,
+  controller_token: WasmControllerToken,
 }
 
-#[wasm_bindgen(js_class = ExecuteSendProposalTx)]
-impl WasmExecuteSendProposalTx {
-  fn new(proposal: WasmProposalSend, identity: &WasmOnChainIdentity) -> Self {
+#[wasm_bindgen(js_class = ExecuteSendProposal)]
+impl WasmExecuteSendProposal {
+  fn new(proposal: WasmProposalSend, identity: &WasmOnChainIdentity, controller_token: &WasmControllerToken) -> Self {
     Self {
       proposal,
       identity: identity.clone(),
-      gas_budget: None,
+      controller_token: controller_token.clone(),
     }
   }
 
-  #[wasm_bindgen(js_name = withGasBudget)]
-  pub fn with_gas_budget(mut self, budget: u64) -> Self {
-    self.gas_budget = Some(budget);
-    self
-  }
-
-  #[wasm_bindgen(setter, js_name = gasBudget)]
-  pub fn set_gas_budget(&mut self, budget: u64) {
-    self.gas_budget = Some(budget);
-  }
-
-  #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionInternalOutputVoid> {
+  #[wasm_bindgen(js_name = buildProgrammableTransaction)]
+  pub async fn build_programmable_transaction(self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
     let mut identity_ref = self.identity.0.write().await;
-    let proposal = Rc::into_inner(self.proposal.0)
-      .ok_or_else(|| js_sys::Error::new("cannot consume proposal; try to drop all other references to it"))?
-      .into_inner();
+    let proposal = self.proposal.0.read().await.clone();
 
-    proposal
-      .into_tx(&mut identity_ref, client)
+    let pt = proposal
+      .into_tx(&mut identity_ref, &self.controller_token.0, &client.0)
       .await
       .wasm_result()?
-      .execute_with_opt_gas_internal(self.gas_budget, client)
+      .into_inner()
+      .build_programmable_transaction(&client.0)
       .await
-      .wasm_result()
-      .map(|tx_output| tx_output.response.clone_native_response())
-      .map(WasmTransactionInternalOutputVoid::new)
-  }
-}
+      .wasm_result()?;
 
-#[wasm_bindgen(js_name = CreateSendProposalTxOutput, inspectable, getter_with_clone)]
-pub struct WasmCreateSendProposalTxOutput {
-  pub output: Option<WasmProposalSend>,
-  pub response: NativeTransactionBlockResponse,
-}
-
-impl From<TransactionOutputInternal<ProposalResult<Proposal<SendAction>>>> for WasmCreateSendProposalTxOutput {
-  fn from(tx_output: TransactionOutputInternal<ProposalResult<Proposal<SendAction>>>) -> Self {
-    let output = match tx_output.output {
-      ProposalResult::Pending(proposal) => Some(WasmProposalSend::new(proposal)),
-      ProposalResult::Executed(_) => None,
-    };
-    let response = tx_output.response.clone_native_response();
-    Self { output, response }
-  }
-}
-
-#[wasm_bindgen(js_name = CreateSendProposalTx)]
-pub struct WasmCreateSendProposalTx {
-  identity: WasmOnChainIdentity,
-  object_recipient_map: Vec<StringCouple>,
-  expiration_epoch: Option<u64>,
-  gas_budget: Option<u64>,
-}
-
-#[wasm_bindgen(js_class = CreateSendProposalTx)]
-impl WasmCreateSendProposalTx {
-  pub(crate) fn new(
-    identity: &WasmOnChainIdentity,
-    object_recipient_map: Vec<StringCouple>,
-    expiration_epoch: Option<u64>,
-  ) -> Self {
-    Self {
-      identity: identity.clone(),
-      object_recipient_map,
-      expiration_epoch,
-      gas_budget: None,
-    }
-  }
-
-  #[wasm_bindgen(js_name = withGasBudget)]
-  pub fn with_gas_budget(mut self, budget: u64) -> Self {
-    self.gas_budget = Some(budget);
-    self
-  }
-
-  #[wasm_bindgen(setter, js_name = gasBudget)]
-  pub fn set_gas_budget(&mut self, budget: u64) {
-    self.gas_budget = Some(budget);
+    bcs::to_bytes(&pt).wasm_result()
   }
 
   #[wasm_bindgen]
-  pub async fn execute(self, client: &WasmIdentityClient) -> Result<WasmCreateSendProposalTxOutput> {
+  pub async fn apply(
+    self,
+    effects: &WasmIotaTransactionBlockEffects,
+    client: &WasmIdentityClientReadOnly,
+  ) -> Result<()> {
     let mut identity_ref = self.identity.0.write().await;
-    let builder = self
-      .object_recipient_map
+    let proposal = self.proposal.0.read().await.clone();
+
+    proposal
+      .into_tx(&mut identity_ref, &self.controller_token.0, &client.0)
+      .await
+      .wasm_result()?
+      .into_inner()
+      .apply(&effects.clone().into(), &client.0)
+      .await
+      .wasm_result()
+  }
+}
+
+#[wasm_bindgen(js_name = CreateSendProposal)]
+pub struct WasmCreateSendProposal {
+  identity: WasmOnChainIdentity,
+  action: SendAction,
+  expiration_epoch: Option<u64>,
+  controller_token: WasmControllerToken,
+}
+
+#[wasm_bindgen(js_class = CreateSendProposal)]
+impl WasmCreateSendProposal {
+  pub(crate) fn new(
+    identity: &WasmOnChainIdentity,
+    controller_token: &WasmControllerToken,
+    object_recipient_map: Vec<StringCouple>,
+    expiration_epoch: Option<u64>,
+  ) -> Result<Self> {
+    let action = object_recipient_map
       .into_iter()
       .map(Into::into)
       .map(|(obj_id_str, address_str)| {
@@ -271,26 +256,60 @@ impl WasmCreateSendProposalTx {
 
         Result::Ok((obj_id, address))
       })
-      .try_fold(identity_ref.send_assets(), |builder, maybe_obj_address| {
+      .try_fold(SendAction::default(), |mut action, maybe_obj_address| {
         let (obj_id, address) = maybe_obj_address?;
-        Result::Ok(builder.object(obj_id, address))
+        action.send_object(obj_id, address);
+
+        Result::Ok(action)
       })?;
+    Ok(Self {
+      identity: identity.clone(),
+      action,
+      expiration_epoch,
+      controller_token: controller_token.clone(),
+    })
+  }
 
-    // identity_ref.deactivate_did();
-    let builder = if let Some(exp) = self.expiration_epoch {
-      builder.expiration_epoch(exp)
-    } else {
-      builder
-    };
+  #[wasm_bindgen(js_name = buildProgrammableTransaction)]
+  pub async fn build_programmable_transaction(&self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
+    let mut identity_ref = self.identity.0.write().await;
+    let tx = Proposal::<SendAction>::create(
+      self.action.clone(),
+      self.expiration_epoch,
+      &mut identity_ref,
+      &self.controller_token.0,
+      &client.0,
+    )
+    .await
+    .wasm_result()?
+    .into_inner();
+    let pt = tx.build_programmable_transaction(&client.0).await.wasm_result()?;
 
-    let tx_output = builder
-      .finish(client)
-      .await
-      .wasm_result()?
-      .execute_with_opt_gas_internal(self.gas_budget, client)
-      .await
-      .wasm_result()?;
+    bcs::to_bytes(&pt).wasm_result()
+  }
 
-    Ok(tx_output.into())
+  #[wasm_bindgen(unchecked_return_type = "ProposalResult<SendProposal>")]
+  pub async fn apply(
+    self,
+    effects: &WasmIotaTransactionBlockEffects,
+    client: &WasmIdentityClientReadOnly,
+  ) -> Result<Option<WasmProposalSend>> {
+    let mut identity_ref = self.identity.0.write().await;
+    let tx = Proposal::<SendAction>::create(
+      self.action.clone(),
+      self.expiration_epoch,
+      &mut identity_ref,
+      &self.controller_token.0,
+      &client.0,
+    )
+    .await
+    .wasm_result()?
+    .into_inner();
+
+    let proposal_result = tx.apply(&effects.clone().into(), &client.0).await.wasm_result()?;
+    match proposal_result {
+      ProposalResult::Pending(proposal) => Ok(Some(WasmProposalSend::new(proposal))),
+      ProposalResult::Executed(_) => Ok(None),
+    }
   }
 }

@@ -10,6 +10,7 @@ use identity_iota::iota::rebased::migration::OnChainIdentity;
 use identity_iota::iota::rebased::transaction_builder::Transaction;
 use identity_iota::iota::IotaDocument;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
+use iota_interaction_ts::error::WasmResult as _;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::*;
 
@@ -20,7 +21,9 @@ use crate::iota::WasmIotaDocument;
 use crate::rebased::proposals::WasmCreateConfigChangeProposal;
 use crate::rebased::proposals::WasmCreateUpdateDidProposal;
 
+use super::proposals::StringCouple;
 use super::proposals::WasmConfigChange;
+use super::proposals::WasmCreateSendProposal;
 use super::WasmIdentityClient;
 // use super::proposals::StringCouple;
 // use super::proposals::WasmConfigChange;
@@ -154,19 +157,21 @@ impl WasmOnChainIdentity {
     ));
     WasmTransactionBuilder::new(tx.unchecked_into())
   }
-}
-//   #[wasm_bindgen(
-//     js_name = sendAssets,
-//     unchecked_return_type = "TransactionInternal<Proposal<SendAction> | ProposalOutput<SendAction>>",
-//   )]
-//   pub fn send_assets(
-//     &self,
-//     transfer_map: Vec<StringCouple>,
-//     expiration_epoch: Option<u64>,
-//   ) -> WasmCreateSendProposalTx {
-//     WasmCreateSendProposalTx::new(self, transfer_map, expiration_epoch)
-//   }
 
+  #[wasm_bindgen(
+    js_name = sendAssets,
+    unchecked_return_type = "TransactionBuilder<CreateProposal<SendAction>>",
+  )]
+  pub fn send_assets(
+    &self,
+    controller_token: &WasmControllerToken,
+    transfer_map: Vec<StringCouple>,
+    expiration_epoch: Option<u64>,
+  ) -> Result<WasmTransactionBuilder> {
+    let tx = WasmCreateSendProposal::new(self, controller_token, transfer_map, expiration_epoch).wasm_result()?;
+    Ok(WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into()))
+  }
+}
 //   #[allow(unused)] // API will be updated in the future
 //   #[wasm_bindgen(js_name = getHistory, skip_typescript)] // ts type in custom section below
 //   pub async fn get_history(
@@ -197,12 +202,6 @@ impl WasmOnChainIdentity {
 // 		getHistory(): Map<String, Proposal>;
 // 	}
 // "###;
-
-// // TODO: remove the following comment and commented out code if we don't run into a rename issue
-// // -> in case `serde(rename` runs into issues with properties with renamed types still having the
-// // original type, see [here](https://github.com/madonoharu/tsify/issues/43) for an example
-// // #[declare]
-// // pub type ProposalAction = WasmProposalAction;
 
 #[wasm_bindgen(js_name = IdentityBuilder)]
 pub struct WasmIdentityBuilder(pub(crate) IdentityBuilder);

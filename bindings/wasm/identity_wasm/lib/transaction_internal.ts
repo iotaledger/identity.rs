@@ -1,13 +1,13 @@
 // Copyright 2021-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IotaTransactionBlockResponse, TransactionEffects, Signature, IotaObjectRef } from "@iota/iota-sdk/client";
-import { TransactionData, GasData } from "@iota/iota-sdk/transactions";
-import { IdentityClientReadOnly, IdentityClient } from "~identity_wasm";
+import { IotaObjectRef, IotaTransactionBlockResponse, Signature, TransactionEffects } from "@iota/iota-sdk/client";
+import { GasData, TransactionData } from "@iota/iota-sdk/transactions";
+import { IdentityClient, IdentityClientReadOnly } from "~identity_wasm";
 
 export interface TransactionOutput<T extends Transaction<unknown>> {
     response: IotaTransactionBlockResponse;
-    output: Awaited<ReturnType<T['apply']>>;
+    output: Awaited<ReturnType<T["apply"]>>;
 }
 
 export interface Transaction<Output> {

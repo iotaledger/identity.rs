@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod config_change;
-// mod send;
+mod send;
 mod update_did;
 
 pub use config_change::*;
-// pub use send::*;
+pub use send::*;
 pub use update_did::*;
 
 use std::collections::HashMap;

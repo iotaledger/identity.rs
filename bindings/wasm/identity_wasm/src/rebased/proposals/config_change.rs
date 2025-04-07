@@ -337,7 +337,7 @@ impl WasmCreateConfigChangeProposal {
     self,
     effects: &WasmIotaTransactionBlockEffects,
     client: &WasmIdentityClientReadOnly,
-  ) -> Result<JsValue> {
+  ) -> Result<Option<WasmConfigChangeProposal>> {
     let mut identity_ref = self.identity.0.write().await;
     let controllers_to_add = self
       .controllers_to_add
@@ -378,8 +378,8 @@ impl WasmCreateConfigChangeProposal {
 
     let result = tx.apply(&effects.clone().into(), &client.0).await.wasm_result()?;
     match result {
-      ProposalResult::Executed(_) => Ok(JsValue::undefined()),
-      ProposalResult::Pending(proposal) => Ok(WasmConfigChangeProposal::new(proposal).into()),
+      ProposalResult::Executed(_) => Ok(None),
+      ProposalResult::Pending(proposal) => Ok(Some(WasmConfigChangeProposal::new(proposal))),
     }
   }
 }
