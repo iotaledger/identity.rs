@@ -42,7 +42,9 @@
 use std::result::Result as StdResult;
 
 use anyhow::anyhow;
+use anyhow::Context as _;
 use async_trait::async_trait;
+use fastcrypto::traits::EncodeDecodeBase64;
 use identity_iota::iota::rebased::client::IdentityClientReadOnly;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
 use identity_iota::iota::rebased::transaction_builder::MutGasDataRef;
@@ -57,8 +59,8 @@ use identity_iota::iota_interaction::types::transaction::TransactionDataAPI as _
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockResponse;
 use iota_interaction_ts::bindings::WasmObjectRef;
-use iota_interaction_ts::bindings::WasmTransactionData;
-use iota_interaction_ts::WasmIotaSignature;
+use iota_interaction_ts::bindings::WasmTransactionDataBuilder;
+use js_sys::JsString;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast as _;
 use wasm_bindgen::JsValue;
@@ -67,7 +69,7 @@ use wasm_bindgen_futures::JsFuture;
 use super::WasmIdentityClient;
 use super::WasmIdentityClientReadOnly;
 use crate::error::Result;
-use crate::error::WasmResult;
+use crate::error::WasmResult as _;
 
 #[wasm_bindgen]
 extern "C" {
@@ -185,48 +187,52 @@ impl WasmTransactionBuilder {
     #[wasm_bindgen(unchecked_param_type = "SponsorFn")] sponsor_fn: &js_sys::Function,
   ) -> Result<Self> {
     let closure = async |mut tx_data_ref: MutGasDataRef<'_>| -> anyhow::Result<Signature> {
-      let wasm_tx_data = WasmTransactionData::try_from(tx_data_ref.clone())
-        .map_err(|_| anyhow!("failed to convert TransactionData into JS TransactionData"))?;
+      let tx_data_bcs = bcs::to_bytes(&*tx_data_ref)?;
+      let wasm_tx = WasmTransactionDataBuilder::from_bcs_bytes(js_sys::Uint8Array::from(tx_data_bcs.as_slice()))
+        .map_err(|_| anyhow!("failed to convert TransactionData into JS IotaTransaction"))?;
       let promise: js_sys::Promise = sponsor_fn
-        .call1(&JsValue::NULL, wasm_tx_data.as_ref())
+        .call1(&JsValue::NULL, &wasm_tx)
         .and_then(|value| value.dyn_into())
         .map_err(|_| anyhow!("failed to call JS closure"))?;
-      let signature: WasmIotaSignature = JsFuture::from(promise)
+      let sig_str: JsString = JsFuture::from(promise)
         .await
         .and_then(|value| value.dyn_into())
         .map_err(|_| anyhow!("failed to build a Future from a JS Promise"))?;
-      let tx_data = TransactionData::try_from(wasm_tx_data)
-        .map_err(|_| anyhow!("failed to convert JS TransactionData to TransactionData"))?;
+
+      let modified_tx_data_bcs = wasm_tx
+        .build()
+        .map_err(|_| anyhow!("failed to build JS TransactionDataBuilder"))?
+        .to_vec();
+      let tx_data = bcs::from_bytes::<TransactionData>(&modified_tx_data_bcs)?;
 
       *tx_data_ref.gas_data_mut() = tx_data.gas_data().clone();
+      let signature = Signature::decode_base64(&String::from(sig_str)).context("failed to decode b64 signature")?;
 
-      signature
-        .try_into()
-        .map_err(|_| anyhow::anyhow!("failed to convert JS IOTA Signature to Signature"))
+      Ok(signature)
     };
 
     self.0 = self.0.with_sponsor(&client.0, closure).await.wasm_result()?;
     Ok(self)
   }
 
-  #[wasm_bindgen(unchecked_return_type = "[TransactionData, Signature[], Transaction]")]
+  #[wasm_bindgen(unchecked_return_type = "[Uint8Array, string[], Transaction]")]
   pub async fn build(self, client: &WasmIdentityClient) -> Result<JsValue> {
     let (tx_data, signatures, inner_tx) = self.0.build(&client.0).await.wasm_result()?;
-    let wasm_tx_data = WasmTransactionData::try_from(tx_data).wasm_result()?;
+    let tx_data_bcs = bcs::to_bytes(&tx_data)
+      .wasm_result()
+      .map(|bcs_bytes| js_sys::Uint8Array::from(bcs_bytes.as_slice()))?;
     let wasm_signatures = {
       let wasm_signatures = js_sys::Array::new();
       for sig in signatures {
-        let wasm_sig = WasmIotaSignature::try_from(sig)
-          .map_err(|_| anyhow!("failed to convert Signature to JS Signature"))
-          .wasm_result()?;
-        wasm_signatures.push(wasm_sig.as_ref());
+        let b64_sig = sig.encode_base64();
+        wasm_signatures.push(&JsValue::from_str(&b64_sig));
       }
 
       wasm_signatures
     };
 
     let wasm_triple = js_sys::Array::new();
-    wasm_triple.push(wasm_tx_data.as_ref());
+    wasm_triple.push(&tx_data_bcs);
     wasm_triple.push(wasm_signatures.as_ref());
     wasm_triple.push(inner_tx.as_ref());
 

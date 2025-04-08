@@ -11,6 +11,7 @@ use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
 
 use identity_iota::iota::rebased::transaction_builder::Transaction as _;
 use iota_interaction_ts::bindings::WasmExecutionStatus;
+use iota_interaction_ts::bindings::WasmIotaClient;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use iota_interaction_ts::bindings::WasmOwnedObjectRef;
 use iota_interaction_ts::WasmPublicKey;
@@ -163,6 +164,21 @@ impl WasmIdentityClient {
       .map_err(<Error as std::convert::Into<JsError>>::into)?;
 
     Ok(())
+  }
+
+  #[wasm_bindgen(js_name = iotaClient)]
+  pub fn iota_client(&self) -> WasmIotaClient {
+    (**self.0).clone().into_inner()
+  }
+
+  #[wasm_bindgen]
+  pub fn signer(&self) -> WasmTransactionSigner {
+    self.0.signer().clone()
+  }
+
+  #[wasm_bindgen(js_name = readOnly)]
+  pub fn read_only(&self) -> WasmIdentityClientReadOnly {
+    WasmIdentityClientReadOnly((*self.0).clone())
   }
 }
 

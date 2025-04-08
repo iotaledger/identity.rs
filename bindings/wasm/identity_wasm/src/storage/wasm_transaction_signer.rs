@@ -8,8 +8,8 @@ use identity_iota::iota_interaction::types::crypto::PublicKey;
 use identity_iota::iota_interaction::types::crypto::Signature;
 use identity_iota::iota_interaction::types::crypto::SignatureScheme;
 use identity_iota::iota_interaction::types::transaction::TransactionData;
-use iota_interaction_ts::bindings::WasmTransactionData;
-use iota_interaction_ts::WasmIotaSignature;
+use js_sys::JsString;
+use js_sys::Uint8Array;
 use secret_storage::Error as SecretStorageError;
 use secret_storage::Signer;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -19,11 +19,9 @@ use crate::error::Result;
 #[wasm_bindgen(typescript_custom_section)]
 const I_TX_SIGNER: &str = r#"
 import { PublicKey } from "@iota/iota-sdk/cryptography";
-import { Signature } from "@iota/iota-sdk/client";
-import { TransactionData } from "@iota/iota-sdk/transaction";
 
 interface TransactionSigner {
-  sign: (data: TransactionData) => Promise<Signature>;
+  sign: (tx_data_bcs: Uint8Array) => Promise<string>;
   publicKey: () => Promise<PublicKey>;
   iotaPublicKeyBytes: () => Promise<Uint8Array>;
   keyId: () => string;
@@ -32,14 +30,15 @@ interface TransactionSigner {
 
 #[wasm_bindgen]
 extern "C" {
+  #[derive(Clone)]
   #[wasm_bindgen(typescript_type = "TransactionSigner")]
   pub type WasmTransactionSigner;
 
   #[wasm_bindgen(method, structural, catch)]
-  pub async fn sign(this: &WasmTransactionSigner, tx_data: &WasmTransactionData) -> Result<WasmIotaSignature>;
+  pub async fn sign(this: &WasmTransactionSigner, tx_data: Vec<u8>) -> Result<JsString>;
 
   #[wasm_bindgen(js_name = "iotaPublicKeyBytes", method, structural, catch)]
-  pub async fn iota_public_key_bytes(this: &WasmTransactionSigner) -> Result<js_sys::Uint8Array>;
+  pub async fn iota_public_key_bytes(this: &WasmTransactionSigner) -> Result<Uint8Array>;
 
   #[wasm_bindgen(js_name = "keyId", method, structural)]
   pub fn key_id(this: &WasmTransactionSigner) -> String;
@@ -50,17 +49,18 @@ impl Signer<IotaKeySignature> for WasmTransactionSigner {
   type KeyId = String;
 
   async fn sign(&self, data: &TransactionData) -> std::result::Result<Signature, SecretStorageError> {
-    let wasm_tx_data = WasmTransactionData::try_from(data.clone())
-      .map_err(|_| SecretStorageError::Other(anyhow!("failed to convert TransactionData to JS TransactionData")))?;
-    self
-      .sign(&wasm_tx_data)
+    let bcs_tx_data = bcs::to_bytes(data).map_err(|e| SecretStorageError::Other(e.into()))?;
+
+    let sig_str: String = self
+      .sign(bcs_tx_data)
       .await
-      .and_then(|v| v.try_into())
+      .map(|js_str| js_str.into())
       .map_err(|err| {
         let details = err.as_string().map(|v| format!("; {}", v)).unwrap_or_default();
         let message = format!("could not sign data{details}");
         SecretStorageError::Other(anyhow::anyhow!(message))
-      })
+      })?;
+    sig_str.parse().map_err(|e| SecretStorageError::Other(anyhow!("{e}")))
   }
 
   async fn public_key(&self) -> std::result::Result<PublicKey, SecretStorageError> {

@@ -29,7 +29,6 @@ use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::bindings::WasmIotaClient;
-use crate::common::PromiseUint8Array;
 use crate::console_log;
 use crate::error::TsSdkError;
 use crate::error::WasmError;
@@ -250,6 +249,26 @@ impl TryFrom<WasmIotaSignature> for Signature {
 
 #[wasm_bindgen(module = "@iota/iota-sdk/transactions")]
 extern "C" {
+  #[derive(Clone)]
+  #[wasm_bindgen(typescript_type = "Transaction")]
+  pub type WasmTransaction;
+
+  #[wasm_bindgen(js_name = "from", js_class = "Transaction", static_method_of = WasmTransaction, catch)]
+  pub fn from_bcs_bytes(bytes: Uint8Array) -> Result<WasmTransaction, JsValue>;
+
+  #[wasm_bindgen(method, structural, catch)]
+  pub async fn build(
+    this: &WasmTransaction,
+    options: Option<WasmBuildTransactionOptions>,
+  ) -> Result<Uint8Array, JsValue>;
+
+  #[wasm_bindgen(typescript_type = BuildTransactionOptions)]
+  pub type WasmBuildTransactionOptions;
+
+  #[derive(Clone)]
+  #[wasm_bindgen(typescript_type = "TransactionData")]
+  pub type WasmTransactionData;
+
   #[wasm_bindgen(typescript_type = "Transaction")]
   pub type WasmTransactionBuilder;
 
@@ -260,8 +279,27 @@ extern "C" {
   pub async fn build(this: &WasmTransactionBuilder) -> Result<Uint8Array, JsValue>;
 
   #[derive(Clone)]
-  #[wasm_bindgen(typescript_type = "TransactionData")]
-  pub type WasmTransactionData;
+  #[wasm_bindgen(typescript_type = TransactionDataBuilder)]
+  pub type WasmTransactionDataBuilder;
+
+  #[wasm_bindgen(
+    js_name = fromBytes,
+    js_class = TransactionDataBuilder,
+    static_method_of = WasmTransactionDataBuilder,
+    catch
+  )]
+  pub fn from_bcs_bytes(bytes: Uint8Array) -> Result<WasmTransactionDataBuilder, JsValue>;
+
+  #[wasm_bindgen(
+    js_name = fromKindBytes,
+    js_class = TransactionDataBuilder,
+    static_method_of = WasmTransactionDataBuilder,
+    catch
+  )]
+  pub fn from_kind_bcs_bytes(bytes: Uint8Array) -> Result<WasmTransactionDataBuilder, JsValue>;
+
+  #[wasm_bindgen(method, catch)]
+  pub fn build(this: &WasmTransactionDataBuilder) -> Result<Uint8Array, JsValue>;
   // TODO: decide if we need the following functions: "yagni" or not?
 
   // #[wasm_bindgen(js_name = "setSender", method, catch)]
@@ -472,42 +510,6 @@ extern "C" {
 
   #[wasm_bindgen(js_name = "sleep")]
   fn sleep_inner(ms: i32) -> Promise;
-}
-
-/// Inserts these values into the transaction and replaces placeholder values.
-///
-///   - sender (overwritten as we assume a placeholder to be used in prepared transaction)
-///   - gas budget (value determined automatically if not provided)
-///   - gas price (value determined automatically)
-///   - gas coin / payment object (fetched automatically)
-///   - gas owner (equals sender)
-///
-/// # Arguments
-///
-///   * `iota_client` -  client instance
-///   * `sender_address` -  transaction sender (and the one paying for it)
-///   * `tx_bcs` -  transaction data serialized to bcs, most probably having placeholder values
-///   * `gas_budget` -  optional fixed gas budget, determined automatically with a dry run if not provided
-pub(crate) async fn add_gas_data_to_transaction(
-  iota_client: &WasmIotaClient,
-  sender_address: IotaAddress,
-  tx_bcs: Vec<u8>,
-  gas_budget: Option<u64>,
-) -> Result<Vec<u8>, TsSdkError> {
-  let promise: Promise = Promise::resolve(&add_gas_data_to_transaction_inner(
-    iota_client,
-    sender_address.to_string(),
-    tx_bcs,
-    gas_budget,
-  ));
-  let value: JsValue = JsFuture::from(promise).await.map_err(|e| {
-    let message = "Error executing JsFuture::from(promise) for `add_gas_data_to_transaction`";
-    let details = format!("{e:?}");
-    console_log!("{message}; {details}");
-    TsSdkError::WasmError(message.to_string(), details.to_string())
-  })?;
-
-  Ok(Uint8Array::new(&value).to_vec())
 }
 
 ///  Helper function to pause execution.

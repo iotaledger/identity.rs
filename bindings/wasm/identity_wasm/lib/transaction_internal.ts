@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { IotaObjectRef, IotaTransactionBlockResponse, Signature, TransactionEffects } from "@iota/iota-sdk/client";
-import { GasData, TransactionData } from "@iota/iota-sdk/transactions";
+import { TransactionDataBuilder } from "@iota/iota-sdk/transactions";
 import { IdentityClient, IdentityClientReadOnly } from "~identity_wasm";
 
 export interface TransactionOutput<T extends Transaction<unknown>> {
@@ -15,8 +15,7 @@ export interface Transaction<Output> {
     apply(effects: TransactionEffects, client: IdentityClientReadOnly): Promise<Output>;
 }
 
-export type TransactionDataMutGas = Readonly<Omit<TransactionData, "gasData">> & { gasData: GasData };
-export type SponsorFn = (txData: TransactionDataMutGas) => Signature;
+export type SponsorFn = (tx_data: TransactionDataBuilder) => Promise<string>;
 
 export interface TransactionBuilder<T extends Transaction<unknown>> {
     get transaction(): Readonly<Transaction<T>>;
@@ -26,7 +25,7 @@ export interface TransactionBuilder<T extends Transaction<unknown>> {
     withGasPayment(payment: IotaObjectRef[]): TransactionBuilder<T>;
     withSender(sender: String): TransactionBuilder<T>;
     withSignature(client: IdentityClient): TransactionBuilder<T>;
-    withSponsor(client: IdentityClientReadOnly, sponsorFn: SponsorFn): TransactionBuilder<T>;
-    build(client: IdentityClient): Promise<[TransactionData, Signature[], T]>;
+    withSponsor(client: IdentityClientReadOnly, sponsorFn: SponsorFn): Promise<TransactionBuilder<T>>;
+    build(client: IdentityClient): Promise<[Uint8Array, string[], T]>;
     buildAndExecute(client: IdentityClient): Promise<TransactionOutput<T>>;
 }

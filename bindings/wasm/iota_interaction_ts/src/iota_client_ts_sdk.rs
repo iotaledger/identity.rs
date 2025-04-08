@@ -386,6 +386,10 @@ impl IotaClientTsSdk {
     })
   }
 
+  pub fn into_inner(self) -> WasmIotaClient {
+    self.iota_client.clone().0
+  }
+
   // Submit tx to IOTA client, also:
   //   - signs tx
   //   - calls execute_transaction_block to submit tx (with signatures created here)

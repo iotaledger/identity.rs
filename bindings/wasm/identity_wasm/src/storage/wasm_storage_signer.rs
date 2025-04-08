@@ -1,11 +1,9 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::iota_interaction::types::transaction::TransactionData;
+use fastcrypto::traits::EncodeDecodeBase64;
 use identity_iota::storage::KeyId;
 use identity_iota::storage::StorageSigner;
-use iota_interaction_ts::bindings::WasmTransactionData;
-use iota_interaction_ts::WasmIotaSignature;
 use iota_interaction_ts::WasmPublicKey;
 use secret_storage::Signer;
 use wasm_bindgen::prelude::*;
@@ -47,10 +45,10 @@ impl WasmStorageSigner {
   }
 
   #[wasm_bindgen(js_name = sign)]
-  pub async fn sign(&self, data: &WasmTransactionData) -> Result<WasmIotaSignature> {
-    let tx_data = TransactionData::try_from(data.clone()).wasm_result()?;
+  pub async fn sign(&self, data: &[u8]) -> Result<String> {
+    let tx_data = bcs::from_bytes(data).wasm_result()?;
     let sig = self.signer().sign(&tx_data).await.wasm_result()?;
-    sig.try_into()
+    Ok(sig.encode_base64())
   }
 
   #[wasm_bindgen(js_name = publicKey)]
