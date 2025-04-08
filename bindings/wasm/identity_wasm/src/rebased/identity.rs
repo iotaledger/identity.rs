@@ -162,8 +162,8 @@ impl WasmOnChainIdentity {
     controller_token: &WasmControllerToken,
     expiration_epoch: Option<u64>
   ) -> WasmTransactionBuilder {
-    let tx = WasmCreateUpdateDidProposal::delete(self, controller_token.clone(), expiration_epoch);
-    WasmTransactionBuilder::new(JsValue::from(create_proposal_tx).unchecked_into())
+    let tx = WasmCreateUpdateDidProposal::delete(self, controller_token, expiration_epoch);
+    WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into())
   }
 
   #[wasm_bindgen(
