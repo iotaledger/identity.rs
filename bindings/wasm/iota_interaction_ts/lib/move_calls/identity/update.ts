@@ -28,7 +28,7 @@ export function proposeUpdate(
 
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
 
-    return tx.build({onlyTransactionKind: true});
+    return tx.build({ onlyTransactionKind: true });
 }
 
 export function executeUpdate(
@@ -51,5 +51,5 @@ export function executeUpdate(
 
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
 
-    return tx.build({onlyTransactionKind: true});
+    return tx.build({ onlyTransactionKind: true });
 }

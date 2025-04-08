@@ -15,7 +15,7 @@ export async function create(didDoc: Uint8Array | undefined, packageId: string):
         arguments: [didDocArg, clock],
     });
 
-    return tx.build({onlyTransactionKind: true});
+    return tx.build({ onlyTransactionKind: true });
 }
 
 export async function newWithControllers(
@@ -46,10 +46,10 @@ export async function newWithControllers(
         arguments: [didDocArg, controllersArg, controllersThatCanDelegate, thresholdArg, clock],
     });
 
-    const tx_kind_bcs = await tx.build({onlyTransactionKind: true});
+    const tx_kind_bcs = await tx.build({ onlyTransactionKind: true });
     try {
         const tx_kind = bcs.TransactionKind.parse(tx_kind_bcs);
-    } catch(e) {
+    } catch (e) {
         console.error(`failed to deserialize tx kind: ${e}`);
     } finally {
         return tx_kind_bcs;

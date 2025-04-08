@@ -401,8 +401,8 @@ impl<'a, T: MoveType + Send + Sync> UpdateContent<'a, T> {
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl<T> Transaction for UpdateContent<'_, T>
 where
   T: MoveType + Send + Sync,
@@ -454,8 +454,8 @@ impl<T: MoveType + Send + Sync> DeleteAsset<T> {
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl<T> Transaction for DeleteAsset<T>
 where
   T: MoveType + Send + Sync,
@@ -508,8 +508,8 @@ impl<T: MoveType> CreateAsset<T> {
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl<T> Transaction for CreateAsset<T>
 where
   T: MoveType + DeserializeOwned + Send + Sync,
@@ -573,8 +573,8 @@ impl<T: MoveType + Send + Sync> TransferAsset<T> {
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl<T> Transaction for TransferAsset<T>
 where
   T: MoveType + Send + Sync,
@@ -666,8 +666,8 @@ impl AcceptTransfer {
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for AcceptTransfer {
   type Output = ();
 
@@ -733,8 +733,8 @@ impl ConcludeTransfer {
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for ConcludeTransfer {
   type Output = ();
   async fn build_programmable_transaction(

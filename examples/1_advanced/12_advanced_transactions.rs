@@ -1,16 +1,17 @@
 // Copyright 2020-2025 IOTA Stiftung, Fondazione Links
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_did_document;
 use examples::get_funded_client;
+use examples::get_memstorage;
+use examples::TEST_GAS_BUDGET;
 
 use anyhow::Context as _;
-use identity_iota_core::rebased::client::IdentityClient;
-use identity_iota_core::rebased::transaction_builder::MutGasDataRef;
-use identity_iota_core::rebased::transaction_builder::Transaction as _;
-use identity_iota_core::IotaDocument;
-use identity_iota_interaction::IotaClientTrait as _;
-use identity_iota_interaction::IotaKeySignature;
+use identity_iota::iota::rebased::client::IdentityClient;
+use identity_iota::iota::rebased::transaction_builder::MutGasDataRef;
+use identity_iota::iota::rebased::transaction_builder::Transaction as _;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota_interaction::IotaClientTrait as _;
+use identity_iota::iota_interaction::IotaKeySignature;
 use iota_sdk::rpc_types::IotaTransactionBlockResponseOptions;
 use iota_sdk::types::crypto::Signature;
 use iota_sdk::types::quorum_driver_types::ExecuteTransactionRequestType;
@@ -26,12 +27,13 @@ use secret_storage::Signer;
 /// 3. Apply the transaction's off-chain effects, from its on-chain ones.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  let alice_client = get_funded_client().await?;
-  let bob_client = get_funded_client().await?;
+  let storage = get_memstorage()?;
+  let alice_client = get_funded_client(&storage).await?;
+  let bob_client = get_funded_client(&storage).await?;
 
   // Alice wants to create a new Identity with only her as its controller.
   let (tx_data, sigs, tx) = alice_client
-    .create_identity(IotaDocument::new(test_client.network()))
+    .create_identity(IotaDocument::new(alice_client.network()))
     .finish()
     // Alice is the sender of this transaction
     .with_sender(alice_client.sender_address())

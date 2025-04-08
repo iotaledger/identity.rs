@@ -106,5 +106,5 @@ path = "1_advanced/11_linked_verifiable_presentation.rs"
 name = "11_linked_verifiable_presentation"
 
 [[example]]
-path = "1_advanced/12_advanced_transactions"
+path = "1_advanced/12_advanced_transactions.rs"
 name = "12_advanced_transactions"

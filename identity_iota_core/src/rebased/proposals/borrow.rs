@@ -154,8 +154,8 @@ impl<'i, 'c, F> ProposalBuilder<'i, 'c, BorrowAction<F>> {
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl<F> ProposalT for Proposal<BorrowAction<F>>
 where
   F: BorrowIntentFnT + Send + Sync,
@@ -344,8 +344,8 @@ where
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl<F> Transaction for UserDrivenTx<'_, BorrowActionWithIntent<F>>
 where
   F: BorrowIntentFnT + Send,

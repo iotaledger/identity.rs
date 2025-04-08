@@ -1,7 +1,7 @@
 // Copyright 2021-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IdentityClient, UpdateDid, SendAction, ConfigChange } from "~identity_wasm";
+import { ConfigChange, IdentityClient, SendAction, UpdateDid } from "~identity_wasm";
 import { Transaction, TransactionBuilder } from "./transaction_internal";
 
 export type Action = UpdateDid | SendAction | ConfigChange;

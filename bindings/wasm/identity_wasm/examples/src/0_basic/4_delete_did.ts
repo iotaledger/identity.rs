@@ -31,7 +31,7 @@ export async function deleteIdentityDID() {
     await identity
         .deleteDid(controllerToken!)
         .withGasBudget(TEST_GAS_BUDGET)
-        .buildexecute(identityClient);
+        .buildAndExecute(identityClient);
 
     // After an Identity's DID has been deleted, the document will be
     // empty and inactive. Identity.hasDeletedDid must return `true`.

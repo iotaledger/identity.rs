@@ -52,8 +52,8 @@ use identity_iota_interaction::MoveType;
 use super::migration::ControllerToken;
 
 /// Interface that allows the creation and execution of an [`OnChainIdentity`]'s [`Proposal`]s.
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 pub trait ProposalT: Sized {
   /// The [`Proposal`] action's type.
   type Action;
@@ -171,15 +171,15 @@ pub struct CreateProposal<'i, A> {
   _action: PhantomData<A>,
 }
 
-impl<'i, A> CreateProposal<'i, A> {
+impl<A> CreateProposal<'_, A> {
   /// Returns this [Transaction]'s [ProgrammableTransaction].
   pub fn ptb(&self) -> &ProgrammableTransaction {
     &self.ptb
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl<A> Transaction for CreateProposal<'_, A>
 where
   Proposal<A>: ProposalT<Action = A> + DeserializeOwned,
@@ -242,15 +242,15 @@ pub struct ExecuteProposal<'i, A> {
   _action: PhantomData<A>,
 }
 
-impl<'i, A> ExecuteProposal<'i, A> {
+impl<A> ExecuteProposal<'_, A> {
   /// Returns this [Transaction]'s [ProgrammableTransaction].
   pub fn ptb(&self) -> &ProgrammableTransaction {
     &self.ptb
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl<A> Transaction for ExecuteProposal<'_, A>
 where
   Proposal<A>: ProposalT<Action = A>,
@@ -334,8 +334,8 @@ impl<A: MoveType> ApproveProposal<'_, '_, A> {
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl<A> Transaction for ApproveProposal<'_, '_, A>
 where
   Proposal<A>: ProposalT<Action = A>,

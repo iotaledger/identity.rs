@@ -569,8 +569,8 @@ impl CreateIdentity {
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for CreateIdentity {
   type Output = OnChainIdentity;
   async fn build_programmable_transaction(

@@ -215,8 +215,8 @@ impl ConfigChange {
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl ProposalT for Proposal<ConfigChange> {
   type Action = ConfigChange;
   type Output = ();
