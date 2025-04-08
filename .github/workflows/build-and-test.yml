@@ -31,7 +31,7 @@ env:
   SCCACHE_CACHE_SIZE: 2G
   SCCACHE_IDLE_TIMEOUT: 0
   # SCCACHE_RECACHE: 1 # uncomment to clear sccache cache, then re-comment
-  IOTA_VERSION: "${{ !github.event.schedule && '' || (github.event.schedule == '5 0 * * *' && 'testnet' || 'devnet')}}"
+  IOTA_VERSION: ${{github.event.schedule && (github.event.schedule == '5 0 * * *' && 'testnet' || 'devnet')}}
 
 jobs:
   check-for-run-condition:
