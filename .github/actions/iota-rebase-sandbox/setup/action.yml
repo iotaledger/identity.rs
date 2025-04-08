@@ -26,10 +26,13 @@ runs:
         cd iota
 
         VERSION="${{ inputs.iota-version }}"
-
+        if [[ "$VERSION" = "" ]]; then
+          VERSION="testnet"
+        fi
+        
         if [ "$VERSION" = "mainnet" ]; then
           VERSION_SEARCH_STRING="[Mainnet]"
-        elif [ "$VERSION" = "testnet" || !"$VERSION" ]; then
+        elif [ "$VERSION" = "testnet" ]; then
           VERSION_SEARCH_STRING="[Testnet]"
         elif [ "$VERSION" = "devnet" ]; then
           VERSION_SEARCH_STRING="[Devnet]"
