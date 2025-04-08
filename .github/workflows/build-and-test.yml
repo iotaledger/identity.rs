@@ -20,12 +20,18 @@ on:
       - '!bindings/**.md'
       - 'bindings/wasm/identity_wasm/README.md' # the Readme contain txm tests
 
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '5 0 * * *' # everyday, 00:05, used for testnet scheduled test
+    - cron:  '10 0 * * *' # everyday, 00:10 used for devnet scheduled test
+
 env:
   RUST_BACKTRACE: full
   CARGO_INCREMENTAL: 0 # disabled to reduce target cache size and improve sccache (https://github.com/mozilla/sccache#known-caveats)
   SCCACHE_CACHE_SIZE: 2G
   SCCACHE_IDLE_TIMEOUT: 0
   # SCCACHE_RECACHE: 1 # uncomment to clear sccache cache, then re-comment
+  IOTA_VERSION: "${{ !github.event.schedule && '' || (github.event.schedule == '5 0 * * *' && 'testnet' || 'devnet')}}"
 
 jobs:
   check-for-run-condition:
@@ -148,6 +154,7 @@ jobs:
         with:
           platform: ${{ matrix.os == 'ubuntu-24.04' && 'linux' || 'macos' }}
           logfile: ${{ env.IOTA_SERVER_LOGFILE }}
+          iota-version: ${{ env.IOTA_VERSION }}
 
       - name: test IotaIdentity package
         if: matrix.os != 'windows-latest'
@@ -240,6 +247,8 @@ jobs:
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
+        with:
+          iota-version: ${{ env.IOTA_VERSION }}
 
       - name: publish IotaIdentity package
         if: matrix.os != 'windows-latest'
@@ -294,6 +303,8 @@ jobs:
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
+        with:
+          iota-version: ${{ env.IOTA_VERSION }}
 
       - name: publish IotaIdentity package
         # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
@@ -345,6 +356,8 @@ jobs:
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
+        with:
+          iota-version: ${{ env.IOTA_VERSION }}
 
       - name: publish IotaIdentity package
         # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
