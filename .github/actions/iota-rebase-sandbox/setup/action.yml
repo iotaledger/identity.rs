@@ -11,9 +11,9 @@ inputs:
     required: false
     default: ""
   iota-version:
-    description: "IOTA version to pull from GitHub releases, recognizes well known networks (mainnet, testnet, devnet)"
+    description: "IOTA version to pull from GitHub releases, recognizes well known networks (mainnet, testnet, devnet), defaults to 'testnet'"
     required: false
-    default: "testnet"
+    default: ""
 
 runs:
   using: composite
@@ -26,21 +26,21 @@ runs:
         cd iota
 
         VERSION="${{ inputs.iota-version }}"
-        echo "Looking for version: $VERSION"
 
         if [ "$VERSION" = "mainnet" ]; then
           VERSION_SEARCH_STRING="[Mainnet]"
-        elif [ "$VERSION" = "testnet" ]; then
+        elif [ "$VERSION" = "testnet" || "$VERSION" = ""]; then
           VERSION_SEARCH_STRING="[Testnet]"
         elif [ "$VERSION" = "devnet" ]; then
           VERSION_SEARCH_STRING="[Devnet]"
         else
           VERSION_SEARCH_STRING=VERSION
         fi
+        
+        echo "Looking for version: $VERSION_SEARCH_STRING"
 
         # Set platform
         PLATFORM="${{ inputs.platform }}"
-        echo "Looking for platform: $PLATFORM"
 
         if [ "$PLATFORM" = "linux" ]; then
           PLATFORM_TRIPLET="linux-x86_64"
@@ -52,6 +52,8 @@ runs:
           echo "not binaries for platform: $PLATFORM"
           exit 1
         fi
+        
+        echo "Looking for platform: $PLATFORM_TRIPLET"
 
         # pinned releases from:
         # url = https://api.github.com/repos/iotaledger/iota/releases
