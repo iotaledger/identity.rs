@@ -29,12 +29,12 @@ runs:
 
         if [ "$VERSION" = "mainnet" ]; then
           VERSION_SEARCH_STRING="[Mainnet]"
-        elif [ "$VERSION" = "testnet" || "$VERSION" = ""]; then
+        elif [ "$VERSION" = "testnet" || !"$VERSION" ]; then
           VERSION_SEARCH_STRING="[Testnet]"
         elif [ "$VERSION" = "devnet" ]; then
           VERSION_SEARCH_STRING="[Devnet]"
         else
-          VERSION_SEARCH_STRING=VERSION
+          VERSION_SEARCH_STRING=$VERSION
         fi
         
         echo "Looking for version: $VERSION_SEARCH_STRING"
