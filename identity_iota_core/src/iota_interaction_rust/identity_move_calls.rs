@@ -305,8 +305,8 @@ fn execute_send_impl(
 #[derive(Clone)]
 pub(crate) struct IdentityMoveCallsRustSdk {}
 
-#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
-#[cfg_attr(feature = "send-sync", async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
   type Error = Error;
   type NativeTxBuilder = PrgrTxBuilder;

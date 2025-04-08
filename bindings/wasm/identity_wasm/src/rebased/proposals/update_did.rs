@@ -284,7 +284,11 @@ impl WasmCreateUpdateDidProposal {
     }
   }
 
-  pub(crate) fn delete(identity: &WasmOnChainIdentity, controller_token: &WasmControllerToken, expiration_epoch: Option<u64>) -> Self {
+  pub(crate) fn delete(
+    identity: &WasmOnChainIdentity,
+    controller_token: &WasmControllerToken,
+    expiration_epoch: Option<u64>,
+  ) -> Self {
     Self {
       identity: identity.clone(),
       expiration_epoch,

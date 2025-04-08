@@ -98,7 +98,7 @@ impl Transaction for WasmTransaction {
     client: &IdentityClientReadOnly,
   ) -> StdResult<ProgrammableTransaction, IotaError> {
     let client = WasmIdentityClientReadOnly(client.clone());
-    let pt_bcs = Self::build_programmable_transaction(&self, client)
+    let pt_bcs = Self::build_programmable_transaction(self, client)
       .await
       .map_err(|e| IotaError::FfiError(format!("{e:?}")))?
       .to_vec();

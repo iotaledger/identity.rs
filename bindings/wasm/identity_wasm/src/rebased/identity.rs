@@ -160,7 +160,7 @@ impl WasmOnChainIdentity {
   pub fn delete_did(
     &self,
     controller_token: &WasmControllerToken,
-    expiration_epoch: Option<u64>
+    expiration_epoch: Option<u64>,
   ) -> WasmTransactionBuilder {
     let tx = WasmCreateUpdateDidProposal::delete(self, controller_token, expiration_epoch);
     WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into())
