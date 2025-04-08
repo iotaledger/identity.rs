@@ -86,6 +86,20 @@ impl WasmOnChainIdentity {
     Ok(WasmIotaDocument::from(inner_doc))
   }
 
+  /// Returns whether the {@link IotaDocument} contained in this {@link OnChainIdentity} has been deleted.
+  /// Once a DID Document is deleted, it cannot be reactivated.
+  ///
+  /// When calling {@link OnChainIdentity.did_document} on an Identity whose DID Document
+  /// had been deleted, an *empty* and *deactivated* {@link IotaDocument} will be returned.
+  #[wasm_bindgen(js_name = hasDeletedDid)]
+  pub fn has_deleted_did(&self) -> Result<bool> {
+    self
+      .0
+      .try_read()
+      .wasm_result()
+      .map(|identity| identity.has_deleted_did())
+  }
+
   #[wasm_bindgen(js_name = isShared)]
   pub fn is_shared(&self) -> Result<bool> {
     Ok(self.0.try_read().wasm_result()?.is_shared())
@@ -136,6 +150,19 @@ impl WasmOnChainIdentity {
     expiration_epoch: Option<u64>,
   ) -> WasmTransactionBuilder {
     let create_proposal_tx = WasmCreateUpdateDidProposal::deactivate(self, controller_token.clone(), expiration_epoch);
+    WasmTransactionBuilder::new(JsValue::from(create_proposal_tx).unchecked_into())
+  }
+
+  #[wasm_bindgen(
+    js_name = deleteDid,
+    unchecked_return_type = "TransactionBuilder<CreateProposal<UpdateDid>>",
+  )]
+  pub fn delete_did(
+    &self,
+    controller_token: &WasmControllerToken,
+    expiration_epoch: Option<u64>
+  ) -> WasmTransactionBuilder {
+    let tx = WasmCreateUpdateDidProposal::delete(self, controller_token.clone(), expiration_epoch);
     WasmTransactionBuilder::new(JsValue::from(create_proposal_tx).unchecked_into())
   }
 

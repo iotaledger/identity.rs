@@ -4,6 +4,7 @@
       "ES2020",
       "DOM"
     ],
+    "target": "ES2022",
     "declaration": true,
     "sourceMap": true,
     "strict": true,

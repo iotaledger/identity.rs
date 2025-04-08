@@ -315,10 +315,15 @@ impl IdentityClientReadOnly {
 
   /// Queries an [`IotaDocument`] DID Document through its `did`.
   pub async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument, Error> {
-    self
-      .get_identity(get_object_id_from_did(did)?)
-      .await?
-      .did_document(self.network())
+    let identity = self.get_identity(get_object_id_from_did(did)?).await?;
+    let did_doc = identity.did_document(self.network())?;
+
+    match identity {
+      Identity::FullFledged(identity) if identity.has_deleted_did() => {
+        Err(Error::DIDResolutionError(format!("could not find DID Document {did}")))
+      }
+      _ => Ok(did_doc),
+    }
   }
 
   /// Resolves an [`Identity`] from its ID `object_id`.

@@ -84,6 +84,9 @@ impl ProposalT for Proposal<UpdateDidDocument> {
         identity.id()
       )));
     }
+    if identity.has_deleted_did() {
+      return Err(Error::Identity("cannot update a deleted DID Document".into()));
+    }
 
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
@@ -132,6 +135,10 @@ impl ProposalT for Proposal<UpdateDidDocument> {
         identity.id()
       )));
     }
+    if identity.has_deleted_did() {
+      return Err(Error::Identity("cannot update a deleted DID Document".into()));
+    }
+
     let proposal_id = self.id();
     let identity_ref = client
       .get_object_ref_by_id(identity.id())

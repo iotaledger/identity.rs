@@ -284,6 +284,16 @@ impl WasmCreateUpdateDidProposal {
     }
   }
 
+  pub(crate) fn delete(identity: &WasmOnChainIdentity, controller_token: &WasmControllerToken, expiration_epoch: Option<u64>) -> Self {
+    Self {
+      identity: identity.clone(),
+      expiration_epoch,
+      updated_did_doc: None,
+      delete: true,
+      controller_token: controller_token.clone(),
+    }
+  }
+
   #[wasm_bindgen(js_name = buildProgrammableTransaction)]
   pub async fn build_programmable_transaction(&self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
     let action = if let Some(did_doc) = self.updated_did_doc.as_ref() {

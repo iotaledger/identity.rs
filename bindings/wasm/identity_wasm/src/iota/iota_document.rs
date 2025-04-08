@@ -488,18 +488,6 @@ impl WasmIotaDocument {
     Ok(())
   }
 
-  /// Returns a copy of the Bech32-encoded state controller address, if present.
-  #[wasm_bindgen(js_name = metadataStateControllerAddress)]
-  pub fn metadata_state_controller_address(&self) -> Result<Option<String>> {
-    Ok(self.0.try_read()?.metadata.state_controller_address.clone())
-  }
-
-  /// Returns a copy of the Bech32-encoded governor address, if present.
-  #[wasm_bindgen(js_name = metadataGovernorAddress)]
-  pub fn metadata_governor_address(&self) -> Result<Option<String>> {
-    Ok(self.0.try_read()?.metadata.governor_address.clone())
-  }
-
   /// Sets a custom property in the document metadata.
   /// If the value is set to `null`, the custom property will be removed.
   #[wasm_bindgen(js_name = setMetadataPropertyUnchecked)]
