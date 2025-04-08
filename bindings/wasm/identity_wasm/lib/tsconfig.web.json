@@ -16,6 +16,6 @@
     },
     "outDir": "../web",
     "declarationDir": "../web",
-    "module": "ES2020"
+    "module": "ES2022"
   }
 }

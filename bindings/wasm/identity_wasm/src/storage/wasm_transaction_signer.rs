@@ -74,8 +74,7 @@ impl Signer<IotaKeySignature> for WasmTransactionSigner {
     })
   }
 
-  fn key_id(&self) -> &String {
-    // TODO: Yikes! Find a way to work around this.
-    Box::leak(Box::new(self.key_id()))
+  fn key_id(&self) -> String {
+    self.key_id()
   }
 }
