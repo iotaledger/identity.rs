@@ -25,6 +25,7 @@ runs:
         mkdir -p iota
         cd iota
 
+        # Default
         VERSION="${{ inputs.iota-version }}"
         if [[ "$VERSION" = "" ]]; then
           VERSION="testnet"
@@ -42,7 +43,6 @@ runs:
         
         echo "Looking for version: $VERSION_SEARCH_STRING"
 
-        # Set platform
         PLATFORM="${{ inputs.platform }}"
 
         if [ "$PLATFORM" = "linux" ]; then
@@ -58,10 +58,8 @@ runs:
         
         echo "Looking for platform: $PLATFORM_TRIPLET"
 
-        # pinned releases from:
-        # url = https://api.github.com/repos/iotaledger/iota/releases
+        # Note: Releases might be visible before all binaries are available
         DOWNLOAD_URL=$(curl "https://api.github.com/repos/iotaledger/iota/releases" | jq -r 'map(select(.name | contains('\"$VERSION_SEARCH_STRING\"'))) | first | .assets | .[] | select(.browser_download_url | contains('\"$PLATFORM_TRIPLET\"')) | .browser_download_url')
-        # releases might be visible before all binaries are available, so refer to fixed binaries here
 
         # Download and extract
         echo "Downloading from: $DOWNLOAD_URL"
