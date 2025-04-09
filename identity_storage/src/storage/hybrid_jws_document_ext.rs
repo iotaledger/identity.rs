@@ -311,7 +311,6 @@ impl JwkDocumentExtHybrid for CoreDocument {
 
     let signing_input = match alg {
       JwsAlgorithm::IdMldsa44Ed25519 => {
-        //TODO: hybrid - DER OID
         let mut input = vec![
           0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x3E,
         ];
