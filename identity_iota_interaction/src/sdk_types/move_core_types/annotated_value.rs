@@ -98,7 +98,7 @@ pub struct MoveStructLayout {
     /// An decorated representation with both types and human-readable field
     /// names
     pub type_: StructTag,
-    pub fields: Box<Vec<MoveFieldLayout>>,
+    pub fields: Vec<MoveFieldLayout>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -356,10 +356,7 @@ impl MoveVariant {
 
 impl MoveStructLayout {
     pub fn new(type_: StructTag, fields: Vec<MoveFieldLayout>) -> Self {
-        Self {
-            type_,
-            fields: Box::new(fields),
-        }
+        Self { type_, fields }
     }
 
     pub fn into_fields(self) -> Vec<MoveTypeLayout> {

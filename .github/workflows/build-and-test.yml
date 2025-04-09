@@ -272,16 +272,14 @@ jobs:
         run: npm run test:readme && npm run test:node
         working-directory: bindings/wasm/identity_wasm
 
-  test-wasm-firefox:
+  test-wasm-browser:
     needs: build-wasm
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-24.04 ]
-        include:
-          - os: ubuntu-24.04
+        browser: [ chrome, firefox ]
 
     steps:
       - uses: actions/checkout@v3
@@ -300,6 +298,14 @@ jobs:
         with:
           name: identity-wasm-bindings-build
           path: bindings/wasm/
+
+      - name: Install JS dependencies # This is problematic: @iota/iota-sdk seems to not get used from the identity_wasm package, that is why reinstall deps here
+        run: npm ci
+        working-directory: bindings/wasm/iota_interaction_ts
+
+      - name: Setup link
+        run: npm link ../iota_interaction_ts
+        working-directory: bindings/wasm/identity_wasm
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
@@ -323,57 +329,4 @@ jobs:
             IOTA_IDENTITY_PKG_ID=${{ env.IOTA_IDENTITY_PKG_ID }}
 
       - name: Run cypress
-        run: docker run --network host cypress-test test:browser:firefox
-
-  test-wasm-chrome:
-    needs: build-wasm
-    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-24.04 ]
-        include:
-          - os: ubuntu-24.04
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: 20.x
-
-      - name: Install JS dependencies
-        run: npm ci
-        working-directory: bindings/wasm/identity_wasm
-
-      - name: Download bindings/wasm/identity_wasm artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: identity-wasm-bindings-build
-          path: bindings/wasm/
-
-      - name: Start iota sandbox
-        uses: './.github/actions/iota-rebase-sandbox/setup'
-        with:
-          iota-version: ${{ env.IOTA_VERSION }}
-
-      - name: publish IotaIdentity package
-        # publish the package and set the IOTA_IDENTITY_PKG_ID env variable
-        run: echo "IOTA_IDENTITY_PKG_ID=$(./publish_identity_package.sh)" >> "$GITHUB_ENV"
-        working-directory: identity_iota_core/scripts/
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v6.2.0
-        with:
-          context: bindings/wasm/
-          file: bindings/wasm/identity_wasm/cypress/Dockerfile
-          push: false
-          tags: cypress-test:latest
-          load: true
-          build-args: |
-            IOTA_IDENTITY_PKG_ID=${{ env.IOTA_IDENTITY_PKG_ID }}
-
-      - name: Run cypress
-        run: docker run --network host cypress-test test:browser:chrome
+        run: docker run --network host cypress-test test:browser:${{ matrix.browser }}
