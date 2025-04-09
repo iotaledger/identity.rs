@@ -12,7 +12,7 @@
     "paths": {
       "@iota/identity-wasm/node": [
         "../web"
-      ],
+      ]
     }
   },
   "exclude": [
