@@ -63,6 +63,12 @@ mod keytool {
 
   /// An unsecure [Storage] that leverages IOTA Keytool.
   pub type KeytoolStorage = Storage<Keytool, Keytool>;
+
+  impl From<Keytool> for KeytoolStorage {
+    fn from(keytool: Keytool) -> Self {
+      KeytoolStorage::new(keytool.clone(), keytool) 
+    }
+  }
 }
 
 #[cfg(feature = "keytool")]
