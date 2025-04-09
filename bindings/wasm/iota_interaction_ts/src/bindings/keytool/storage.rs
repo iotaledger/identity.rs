@@ -16,6 +16,10 @@ use crate::WasmPublicKey;
 
 use super::signer::WasmKeytoolSigner;
 
+const __TS_IMPORTS: &str = r#"
+import { PublicKey } from "@iota/iota-sdk/cryptography";
+"#;
+
 #[wasm_bindgen(skip_typescript, getter_with_clone)]
 pub struct WasmPublicKeyAndAlias(pub WasmPublicKey, pub String);
 
@@ -75,7 +79,7 @@ impl WasmKeytoolStorage {
   }
 
   /// Creates a new key of type `key_scheme`.
-  /// Returns the tuple {@link PublicKey}, alias.
+  /// Returns the tuple ({@link PublicKey}, alias).
   #[wasm_bindgen(
     js_name = generateKey,
     unchecked_return_type = "[PublicKey, string]",
@@ -126,7 +130,10 @@ impl WasmKeytoolStorage {
   }
 
   /// Returns the {@link PublicKey} for the given address together with its alias.
-  #[wasm_bindgen(js_name = getKey)]
+  #[wasm_bindgen(
+    js_name = getKey,
+    unchecked_return_type = "[PublicKey, string]",
+  )]
   pub fn get_key(&self, address: &str) -> Result<WasmPublicKeyAndAlias> {
     let address = address.parse().wasm_result()?;
     self

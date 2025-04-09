@@ -3,8 +3,9 @@
 
 use fastcrypto::ed25519::Ed25519KeyPair;
 use fastcrypto::ed25519::Ed25519PrivateKey;
-use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::ed25519::Ed25519PublicKeyAsBytes;
+#[cfg(test)]
+use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::traits::KeyPair as _;
 use fastcrypto::traits::SigningKey;
 use fastcrypto::traits::ToFromBytes;
@@ -12,15 +13,16 @@ use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkParamsOkp;
 use identity_verification::jose::jwu;
-use identity_verification::jwu::decode_b64;
 use identity_verification::jwu::encode_b64;
 
 use crate::key_storage::KeyStorageError;
 use crate::key_storage::KeyStorageErrorKind;
 use crate::key_storage::KeyStorageResult;
 
-#[allow(dead_code)]
+#[cfg(test)]
 pub(crate) fn from_public_jwk(jwk: &Jwk) -> anyhow::Result<Ed25519PublicKey> {
+  use identity_verification::jwu::decode_b64;
+
   let bytes = decode_b64(&jwk.try_okp_params()?.x)?;
   Ok(Ed25519PublicKey::from_bytes(&bytes)?)
 }

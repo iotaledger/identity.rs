@@ -1,6 +1,7 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::Context as _;
 use fastcrypto::secp256r1::Secp256r1KeyPair;
 use fastcrypto::secp256r1::Secp256r1PublicKeyAsBytes;
 use fastcrypto::traits::ToFromBytes;
@@ -20,5 +21,5 @@ pub(crate) fn pk_to_jwk(pk: &Secp256r1PublicKeyAsBytes) -> Jwk {
 
 pub(crate) fn jwk_to_keypair(jwk: &Jwk) -> anyhow::Result<Secp256r1KeyPair> {
   let sk = SecretKey::from_jwk_str(&serde_json::to_string(jwk)?)?;
-  Ok(Secp256r1KeyPair::from_bytes(sk.to_bytes().as_ref()).expect("valid secp256r1 key"))
+  Secp256r1KeyPair::from_bytes(sk.to_bytes().as_ref()).context("failed to create secp256r1 keypair from JWK")
 }
