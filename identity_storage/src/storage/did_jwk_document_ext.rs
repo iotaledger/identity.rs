@@ -5,19 +5,19 @@ use identity_did::DIDJwk;
 use identity_document::document::CoreDocument;
 use identity_verification::{jws::JwsAlgorithm, jwu::encode_b64_json};
 use async_trait::async_trait;
-#[cfg(feature = "jpt-bbs-plus")]
-use jsonprooftoken::jpa::algs::ProofAlgorithm;
-
-
 use crate::{JwkGenOutput, JwkStorage, JwkStorageDocumentError as Error, KeyIdStorage, KeyType, MethodDigest};
 #[cfg(feature = "pqc")]
 use crate::JwkStoragePQ;
 #[cfg(feature = "jpt-bbs-plus")]
 use crate::JwkStorageBbsPlusExt;
+#[cfg(feature = "jpt-bbs-plus")]
+use jsonprooftoken::jpa::algs::ProofAlgorithm;
 #[cfg(feature = "hybrid")]
 use identity_verification::jwk::{CompositeAlgId, CompositeJwk};
 #[cfg(feature = "hybrid")]
 use identity_did::DIDCompositeJwk;
+#[cfg(feature = "hybrid")]
+use crate::KeyId; 
 
 use super::{Storage, StorageResult};
 
@@ -25,8 +25,7 @@ use super::{Storage, StorageResult};
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait DidJwkDocumentExt{
-
-/// Create a JWK-based DID documents with traditional keys. Returns the DID document and the fragment
+  /// Create a JWK-based DID documents with traditional keys. Returns the DID document and the fragment
   async fn new_did_jwk<K, I>(
       storage: &Storage<K, I>,
       key_type: KeyType,
@@ -35,7 +34,7 @@ pub trait DidJwkDocumentExt{
     where
       K: JwkStorage,
       I: KeyIdStorage;
-/// Create a JWK-based DID documents with PQ keys. Returns the DID document and the fragment 
+  /// Create a JWK-based DID documents with PQ keys. Returns the DID document and the fragment 
   #[cfg(feature = "pqc")]
   async fn new_did_jwk_pqc<K, I>(
       storage: &Storage<K, I>,
@@ -45,7 +44,7 @@ pub trait DidJwkDocumentExt{
     where
       K: JwkStoragePQ,
       I: KeyIdStorage;
-/// Create a JWK-based DID documents with zk keys. Returns the DID document and the fragment
+  /// Create a JWK-based DID documents with zk keys. Returns the DID document and the fragment
   #[cfg(feature = "jpt-bbs-plus")]
   async fn new_did_jwk_zk<K, I>(
       storage: &Storage<K, I>,
@@ -56,7 +55,7 @@ pub trait DidJwkDocumentExt{
       K: JwkStorageBbsPlusExt,
       I: KeyIdStorage;
 
-/// Create a JWK-based DID documents with hybrid keys. Returns the DID document and the fragment
+  /// Create a JWK-based DID documents with hybrid keys. Returns the DID document and the fragment
   #[cfg(feature = "hybrid")]
   async fn new_did_compositejwk<K, I>(
       storage: &Storage<K, I>,
@@ -70,7 +69,6 @@ pub trait DidJwkDocumentExt{
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl DidJwkDocumentExt for CoreDocument {
-  
   async fn new_did_jwk<K, I>(
       storage: &Storage<K, I>,
       key_type: KeyType,
@@ -113,7 +111,6 @@ impl DidJwkDocumentExt for CoreDocument {
 
   #[cfg(feature = "pqc")]
   async fn new_did_jwk_pqc<K, I>(
-
     storage: &Storage<K, I>,
     key_type: KeyType,
     alg: JwsAlgorithm,
@@ -121,7 +118,6 @@ impl DidJwkDocumentExt for CoreDocument {
   where
     K: JwkStoragePQ,
     I: KeyIdStorage 
-    
   {
       
     let JwkGenOutput { key_id, jwk } = K::generate_pq_key(storage.key_storage(),
@@ -205,9 +201,6 @@ impl DidJwkDocumentExt for CoreDocument {
     K: JwkStorage + JwkStoragePQ,
     I: KeyIdStorage 
   {
-
-    use crate::KeyId; 
-    
     let (pq_key_type, pq_alg, trad_key_type, trad_alg) = match alg {
       CompositeAlgId::IdMldsa44Ed25519 => (
         KeyType::from_static_str("ML-DSA"),

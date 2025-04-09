@@ -31,12 +31,12 @@ use identity_verification::VerificationMethod;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-///New trait to handle JWP-based operations on DID Documents
+///New trait to handle PQ-based operations on DID Documents
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait JwsDocumentExtPQC {
-  /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
-  /// public key material into the DID document. This support BBS+ keys.
+  /// Generate new key material in the given `storage` and insert a new verification method with the corresponding PQ
+  /// public key material into the DID document.
   async fn generate_method_pqc<K, I>(
     &mut self,
     storage: &Storage<K, I>,
@@ -49,7 +49,7 @@ pub trait JwsDocumentExtPQC {
     K: JwkStoragePQ,
     I: KeyIdStorage;
 
-  /// Create a JWS using a PQC
+  /// Create a PQ JWS
   async fn create_jws_pqc<K, I>(
     &self,
     storage: &Storage<K, I>,

@@ -989,6 +989,16 @@ impl CoreDocument {
       .map_err(Error::JwsVerificationError)
   }
 
+  /// Decodes and verifies the provided PQ/T JWS according to the passed [`JwsVerificationOptions`] with a
+  /// traditional [`JwsVerifier`] and PQ [`JwsVerifier`].
+  ///
+  /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
+  /// take place.
+  /// - The JWS must be encoded according to the JWS compact serialization.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document, or
+  ///   set explicitly in the `options`.
+  //
+  // NOTE: This is tested in `identity_storage` and `identity_credential`.
   pub fn verify_jws_hybrid<'jws, TRV: JwsVerifier, PQV: JwsVerifier>(
     &self,
     jws: &'jws str,
@@ -1055,7 +1065,7 @@ impl CoreDocument {
 }
 
 impl CoreDocument {
-  /// Creates a [`CoreDocument`] from a did:jwk DID.
+  /// Creates a [`CoreDocument`] from a did:compositejwk DID.
   pub fn expand_did_compositejwk(did_compositejwk: DIDCompositeJwk) -> Result<Self, Error> {
     let verification_method = VerificationMethod::try_from(did_compositejwk.clone()).map_err(Error::InvalidKeyMaterial)?;
     let verification_method_id = verification_method.id().clone();

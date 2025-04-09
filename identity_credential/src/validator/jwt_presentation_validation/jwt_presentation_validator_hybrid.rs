@@ -21,7 +21,7 @@ use super::CompoundJwtPresentationValidationError;
 use super::DecodedJwtPresentation;
 use super::JwtPresentationValidationOptions;
 
-/// Struct for validating [`Presentation`].
+/// Struct for validating [`Presentation`] signed with a PQ/T signature.
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct JwtPresentationValidatorHybrid<TRV: JwsVerifier, PQV: JwsVerifier>(TRV, PQV);
@@ -31,17 +31,17 @@ where
   TRV: JwsVerifier,
   PQV: JwsVerifier,
 {
-  /// Creates a new [`JwtPresentationValidator`] using a specific [`JwsVerifier`].
+  /// Creates a new [`JwtPresentationValidatorHybrid`] using a specific traditional [`JwsVerifier`] and a specific PQ [`JwsVerifier`].
   pub fn with_signature_verifiers(traditional_signature_verifier: TRV, pq_signature_verifier: PQV) -> Self {
     Self(traditional_signature_verifier, pq_signature_verifier)
   }
 
-  /// Validates a [`Presentation`].
+  /// Validates a [`Presentation`] signed with a PQ/T signature.
   ///
   /// The following properties are validated according to `options`:
   /// - the JWT can be decoded into a semantically valid presentation.
   /// - the expiration and issuance date contained in the JWT claims.
-  /// - the holder's signature.
+  /// - the holder's PQ/T signature.
   ///
   /// Validation is done with respect to the properties set in `options`.
   ///

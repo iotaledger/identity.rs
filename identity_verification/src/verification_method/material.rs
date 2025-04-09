@@ -6,7 +6,7 @@
  */
 
 use crate::jose::jwk::Jwk;
-use identity_jose::jwk::CompositeJwk;
+use crate::jose::jwk::CompositeJwk;
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use identity_core::convert::BaseEncoding;

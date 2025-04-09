@@ -24,13 +24,13 @@ use crate::credential::CredentialJwtClaims;
 use crate::credential::Jwt;
 use crate::validator::FailFast;
 
-/// A type for decoding and validating [`Credential`]s.
+/// A type for decoding and validating [`Credential`]s signed with a PQ/T signature.
 #[non_exhaustive]
 pub struct JwtCredentialValidatorHybrid<TRV, PQV>(TRV, PQV);
 
 impl<TRV: JwsVerifier, PQV: JwsVerifier> JwtCredentialValidatorHybrid<TRV, PQV> {
-  /// Create a new [`JwtCredentialValidator`] that delegates cryptographic signature verification to the given
-  /// `signature_verifier`.
+  /// Create a new [`JwtCredentialValidatorHybrid`] that delegates cryptographic signature verification to the given
+  /// traditional [`JwsVerifier`] and PQ [`JwsVerifier`].
   pub fn with_signature_verifiers(traditional_signature_verifier: TRV, pq_signature_verifier: PQV) -> Self {
     Self(traditional_signature_verifier, pq_signature_verifier)
   }
@@ -38,7 +38,7 @@ impl<TRV: JwsVerifier, PQV: JwsVerifier> JwtCredentialValidatorHybrid<TRV, PQV> 
   /// Decodes and validates a [`Credential`] issued as a JWT. A [`DecodedJwtCredential`] is returned upon success.
   ///
   /// The following properties are validated according to `options`:
-  /// - the issuer's signature on the JWS,
+  /// - the issuer's PQ/T signature on the JWS,
   /// - the expiration date,
   /// - the issuance date,
   /// - the semantic structure.
@@ -87,7 +87,7 @@ impl<TRV: JwsVerifier, PQV: JwsVerifier> JwtCredentialValidatorHybrid<TRV, PQV> 
     )
   }
 
-  /// Decode and verify the JWS signature of a [`Credential`] issued as a JWT using the DID Document of a trusted
+  /// Decode and verify the PQ/T JWS signature of a [`Credential`] issued as a JWT using the DID Document of a trusted
   /// issuer.
   ///
   /// A [`DecodedJwtCredential`] is returned upon success.
@@ -96,7 +96,7 @@ impl<TRV: JwsVerifier, PQV: JwsVerifier> JwtCredentialValidatorHybrid<TRV, PQV> 
   /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
   ///
   /// ## Proofs
-  ///  Only the JWS signature is verified. If the [`Credential`] contains a `proof` property this will not be verified
+  ///  Only the PQ/T JWS signature is verified. If the [`Credential`] contains a `proof` property this will not be verified
   /// by this method.
   ///
   /// # Errors
@@ -252,8 +252,7 @@ impl<TRV: JwsVerifier, PQV: JwsVerifier> JwtCredentialValidatorHybrid<TRV, PQV> 
   ) -> Result<DecodedJwtCredential<T>, JwtValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
-    DOC: AsRef<CoreDocument>,
-    // S: JwsVerifier,
+    DOC: AsRef<CoreDocument>
   {
     // Note the below steps are necessary because `CoreDocument::verify_jws` decodes the JWS and then searches for a
     // method with a fragment (or full DID Url) matching `kid` in the given document. We do not want to carry out

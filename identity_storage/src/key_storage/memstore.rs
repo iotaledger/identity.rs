@@ -372,7 +372,7 @@ mod pqc_liboqs {
     }
   }
 
-  /// JwkStoragePQ implementation for JwkMemStore
+  /// JwkStoragePQ implementation for JwkMemStore based on liboqs
   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
   #[cfg_attr(feature = "send-sync-storage", async_trait)]
   impl JwkStoragePQ for JwkMemStore {
@@ -513,11 +513,11 @@ mod pqc_liboqs {
         .map(jwu::decode_b64)
         .ok_or_else(|| {
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-            .with_custom_message("expected Jwk `pub` param to be present")
+            .with_custom_message("expected Jwk `private` param to be present")
         })?
         .map_err(|err| {
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-            .with_custom_message("unable to decode `d` param")
+            .with_custom_message("unable to decode `private` param")
             .with_source(err)
         })?;
         oqs::init();
@@ -530,7 +530,7 @@ mod pqc_liboqs {
   
         let secret_key = scheme.secret_key_from_bytes(&sk_bytes).ok_or(
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-            .with_custom_message(format!("wrong key length")),
+            .with_custom_message(format!("invalid private key")),
         )?;
   
         let signature = scheme.sign(&data, secret_key).map_err(|err| {
