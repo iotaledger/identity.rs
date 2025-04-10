@@ -273,7 +273,7 @@ impl VerificationMethod {
 
     MethodBuilder::default()
       .id(id)
-      .type_(MethodType::custom("CompositeSignaturePublicKey"))
+      .type_(MethodType::custom("CompositeJsonWebKey"))
       .controller(did.into())
       .data(MethodData::CompositeJwk(key))
       .build()
