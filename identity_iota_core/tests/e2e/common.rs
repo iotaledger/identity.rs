@@ -10,7 +10,7 @@ use identity_iota_core::rebased::client::IdentityClientReadOnly;
 use identity_iota_core::rebased::transaction_builder::Transaction;
 use identity_iota_core::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_core::rebased::utils::request_funds;
-use identity_iota_core::rebased::Error;
+use identity_iota_core::rebased::{AuthenticatedAsset, CreateAsset, Error};
 use identity_iota_core::rebased::KeytoolSigner;
 use identity_iota_core::IotaDID;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
@@ -51,6 +51,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tokio::process::Command;
 use tokio::sync::OnceCell;
+use identity_iota_core::rebased::transaction::TransactionOutput;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 pub type MemSigner<'s> = StorageSigner<'s, JwkMemStore, KeyIdMemstore>;
@@ -207,6 +208,34 @@ pub struct TestClient {
   storage: Arc<MemStorage>,
 }
 
+pub struct ProgrammableTransactionBlockManager;
+
+impl ProgrammableTransactionBlockManager {
+  pub async fn append_tx(&self, _resource_tx_builder: TransactionBuilder<CreateAsset<u64>>) -> anyhow::Result<ResourceHandle<AuthenticatedAsset<u64>>> {
+    todo!()
+  }
+
+  pub async fn execute(&self) -> anyhow::Result<IotaTransactionBlockEffects> {
+    todo!()
+  }
+}
+
+pub struct ResourceHandle<T> {
+  tx_builder: TransactionBuilder<CreateAsset<T>>
+}
+
+impl<T> ResourceHandle<T> {
+  pub async fn get_resource(&self) -> anyhow::Result<TransactionOutput<T>> {
+    todo!()
+  } 
+}
+
+impl TestClient {
+  pub(crate) async fn new_user_tx_manager(&self) -> anyhow::Result<ProgrammableTransactionBlockManager>{
+    todo!()
+  }
+}
+
 impl Deref for TestClient {
   type Target = IdentityClient<KeytoolSigner>;
   fn deref(&self) -> &Self::Target {
@@ -293,7 +322,7 @@ impl TestClient {
     Ok(())
   }
 
-  pub async fn new_user_client(&self) -> anyhow::Result<IdentityClient<MemSigner>> {
+  pub async fn new_user_client(&self, _tx_manager: Option<&ProgrammableTransactionBlockManager>) -> anyhow::Result<IdentityClient<MemSigner>> {
     let generate = self
       .storage
       .key_storage()

@@ -30,15 +30,103 @@ use move_core_types::language_storage::StructTag;
 
 #[tokio::test]
 async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
-  let test_client = get_funded_test_client().await?;
-  let alice_client = test_client.new_user_client().await?;
 
-  let asset = alice_client
+  // Glossary:
+  // * `ProductClient`:
+  //   Manages product addresses, public_keys, id_documents and other
+  //   product specific data, needed to create `ResourceTxBuilder`s for
+  //   specific `ProductResource`s.
+  //   Example: `IdentityClient`
+  // * `ProductResource`:
+  //   References one or more existing object(s) on the IOTA ledger.
+  //   Example: AuthenticatedAsset<T>
+  // * `ResourceTxBuilder`:
+  //   A transaction builder (current name `TransactionBuilder<Tx>`),
+  //   providing a `Transaction` to create a `ProductResource`
+  // * `Transaction`:
+  //   The currently used `Transaction` trait, but in a `ProductClient` agnostic way.
+  //   Provides the transaction needed to create the `ProductResource` object
+  //   on the ledger (fn `build_programmable_transaction()`) and to evaluate the
+  //   transaction results (fn `apply()`).
+  // * `ProgrammableTransactionBlockManager`:
+  //   Manages the overall PTB construction and execution process.
+  //   An extended IOTA Rust SDK `ProgrammableTransactionBuilder` providing additional functions
+  //   to facilitate the usage of `ProductResource`s
+  // * `ResourceHandle`:
+  //   A reference to a `Transaction` for a specific `ProductResource`. You can also think of
+  //   a promise to receive a `ProductResource` after a PTB has been executed by a
+  //    `ProgrammableTransactionBlockManager`.
+
+  let test_client = get_funded_test_client().await?;
+
+  // ******** Introduction ********
+  // Alice is going to create & execute a PTB to create an AuthenticatedAsset<u64>,
+  // using an IdentityClient that uses the same address & public_key as the
+  // `ProgrammableTransactionBlockManager` that is used to manage the PTB.
+  // Alternatively someone else (GasStation, Bob, ...) could manage the PTB construction
+  // and execution process for her.
+
+  // Create a `ProgrammableTransactionBlockManager` for Alice
+  let alice_tx_manager = test_client.new_user_tx_manager().await?;
+
+  // Create the `ProductClient` which is an `IdentityClient` here.
+  // The IdentityClient uses the same address & public_key as alice_tx_manager.
+  //
+  //    @param tx_manager: If provided, provides address & public_key data for the alice identity,
+  //                       if None, new address & public_key data are used.  
+  //    async fn new_user_client(&self, tx_manager: Option<&ProgrammableTransactionBlockManager>)
+  //       -> anyhow::Result<IdentityClient<MemSigner>>
+  let alice_client = test_client.new_user_client(Some(&alice_tx_manager)).await?;
+
+  // ****************************************************************************************
+  // *  Here we could add arbitrary transactions to the managed PTB using alice_tx_manager  *
+  // ****************************************************************************************
+
+  // Create a `ResourceTxBuilder` for an `AuthenticatedAsset<u64>`
+  let alice_authenticated_asset_tx_builder = alice_client
     .create_authenticated_asset::<u64>(42)
-    .finish()
-    .build_and_execute(&alice_client)
+    .finish();
+
+  // Add the alice_authenticated_asset_tx_builder to the PTB.
+  // The returned `resource_handle_for_auth_asset` is a `ResourceHandle` and can be used
+  // later onto to receive the `AuthenticatedAsset<u64>` after the PTB has been executed.
+  //
+  // The function `append_tx()` is product/resource agnostic and can be used for all
+  // `ProductResource`s of all IOTA Products.
+  //
+  //    // Used generic arguments C and T are just placeholders to symbolize
+  //    // the currently unknown exact types
+  //    async fn append_tx(&self, resource_tx_builder: TransactionBuilder<C>)
+  //      -> anyhow::Result<ResourceHandle<T>>
+  let resource_handle_for_auth_asset = alice_tx_manager
+    .append_tx(alice_authenticated_asset_tx_builder)
+    .await?;
+
+  // ****************************************************************************************
+  // *  Here we could add arbitrary transactions to the managed PTB using alice_tx_manager
+  // *
+  // *  For example:
+  // *  let another_resource_handle = alice_tx_manager
+  // *    .append_tx(just_another_product_resource_tx_builder)
+  // *    .await?;
+  // ****************************************************************************************
+
+  // Execute the constructed PTB and receive the `IotaTransactionBlockEffects` for
+  // quality assurance and logging purposes. The _tx_block_effects are not needed
+  // to receive the `ProductResource` which will be done using the
+  // resource_handle_for_auth_asset.
+  //
+  //    async fn execute(&self) -> anyhow::Result<IotaTransactionBlockEffects>
+  let _tx_block_effects = alice_tx_manager.execute().await?;
+
+  // Receive the `ProductResource`, which is an `AuthenticatedAsset<u64>`, from
+  // the resource_handle_for_auth_asset.
+  //
+  //     async fn get_resource(&self) -> anyhow::Result<TransactionOutput<T>>
+  let asset = resource_handle_for_auth_asset.get_resource()
     .await?
     .output;
+
   assert_eq!(asset.content(), &42);
 
   Ok(())
