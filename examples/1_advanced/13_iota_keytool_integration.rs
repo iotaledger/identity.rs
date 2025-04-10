@@ -2,6 +2,7 @@ use examples::get_read_only_client;
 use identity_iota::core::ToJson;
 use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::transaction::Transaction;
+use identity_iota::iota::rebased::utils::request_funds;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota_interaction::KeytoolStorage as Keytool;
 use identity_iota::storage::KeytoolStorage;
@@ -24,6 +25,9 @@ async fn main() -> anyhow::Result<()> {
   let address = IotaAddress::from(&pk);
   println!("Created new address {address}!");
 
+  // Let's request some funds for our new address.
+  request_funds(&address).await?;
+
   // Let's use the newly generated key to build the signer that will power our identity client.
   let identity_client = {
     let read_only_client = get_read_only_client().await?;
@@ -35,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
   };
 
   // Let's create a new DID Document, with a verification method
-  // that has secret key its stored in the Keytool.
+  // that has its secret key stored in the Keytool.
 
   // Firstly, we create a storage instance from our Keytool.
   let keytool_storage = KeytoolStorage::from(keytool);
