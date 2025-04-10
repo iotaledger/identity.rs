@@ -28,38 +28,107 @@ use iota_sdk::types::TypeTag;
 use itertools::Itertools as _;
 use move_core_types::language_storage::StructTag;
 
+/// Glossary for terms used in the following test example code:
+/// * `ProductClient`:
+///   Manages product addresses, public_keys, id_documents and other
+///   product specific data, needed to create `ResourceTxBuilder`s for
+///   specific `ProductResource`s.
+///   Examples: `IdentityClient`, `NotarizationClient`
+/// * `ProductResource`:
+///   References one or more existing object(s) on the IOTA ledger.
+///   Examples: ' AuthenticatedAsset<T>', `DynamicNotarization`, `LockedNotarization`
+/// * `ResourceTxBuilder`:
+///   A transaction builder (current name `TransactionBuilder<Tx>`),
+///   providing a `Transaction` to perform actions (create, update, destroy, ...)
+///   on a `ProductResource`.
+/// * `Transaction`:
+///   The currently used `Transaction` trait, but in a `ProductClient` agnostic way.
+///   Provides the transaction needed to perform an action on a `ProductResource` object
+///   on the ledger (fn `build_programmable_transaction()`) and to evaluate the
+///   transaction results (fn `apply()`).
+/// * `ProgrammableTransactionBlockManager`:
+///   Manages the overall PTB construction and execution process.
+///   An extended `ProgrammableTransactionBuilder` (from IOTA Rust- or TS-SDK) providing
+///   additional functionality to facilitate the usage of `ProductResource`s.
+/// * `TransactionHandle`:
+///   A reference to a `Transaction` for a specific action on a specific `ProductResource`.
+///   Can be used to receive the resulting `ProductResource` of an executed `Transaction`.
+///   For example, it can be seen as a promise to receive an `AuthenticatedAsset<u64>`
+///   (a.k.a. `ProductResource`) after a PTB, containing a `Transaction` of type
+///   `CreateAsset<u64>`, has been executed by a `ProgrammableTransactionBlockManager`.
+/// 
+/// Some notes on the implementation of `ProgrammableTransactionBlockManager` and `ResourceTxBuilder`
+/// * To implement a `ProgrammableTransactionBlockManager` the existing `TransactionBuilder<Tx>`
+///   struct needs to be split into `ProgrammableTransactionBlockManager` and `ResourceTxBuilder`.
+/// * The `ProgrammableTransactionBlockManager` owns a platform specific
+///   `ProgrammableTransactionBuilder` (IOTA Rust- or TS-SDK) instance and provides it to the
+///    managed `ResourceTxBuilder` instances (see below).
+/// * The `ProgrammableTransactionBlockManager` internally manages an ordered list of
+///   `ResourceTxBuilder` instances that will be `build()` when
+///   `ProgrammableTransactionBlockManager::build_and_execute()` is called (see below test example
+///    code).
+///    * A `TransactionHandle` is just a reference or list index to the `ResourceTxBuilder` instance
+///      that finally provides the `Transaction::output`.
+///    * When `ProgrammableTransactionBlockManager::build_and_execute()` is called
+///      * A loop over the ordered list of `ResourceTxBuilder` instances, calls
+///        `ResourceTxBuilder::build_programmable_transaction()` and provides a mutable reference to
+///        the `ProgrammableTransactionBuilder` to the `ResourceTxBuilder` so that the low level API
+///        code (a.k.a MoveCalls) can be called to append the needed transactions/commands to the
+///        final programmable transaction block (PTB) that is build for all `ResourceTxBuilder` instances
+///        in the ordered list of `ResourceTxBuilder`s.
+///      * After the final PTB has been build, it is executed by the
+///        `ProgrammableTransactionBlockManager`
+///      * The resulting `IotaTransactionBlockEffects` are provided to all `ResourceTxBuilder` instances
+///        in the ordered list of `ResourceTxBuilder`s. Each `ResourceTxBuilder` needs to find the
+///        relevant information to update or create the `ResourceTxBuilder::output`.
+/// * IMPORTANT:<br>
+///   We must make sure, that `ResourceTxBuilder` instances creating new `ProductResource`s on the
+///   ledger can find the correct ObjectId in the CreatedObjects section of the ObjectChanges
+///   in the `IotaTransactionBlockEffects`.<br>
+///   All other kinds of `ResourceTxBuilder` instances (not creating `ProductResource`s) can find
+///   the correct transaction effect using the ObjectId. As the ObjectId is not known when a new
+///   `ProductResource` is created we, need to handle these PTBs in a special way
+///   so that the `ResourceTxBuilder::apply()` function can parse the `IotaTransactionBlockEffects`
+///   to find the correct ObjectId after a `ProductResource` has been created.<br>
+///   Possible simple solutions:
+///   * PTBs creating new `ProductResource`s must only include
+///     * one single `ResourceTxBuilder`
+///     * one single `ResourceTxBuilder` per ObjectType
+/// * The `ProgrammableTransactionBlockManager` can do the gas management and PTB signing as
+///   currently been implemented in `TransactionBuilder<Tx>`
+/// * The function `ProgrammableTransactionBlockManager::append_tx()` needs to be product/resource
+///   agnostic and shall be usable for all `ProductResource`s of all IOTA Products.<br>
+///   ```
+///   // The generic arguments C and T used here are just placeholders to symbolize<br>
+///   // the currently unknown exact types.<br>
+///   async fn append_tx(&self, resource_tx_builder: TransactionBuilder<C>)
+///      -> anyhow::Result<TransactionHandle<T>>
+///   ```
+/// * To use the IOTA GasStation together with the `ProgrammableTransactionBlockManager`,
+///   instead of using `ProgrammableTransactionBlockManager::build_and_execute()` the function
+///   `ProgrammableTransactionBlockManager::build_programmable_transaction()` can be used.
+///   The `IotaTransactionBlockEffects` resulting from the PTB execution, needs to be provided
+///   to the `ProgrammableTransactionBlockManager` by using
+///   `ProgrammableTransactionBlockManager::apply()`:<br>
+///  <br>
+///   Function signatures:
+///   ```
+///   impl ProgrammableTransactionBlockManager {
+///     async fn build_programmable_transaction(&self) -> anyhow::Result<ProgrammableTransaction>
+///     async fn apply(&self, tx_results: &IotaTransactionBlockEffects) -> anyhow::Result<()>
+///   }
+///   ```
+///   Example:
+///   ```
+///   // in the context of the test example code below, this would look like:
+///   let ptb = alice_tx_manager.build_programmable_transaction().await?;
+///   let tx_effects = ... // Execute the ptb for example using the GasStation
+///   alice_tx_manager.apply(tx_effects).await?;
+///   ```
+
 #[tokio::test]
 async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
-
-  // Glossary:
-  // * `ProductClient`:
-  //   Manages product addresses, public_keys, id_documents and other
-  //   product specific data, needed to create `ResourceTxBuilder`s for
-  //   specific `ProductResource`s.
-  //   Examples: `IdentityClient`, `NotarizationClient`
-  // * `ProductResource`:
-  //   References one or more existing object(s) on the IOTA ledger.
-  //   Examples: ' AuthenticatedAsset<T>', `DynamicNotarization`, `LockedNotarization`
-  // * `ResourceTxBuilder`:
-  //   A transaction builder (current name `TransactionBuilder<Tx>`),
-  //   providing a `Transaction` to perform actions (create, update, destroy, ...)
-  //   on a `ProductResource`.
-  // * `Transaction`:
-  //   The currently used `Transaction` trait, but in a `ProductClient` agnostic way.
-  //   Provides the transaction needed to perform an action on a `ProductResource` object
-  //   on the ledger (fn `build_programmable_transaction()`) and to evaluate the
-  //   transaction results (fn `apply()`).
-  // * `ProgrammableTransactionBlockManager`:
-  //   Manages the overall PTB construction and execution process.
-  //   An extended `ProgrammableTransactionBuilder` (e.g. from IOTA Rust or TS SDK) providing
-  //   additional functionality to facilitate the usage of `ProductResource`s.
-  // * `TransactionHandle`:
-  //   A reference to a `Transaction` for a specific action on a specific `ProductResource`.
-  //   Can be used to receive the resulting `ProductResource` of an executed `Transaction`.
-  //   For example, it can be seen as a promise to receive an `AuthenticatedAsset<u64>`
-  //   (a.k.a. `ProductResource`) after a PTB, containing a `Transaction` of type
-  //   `CreateAsset<u64>`, has been executed by a `ProgrammableTransactionBlockManager`.
-
+  
   let test_client = get_funded_test_client().await?;
 
   // ******** Introduction ********
@@ -85,7 +154,7 @@ async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
   // *  Here we could add arbitrary transactions to the managed PTB using alice_tx_manager  *
   // ****************************************************************************************
 
-  // Create a `ResourceTxBuilder` for an `AuthenticatedAsset<u64>`
+  // Create a `ResourceTxBuilder` to create an `AuthenticatedAsset<u64>`
   let alice_authenticated_asset_tx_builder = alice_client
     .create_authenticated_asset::<u64>(42)
     .finish();
@@ -94,20 +163,6 @@ async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
   //
   // The returned `tx_handle_for_auth_asset` is a `TransactionHandle`, that can be used
   // later, to receive the `AuthenticatedAsset<u64>` after the PTB has been executed.
-  //
-  // The `ProgrammableTransactionBlockManager` internally manages an ordered list of
-  // `TransactionBuilder<Tx>` instances that will be `build()` when
-  // `ProgrammableTransactionBlockManager::build_and_execute()` is called (see below). The
-  // `TransactionHandle` is just a reference or list index to the `TransactionBuilder<Tx>` instance
-  // that finally provides the `Transaction::output`. 
-  //
-  // The function `append_tx()` needs to be product/resource agnostic and shall be usable for all
-  // `ProductResource`s of all IOTA Products.
-  //
-  //    // The generic arguments C and T used here are just placeholders to symbolize
-  //    // the currently unknown exact types.
-  //    async fn append_tx(&self, resource_tx_builder: TransactionBuilder<C>)
-  //      -> anyhow::Result<TransactionHandle<T>>
   let tx_handle_for_auth_asset = alice_tx_manager
     .append_tx(alice_authenticated_asset_tx_builder)
     .await?;
@@ -129,15 +184,6 @@ async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
   // `TransactionHandle` tx_handle_for_auth_asset.
   //
   //    async fn build_and_execute(&self) -> anyhow::Result<IotaTransactionBlockEffects>
-  //
-  // Alternatively the final PTB is available:
-  //
-  //    async fn build_programmable_transaction(&self) -> anyhow::Result<ProgrammableTransaction>
-  //
-  //    let ptb = alice_tx_manager.build_programmable_transaction().await?;
-  //    let tx_effects = ... // Execute the ptb for example using the GasStation
-  //    alice_tx_manager.apply(tx_effects).await?;
-  
   let _tx_block_effects = alice_tx_manager.build_and_execute().await?;
 
   // Receive the `ProductResource`, which is an `AuthenticatedAsset<u64>`, from
