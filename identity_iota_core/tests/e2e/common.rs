@@ -211,23 +211,32 @@ pub struct TestClient {
 pub struct ProgrammableTransactionBlockManager;
 
 impl ProgrammableTransactionBlockManager {
-  pub async fn append_tx(&self, _resource_tx_builder: TransactionBuilder<CreateAsset<u64>>) -> anyhow::Result<ResourceHandle<AuthenticatedAsset<u64>>> {
+  pub async fn append_tx(&self, _resource_tx_builder: TransactionBuilder<CreateAsset<u64>>) -> anyhow::Result<TransactionHandle<AuthenticatedAsset<u64>>> {
     todo!()
   }
 
-  pub async fn execute(&self) -> anyhow::Result<IotaTransactionBlockEffects> {
+  pub async fn build_and_execute(&self) -> anyhow::Result<IotaTransactionBlockEffects> {
     todo!()
   }
+
+  pub async fn build_programmable_transaction(&self) -> anyhow::Result<ProgrammableTransaction> {
+    todo!()
+  }
+
+  pub async fn apply(
+    self,
+    tx_results: &IotaTransactionBlockEffects,
+  ) -> anyhow::Result<()>;
 }
 
-pub struct ResourceHandle<T> {
+pub struct TransactionHandle<T> {
   tx_builder: TransactionBuilder<CreateAsset<T>>
 }
 
-impl<T> ResourceHandle<T> {
+impl<T> TransactionHandle<T> {
   pub async fn get_resource(&self) -> anyhow::Result<TransactionOutput<T>> {
     todo!()
-  } 
+  }
 }
 
 impl TestClient {
