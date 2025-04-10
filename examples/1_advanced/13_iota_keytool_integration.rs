@@ -1,3 +1,6 @@
+// Copyright 2020-2025 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use examples::get_read_only_client;
 use identity_iota::core::ToJson;
 use identity_iota::iota::rebased::client::IdentityClient;
