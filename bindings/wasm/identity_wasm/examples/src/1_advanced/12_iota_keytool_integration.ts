@@ -27,12 +27,12 @@ export async function iotaKeytoolIntegration() {
     // Let's request some funds for our new address.
     await requestFunds(address);
 
-    const key = keytool.getKeyByAlias(alias);
-
     // Let's use the newly generated key to build the signer that will power our identity client.
     const iotaClient = new IotaClient({ url: NETWORK_URL });
     const readOnlyClient = await IdentityClientReadOnly.createWithPkgId(iotaClient, IOTA_IDENTITY_PKG_ID);
     const signer = keytool.signer(address);
+    // A signer that relies on IOTA Keytool may also be built with:
+    // const signer = new KeytoolSigner(address);
     const identityClient = await IdentityClient.create(readOnlyClient, signer);
 
     // Let's create a new DID Document, with a verification method
