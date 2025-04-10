@@ -2,123 +2,116 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::rc::Rc;
+
+use identity_iota::core::Object;
+
+use identity_iota::credential::Credential;
+use identity_iota::credential::JwtPresentationOptions;
+use identity_iota::credential::Presentation;
+use identity_iota::storage::key_storage::KeyType;
+use identity_iota::storage::storage::JwsSignatureOptions;
+use identity_iota::verification::jose::jws::JwsAlgorithm;
+use identity_iota::verification::MethodScope;
+use js_sys::Promise;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::future_to_promise;
+use crate::common::PromiseString;
+use crate::common::RecordStringAny;
+use crate::credential::UnknownCredential;
+use crate::credential::WasmCredential;
+use crate::credential::WasmJws;
+use crate::credential::WasmJwt;
+use crate::credential::WasmPresentation;
+use crate::iota::IotaDocumentLock;
+use crate::did::PromiseJws;
+use crate::did::PromiseJwt;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::storage::WasmStorageInner;
 use crate::jose::WasmJwsAlgorithm;
-use crate::jose::WasmCompositeAlgId;
-use crate::storage::WasmStorage;
-use super::CoreDocumentLock;
-use super::WasmCoreDocument;
-use crate::credential::WasmCredential;
-use crate::common::RecordStringAny;
-use crate::credential::WasmJpt;
-use crate::credential::PromiseJpt;
-use crate::credential::WasmJwpPresentationOptions;
-use crate::jpt::WasmSelectiveDisclosurePresentation;
-use crate::credential::WasmJwt;
-use crate::jpt::WasmProofAlgorithm;
-use crate::credential::UnknownCredential;
-use crate::did::PromiseJws;
 use crate::storage::WasmJwsSignatureOptions;
-use crate::credential::WasmJws;
-use crate::credential::WasmPresentation;
 use crate::storage::WasmJwtPresentationOptions;
-use crate::did::PromiseJwt;
-use identity_iota::credential::Presentation;
-use identity_iota::credential::JwtPresentationOptions;
-use identity_iota::storage::JwsSignatureOptions;
-use identity_iota::storage::JwpDocumentExt;
-use identity_iota::credential::Credential;
-use identity_iota::core::Object;
-use identity_iota::storage::storage::JwsDocumentExtPQC;
-use identity_iota::storage::storage::JwkDocumentExtHybrid;
-use identity_iota::storage::DidJwkDocumentExt;
-use identity_iota::document::CoreDocument;
-use identity_iota::storage::key_storage::KeyType;
-use identity_iota::verification::jws::JwsAlgorithm;
+use crate::storage::WasmStorage;
+use crate::storage::WasmStorageInner;
+use crate::verification::WasmMethodScope;
+use crate::jose::WasmCompositeAlgId;
+use crate::iota::WasmIotaDocument;
+use identity_iota::storage::JwsDocumentExtPQC;
+use identity_iota::storage::JwkDocumentExtHybrid;
 use identity_iota::verification::jwk::CompositeAlgId;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::future_to_promise;
-use jsonprooftoken::jpa::algs::ProofAlgorithm;
-use js_sys::Promise;
 
-#[wasm_bindgen(js_class = CoreDocument)]
-impl WasmCoreDocument {
+#[wasm_bindgen(js_class = IotaDocument)]
+impl WasmIotaDocument {
 
-  /// Creates a new DID Document with the given `key_type` and `alg` with the JWK did method.
-  #[wasm_bindgen(js_name = newDidJwk)]
-  pub async fn _new_did_jwk(
+  /// Generate new PQ key material in the given `storage` and insert a new verification method with the corresponding
+  /// public key material into the DID document.
+  ///
+  /// - If no fragment is given the `kid` of the generated JWK is used, if it is set, otherwise an error is returned.
+  /// - The `keyType` must be compatible with the given `storage`. `Storage`s are expected to export key type constants
+  /// for that use case.
+  ///
+  /// The fragment of the generated method is returned.
+  #[wasm_bindgen(js_name = generateMethodPQC)]
+  #[allow(non_snake_case)]
+  pub fn generate_method_pqc(
+    &self,
     storage: &WasmStorage,
-    key_type: String,
+    keyType: String,
     alg: WasmJwsAlgorithm,
-  ) -> Result<WasmCoreDocument>{
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    fragment: Option<String>,
+    scope: WasmMethodScope,
+  ) -> Result<PromiseString> {
     let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
-    CoreDocument::new_did_jwk(
-      &storage_clone,
-      KeyType::from(key_type),
-      alg
-    ).await
-    .map(|doc| WasmCoreDocument(Rc::new(CoreDocumentLock::new(doc.0))))
-    .wasm_result()
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let scope: MethodScope = scope.0;
+    
+    let promise: Promise = future_to_promise(async move {
+      let method_fragment: String = document_lock_clone
+        .write()
+        .await
+        .generate_method_pqc(&storage_clone, KeyType::from(keyType), alg, fragment.as_deref(), scope)
+        .await
+        .wasm_result()?;
+      Ok(JsValue::from(method_fragment))
+    });
+    Ok(promise.unchecked_into())
   }
 
-  /// Creates a new PQ DID Document with the given `key_type` and `alg` with the JWK did method.
-  #[wasm_bindgen(js_name = newDidJwkPq)]
-  pub async fn _new_did_jwk_pqc(
+  /// Generate new hybrid key material in the given `storage` and insert a new verification method with the corresponding
+  /// public key material into the DID document.
+  ///
+  /// - If no fragment is given the `kid` of the generated JWK is used, if it is set, otherwise an error is returned.
+  /// - The `keyType` must be compatible with the given `storage`. `Storage`s are expected to export key type constants
+  /// for that use case.
+  ///
+  /// The fragment of the generated method is returned.
+  #[wasm_bindgen(js_name = generateMethodHybrid)]
+  #[allow(non_snake_case)]
+  pub fn generate_method_hybrid(
+    &self,
     storage: &WasmStorage,
-    key_type: String,
-    alg: WasmJwsAlgorithm,
-  ) -> Result<WasmCoreDocument> {
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
-    let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
-    CoreDocument::new_did_jwk_pqc(
-      &storage_clone,
-      KeyType::from(key_type),
-      alg
-    ).await
-    .map(|doc| WasmCoreDocument(Rc::new(CoreDocumentLock::new(doc.0))))
-    .wasm_result()
-  }
-
-  /// Creates a new hybrid DID Document with the given `key_type` and `alg`with the compositeJWK did method.
-  #[wasm_bindgen(js_name = newDidCompositeJwk)]
-  pub async fn _new_did_compositejwk(
-    storage: &WasmStorage,
-    alg: WasmCompositeAlgId
-  ) -> Result<WasmCoreDocument>{
-    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    alg: WasmCompositeAlgId,
+    fragment: Option<String>,
+    scope: WasmMethodScope,
+  ) -> Result<PromiseString> {
     let alg: CompositeAlgId = alg.into_serde().wasm_result()?;
-    CoreDocument::new_did_compositejwk(
-      &storage_clone,
-      alg
-    ).await
-    .map(|doc| WasmCoreDocument(Rc::new(CoreDocumentLock::new(doc.0))))
-    .wasm_result()
-  }
-
-  /// Creates a new zk DID Document with the given `key_type` and `alg` with the JWK did method.
-  #[wasm_bindgen(js_name = newDidJwkZk)]
-  pub async fn _new_did_jwk_zk(
-    storage: &WasmStorage,
-    alg: WasmProofAlgorithm,
-  ) -> Result<WasmCoreDocument> {
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
-    let alg: ProofAlgorithm = alg.into();
-    CoreDocument::new_did_jwk_zk(
-      &storage_clone,
-      KeyType::from_static_str("BLS12381"),
-      alg
-    ).await
-    .map(|doc| WasmCoreDocument(Rc::new(CoreDocumentLock::new(doc.0))))
-    .wasm_result()
+    let scope: MethodScope = scope.0;
+    
+    let promise: Promise = future_to_promise(async move {
+      let method_fragment: String = document_lock_clone
+        .write()
+        .await
+        .generate_method_hybrid(&storage_clone, alg, fragment.as_deref(), scope)
+        .await
+        .wasm_result()?;
+      Ok(JsValue::from(method_fragment))
+    });
+    Ok(promise.unchecked_into())
   }
 
-  #[wasm_bindgen(js_name = fragmentJwk)]
-  pub fn _fragment(self) -> String {
-    "0".to_string()
-  }
   /// Produces a PQ JWS, from a document with a PQ method, where the payload is produced from the given `fragment` and `payload`.
   #[wasm_bindgen(js_name = createPqJws)]
   pub fn _create_pq_jws(
@@ -130,7 +123,7 @@ impl WasmCoreDocument {
   ) -> Result<PromiseJws> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
-    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
       document_lock_clone
         .read()
@@ -143,7 +136,7 @@ impl WasmCoreDocument {
     });
     Ok(promise.unchecked_into())
   }
-
+  
   /// Produces an hybrid JWS, from a document with an hybrid method, where the payload is produced from the given `fragment` and `payload`.
   #[wasm_bindgen(js_name = createHybridJws)]
   pub fn create_hybrid_jws(
@@ -155,7 +148,7 @@ impl WasmCoreDocument {
   ) -> Result<PromiseJws> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
-    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
       document_lock_clone
         .read()
@@ -188,7 +181,7 @@ impl WasmCoreDocument {
   ) -> Result<PromiseJwt> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
-    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let credential_clone: Credential = credential.0.clone();
     let custom: Option<Object> = custom_claims
       .map(|claims| claims.into_serde().wasm_result())
@@ -225,7 +218,7 @@ impl WasmCoreDocument {
   ) -> Result<PromiseJwt> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
-    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let credential_clone: Credential = credential.0.clone();
     let custom: Option<Object> = custom_claims
       .map(|claims| claims.into_serde().wasm_result())
@@ -260,7 +253,7 @@ impl WasmCoreDocument {
   ) -> Result<PromiseJwt> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = signature_options.0.clone();
-    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let presentation_clone: Presentation<UnknownCredential> = presentation.0.clone();
     let presentation_options_clone: JwtPresentationOptions = presentation_options.0.clone();
     let promise: Promise = future_to_promise(async move {
@@ -299,7 +292,7 @@ impl WasmCoreDocument {
   ) -> Result<PromiseJwt> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = signature_options.0.clone();
-    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let presentation_clone: Presentation<UnknownCredential> = presentation.0.clone();
     let presentation_options_clone: JwtPresentationOptions = presentation_options.0.clone();
     let promise: Promise = future_to_promise(async move {
@@ -320,31 +313,6 @@ impl WasmCoreDocument {
     });
     Ok(promise.unchecked_into())
   }
-
-  #[wasm_bindgen(js_name = createPresentationJpt)]
-  pub fn create_presentation_jpt(
-    &self,
-    presentation: WasmSelectiveDisclosurePresentation,
-    method_id: String,
-    options: WasmJwpPresentationOptions,
-  ) -> Result<PromiseJpt> {
-    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
-    let options = options.try_into()?;
-    let promise: Promise = future_to_promise(async move {
-      let mut presentation = presentation.0;
-      let jpt = document_lock_clone
-        .write()
-        .await
-        .create_presentation_jpt(&mut presentation, method_id.as_str(), &options)
-        .await
-        .map(WasmJpt)
-        .wasm_result()?;
-      Ok(JsValue::from(jpt))
-    });
-
-    Ok(promise.unchecked_into())
-  }
-
 
 }
 

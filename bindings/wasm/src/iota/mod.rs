@@ -1,5 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
 
 pub(crate) use identity_client::WasmIotaIdentityClient;
 pub use identity_client_ext::PromiseIotaDocument;
@@ -13,5 +16,6 @@ mod identity_client;
 mod identity_client_ext;
 mod iota_did;
 mod iota_document;
+mod iota_document_ext;
 mod iota_document_metadata;
 mod iota_metadata_encoding;
