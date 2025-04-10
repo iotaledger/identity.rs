@@ -8,6 +8,7 @@ use identity_iota_interaction::types::crypto::IotaKeyPair;
 use identity_iota_interaction::types::crypto::SignatureScheme;
 use identity_iota_interaction::KeytoolStorage;
 use js_sys::Array;
+use js_sys::JsString;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
@@ -20,25 +21,12 @@ const __TS_IMPORTS: &str = r#"
 import { PublicKey } from "@iota/iota-sdk/cryptography";
 "#;
 
-#[wasm_bindgen(skip_typescript, getter_with_clone)]
-pub struct WasmPublicKeyAndAlias(pub WasmPublicKey, pub String);
+fn make_pk_alias_tuple(pk: &WasmPublicKey, alias: &str) -> Array {
+  let arr = Array::new();
+  arr.push(pk.as_ref());
+  arr.push(JsString::from(alias).as_ref());
 
-#[wasm_bindgen(js_class = PublicKeyAndAlias)]
-impl WasmPublicKeyAndAlias {
-  #[wasm_bindgen(
-    js_name = toJSON,
-    unchecked_return_type = "[PublicKey, string]",
-  )]
-  pub fn to_json(&self) -> JsValue {
-    let arr = Array::new_with_length(2);
-    arr.push(self.0.as_ref());
-    arr.push(&JsValue::from_str(&self.1));
-    arr.into()
-  }
-  #[wasm_bindgen(js_name = toString)]
-  pub fn to_string(&self) -> String {
-    format!("[{},{}]", self.0.to_iota_public_key(), &self.1)
-  }
+  arr
 }
 
 /// IOTA Keytool CLI wrapper.
@@ -87,7 +75,7 @@ impl WasmKeytoolStorage {
   pub fn generate_key(
     &self,
     #[wasm_bindgen(unchecked_param_type = "'ed25519' | 'secp256r1' | 'secp256k1'")] key_scheme: &str,
-  ) -> Result<WasmPublicKeyAndAlias> {
+  ) -> Result<Array> {
     let key_scheme = match key_scheme {
       "ed25519" => SignatureScheme::ED25519,
       "secp256r1" => SignatureScheme::Secp256r1,
@@ -99,7 +87,7 @@ impl WasmKeytoolStorage {
       .0
       .generate_key(key_scheme)
       .wasm_result()
-      .map(|(pk, alias)| WasmPublicKeyAndAlias(WasmPublicKey::try_from(&pk).unwrap(), alias))
+      .map(|(pk, alias)| make_pk_alias_tuple(&WasmPublicKey::try_from(&pk).unwrap(), &alias))
   }
 
   /// Inserts a Bech32-encoded private key in the keystore.
@@ -134,13 +122,13 @@ impl WasmKeytoolStorage {
     js_name = getKey,
     unchecked_return_type = "[PublicKey, string]",
   )]
-  pub fn get_key(&self, address: &str) -> Result<WasmPublicKeyAndAlias> {
+  pub fn get_key(&self, address: &str) -> Result<Array> {
     let address = address.parse().wasm_result()?;
     self
       .0
       .get_key(address)
       .wasm_result()?
-      .map(|(pk, alias)| WasmPublicKeyAndAlias(WasmPublicKey::try_from(&pk).unwrap(), alias))
+      .map(|(pk, alias)| make_pk_alias_tuple(&WasmPublicKey::try_from(&pk).unwrap(), &alias))
       .ok_or_else(|| anyhow::anyhow!("the requested address is not in the keystore"))
       .wasm_result()
   }

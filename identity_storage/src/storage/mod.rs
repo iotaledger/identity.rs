@@ -66,7 +66,7 @@ mod keytool {
 
   impl From<Keytool> for KeytoolStorage {
     fn from(keytool: Keytool) -> Self {
-      KeytoolStorage::new(keytool.clone(), keytool) 
+      KeytoolStorage::new(keytool.clone(), keytool)
     }
   }
 }

@@ -57,8 +57,15 @@ async fn main() -> anyhow::Result<()> {
     .await?;
 
   // Let's publish our new DID Document.
-  let did_document = identity_client.publish_did_document(did_document).execute(&identity_client).await?.output;
-  println!("Here is our published DID Document:\n{}", did_document.to_json_pretty()?);
+  let did_document = identity_client
+    .publish_did_document(did_document)
+    .execute(&identity_client)
+    .await?
+    .output;
+  println!(
+    "Here is our published DID Document:\n{}",
+    did_document.to_json_pretty()?
+  );
 
   Ok(())
 }

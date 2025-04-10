@@ -3,9 +3,9 @@
 
 use fastcrypto::ed25519::Ed25519KeyPair;
 use fastcrypto::ed25519::Ed25519PrivateKey;
-use fastcrypto::ed25519::Ed25519PublicKeyAsBytes;
 #[cfg(test)]
 use fastcrypto::ed25519::Ed25519PublicKey;
+use fastcrypto::ed25519::Ed25519PublicKeyAsBytes;
 use fastcrypto::traits::KeyPair as _;
 use fastcrypto::traits::SigningKey;
 use fastcrypto::traits::ToFromBytes;

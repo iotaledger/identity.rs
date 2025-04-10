@@ -7,15 +7,13 @@ use std::str::FromStr as _;
 
 use anyhow::anyhow;
 use anyhow::Context as _;
-use fastcrypto::encoding::Base64;
-use fastcrypto::encoding::Encoding as _;
+use fastcrypto::traits::EncodeDecodeBase64 as _;
 use jsonpath_rust::JsonPathQuery as _;
 use serde::Deserialize;
 use serde_json::Value;
 
 use crate::types::base_types::IotaAddress;
 use crate::types::crypto::PublicKey;
-use crate::types::crypto::SignatureScheme;
 
 #[derive(Debug, Clone)]
 pub(super) struct IotaCliWrapper {
@@ -97,17 +95,12 @@ impl IotaCliWrapper {
     };
 
     let KeytoolPublicKeyHelper {
-      public_base64_key,
-      flag,
+      public_base64_key_with_flag,
       alias,
       ..
     } = serde_json::from_value(pk_json_data)?;
 
-    let signature_scheme =
-      SignatureScheme::from_flag_byte(&flag).context(format!("invalid signature flag `{flag}`"))?;
-    let pk_bytes = Base64::decode(&public_base64_key).context("invalid base64 encoding for key")?;
-
-    let pk = PublicKey::try_from_bytes(signature_scheme, &pk_bytes).map_err(|e| anyhow!("{e:?}"))?;
+    let pk = PublicKey::decode_base64(&public_base64_key_with_flag).map_err(|e| anyhow!("{e:?}"))?;
 
     Ok(Some((pk, alias)))
   }
@@ -129,6 +122,5 @@ impl IotaCliWrapper {
 #[serde(rename_all = "camelCase")]
 struct KeytoolPublicKeyHelper {
   alias: String,
-  public_base64_key: String,
-  flag: u8,
+  public_base64_key_with_flag: String,
 }

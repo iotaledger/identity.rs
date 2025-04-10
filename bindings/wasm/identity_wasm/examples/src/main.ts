@@ -10,6 +10,7 @@ import { createVC } from "./0_basic/5_create_vc";
 import { createVP } from "./0_basic/6_create_vp";
 import { revokeVC } from "./0_basic/7_revoke_vc";
 import { sdJwtVc } from "./1_advanced/10_sd_jwt_vc";
+import { iotaKeytoolIntegration } from "./1_advanced/12_iota_keytool_integration";
 import { customResolution } from "./1_advanced/4_custom_resolution";
 import { domainLinkage } from "./1_advanced/5_domain_linkage";
 import { sdJwt } from "./1_advanced/6_sd_jwt";
@@ -55,6 +56,8 @@ export async function main(example?: string) {
             return await zkp_revocation();
         case "10_sd_jwt_vc":
             return await sdJwtVc();
+        case "12_iota_keytool_integration":
+            return await iotaKeytoolIntegration();
         default:
             throw "Unknown example name: '" + argument + "'";
     }
