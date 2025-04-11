@@ -41,6 +41,7 @@ phf = { version = "0.11.2", features = ["macros"] }
 rand = { version = "0.8.5", optional = true }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.3.0", default-features = false, optional = true }
 serde-aux = { version = "4.5.0", optional = true }
+tokio = { version = "1.43", default-features = false, features = ["macros", "sync", "rt", "process"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 identity_iota_interaction = { version = "=1.6.0-alpha", path = "../identity_iota_interaction", optional = true }
@@ -48,7 +49,6 @@ iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.11.6-rc", optional = true }
 move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.11.6-rc", optional = true }
 shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.11.6-rc", optional = true }
-tokio = { version = "1.43", default-features = false, optional = true, features = ["macros", "sync", "rt", "process"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 identity_iota_interaction = { version = "=1.6.0-alpha", path = "../identity_iota_interaction", default-features = false, optional = true }
