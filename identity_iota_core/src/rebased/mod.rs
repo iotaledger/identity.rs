@@ -18,6 +18,7 @@ pub mod transaction_builder;
 /// Contains utility functions.
 #[cfg(not(target_arch = "wasm32"))]
 pub mod utils;
+pub mod transaction_builder_idea;
 
 pub use assets::*;
 pub use error::*;
