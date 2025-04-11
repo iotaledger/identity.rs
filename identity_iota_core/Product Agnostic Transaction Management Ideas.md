@@ -6,8 +6,8 @@ IOTA products and to facilitate product composability.
 The most important step into this direction (step-1) is to make the `Transaction` trait,
 currently used only in `iotaledger/identity.rs` usable for all IOTA products.
 
-A second step which might be desirably probably after the v1.6 Identity release
-(step-2) can be to simplify the overall PTB construction and execution process,
+A second step, which might be desirable probably after the v1.6 Identity release
+(step-2), can be to simplify the overall PTB construction and execution process,
 when multiple IOTA Products are used together (composability).
 
 ## Step-1: Product agnostic `Transaction` trait
@@ -94,8 +94,8 @@ be introduced:
 
 * `ProductClient`<br>
   Manages product addresses, public_keys, id_documents and other
-  product specific data, needed to create `ResourceTxBuilder`s for
-  specific `ProductResource`s.
+  product specific data, needed to create `ResourceTxBuilders` for
+  specific `ProductResources`.
   Examples: `IdentityClient`, `NotarizationClient`
 * `ProductResource`<br>
   References one or more existing object(s) on the IOTA ledger.
@@ -113,7 +113,7 @@ be introduced:
 * `ProgrammableTransactionBlockManager` (short name *PtbManager*)<br>
   Manages the overall PTB construction and execution process.
   An extended `ProgrammableTransactionBuilder` (from IOTA Rust- or TS-SDK) providing
-  additional functionality to facilitate the usage of `ProductResource`s.
+  additional functionality to facilitate the usage of `ProductResources`.
 * `TransactionHandle`<br>
   A reference to a `Transaction` for a specific action on a specific `ProductResource`.
   Can be used to receive the resulting `ProductResource` of an executed `Transaction`.
@@ -126,8 +126,8 @@ be introduced:
 An example implementation of the *PtbManager* can be found in the
 [asset.rs e2e test file](./tests/e2e/asset.rs).
 
-Some stub code has also been added in [e2e/common.rs](./tests/e2e/common.rs)
-to achieve proper type info augmentation in IDE`s.
+Some stub code has also been added in [e2e/common.rs](./tests/e2e/common.rs#L211)
+to achieve proper type info augmentation in IDE's.
 
 All tests, except those based on the current ideas, have been commented out to make
 the code compilable.
@@ -151,29 +151,29 @@ the code compilable.
           the `ProgrammableTransactionBuilder` to the `ResourceTxBuilder` so that the low level API
           code (a.k.a MoveCalls) can be called to append the needed transactions/commands to the
           final programmable transaction block (PTB) that is build for all `ResourceTxBuilder` instances
-          in the ordered list of `ResourceTxBuilder`s.
+          in the ordered list of `ResourceTxBuilders`.
         * After the final PTB has been build, it is executed by the
           `ProgrammableTransactionBlockManager`
         * The resulting `IotaTransactionBlockEffects` are provided to all `ResourceTxBuilder` instances
-          in the ordered list of `ResourceTxBuilder`s. Each `ResourceTxBuilder` needs to find the
+          in the ordered list of `ResourceTxBuilders`. Each `ResourceTxBuilder` needs to find the
           relevant information to update or create the `ResourceTxBuilder::output`.
-* IMPORTANT:<br>
-  We must make sure, that `ResourceTxBuilder` instances creating new `ProductResource`s on the
+* **IMPORTANT**:<br>
+  We must make sure, that `ResourceTxBuilder` instances creating new `ProductResources` on the
   ledger can find the correct ObjectId in the CreatedObjects section of the ObjectChanges
   in the `IotaTransactionBlockEffects`.<br>
-  All other kinds of `ResourceTxBuilder` instances (not creating `ProductResource`s) can find
+  All other kinds of `ResourceTxBuilder` instances (not creating `ProductResources`) can find
   the correct transaction effect using the ObjectId. As the ObjectId is not known when a new
   `ProductResource` is created we, need to handle these PTBs in a special way
   so that the `ResourceTxBuilder::apply()` function can parse the `IotaTransactionBlockEffects`
   to find the correct ObjectId after a `ProductResource` has been created.<br>
   Possible simple solutions:
-    * PTBs creating new `ProductResource`s must only include
+    * PTBs creating new `ProductResources` must only include
         * one single `ResourceTxBuilder`
         * one single `ResourceTxBuilder` per ObjectType
 * The `ProgrammableTransactionBlockManager` can do the gas management and PTB signing as
   currently been implemented in `TransactionBuilder<Tx>`
 * The function `ProgrammableTransactionBlockManager::append_tx()` needs to be product/resource
-  agnostic and shall be usable for all `ProductResource`s of all IOTA Products.<br>
+  agnostic and shall be usable for all `ProductResources` of all IOTA Products.<br>
   ```
   // The generic arguments C and T used here are just placeholders to symbolize<br>
   // the currently unknown exact types.<br>
