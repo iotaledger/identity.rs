@@ -677,6 +677,7 @@ impl Transaction for AcceptTransfer {
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
+
   async fn apply(
     self,
     effects: &IotaTransactionBlockEffects,
@@ -737,12 +738,14 @@ impl ConcludeTransfer {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for ConcludeTransfer {
   type Output = ();
+
   async fn build_programmable_transaction(
     &self,
     client: &IdentityClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
+
   async fn apply(
     self,
     effects: &IotaTransactionBlockEffects,
