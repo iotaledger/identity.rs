@@ -25,11 +25,6 @@ use super::proposals::StringCouple;
 use super::proposals::WasmConfigChange;
 use super::proposals::WasmCreateSendProposal;
 use super::WasmIdentityClient;
-// use super::proposals::StringCouple;
-// use super::proposals::WasmConfigChange;
-// use super::proposals::WasmCreateConfigChangeProposalTx;
-// use super::proposals::WasmCreateSendProposalTx;
-// use super::proposals::WasmCreateUpdateDidProposalTx;
 use super::WasmIdentityClientReadOnly;
 use super::WasmIotaAddress;
 use super::WasmTransactionBuilder;
@@ -199,36 +194,6 @@ impl WasmOnChainIdentity {
     Ok(WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into()))
   }
 }
-//   #[allow(unused)] // API will be updated in the future
-//   #[wasm_bindgen(js_name = getHistory, skip_typescript)] // ts type in custom section below
-//   pub async fn get_history(
-//     &self,
-//     _client: WasmIdentityClient,
-//     _last_version: Option<WasmIotaObjectData>,
-//     _page_size: Option<usize>,
-//   ) -> Result<JsValue> {
-//     unimplemented!("WasmOnChainIdentity::get_history");
-//     // let rs_history = self
-//     //   .0
-//     //   .get_history(
-//     //     &client.0,
-//     //     last_version.map(|lv| into_sdk_type(lv).unwrap()).as_ref(),
-//     //     page_size,
-//     //   )
-//     //   .await
-//     //   .map_err(wasm_error)?;
-//     // serde_wasm_bindgen::to_value(&rs_history).map_err(wasm_error)
-//   }
-// }
-
-// // Manually add the method to the interface.
-// #[wasm_bindgen(typescript_custom_section)]
-// const WASM_ON_CHAIN_IDENTITY_TYPES: &str = r###"
-// 	export interface OnChainIdentity {
-// 		proposals(): Map<String, Proposal>;
-// 		getHistory(): Map<String, Proposal>;
-// 	}
-// "###;
 
 #[wasm_bindgen(js_name = IdentityBuilder)]
 pub struct WasmIdentityBuilder(pub(crate) IdentityBuilder);

@@ -161,7 +161,7 @@ impl OnChainIdentity {
 
   /// Returns a [ControllerToken] owned by `address` that grants access to this Identity.
   /// ## Notes
-  /// [None] is returned if `address` doens't own a valid [ControllerToken].
+  /// [None] is returned if `address` doesn't own a valid [ControllerToken].
   pub async fn get_controller_token_for_address(
     &self,
     address: IotaAddress,
@@ -174,7 +174,7 @@ impl OnChainIdentity {
 
   /// Returns a [ControllerToken], owned by `client`'s sender address, that grants access to this Identity.
   /// ## Notes
-  /// [None] is returned if `client`'s sender address doens't own a valid [ControllerToken].
+  /// [None] is returned if `client`'s sender address doesn't own a valid [ControllerToken].
   pub async fn get_controller_token<S>(&self, client: &IdentityClient<S>) -> Result<Option<ControllerToken>, Error> {
     self
       .get_controller_token_for_address(client.sender_address(), client)
@@ -573,12 +573,14 @@ impl CreateIdentity {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for CreateIdentity {
   type Output = OnChainIdentity;
+
   async fn build_programmable_transaction(
     &self,
     client: &IdentityClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
+
   async fn apply(
     self,
     effects: &IotaTransactionBlockEffects,

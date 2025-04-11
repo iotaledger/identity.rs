@@ -1,44 +1,6 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// use identity_iota::iota::rebased::client::PublishDidDocument;
-// use wasm_bindgen::prelude::wasm_bindgen;
-
-// macro_rules! impl_wasm_transaction_builder {
-//   ($tx:ident, $wasm_tx:ident, $read_only_literal:literal, $build_triple_literal:literal) => {
-//     mod __tx_builder_impl {
-//       use super::$tx;
-//       use super::$wasm_tx;
-//       use crate::error::Result;
-//       use crate::error::WasmResult;
-//       use crate::rebased::WasmIdentityClient;
-//       use crate::rebased::WasmIdentityClientReadOnly;
-//       use identity_iota::iota::rebased::transaction_builder::MutGasDataRef;
-//       use identity_iota::iota::rebased::transaction_builder::TransactionBuilder;
-//       use identity_iota::iota_interaction::types::crypto::Signature;
-//       use identity_iota::iota_interaction::types::transaction::TransactionData;
-//       use identity_iota::iota_interaction::types::transaction::TransactionDataAPI as _;
-//       use iota_interaction_ts::bindings::WasmIotaSignature;
-//       use iota_interaction_ts::bindings::WasmTransactionData;
-//       use wasm_bindgen::prelude::wasm_bindgen;
-//       use wasm_bindgen::JsCast;
-//       use wasm_bindgen::JsValue;
-//       use wasm_bindgen_futures::JsFuture;
-
-//     }
-//     pub use __tx_builder_impl::*;
-//   };
-// }
-
-// #[wasm_bindgen(js_name = PublishDidDocument)]
-// pub struct WasmPublishDidDocument(pub(crate) PublishDidDocument);
-
-// impl_wasm_transaction_builder!(
-//   PublishDidDocument,
-//   WasmPublishDidDocument,
-//   "Readonly<PublishDidDocument>",
-//   "[TransactionData, Signature[], PublishDidDocument]"
-// );
 use std::result::Result as StdResult;
 
 use anyhow::anyhow;
@@ -93,6 +55,7 @@ extern "C" {
 #[async_trait(?Send)]
 impl Transaction for WasmTransaction {
   type Output = JsValue;
+
   async fn build_programmable_transaction(
     &self,
     client: &IdentityClientReadOnly,
@@ -104,6 +67,7 @@ impl Transaction for WasmTransaction {
       .to_vec();
     Ok(bcs::from_bytes(&pt_bcs)?)
   }
+
   async fn apply(
     self,
     effects: &IotaTransactionBlockEffects,
