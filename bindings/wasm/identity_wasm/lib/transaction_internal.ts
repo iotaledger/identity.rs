@@ -1,7 +1,7 @@
 // Copyright 2021-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IotaObjectRef, IotaTransactionBlockResponse, Signature, TransactionEffects } from "@iota/iota-sdk/client";
+import { IotaObjectRef, IotaTransactionBlockResponse, TransactionEffects } from "@iota/iota-sdk/client";
 import { TransactionDataBuilder } from "@iota/iota-sdk/transactions";
 import { IdentityClient, IdentityClientReadOnly } from "~identity_wasm";
 

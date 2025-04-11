@@ -27,9 +27,11 @@ use secret_storage::Signer;
 /// 3. Apply the transaction's off-chain effects, from its on-chain ones.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  let storage = get_memstorage()?;
-  let alice_client = get_funded_client(&storage).await?;
-  let bob_client = get_funded_client(&storage).await?;
+  let alice_storage = get_memstorage()?;
+  let alice_client = get_funded_client(&alice_storage).await?;
+
+  let bob_storage = get_memstorage()?;
+  let bob_client = get_funded_client(&bob_storage).await?;
 
   // Alice wants to create a new Identity with only her as its controller.
   let (tx_data, sigs, tx) = alice_client
@@ -57,7 +59,9 @@ async fn main() -> anyhow::Result<()> {
     .await?;
   let tx_effects = tx_response.effects.as_ref().expect("transaction had effects");
   // Alice's Identity is parsed out of the transaction's effects!
-  let _identity = tx.apply(tx_effects, &alice_client).await?;
+  let identity = tx.apply(tx_effects, &alice_client).await?;
+
+  println!("Alice successfully created Identity {}! Thanks for the gas Bob!", identity.id());
 
   Ok(())
 }

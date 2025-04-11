@@ -175,7 +175,7 @@ where
     let controller_cap_ref = client
       .get_object_ref_by_id(controller_token.id())
       .await?
-      .expect("token exists")
+      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exists", controller_token.id())))?
       .reference
       .to_object_ref();
     let maybe_intent_fn = action.intent_fn.into_inner();
@@ -311,7 +311,7 @@ where
     let controller_cap_ref = client
       .get_object_ref_by_id(*controller_token)
       .await?
-      .expect("token exists")
+      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exists", controller_token.id())))?
       .reference
       .to_object_ref();
 

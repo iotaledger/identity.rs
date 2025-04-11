@@ -185,7 +185,7 @@ where
     let controller_cap_ref = client
       .get_object_ref_by_id(controller_token.id())
       .await?
-      .expect("token exists")
+      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exists", controller_token.id())))?
       .reference
       .to_object_ref();
     let can_execute = identity
@@ -310,7 +310,7 @@ where
     let controller_cap_ref = client
       .get_object_ref_by_id(*controller_token)
       .await?
-      .expect("token exists")
+      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exists", controller_token.id())))?
       .reference
       .to_object_ref();
 

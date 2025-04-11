@@ -6,11 +6,18 @@ import { IotaClient } from "@iota/iota-sdk/client";
 import { TransactionDataBuilder } from "@iota/iota-sdk/transactions";
 import { getFundedClient, getMemstorage, NETWORK_URL } from "../util";
 
-/** Demonstrate how to create a DID Document and publish it. */
+/**  
+ * This example demonstrates:
+ * 1. A user - Alice - can build a transaction that is sponsored by another user - Bob;
+ * 2. Deconstruct the transaction into its parts, to execute it manually through the SDK's IotaClient;
+ * 3. Apply the transaction's off-chain effects, from its on-chain ones.
+ */
 export async function advancedTransaction(): Promise<void> {
-    const storage = getMemstorage();
-    const aliceClient = await getFundedClient(storage);
-    const bobClient = await getFundedClient(storage);
+    const aliceStorage = getMemstorage();
+    const aliceClient = await getFundedClient(aliceStorage);
+
+    const bobStorage = getMemstorage();
+    const bobClient = await getFundedClient(bobStorage);
 
     const [txDataBcs, signatures, tx] = await aliceClient
         .createIdentity(new IotaDocument(aliceClient.network()))
