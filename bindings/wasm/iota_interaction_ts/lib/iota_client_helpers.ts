@@ -1,12 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    CoinStruct,
-    IotaClient,
-    IotaTransactionBlockResponse,
-    TransactionEffects,
-} from "@iota/iota-sdk/client";
+import { CoinStruct, IotaClient, IotaTransactionBlockResponse, TransactionEffects } from "@iota/iota-sdk/client";
 import { GasData, TransactionDataBuilder } from "@iota/iota-sdk/transactions";
 
 export type Signer = { sign(data: Uint8Array): Promise<string> };

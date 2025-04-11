@@ -61,7 +61,10 @@ async fn main() -> anyhow::Result<()> {
   // Alice's Identity is parsed out of the transaction's effects!
   let identity = tx.apply(tx_effects, &alice_client).await?;
 
-  println!("Alice successfully created Identity {}! Thanks for the gas Bob!", identity.id());
+  println!(
+    "Alice successfully created Identity {}! Thanks for the gas Bob!",
+    identity.id()
+  );
 
   Ok(())
 }

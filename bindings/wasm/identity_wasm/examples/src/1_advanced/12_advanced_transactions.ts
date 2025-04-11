@@ -6,7 +6,7 @@ import { IotaClient } from "@iota/iota-sdk/client";
 import { TransactionDataBuilder } from "@iota/iota-sdk/transactions";
 import { getFundedClient, getMemstorage, NETWORK_URL } from "../util";
 
-/**  
+/**
  * This example demonstrates:
  * 1. A user - Alice - can build a transaction that is sponsored by another user - Bob;
  * 2. Deconstruct the transaction into its parts, to execute it manually through the SDK's IotaClient;
