@@ -321,8 +321,14 @@ impl<A: MoveType> ApproveProposal<'_, '_, A> {
       controller_token,
       ..
     } = self;
-    let identity_ref = client.get_object_ref_by_id(identity.id()).await?.unwrap();
-    let controller_cap = client.get_object_ref_by_id(*controller_token).await?.unwrap();
+    let identity_ref = client
+      .get_object_ref_by_id(identity.id())
+      .await?
+      .ok_or_else(|| Error::Identity(format!("identity {} doesn't exist", identity.id())))?;
+    let controller_cap = client
+      .get_object_ref_by_id(*controller_token)
+      .await?
+      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token)))?;
     let tx = <IdentityMoveCallsAdapter as IdentityMoveCalls>::approve_proposal::<A>(
       identity_ref.clone(),
       controller_cap.reference.to_object_ref(),

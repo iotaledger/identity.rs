@@ -246,8 +246,7 @@ impl QuorumDriverTrait for QuorumDriverAdapter {
     self
       .client
       .wait_for_transaction(digest, Some(IotaTransactionBlockResponseOptions::new()), None, None)
-      .await
-      .unwrap();
+      .await?;
 
     Ok(Box::new(IotaTransactionBlockResponseProvider::new(wasm_response)))
   }
