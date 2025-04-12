@@ -148,9 +148,10 @@ export async function createVP() {
     // ===========================================================================
     // Step 6: Holder sends a verifiable presentation to the verifier.
     // ===========================================================================
+    const presentationJwtToVerifier = presentationJwt.toString();
     console.log(
         `Sending presentation (as JWT) to the verifier`,
-        unsignedVp.toJSON(),
+        presentationJwtToVerifier,
     );
 
     // ===========================================================================
@@ -173,14 +174,15 @@ export async function createVP() {
         client: didClient,
     });
     // Resolve the presentation holder.
-    const presentationHolderDID: CoreDID = JwtPresentationValidator.extractHolder(presentationJwt);
+    const receivedVpJwt = new Jwt(presentationJwtToVerifier);
+    const presentationHolderDID: CoreDID = JwtPresentationValidator.extractHolder(receivedVpJwt);
     const resolvedHolder = await resolver.resolve(
         presentationHolderDID.toString(),
     );
 
     // Validate presentation. Note that this doesn't validate the included credentials.
     let decodedPresentation = new JwtPresentationValidator(new EdDSAJwsVerifier()).validate(
-        presentationJwt,
+        receivedVpJwt,
         resolvedHolder,
         jwtPresentationValidationOptions,
     );
