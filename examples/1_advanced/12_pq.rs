@@ -114,7 +114,7 @@ async fn main() -> anyhow::Result<()> {
     &client,
     &mut secret_manager_issuer,
     &storage_issuer,
-    JwkMemStore::ML_DSA_KEY_TYPE,
+    JwkMemStore::PQ_KEY_TYPE,
     JwsAlgorithm::ML_DSA_87,
   )
   .await?;
@@ -131,7 +131,7 @@ async fn main() -> anyhow::Result<()> {
     &client,
     &mut secret_manager_holder,
     &storage_holder,
-    JwkMemStore::SLH_DSA_KEY_TYPE,
+    JwkMemStore::PQ_KEY_TYPE,
     JwsAlgorithm::SLH_DSA_SHA2_128s,
   )
   .await?;
