@@ -203,13 +203,13 @@ impl DidJwkDocumentExt for CoreDocument {
   {
     let (pq_key_type, pq_alg, trad_key_type, trad_alg) = match alg {
       CompositeAlgId::IdMldsa44Ed25519 => (
-        KeyType::from_static_str("ML-DSA"),
+        KeyType::from_static_str("AKP"),
         JwsAlgorithm::ML_DSA_44,
         KeyType::from_static_str("Ed25519"),
         JwsAlgorithm::EdDSA,
       ),
       CompositeAlgId::IdMldsa65Ed25519 => (
-        KeyType::from_static_str("ML-DSA"),
+        KeyType::from_static_str("AKP"),
         JwsAlgorithm::ML_DSA_65,
         KeyType::from_static_str("Ed25519"),
         JwsAlgorithm::EdDSA,

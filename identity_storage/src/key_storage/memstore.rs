@@ -206,17 +206,10 @@ impl JwkMemStore {
   /// The BLS12381G2 key type
   pub const BLS12381G2_KEY_TYPE: KeyType = KeyType::from_static_str(Self::BLS12381G2_KEY_TYPE_STR);
 
-  const ML_DSA: &'static str = "ML-DSA";
+  const PQ_KEY_TYPE_STR: &'static str = "AKP";
   /// ML-DSA algorithms key types;
-  pub const ML_DSA_KEY_TYPE: KeyType = KeyType::from_static_str(Self::ML_DSA);
+  pub const PQ_KEY_TYPE: KeyType = KeyType::from_static_str(Self::PQ_KEY_TYPE_STR);
 
-  const SLH_DSA: &'static str = "SLH-DSA";
-  /// SLH-DSA algorithms key types;
-  pub const SLH_DSA_KEY_TYPE: KeyType = KeyType::from_static_str(Self::SLH_DSA);
-
-  const FALCON: &'static str = "FALCON";
-  /// FALCON algorithms key types;
-  pub const FALCON_KEY_TYPE: KeyType = KeyType::from_static_str(Self::FALCON);
 }
 
 impl MemStoreKeyType {
@@ -377,9 +370,7 @@ mod pqc_liboqs {
   #[cfg_attr(feature = "send-sync-storage", async_trait)]
   impl JwkStoragePQ for JwkMemStore {
     async fn generate_pq_key(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
-      if key_type != JwkMemStore::ML_DSA_KEY_TYPE
-        && key_type != JwkMemStore::SLH_DSA_KEY_TYPE
-        && key_type != JwkMemStore::FALCON_KEY_TYPE
+      if key_type != JwkMemStore::PQ_KEY_TYPE
       {
         return Err(
           KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
