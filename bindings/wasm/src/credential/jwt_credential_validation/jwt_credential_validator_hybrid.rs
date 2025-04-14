@@ -30,7 +30,7 @@ use crate::verification::WasmJwsVerifier;
 
 use wasm_bindgen::prelude::*;
 
-/// A type for decoding and validating {@link Credential}.
+/// A type for decoding and validating PQ/T {@link Credential}.
 #[wasm_bindgen(js_name = JwtCredentialValidatorHybrid)]
 pub struct WasmJwtCredentialValidatorHybrid(JwtCredentialValidatorHybrid<WasmJwsVerifier, WasmJwsVerifier>);
 
