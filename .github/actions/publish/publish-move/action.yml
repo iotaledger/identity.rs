@@ -1,0 +1,22 @@
+name: 'publish-move'
+description: 'Publish Move package to network'
+inputs:
+  network:
+    description: 'network to deploy to'
+    required: true
+  pk:
+    description: 'private key to load into Keytool'
+    required: true
+  dry-run:
+    description: "'true' = only log potential result; 'false' = publish'"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Load PK into Keytool
+      shell: bash
+      run: |
+        iota keytool import $(iota keytool convert ${inputs.pk} --json | jq -r '.bech32WithFlag') ed25519 --alias deploy-key
+        iota client switch --env ${inputs.network}
+        iota client switch --address deploy-key
+
