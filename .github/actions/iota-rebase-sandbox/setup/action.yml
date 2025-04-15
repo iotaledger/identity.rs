@@ -58,7 +58,8 @@ runs:
         
         echo "Looking for platform: $PLATFORM_TRIPLET"
 
-        curl "https://api.github.com/repos/iotaledger/iota/releases" > releases.json
+        curl "https://api.github.com/repos/iotaledger/iota/releases" \
+           --header 'authorization: Bearer ${{ github.token }}' > releases.json
 
         {
           # Note: Releases might be visible before all binaries are available
