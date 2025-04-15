@@ -6,7 +6,7 @@ mod read_only;
 
 use anyhow::{anyhow, Context};
 pub use full_client::*;
-use identity_iota_interaction::{IotaClientTrait, OptionalSync, ProgrammableTransactionBcs};
+use identity_iota_interaction::IotaClientTrait;
 use iota_sdk::rpc_types::{IotaData, IotaObjectDataOptions, OwnedObjectRef};
 use iota_sdk::types::base_types::{IotaAddress, ObjectID};
 use iota_sdk::types::crypto::PublicKey;
@@ -16,10 +16,12 @@ pub use identity_iota_interaction::IotaKeySignature;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 
-use crate::iota_interaction_rust::{IotaClientAdapter, IotaTransactionBlockResponseAdaptedTraitObj};
+use crate::iota_interaction_rust::IotaClientAdapter;
 use crate::NetworkName;
+use async_trait::async_trait;
 
-#[async_trait::async_trait]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 /// A trait that defines the core read-only operations for core clients.
 pub trait CoreClientReadOnly {
   /// Returns the package ID associated with the Client.
@@ -110,40 +112,16 @@ pub trait CoreClientReadOnly {
   }
 }
 
-#[async_trait::async_trait]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 /// A trait that defines the core read-write operations for core clients.
-pub trait CoreClient: CoreClientReadOnly {
+pub trait CoreClient<S: Signer<IotaKeySignature>>: CoreClientReadOnly {
   /// Returns the signer of the client.
-  fn signer<S>(&self) -> &S;
+  fn signer(&self) -> &S;
 
   /// Returns this Client's sender address
   fn sender_address(&self) -> IotaAddress;
 
   /// Returns the bytes of the sender's public key.
   fn sender_public_key(&self) -> &PublicKey;
-
-  /// Executes a transaction on the IOTA network.
-  ///
-  /// # Arguments
-  ///
-  /// * `tx_bcs` - The transaction to execute in BCS format.
-  /// * `gas_budget` - Optional gas budget for the transaction.
-  ///
-  /// # Returns
-  ///
-  /// Returns the transaction response or an error if the operation fails.
-  async fn execute_transaction<S>(
-    &self,
-    tx_bcs: ProgrammableTransactionBcs,
-    gas_budget: Option<u64>,
-  ) -> anyhow::Result<IotaTransactionBlockResponseAdaptedTraitObj>
-  where
-    S: Signer<IotaKeySignature> + OptionalSync,
-  {
-    self
-      .client_adapter()
-      .execute_transaction(tx_bcs, gas_budget, self.signer::<S>())
-      .await
-      .context("failed to execute transaction")
-  }
 }
