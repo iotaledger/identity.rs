@@ -7,6 +7,7 @@ use anyhow::Context as _;
 use async_trait::async_trait;
 use cfg_if::cfg_if;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockResponseOptions;
 use identity_iota_interaction::shared_crypto::intent::Intent;
 use identity_iota_interaction::shared_crypto::intent::IntentMessage;
@@ -319,8 +320,10 @@ where
   where
     S: Signer<IotaKeySignature> + OptionalSync,
   {
+    // Build the transaction into its parts.
     let (tx_data, signatures, tx) = self.build(client).await?;
 
+    // Execute and wait for the transaction to be confirmed.
     let dyn_tx_block = client
       .quorum_driver_api()
       .execute_transaction_block(
@@ -331,10 +334,19 @@ where
       )
       .await?;
 
+    // Get the transaction's effects, making sure they are successful.
     let tx_effects = dyn_tx_block
       .effects()
       .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects in response".to_owned()))?;
-    let output = tx.apply(tx_effects, client).await?;
+    let tx_status = tx_effects.status();
+    if tx_status.is_err() {
+      return Err(Error::TransactionUnexpectedResponse(format!(
+        "errors in transaction's effects: {}",
+        tx_status
+      )));
+    }
+
+    let application_result = tx.apply(tx_effects, client).await;
     let response = {
       cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
@@ -342,6 +354,22 @@ where
         } else {
           dyn_tx_block.clone_native_response()
         }
+      }
+    };
+    // Apply the off-chain logic of the transaction by parsing the transaction's effects.
+    // If the application goes awry, salvage the response by returning it alongside the error.
+    let output = match application_result {
+      Ok(output) => output,
+      Err(e) => {
+        #[cfg(not(target_arch = "wasm32"))]
+        let response = Box::new(response);
+        #[cfg(target_arch = "wasm32")]
+        // For WASM the response is passed in the error as its JSON-encoded string representation.
+        let response = response.as_native_response().to_string();
+        return Err(Error::TransactionOffChainApplicationFailure {
+          source: Box::new(e),
+          response,
+        });
       }
     };
 
