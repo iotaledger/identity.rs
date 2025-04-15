@@ -1,0 +1,75 @@
+name: Deploy Move package
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Name of the support branch (e.g. `support/v1.2`)'
+        required: true
+      network:
+        description: 'network to deploy to'
+        required: true
+      faucet:
+        description: 'TBD'
+        required: true
+      script-path:
+        description: 'script to tun'
+        required: true
+
+jobs:
+  deploy-move-package:
+    environment: release
+    name: TBD
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out the repo
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.branch }}
+
+    - name: Setup iota CLI
+      uses: './.github/actions/publish/publish-move'
+      with:
+        dry-run: ${{ github.event.inputs.dry-run }}
+        network: ${{ github.event.inputs.network }}
+        pk: ${{secrets.TRUST_FRAMEWORK_PRODUCTS_PRIVATE_KEY}}
+        faucet: ${{ github.event.inputs.faucet }}
+
+    - name: Import GPG key
+      id: import-gpg
+      uses: crazy-max/ghaction-import-gpg@cb4264d3319acaa2bea23d51ef67f80b4f775013
+      with:
+        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+        passphrase: ${{ secrets.GPG_PASSPHRASE }}
+        git_user_signingkey: true
+        git_commit_gpgsign: true
+        git_tag_gpgsign: true
+
+    - name: Run script
+      run: |
+        source ${{ github.event.inputs.script-path}}
+
+    - name: Commit changes
+      run: |
+        git add .
+        if [[ $(git diff --stat --staged) == '' ]]; then
+          echo 'repository unmodified'
+          exit 1
+        fi
+        git commit -m "bump version"
+        
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@67df31e08a133c6a77008b89689677067fef169e
+      with:
+        committer: GitHub <noreply@github.com>
+        author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+        branch: hotfix/${{ env.HOTFIX_TAG }} 
+        delete-branch: true
+        title: 'Hotfix ${{ env.HOTFIX_TAG }}'
+        body: |
+          This automatically generated PR contains changes for the `${{ env.HOTFIX_TAG }}` hotfix.
+          ${{inputs.pr-body-text}}
+          If you discover any mistakes fix them with commits on this branch. If you want to abort the hotfix simply close the PR.
+        labels: |
+          No changelog

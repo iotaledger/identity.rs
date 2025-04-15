@@ -10,13 +10,21 @@ inputs:
   dry-run:
     description: "'true' = only log potential result; 'false' = publish'"
     required: true
+  faucet:
+    description: "whether to faucet"
+    required: true
 runs:
   using: "composite"
   steps:
     - name: Load PK into Keytool
       shell: bash
+      env:
+        WAIT_FOR_VERSION: 4df3f9262d84cab0039c07bf861045fbb3c20ab7 # v2.2.3
       run: |
         iota keytool import $(iota keytool convert ${inputs.pk} --json | jq -r '.bech32WithFlag') ed25519 --alias deploy-key
         iota client switch --env ${inputs.network}
         iota client switch --address deploy-key
+        iota client faucet
+        # wait up tp 5min for Gas to be available
+        timeout 5m bash -c "until (( $(iota client gas --json | jq -r '.[].nanosBalance') > 0)); do sleep 10; done"
 
