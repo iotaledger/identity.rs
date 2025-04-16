@@ -115,9 +115,9 @@ pub trait CoreClientReadOnly {
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync", async_trait)]
 /// A trait that defines the core read-write operations for core clients.
-pub trait CoreClient<S: Signer<IotaKeySignature>>: CoreClientReadOnly {
+pub trait CoreClient: CoreClientReadOnly {
   /// Returns the signer of the client.
-  fn signer(&self) -> &S;
+  fn signer<S: Signer<IotaKeySignature>>(&self) -> &S;
 
   /// Returns this Client's sender address
   fn sender_address(&self) -> IotaAddress;
