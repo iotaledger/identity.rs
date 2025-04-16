@@ -7,7 +7,6 @@
 
 use core::str;
 use std::borrow::Cow;
-use std::ops::Deref;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -20,8 +19,6 @@ use crate::jwu::decode_b64_json;
 use crate::jwu::filter_non_empty_bytes;
 use crate::jwu::parse_utf8;
 use crate::jwu::validate_jws_headers;
-use crypto::hashes::Digest;
-
 
 use super::JwsVerifier;
 use super::VerificationInput;
@@ -183,7 +180,7 @@ impl<'a> JwsValidationItem<'a> {
     })
   }
 
-  ///Hybrid verify
+  ///Hybrid signature verify, based on [Composite ML-DSA draft](https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-composite-ml-dsaverify)
   pub fn verify_hybrid<TRV, PQV>(
     self,
     traditional_verifier: &TRV,
@@ -211,36 +208,52 @@ impl<'a> JwsValidationItem<'a> {
 
     // Extract and validate alg from the protected header.
     let alg: JwsAlgorithm = protected.alg().ok_or(Error::ProtectedHeaderWithoutAlg)?;
+
+    // M' = Prefix || Domain || len(ctx) || ctx || M
     let (t_alg, pq_alg, signing_input, traditional_signature_len) = match alg {
       JwsAlgorithm::IdMldsa44Ed25519 => {
-        let mut input = vec![
-          0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x3E
-        ];
-        input.extend(crypto::hashes::sha::Sha512::digest(signing_input).deref().to_vec());
+        //Prefix: CompositeAlgorithmSignatures2025
+        let mut input = b"CompositeAlgorithmSignatures2025".to_vec();
+
+        //Domain: id-MLDSA44-Ed25519 (https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-domain-separators)
+        input.extend_from_slice(&[0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x3E]);
+
+        //len(ctx) = 0
+        input.push(0x00);
+
+        //M
+        input.extend(signing_input);
         (
           JwsAlgorithm::EdDSA,
-          JwsAlgorithm::ML_DSA_44,
+          JwsAlgorithm::IdMldsa44Ed25519,
           input,
           crypto::signatures::ed25519::Signature::LENGTH,
         )
       }
       JwsAlgorithm::IdMldsa65Ed25519 => {
-        let mut input = vec![
-          0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x47,
-        ];
-        input.extend(crypto::hashes::sha::Sha512::digest(signing_input).deref().to_vec());
+        //Prefix: CompositeAlgorithmSignatures2025
+        let mut input = b"CompositeAlgorithmSignatures2025".to_vec();
+
+        //Domain: id-MLDSA65-Ed25519 https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-domain-separators
+        input.extend_from_slice(&[0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x47]);
+        
+        //len(ctx) = 0
+        input.push(0x00);
+
+        //M
+        input.extend(signing_input);
+
         (
           JwsAlgorithm::EdDSA,
-          JwsAlgorithm::ML_DSA_65,
+          JwsAlgorithm::IdMldsa65Ed25519,
           input,
           crypto::signatures::ed25519::Signature::LENGTH,
         )
       }
       _ => return Err(Error::JwsAlgorithmParsingError),
     };
-
+    
     traditional_pk.check_alg(t_alg.name())?;
-    pq_pk.check_alg(pq_alg.name())?;
 
     let extracted_signature_t = &decoded_signature[..traditional_signature_len];
     let extracted_signature_pq = &decoded_signature[traditional_signature_len..];
@@ -252,7 +265,7 @@ impl<'a> JwsValidationItem<'a> {
       decoded_signature: extracted_signature_t.into(),
     };
 
-    // Call verifier
+    // Call the traditional verifier
     traditional_verifier
       .verify(input1, traditional_pk)
       .map_err(Error::SignatureVerificationError)?;
@@ -262,11 +275,12 @@ impl<'a> JwsValidationItem<'a> {
       signing_input: signing_input.into(),
       decoded_signature: extracted_signature_pq.into(),
     };
-    // Call verifier
+    
+    // Call the PQ verifier
     pq_verifier
       .verify(input2, pq_pk)
       .map_err(Error::SignatureVerificationError)?;
-
+    
     Ok(DecodedJws {
       protected,
       unprotected,

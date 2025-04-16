@@ -18,7 +18,7 @@ pub struct OQSVerifier;
 impl OQSVerifier {
   /// Verify a JWS signature secured with the on the [`Algorithm`] defined in liboqs.
   pub fn verify(input: VerificationInput, public_key: &Jwk, alg: Algorithm) -> Result<(), SignatureVerificationError> {
-    // Obtain an ML-DSA-44 public key.
+    
     let params: &JwkParamsAKP = public_key
       .try_akp_params()
       .map_err(|_| SignatureVerificationErrorKind::UnsupportedKeyType)?;
@@ -51,6 +51,49 @@ impl OQSVerifier {
         .map_err(|_| SignatureVerificationErrorKind::InvalidSignature)?,
     )
   }
+
+    /// Verify a JWS signature signed with a ctx and secured with the on the [`Algorithm`] defined in liboqs, used in hybrid signature.
+    /// The ctx value is set as the Domain separator value for binding the signature to the Composite OID, as definied in [here](https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-composite-ml-dsaverify)
+    pub fn verify_hybrid_signature(input: VerificationInput, public_key: &Jwk, alg: Algorithm) -> Result<(), SignatureVerificationError> {
+      
+      let params: &JwkParamsAKP = public_key
+        .try_akp_params()
+        .map_err(|_| SignatureVerificationErrorKind::UnsupportedKeyType)?;
+  
+      let pk = identity_jose::jwu::decode_b64(params.public.as_str()).map_err(|_| {
+        SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure)
+          .with_custom_message("could not decode 'pub' parameter from jwk")
+      })?;
+  
+      oqs::init();
+  
+      let scheme = Sig::new(alg).map_err(|_| {
+        SignatureVerificationError::new(SignatureVerificationErrorKind::Unspecified)
+          .with_custom_message("signature scheme init failed")
+      })?;
+  
+      let public_key = scheme
+        .public_key_from_bytes(&pk)
+        .ok_or(SignatureVerificationError::new(
+          SignatureVerificationErrorKind::KeyDecodingFailure,
+        ))?;
+  
+      let signature = scheme
+        .signature_from_bytes(input.decoded_signature.deref())
+        .ok_or(SignatureVerificationErrorKind::InvalidSignature)?;
+
+      let ctx = match  alg {
+        Algorithm::MlDsa44 => &[0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x3E],
+        Algorithm::MlDsa65 => &[0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x47],
+        _ => return Err(SignatureVerificationError::new(SignatureVerificationErrorKind::UnsupportedKeyType)),
+      };
+  
+      Ok(
+        scheme
+          .verify_with_ctx_str(&input.signing_input, signature, ctx, public_key)
+          .map_err(|_| SignatureVerificationErrorKind::InvalidSignature)?,
+      )
+    }
 }
 
 #[cfg(test)]

@@ -1,8 +1,6 @@
 // Copyright 2024 Fondazione Links
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::Deref;
-
 use super::JwkStorageDocumentError as Error;
 use crate::try_undo_key_generation;
 use crate::JwkGenOutput;
@@ -17,7 +15,6 @@ use crate::MethodDigest;
 use crate::Storage;
 use crate::StorageResult;
 use async_trait::async_trait;
-use crypto::hashes::Digest;
 use identity_core::common::Object;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jws;
@@ -214,6 +211,7 @@ impl JwkDocumentExtHybrid for CoreDocument {
     generate_method_hybrid_core_document(self, storage, alg_id, fragment, scope).await
   }
 
+  /// Hybrid signature implementation based on [Composite ML-DSA draft](https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-composite-ml-dsasign)
   async fn create_jws<K, I>(
     &self,
     storage: &Storage<K, I>,
@@ -309,28 +307,41 @@ impl JwkDocumentExtHybrid for CoreDocument {
     let jws_encoder: CompactJwsEncoder<'_> = CompactJwsEncoder::new_with_options(payload, &header, encoding_options)
       .map_err(|err| Error::EncodingError(err.into()))?;
 
-    let signing_input = match alg {
+    //M' = Prefix || Domain || len(ctx) || ctx || M
+    //let prefix = b"CompositeAlgorithmSignatures2025";
+
+    let (signing_input, ctx) = match alg {
       JwsAlgorithm::IdMldsa44Ed25519 => {
-        let mut input = vec![
-          0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x3E,
-        ];
-        input.extend(
-          crypto::hashes::sha::Sha512::digest(jws_encoder.signing_input())
-            .deref()
-            .to_vec(),
-        );
-        input
+        //Prefix: CompositeAlgorithmSignatures2025
+        let mut input = b"CompositeAlgorithmSignatures2025".to_vec();
+
+        //Domain: id-MLDSA44-Ed25519 (https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-domain-separators)
+        let domain = &[0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x3E];
+        input.extend_from_slice(domain);
+
+        //len(ctx) = 0
+        input.push(0x00);
+
+        //M
+        input.extend(jws_encoder.signing_input());
+        
+        (input, domain)
       }
       JwsAlgorithm::IdMldsa65Ed25519 => {
-        let mut input = vec![
-          0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x47,
-        ];
-        input.extend(
-          crypto::hashes::sha::Sha512::digest(jws_encoder.signing_input())
-            .deref()
-            .to_vec(),
-        );
-        input
+        //Prefix: CompositeAlgorithmSignatures2025
+        let mut input = b"CompositeAlgorithmSignatures2025".to_vec();
+
+        //Domain: id-MLDSA65-Ed25519 https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-domain-separators
+        let domain = &[0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x47];
+        input.extend_from_slice(domain);
+        
+        //len(ctx) = 0
+        input.push(0x00);
+
+        //M
+        input.extend(jws_encoder.signing_input());
+
+        (input, domain)
       }
       _ => return Err(Error::InvalidJwsAlgorithm),
     };
@@ -339,7 +350,7 @@ impl JwkDocumentExtHybrid for CoreDocument {
       .await
       .map_err(Error::KeyStorageError)?;
 
-    let signature_pq = <K as JwkStoragePQ>::pq_sign(storage.key_storage(), &pq_key_id, &signing_input, pq_jwk)
+    let signature_pq = <K as JwkStoragePQ>::pq_sign(storage.key_storage(), &pq_key_id, &signing_input, pq_jwk, Some(ctx))
       .await
       .map_err(Error::KeyStorageError)?;
 

@@ -44,6 +44,10 @@ impl JwsVerifier for PQCJwsVerifier {
       JwsAlgorithm::ML_DSA_65 => OQSVerifier::verify(input, public_key, Algorithm::MlDsa65),
       #[cfg(feature = "ML_DSA_87")]
       JwsAlgorithm::ML_DSA_87 => OQSVerifier::verify(input, public_key, Algorithm::MlDsa87),
+      #[cfg(feature = "ML_DSA_44")]
+      JwsAlgorithm::IdMldsa44Ed25519 => OQSVerifier::verify_hybrid_signature(input, public_key, Algorithm::MlDsa44),
+      #[cfg(feature = "ML_DSA_65")]
+      JwsAlgorithm::IdMldsa65Ed25519 => OQSVerifier::verify_hybrid_signature(input, public_key, Algorithm::MlDsa65),
 
       #[cfg(feature = "SLH_DSA_SHA2_128s")]
       JwsAlgorithm::SLH_DSA_SHA2_128s => OQSVerifier::verify(input, public_key, Algorithm::SphincsSha2128sSimple),
