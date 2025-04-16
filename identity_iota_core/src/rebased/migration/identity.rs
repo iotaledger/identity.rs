@@ -9,6 +9,7 @@ use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
 use tokio::sync::OnceCell;
 
 use crate::rebased::iota::types::Number;
@@ -456,6 +457,12 @@ pub(crate) fn unpack_identity_data(did: &IotaDID, data: &IotaObjectData) -> Resu
   }))
 }
 
+impl From<OnChainIdentity> for IotaDocument {
+  fn from(identity: OnChainIdentity) -> Self {
+    identity.did_doc 
+  }
+}
+
 /// Builder-style struct to create a new [`OnChainIdentity`].
 #[derive(Debug)]
 pub struct IdentityBuilder {
@@ -583,26 +590,49 @@ impl Transaction for CreateIdentity {
 
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    mut effects: IotaTransactionBlockEffects,
     client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return Err(Error::TransactionUnexpectedResponse(error.clone()));
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
 
     let created_objects = effects
       .created()
       .iter()
-      .filter(|elem| matches!(elem.owner, Owner::Shared { .. }))
-      .map(|obj| obj.object_id())
-      .collect::<Vec<_>>();
-    let created_identity = created_objects
-      .first()
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("could not find new identity in response".to_owned()))
-      .copied()?;
+      .enumerate()
+      .filter(|(_, elem)| matches!(elem.owner, Owner::Shared { .. }))
+      .map(|(i, obj)| (i, obj.object_id()));
 
-    get_identity(client, created_identity)
-      .await
-      .and_then(|identity| identity.ok_or_else(|| Error::ObjectLookup(created_identity.to_string())))
+    let is_target_identity = |identity: &OnChainIdentity| -> bool {
+      identity.did_document().core_document() == self.builder.did_doc.core_document()
+        && self.builder.threshold.unwrap_or(1) == identity.threshold()
+    };
+
+    let mut target_identity_pos = None;
+    let mut target_identity = None;
+    for (i, obj_id) in created_objects {
+      match get_identity(client, obj_id).await {
+        Ok(Some(identity)) if is_target_identity(&identity) => {
+          target_identity_pos = Some(i);
+          target_identity = Some(identity);
+          break;
+        }
+        _ => continue,
+      }
+    }
+
+    let (Some(i), Some(identity)) = (target_identity_pos, target_identity) else {
+      return (
+        Err(Error::TransactionUnexpectedResponse(
+          "failed to find the correct identity in this transaction's effects".to_owned(),
+        )),
+        effects,
+      );
+    };
+
+    effects.created_mut().swap_remove(i);
+
+    (Ok(identity), effects)
   }
 }

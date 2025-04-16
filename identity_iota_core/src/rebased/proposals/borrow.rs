@@ -359,13 +359,13 @@ where
   }
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    effects: IotaTransactionBlockEffects,
     _client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return Err(Error::TransactionUnexpectedResponse(error.clone()));
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
 
-    Ok(())
+    (Ok(()), effects)
   }
 }

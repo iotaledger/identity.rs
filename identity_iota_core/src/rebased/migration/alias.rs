@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
+use identity_core::common::Url;
+use identity_did::DID as _;
 use identity_iota_interaction::rpc_types::IotaExecutionStatus;
 use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
@@ -12,6 +14,7 @@ use identity_iota_interaction::types::id::UID;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::types::TypeTag;
 use identity_iota_interaction::types::STARDUST_PACKAGE_ID;
+use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -21,6 +24,7 @@ use crate::iota_interaction_adapter::MigrationMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::Error;
+use crate::IotaDID;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::MigrationMoveCalls;
 use identity_iota_interaction::MoveType;
@@ -161,22 +165,50 @@ impl Transaction for MigrateLegacyIdentity {
 
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    mut effects: IotaTransactionBlockEffects,
     client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return Err(Error::TransactionUnexpectedResponse(error.to_string()));
+      return (Err(Error::TransactionUnexpectedResponse(error.to_string())), effects);
     }
 
-    let identity_ref = effects
+    let legacy_did: Url = IotaDID::new(&self.alias.id.object_id().into_bytes(), client.network())
+      .to_url()
+      .into();
+    let is_target_identity =
+      |identity: &OnChainIdentity| -> bool { identity.did_document().also_known_as().contains(&legacy_did) };
+
+    let created_objects = effects
       .created()
       .iter()
-      .find(|obj_ref| obj_ref.owner.is_shared())
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("Identity not found in transaction's results".to_string()))?;
+      .enumerate()
+      .filter(|(_, obj_ref)| obj_ref.owner.is_shared())
+      .map(|(i, obj_ref)| (i, obj_ref.object_id()));
 
-    get_identity(client, identity_ref.object_id())
-      .await
-      .transpose()
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("failed to retrieve the newly created Identity".to_owned()))?
+    let mut target_identity_pos = None;
+    let mut target_identity = None;
+    for (i, obj_id) in created_objects {
+      match get_identity(client, obj_id).await {
+        Ok(Some(identity)) if is_target_identity(&identity) => {
+          target_identity_pos = Some(i);
+          target_identity = Some(identity);
+          break;
+        }
+        _ => continue,
+      }
+    }
+
+    let (Some(i), Some(identity)) = (target_identity_pos, target_identity) else {
+      return (
+        Err(Error::TransactionUnexpectedResponse(
+          "failed to find the correct identity in this transaction's effects".to_owned(),
+        )),
+        effects,
+      );
+    };
+
+    effects.created_mut().swap_remove(i);
+
+    (Ok(identity), effects)
   }
 }

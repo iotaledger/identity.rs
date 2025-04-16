@@ -355,11 +355,15 @@ where
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply(self, effects: &IotaTransactionBlockEffects, _client: &IdentityClientReadOnly) -> Result<(), Error> {
+  async fn apply(
+    self,
+    effects: IotaTransactionBlockEffects,
+    _client: &IdentityClientReadOnly,
+  ) -> (Result<(), Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return Err(Error::TransactionUnexpectedResponse(error.clone()));
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
 
-    Ok(())
+    (Ok(()), effects)
   }
 }

@@ -28,6 +28,7 @@ use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::types::TypeTag;
 use identity_iota_interaction::AssetMoveCalls;
 use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
 use identity_iota_interaction::MoveType;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -181,7 +182,10 @@ impl<T: MoveType> MoveType for AuthenticatedAsset<T> {
   }
 }
 
-impl<T: MoveType + Send + Sync + DeserializeOwned> AuthenticatedAssetBuilder<T> {
+impl<T> AuthenticatedAssetBuilder<T>
+where
+  T: MoveType + Send + Sync + DeserializeOwned + PartialEq,
+{
   /// Initializes the builder with the asset's content.
   pub fn new(content: T) -> Self {
     Self {
@@ -417,16 +421,25 @@ where
   }
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    mut effects: IotaTransactionBlockEffects,
     _client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return Err(Error::TransactionUnexpectedResponse(error.clone()));
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
 
-    self.asset.inner = self.new_content;
+    if let Some(asset_pos) = effects
+      .mutated()
+      .iter()
+      .enumerate()
+      .find(|(_, obj)| obj.object_id() == self.asset.id())
+      .map(|(i, _)| i)
+    {
+      effects.mutated_mut().swap_remove(asset_pos);
+      self.asset.inner = self.new_content;
+    }
 
-    Ok(())
+    (Ok(()), effects)
   }
 }
 
@@ -470,14 +483,30 @@ where
   }
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    mut effects: IotaTransactionBlockEffects,
     _client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return Err(Error::TransactionUnexpectedResponse(error.clone()));
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
 
-    Ok(())
+    if let Some(asset_pos) = effects
+      .mutated()
+      .iter()
+      .enumerate()
+      .find_map(|(i, obj)| (obj.object_id() == self.asset.id()).then_some(i))
+    {
+      effects.deleted_mut().swap_remove(asset_pos);
+      (Ok(()), effects)
+    } else {
+      (
+        Err(Error::TransactionUnexpectedResponse(format!(
+          "cannot find asset {} in the list of delete objects",
+          self.asset.id()
+        ))),
+        effects,
+      )
+    }
   }
 }
 /// A [`Transaction`] that creates a new [`AuthenticatedAsset`].
@@ -512,7 +541,7 @@ impl<T: MoveType> CreateAsset<T> {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl<T> Transaction for CreateAsset<T>
 where
-  T: MoveType + DeserializeOwned + Send + Sync,
+  T: MoveType + DeserializeOwned + PartialEq + Send + Sync,
 {
   type Output = AuthenticatedAsset<T>;
 
@@ -525,22 +554,52 @@ where
 
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    mut effects: IotaTransactionBlockEffects,
     client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
-    if effects.status().is_err() {
-      return Err(Error::TransactionUnexpectedResponse(
-        "unsuccessfull transaction".to_owned(),
-      ));
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    if let IotaExecutionStatus::Failure { error } = effects.status() {
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
 
-    let asset_id = effects
+    let created_objects = effects
       .created()
-      .first()
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("no objects were created in this transaction".to_owned()))?
-      .object_id();
+      .iter()
+      .enumerate()
+      .filter(|(_, obj)| obj.owner.is_address_owned())
+      .map(|(i, obj)| (i, obj.object_id()));
 
-    AuthenticatedAsset::get_by_id(asset_id, client).await
+    let is_target_asset = |asset: &AuthenticatedAsset<T>| -> bool {
+      asset.inner == self.builder.inner
+        && asset.transferable == self.builder.transferable
+        && asset.mutable == self.builder.mutable
+        && asset.deletable == self.builder.deletable
+    };
+
+    let mut target_asset_pos = None;
+    let mut target_asset = None;
+    for (i, obj_id) in created_objects {
+      match AuthenticatedAsset::get_by_id(obj_id, client).await {
+        Ok(asset) if is_target_asset(&asset) => {
+          target_asset_pos = Some(i);
+          target_asset = Some(asset);
+          break;
+        }
+        _ => continue,
+      }
+    }
+
+    let (Some(pos), Some(asset)) = (target_asset_pos, target_asset) else {
+      return (
+        Err(Error::TransactionUnexpectedResponse(
+          "failed to find the asset created by this operation in transaction's effects".to_owned(),
+        )),
+        effects,
+      );
+    };
+
+    effects.created_mut().swap_remove(pos);
+
+    (Ok(asset), effects)
   }
 }
 
@@ -589,34 +648,49 @@ where
   }
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    mut effects: IotaTransactionBlockEffects,
     client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
-    if effects.status().is_err() {
-      return Err(Error::TransactionUnexpectedResponse(
-        "unsuccessfull transaction".to_owned(),
-      ));
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    if let IotaExecutionStatus::Failure { error } = effects.status() {
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
 
-    let created = effects.created().iter().map(|obj| obj.object_id());
-    for id in created {
-      let object_type = client
-        .read_api()
-        .get_object_with_options(id, IotaObjectDataOptions::new().with_type())
-        .await?
-        .data
-        .context("no data in response")
-        .and_then(|data| Ok(data.object_type()?.to_string()))
-        .map_err(|e| Error::ObjectLookup(e.to_string()))?;
+    let created_objects = effects
+      .created()
+      .iter()
+      .enumerate()
+      .filter(|(_, obj)| obj.owner.is_shared())
+      .map(|(i, obj)| (i, obj.object_id()));
 
-      if object_type == TransferProposal::move_type(client.package_id()).to_string() {
-        return TransferProposal::get_by_id(id, client).await;
+    let is_target_proposal = |proposal: &TransferProposal| -> bool {
+      proposal.asset_id == self.asset.id() && proposal.recipient_address == self.recipient
+    };
+
+    let mut target_proposal_pos = None;
+    let mut target_proposal = None;
+    for (i, obj_id) in created_objects {
+      match TransferProposal::get_by_id(obj_id, client).await {
+        Ok(proposal) if is_target_proposal(&proposal) => {
+          target_proposal_pos = Some(i);
+          target_proposal = Some(proposal);
+          break;
+        }
+        _ => continue,
       }
     }
 
-    Err(Error::TransactionUnexpectedResponse(
-      "no proposal was created in this transaction".to_owned(),
-    ))
+    let (Some(pos), Some(proposal)) = (target_proposal_pos, target_proposal) else {
+      return (
+        Err(Error::TransactionUnexpectedResponse(
+          "failed to find the TransferProposal created by this operation in transaction's effects".to_owned(),
+        )),
+        effects,
+      );
+    };
+
+    effects.created_mut().swap_remove(pos);
+
+    (Ok(proposal), effects)
   }
 }
 
@@ -680,16 +754,32 @@ impl Transaction for AcceptTransfer {
 
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    mut effects: IotaTransactionBlockEffects,
     _client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
-    if effects.status().is_err() {
-      return Err(Error::TransactionUnexpectedResponse(
-        "unsuccessfull transaction".to_owned(),
-      ));
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    if let IotaExecutionStatus::Failure { error } = effects.status() {
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
 
-    Ok(())
+    if let Some(i) = effects
+      .deleted()
+      .iter()
+      .enumerate()
+      // The tx was successful if the recipient cap was consumed.
+      .find_map(|(i, obj)| (obj.object_id == self.proposal.recipient_cap_id).then_some(i))
+    {
+      effects.deleted_mut().swap_remove(i);
+      (Ok(()), effects)
+    } else {
+      (
+        Err(Error::TransactionUnexpectedResponse(format!(
+          "transfer of asset {} through proposal {} wasn't successful",
+          self.proposal.asset_id,
+          self.proposal.id.object_id()
+        ))),
+        effects,
+      )
+    }
   }
 }
 
@@ -748,13 +838,40 @@ impl Transaction for ConcludeTransfer {
 
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    mut effects: IotaTransactionBlockEffects,
     _client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return Err(Error::TransactionUnexpectedResponse(error.clone()));
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
 
-    Ok(())
+    let mut idx_to_remove = effects
+      .deleted()
+      .iter()
+      .enumerate()
+      .filter_map(|(i, obj)| {
+        (obj.object_id == *self.proposal.id.object_id() || obj.object_id == self.proposal.sender_cap_id).then_some(i)
+      })
+      .collect::<Vec<_>>();
+
+    if idx_to_remove.len() < 2 {
+      return (
+        Err(Error::TransactionUnexpectedResponse(format!(
+          "conclusion or canceling of proposal {} wasn't successful",
+          self.proposal.id.object_id()
+        ))),
+        effects,
+      );
+    }
+
+    // Ordering the list of indexis to remove is important to avoid invalidating the positions
+    // of the objects in the list. If we remove them from the higher index to the lower this
+    // shouldn't happen.
+    idx_to_remove.sort_unstable();
+    for i in idx_to_remove.into_iter().rev() {
+      effects.deleted_mut().swap_remove(i);
+    }
+
+    (Ok(()), effects)
   }
 }

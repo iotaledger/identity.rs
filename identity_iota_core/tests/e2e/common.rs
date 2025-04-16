@@ -17,6 +17,7 @@ use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI;
 use identity_iota_interaction::OptionalSync;
 use identity_jose::jwk::Jwk;
 use identity_jose::jws::JwsAlgorithm;
@@ -30,9 +31,12 @@ use identity_storage::MethodDigest;
 use identity_storage::Storage;
 use identity_storage::StorageSigner;
 use identity_verification::VerificationMethod;
+use iota_sdk::rpc_types::IotaObjectDataOptions;
+use iota_sdk::rpc_types::IotaObjectResponse;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::crypto::SignatureScheme;
+use iota_sdk::types::object::Owner;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
@@ -384,13 +388,47 @@ impl Transaction for GetTestCoin {
 
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
-    effects
+    mut effects: IotaTransactionBlockEffects,
+    client: &IdentityClientReadOnly,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    use identity_iota_interaction::IotaClientTrait as _;
+    let created_objects = effects
       .created()
-      .first()
-      .map(|obj_ref| obj_ref.object_id())
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("no coins were created".to_owned()))
+      .iter()
+      .enumerate()
+      .filter(|(_, obj)| matches!(obj.owner, Owner::AddressOwner(address) if address == self.recipient))
+      .map(|(i, obj_ref)| (i, obj_ref.object_id()));
+
+    let is_target_coin = |obj_info: &IotaObjectResponse| obj_info.data.as_ref().unwrap().is_gas_coin();
+
+    let mut i = None;
+    let mut id = None;
+    for (pos, obj) in created_objects {
+      let coin_info = client
+        .read_api()
+        .get_object_with_options(obj, IotaObjectDataOptions::new().with_type())
+        .await;
+      match coin_info {
+        Ok(info) if is_target_coin(&info) => {
+          i = Some(pos);
+          id = Some(obj);
+          break;
+        }
+        _ => continue,
+      }
+    }
+
+    if let (Some(i), Some(id)) = (i, id) {
+      effects.created_mut().swap_remove(i);
+      (Ok(id), effects)
+    } else {
+      (
+        Err(Error::TransactionUnexpectedResponse(format!(
+          "transaction didn't create any coins for address {}",
+          self.recipient
+        ))),
+        effects,
+      )
+    }
   }
 }

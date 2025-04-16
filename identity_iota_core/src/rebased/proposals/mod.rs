@@ -196,9 +196,9 @@ where
 
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    effects: IotaTransactionBlockEffects,
     client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     let Self {
       identity,
       chained_execution,
@@ -206,18 +206,20 @@ where
     } = self;
 
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return Err(Error::TransactionUnexpectedResponse(error.clone()));
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
 
     // Identity has been changed regardless of whether the proposal has been executed
     // or simply created. Refetch it, to sync it with its on-chain state.
-    *identity = get_identity(client, identity.id())
-      .await?
-      .expect("identity exists on-chain");
+    match get_identity(client, identity.id()).await {
+      Ok(maybe_identity) => *identity = maybe_identity.expect("This identity already exists on-chain"),
+      Err(e) => return (Err(e), effects),
+    }
 
     if chained_execution {
       // The proposal has been created and executed right-away. Parse its effects.
-      Proposal::<A>::parse_tx_effects(effects).map(ProposalResult::Executed)
+      let apply_result = Proposal::<A>::parse_tx_effects(&effects).map(ProposalResult::Executed);
+      (apply_result, effects)
     } else {
       // 2 objects are created, one is the Bag's Field and the other is our Proposal. Proposal is not owned by the bag,
       // but the field is.
@@ -229,7 +231,8 @@ where
         .expect("tx was successful")
         .object_id();
 
-      client.get_object_by_id(proposal_id).await.map(ProposalResult::Pending)
+      let apply_result = client.get_object_by_id(proposal_id).await.map(ProposalResult::Pending);
+      (apply_result, effects)
     }
   }
 }
@@ -265,19 +268,21 @@ where
   }
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    effects: IotaTransactionBlockEffects,
     client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     let Self { identity, .. } = self;
 
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return Err(Error::TransactionUnexpectedResponse(error.clone()));
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
-    *identity = get_identity(client, identity.id())
-      .await?
-      .expect("identity exists on-chain");
 
-    Proposal::<A>::parse_tx_effects(effects)
+    match get_identity(client, identity.id()).await {
+      Ok(maybe_identity) => *identity = maybe_identity.expect("This identity already exists on-chain"),
+      Err(e) => return (Err(e), effects),
+    }
+
+    (Proposal::<A>::parse_tx_effects(&effects), effects)
   }
 }
 
@@ -356,20 +361,33 @@ where
   }
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    effects: IotaTransactionBlockEffects,
     _client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return Err(Error::TransactionUnexpectedResponse(error.clone()));
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
 
-    let vp = self
-      .identity
-      .controller_voting_power(self.controller_token)
-      .expect("is identity's controller");
-    *self.proposal.votes_mut() = self.proposal.votes() + vp;
-
-    Ok(())
+    let proposal_was_updated = effects
+      .mutated()
+      .iter()
+      .any(|obj| obj.object_id() == self.proposal.id());
+    if proposal_was_updated {
+      let vp = self
+        .identity
+        .controller_voting_power(self.controller_token)
+        .expect("is identity's controller");
+      *self.proposal.votes_mut() = self.proposal.votes() + vp;
+      (Ok(()), effects)
+    } else {
+      (
+        Err(Error::TransactionUnexpectedResponse(format!(
+          "proposal {} wasn't updated in this transaction",
+          self.proposal.id()
+        ))),
+        effects,
+      )
+    }
   }
 }
 

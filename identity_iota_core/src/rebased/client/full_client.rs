@@ -4,7 +4,7 @@
 use std::ops::Deref;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::migration::get_identity;
+use crate::rebased::migration::CreateIdentity;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::IotaDID;
@@ -17,11 +17,9 @@ use identity_iota_interaction::rpc_types::IotaObjectData;
 use identity_iota_interaction::rpc_types::IotaObjectDataFilter;
 use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::crypto::PublicKey;
-use identity_iota_interaction::types::object::Owner;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::IdentityMoveCalls as _;
 use identity_verification::jwk::Jwk;
@@ -131,7 +129,7 @@ impl<S> IdentityClient<S> {
   /// Returns a new [`IdentityBuilder`] in order to build a new [`crate::rebased::migration::OnChainIdentity`].
   pub fn create_authenticated_asset<T>(&self, content: T) -> AuthenticatedAssetBuilder<T>
   where
-    T: MoveType + DeserializeOwned + Send + Sync,
+    T: MoveType + DeserializeOwned + Send + Sync + PartialEq,
   {
     AuthenticatedAssetBuilder::new(content)
   }
@@ -294,29 +292,17 @@ impl Transaction for PublishDidDocument {
 
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    effects: IotaTransactionBlockEffects,
     client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error> {
-    if effects.status().is_err() {
-      return Err(Error::TransactionUnexpectedResponse(
-        "unsuccessful transaction".to_owned(),
-      ));
-    }
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    let tx = {
+      let builder = IdentityBuilder::new(self.did_document)
+        .threshold(1)
+        .controller(self.controller, 1);
+      CreateIdentity::new(builder)
+    };
 
-    let controller = self.controller;
-    let identity_id = effects
-      .created()
-      .iter()
-      .find(|obj| matches!(obj.owner, Owner::Shared { .. }))
-      .ok_or_else(|| {
-        Error::TransactionUnexpectedResponse(format!("no object was created for controller {controller}"))
-      })?
-      .object_id();
-    let mut identity = get_identity(client, identity_id)
-      .await?
-      .expect("Identity was created in this transaction");
-    let did_document = std::mem::replace(identity.did_document_mut(), IotaDocument::new(client.network()));
-
-    Ok(did_document)
+    let (application_result, remaining_effects) = tx.apply(effects, client).await;
+    (application_result.map(IotaDocument::from), remaining_effects)
   }
 }

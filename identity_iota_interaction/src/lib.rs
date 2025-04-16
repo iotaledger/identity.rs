@@ -12,6 +12,7 @@ pub mod keytool_signer;
 mod move_call_traits;
 mod move_type;
 mod transaction_builder_trait;
+mod effects_mut_api;
 
 pub use iota_client_trait::*;
 pub use iota_verifiable_credential::*;
@@ -20,6 +21,7 @@ pub use keytool_signer::*;
 pub use move_call_traits::*;
 pub use move_type::*;
 pub use transaction_builder_trait::*;
+pub use effects_mut_api::*;
 
 #[cfg(target_arch = "wasm32")]
 mod sdk_types;

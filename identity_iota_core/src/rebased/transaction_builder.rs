@@ -50,11 +50,17 @@ pub trait Transaction {
   ) -> Result<ProgrammableTransaction, Error>;
 
   /// Parses a transaction result in order to compute its effects.
+  /// ## Notes
+  /// [Transaction::apply] implementations should make sure to properly consume
+  /// the parts of `effects` that are needed for the transaction - e.g., removing
+  /// the ID of the object the transaction created from the `effects`'s list of
+  /// created objects. 
+  /// This is particularly important to enable the batching of transactions.
   async fn apply(
     self,
-    tx_results: &IotaTransactionBlockEffects,
+    effects: IotaTransactionBlockEffects,
     client: &IdentityClientReadOnly,
-  ) -> Result<Self::Output, Error>;
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects);
 }
 
 #[derive(Debug, Default, Clone)]
@@ -337,7 +343,8 @@ where
     // Get the transaction's effects, making sure they are successful.
     let tx_effects = dyn_tx_block
       .effects()
-      .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects in response".to_owned()))?;
+      .ok_or_else(|| Error::TransactionUnexpectedResponse("missing effects in response".to_owned()))?
+      .clone();
     let tx_status = tx_effects.status();
     if tx_status.is_err() {
       return Err(Error::TransactionUnexpectedResponse(format!(
@@ -346,7 +353,7 @@ where
       )));
     }
 
-    let application_result = tx.apply(tx_effects, client).await;
+    let (application_result , _remaining_effects) = tx.apply(tx_effects, client).await;
     let response = {
       cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
