@@ -37,5 +37,5 @@ jobs:
           dry-run: ${{ github.event.inputs.dry-run }}
           input-artifact-name: identity-wasm-bindings-build
           npm-token: ${{ secrets.NPM_TOKEN }}
-          working-directory: identity_wasm
+          working-directory: ./bindings/wasm/
           tag: ${{ github.event.inputs.tag }}
