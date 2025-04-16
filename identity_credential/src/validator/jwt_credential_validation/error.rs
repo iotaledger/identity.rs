@@ -27,7 +27,7 @@ pub enum JwtValidationError {
     source: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
     /// A message providing more context
     message: &'static str,
-    /// Specifies whether the error ocurred when trying to verify the signature of a presentation holder or
+    /// Specifies whether the error occurred when trying to verify the signature of a presentation holder or
     /// of a credential issuer.
     signer_ctx: SignerContext,
   },

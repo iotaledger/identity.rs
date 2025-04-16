@@ -49,7 +49,7 @@ impl WasmRevocationTimeframeStatus {
     self.0.end_validity_timeframe().into()
   }
 
-  /// Return the URL fo the `RevocationBitmapStatus`.
+  /// Return the URL for the `RevocationBitmapStatus`.
   #[wasm_bindgen]
   pub fn id(&self) -> String {
     self.0.id().to_string()

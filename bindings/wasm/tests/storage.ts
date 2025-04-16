@@ -119,7 +119,7 @@ describe("#JwkStorageDocument", function() {
             token.toJSON(),
             tokenFromCustomVerification.toJSON(),
         );
-        // Check that customVerifer.verify was indeed called
+        // Check that customVerifier.verify was indeed called
         assert.deepStrictEqual(customVerifier.verifications(), 1);
 
         // Check that issuing a credential as a JWT works
@@ -170,7 +170,7 @@ describe("#JwkStorageDocument", function() {
                 FailFast.AllErrors,
             )
             .credential();
-        // Check that customVerifer.verify was indeed called
+        // Check that customVerifier.verify was indeed called
         assert.deepStrictEqual(customVerifier.verifications(), 2);
         assert.deepStrictEqual(
             credentialRetrievedCustom.toJSON(),
@@ -281,7 +281,7 @@ describe("#JwkStorageDocument", function() {
                 FailFast.AllErrors,
             )
             .credential();
-        // Check that customVerifer.verify was indeed called
+        // Check that customVerifier.verify was indeed called
         assert.deepStrictEqual(customVerifier.verifications(), 2);
         assert.deepStrictEqual(
             credentialRetrievedCustom.toJSON(),
