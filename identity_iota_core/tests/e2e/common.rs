@@ -399,7 +399,8 @@ impl Transaction for GetTestCoin {
       .filter(|(_, obj)| matches!(obj.owner, Owner::AddressOwner(address) if address == self.recipient))
       .map(|(i, obj_ref)| (i, obj_ref.object_id()));
 
-    let is_target_coin = |obj_info: &IotaObjectResponse| obj_info.data.as_ref().unwrap().is_gas_coin();
+    let is_target_coin =
+      |obj_info: &IotaObjectResponse| obj_info.data.as_ref().unwrap().type_.as_ref().unwrap().is_coin();
 
     let mut i = None;
     let mut id = None;

@@ -491,10 +491,10 @@ where
     }
 
     if let Some(asset_pos) = effects
-      .mutated()
+      .deleted()
       .iter()
       .enumerate()
-      .find_map(|(i, obj)| (obj.object_id() == self.asset.id()).then_some(i))
+      .find_map(|(i, obj)| (obj.object_id == self.asset.id()).then_some(i))
     {
       effects.deleted_mut().swap_remove(asset_pos);
       (Ok(()), effects)

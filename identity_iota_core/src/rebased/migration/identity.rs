@@ -589,7 +589,7 @@ impl Transaction for CreateIdentity {
   }
 
   async fn apply(
-    self,
+    mut self,
     mut effects: IotaTransactionBlockEffects,
     client: &IdentityClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
@@ -604,8 +604,13 @@ impl Transaction for CreateIdentity {
       .filter(|(_, elem)| matches!(elem.owner, Owner::Shared { .. }))
       .map(|(i, obj)| (i, obj.object_id()));
 
-    let is_target_identity = |identity: &OnChainIdentity| -> bool {
-      identity.did_document().core_document() == self.builder.did_doc.core_document()
+    let mut is_target_identity = |identity: &OnChainIdentity| -> bool {
+      let did_doc = identity.did_document().core_document();
+      let did = did_doc.id().clone();
+
+      *self.builder.did_doc.core_document_mut().id_mut_unchecked() = did;
+      // Replace the placeholder did with the did coming from the identity we are checking.
+      did_doc == self.builder.did_doc.core_document()
         && self.builder.threshold.unwrap_or(1) == identity.threshold()
     };
 
