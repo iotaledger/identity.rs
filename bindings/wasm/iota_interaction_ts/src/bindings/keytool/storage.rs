@@ -67,7 +67,7 @@ impl WasmKeytoolStorage {
   }
 
   /// Creates a new key of type `key_scheme`.
-  /// Returns the tuple ({@link PublicKey}, alias).
+  /// Returns the tuple ([`PublicKey`](https://docs.iota.org/ts-sdk/api/cryptography/classes/PublicKey), alias).
   #[wasm_bindgen(
     js_name = generateKey,
     unchecked_return_type = "[PublicKey, string]",
@@ -117,7 +117,7 @@ impl WasmKeytoolStorage {
     self.0.update_alias(old_alias, new_alias).wasm_result()
   }
 
-  /// Returns the {@link PublicKey} for the given address together with its alias.
+  /// Returns the [`PublicKey`](https://docs.iota.org/ts-sdk/api/cryptography/classes/PublicKey) for the given address together with its alias.
   #[wasm_bindgen(
     js_name = getKey,
     unchecked_return_type = "[PublicKey, string]",
@@ -133,7 +133,7 @@ impl WasmKeytoolStorage {
       .wasm_result()
   }
 
-  /// Returns the {@link PublicKey} that has the given alias.
+  /// Returns the [`PublicKey`](https://docs.iota.org/ts-sdk/api/cryptography/classes/PublicKey) that has the given alias.
   #[wasm_bindgen(js_name = getKeyByAlias)]
   pub fn get_key_by_alias(&self, alias: &str) -> Result<WasmPublicKey> {
     self
