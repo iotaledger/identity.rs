@@ -72,7 +72,7 @@ impl<T> OrderedSet<T> {
     self.0.first()
   }
 
-  /// Returns a mutable referece to the first element in the set, or `None` if
+  /// Returns a mutable reference to the first element in the set, or `None` if
   /// the set is empty.
   ///
   /// # Warning

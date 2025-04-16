@@ -167,7 +167,7 @@ impl WasmStatusList2021Credential {
   }
 }
 
-/// Builder type to construct valid {@link StatusList2021Credential} istances.
+/// Builder type to construct valid {@link StatusList2021Credential} instances.
 #[wasm_bindgen(js_name = StatusList2021CredentialBuilder)]
 pub struct WasmStatusList2021CredentialBuilder(StatusList2021CredentialBuilder);
 
