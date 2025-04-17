@@ -48,7 +48,7 @@ pub enum JwtValidationError {
   IssuanceDate,
   /// Indicates that the credential's (resp. presentation's) signature could not be verified using
   /// the issuer's (resp. holder's) DID Document.
-  #[error("could not verify the {signer_ctx}'s signature")]
+  #[error("could not verify the {signer_ctx}'s signature; {source}")]
   #[non_exhaustive]
   Signature {
     /// Signature verification error.
