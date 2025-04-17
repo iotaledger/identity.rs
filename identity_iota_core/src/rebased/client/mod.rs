@@ -94,22 +94,7 @@ pub trait CoreClientReadOnly {
       .context("failed to get object ref by id")
   }
 
-  /// Retrieves the network ID of the client.
-  ///
-  /// # Returns
-  ///
-  /// Returns the network ID of the client.
-  async fn network_id(&self) -> anyhow::Result<NetworkName> {
-    Ok(
-      self
-        .client_adapter()
-        .read_api()
-        .get_chain_identifier()
-        .await?
-        .try_into()
-        .expect("chain ID is a valid network name"),
-    )
-  }
+
 }
 
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
