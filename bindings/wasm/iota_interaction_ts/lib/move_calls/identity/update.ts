@@ -4,7 +4,7 @@
 import { bcs } from "@iota/iota-sdk/bcs";
 import { SharedObjectRef } from "@iota/iota-sdk/dist/cjs/bcs/types";
 import { ObjectRef, Transaction } from "@iota/iota-sdk/transactions";
-import { getClockRef, getControllerDelegation, insertPlaceholders, putBackDelegationToken } from "../utils";
+import { getClockRef, getControllerDelegation, putBackDelegationToken } from "../utils";
 
 export function proposeUpdate(
     identity: SharedObjectRef,
@@ -28,9 +28,7 @@ export function proposeUpdate(
 
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
 
-    insertPlaceholders(tx);
-
-    return tx.build();
+    return tx.build({ onlyTransactionKind: true });
 }
 
 export function executeUpdate(
@@ -53,5 +51,5 @@ export function executeUpdate(
 
     putBackDelegationToken(tx, cap, delegationToken, borrow, packageId);
 
-    return tx.build();
+    return tx.build({ onlyTransactionKind: true });
 }

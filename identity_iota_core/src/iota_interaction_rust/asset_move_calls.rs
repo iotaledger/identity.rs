@@ -48,14 +48,14 @@ impl AssetMoveCalls for AssetMoveCallsRustSdk {
   type Error = Error;
 
   fn new_asset<T: Serialize + MoveType>(
-    inner: T,
+    inner: &T,
     mutable: bool,
     transferable: bool,
     deletable: bool,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error> {
     let mut ptb = ProgrammableTransactionBuilder::new();
-    let inner = try_to_argument(&inner, &mut ptb, package)?;
+    let inner = try_to_argument(inner, &mut ptb, package)?;
     let mutable = ptb.pure(mutable).map_err(|e| Error::InvalidArgument(e.to_string()))?;
     let transferable = ptb
       .pure(transferable)
@@ -177,7 +177,7 @@ impl AssetMoveCalls for AssetMoveCallsRustSdk {
     )
   }
 
-  fn update<T>(asset: ObjectRef, new_content: T, package: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error>
+  fn update<T>(asset: ObjectRef, new_content: &T, package: ObjectID) -> Result<ProgrammableTransactionBcs, Self::Error>
   where
     T: MoveType + Serialize,
   {

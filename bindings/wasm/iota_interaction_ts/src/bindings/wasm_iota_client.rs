@@ -24,12 +24,12 @@ use identity_iota_interaction::rpc_types::ObjectsPage;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::SequenceNumber;
+use identity_iota_interaction::types::crypto::Signature;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::dynamic_field::DynamicFieldName;
 use identity_iota_interaction::types::event::EventID;
 use identity_iota_interaction::types::quorum_driver_types::ExecuteTransactionRequestType;
-use identity_iota_interaction::SignatureBcs;
-use identity_iota_interaction::TransactionDataBcs;
+use identity_iota_interaction::types::transaction::TransactionData;
 use js_sys::Promise;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
@@ -38,6 +38,8 @@ use wasm_bindgen_futures::JsFuture;
 use super::wasm_types::PromiseIotaTransactionBlockResponse;
 use super::wasm_types::WasmExecuteTransactionBlockParams;
 use super::wasm_types::WasmIotaTransactionBlockResponseWrapper;
+use super::PromiseDryRunTransactionBlockResponse;
+use super::WasmDryRunTransactionBlockParams;
 use super::WasmWaitForTransactionParams;
 
 use crate::bindings::PromiseIotaObjectResponse;
@@ -79,6 +81,12 @@ extern "C" {
 
   #[wasm_bindgen(method, js_name = getChainIdentifier)]
   pub fn get_chain_identifier(this: &WasmIotaClient) -> PromiseString;
+
+  #[wasm_bindgen(method, js_name = dryRunTransactionBlock)]
+  pub fn dry_run_transaction_block(
+    this: &WasmIotaClient,
+    params: &WasmDryRunTransactionBlockParams,
+  ) -> PromiseDryRunTransactionBlockResponse;
 
   #[wasm_bindgen(method, js_name = executeTransactionBlock)]
   pub fn execute_transaction_block(
@@ -141,24 +149,22 @@ impl ManagedWasmIotaClient {
 
   pub async fn execute_transaction_block(
     &self,
-    tx_data_bcs: &TransactionDataBcs,
-    signatures: &[SignatureBcs],
+    tx_data: TransactionData,
+    signatures: Vec<Signature>,
     options: Option<IotaTransactionBlockResponseOptions>,
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> IotaRpcResult<WasmIotaTransactionBlockResponseWrapper> {
-    let ex_tx_params: WasmExecuteTransactionBlockParams = serde_wasm_bindgen::to_value(
-      &ExecuteTransactionBlockParams::new(tx_data_bcs, signatures, options, request_type),
-    )
-    .map_err(|e| {
-      console_log!(
-        "Error executing serde_wasm_bindgen::to_value(ExecuteTransactionBlockParams): {:?}",
-        e
-      );
-      IotaRpcError::FfiError(format!("{:?}", e))
-    })?
-    .into();
+    let params = ExecuteTransactionBlockParams::new(tx_data, signatures, options, request_type);
+    let wasm_params = params
+      .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+      .map_err(|e| {
+        IotaRpcError::FfiError(format!(
+          "failed to convert ExecuteTransactionBlockParams to JS value: {e}"
+        ))
+      })?
+      .into();
 
-    let promise: Promise = Promise::resolve(&WasmIotaClient::execute_transaction_block(&self.0, &ex_tx_params));
+    let promise: Promise = Promise::resolve(&WasmIotaClient::execute_transaction_block(&self.0, &wasm_params));
     let result: JsValue = JsFuture::from(promise).await.map_err(|e| {
       console_log!("Error executing JsFuture::from(promise): {:?}", e);
       IotaRpcError::FfiError(format!("{:?}", e))
@@ -288,8 +294,8 @@ impl ManagedWasmIotaClient {
       IotaRpcError::FfiError(format!("{:?}", e))
     })?;
 
-    #[allow(deprecated)] // will be refactored
-    Ok(result.into_serde()?)
+    serde_wasm_bindgen::from_value(result)
+      .map_err(|e| IotaRpcError::FfiError(format!("failed to deserialize gas price from JS value: {e}")))
   }
 
   pub async fn try_get_parsed_past_object(

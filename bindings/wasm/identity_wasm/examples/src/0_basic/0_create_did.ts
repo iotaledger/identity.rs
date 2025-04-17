@@ -24,7 +24,7 @@ export async function createIdentity(): Promise<void> {
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
         .finish()
-        .execute(identityClient);
+        .buildAndExecute(identityClient);
     did = identity.didDocument().id();
 
     // check if we can resolve it via client

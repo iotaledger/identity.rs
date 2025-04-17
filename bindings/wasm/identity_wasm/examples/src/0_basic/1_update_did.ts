@@ -25,7 +25,7 @@ export async function updateIdentity() {
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
         .finish()
-        .execute(identityClient);
+        .buildAndExecute(identityClient);
     const did = identity.didDocument().id();
 
     // Resolve the latest state of the document.
@@ -56,10 +56,12 @@ export async function updateIdentity() {
     let originalMethod = resolved.resolveMethod(vmFragment1) as VerificationMethod;
     await resolved.purgeMethod(storage, originalMethod?.id());
 
+    let controllerToken = await identity.getControllerToken(identityClient);
+
     let maybePendingProposal = await identity
-        .updateDidDocument(resolved.clone())
+        .updateDidDocument(resolved.clone(), controllerToken!)
         .withGasBudget(TEST_GAS_BUDGET)
-        .execute(identityClient)
+        .buildAndExecute(identityClient)
         .then(result => result.output);
 
     console.assert(maybePendingProposal == null, "the proposal should have been executed right away!");

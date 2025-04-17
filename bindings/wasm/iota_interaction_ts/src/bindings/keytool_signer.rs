@@ -15,6 +15,7 @@ use wasm_bindgen::JsError;
 
 use super::WasmIotaSignature;
 use super::WasmPublicKey;
+use super::WasmTransactionData;
 
 #[wasm_bindgen(module = buffer)]
 extern "C" {
@@ -74,7 +75,8 @@ impl WasmKeytoolSigner {
   }
 
   #[wasm_bindgen]
-  pub async fn sign(&self, data: Vec<u8>) -> Result<WasmIotaSignature> {
+  pub async fn sign(&self, data: &WasmTransactionData) -> Result<WasmIotaSignature> {
+    let data = data.clone().try_into().wasm_result()?;
     self
       .0
       .sign(&data)

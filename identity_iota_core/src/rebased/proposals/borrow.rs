@@ -4,33 +4,31 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use crate::iota_interaction_adapter::AdapterError;
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdapter;
-use crate::iota_interaction_adapter::NativeTransactionBlockResponse;
+use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::migration::ControllerToken;
+use crate::rebased::transaction_builder::Transaction;
+use crate::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::IotaKeySignature;
-use identity_iota_interaction::IotaTransactionBlockResponseT;
+use serde::Deserialize;
+use tokio::sync::Mutex;
 
-use crate::rebased::client::IdentityClient;
 use crate::rebased::migration::Proposal;
 use crate::rebased::transaction::ProtoTransaction;
-use crate::rebased::transaction::TransactionInternal;
-use crate::rebased::transaction::TransactionOutputInternal;
 use crate::rebased::Error;
 use async_trait::async_trait;
+use identity_iota_interaction::rpc_types::IotaExecutionStatus;
 use identity_iota_interaction::rpc_types::IotaObjectData;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::transaction::Argument;
+use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::types::TypeTag;
 use identity_iota_interaction::MoveType;
-use identity_iota_interaction::OptionalSync;
-use secret_storage::Signer;
-use serde::Deserialize;
 use serde::Serialize;
 
-use super::CreateProposalTx;
-use super::ExecuteProposalTx;
+use super::CreateProposal;
 use super::OnChainIdentity;
 use super::ProposalBuilder;
 use super::ProposalT;
@@ -62,15 +60,15 @@ cfg_if::cfg_if! {
 #[derive(Deserialize, Serialize)]
 pub struct BorrowAction<F = BorrowIntentFn> {
   objects: Vec<ObjectID>,
-  #[serde(skip, default = "Option::default")]
-  intent_fn: Option<F>,
+  #[serde(skip, default = "Mutex::default")]
+  intent_fn: Mutex<Option<F>>,
 }
 
 impl<F> Default for BorrowAction<F> {
   fn default() -> Self {
-    Self {
+    BorrowAction {
       objects: vec![],
-      intent_fn: None,
+      intent_fn: Mutex::new(None),
     }
   }
 }
@@ -103,9 +101,24 @@ impl<F> BorrowAction<F> {
   {
     objects.into_iter().for_each(|obj_id| self.borrow_object(obj_id));
   }
+
+  async fn take_intent(&self) -> Option<F> {
+    self.intent_fn.lock().await.take()
+  }
+
+  fn plug_intent<I>(self, intent_fn: I) -> BorrowActionWithIntent<I>
+  where
+    I: BorrowIntentFnT,
+  {
+    let action = BorrowAction {
+      objects: self.objects,
+      intent_fn: Mutex::new(Some(intent_fn)),
+    };
+    BorrowActionWithIntent(action)
+  }
 }
 
-impl<'i, F> ProposalBuilder<'i, BorrowAction<F>> {
+impl<'i, 'c, F> ProposalBuilder<'i, 'c, BorrowAction<F>> {
   /// Adds an object to the list of objects that will be borrowed when executing this action.
   pub fn borrow(mut self, object_id: ObjectID) -> Self {
     self.action.borrow_object(object_id);
@@ -121,53 +134,66 @@ impl<'i, F> ProposalBuilder<'i, BorrowAction<F>> {
 
   /// Specifies how to use the borrowed assets. This is only useful if the sender of this
   /// transaction has enough voting power to execute this proposal right-away.
-  pub fn with_intent<F1>(self, intent_fn: F1) -> ProposalBuilder<'i, BorrowAction<F1>>
+  pub fn with_intent<F1>(self, intent_fn: F1) -> ProposalBuilder<'i, 'c, BorrowAction<F1>>
   where
     F1: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>),
   {
     let ProposalBuilder {
       identity,
       expiration,
+      controller_token,
       action: BorrowAction { objects, .. },
     } = self;
-    let intent_fn = Some(intent_fn);
+    let intent_fn = Mutex::new(Some(intent_fn));
     ProposalBuilder {
       identity,
       expiration,
+      controller_token,
       action: BorrowAction { objects, intent_fn },
     }
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
 impl<F> ProposalT for Proposal<BorrowAction<F>>
 where
-  F: BorrowIntentFnT + Send,
+  F: BorrowIntentFnT + Send + Sync,
 {
   type Action = BorrowAction<F>;
   type Output = ();
-  type Response = IotaTransactionBlockResponseAdapter;
 
-  async fn create<'i, S>(
+  async fn create<'i>(
     action: Self::Action,
     expiration: Option<u64>,
     identity: &'i mut OnChainIdentity,
-    client: &IdentityClient<S>,
-  ) -> Result<CreateProposalTx<'i, Self::Action>, Error>
-  where
-    S: Signer<IotaKeySignature> + OptionalSync,
-  {
+    controller_token: &ControllerToken,
+    client: &IdentityClientReadOnly,
+  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error> {
+    if identity.id() != controller_token.controller_of() {
+      return Err(Error::Identity(format!(
+        "token {} doesn't grant access to identity {}",
+        controller_token.id(),
+        identity.id()
+      )));
+    }
+
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = identity.get_controller_cap(client).await?;
+    let controller_cap_ref = client
+      .get_object_ref_by_id(controller_token.id())
+      .await?
+      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
+      .reference
+      .to_object_ref();
     let can_execute = identity
       .controller_voting_power(controller_cap_ref.0)
       .expect("is a controller of identity")
       >= identity.threshold();
-    let chained_execution = can_execute && action.intent_fn.is_some();
+    let maybe_intent_fn = action.intent_fn.into_inner();
+    let chained_execution = can_execute && maybe_intent_fn.is_some();
     let tx = if chained_execution {
       // Construct a list of `(ObjectRef, TypeTag)` from the list of objects to send.
       let object_data_list = {
@@ -184,7 +210,7 @@ where
         identity_ref,
         controller_cap_ref,
         object_data_list,
-        action.intent_fn.unwrap(),
+        maybe_intent_fn.unwrap(),
         expiration,
         client.package_id(),
       )
@@ -199,38 +225,44 @@ where
     }
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
-    Ok(CreateProposalTx {
+    Ok(TransactionBuilder::new(CreateProposal {
       identity,
-      tx,
+      ptb: bcs::from_bytes(&tx)?,
       chained_execution,
       _action: PhantomData,
-    })
+    }))
   }
 
-  async fn into_tx<'i, S>(
+  async fn into_tx<'i>(
     self,
     identity: &'i mut OnChainIdentity,
-    _: &IdentityClient<S>,
-  ) -> Result<UserDrivenTx<'i, Self::Action>, Error>
-  where
-    S: Signer<IotaKeySignature> + OptionalSync,
-  {
+    controller_token: &ControllerToken,
+    _: &IdentityClientReadOnly,
+  ) -> Result<UserDrivenTx<'i, Self::Action>, Error> {
+    if identity.id() != controller_token.controller_of() {
+      return Err(Error::Identity(format!(
+        "token {} doesn't grant access to identity {}",
+        controller_token.id(),
+        identity.id()
+      )));
+    }
+
     let proposal_id = self.id();
     let borrow_action = self.into_action();
 
-    Ok(UserDrivenTx {
+    Ok(UserDrivenTx::new(
       identity,
+      controller_token.id(),
+      borrow_action,
       proposal_id,
-      action: borrow_action,
-    })
+    ))
   }
 
-  fn parse_tx_effects_internal(
-    _tx_response: &dyn IotaTransactionBlockResponseT<
-      Error = AdapterError,
-      NativeResponse = NativeTransactionBlockResponse,
-    >,
-  ) -> Result<Self::Output, Error> {
+  fn parse_tx_effects(effects: &IotaTransactionBlockEffects) -> Result<Self::Output, Error> {
+    if let IotaExecutionStatus::Failure { error } = effects.status() {
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
+    }
+
     Ok(())
   }
 }
@@ -241,60 +273,52 @@ impl<'i, F> UserDrivenTx<'i, BorrowAction<F>> {
   where
     F1: BorrowIntentFnT,
   {
-    let UserDrivenTx {
-      identity,
-      action: BorrowAction { objects, .. },
-      proposal_id,
-    } = self;
-    let intent_fn = Some(intent_fn);
-    UserDrivenTx {
-      identity,
-      proposal_id,
-      action: BorrowActionWithIntent(BorrowAction { objects, intent_fn }),
-    }
+    UserDrivenTx::new(
+      self.identity,
+      self.controller_token,
+      self.action.plug_intent(intent_fn),
+      self.proposal_id,
+    )
   }
 }
 
 impl<'i, F> ProtoTransaction for UserDrivenTx<'i, BorrowAction<F>> {
   type Input = BorrowIntentFn;
-  type Tx = UserDrivenTx<'i, BorrowActionWithIntent<BorrowIntentFn>>;
+  type Tx = TransactionBuilder<UserDrivenTx<'i, BorrowActionWithIntent<BorrowIntentFn>>>;
 
   fn with(self, input: Self::Input) -> Self::Tx {
-    self.with_intent(input)
+    TransactionBuilder::new(self.with_intent(input))
   }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-impl<F> TransactionInternal for UserDrivenTx<'_, BorrowActionWithIntent<F>>
+impl<F> UserDrivenTx<'_, BorrowActionWithIntent<F>>
 where
-  F: BorrowIntentFnT + Send,
+  F: BorrowIntentFnT,
 {
-  type Output = ();
-  async fn execute_with_opt_gas_internal<S>(
-    self,
-    gas_budget: Option<u64>,
-    client: &IdentityClient<S>,
-  ) -> Result<TransactionOutputInternal<Self::Output>, Error>
-  where
-    S: Signer<IotaKeySignature> + OptionalSync,
-  {
+  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let Self {
       identity,
       action: borrow_action,
       proposal_id,
+      controller_token,
+      ..
     } = self;
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = identity.get_controller_cap(client).await?;
+    let controller_cap_ref = client
+      .get_object_ref_by_id(*controller_token)
+      .await?
+      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token)))?
+      .reference
+      .to_object_ref();
 
     // Construct a list of `(ObjectRef, TypeTag)` from the list of objects to send.
     let object_data_list = {
       let mut object_data_list = vec![];
-      for obj_id in borrow_action.0.objects {
-        let object_data = super::obj_data_for_id(client, obj_id)
+      for obj_id in borrow_action.0.objects.iter() {
+        let object_data = super::obj_data_for_id(client, *obj_id)
           .await
           .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
         object_data_list.push(object_data);
@@ -305,22 +329,43 @@ where
     let tx = IdentityMoveCallsAdapter::execute_borrow(
       identity_ref,
       controller_cap_ref,
-      proposal_id,
+      *proposal_id,
       object_data_list,
       borrow_action
         .0
-        .intent_fn
+        .take_intent()
+        .await
         .expect("BorrowActionWithIntent makes sure intent_fn is there"),
       client.package_id(),
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
-    ExecuteProposalTx {
-      identity,
-      tx,
-      _action: PhantomData::<BorrowAction>,
+    Ok(bcs::from_bytes(&tx)?)
+  }
+}
+
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync", async_trait)]
+impl<F> Transaction for UserDrivenTx<'_, BorrowActionWithIntent<F>>
+where
+  F: BorrowIntentFnT + Send,
+{
+  type Output = ();
+  async fn build_programmable_transaction(
+    &self,
+    client: &IdentityClientReadOnly,
+  ) -> Result<ProgrammableTransaction, Error> {
+    self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
+  }
+  async fn apply(
+    self,
+    effects: IotaTransactionBlockEffects,
+    _client: &IdentityClientReadOnly,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    if let IotaExecutionStatus::Failure { error } = effects.status() {
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
-    .execute_with_opt_gas_internal(gas_budget, client)
-    .await
+
+    (Ok(()), effects)
   }
 }

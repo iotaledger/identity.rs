@@ -47,6 +47,20 @@ pub enum Error {
   /// the expected result.
   #[error("transaction returned an unexpected response; {0}")]
   TransactionUnexpectedResponse(String),
+  /// A transaction was successfully executed on the ledger, but its off-chain logic couldn't be applied.
+  #[error("failed to parse transaction effects: {source}")]
+  TransactionOffChainApplicationFailure {
+    /// The actual error coming from `apply`.
+    #[source]
+    source: Box<Self>,
+    /// The raw RPC response, as received by the client.
+    // Dev-comment: Neeeded to box this to avoid clippy complaining about the size of this variant.
+    #[cfg(not(target_arch = "wasm32"))]
+    response: Box<identity_iota_interaction::rpc_types::IotaTransactionBlockResponse>,
+    /// JSON-encoded string representation for the actual execution's RPC response.
+    #[cfg(target_arch = "wasm32")]
+    response: String,
+  },
   /// Config is invalid.
   #[error("invalid config: {0}")]
   InvalidConfig(String),

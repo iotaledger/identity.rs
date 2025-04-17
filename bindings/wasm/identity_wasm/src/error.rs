@@ -186,6 +186,15 @@ impl From<anyhow::Error> for WasmError<'_> {
   }
 }
 
+impl From<bcs::Error> for WasmError<'_> {
+  fn from(value: bcs::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("BCS Error"),
+      message: Cow::Owned(value.to_string()),
+    }
+  }
+}
+
 impl From<iota_sdk::types::block::Error> for WasmError<'_> {
   fn from(error: iota_sdk::types::block::Error) -> Self {
     Self {

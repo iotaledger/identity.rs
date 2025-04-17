@@ -4,6 +4,7 @@
 
 use std::fmt::{Display, Formatter};
 
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -13,7 +14,7 @@ use super::error::{IotaResult, IotaError};
 pub const OBJECT_START_VERSION: SequenceNumber = SequenceNumber::from_u64(1);
 
 #[derive(
-Eq, PartialEq, Debug, Clone, Copy, Deserialize, Serialize, Hash, Ord, PartialOrd,)]
+Eq, PartialEq, Debug, Clone, Copy, Deserialize, Serialize, Hash, Ord, PartialOrd, JsonSchema)]
 pub enum Owner {
     /// Object is exclusively owned by a single address, and is mutable.
     AddressOwner(IotaAddress),

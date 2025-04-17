@@ -16,7 +16,6 @@ use identity_iota::verification::MethodScope;
 use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::client::IdentityClientReadOnly;
 use identity_iota::iota::rebased::client::IotaKeySignature;
-use identity_iota::iota::rebased::transaction::Transaction;
 use identity_iota::iota::rebased::utils::request_funds;
 use identity_storage::JwkStorage;
 use identity_storage::KeyIdStorage;
@@ -59,7 +58,8 @@ where
 
   let document = identity_client
     .publish_did_document(unpublished)
-    .execute_with_gas(TEST_GAS_BUDGET, identity_client)
+    .with_gas_budget(TEST_GAS_BUDGET)
+    .build_and_execute(identity_client)
     .await?
     .output;
 

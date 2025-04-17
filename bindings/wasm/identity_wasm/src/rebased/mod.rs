@@ -3,10 +3,12 @@
 
 mod identity;
 mod proposals;
+mod transaction_builder;
 mod wasm_identity_client;
 mod wasm_identity_client_read_only;
 
 pub use identity::*;
+pub use transaction_builder::*;
 pub use wasm_identity_client::*;
 pub use wasm_identity_client_read_only::*;
 

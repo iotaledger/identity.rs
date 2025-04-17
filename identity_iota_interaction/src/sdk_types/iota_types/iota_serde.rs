@@ -24,6 +24,7 @@ use serde::{
     Deserialize, Serialize,
 };
 use serde_with::{serde_as, DeserializeAs, DisplayFromStr, SerializeAs};
+use schemars::JsonSchema;
 
 use Result;
 
@@ -275,15 +276,17 @@ impl<'de> DeserializeAs<'de, TypeTag> for IotaTypeTag {
     }
 }
 
+
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy, JsonSchema)]
 pub struct BigInt<T>(
+    #[schemars(with = "String")]
     #[serde_as(as = "DisplayFromStr")]
     T,
 )
-    where
-        T: Display + FromStr,
-        <T as FromStr>::Err: Display;
+where
+    T: Display + FromStr,
+    <T as FromStr>::Err: Display;
 
 impl<T> BigInt<T>
     where
@@ -354,8 +357,8 @@ impl<T> Display for BigInt<T>
 }
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy)]
-pub struct SequenceNumber(u64);
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy, JsonSchema)]
+pub struct SequenceNumber(#[schemars(with = "BigInt<u64>")] u64);
 
 impl SerializeAs<super::base_types::SequenceNumber> for SequenceNumber {
     fn serialize_as<S>(

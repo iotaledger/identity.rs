@@ -45,18 +45,31 @@ extern "C" {
   pub(crate) type WasmTxArgumentMap;
 }
 
+impl From<(IotaAddress, u64)> for WasmControllerCouple {
+  fn from((address, vp): (IotaAddress, u64)) -> Self {
+    let address = JsValue::from_str(&address.to_string());
+    let vp = JsValue::bigint_from_str(&vp.to_string());
+
+    let arr = js_sys::Array::new();
+    arr.push(&address);
+    arr.push(&vp);
+
+    arr.unchecked_into()
+  }
+}
+
 #[wasm_bindgen(module = "@iota/iota-interaction-ts/move_calls/identity")]
 extern "C" {
   #[wasm_bindgen(js_name = "create", catch)]
   fn identity_new(did: Option<&[u8]>, package: &str) -> Result<PromiseUint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "newWithControllers", catch)]
-  async fn identity_new_with_controllers(
+  fn identity_new_with_controllers(
     did: Option<&[u8]>,
     controllers: Vec<WasmControllerCouple>,
     threshold: u64,
     package: &str,
-  ) -> Result<Uint8Array, JsValue>;
+  ) -> Result<PromiseUint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "approve", catch)]
   async fn approve_proposal(
@@ -127,12 +140,12 @@ extern "C" {
   ) -> Result<PromiseUint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "executeUpdate", catch)]
-  async fn execute_update(
+  fn execute_update(
     identity: WasmSharedObjectRef,
     capability: WasmObjectRef,
     proposal: &str,
     package: &str,
-  ) -> Result<Uint8Array, JsValue>;
+  ) -> Result<PromiseUint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "proposeBorrow", catch)]
   async fn propose_borrow(
@@ -484,11 +497,11 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
 
     identity_new(did_doc, &package)
       .map_err(WasmError::from)?
-      .to_transaction_bcs()
+      .to_programmable_transaction_bcs()
       .await
   }
 
-  fn new_with_controllers<C>(
+  async fn new_with_controllers<C>(
     did_doc: Option<&[u8]>,
     controllers: C,
     threshold: u64,
@@ -498,16 +511,12 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     C: IntoIterator<Item = (IotaAddress, u64)>,
   {
     let package = package_id.to_string();
-    let controllers = controllers
-      .into_iter()
-      .map(|controller| serde_wasm_bindgen::to_value(&controller).map(|js_value| js_value.unchecked_into()))
-      .collect::<Result<Vec<_>, _>>()
-      .map_err(|e| WasmError::from(e))?;
+    let controllers = controllers.into_iter().map(Into::into).collect();
 
-    futures::executor::block_on(identity_new_with_controllers(did_doc, controllers, threshold, &package))
-      .map(|js_arr| js_arr.to_vec())
-      .map_err(WasmError::from)
-      .map_err(TsSdkError::from)
+    identity_new_with_controllers(did_doc, controllers, threshold, &package)
+      .map_err(WasmError::from)?
+      .to_programmable_transaction_bcs()
+      .await
   }
 
   fn approve_proposal<T: MoveType>(
@@ -608,11 +617,11 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
 
     propose_update(identity, controller_cap, did_doc, &package_id, expiration)
       .map_err(WasmError::from)?
-      .to_transaction_bcs()
+      .to_programmable_transaction_bcs()
       .await
   }
 
-  fn execute_update(
+  async fn execute_update(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,
@@ -623,10 +632,10 @@ impl IdentityMoveCalls for IdentityMoveCallsTsSdk {
     let proposal = proposal_id.to_string();
     let package_id = package_id.to_string();
 
-    futures::executor::block_on(execute_update(identity, controller_cap, &proposal, &package_id))
-      .map(|js_arr| js_arr.to_vec())
-      .map_err(WasmError::from)
-      .map_err(TsSdkError::from)
+    execute_update(identity, controller_cap, &proposal, &package_id)
+      .map_err(WasmError::from)?
+      .to_programmable_transaction_bcs()
+      .await
   }
 
   fn propose_upgrade(

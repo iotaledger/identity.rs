@@ -1,17 +1,10 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    CoinStruct,
-    ExecutionStatus,
-    IotaClient,
-    IotaTransactionBlockResponse,
-    OwnedObjectRef,
-    Signature,
-} from "@iota/iota-sdk/client";
+import { CoinStruct, IotaClient, IotaTransactionBlockResponse, TransactionEffects } from "@iota/iota-sdk/client";
 import { GasData, TransactionDataBuilder } from "@iota/iota-sdk/transactions";
 
-export type Signer = { sign(data: Uint8Array): Promise<Signature> };
+export type Signer = { sign(data: Uint8Array): Promise<string> };
 
 const MINIMUM_BALANCE_FOR_COIN = BigInt(1_000_000_000);
 
@@ -22,26 +15,12 @@ export class WasmIotaTransactionBlockResponseWrapper {
         this.response = response;
     }
 
-    effects_is_none(): boolean {
-        return this.response.effects == null;
-    }
-
-    effects_is_some(): boolean {
-        return !(typeof this.response.effects == null);
-    }
-
     to_string(): string {
         return JSON.stringify(this.response);
     }
 
-    effects_execution_status_inner(): null | ExecutionStatus {
-        return this.response.effects != null ? this.response.effects.status : null;
-    }
-
-    effects_created_inner(): null | OwnedObjectRef[] {
-        return this.response.effects != null && this.response.effects.created != null
-            ? this.response.effects.created
-            : null;
+    get_effects(): TransactionEffects | null | undefined {
+        return this.response.effects;
     }
 
     get_response(): IotaTransactionBlockResponse {
@@ -170,11 +149,10 @@ export async function executeTransaction(
 ): Promise<WasmIotaTransactionBlockResponseWrapper> {
     const txWithGasData = await addGasDataToTransaction(iotaClient, senderAddress, txBcs, gasBudget);
     const signature = await signer.sign(txWithGasData);
-    const base64signature = getSignatureValue(signature);
 
     const response = await iotaClient.executeTransactionBlock({
         transactionBlock: txWithGasData,
-        signature: base64signature,
+        signature,
         options: { // equivalent of `IotaTransactionBlockResponseOptions::full_content()`
             showEffects: true,
             showInput: true,
@@ -191,20 +169,6 @@ export async function executeTransaction(
     }
 
     return new WasmIotaTransactionBlockResponseWrapper(response);
-}
-
-function getSignatureValue(signature: Signature): string {
-    if ("Ed25519IotaSignature" in signature) {
-        return signature.Ed25519IotaSignature;
-    }
-    if ("Secp256k1IotaSignature" in signature) {
-        return signature.Secp256k1IotaSignature;
-    }
-    if ("Secp256r1IotaSignature" in signature) {
-        return signature.Secp256r1IotaSignature;
-    }
-
-    throw new Error("invalid `Signature` value given");
 }
 
 /**

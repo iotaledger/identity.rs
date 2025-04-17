@@ -9,7 +9,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct IotaVerifiableCredential {
   data: Vec<u8>,
 }

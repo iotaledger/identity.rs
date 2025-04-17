@@ -66,7 +66,7 @@ export async function customResolution() {
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
         .finish()
-        .execute(identityClient);
+        .buildAndExecute(identityClient);
     const did = identity.didDocument().id();
 
     // Construct a Resolver capable of resolving the did:key and iota methods.

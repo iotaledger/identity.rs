@@ -32,7 +32,6 @@ use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockResponseOptions;
 use identity_iota_interaction::rpc_types::ObjectChange;
 use identity_iota_interaction::rpc_types::ObjectsPage;
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::SequenceNumber;
@@ -44,6 +43,7 @@ use identity_iota_interaction::types::quorum_driver_types::ExecuteTransactionReq
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::types::transaction::Transaction;
 use identity_iota_interaction::types::transaction::TransactionData;
+use identity_iota_interaction::types::transaction::TransactionDataAPI as _;
 use identity_iota_interaction::CoinReadTrait;
 use identity_iota_interaction::EventTrait;
 use identity_iota_interaction::IotaClient;
@@ -51,11 +51,8 @@ use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockResponseT;
 use identity_iota_interaction::OptionalSync;
-use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::QuorumDriverTrait;
 use identity_iota_interaction::ReadTrait;
-use identity_iota_interaction::SignatureBcs;
-use identity_iota_interaction::TransactionDataBcs;
 
 /// The minimum balance required to execute a transaction.
 pub(crate) const MINIMUM_BALANCE: u64 = 1_000_000_000;
@@ -111,7 +108,7 @@ impl<T> IotaClientAdaptedT for T where T: IotaClientTrait<Error = Error, NativeR
 pub type IotaClientAdaptedTraitObj =
   Box<dyn IotaClientTrait<Error = Error, NativeResponse = IotaTransactionBlockResponse>>;
 
-pub struct IotaTransactionBlockResponseProvider {
+pub(crate) struct IotaTransactionBlockResponseProvider {
   response: IotaTransactionBlockResponse,
 }
 
@@ -125,24 +122,12 @@ impl IotaTransactionBlockResponseT for IotaTransactionBlockResponseProvider {
   type Error = Error;
   type NativeResponse = IotaTransactionBlockResponse;
 
-  fn effects_is_none(&self) -> bool {
-    self.response.effects.is_none()
-  }
-
-  fn effects_is_some(&self) -> bool {
-    self.response.effects.is_some()
+  fn effects(&self) -> Option<&IotaTransactionBlockEffects> {
+    self.response.effects.as_ref()
   }
 
   fn to_string(&self) -> String {
     format!("{:?}", self.response)
-  }
-
-  fn effects_execution_status(&self) -> Option<IotaExecutionStatus> {
-    self.response.effects.as_ref().map(|effects| effects.status().clone())
-  }
-
-  fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
-    self.response.effects.as_ref().map(|effects| effects.created().to_vec())
   }
 
   fn as_native_response(&self) -> &Self::NativeResponse {
@@ -173,17 +158,12 @@ impl QuorumDriverTrait for QuorumDriverAdapter<'_> {
 
   async fn execute_transaction_block(
     &self,
-    tx_data_bcs: &TransactionDataBcs,
-    signatures: &[SignatureBcs],
+    tx_data: TransactionData,
+    signatures: Vec<Signature>,
     options: Option<IotaTransactionBlockResponseOptions>,
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> IotaRpcResult<IotaTransactionBlockResponseAdaptedTraitObj> {
-    let tx_data = bcs::from_bytes::<TransactionData>(tx_data_bcs.as_slice())?;
-    let signatures_vec = signatures
-      .iter()
-      .map(|signature_bcs| bcs::from_bytes::<Signature>(signature_bcs.as_slice()))
-      .collect::<Result<Vec<Signature>, _>>()?;
-    let tx = Transaction::from_data(tx_data, signatures_vec);
+    let tx = Transaction::from_data(tx_data, signatures);
     let response = self
       .api
       .execute_transaction_block(tx, options.unwrap_or_default(), request_type)
@@ -334,25 +314,18 @@ impl IotaClientTrait for IotaClientRustSdk {
 
   async fn execute_transaction<S>(
     &self,
-    tx_bcs: ProgrammableTransactionBcs,
-    gas_budget: Option<u64>,
+    tx_data: TransactionData,
     signer: &S,
   ) -> Result<IotaTransactionBlockResponseAdaptedTraitObj, Self::Error>
   where
     S: Signer<IotaKeySignature> + OptionalSync,
   {
-    let tx = bcs::from_bytes::<ProgrammableTransaction>(tx_bcs.as_slice())?;
-    let response = self.sdk_execute_transaction(tx, gas_budget, signer).await?;
+    let response = self.sdk_execute_transaction(tx_data, signer).await?;
     Ok(Box::new(IotaTransactionBlockResponseProvider::new(response)))
   }
 
-  async fn default_gas_budget(
-    &self,
-    sender_address: IotaAddress,
-    tx_bcs: &ProgrammableTransactionBcs,
-  ) -> Result<u64, Error> {
-    let tx = bcs::from_bytes::<ProgrammableTransaction>(tx_bcs.as_slice())?;
-    self.sdk_default_gas_budget(sender_address, &tx).await
+  async fn default_gas_budget(&self, sender_address: IotaAddress, tx: &ProgrammableTransaction) -> Result<u64, Error> {
+    self.sdk_default_gas_budget(sender_address, tx).await
   }
 
   async fn get_previous_version(&self, iod: IotaObjectData) -> Result<Option<IotaObjectData>, Error> {
@@ -444,8 +417,7 @@ impl IotaClientRustSdk {
 
   async fn sdk_execute_transaction<S: Signer<IotaKeySignature>>(
     &self,
-    tx: ProgrammableTransaction,
-    gas_budget: Option<u64>,
+    tx: TransactionData,
     signer: &S,
   ) -> Result<IotaTransactionBlockResponse, Error> {
     let public_key = signer
@@ -453,19 +425,22 @@ impl IotaClientRustSdk {
       .await
       .map_err(|e| Error::TransactionSigningFailed(e.to_string()))?;
     let sender_address = IotaAddress::from(&public_key);
-    let gas_budget = match gas_budget {
-      Some(gas) => gas,
-      None => self.sdk_default_gas_budget(sender_address, &tx).await?,
-    };
-    let tx_data = self.get_transaction_data(tx, gas_budget, sender_address).await?;
-    let signature = Self::sign_transaction_data(signer, &tx_data).await?;
+
+    if sender_address != tx.sender() {
+      return Err(Error::TransactionSigningFailed(format!("transaction data needs to be signed by address {}, but client can only provide signature for address {sender_address}", tx.sender())));
+    }
+
+    let signature = signer
+      .sign(&tx)
+      .await
+      .map_err(|e| Error::TransactionSigningFailed(e.to_string()))?;
 
     // execute tx
     let response = self
       .iota_client
       .quorum_driver_api()
       .execute_transaction_block(
-        Transaction::from_data(tx_data, vec![signature]),
+        Transaction::from_data(tx, vec![signature]),
         IotaTransactionBlockResponseOptions::full_content(),
         Some(ExecuteTransactionRequestType::WaitForLocalExecution),
       )
@@ -521,40 +496,6 @@ impl IotaClientRustSdk {
 
     let budget = overhead + (net_used.max(0) as u64).max(computation);
     Ok(budget)
-  }
-
-  async fn get_transaction_data(
-    &self,
-    programmable_transaction: ProgrammableTransaction,
-    gas_budget: u64,
-    sender_address: IotaAddress,
-  ) -> Result<TransactionData, Error> {
-    let gas_price = self
-      .iota_client
-      .read_api()
-      .get_reference_gas_price()
-      .await
-      .map_err(|err| Error::GasIssue(format!("could not get gas price; {err}")))?;
-    let coin = self.get_coin_for_transaction(sender_address).await?;
-    let tx_data = TransactionData::new_programmable(
-      sender_address,
-      vec![coin.object_ref()],
-      programmable_transaction,
-      gas_budget,
-      gas_price,
-    );
-
-    Ok(tx_data)
-  }
-
-  async fn sign_transaction_data<S: Signer<IotaKeySignature>>(
-    signer: &S,
-    tx_data: &TransactionData,
-  ) -> Result<Signature, Error> {
-    signer
-      .sign(&bcs::to_bytes(tx_data)?)
-      .await
-      .map_err(|err| Error::TransactionSigningFailed(format!("could not sign transaction message; {err}")))
   }
 
   async fn get_coin_for_transaction(&self, sender_address: IotaAddress) -> Result<Coin, Error> {

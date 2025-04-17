@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
+use identity_iota_interaction::OptionalSend;
 use itertools::Itertools;
 
 use std::collections::HashSet;
@@ -603,14 +604,14 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
 
-  fn new_with_controllers<C>(
+  async fn new_with_controllers<C>(
     did_doc: Option<&[u8]>,
     controllers: C,
     threshold: u64,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>
   where
-    C: IntoIterator<Item = (IotaAddress, u64)>,
+    C: IntoIterator<Item = (IotaAddress, u64)> + OptionalSend,
   {
     let mut ptb = PrgrTxBuilder::new();
 
@@ -778,7 +779,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     Ok(bcs::to_bytes(&ptb.finish())?)
   }
 
-  fn execute_update(
+  async fn execute_update(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,

@@ -7,6 +7,8 @@ use serde::Serialize;
 
 use super::iota_json_rpc_types::iota_transaction::IotaTransactionBlockResponseOptions;
 use super::iota_types::quorum_driver_types::ExecuteTransactionRequestType;
+use super::types::crypto::Signature;
+use super::types::transaction::TransactionData;
 
 use crate::rpc_types::EventFilter;
 use crate::rpc_types::IotaObjectDataFilter;
@@ -14,8 +16,6 @@ use crate::rpc_types::IotaObjectDataOptions;
 use crate::types::dynamic_field::DynamicFieldName;
 use crate::types::event::EventID;
 use crate::types::iota_serde::SequenceNumber;
-use crate::SignatureBcs;
-use crate::TransactionDataBcs;
 
 // The types defined in this file:
 // * do not exist in the iota rust sdk
@@ -42,14 +42,19 @@ pub struct ExecuteTransactionBlockParams {
 
 impl ExecuteTransactionBlockParams {
   pub fn new(
-    tx_bytes: &TransactionDataBcs,
-    signatures: &[SignatureBcs],
+    tx_data: TransactionData,
+    signatures: Vec<Signature>,
     options: Option<IotaTransactionBlockResponseOptions>,
     request_type: Option<ExecuteTransactionRequestType>,
   ) -> Self {
+    let tx_data_bcs = bcs::to_bytes(&tx_data).expect("this serialization cannot fail");
+    let signatures_b64 = signatures
+      .into_iter()
+      .map(|sig| Base64::from_bytes(sig.as_ref()))
+      .collect();
     ExecuteTransactionBlockParams {
-      transaction_block: Base64::from_bytes(&tx_bytes),
-      signature: signatures.into_iter().map(|sig| Base64::from_bytes(&sig)).collect(),
+      transaction_block: Base64::from_bytes(&tx_data_bcs),
+      signature: signatures_b64,
       options,
       request_type,
     }

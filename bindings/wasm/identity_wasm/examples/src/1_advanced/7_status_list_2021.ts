@@ -34,7 +34,7 @@ export async function statusList2021() {
     const { output: issuerIdentity } = await issuerClient
         .createIdentity(unpublishedIssuerDocument)
         .finish()
-        .execute(issuerClient);
+        .buildAndExecute(issuerClient);
     const issuerDocument = issuerIdentity.didDocument();
 
     // Create an identity for the holder, and publish DID document for it, in this case also the subject.
@@ -44,7 +44,7 @@ export async function statusList2021() {
     const { output: aliceIdentity } = await aliceClient
         .createIdentity(unpublishedAliceDocument)
         .finish()
-        .execute(aliceClient);
+        .buildAndExecute(aliceClient);
     const aliceDocument = aliceIdentity.didDocument();
 
     // Create a new empty status list. No credentials have been revoked yet.

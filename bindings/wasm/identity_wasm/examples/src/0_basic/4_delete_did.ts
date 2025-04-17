@@ -17,7 +17,7 @@ export async function deleteIdentityDID() {
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
         .finish()
-        .execute(identityClient);
+        .buildAndExecute(identityClient);
     const did = identity.didDocument().id();
 
     // Resolve the latest state of the document.
@@ -25,11 +25,13 @@ export async function deleteIdentityDID() {
     const resolved = await identityClient.resolveDid(did);
     console.log("Resolved DID document:", JSON.stringify(resolved, null, 2));
 
+    const controllerToken = await identity.getControllerToken(identityClient);
+
     // delete the DID.
     await identity
-        .deleteDid()
+        .deleteDid(controllerToken!)
         .withGasBudget(TEST_GAS_BUDGET)
-        .execute(identityClient);
+        .buildAndExecute(identityClient);
 
     // After an Identity's DID has been deleted, the document will be
     // empty and inactive. Identity.hasDeletedDid must return `true`.
@@ -49,9 +51,9 @@ export async function deleteIdentityDID() {
     // Trying to update a deleted DID must fail!
     try {
         await identity
-            .updateDidDocument(resolved)
+            .updateDidDocument(resolved, controllerToken!)
             .withGasBudget(TEST_GAS_BUDGET)
-            .execute(identityClient);
+            .buildAndExecute(identityClient);
     } catch (_) {
         console.log("A deleted DID cannot be updated!");
     }

@@ -47,7 +47,6 @@ use identity_iota::document::verifiable::JwsVerificationOptions;
 use identity_iota::document::Service;
 use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::client::IotaKeySignature;
-use identity_iota::iota::rebased::transaction::Transaction;
 use identity_iota::iota::rebased::transaction::TransactionOutput;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::NetworkName;
@@ -112,7 +111,8 @@ where
 
   let TransactionOutput::<IotaDocument> { output: document, .. } = identity_client
     .publish_did_document(unpublished)
-    .execute_with_gas(TEST_GAS_BUDGET, identity_client)
+    .with_gas_budget(TEST_GAS_BUDGET)
+    .build_and_execute(identity_client)
     .await?;
 
   println!("Published DID document: {document:#}");
