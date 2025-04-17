@@ -23,7 +23,7 @@
 ---
 
 > [!NOTE]
-> This version of the library is compatible with IOTA Stardust networks, for a version of the library compatible with IOTA Rebased networks check [here](https://github.com/iotaledger/identity.rs/tree/feat/identity-rebased-alpha/)
+> This version of the library is compatible with IOTA Stardust networks, for a version of the library compatible with IOTA Rebased networks check [here](https://github.com/iotaledger/identity.rs)
 
 ## Introduction
 
