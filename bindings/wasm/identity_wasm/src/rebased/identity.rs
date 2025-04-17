@@ -11,6 +11,7 @@ use identity_iota::iota::rebased::transaction_builder::Transaction;
 use identity_iota::iota::IotaDocument;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use iota_interaction_ts::error::WasmResult as _;
+use js_sys::Object;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::*;
 
@@ -264,13 +265,18 @@ impl WasmCreateIdentity {
   #[wasm_bindgen]
   pub async fn apply(
     self,
-    effects: &WasmIotaTransactionBlockEffects,
+    wasm_effects: &WasmIotaTransactionBlockEffects,
     client: &WasmIdentityClientReadOnly,
   ) -> Result<WasmOnChainIdentity> {
-    self
+    let effects = wasm_effects.clone().into();
+    let (apply_result, rem_effects) = self
       .0
-      .apply(&effects.clone().into(), &client.0)
-      .await
+      .apply(effects, &client.0)
+      .await;
+    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    Object::assign(&wasm_effects, &rem_wasm_effects);
+      
+    apply_result
       .wasm_result()
       .map(WasmOnChainIdentity::new)
   }

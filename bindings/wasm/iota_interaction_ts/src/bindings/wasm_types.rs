@@ -100,7 +100,10 @@ extern "C" {
   pub type WasmDryRunTransactionBlockParams;
 
   #[derive(Clone)]
-  #[wasm_bindgen(typescript_type = "TransactionEffects")]
+  #[wasm_bindgen(
+    typescript_type = "TransactionEffects",
+    extends = js_sys::Object,
+  )]
   pub type WasmIotaTransactionBlockEffects;
 
   #[wasm_bindgen(typescript_type = "GetDynamicFieldObjectParams")]

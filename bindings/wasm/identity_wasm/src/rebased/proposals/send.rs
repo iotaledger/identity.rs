@@ -9,6 +9,7 @@ use identity_iota::iota::rebased::proposals::ProposalT;
 use identity_iota::iota::rebased::proposals::SendAction;
 use identity_iota::iota::rebased::transaction_builder::Transaction;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
+use js_sys::Object;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::JsCast;
@@ -155,7 +156,7 @@ impl WasmApproveSendProposal {
   #[wasm_bindgen]
   pub async fn apply(
     self,
-    effects: &WasmIotaTransactionBlockEffects,
+    wasm_effects: &WasmIotaTransactionBlockEffects,
     client: &WasmIdentityClientReadOnly,
   ) -> Result<()> {
     let mut identity_ref = self.identity.0.write().await;
@@ -169,7 +170,11 @@ impl WasmApproveSendProposal {
       .await
       .wasm_result()?
       .into_inner();
-    tx.apply(&effects.clone().into(), &client.0).await.wasm_result()
+    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &client.0).await;
+    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    Object::assign(&wasm_effects, &wasm_rem_effects);
+
+    apply_result.wasm_result()
   }
 }
 
@@ -210,20 +215,24 @@ impl WasmExecuteSendProposal {
   #[wasm_bindgen]
   pub async fn apply(
     self,
-    effects: &WasmIotaTransactionBlockEffects,
+    wasm_effects: &WasmIotaTransactionBlockEffects,
     client: &WasmIdentityClientReadOnly,
   ) -> Result<()> {
     let mut identity_ref = self.identity.0.write().await;
     let proposal = self.proposal.0.read().await.clone();
 
-    proposal
+    let (apply_result, rem_effects) = proposal
       .into_tx(&mut identity_ref, &self.controller_token.0, &client.0)
       .await
       .wasm_result()?
       .into_inner()
-      .apply(&effects.clone().into(), &client.0)
-      .await
-      .wasm_result()
+      .apply(wasm_effects.clone().into(), &client.0)
+      .await;
+
+    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    Object::assign(&wasm_effects, &wasm_rem_effects);
+
+    apply_result.wasm_result()
   }
 }
 
@@ -291,7 +300,7 @@ impl WasmCreateSendProposal {
   #[wasm_bindgen(unchecked_return_type = "ProposalResult<SendProposal>")]
   pub async fn apply(
     self,
-    effects: &WasmIotaTransactionBlockEffects,
+    wasm_effects: &WasmIotaTransactionBlockEffects,
     client: &WasmIdentityClientReadOnly,
   ) -> Result<Option<WasmProposalSend>> {
     let mut identity_ref = self.identity.0.write().await;
@@ -306,8 +315,11 @@ impl WasmCreateSendProposal {
     .wasm_result()?
     .into_inner();
 
-    let proposal_result = tx.apply(&effects.clone().into(), &client.0).await.wasm_result()?;
-    match proposal_result {
+    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &client.0).await;
+    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    Object::assign(&wasm_effects, &wasm_rem_effects);
+
+    match apply_result.wasm_result()? {
       ProposalResult::Pending(proposal) => Ok(Some(WasmProposalSend::new(proposal))),
       ProposalResult::Executed(_) => Ok(None),
     }

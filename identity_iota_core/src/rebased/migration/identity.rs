@@ -459,7 +459,7 @@ pub(crate) fn unpack_identity_data(did: &IotaDID, data: &IotaObjectData) -> Resu
 
 impl From<OnChainIdentity> for IotaDocument {
   fn from(identity: OnChainIdentity) -> Self {
-    identity.did_doc 
+    identity.did_doc
   }
 }
 
@@ -610,8 +610,7 @@ impl Transaction for CreateIdentity {
 
       *self.builder.did_doc.core_document_mut().id_mut_unchecked() = did;
       // Replace the placeholder did with the did coming from the identity we are checking.
-      did_doc == self.builder.did_doc.core_document()
-        && self.builder.threshold.unwrap_or(1) == identity.threshold()
+      did_doc == self.builder.did_doc.core_document() && self.builder.threshold.unwrap_or(1) == identity.threshold()
     };
 
     let mut target_identity_pos = None;

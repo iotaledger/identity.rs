@@ -47,7 +47,7 @@ extern "C" {
   #[wasm_bindgen(method, catch)]
   pub async fn apply(
     this: &WasmTransaction,
-    effects: WasmIotaTransactionBlockEffects,
+    effects: &WasmIotaTransactionBlockEffects,
     client: WasmIdentityClientReadOnly,
   ) -> Result<JsValue>;
 }
@@ -70,15 +70,17 @@ impl Transaction for WasmTransaction {
 
   async fn apply(
     self,
-    effects: &IotaTransactionBlockEffects,
+    effects: IotaTransactionBlockEffects,
     client: &IdentityClientReadOnly,
-  ) -> StdResult<Self::Output, IotaError> {
+  ) -> (StdResult<Self::Output, IotaError>, IotaTransactionBlockEffects) {
     let client = WasmIdentityClientReadOnly(client.clone());
-    let effects = effects.into();
+    let wasm_effects = WasmIotaTransactionBlockEffects::from(&effects);
 
-    Self::apply(&self, effects, client)
+    let apply_result = Self::apply(&self, &wasm_effects, client)
       .await
-      .map_err(|e| IotaError::FfiError(format!("failed to apply effects from WASM Transaction: {e:?}")))
+      .map_err(|e| IotaError::FfiError(format!("failed to apply effects from WASM Transaction: {e:?}")));
+
+    (apply_result, wasm_effects.into())
   }
 }
 

@@ -54,7 +54,7 @@ pub trait Transaction {
   /// [Transaction::apply] implementations should make sure to properly consume
   /// the parts of `effects` that are needed for the transaction - e.g., removing
   /// the ID of the object the transaction created from the `effects`'s list of
-  /// created objects. 
+  /// created objects.
   /// This is particularly important to enable the batching of transactions.
   async fn apply(
     self,
@@ -353,7 +353,7 @@ where
       )));
     }
 
-    let (application_result , _remaining_effects) = tx.apply(tx_effects, client).await;
+    let (application_result, _remaining_effects) = tx.apply(tx_effects, client).await;
     let response = {
       cfg_if! {
         if #[cfg(target_arch = "wasm32")] {

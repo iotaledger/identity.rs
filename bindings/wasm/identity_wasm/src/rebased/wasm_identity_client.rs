@@ -18,6 +18,7 @@ use iota_interaction_ts::WasmPublicKey;
 
 use identity_iota::iota::rebased::Error;
 use iota_interaction_ts::NativeTransactionBlockResponse;
+use js_sys::Object;
 
 use super::identity::WasmIdentityBuilder;
 use super::IdentityContainer;
@@ -225,15 +226,17 @@ impl WasmPublishDidDocument {
   #[wasm_bindgen]
   pub async fn apply(
     self,
-    effects: &WasmIotaTransactionBlockEffects,
+    wasm_effects: &WasmIotaTransactionBlockEffects,
     client: &WasmIdentityClientReadOnly,
   ) -> Result<WasmIotaDocument> {
-    let effects = effects.clone().into();
-    self
+    let effects = wasm_effects.clone().into();
+    let (apply_result, rem_effects) = self
       .0
-      .apply(&effects, &client.0)
-      .await
-      .wasm_result()
-      .map(WasmIotaDocument::from)
+      .apply(effects, &client.0)
+      .await;
+    let wasm_remaining_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    Object::assign(wasm_effects.as_ref(), wasm_remaining_effects.as_ref());
+
+    apply_result.wasm_result().map(WasmIotaDocument::from)
   }
 }
