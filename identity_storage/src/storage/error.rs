@@ -1,5 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
 
 use crate::key_id_storage::KeyIdStorageError;
 use crate::key_id_storage::MethodDigestConstructionError;
@@ -24,6 +27,9 @@ pub enum JwkStorageDocumentError {
   /// Caused by the usage of a non-JWK method where a JWK method is expected.
   #[error("invalid method data format: expected publicKeyJwk")]
   NotPublicKeyJwk,
+  /// Caused by the usage of a non-Composite method where a Composite method is expected.
+  #[error("invalid method data format: expected compositePublicKey")]
+  NotCompositePublicKey,
   /// Caused by an invalid JWS algorithm.
   #[error("invalid JWS algorithm")]
   InvalidJwsAlgorithm,

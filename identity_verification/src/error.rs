@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 //! Errors that may occur when working with Decentralized Identifiers.
 
 /// Alias for a [`Result`][::core::result::Result] with the error type [Error].
@@ -39,4 +43,7 @@ pub enum Error {
   /// Caused by key material that is not a JSON Web Key.
   #[error("verification material format is not publicKeyJwk")]
   NotPublicKeyJwk,
+  /// Caused by key material that is not a Composite Public Key.
+  #[error("verification material format is not compositePublicKey")]
+  NotCompositePublicKey,
 }

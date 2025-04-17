@@ -1,6 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
 use identity_iota::verification::jose::jwk::Jwk;
 use identity_iota::verification::jose::jwk::JwkOperation;
 use identity_iota::verification::jose::jwk::JwkParams;
@@ -15,6 +17,7 @@ use crate::jose::WasmJwkParamsEc;
 use crate::jose::WasmJwkParamsOct;
 use crate::jose::WasmJwkParamsOkp;
 use crate::jose::WasmJwkParamsRsa;
+use crate::jose::WasmJwkParamsAkp;
 use crate::jose::WasmJwkType;
 use crate::jose::WasmJwkUse;
 use crate::jose::WasmJwsAlgorithm;
@@ -165,6 +168,17 @@ impl WasmJwk {
     }
   }
 
+  /// If this JWK is of kty AKP, returns those parameters.
+  #[wasm_bindgen(js_name = paramsAkp)]
+  pub fn params_akp(&self) -> crate::error::Result<Option<WasmJwkParamsAkp>> {
+    if let JwkParams::Akp(params_akp) = self.0.params() {
+      // WARNING: this does not validate the return type. Check carefully.
+      Ok(Some(JsValue::from_serde(params_akp).wasm_result()?.unchecked_into()))
+    } else {
+      Ok(None)
+    }
+  }
+
   /// Returns a clone of the {@link Jwk} with _all_ private key components unset.
   /// Nothing is returned when `kty = oct` as this key type is not considered public by this library.
   #[wasm_bindgen(js_name = toPublic)]
@@ -202,7 +216,7 @@ impl_wasm_clone!(WasmJwk, Jwk);
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWK: &'static str = r#"
-type IJwkParams = IJwkEc | IJwkRsa | IJwkOkp | IJwkOct
+type IJwkParams = IJwkEc | IJwkRsa | IJwkOkp | IJwkOct | IJwkAkp
 /** A JSON Web Key with EC params. */
 export interface IJwkEc extends IJwk, JwkParamsEc {
   kty: JwkType.Ec
@@ -218,6 +232,10 @@ export interface IJwkOkp extends IJwk, JwkParamsOkp {
 /** A JSON Web Key with OCT params. */
 export interface IJwkOct extends IJwk, JwkParamsOct {
   kty: JwkType.Oct
+}
+/** A JSON Web Key with AKP params. */
+export interface IJwkAkp extends IJwk, JwkParamsAkp {
+  kty: JwkType.Akp
 }
 "#;
 
@@ -401,4 +419,15 @@ interface JwkParamsOct {
    * 
    * [More Info](https://tools.ietf.org/html/rfc7518#section-6.4.1) */
   k: string
+}"#;
+
+
+#[wasm_bindgen(typescript_custom_section)]
+const IJWK_PARAMS_AKP: &str = r#"
+/** Parameters for Algorithm Key Pair (AKP).
+ * 
+ * [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium-06#name-algorithm-key-pair-type) */
+interface JwkParamsAkp {
+  pub: string,
+  priv?: string
 }"#;

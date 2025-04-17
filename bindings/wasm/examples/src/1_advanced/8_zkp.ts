@@ -64,7 +64,7 @@ export async function createDid(client: Client, secretManager: SecretManagerType
 
     const fragment = await document.generateMethodJwp(
         storage,
-        ProofAlgorithm.BLS12381_SHA256,
+        ProofAlgorithm.BBS,
         undefined,
         MethodScope.VerificationMethod(),
     );

@@ -1,16 +1,20 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use zeroize::Zeroize;
 
+use super::BlsCurve;
+use super::JwkParamsAKP;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::EcCurve;
 use crate::jwk::EcxCurve;
 use crate::jwk::EdCurve;
 use crate::jwk::JwkType;
-
-use super::BlsCurve;
 
 /// Algorithm-specific parameters for JSON Web Keys.
 ///
@@ -28,6 +32,8 @@ pub enum JwkParams {
   Oct(JwkParamsOct),
   /// Octet Key Pairs parameters.
   Okp(JwkParamsOkp),
+  /// Algorithm Key Pair Type parameters
+  Akp(JwkParamsAKP),
 }
 
 impl JwkParams {
@@ -38,6 +44,7 @@ impl JwkParams {
       JwkType::Rsa => Self::Rsa(JwkParamsRsa::new()),
       JwkType::Oct => Self::Oct(JwkParamsOct::new()),
       JwkType::Okp => Self::Okp(JwkParamsOkp::new()),
+      JwkType::Akp => Self::Akp(JwkParamsAKP::new())
     }
   }
 
@@ -48,6 +55,7 @@ impl JwkParams {
       Self::Rsa(inner) => inner.kty(),
       Self::Oct(inner) => inner.kty(),
       Self::Okp(inner) => inner.kty(),
+      Self::Akp(_) => JwkType::Akp
     }
   }
 
@@ -60,6 +68,7 @@ impl JwkParams {
       Self::Ec(inner) => Some(Self::Ec(inner.to_public())),
       Self::Rsa(inner) => Some(Self::Rsa(inner.to_public())),
       Self::Oct(_) => None,
+      Self::Akp(inner) => Some(Self::Akp(inner.to_public()))
     }
   }
 
@@ -70,6 +79,7 @@ impl JwkParams {
       Self::Ec(value) => value.is_public(),
       Self::Rsa(value) => value.is_public(),
       Self::Oct(value) => value.is_public(),
+      Self::Akp(value) => value.is_public()
     }
   }
 }
