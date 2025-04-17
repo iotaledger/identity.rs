@@ -32,6 +32,7 @@ features = [
   "revocation-bitmap",
   "sd-jwt",
   "status-list-2021",
+  "keytool",
 ]
 
 [lib]
@@ -104,3 +105,7 @@ name = "10_zkp_revocation"
 [[example]]
 path = "1_advanced/11_linked_verifiable_presentation.rs"
 name = "11_linked_verifiable_presentation"
+
+[[example]]
+path = "1_advanced/13_iota_keytool_integration.rs"
+name = "13_iota_keytool_integration"

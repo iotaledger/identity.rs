@@ -43,6 +43,13 @@ export async function createDocumentForNetwork(storage: Storage, network: string
     return [unpublished, verificationMethodFragment];
 }
 
+export async function requestFunds(address: string) {
+    await requestIotaFromFaucetV0({
+        host: getFaucetHost(NETWORK_NAME_FAUCET),
+        recipient: address,
+    });
+}
+
 export async function getFundedClient(storage: Storage): Promise<IdentityClient> {
     if (!IOTA_IDENTITY_PKG_ID) {
         throw new Error(`IOTA_IDENTITY_PKG_ID env variable must be provided to run the examples`);
@@ -68,10 +75,7 @@ export async function getFundedClient(storage: Storage): Promise<IdentityClient>
     let signer = new StorageSigner(storage, keyId, publicKeyJwk);
     const identityClient = await IdentityClient.create(identityClientReadOnly, signer);
 
-    await requestIotaFromFaucetV0({
-        host: getFaucetHost(NETWORK_NAME_FAUCET),
-        recipient: identityClient.senderAddress(),
-    });
+    await requestFunds(identityClient.senderAddress());
 
     const balance = await iotaClient.getBalance({ owner: identityClient.senderAddress() });
     if (balance.totalBalance === "0") {
