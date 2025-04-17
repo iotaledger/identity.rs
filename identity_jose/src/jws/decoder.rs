@@ -180,7 +180,7 @@ impl<'a> JwsValidationItem<'a> {
     })
   }
 
-  ///Hybrid signature verify, based on [Composite ML-DSA draft](https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-composite-ml-dsaverify)
+  ///Hybrid signature verify
   pub fn verify_hybrid<TRV, PQV>(
     self,
     traditional_verifier: &TRV,
@@ -215,7 +215,7 @@ impl<'a> JwsValidationItem<'a> {
         //Prefix: CompositeAlgorithmSignatures2025
         let mut input = b"CompositeAlgorithmSignatures2025".to_vec();
 
-        //Domain: id-MLDSA44-Ed25519 (https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-domain-separators)
+        //Domain: id-MLDSA44-Ed25519
         input.extend_from_slice(&[0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x3E]);
 
         //len(ctx) = 0
@@ -234,7 +234,7 @@ impl<'a> JwsValidationItem<'a> {
         //Prefix: CompositeAlgorithmSignatures2025
         let mut input = b"CompositeAlgorithmSignatures2025".to_vec();
 
-        //Domain: id-MLDSA65-Ed25519 https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-domain-separators
+        //Domain: id-MLDSA65-Ed25519
         input.extend_from_slice(&[0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x47]);
         
         //len(ctx) = 0

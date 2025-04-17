@@ -5,8 +5,7 @@ use std::str::FromStr;
 
 use crate::jwk::Jwk;
 
-/// Mame of algorithms used to generate the hybrid signature. Values taken from 
-/// [here](https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-domain-separators).
+/// Mame of algorithms used to generate the hybrid signature.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 pub enum CompositeAlgId {
   /// DER encoded value in hex = 060B6086480186FA6B5008013E

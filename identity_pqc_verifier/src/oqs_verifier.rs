@@ -53,7 +53,7 @@ impl OQSVerifier {
   }
 
     /// Verify a JWS signature signed with a ctx and secured with the on the [`Algorithm`] defined in liboqs, used in hybrid signature.
-    /// The ctx value is set as the Domain separator value for binding the signature to the Composite OID, as definied in [here](https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-composite-ml-dsaverify)
+    /// The ctx value is set as the Domain separator value for binding the signature to the Composite OID
     pub fn verify_hybrid_signature(input: VerificationInput, public_key: &Jwk, alg: Algorithm) -> Result<(), SignatureVerificationError> {
       
       let params: &JwkParamsAKP = public_key

@@ -211,7 +211,7 @@ impl JwkDocumentExtHybrid for CoreDocument {
     generate_method_hybrid_core_document(self, storage, alg_id, fragment, scope).await
   }
 
-  /// Hybrid signature implementation based on [Composite ML-DSA draft](https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-composite-ml-dsasign)
+  /// Hybrid signature implementation
   async fn create_jws<K, I>(
     &self,
     storage: &Storage<K, I>,
@@ -315,7 +315,7 @@ impl JwkDocumentExtHybrid for CoreDocument {
         //Prefix: CompositeAlgorithmSignatures2025
         let mut input = b"CompositeAlgorithmSignatures2025".to_vec();
 
-        //Domain: id-MLDSA44-Ed25519 (https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-domain-separators)
+        //Domain: id-MLDSA44-Ed25519
         let domain = &[0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x3E];
         
         input.extend_from_slice(domain);
@@ -332,7 +332,7 @@ impl JwkDocumentExtHybrid for CoreDocument {
         //Prefix: CompositeAlgorithmSignatures2025
         let mut input = b"CompositeAlgorithmSignatures2025".to_vec();
 
-        //Domain: id-MLDSA65-Ed25519 https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-domain-separators
+        //Domain: id-MLDSA65-Ed25519
         let domain = &[0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x47];
         
         input.extend_from_slice(domain);
