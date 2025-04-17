@@ -96,14 +96,15 @@ export class JwkPqMemStore implements  JwkStorage, JwkStoragePQ{
     public async sign(keyId: string, data: Uint8Array, publicKey: Jwk): Promise<Uint8Array> {
         let alg = publicKey.alg();
         let signature = null;
+        
         if(alg === undefined) {
             throw new Error("expected a Jwk with an `alg` parameter");
         }
 
-        if (alg !== JwsAlgorithm.EdDSA && alg !== JwsAlgorithm.MLDSA44 && alg !== JwsAlgorithm.MLDSA65 && alg !== JwsAlgorithm.MLDSA87) {
+        if (alg !== JwsAlgorithm.EdDSA ) {
             throw new Error("unsupported JWS algorithm");
         } else {
-            if (publicKey.paramsOkp()?.crv !== (EdCurve.Ed25519 as string) && publicKey.paramsAkp()?.pub === undefined)
+            if (publicKey.paramsOkp()?.crv !== (EdCurve.Ed25519 as string))
             {
                 throw new Error("unsupported Okp parameter");
             }
@@ -112,22 +113,42 @@ export class JwkPqMemStore implements  JwkStorage, JwkStoragePQ{
         const jwk = this._keys.get(keyId);
 
         if (jwk) {
+            const [privateKey, _] = decodeJwk(jwk);
+            signature = await ed.sign(data, privateKey);
+
+        } else {
+            throw new Error(`key with id ${keyId} not found`);
+        }
+        return signature; 
+    }
+
+    public async signPQ(keyId: string, data: Uint8Array, publicKey: Jwk, ctx: Uint8Array|undefined ): Promise<Uint8Array> {
+        let alg = publicKey.alg();
+        let signature = null;
+        
+        if(alg === undefined) {
+            throw new Error("expected a Jwk with an `alg` parameter");
+        }
+
+        if (alg !== JwsAlgorithm.MLDSA44 && alg !== JwsAlgorithm.MLDSA65 && alg !== JwsAlgorithm.MLDSA87) {
+            throw new Error("unsupported JWS algorithm");
+        }
+
+        const jwk = this._keys.get(keyId);
+
+        if (jwk) {
             
             const [privateKey, _] = decodeJwk(jwk);
             
-            if (alg == JwsAlgorithm.EdDSA){
-                signature = await ed.sign(data, privateKey);
-            } else {
-                if(alg == JwsAlgorithm.MLDSA44)
-                    signature = ml_dsa44.sign(privateKey, data);
-                else if(alg == JwsAlgorithm.MLDSA65)
-                    signature = ml_dsa65.sign(privateKey, data);
-                else if(alg == JwsAlgorithm.MLDSA87)
-                    signature = ml_dsa87.sign(privateKey, data);
-                else
-                    throw new Error("unsupported algorithm");
-                
-            } 
+            if(alg == JwsAlgorithm.MLDSA44)
+                signature = ml_dsa44.sign(privateKey, data, ctx);
+            else if(alg == JwsAlgorithm.MLDSA65)
+                signature = ml_dsa65.sign(privateKey, data, ctx);
+            else if(alg == JwsAlgorithm.MLDSA87)
+                signature = ml_dsa87.sign(privateKey, data, ctx);
+            else
+                throw new Error("unsupported algorithm");
+
         } else {
             throw new Error(`key with id ${keyId} not found`);
         }

@@ -317,6 +317,7 @@ impl JwkDocumentExtHybrid for CoreDocument {
 
         //Domain: id-MLDSA44-Ed25519 (https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-domain-separators)
         let domain = &[0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x3E];
+        
         input.extend_from_slice(domain);
 
         //len(ctx) = 0
@@ -333,6 +334,7 @@ impl JwkDocumentExtHybrid for CoreDocument {
 
         //Domain: id-MLDSA65-Ed25519 https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#name-domain-separators
         let domain = &[0x06, 0x0B, 0x60, 0x86, 0x48, 0x01, 0x86, 0xFA, 0x6B, 0x50, 0x08, 0x01, 0x47];
+        
         input.extend_from_slice(domain);
         
         //len(ctx) = 0

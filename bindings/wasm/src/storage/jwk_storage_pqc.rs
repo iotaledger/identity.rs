@@ -20,11 +20,17 @@ use js_sys::Array;
 use crate::jose::WasmJwk;
 use js_sys::Uint8Array;
 
+
+use crate::common::PromiseUint8Array;
+
 #[wasm_bindgen]
 extern "C" {
 
   #[wasm_bindgen(method, js_name = generatePQKey)]
   pub fn _generate_pq_key(this: &WasmJwkStorage, key_type: String, alg: String) -> PromiseJwkGenOutput;
+
+  #[wasm_bindgen(method, js_name = signPQ)]
+  pub fn _pq_sign(this: &WasmJwkStorage, key_id: String, data: Vec<u8>, public_key: WasmJwk, ctx: Option<&[u8]>) -> PromiseUint8Array;
 
 }
 
@@ -37,12 +43,13 @@ impl JwkStoragePQ for WasmJwkStorage {
     result.into()
   }
 
-  async fn pq_sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::sign(
+  async fn pq_sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk, ctx: Option<&[u8]>) -> KeyStorageResult<Vec<u8>> {
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::_pq_sign(
       self,
       key_id.clone().into(),
       data.to_owned(),
-      WasmJwk(public_key.clone()),
+      WasmJwk(public_key.clone(),),
+      ctx
     ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.to_key_storage_error().map(uint8array_to_bytes)?
@@ -54,10 +61,12 @@ impl JwkStoragePQ for WasmJwkStorage {
 const JWK_STORAGE_PQ: &'static str = r#"
 /** Secure storage for cryptographic keys represented as JWKs. */
 interface JwkStoragePQ {
-  /** Generate a new key represented as a JSON Web Key.
+  /** Generate a new PQ key represented as a JSON Web Key.
    * 
    * It's recommend that the implementer exposes constants for the supported key type string. */
   generatePQKey: (keyType: string, algorithm: JwsAlgorithm) => Promise<JwkGenOutput>;
+
+  signPQ: (keyId: string, data: Uint8Array, publicKey: Jwk, ctx: Uint8Array|undefined ) => Promise<Uint8Array>;
 }"#;
 
 fn uint8array_to_bytes(value: JsValue) -> KeyStorageResult<Vec<u8>> {

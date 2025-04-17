@@ -9,16 +9,29 @@ export class PQJwsVerifier implements  IJwsVerifier{
 
     public verify (alg: JwsAlgorithm, signingInput: Uint8Array, decodedSignature: Uint8Array, publicKey: Jwk): void{
         let res = false;
-        if (alg !== JwsAlgorithm.MLDSA44 && alg !== JwsAlgorithm.MLDSA65 && alg !== JwsAlgorithm.MLDSA87) {
+        let ctx = undefined;
+        
+        if (alg !== JwsAlgorithm.MLDSA44 &&
+            alg !== JwsAlgorithm.MLDSA65 &&
+            alg !== JwsAlgorithm.MLDSA87 &&
+            alg !== JwsAlgorithm.IdMldsa44Ed25519 &&
+            alg !== JwsAlgorithm.IdMldsa65Ed25519) {
             throw new Error("unsupported JWS algorithm");
         }
 
         const pubKey = decodeJwk(publicKey);
 
-        if (alg === JwsAlgorithm.MLDSA44) {
-            res = ml_dsa44.verify(pubKey, signingInput, decodedSignature);
-        } else if (alg === JwsAlgorithm.MLDSA65) {
-            res = ml_dsa65.verify(pubKey, signingInput, decodedSignature);
+        //Domain separator for hybrid signatures
+        if (alg === JwsAlgorithm.IdMldsa44Ed25519) {
+            ctx = Uint8Array.from([6, 11, 96, 134, 72, 1, 134, 250, 107, 80, 8, 1, 62]);
+        } else if (alg === JwsAlgorithm.IdMldsa65Ed25519) { 
+            ctx = Uint8Array.from([6, 11, 96, 134, 72, 1, 134, 250, 107, 80, 8, 1, 71]);
+        }
+
+        if (alg === JwsAlgorithm.MLDSA44 || alg === JwsAlgorithm.IdMldsa44Ed25519) {
+            res = ml_dsa44.verify(pubKey, signingInput, decodedSignature, ctx);
+        } else if (alg === JwsAlgorithm.MLDSA65 || alg === JwsAlgorithm.IdMldsa65Ed25519) {
+            res = ml_dsa65.verify(pubKey, signingInput, decodedSignature, ctx);
         } else if (alg === JwsAlgorithm.MLDSA87) {
             res = ml_dsa87.verify(pubKey, signingInput, decodedSignature);
         }
