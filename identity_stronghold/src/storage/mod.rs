@@ -117,7 +117,7 @@ impl StrongholdStorage {
       .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound).with_source(e))
   }
 
-  /// Attepts to retrieve the public key corresponding to the key of id `key_id`,
+  /// Attempts to retrieve the public key corresponding to the key of id `key_id`,
   /// returning it as a `key_type` encoded public JWK.
   pub async fn get_public_key_with_type(&self, key_id: &KeyId, key_type: StrongholdKeyType) -> KeyStorageResult<Jwk> {
     match key_type {

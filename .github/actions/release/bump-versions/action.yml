@@ -51,7 +51,7 @@ runs:
       uses: actions/setup-node@v2
       if: ${{inputs.release-target == 'wasm'}}
       with:
-        node-version: '16.x'
+        node-version: '20.x'
         registry-url: 'https://registry.npmjs.org'
 
     - name: Bump Wasm npm package version

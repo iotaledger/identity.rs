@@ -17,7 +17,7 @@ impl_wasm_json!(WasmJptCredentialValidationOptions, JptCredentialValidationOptio
 
 #[wasm_bindgen(js_class = JptCredentialValidationOptions)]
 impl WasmJptCredentialValidationOptions {
-  /// Creates a new default istance.
+  /// Creates a new default instance.
   #[wasm_bindgen(constructor)]
   pub fn new(opts: Option<IJptCredentialValidationOptions>) -> Result<WasmJptCredentialValidationOptions> {
     if let Some(opts) = opts {
