@@ -11,6 +11,9 @@ repository.workspace = true
 description = "The core traits and types for the identity-rs library."
 
 [dependencies]
+# pin dependency of `time` and limit range, as `0.4.1` has impl for `usize: PartialOrd<_>`
+# that conflicts with `iota-sdk`s `core` impl, leading to errors in `iota-sdk` crate
+deranged = { version = ">=0.4.0, <0.4.1", default-features = false }
 multibase = { version = "0.9", default-features = false, features = ["std"] }
 serde = { workspace = true, features = ["std"] }
 serde_json = { workspace = true, features = ["std"] }

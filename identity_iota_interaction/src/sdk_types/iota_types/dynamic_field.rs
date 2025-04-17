@@ -7,7 +7,7 @@ use std::{
     fmt::{Display, Formatter},
 };
 
-use fastcrypto::{encoding::Base58};
+use fastcrypto::{encoding::Base64};
 
 use crate::ident_str;
 
@@ -51,7 +51,7 @@ pub struct Field<N, V> {
 #[serde(rename_all = "camelCase")]
 pub struct DynamicFieldInfo {
     pub name: DynamicFieldName,
-    #[serde_as(as = "Readable<Base58, _>")]
+    #[serde_as(as = "Readable<Base64, _>")]
     pub bcs_name: Vec<u8>,
     pub type_: DynamicFieldType,
     pub object_type: String,
