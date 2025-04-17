@@ -288,7 +288,7 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 20.x
- 
+
       - name: Install JS dependencies
         run: npm ci
         working-directory: bindings/wasm/identity_wasm
