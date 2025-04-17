@@ -57,9 +57,9 @@ async fn main() -> anyhow::Result<()> {
       ExecuteTransactionRequestType::WaitForLocalExecution,
     )
     .await?;
-  let tx_effects = tx_response.effects.as_ref().expect("transaction had effects");
+  let tx_effects = tx_response.effects.as_ref().expect("transaction had effects").clone();
   // Alice's Identity is parsed out of the transaction's effects!
-  let identity = tx.apply(tx_effects, &alice_client).await?;
+  let identity = tx.apply(tx_effects, &alice_client).await.0?;
 
   println!(
     "Alice successfully created Identity {}! Thanks for the gas Bob!",
