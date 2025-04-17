@@ -95,7 +95,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
     let controller_cap_ref = client
       .get_object_ref_by_id(controller_token.id())
       .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exists", controller_token.id())))?
+      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
       .reference
       .to_object_ref();
     let sender_vp = identity
@@ -147,7 +147,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
     let controller_cap_ref = client
       .get_object_ref_by_id(controller_token.id())
       .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exists", controller_token.id())))?
+      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
       .reference
       .to_object_ref();
 

@@ -310,7 +310,7 @@ where
     let controller_cap_ref = client
       .get_object_ref_by_id(*controller_token)
       .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exists", controller_token)))?
+      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token)))?
       .reference
       .to_object_ref();
 

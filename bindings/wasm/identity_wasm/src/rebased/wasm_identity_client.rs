@@ -230,10 +230,7 @@ impl WasmPublishDidDocument {
     client: &WasmIdentityClientReadOnly,
   ) -> Result<WasmIotaDocument> {
     let effects = wasm_effects.clone().into();
-    let (apply_result, rem_effects) = self
-      .0
-      .apply(effects, &client.0)
-      .await;
+    let (apply_result, rem_effects) = self.0.apply(effects, &client.0).await;
     let wasm_remaining_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
     Object::assign(wasm_effects.as_ref(), wasm_remaining_effects.as_ref());
 
