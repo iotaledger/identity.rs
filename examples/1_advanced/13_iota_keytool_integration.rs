@@ -4,7 +4,6 @@
 use examples::get_read_only_client;
 use identity_iota::core::ToJson;
 use identity_iota::iota::rebased::client::IdentityClient;
-use identity_iota::iota::rebased::transaction::Transaction;
 use identity_iota::iota::rebased::utils::request_funds;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota_interaction::KeytoolStorage as Keytool;
@@ -62,7 +61,7 @@ async fn main() -> anyhow::Result<()> {
   // Let's publish our new DID Document.
   let did_document = identity_client
     .publish_did_document(did_document)
-    .execute(&identity_client)
+    .build_and_execute(&identity_client)
     .await?
     .output;
   println!(

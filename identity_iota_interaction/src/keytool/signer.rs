@@ -7,7 +7,6 @@ use std::path::PathBuf;
 use crate::types::base_types::IotaAddress;
 use crate::types::crypto::PublicKey;
 use crate::types::crypto::Signature;
-use crate::types::crypto::SignatureScheme;
 use crate::types::transaction::TransactionData;
 use crate::IotaKeySignature;
 use anyhow::anyhow;

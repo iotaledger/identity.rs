@@ -13,9 +13,9 @@ use serde_json::Value;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsError;
 
-use super::WasmIotaSignature;
-use super::WasmPublicKey;
-use super::WasmTransactionData;
+use crate::bindings::WasmTransactionData;
+use crate::WasmIotaSignature;
+use crate::WasmPublicKey;
 
 #[wasm_bindgen(module = buffer)]
 extern "C" {

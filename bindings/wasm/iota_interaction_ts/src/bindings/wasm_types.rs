@@ -4,8 +4,8 @@ use std::str::FromStr;
 
 use fastcrypto::encoding::Base64;
 use fastcrypto::encoding::Encoding;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use fastcrypto::traits::EncodeDecodeBase64 as _;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
