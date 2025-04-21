@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use fastcrypto::encoding::Base64;
 use fastcrypto::encoding::Encoding;
+use fastcrypto::traits::EncodeDecodeBase64 as _;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
@@ -11,7 +12,6 @@ use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::base_types::SequenceNumber;
 use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::crypto::Signature;
-use identity_iota_interaction::types::crypto::SignatureScheme;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::execution_status::CommandArgumentError;
 use identity_iota_interaction::types::execution_status::ExecutionStatus;
@@ -243,11 +243,18 @@ extern "C" {
 
 #[wasm_bindgen(module = "@iota/iota-sdk/cryptography")]
 extern "C" {
+  #[derive(Clone)]
   #[wasm_bindgen(typescript_type = PublicKey)]
   pub type WasmPublicKey;
 
+  #[wasm_bindgen(js_name = toIotaPublicKey, method)]
+  pub fn to_iota_public_key(this: &WasmPublicKey) -> String;
+
   #[wasm_bindgen(js_name = toRawBytes, method)]
   pub fn to_raw_bytes(this: &WasmPublicKey) -> Vec<u8>;
+
+  #[wasm_bindgen(js_name = toIotaAddress, method)]
+  pub fn to_iota_address(this: &WasmPublicKey) -> String;
 
   #[wasm_bindgen(method)]
   pub fn flag(this: &WasmPublicKey) -> u8;
@@ -292,6 +299,10 @@ impl TryFrom<&'_ PublicKey> for WasmPublicKey {
     };
 
     assert_eq!(pk_bytes, &wasm_pk.to_raw_bytes());
+    assert_eq!(
+      IotaAddress::from(pk),
+      wasm_pk.to_iota_address().parse().expect("valid iota address")
+    );
 
     Ok(wasm_pk)
   }
@@ -299,16 +310,17 @@ impl TryFrom<&'_ PublicKey> for WasmPublicKey {
 
 impl TryFrom<WasmPublicKey> for PublicKey {
   type Error = JsValue;
-  fn try_from(pk: WasmPublicKey) -> Result<Self, Self::Error> {
-    let key_bytes = pk.to_raw_bytes();
-    let key_flag = pk.flag();
-    let signature_scheme = SignatureScheme::from_flag_byte(&key_flag).map_err(|e| JsError::new(&e.to_string()))?;
-    let public_key =
-      PublicKey::try_from_bytes(signature_scheme, &key_bytes).map_err(|e| JsError::new(&e.to_string()))?;
+  fn try_from(wasm_pk: WasmPublicKey) -> Result<Self, Self::Error> {
+    let pk = PublicKey::decode_base64(&wasm_pk.to_iota_public_key())
+      .map_err(|_| JsError::new("failed to decode base64 JS PublicKey"))?;
 
-    assert_eq!(&key_bytes, public_key.as_ref());
+    assert_eq!(&wasm_pk.to_raw_bytes(), pk.as_ref());
+    assert_eq!(
+      IotaAddress::from(&pk),
+      wasm_pk.to_iota_address().parse().expect("valid iota address")
+    );
 
-    Ok(public_key)
+    Ok(pk)
   }
 }
 

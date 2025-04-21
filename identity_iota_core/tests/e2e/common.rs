@@ -6,9 +6,9 @@ use anyhow::anyhow;
 use anyhow::Context;
 use identity_iota_core::rebased::client::IdentityClient;
 use identity_iota_core::rebased::client::IdentityClientReadOnly;
+use identity_iota_core::rebased::keytool::KeytoolSigner;
 use identity_iota_core::rebased::transaction::Transaction;
 use identity_iota_core::rebased::utils::request_funds;
-use identity_iota_core::rebased::KeytoolSigner;
 use identity_iota_core::IotaDID;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::OptionalSync;
@@ -227,7 +227,7 @@ impl TestClient {
 
     let storage = Arc::new(Storage::new(JwkMemStore::new(), KeyIdMemstore::new()));
     let identity_client = IdentityClientReadOnly::new_with_pkg_id(client, package_id).await?;
-    let signer = KeytoolSigner::builder().build().await?;
+    let signer = KeytoolSigner::builder().build()?;
     let client = IdentityClient::new(identity_client, signer).await?;
 
     Ok(TestClient {

@@ -7,7 +7,6 @@ use std::path::PathBuf;
 use crate::types::base_types::IotaAddress;
 use crate::types::crypto::PublicKey;
 use crate::types::crypto::Signature;
-use crate::types::crypto::SignatureScheme;
 use crate::IotaKeySignature;
 use crate::TransactionDataBcs;
 use anyhow::anyhow;
@@ -15,11 +14,10 @@ use anyhow::Context as _;
 use async_trait::async_trait;
 use fastcrypto::encoding::Base64;
 use fastcrypto::encoding::Encoding;
-use jsonpath_rust::JsonPathQuery as _;
 use secret_storage::Error as SecretStorageError;
 use secret_storage::Signer;
-use serde::Deserialize;
-use serde_json::Value;
+
+use super::internal::IotaCliWrapper;
 
 /// Builder structure to ease the creation of a [KeytoolSigner].
 #[derive(Debug, Default)]
@@ -53,20 +51,20 @@ impl KeytoolSignerBuilder {
   }
 
   /// Builds a new [KeytoolSigner] using the provided configuration.
-  pub async fn build(self) -> anyhow::Result<KeytoolSigner> {
+  pub fn build(self) -> anyhow::Result<KeytoolSigner> {
     let KeytoolSignerBuilder { address, iota_bin } = self;
-    let iota_bin = iota_bin.unwrap_or_else(|| "iota".into());
+    let iota_cli_wrapper = iota_bin.map(IotaCliWrapper::new_with_custom_bin).unwrap_or_default();
     let address = if let Some(address) = address {
       address
     } else {
-      get_active_address(&iota_bin).await?
+      iota_cli_wrapper.get_active_address()?
     };
 
-    let public_key = get_key(&iota_bin, address).await.context("cannot find key")?;
+    let public_key = iota_cli_wrapper.get_key(address)?.context("key doens't exist")?.0;
 
     Ok(KeytoolSigner {
       public_key,
-      iota_bin,
+      iota_cli_wrapper,
       address,
     })
   }
@@ -76,7 +74,7 @@ impl KeytoolSignerBuilder {
 #[derive(Debug)]
 pub struct KeytoolSigner {
   public_key: PublicKey,
-  iota_bin: PathBuf,
+  iota_cli_wrapper: IotaCliWrapper,
   address: IotaAddress,
 }
 
@@ -94,10 +92,6 @@ impl KeytoolSigner {
   /// Returns the [PublicKey] used by this [KeytoolSigner].
   pub fn public_key(&self) -> &PublicKey {
     &self.public_key
-  }
-
-  async fn run_iota_cli_command(&self, args: &str) -> anyhow::Result<Value> {
-    run_iota_cli_command_with_bin(&self.iota_bin, args).await
   }
 }
 
@@ -119,8 +113,8 @@ impl Signer<IotaKeySignature> for KeytoolSigner {
     let command = format!("keytool sign --address {} --data {base64_data}", self.address);
 
     self
-      .run_iota_cli_command(&command)
-      .await
+      .iota_cli_wrapper
+      .run_command(&command)
       .and_then(|json| {
         json
           .get("iotaSignature")
@@ -132,74 +126,4 @@ impl Signer<IotaKeySignature> for KeytoolSigner {
       })
       .map_err(SecretStorageError::Other)
   }
-}
-
-async fn run_iota_cli_command_with_bin(iota_bin: impl AsRef<Path>, args: &str) -> anyhow::Result<Value> {
-  let iota_bin = iota_bin.as_ref();
-
-  cfg_if::cfg_if! {
-    if #[cfg(not(target_arch = "wasm32"))] {
-    let output = tokio::process::Command::new(iota_bin)
-      .args(args.split_ascii_whitespace())
-      .arg("--json")
-      .output()
-      .await
-      .map_err(|e| anyhow!("failed to run command: {e}"))?;
-
-    if !output.status.success() {
-      let err_msg =
-        String::from_utf8(output.stderr).map_err(|e| anyhow!("command failed with non-utf8 error message: {e}"))?;
-      return Err(anyhow!("failed to run \"iota client active-address\": {err_msg}"));
-    }
-
-    serde_json::from_slice(&output.stdout).context("invalid JSON object in command output")
-    } else {
-      extern "Rust" {
-        fn __wasm_exec_iota_cmd(cmd: &str) -> anyhow::Result<Value>;
-      }
-      let iota_bin = iota_bin.to_str().context("invalid IOTA bin path")?;
-      let cmd = format!("{iota_bin} {args} --json");
-      unsafe { __wasm_exec_iota_cmd(&cmd) }
-    }
-  }
-}
-
-async fn get_active_address(iota_bin: impl AsRef<Path>) -> anyhow::Result<IotaAddress> {
-  run_iota_cli_command_with_bin(iota_bin, "client active-address")
-    .await
-    .and_then(|value| serde_json::from_value(value).context("failed to parse IotaAddress from output"))
-}
-
-async fn get_key(iota_bin: impl AsRef<Path>, address: IotaAddress) -> anyhow::Result<PublicKey> {
-  let query = format!("$[?(@.iotaAddress==\"{}\")]", address);
-
-  let pk_json_data = run_iota_cli_command_with_bin(iota_bin, "keytool list")
-    .await
-    .and_then(|json_value| {
-      json_value
-        .path(&query)
-        .map_err(|e| anyhow!("failed to query JSON output: {e}"))?
-        .get_mut(0)
-        .context("key not found")
-        .map(Value::take)
-    })?;
-  let Ok(KeytoolPublicKeyHelper {
-    public_base64_key,
-    flag,
-  }) = serde_json::from_value(pk_json_data)
-  else {
-    return Err(anyhow!("invalid key format"));
-  };
-
-  let signature_scheme = SignatureScheme::from_flag_byte(&flag).context(format!("invalid signature flag `{flag}`"))?;
-  let pk_bytes = Base64::decode(&public_base64_key).context("invalid base64 encoding for key")?;
-
-  PublicKey::try_from_bytes(signature_scheme, &pk_bytes).map_err(|e| anyhow!("{e:?}"))
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct KeytoolPublicKeyHelper {
-  public_base64_key: String,
-  flag: u8,
 }
