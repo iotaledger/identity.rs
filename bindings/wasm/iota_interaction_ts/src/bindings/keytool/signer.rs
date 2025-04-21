@@ -31,13 +31,18 @@ extern "C" {
   fn exec_cli_cmd(cmd: &str) -> Result<NodeBuffer>;
 }
 
+/// An implementation of the Signer interface that relies on
+/// IOTA Keytool.
 #[wasm_bindgen(js_name = KeytoolSigner)]
 pub struct WasmKeytoolSigner(pub(crate) KeytoolSigner);
 
 #[wasm_bindgen(js_class = KeytoolSigner)]
 impl WasmKeytoolSigner {
-  #[wasm_bindgen(js_name = create)]
-  pub async fn new(address: Option<String>, iota_bin_location: Option<String>) -> Result<WasmKeytoolSigner> {
+  /// Returns a new {@link KeytoolSigner}. The optional parameters respectively
+  /// allow to set the signing address and the `iota` binary to use. Defaults
+  /// to use the current active address and the binary found in $PATH.
+  #[wasm_bindgen(constructor)]
+  pub fn new(address: Option<String>, iota_bin_location: Option<String>) -> Result<WasmKeytoolSigner> {
     let address = address
       .as_deref()
       .map(IotaAddress::from_str)
@@ -53,9 +58,10 @@ impl WasmKeytoolSigner {
       builder
     };
 
-    Ok(WasmKeytoolSigner(builder.build().await.wasm_result()?))
+    Ok(WasmKeytoolSigner(builder.build().wasm_result()?))
   }
 
+  /// Returns the signing address.
   #[wasm_bindgen]
   pub fn address(&self) -> String {
     self.0.address().to_string()

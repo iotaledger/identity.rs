@@ -225,7 +225,7 @@ async fn kb_aud() {
   let kb_validation = validator.validate_key_binding_jwt(&sd_jwt, &setup.subject_doc, &options);
   assert!(matches!(
     kb_validation.err().unwrap(),
-    KeyBindingJwtError::AudianceMismatch
+    KeyBindingJwtError::AudienceMismatch
   ));
 }
 

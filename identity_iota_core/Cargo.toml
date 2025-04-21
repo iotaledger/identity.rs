@@ -63,8 +63,8 @@ iota-crypto = { version = "0.23", default-features = false, features = ["bip39",
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 
 # for feature iota-client tests
-identity_iota_core = { path = ".", features = ["iota-client", "keytool-signer", "send-sync"] } # enable for e2e tests
-identity_storage = { path = "../identity_storage", features = ["send-sync-storage", "storage-signer"] }
+identity_iota_core = { path = ".", features = ["iota-client", "keytool", "send-sync"] } # enable for e2e tests
+identity_storage = { path = "../identity_storage", features = ["send-sync-storage", "storage-signer", "keytool"] }
 lazy_static = "1.5.0"
 serial_test = "3.1.1"
 
@@ -98,12 +98,17 @@ iota-client = [
 revocation-bitmap = ["identity_credential/revocation-bitmap"]
 
 # Enables `Send` + `Sync` bounds for the storage and client interaction traits.
-send-sync = ["send-sync-storage", "send-sync-client-ext"]
+send-sync = ["send-sync-storage", "send-sync-client-ext", "identity_iota_interaction/send-sync-transaction"]
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = ["secret-storage?/send-sync-storage"]
 # Enables `Send` + `Sync` bounds for IOTA client interaction traits.
 send-sync-client-ext = []
-keytool-signer = ["identity_iota_interaction/keytool-signer", "iota-client"]
+keytool = [
+  "identity_iota_interaction/keytool",
+  "identity_storage/keytool",
+  "iota_interaction_ts/keytool",
+  "iota-client",
+]
 
 [lints]
 workspace = true

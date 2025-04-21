@@ -25,6 +25,8 @@ identity_iota_core = { version = "=1.6.0-alpha", path = "../identity_iota_core",
 identity_verification = { version = "=1.6.0-alpha", path = "../identity_verification", default-features = false }
 iota-crypto = { version = "0.23.2", default-features = false, features = ["ed25519", "random"], optional = true }
 json-proof-token = { workspace = true, optional = true }
+k256 = { version = "0.13.3", default-features = false, features = ["std", "ecdsa", "ecdsa-core", "jwk"], optional = true }
+p256 = { version = "0.13.2", default-features = false, features = ["std", "ecdsa", "ecdsa-core", "jwk"], optional = true }
 rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"], optional = true }
 seahash = { version = "4.1.0", default-features = false }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", default-features = false, tag = "v0.3.0", optional = true }
@@ -42,6 +44,7 @@ identity_iota_interaction = { version = "=1.6.0-alpha", path = "../identity_iota
 
 [dev-dependencies]
 identity_credential = { version = "=1.6.0-alpha", path = "../identity_credential", features = ["revocation-bitmap"] }
+identity_ecdsa_verifier = { version = "=1.6.0-alpha", path = "../identity_ecdsa_verifier", default-features = false, features = ["es256"] }
 identity_eddsa_verifier = { version = "=1.6.0-alpha", path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 once_cell = { version = "1.18", default-features = false }
 tokio = { version = "1.43", default-features = false, features = ["macros", "sync", "rt"] }
@@ -49,7 +52,7 @@ tokio = { version = "1.43", default-features = false, features = ["macros", "syn
 [features]
 default = ["iota-document", "memstore"]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
-memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto"]
+memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto", "dep:fastcrypto"]
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = ["identity_iota_core?/send-sync-client-ext", "secret-storage?/send-sync-storage"]
 # Implements the JwkStorageDocumentExt trait for IotaDocument
@@ -68,6 +71,14 @@ jpt-bbs-plus = [
   "dep:zkryptium",
   "dep:bls12_381_plus",
   "dep:json-proof-token",
+]
+# Enables integration with IOTA Keytool
+keytool = [
+  "dep:identity_iota_interaction",
+  "identity_iota_interaction/keytool",
+  "k256",
+  "p256",
+  "dep:fastcrypto",
 ]
 
 [lints]

@@ -75,6 +75,23 @@ pub fn random_stronghold_path() -> PathBuf {
   file.to_owned()
 }
 
+pub async fn get_read_only_client() -> anyhow::Result<IdentityClientReadOnly> {
+  let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| IOTA_LOCAL_NETWORK_URL.to_string());
+  let iota_client = IotaClientBuilder::default()
+    .build(&api_endpoint)
+    .await
+    .map_err(|err| anyhow::anyhow!(format!("failed to connect to network; {}", err)))?;
+  let package_id = std::env::var("IOTA_IDENTITY_PKG_ID")
+    .map_err(|e| {
+      anyhow::anyhow!("env variable IOTA_IDENTITY_PKG_ID must be set in order to run the examples").context(e)
+    })
+    .and_then(|pkg_str| pkg_str.parse().context("invalid package id"))?;
+
+  IdentityClientReadOnly::new_with_pkg_id(iota_client, package_id)
+    .await
+    .context("failed to create a read-only IdentityClient")
+}
+
 pub async fn get_funded_client<K, I>(
   storage: &Storage<K, I>,
 ) -> Result<IdentityClient<StorageSigner<K, I>>, anyhow::Error>
@@ -82,12 +99,6 @@ where
   K: JwkStorage,
   I: KeyIdStorage,
 {
-  let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| IOTA_LOCAL_NETWORK_URL.to_string());
-  let iota_client = IotaClientBuilder::default()
-    .build(&api_endpoint)
-    .await
-    .map_err(|err| anyhow::anyhow!(format!("failed to connect to network; {}", err)))?;
-
   // generate new key
   let generate = storage
     .key_storage()
@@ -98,14 +109,8 @@ where
   let sender_address = IotaAddress::from(&Signer::public_key(&signer).await?);
 
   request_funds(&sender_address).await?;
-  let package_id = std::env::var("IOTA_IDENTITY_PKG_ID")
-    .map_err(|e| {
-      anyhow::anyhow!("env variable IOTA_IDENTITY_PKG_ID must be set in order to run the examples").context(e)
-    })
-    .and_then(|pkg_str| pkg_str.parse().context("invalid package id"))?;
 
-  let read_only_client = IdentityClientReadOnly::new_with_pkg_id(iota_client, package_id).await?;
-
+  let read_only_client = get_read_only_client().await?;
   let identity_client = IdentityClient::new(read_only_client, signer).await?;
 
   Ok(identity_client)

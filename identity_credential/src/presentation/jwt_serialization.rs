@@ -261,12 +261,12 @@ mod test {
       Object::from_json(&claims_serialized).unwrap(),
       Object::from_json(claims_json).unwrap()
     );
-    let retrieved_presentaiton: Presentation<Jwt> = PresentationJwtClaims::<'_, Jwt>::from_json(&claims_serialized)
+    let retrieved_presentation: Presentation<Jwt> = PresentationJwtClaims::<'_, Jwt>::from_json(&claims_serialized)
       .unwrap()
       .try_into_presentation()
       .unwrap();
 
-    assert_eq!(presentation, retrieved_presentaiton);
+    assert_eq!(presentation, retrieved_presentation);
   }
 
   #[test]
@@ -301,12 +301,12 @@ mod test {
     "#;
 
     let presentation: Presentation<Jwt> = Presentation::from_json(presentation_json).unwrap();
-    let retrieved_presentaiton: Presentation<Jwt> = PresentationJwtClaims::<'_, Jwt>::from_json(&claims_json)
+    let retrieved_presentation: Presentation<Jwt> = PresentationJwtClaims::<'_, Jwt>::from_json(&claims_json)
       .unwrap()
       .try_into_presentation()
       .unwrap();
 
-    assert_eq!(presentation, retrieved_presentaiton);
+    assert_eq!(presentation, retrieved_presentation);
   }
 
   #[test]

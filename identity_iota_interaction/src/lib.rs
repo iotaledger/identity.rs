@@ -8,8 +8,8 @@
 mod effects_mut_api;
 mod iota_client_trait;
 mod iota_verifiable_credential;
-#[cfg(feature = "keytool-signer")]
-pub mod keytool_signer;
+#[cfg(feature = "keytool")]
+pub mod keytool;
 mod move_call_traits;
 mod move_type;
 mod transaction_builder_trait;
@@ -17,8 +17,8 @@ mod transaction_builder_trait;
 pub use effects_mut_api::*;
 pub use iota_client_trait::*;
 pub use iota_verifiable_credential::*;
-#[cfg(feature = "keytool-signer")]
-pub use keytool_signer::*;
+#[cfg(feature = "keytool")]
+pub use keytool::*;
 pub use move_call_traits::*;
 pub use move_type::*;
 pub use transaction_builder_trait::*;
