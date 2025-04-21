@@ -597,8 +597,6 @@ impl Transaction for CreateIdentity {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
 
-    dbg!(&effects);
-
     let created_objects = effects
       .created()
       .iter()
@@ -608,17 +606,18 @@ impl Transaction for CreateIdentity {
 
     let target_did_bytes = match StateMetadataDocument::from(self.builder.did_doc)
       .pack(StateMetadataEncoding::Json)
-      .map_err(|e| Error::DidDocSerialization(e.to_string())) {
-        Ok(did_doc_bytes) => did_doc_bytes,
-        Err(e) => return (Err(e), effects),
-      };
+      .map_err(|e| Error::DidDocSerialization(e.to_string()))
+    {
+      Ok(did_doc_bytes) => did_doc_bytes,
+      Err(e) => return (Err(e), effects),
+    };
     let is_target_identity = |identity: &OnChainIdentity| -> bool {
       let did_bytes = identity
         .multicontroller()
         .controlled_value()
         .as_deref()
         .unwrap_or_default();
-      &target_did_bytes == did_bytes && self.builder.threshold.unwrap_or(1) == identity.threshold()
+      target_did_bytes == did_bytes && self.builder.threshold.unwrap_or(1) == identity.threshold()
     };
 
     let mut target_identity_pos = None;
