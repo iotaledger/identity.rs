@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use crate::error::Result;
 use crate::error::WasmResult;
+use fastcrypto::traits::EncodeDecodeBase64 as _;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::KeytoolSigner;
 use identity_iota_interaction::KeytoolSignerBuilder;
@@ -13,8 +14,6 @@ use serde_json::Value;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsError;
 
-use crate::bindings::WasmTransactionData;
-use crate::WasmIotaSignature;
 use crate::WasmPublicKey;
 
 #[wasm_bindgen(module = buffer)]
@@ -81,14 +80,14 @@ impl WasmKeytoolSigner {
   }
 
   #[wasm_bindgen]
-  pub async fn sign(&self, data: &WasmTransactionData) -> Result<WasmIotaSignature> {
-    let data = data.clone().try_into().wasm_result()?;
+  pub async fn sign(&self, tx_data_bcs: &[u8]) -> Result<String> {
+    let tx_data = bcs::from_bytes(tx_data_bcs).map_err(|e| JsError::new(&e.to_string()))?;
     self
       .0
-      .sign(&data)
+      .sign(&tx_data)
       .await
+      .map(|sig| sig.encode_base64())
       .map_err(|e| JsError::new(&e.to_string()).into())
-      .and_then(|sig| sig.try_into())
   }
 
   #[wasm_bindgen(js_name = iotaPublicKeyBytes)]
