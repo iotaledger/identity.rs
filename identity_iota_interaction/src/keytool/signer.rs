@@ -7,8 +7,8 @@ use std::path::PathBuf;
 use crate::types::base_types::IotaAddress;
 use crate::types::crypto::PublicKey;
 use crate::types::crypto::Signature;
+use crate::types::transaction::TransactionData;
 use crate::IotaKeySignature;
-use crate::TransactionDataBcs;
 use anyhow::anyhow;
 use anyhow::Context as _;
 use async_trait::async_trait;
@@ -108,8 +108,10 @@ impl Signer<IotaKeySignature> for KeytoolSigner {
     Ok(self.public_key.clone())
   }
 
-  async fn sign(&self, data: &TransactionDataBcs) -> Result<Signature, SecretStorageError> {
-    let base64_data = Base64::encode(data);
+  async fn sign(&self, data: &TransactionData) -> Result<Signature, SecretStorageError> {
+    let tx_data_bcs =
+      bcs::to_bytes(data).map_err(|e| SecretStorageError::Other(anyhow!("bcs serialization failed: {e}")))?;
+    let base64_data = Base64::encode(&tx_data_bcs);
     let command = format!("keytool sign --address {} --data {base64_data}", self.address);
 
     self

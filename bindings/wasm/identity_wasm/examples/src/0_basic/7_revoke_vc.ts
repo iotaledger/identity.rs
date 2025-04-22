@@ -52,7 +52,7 @@ export async function revokeVC() {
     const { output: issuerIdentity } = await issuerClient
         .createIdentity(unpublishedIssuerDocument)
         .finish()
-        .execute(issuerClient);
+        .buildAndExecute(issuerClient);
     let issuerDocument = issuerIdentity.didDocument();
 
     // create holder account, create identity, and publish DID document for it.
@@ -62,7 +62,7 @@ export async function revokeVC() {
     const { output: aliceIdentity } = await aliceClient
         .createIdentity(unpublishedAliceDocument)
         .finish()
-        .execute(aliceClient);
+        .buildAndExecute(aliceClient);
     const aliceDocument = aliceIdentity.didDocument();
 
     // Create a new empty revocation bitmap. No credential is revoked yet.
@@ -73,11 +73,13 @@ export async function revokeVC() {
     const service: Service = revocationBitmap.toService(serviceId);
     issuerDocument.insertService(service);
 
+    const issuerIdentityToken = await issuerIdentity.getControllerToken(issuerClient);
+
     // Publish the updated document.
     await issuerIdentity
-        .updateDidDocument(issuerDocument)
+        .updateDidDocument(issuerDocument, issuerIdentityToken!)
         .withGasBudget(TEST_GAS_BUDGET)
-        .execute(issuerClient);
+        .buildAndExecute(issuerClient);
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
     const subject = {
@@ -131,9 +133,9 @@ export async function revokeVC() {
 
     // Publish the changes.
     await issuerIdentity
-        .updateDidDocument(issuerDocument)
+        .updateDidDocument(issuerDocument, issuerIdentityToken!)
         .withGasBudget(TEST_GAS_BUDGET)
-        .execute(issuerClient);
+        .buildAndExecute(issuerClient);
 
     // Credential verification now fails.
     try {
@@ -161,9 +163,9 @@ export async function revokeVC() {
 
     // Publish the changes.
     await issuerIdentity
-        .updateDidDocument(issuerDocument)
+        .updateDidDocument(issuerDocument, issuerIdentityToken!)
         .withGasBudget(TEST_GAS_BUDGET)
-        .execute(issuerClient);
+        .buildAndExecute(issuerClient);
 
     issuerDocument = issuerIdentity.didDocument();
 

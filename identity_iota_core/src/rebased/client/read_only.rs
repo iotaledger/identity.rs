@@ -1,6 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::fmt::Debug;
 use std::future::Future;
 use std::ops::Deref;
 use std::pin::Pin;
@@ -13,6 +14,7 @@ use crate::NetworkName;
 use anyhow::anyhow;
 use anyhow::Context as _;
 use futures::stream::FuturesUnordered;
+use identity_iota_interaction::MoveType;
 
 use crate::iota_interaction_adapter::IotaClientAdapter;
 use crate::rebased::migration::get_alias;
@@ -30,6 +32,7 @@ use identity_iota_interaction::rpc_types::IotaObjectData;
 use identity_iota_interaction::rpc_types::IotaObjectDataFilter;
 use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
 use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
+use identity_iota_interaction::rpc_types::IotaParsedData;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
@@ -201,6 +204,76 @@ impl IdentityClientReadOnly {
         })
       })
       .map_err(Error::from)
+  }
+
+  pub(crate) async fn get_iota_coins_with_at_least_balance(
+    &self,
+    owner: IotaAddress,
+    balance: u64,
+  ) -> anyhow::Result<Vec<ObjectRef>> {
+    let mut coins = self
+      .coin_read_api()
+      .get_coins(owner, Some(String::from("0x2::iota::IOTA")), None, None)
+      .await?
+      .data;
+    coins.sort_unstable_by_key(|coin| coin.balance);
+
+    let mut needed_coins = vec![];
+    let mut needed_coins_balance = 0;
+    while let Some(coin) = coins.pop() {
+      needed_coins_balance += coin.balance;
+      needed_coins.push(coin.object_ref());
+
+      if needed_coins_balance >= balance {
+        return Ok(needed_coins);
+      }
+    }
+
+    anyhow::bail!("address {owner} does not have enough coins to form a balance of {balance}");
+  }
+
+  /// Queries `address` owned objects, returning the first object for which `predicate` returns `true`.
+  pub async fn find_object_for_address<T, P>(&self, address: IotaAddress, predicate: P) -> Result<Option<T>, Error>
+  where
+    T: MoveType + DeserializeOwned,
+    P: Fn(&T) -> bool,
+  {
+    let tag = T::move_type(self.package_id())
+      .to_string()
+      .parse()
+      .expect("type tag is a valid struct tag");
+    let filter = IotaObjectResponseQuery::new(
+      Some(IotaObjectDataFilter::StructType(tag)),
+      Some(IotaObjectDataOptions::default().with_content()),
+    );
+    let mut cursor = None;
+    loop {
+      let mut page = self
+        .read_api()
+        .get_owned_objects(address, Some(filter.clone()), cursor, Some(25))
+        .await?;
+      let maybe_obj = std::mem::take(&mut page.data)
+        .into_iter()
+        .filter_map(|res| res.data)
+        .filter_map(|data| data.content)
+        .filter_map(|obj_data| {
+          let IotaParsedData::MoveObject(move_object) = obj_data else {
+            unreachable!()
+          };
+          serde_json::from_value(move_object.fields.to_json_value()).ok()
+        })
+        .find(&predicate);
+      cursor = page.next_cursor;
+
+      if maybe_obj.is_some() {
+        return Ok(maybe_obj);
+      }
+      if !page.has_next_page {
+        break;
+      }
+    }
+
+    Ok(None)
   }
 
   /// Queries the object owned by this sender address and returns the first one

@@ -6,7 +6,6 @@ mod send;
 mod update_did;
 
 pub use config_change::*;
-use iota_interaction_ts::NativeTransactionBlockResponse;
 pub use send::*;
 pub use update_did::*;
 
@@ -100,16 +99,5 @@ impl TryFrom<&'_ HashSet<ObjectID>> for StringSet {
   fn try_from(value: &'_ HashSet<ObjectID>) -> Result<Self, Self::Error> {
     let js_value = serde_wasm_bindgen::to_value(value)?;
     js_value.dyn_into::<StringSet>()
-  }
-}
-
-#[wasm_bindgen(getter_with_clone, skip_typescript)]
-pub struct WasmTransactionInternalOutputVoid {
-  pub response: NativeTransactionBlockResponse,
-}
-
-impl WasmTransactionInternalOutputVoid {
-  pub fn new(response: NativeTransactionBlockResponse) -> Self {
-    Self { response }
   }
 }

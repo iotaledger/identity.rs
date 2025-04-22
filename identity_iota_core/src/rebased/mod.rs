@@ -13,6 +13,8 @@ pub mod migration;
 pub mod proposals;
 /// Module for handling transactions.
 pub mod transaction;
+/// Module for creating transactions using a builder style pattern.
+pub mod transaction_builder;
 /// Contains utility functions.
 #[cfg(not(target_arch = "wasm32"))]
 pub mod utils;

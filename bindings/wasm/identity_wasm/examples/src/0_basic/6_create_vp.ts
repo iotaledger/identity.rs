@@ -46,7 +46,7 @@ export async function createVP() {
     const { output: issuerIdentity } = await issuerClient
         .createIdentity(unpublishedIssuerDocument)
         .finish()
-        .execute(issuerClient);
+        .buildAndExecute(issuerClient);
     const issuerDocument = issuerIdentity.didDocument();
 
     // create holder account, create identity, and publish DID document for it
@@ -56,7 +56,7 @@ export async function createVP() {
     const { output: aliceIdentity } = await aliceClient
         .createIdentity(unpublishedAliceDocument)
         .finish()
-        .execute(aliceClient);
+        .buildAndExecute(aliceClient);
     const aliceDocument = aliceIdentity.didDocument();
 
     // ===========================================================================

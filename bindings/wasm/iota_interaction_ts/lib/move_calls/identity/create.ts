@@ -3,7 +3,7 @@
 
 import { bcs } from "@iota/iota-sdk/bcs";
 import { Transaction } from "@iota/iota-sdk/transactions";
-import { getClockRef, insertPlaceholders } from "../utils";
+import { getClockRef } from "../utils";
 
 export async function create(didDoc: Uint8Array | undefined, packageId: string): Promise<Uint8Array> {
     const tx = new Transaction();
@@ -15,12 +15,10 @@ export async function create(didDoc: Uint8Array | undefined, packageId: string):
         arguments: [didDocArg, clock],
     });
 
-    insertPlaceholders(tx);
-
-    return tx.build();
+    return tx.build({ onlyTransactionKind: true });
 }
 
-export function newWithControllers(
+export async function newWithControllers(
     didDoc: Uint8Array | undefined,
     controllers: [string, number][],
     threshold: number,
@@ -48,5 +46,12 @@ export function newWithControllers(
         arguments: [didDocArg, controllersArg, controllersThatCanDelegate, thresholdArg, clock],
     });
 
-    return tx.build();
+    const tx_kind_bcs = await tx.build({ onlyTransactionKind: true });
+    try {
+        const tx_kind = bcs.TransactionKind.parse(tx_kind_bcs);
+    } catch (e) {
+        console.error(`failed to deserialize tx kind: ${e}`);
+    } finally {
+        return tx_kind_bcs;
+    }
 }

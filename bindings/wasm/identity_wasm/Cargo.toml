@@ -18,6 +18,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 anyhow = "1.0.95"
 async-trait = { version = "0.1", default-features = false }
+bcs = "0.1.6"
 console_error_panic_hook = { version = "0.1" }
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "2f502fd8570fe4e9cff36eea5bbd6fef22002898", package = "fastcrypto" }
 identity_ecdsa_verifier = { path = "../../../identity_ecdsa_verifier", default-features = false, features = ["es256", "es256k"] }

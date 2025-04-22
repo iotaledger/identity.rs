@@ -17,7 +17,7 @@ export async function deactivateIdentity() {
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
         .finish()
-        .execute(identityClient);
+        .buildAndExecute(identityClient);
     const did = identity.didDocument().id();
 
     // Resolve the latest state of the document.
@@ -25,11 +25,12 @@ export async function deactivateIdentity() {
     const resolved = await identityClient.resolveDid(did);
     console.log("Resolved DID document:", JSON.stringify(resolved, null, 2));
 
+    const controllerToken = await identity.getControllerToken(identityClient);
     // Deactivate the DID.
     await identity
-        .deactivateDid()
+        .deactivateDid(controllerToken!)
         .withGasBudget(TEST_GAS_BUDGET)
-        .execute(identityClient);
+        .buildAndExecute(identityClient);
 
     // Resolving a deactivated DID returns an empty DID document
     // with its `deactivated` metadata field set to `true`.
@@ -42,9 +43,9 @@ export async function deactivateIdentity() {
     // Re-activate the DID by publishing a valid DID document.
     console.log("Publishing this:", JSON.stringify(resolved, null, 2));
     await identity
-        .updateDidDocument(resolved)
+        .updateDidDocument(resolved, controllerToken!)
         .withGasBudget(TEST_GAS_BUDGET)
-        .execute(identityClient);
+        .buildAndExecute(identityClient);
 
     // Resolve the reactivated DID document.
     let resolvedReactivated = await identityClient.resolveDid(did);

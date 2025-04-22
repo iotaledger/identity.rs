@@ -5,6 +5,7 @@ use std::str::FromStr;
 use fastcrypto::encoding::Base64;
 use fastcrypto::encoding::Encoding;
 use fastcrypto::traits::EncodeDecodeBase64 as _;
+use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::rpc_types::OwnedObjectRef;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
@@ -14,8 +15,8 @@ use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::crypto::Signature;
 use identity_iota_interaction::types::digests::TransactionDigest;
 use identity_iota_interaction::types::execution_status::CommandArgumentError;
-use identity_iota_interaction::types::execution_status::ExecutionStatus;
 use identity_iota_interaction::types::object::Owner;
+use identity_iota_interaction::types::transaction::TransactionData;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Promise;
 use js_sys::Uint8Array;
@@ -28,8 +29,6 @@ use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::bindings::WasmIotaClient;
-use crate::common::into_sdk_type;
-use crate::common::PromiseUint8Array;
 use crate::console_log;
 use crate::error::TsSdkError;
 use crate::error::WasmError;
@@ -89,6 +88,24 @@ extern "C" {
   #[derive(Clone)]
   pub type WasmIotaTransactionBlockResponse;
 
+  #[wasm_bindgen(typescript_type = "Promise<DryRunTransactionBlockResponse>")]
+  pub type PromiseDryRunTransactionBlockResponse;
+
+  #[wasm_bindgen(typescript_type = "DryRunTransactionBlockResponse")]
+  #[derive(Clone)]
+  pub type WasmDryRunTransactionBlockResponse;
+
+  #[wasm_bindgen(typescript_type = "DryRunTransactionBlockParams")]
+  #[derive(Clone)]
+  pub type WasmDryRunTransactionBlockParams;
+
+  #[derive(Clone)]
+  #[wasm_bindgen(
+    typescript_type = "TransactionEffects",
+    extends = js_sys::Object,
+  )]
+  pub type WasmIotaTransactionBlockEffects;
+
   #[wasm_bindgen(typescript_type = "GetDynamicFieldObjectParams")]
   #[derive(Clone)]
   pub type WasmGetDynamicFieldObjectParams;
@@ -129,9 +146,18 @@ extern "C" {
   #[derive(Clone)]
   pub type WasmExecutionStatus;
 
-  #[wasm_bindgen(typescript_type = "ObjectRef")]
+  #[wasm_bindgen(typescript_type = "IotaObjectRef")]
   #[derive(Clone)]
   pub type WasmObjectRef;
+
+  #[wasm_bindgen(method, getter, js_name = objectId)]
+  pub fn object_id(this: &WasmObjectRef) -> String;
+
+  #[wasm_bindgen(method, getter, js_name = digest)]
+  pub fn digest(this: &WasmObjectRef) -> String;
+
+  #[wasm_bindgen(method, getter, js_name = version)]
+  pub fn version(this: &WasmObjectRef) -> String;
 
   #[wasm_bindgen(typescript_type = "SharedObjectRef")]
   #[derive(Clone)]
@@ -167,6 +193,21 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Parameters<IotaClient['waitForTransaction']>")]
   #[derive(Clone, Debug)]
   pub type WasmWaitForTransactionParams;
+}
+
+impl From<WasmIotaTransactionBlockEffects> for IotaTransactionBlockEffects {
+  fn from(value: WasmIotaTransactionBlockEffects) -> Self {
+    serde_wasm_bindgen::from_value(value.into()).expect("have the same repr")
+  }
+}
+
+impl From<&'_ IotaTransactionBlockEffects> for WasmIotaTransactionBlockEffects {
+  fn from(value: &'_ IotaTransactionBlockEffects) -> Self {
+    value
+      .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+      .expect("same representation")
+      .unchecked_into()
+  }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -211,6 +252,26 @@ impl TryFrom<WasmIotaSignature> for Signature {
 
 #[wasm_bindgen(module = "@iota/iota-sdk/transactions")]
 extern "C" {
+  #[derive(Clone)]
+  #[wasm_bindgen(typescript_type = "Transaction")]
+  pub type WasmTransaction;
+
+  #[wasm_bindgen(js_name = "from", js_class = "Transaction", static_method_of = WasmTransaction, catch)]
+  pub fn from_bcs_bytes(bytes: Uint8Array) -> Result<WasmTransaction, JsValue>;
+
+  #[wasm_bindgen(method, structural, catch)]
+  pub async fn build(
+    this: &WasmTransaction,
+    options: Option<WasmBuildTransactionOptions>,
+  ) -> Result<Uint8Array, JsValue>;
+
+  #[wasm_bindgen(typescript_type = BuildTransactionOptions)]
+  pub type WasmBuildTransactionOptions;
+
+  #[derive(Clone)]
+  #[wasm_bindgen(typescript_type = "TransactionData")]
+  pub type WasmTransactionData;
+
   #[wasm_bindgen(typescript_type = "Transaction")]
   pub type WasmTransactionBuilder;
 
@@ -220,6 +281,28 @@ extern "C" {
   #[wasm_bindgen(method, structural, catch)]
   pub async fn build(this: &WasmTransactionBuilder) -> Result<Uint8Array, JsValue>;
 
+  #[derive(Clone)]
+  #[wasm_bindgen(typescript_type = TransactionDataBuilder)]
+  pub type WasmTransactionDataBuilder;
+
+  #[wasm_bindgen(
+    js_name = fromBytes,
+    js_class = TransactionDataBuilder,
+    static_method_of = WasmTransactionDataBuilder,
+    catch
+  )]
+  pub fn from_bcs_bytes(bytes: Uint8Array) -> Result<WasmTransactionDataBuilder, JsValue>;
+
+  #[wasm_bindgen(
+    js_name = fromKindBytes,
+    js_class = TransactionDataBuilder,
+    static_method_of = WasmTransactionDataBuilder,
+    catch
+  )]
+  pub fn from_kind_bcs_bytes(bytes: Uint8Array) -> Result<WasmTransactionDataBuilder, JsValue>;
+
+  #[wasm_bindgen(method, catch)]
+  pub fn build(this: &WasmTransactionDataBuilder) -> Result<Uint8Array, JsValue>;
   // TODO: decide if we need the following functions: "yagni" or not?
 
   // #[wasm_bindgen(js_name = "setSender", method, catch)]
@@ -239,6 +322,21 @@ extern "C" {
 
   // #[wasm_bindgen(js_name = "getData", method, catch)]
   // pub fn get_data(this: &WasmTransactionBuilder) -> Result<JsValue, JsValue>;
+}
+
+impl TryFrom<TransactionData> for WasmTransactionData {
+  type Error = serde_wasm_bindgen::Error;
+  fn try_from(value: TransactionData) -> Result<Self, Self::Error> {
+    let js_value = serde_wasm_bindgen::to_value(&value)?;
+    Ok(js_value.unchecked_into())
+  }
+}
+
+impl TryFrom<WasmTransactionData> for TransactionData {
+  type Error = serde_wasm_bindgen::Error;
+  fn try_from(value: WasmTransactionData) -> Result<Self, Self::Error> {
+    serde_wasm_bindgen::from_value(value.into())
+  }
 }
 
 #[wasm_bindgen(module = "@iota/iota-sdk/cryptography")]
@@ -324,6 +422,20 @@ impl TryFrom<WasmPublicKey> for PublicKey {
   }
 }
 
+impl TryFrom<WasmObjectRef> for ObjectRef {
+  type Error = anyhow::Error;
+  fn try_from(value: WasmObjectRef) -> Result<Self, Self::Error> {
+    let digest = serde_json::from_value(serde_json::Value::String(value.digest()))?;
+    let version = {
+      let version_number = serde_json::Number::from_str(&value.version())?;
+      serde_json::from_value(serde_json::Value::Number(version_number))?
+    };
+    let object_id = value.object_id().parse()?;
+
+    Ok((object_id, version, digest))
+  }
+}
+
 impl From<ObjectRef> for WasmObjectRef {
   fn from(value: ObjectRef) -> Self {
     let json_obj = serde_json::json!({
@@ -390,26 +502,17 @@ extern "C" {
   #[wasm_bindgen(constructor)]
   pub fn new(response: WasmIotaTransactionBlockResponse) -> WasmIotaTransactionBlockResponseWrapper;
 
-  #[wasm_bindgen(method)]
-  pub fn effects_is_none(this: &WasmIotaTransactionBlockResponseWrapper) -> bool;
-
-  #[wasm_bindgen(method)]
-  pub fn effects_is_some(this: &WasmIotaTransactionBlockResponseWrapper) -> bool;
+  #[wasm_bindgen(method, js_name = get_effects)]
+  pub fn effects(this: &WasmIotaTransactionBlockResponseWrapper) -> Option<WasmIotaTransactionBlockEffects>;
 
   #[wasm_bindgen(method)]
   pub fn to_string(this: &WasmIotaTransactionBlockResponseWrapper) -> String;
-
-  #[wasm_bindgen(method)]
-  fn effects_execution_status_inner(this: &WasmIotaTransactionBlockResponseWrapper) -> Option<WasmExecutionStatus>;
-
-  #[wasm_bindgen(method)]
-  fn effects_created_inner(this: &WasmIotaTransactionBlockResponseWrapper) -> Option<Vec<WasmOwnedObjectRef>>;
 
   #[wasm_bindgen(method, js_name = "get_digest")]
   fn digest_inner(this: &WasmIotaTransactionBlockResponseWrapper) -> String;
 
   #[wasm_bindgen(method, js_name = "get_response")]
-  fn response(this: &WasmIotaTransactionBlockResponseWrapper) -> WasmIotaTransactionBlockResponse;
+  pub fn response(this: &WasmIotaTransactionBlockResponseWrapper) -> WasmIotaTransactionBlockResponse;
 
   #[wasm_bindgen(js_name = executeTransaction)]
   fn execute_transaction_inner(
@@ -420,52 +523,8 @@ extern "C" {
     gas_budget: Option<u64>,      // --> TypeScript: optional bigint
   ) -> PromiseIotaTransactionBlockResponseWrapper;
 
-  #[wasm_bindgen(js_name = "addGasDataToTransaction")]
-  fn add_gas_data_to_transaction_inner(
-    iota_client: &WasmIotaClient, // --> TypeScript: IotaClient
-    sender_address: String,       // --> TypeScript: string
-    tx_bcs: Vec<u8>,              // --> TypeScript: Uint8Array,
-    gas_budget: Option<u64>,      // --> TypeScript: optional bigint
-  ) -> PromiseUint8Array;
-
   #[wasm_bindgen(js_name = "sleep")]
   fn sleep_inner(ms: i32) -> Promise;
-}
-
-/// Inserts these values into the transaction and replaces placeholder values.
-///
-///   - sender (overwritten as we assume a placeholder to be used in prepared transaction)
-///   - gas budget (value determined automatically if not provided)
-///   - gas price (value determined automatically)
-///   - gas coin / payment object (fetched automatically)
-///   - gas owner (equals sender)
-///
-/// # Arguments
-///
-///   * `iota_client` -  client instance
-///   * `sender_address` -  transaction sender (and the one paying for it)
-///   * `tx_bcs` -  transaction data serialized to bcs, most probably having placeholder values
-///   * `gas_budget` -  optional fixed gas budget, determined automatically with a dry run if not provided
-pub(crate) async fn add_gas_data_to_transaction(
-  iota_client: &WasmIotaClient,
-  sender_address: IotaAddress,
-  tx_bcs: Vec<u8>,
-  gas_budget: Option<u64>,
-) -> Result<Vec<u8>, TsSdkError> {
-  let promise: Promise = Promise::resolve(&add_gas_data_to_transaction_inner(
-    iota_client,
-    sender_address.to_string(),
-    tx_bcs,
-    gas_budget,
-  ));
-  let value: JsValue = JsFuture::from(promise).await.map_err(|e| {
-    let message = "Error executing JsFuture::from(promise) for `add_gas_data_to_transaction`";
-    let details = format!("{e:?}");
-    console_log!("{message}; {details}");
-    TsSdkError::WasmError(message.to_string(), details.to_string())
-  })?;
-
-  Ok(Uint8Array::new(&value).to_vec())
 }
 
 ///  Helper function to pause execution.
@@ -476,31 +535,7 @@ pub async fn sleep(duration_ms: i32) -> Result<(), JsValue> {
   Ok(())
 }
 
-#[derive(Deserialize)]
-struct WasmExecutionStatusAdapter {
-  status: ExecutionStatus,
-}
-
 impl WasmIotaTransactionBlockResponseWrapper {
-  pub fn effects_execution_status(&self) -> Option<ExecutionStatus> {
-    self.effects_execution_status_inner().map(|s| {
-      let state: WasmExecutionStatusAdapter =
-        into_sdk_type(s).expect("[WasmIotaTransactionBlockResponseWrapper] Failed to convert WasmExecutionStatus");
-      state.status
-    })
-  }
-
-  pub fn effects_created(&self) -> Option<Vec<OwnedObjectRef>> {
-    self.effects_created_inner().map(|vex_obj_ref| {
-      vex_obj_ref
-        .into_iter()
-        .map(|obj| {
-          into_sdk_type(obj).expect("[WasmIotaTransactionBlockResponseWrapper] Failed to convert WasmOwnedObjectRef")
-        })
-        .collect()
-    })
-  }
-
   pub fn digest(&self) -> Result<TransactionDigest, TsSdkError> {
     TransactionDigest::from_str(&self.digest_inner())
       .map_err(|err| TsSdkError::WasmError("Failed to parse transaction block digest".to_string(), err.to_string()))
@@ -533,7 +568,7 @@ pub async fn execute_transaction(
 
 #[derive(Deserialize)]
 #[serde(try_from = "Vec<u8>")]
-pub struct ProgrammableTransaction(pub(crate) WasmTransactionBuilder);
+pub struct ProgrammableTransaction(#[allow(dead_code)] pub(crate) WasmTransactionBuilder);
 impl TryFrom<Vec<u8>> for ProgrammableTransaction {
   type Error = TsSdkError;
   fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {

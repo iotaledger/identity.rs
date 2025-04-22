@@ -3,7 +3,6 @@
 
 use examples::get_funded_client;
 use examples::get_memstorage;
-use identity_iota::iota::rebased::transaction::Transaction as _;
 use identity_iota::iota::rebased::Error;
 use identity_iota::iota::IotaDocument;
 
@@ -15,7 +14,7 @@ async fn main() -> anyhow::Result<()> {
   let mut identity = client
     .create_identity(IotaDocument::new(client.network()))
     .finish()
-    .execute(&client)
+    .build_and_execute(&client)
     .await?
     .output;
   let did = identity.did_document().id().clone();
@@ -23,7 +22,13 @@ async fn main() -> anyhow::Result<()> {
   println!("Created a new Identity containing DID Document {did}");
 
   // Delete the DID we just created.
-  identity.delete_did().finish(&client).await?.execute(&client).await?;
+  let controller_token = identity.get_controller_token(&client).await?.expect("is a controller");
+  identity
+    .delete_did(&controller_token)
+    .finish(&client)
+    .await?
+    .build_and_execute(&client)
+    .await?;
 
   assert!(identity.has_deleted_did());
   assert_eq!(identity.did_document().metadata.deactivated, Some(true));
@@ -32,7 +37,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Trying to update a deleted DID Document must fail.
   let err = identity
-    .update_did_document(IotaDocument::new(client.network()))
+    .update_did_document(IotaDocument::new(client.network()), &controller_token)
     .finish(&client)
     .await;
   assert!(matches!(err, Err(Error::Identity(_))));

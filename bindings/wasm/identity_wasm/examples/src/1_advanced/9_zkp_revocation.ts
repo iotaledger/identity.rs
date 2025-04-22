@@ -46,7 +46,7 @@ export async function zkp_revocation() {
     const { output: issuerIdentity } = await issuerClient
         .createIdentity(unpublishedIssuerDocument)
         .finish()
-        .execute(issuerClient);
+        .buildAndExecute(issuerClient);
     let issuerDocument = issuerIdentity.didDocument();
 
     // Create an identity for the holder, and publish DID document for it, in this case also the subject.
@@ -56,7 +56,7 @@ export async function zkp_revocation() {
     const { output: holderIdentity } = await holderClient
         .createIdentity(unpublishedholderDocument)
         .finish()
-        .execute(holderClient);
+        .buildAndExecute(holderClient);
     const holderDocument = holderIdentity.didDocument();
 
     // =========================================================================================
@@ -192,10 +192,11 @@ export async function zkp_revocation() {
 
     console.log("Issuer decides to revoke the Credential");
 
+    const issuerIdentityToken = await issuerIdentity.getControllerToken(issuerClient);
     // Update the RevocationBitmap service in the issuer's DID Document.
     // This revokes the credential's unique index.
     issuerDocument.revokeCredentials("my-revocation-service", 5);
-    await issuerIdentity.updateDidDocument(issuerDocument).execute(issuerClient);
+    await issuerIdentity.updateDidDocument(issuerDocument, issuerIdentityToken!).buildAndExecute(issuerClient);
     issuerDocument = issuerIdentity.didDocument();
 
     // Holder checks if his credential has been revoked by the Issuer

@@ -7,15 +7,16 @@ use std::{
     fmt::{self, Display, Formatter},
 };
 
+use enum_dispatch::enum_dispatch;
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
+use serde_with::serde_as;
 
-use crate::types::{
-    base_types::{SequenceNumber, ObjectID},
-    object::Owner,
-    quorum_driver_types::ExecuteTransactionRequestType,
-    execution_status::ExecutionStatus,
-};
+use crate::{iota_types::{base_types::EpochId, digests::{TransactionDigest, TransactionEventsDigest}, gas::GasCostSummary, storage::{DeleteKind, WriteKind}}, types::{
+    base_types::{ObjectID, SequenceNumber}, execution_status::ExecutionStatus, object::Owner, quorum_driver_types::ExecuteTransactionRequestType,
+    iota_serde::{BigInt, SequenceNumber as AsSequenceNumber},
+}};
 
 use super::iota_object::IotaObjectRef;
 
@@ -142,7 +143,7 @@ impl IotaTransactionBlockResponseOptions {
     }
 }
 
-#[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename = "ExecutionStatus", rename_all = "camelCase", tag = "status")]
 pub enum IotaExecutionStatus {
     // Gas used in the success case.
@@ -189,7 +190,7 @@ impl From<ExecutionStatus> for IotaExecutionStatus {
     }
 }
 
-#[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename = "OwnedObjectRef")]
 pub struct OwnedObjectRef {
     pub owner: Owner,
@@ -202,5 +203,205 @@ impl OwnedObjectRef {
     }
     pub fn version(&self) -> SequenceNumber {
         self.reference.version
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, PartialEq, Eq)]
+#[enum_dispatch(IotaTransactionBlockEffectsAPI)]
+#[serde(
+    rename = "TransactionBlockEffects",
+    rename_all = "camelCase",
+    tag = "messageVersion"
+)]
+pub enum IotaTransactionBlockEffects {
+    V1(IotaTransactionBlockEffectsV1),
+}
+
+#[enum_dispatch]
+pub trait IotaTransactionBlockEffectsAPI {
+    fn status(&self) -> &IotaExecutionStatus;
+    fn into_status(self) -> IotaExecutionStatus;
+    fn shared_objects(&self) -> &[IotaObjectRef];
+    fn created(&self) -> &[OwnedObjectRef];
+    fn mutated(&self) -> &[OwnedObjectRef];
+    fn unwrapped(&self) -> &[OwnedObjectRef];
+    fn deleted(&self) -> &[IotaObjectRef];
+    fn unwrapped_then_deleted(&self) -> &[IotaObjectRef];
+    fn wrapped(&self) -> &[IotaObjectRef];
+    fn gas_object(&self) -> &OwnedObjectRef;
+    fn events_digest(&self) -> Option<&TransactionEventsDigest>;
+    fn dependencies(&self) -> &[TransactionDigest];
+    fn executed_epoch(&self) -> EpochId;
+    fn transaction_digest(&self) -> &TransactionDigest;
+    fn gas_cost_summary(&self) -> &GasCostSummary;
+
+    /// Return an iterator of mutated objects, but excluding the gas object.
+    fn mutated_excluding_gas(&self) -> Vec<OwnedObjectRef>;
+    fn modified_at_versions(&self) -> Vec<(ObjectID, SequenceNumber)>;
+    fn all_changed_objects(&self) -> Vec<(&OwnedObjectRef, WriteKind)>;
+    fn all_deleted_objects(&self) -> Vec<(&IotaObjectRef, DeleteKind)>;
+}
+
+#[serde_as]
+#[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(
+    rename = "TransactionBlockEffectsModifiedAtVersions",
+    rename_all = "camelCase"
+)]
+pub struct IotaTransactionBlockEffectsModifiedAtVersions {
+    object_id: ObjectID,
+    #[schemars(with = "AsSequenceNumber")]
+    #[serde_as(as = "AsSequenceNumber")]
+    sequence_number: SequenceNumber,
+}
+
+/// The response from processing a transaction or a certified transaction
+#[serde_as]
+#[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename = "TransactionBlockEffectsV1", rename_all = "camelCase")]
+pub struct IotaTransactionBlockEffectsV1 {
+    /// The status of the execution
+    pub status: IotaExecutionStatus,
+    /// The epoch when this transaction was executed.
+    #[schemars(with = "BigInt<u64>")]
+    #[serde_as(as = "BigInt<u64>")]
+    pub executed_epoch: EpochId,
+    pub gas_used: GasCostSummary,
+    /// The version that every modified (mutated or deleted) object had before
+    /// it was modified by this transaction.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub modified_at_versions: Vec<IotaTransactionBlockEffectsModifiedAtVersions>,
+    /// The object references of the shared objects used in this transaction.
+    /// Empty if no shared objects were used.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub shared_objects: Vec<IotaObjectRef>,
+    /// The transaction digest
+    pub transaction_digest: TransactionDigest,
+    /// ObjectRef and owner of new objects created.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub created: Vec<OwnedObjectRef>,
+    /// ObjectRef and owner of mutated objects, including gas object.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub mutated: Vec<OwnedObjectRef>,
+    /// ObjectRef and owner of objects that are unwrapped in this transaction.
+    /// Unwrapped objects are objects that were wrapped into other objects in
+    /// the past, and just got extracted out.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unwrapped: Vec<OwnedObjectRef>,
+    /// Object Refs of objects now deleted (the old refs).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub deleted: Vec<IotaObjectRef>,
+    /// Object refs of objects previously wrapped in other objects but now
+    /// deleted.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unwrapped_then_deleted: Vec<IotaObjectRef>,
+    /// Object refs of objects now wrapped in other objects.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub wrapped: Vec<IotaObjectRef>,
+    /// The updated gas object reference. Have a dedicated field for convenient
+    /// access. It's also included in mutated.
+    pub gas_object: OwnedObjectRef,
+    /// The digest of the events emitted during execution,
+    /// can be None if the transaction does not emit any event.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub events_digest: Option<TransactionEventsDigest>,
+    /// The set of transaction digests this transaction depends on.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dependencies: Vec<TransactionDigest>,
+}
+
+impl IotaTransactionBlockEffectsAPI for IotaTransactionBlockEffectsV1 {
+    fn status(&self) -> &IotaExecutionStatus {
+        &self.status
+    }
+    fn into_status(self) -> IotaExecutionStatus {
+        self.status
+    }
+    fn shared_objects(&self) -> &[IotaObjectRef] {
+        &self.shared_objects
+    }
+    fn created(&self) -> &[OwnedObjectRef] {
+        &self.created
+    }
+    fn mutated(&self) -> &[OwnedObjectRef] {
+        &self.mutated
+    }
+    fn unwrapped(&self) -> &[OwnedObjectRef] {
+        &self.unwrapped
+    }
+    fn deleted(&self) -> &[IotaObjectRef] {
+        &self.deleted
+    }
+    fn unwrapped_then_deleted(&self) -> &[IotaObjectRef] {
+        &self.unwrapped_then_deleted
+    }
+    fn wrapped(&self) -> &[IotaObjectRef] {
+        &self.wrapped
+    }
+    fn gas_object(&self) -> &OwnedObjectRef {
+        &self.gas_object
+    }
+    fn events_digest(&self) -> Option<&TransactionEventsDigest> {
+        self.events_digest.as_ref()
+    }
+    fn dependencies(&self) -> &[TransactionDigest] {
+        &self.dependencies
+    }
+
+    fn executed_epoch(&self) -> EpochId {
+        self.executed_epoch
+    }
+
+    fn transaction_digest(&self) -> &TransactionDigest {
+        &self.transaction_digest
+    }
+
+    fn gas_cost_summary(&self) -> &GasCostSummary {
+        &self.gas_used
+    }
+
+    fn mutated_excluding_gas(&self) -> Vec<OwnedObjectRef> {
+        self.mutated
+            .iter()
+            .filter(|o| *o != &self.gas_object)
+            .cloned()
+            .collect()
+    }
+
+    fn modified_at_versions(&self) -> Vec<(ObjectID, SequenceNumber)> {
+        self.modified_at_versions
+            .iter()
+            .map(|v| (v.object_id, v.sequence_number))
+            .collect::<Vec<_>>()
+    }
+
+    fn all_changed_objects(&self) -> Vec<(&OwnedObjectRef, WriteKind)> {
+        self.mutated
+            .iter()
+            .map(|owner_ref| (owner_ref, WriteKind::Mutate))
+            .chain(
+                self.created
+                    .iter()
+                    .map(|owner_ref| (owner_ref, WriteKind::Create)),
+            )
+            .chain(
+                self.unwrapped
+                    .iter()
+                    .map(|owner_ref| (owner_ref, WriteKind::Unwrap)),
+            )
+            .collect()
+    }
+
+    fn all_deleted_objects(&self) -> Vec<(&IotaObjectRef, DeleteKind)> {
+        self.deleted
+            .iter()
+            .map(|r| (r, DeleteKind::Normal))
+            .chain(
+                self.unwrapped_then_deleted
+                    .iter()
+                    .map(|r| (r, DeleteKind::UnwrapThenDelete)),
+            )
+            .chain(self.wrapped.iter().map(|r| (r, DeleteKind::Wrap)))
+            .collect()
     }
 }
