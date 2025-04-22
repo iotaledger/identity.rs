@@ -10,7 +10,7 @@ on:
         description: 'Network to deploy to'
         required: true
       faucet:
-        description: 'TBD'
+        description: 'Whether to faucet'
         required: true
       script-path:
         description: 'Script to tun'
