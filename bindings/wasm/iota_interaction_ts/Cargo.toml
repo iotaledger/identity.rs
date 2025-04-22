@@ -53,4 +53,5 @@ instant = { version = "0.1", default-features = false, features = ["wasm-bindgen
 empty_docs = "allow"
 
 [features]
-keytool-signer = ["identity_iota_interaction/keytool-signer"]
+default = []
+keytool = ["identity_iota_interaction/keytool"]
