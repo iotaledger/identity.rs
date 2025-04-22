@@ -11,9 +11,11 @@ on:
         required: true
       faucet:
         description: 'Whether to faucet'
+        type: boolean
         required: true
+        default: true
       script-path:
-        description: 'Script to tun'
+        description: 'Script to run'
         required: true
       dry-run:
         description: 'Run in dry-run mode'
@@ -45,7 +47,7 @@ jobs:
       with:
         network: ${{ github.event.inputs.network }}
         pk: ${{secrets.TRUST_FRAMEWORK_PRODUCTS_PRIVATE_KEY}}
-        bak_pk: ${{secrets.TRUST_FRAMEWORK_PRODUCTS_PRIVATE_KEY_BACKUP}} #only for testing, TODO: remove
+        bak-pk: ${{secrets.TRUST_FRAMEWORK_PRODUCTS_PRIVATE_KEY_BACKUP}} #only for testing, TODO: remove
         faucet: ${{ github.event.inputs.faucet }}
 
     - name: Import GPG key

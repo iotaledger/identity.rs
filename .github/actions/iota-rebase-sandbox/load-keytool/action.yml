@@ -20,16 +20,16 @@ runs:
     - name: Load PK into Keytool
       shell: bash
       run: |
-        iota keytool import $(iota keytool convert ${inputs.pk} --json | jq -r '.bech32WithFlag') ed25519 --alias deploy-key
-        iota client switch --env ${inputs.network}
+        iota keytool import $(iota keytool convert ${{inputs.pk}} --json | jq -r '.bech32WithFlag') ed25519 --alias deploy-key
+        iota client switch --env ${{inputs.network}}
         iota client switch --address deploy-key
 
         # test backup key
-        iota keytool import $(iota keytool convert ${inputs.bak-pk} --json | jq -r '.bech32WithFlag') ed25519 --alias backup-key
+        iota keytool import $(iota keytool convert ${{inputs.bak-pk}} --json | jq -r '.bech32WithFlag') ed25519 --alias backup-key
         iota keytool list --json | jq -r '.[] | select(.alias=="deploy-key")'
         iota keytool list --json | jq -r '.[] | select(.alias=="backup-key")'
 
-        if [ ${inputs.faucet} == "true" ]; then
+        if [ ${{inputs.faucet}} == "true" ]; then
           iota client faucet
           # wait up tp 5min for Gas to be available
           timeout 5m bash -c "until (( $(iota client gas --json | jq -r '.[].nanosBalance') > 0)); do sleep 10; done"
