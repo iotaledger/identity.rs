@@ -16,8 +16,6 @@ runs:
   steps:
     - name: Load PK into Keytool
       shell: bash
-      env:
-        WAIT_FOR_VERSION: 4df3f9262d84cab0039c07bf861045fbb3c20ab7 # v2.2.3
       run: |
         iota keytool import $(iota keytool convert ${inputs.pk} --json | jq -r '.bech32WithFlag') ed25519 --alias deploy-key
         iota client switch --env ${inputs.network}
