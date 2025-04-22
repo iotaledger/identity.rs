@@ -1,5 +1,5 @@
-name: 'publish-move'
-description: 'Publish Move package to network'
+name: 'load-keytool'
+description: 'Load Keytool'
 inputs:
   network:
     description: 'network to deploy to'
@@ -7,12 +7,10 @@ inputs:
   pk:
     description: 'private key to load into Keytool'
     required: true
-  dry-run:
-    description: "'true' = only log potential result; 'false' = publish'"
-    required: true
   faucet:
     description: "whether to faucet"
     required: true
+    
 runs:
   using: "composite"
   steps:
@@ -24,7 +22,10 @@ runs:
         iota keytool import $(iota keytool convert ${inputs.pk} --json | jq -r '.bech32WithFlag') ed25519 --alias deploy-key
         iota client switch --env ${inputs.network}
         iota client switch --address deploy-key
-        iota client faucet
-        # wait up tp 5min for Gas to be available
-        timeout 5m bash -c "until (( $(iota client gas --json | jq -r '.[].nanosBalance') > 0)); do sleep 10; done"
+
+        if [ ${inputs.faucet} == "true" ]; then
+          iota client faucet
+          # wait up tp 5min for Gas to be available
+          timeout 5m bash -c "until (( $(iota client gas --json | jq -r '.[].nanosBalance') > 0)); do sleep 10; done"
+        fi
 
