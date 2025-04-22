@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "27C2591D464A6C0E5FB92A066BADCF3C330B3ABA05305B5AE0C5F2EE7659E7FC"
+manifest_digest = "FF296D70242987085F04C1F86112974684C8E251A195A5FC3442D6514F5EFE36"
 deps_digest = "060AD7E57DFB13104F21BE5F5C3759D03F0553FC3229247D9A7A6B45F50D03A3"
 dependencies = [
   { id = "Iota", name = "Iota" },
@@ -12,7 +12,7 @@ dependencies = [
 
 [[move.package]]
 id = "Iota"
-source = { git = "https://github.com/iotaledger/iota.git", rev = "45df8ac5533251237ce34f7c6e5cbc099805895e", subdir = "crates/iota-framework/packages/iota-framework" }
+source = { git = "https://github.com/iotaledger/iota.git", rev = "7e49c58b826b34c8e2b61842ef13c8de35a0aee8", subdir = "crates/iota-framework/packages/iota-framework" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -20,11 +20,11 @@ dependencies = [
 
 [[move.package]]
 id = "MoveStdlib"
-source = { git = "https://github.com/iotaledger/iota.git", rev = "45df8ac5533251237ce34f7c6e5cbc099805895e", subdir = "crates/iota-framework/packages/move-stdlib" }
+source = { git = "https://github.com/iotaledger/iota.git", rev = "7e49c58b826b34c8e2b61842ef13c8de35a0aee8", subdir = "crates/iota-framework/packages/move-stdlib" }
 
 [[move.package]]
 id = "Stardust"
-source = { git = "https://github.com/iotaledger/iota.git", rev = "45df8ac5533251237ce34f7c6e5cbc099805895e", subdir = "crates/iota-framework/packages/stardust" }
+source = { git = "https://github.com/iotaledger/iota.git", rev = "7e49c58b826b34c8e2b61842ef13c8de35a0aee8", subdir = "crates/iota-framework/packages/stardust" }
 
 dependencies = [
   { id = "Iota", name = "Iota" },
@@ -32,7 +32,7 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "0.11.6-rc"
+compiler-version = "0.12.0-rc"
 edition = "2024.beta"
 flavor = "iota"
 
@@ -51,7 +51,7 @@ latest-published-id = "0x03242ae6b87406bd0eb5d669fbe874ed4003694c0be9c6a9ee7c315
 published-version = "1"
 
 [env.localnet]
-chain-id = "e060d4a9"
-original-published-id = "0x574f5ec6c392dbb835dfe640a6ec1f623e53c735929debae17f847eee44ed0a5"
-latest-published-id = "0x574f5ec6c392dbb835dfe640a6ec1f623e53c735929debae17f847eee44ed0a5"
+chain-id = "461e4e6c"
+original-published-id = "0x7b310d2af24b4d782ebb41d93b4b72bde08546e3e12a00e91b8b8f98442f6656"
+latest-published-id = "0x7b310d2af24b4d782ebb41d93b4b72bde08546e3e12a00e91b8b8f98442f6656"
 published-version = "1"

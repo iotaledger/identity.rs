@@ -44,10 +44,10 @@ serde-aux = { version = "4.5.0", optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 identity_iota_interaction = { version = "=1.6.0-alpha", path = "../identity_iota_interaction", optional = true }
-iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config", tag = "v0.11.6-rc", optional = true }
-iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.11.6-rc", optional = true }
-move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.11.6-rc", optional = true }
-shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.11.6-rc", optional = true }
+iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config", tag = "v0.12.0-rc", optional = true }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.12.0-rc", optional = true }
+move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.12.0-rc", optional = true }
+shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.12.0-rc", optional = true }
 tokio = { version = "1.43", default-features = false, features = ["macros", "sync", "rt", "process"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
