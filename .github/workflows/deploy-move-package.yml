@@ -4,17 +4,22 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Name of the support branch (e.g. `support/v1.2`)'
+        description: 'Name of branch to checkout'
         required: true
       network:
-        description: 'network to deploy to'
+        description: 'Network to deploy to'
         required: true
       faucet:
         description: 'TBD'
         required: true
       script-path:
-        description: 'script to tun'
+        description: 'Script to tun'
         required: true
+      dry-run:
+        description: 'Run in dry-run mode'
+        type: boolean
+        required: false
+        default: true
 
 jobs:
   deploy-move-package:
@@ -38,9 +43,9 @@ jobs:
     - name: Setup Keytool
       uses: './.github/actions/iota-rebase-sandbox/load-keytool'
       with:
-        # dry-run: ${{ github.event.inputs.dry-run }}
         network: ${{ github.event.inputs.network }}
         pk: ${{secrets.TRUST_FRAMEWORK_PRODUCTS_PRIVATE_KEY}}
+        bak_pk: ${{secrets.TRUST_FRAMEWORK_PRODUCTS_PRIVATE_KEY_BACKUP}} #only for testing, TODO: remove
         faucet: ${{ github.event.inputs.faucet }}
 
     - name: Import GPG key
@@ -54,6 +59,7 @@ jobs:
         git_tag_gpgsign: true
 
     - name: Run script
+      if: ${{ github.event.inputs.dry-run == 'false' }}
       run: |
         source ${{ github.event.inputs.script-path}}
 

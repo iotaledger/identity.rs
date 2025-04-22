@@ -2,13 +2,13 @@ name: 'load-keytool'
 description: 'Load Keytool'
 inputs:
   network:
-    description: 'network to deploy to'
+    description: 'Network to configure'
     required: true
   pk:
-    description: 'private key to load into Keytool'
+    description: 'Private key to load into Keytool'
     required: true
   faucet:
-    description: "whether to faucet"
+    description: "Whether to faucet"
     required: true
     
 runs:
