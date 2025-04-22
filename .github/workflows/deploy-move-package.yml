@@ -28,10 +28,17 @@ jobs:
       with:
         ref: ${{ github.event.inputs.branch }}
 
-    - name: Setup iota CLI
-      uses: './.github/actions/publish/publish-move'
+    - name: Start iota sandbox
+      uses: './.github/actions/iota-rebase-sandbox/setup'
       with:
-        dry-run: ${{ github.event.inputs.dry-run }}
+        platform: 'linux'
+        iota-version: ${{ github.event.inputs.network }}
+        start-sandbox: false
+
+    - name: Setup Keytool
+      uses: './.github/actions/iota-rebase-sandbox/load-keytool'
+      with:
+        # dry-run: ${{ github.event.inputs.dry-run }}
         network: ${{ github.event.inputs.network }}
         pk: ${{secrets.TRUST_FRAMEWORK_PRODUCTS_PRIVATE_KEY}}
         faucet: ${{ github.event.inputs.faucet }}
@@ -64,12 +71,10 @@ jobs:
       with:
         committer: GitHub <noreply@github.com>
         author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-        branch: hotfix/${{ env.HOTFIX_TAG }} 
+        branch: chore/deploy-${{ github.event.inputs.network }} 
         delete-branch: true
-        title: 'Hotfix ${{ env.HOTFIX_TAG }}'
+        title: 'Deploy ${{ github.event.inputs.network }}'
         body: |
-          This automatically generated PR contains changes for the `${{ env.HOTFIX_TAG }}` hotfix.
-          ${{inputs.pr-body-text}}
-          If you discover any mistakes fix them with commits on this branch. If you want to abort the hotfix simply close the PR.
+          TBD
         labels: |
           No changelog

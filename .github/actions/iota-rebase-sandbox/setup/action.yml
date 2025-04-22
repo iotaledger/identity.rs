@@ -14,6 +14,10 @@ inputs:
     description: "IOTA version to pull from GitHub releases, recognizes well known networks (mainnet, testnet, devnet), defaults to 'testnet'"
     required: false
     default: ""
+  start-sandbox:
+    description: "Wether to start the sandbox or just install"
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -84,6 +88,7 @@ runs:
     - name: Start the Network
       shell: bash
       working-directory: iota
+      if: ${{ inputs.start-sandbox == 'true' }}
       run: |
         # Clear previous configuration
         rm -rf ~/.iota || true 
