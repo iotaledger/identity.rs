@@ -24,7 +24,7 @@ on:
 jobs:
   deploy-move-package:
     environment: release
-    name: TBD
+    name: Deploy Move package and create PR to bump references.
     runs-on: ubuntu-latest
     steps:
 
