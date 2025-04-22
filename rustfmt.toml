@@ -6,3 +6,6 @@ normalize_doc_attributes = false
 tab_spaces = 2
 wrap_comments = true
 imports_granularity = "Item"
+ignore = [
+  "identity_iota_interaction/src/sdk_types",
+]
