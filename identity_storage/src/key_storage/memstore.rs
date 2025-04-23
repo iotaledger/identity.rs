@@ -335,7 +335,7 @@ mod pqc_liboqs {
   use crate::key_storage::jwk_storage_pqc::JwkStoragePQ;
   use crate::JwkGenOutput;
 
-  fn check_pq_alg_compatibility(alg: JwsAlgorithm) -> KeyStorageResult<Algorithm> {
+  fn check_pq_alg_compatibility(alg: &JwsAlgorithm) -> KeyStorageResult<Algorithm> {
     match alg {
       JwsAlgorithm::ML_DSA_44 => Ok(Algorithm::MlDsa44),
       JwsAlgorithm::ML_DSA_65 => Ok(Algorithm::MlDsa65),
@@ -357,10 +357,10 @@ mod pqc_liboqs {
       JwsAlgorithm::FALCON512 => Ok(Algorithm::Falcon512),
       JwsAlgorithm::FALCON1024 => Ok(Algorithm::Falcon1024),
       other => {
-        return Err(
+        Err(
           KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
             .with_custom_message(format!("{other} is not supported")),
-        );
+        )
       }
     }
   }
@@ -378,17 +378,17 @@ mod pqc_liboqs {
         );
       }
 
-      let oqs_alg = check_pq_alg_compatibility(alg)?;
+      let oqs_alg = check_pq_alg_compatibility(&alg)?;
       oqs::init();
 
        let scheme = Sig::new(oqs_alg).map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("signature scheme init failed"))
+          .with_custom_message("signature scheme init failed".to_string())
           .with_source(err)
       })?;
       let (pk, sk) = scheme.keypair().map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("keypair generation failed!"))
+          .with_custom_message("keypair generation failed!".to_string())
           .with_source(err)
       })?;
 
@@ -458,7 +458,7 @@ mod pqc_liboqs {
           JwsAlgorithm::from_str(alg_str).map_err(|_| KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
         })?;
 
-      let oqs_alg = check_pq_alg_compatibility(alg)?;
+      let oqs_alg = check_pq_alg_compatibility(&alg)?;
 
       // Check that `kty` is `AKP`.
       match alg {
@@ -515,13 +515,13 @@ mod pqc_liboqs {
 
         let scheme = Sig::new(oqs_alg).map_err(|err| {
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-            .with_custom_message(format!("signature scheme init failed"))
+            .with_custom_message("signature scheme init failed".to_string())
             .with_source(err)
         })?;
   
         let secret_key = scheme.secret_key_from_bytes(&sk_bytes).ok_or(
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-            .with_custom_message(format!("invalid private key")),
+            .with_custom_message("invalid private key".to_string()),
         )?;
 
         let signature: oqs::sig::Signature;
@@ -530,18 +530,18 @@ mod pqc_liboqs {
           if !scheme.has_ctx_str_support() {
             return Err(
               KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-                .with_custom_message(format!("signature with ctx is not supported with this algorithm"))
+                .with_custom_message("signature with ctx is not supported with this algorithm".to_string())
             );
           }
-          signature = scheme.sign_with_ctx_str(&data, ctx, secret_key).map_err(|err| {
+          signature = scheme.sign_with_ctx_str(data, ctx, secret_key).map_err(|err| {
             KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-              .with_custom_message(format!("signature computation failed"))
+              .with_custom_message("signature computation failed".to_string())
               .with_source(err)
           })?;
         } else {
-          signature = scheme.sign(&data, secret_key).map_err(|err| {
+          signature = scheme.sign(data, secret_key).map_err(|err| {
             KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-              .with_custom_message(format!("signature computation failed"))
+              .with_custom_message("signature computation failed".to_string())
               .with_source(err)
           })?;
         }

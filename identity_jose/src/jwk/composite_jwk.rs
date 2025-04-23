@@ -67,7 +67,6 @@ impl FromStr for CompositeAlgId {
     match string {
       "id-MLDSA44-Ed25519" => Ok(Self::IdMldsa44Ed25519),
       "id-MLDSA65-Ed25519" => Ok(Self::IdMldsa65Ed25519),
-      #[cfg(not(feature = "custom_alg"))]
       &_ => Err(crate::error::Error::JwsAlgorithmParsingError),
     }
   }

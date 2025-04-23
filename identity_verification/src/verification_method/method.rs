@@ -257,7 +257,7 @@ impl VerificationMethod {
 
     let fragment: Cow<'_, str> = {
       let given_fragment: &str = fragment
-        .or_else(|| composite_fragment.as_deref())
+        .or(composite_fragment.as_deref())
         .ok_or(Error::InvalidMethod(
           "an explicit fragment or kid is required",
         ))?;

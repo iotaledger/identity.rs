@@ -24,6 +24,12 @@ pub struct JwkParamsAKP {
   pub private: Option<String>, // Private Key
 }
 
+impl Default for JwkParamsAKP {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JwkParamsAKP {
   /// Creates new JWK AKP Params.
   pub const fn new() -> Self {

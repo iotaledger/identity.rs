@@ -240,7 +240,7 @@ impl JwkDocumentExtHybrid for CoreDocument {
     let header: JwsHeader = {
       let mut header = JwsHeader::new();
 
-      header.set_alg(alg);
+      header.set_alg(alg.clone());
       if let Some(custom) = &options.custom_header_parameters {
         header.set_custom(custom.clone())
       }

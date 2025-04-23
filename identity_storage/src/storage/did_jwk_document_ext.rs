@@ -100,9 +100,9 @@ impl DidJwkDocumentExt for CoreDocument {
     .map_err(Error::VerificationMethodConstructionError)?;
 
     let method_digest = MethodDigest::new(verification_method)
-    .map_err(|err| Error::MethodDigestConstructionError(err))?;
+    .map_err(Error::MethodDigestConstructionError)?;
 
-    I::insert_key_id(&storage.key_id_storage(), method_digest, key_id.clone())
+    I::insert_key_id(storage.key_id_storage(), method_digest, key_id.clone())
     .await
     .map_err(Error::KeyIdStorageError)?;
 
@@ -142,9 +142,9 @@ impl DidJwkDocumentExt for CoreDocument {
     .map_err(Error::VerificationMethodConstructionError)?;
 
     let method_digest = MethodDigest::new(verification_method)
-    .map_err(|err| Error::MethodDigestConstructionError(err))?;
+    .map_err(Error::MethodDigestConstructionError)?;
 
-    I::insert_key_id(&storage.key_id_storage(), method_digest, key_id.clone())
+    I::insert_key_id(storage.key_id_storage(), method_digest, key_id.clone())
     .await
     .map_err(Error::KeyIdStorageError)?;
 
@@ -183,9 +183,9 @@ impl DidJwkDocumentExt for CoreDocument {
     .map_err(Error::VerificationMethodConstructionError)?;
 
     let method_digest = MethodDigest::new(verification_method)
-    .map_err(|err| Error::MethodDigestConstructionError(err))?;
+    .map_err(Error::MethodDigestConstructionError)?;
 
-    I::insert_key_id(&storage.key_id_storage(), method_digest, key_id.clone())
+    I::insert_key_id(storage.key_id_storage(), method_digest, key_id.clone())
     .await
     .map_err(Error::KeyIdStorageError)?;
 
@@ -250,9 +250,9 @@ impl DidJwkDocumentExt for CoreDocument {
     .map_err(Error::VerificationMethodConstructionError)?;
 
     let method_digest = MethodDigest::new(verification_method)
-    .map_err(|err| Error::MethodDigestConstructionError(err))?;
+    .map_err(Error::MethodDigestConstructionError)?;
 
-    I::insert_key_id(&storage.key_id_storage(), method_digest, key_id.clone())
+    I::insert_key_id(storage.key_id_storage(), method_digest, key_id.clone())
     .await
     .map_err(Error::KeyIdStorageError)?;
 
