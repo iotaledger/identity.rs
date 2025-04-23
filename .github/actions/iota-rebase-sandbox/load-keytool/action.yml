@@ -21,6 +21,29 @@ runs:
       shell: bash
       run: |
         iota keytool import $(iota keytool convert ${{inputs.pk}} --json | jq -r '.bech32WithFlag') ed25519 --alias deploy-key
+        
+        case ${{inputs.network}} in
+          devnet)
+            RPC=https://api.devnet.iota.cafe
+            ;;
+
+          testnet)
+            RPC=https://api.testnet.iota.cafe
+            ;;
+
+          mainnet)
+            RPC=
+            echo "network ${{inputs.network}} not configured"
+            exit 1
+            ;;
+
+          *)
+            echo "unknown network ${{inputs.network}}"
+            exit 1
+            ;;
+        esac
+
+        iota client new-env --alias ${{inputs.network}} --rpc $RPC
         iota client switch --env ${{inputs.network}}
         iota client switch --address deploy-key
 
