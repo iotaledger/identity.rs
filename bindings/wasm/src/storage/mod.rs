@@ -13,6 +13,8 @@ mod key_id_storage;
 mod method_digest;
 mod signature_options;
 mod wasm_storage;
+mod wasm_storage_signer;
+mod wasm_transaction_signer;
 mod jwk_storage_pqc;
 
 pub use jpt_timeframe_revocation_ext::*;
