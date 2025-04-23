@@ -285,7 +285,7 @@ impl<DOC: From<CoreDocument> + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   }
 }
 
-#[cfg(all(feature = "iota", not(target_arch = "wasm32")))]
+#[cfg(feature = "iota")]
 mod iota_handler {
   use crate::ErrorCause;
 

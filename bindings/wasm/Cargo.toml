@@ -36,6 +36,22 @@ wasm-bindgen = { version = "0.2.100", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 zkryptium = "0.4.0"
 
+[dependencies.identity_iota]
+path = "../../identity_iota"
+default-features = false
+features = [
+  "client",
+  "revocation-bitmap",
+  "resolver",
+  "domain-linkage",
+  "sd-jwt",
+  "status-list-2021",
+  "jpt-bbs-plus",
+  "sd-jwt-vc",
+  "pqc",
+  "hybrid"
+]
+
 [dev-dependencies]
 rand = "0.8.5"
 

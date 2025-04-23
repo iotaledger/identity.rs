@@ -179,17 +179,6 @@ impl WasmJwk {
     }
   }
 
-  /// If this JWK is of kty AKP, returns those parameters.
-  #[wasm_bindgen(js_name = paramsAkp)]
-  pub fn params_akp(&self) -> crate::error::Result<Option<WasmJwkParamsAkp>> {
-    if let JwkParams::Akp(params_akp) = self.0.params() {
-      // WARNING: this does not validate the return type. Check carefully.
-      Ok(Some(JsValue::from_serde(params_akp).wasm_result()?.unchecked_into()))
-    } else {
-      Ok(None)
-    }
-  }
-
   /// Returns a clone of the {@link Jwk} with _all_ private key components unset.
   /// Nothing is returned when `kty = oct` as this key type is not considered public by this library.
   #[wasm_bindgen(js_name = toPublic)]

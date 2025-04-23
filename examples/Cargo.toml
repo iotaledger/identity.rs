@@ -17,26 +17,9 @@ primitive-types = "0.12.1"
 rand = "0.8.5"
 sd-jwt-payload = { version = "0.2.1", default-features = false, features = ["sha"] }
 serde_json = { version = "1.0", default-features = false }
-tokio = { version = "1.43", default-features = false, features = ["rt", "macros"] }
+tokio = { version = "1.29", default-features = false, features = ["rt"] }
 identity_pqc_verifier = { path = "../identity_pqc_verifier", default-features = true }
 serde.workspace = true
-
-[dependencies.identity_iota]
-path = "../identity_iota"
-default-features = false
-features = [
-  "domain-linkage",
-  "jpt-bbs-plus",
-  "iota-client",
-  "send-sync-storage",
-  "memstore",
-  "resolver",
-  "revocation-bitmap",
-  "sd-jwt",
-  "status-list-2021",
-  "keytool",
-  "hybrid-liboqs"
-]
 
 [lib]
 path = "utils/utils.rs"
@@ -130,13 +113,5 @@ path = "1_advanced/12_pq.rs"
 name = "12_pq"
 
 [[example]]
-path = "1_advanced/13_iota_keytool_integration.rs"
-name = "13_iota_keytool_integration"
-
-[[example]]
-path = "1_advanced/13_pq.rs"
-name = "13_pq"
-
-[[example]]
-path = "1_advanced/14_hybrid.rs"
-name = "14_hybrid"
+path = "1_advanced/13_hybrid.rs"
+name = "13_hybrid"
