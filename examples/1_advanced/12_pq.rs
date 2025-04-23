@@ -64,7 +64,7 @@ async fn create_did(
   alg: JwsAlgorithm,
 ) -> anyhow::Result<(Address, IotaDocument, String)> {
   // Get an address with funds for testing.
-  let address: Address = get_address_with_funds(&client, &secret_manager, FAUCET_ENDPOINT).await?;
+  let address: Address = get_address_with_funds(client, secret_manager, FAUCET_ENDPOINT).await?;
 
   // Get the Bech32 human-readable part (HRP) of the network.
   let network_name: NetworkName = client.network_name().await?;
@@ -75,7 +75,7 @@ async fn create_did(
 
   // New Verification Method containing a PQC key
   let fragment = document
-    .generate_method_pqc(&storage, key_type, alg, None, MethodScope::VerificationMethod)
+    .generate_method_pqc(storage, key_type, alg, None, MethodScope::VerificationMethod)
     .await?;
 
   // Construct an Alias Output containing the DID document, with the wallet address
@@ -83,7 +83,7 @@ async fn create_did(
   let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
 
   // Publish the Alias Output and get the published DID document.
-  let document: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
+  let document: IotaDocument = client.publish_did_output(secret_manager, alias_output).await?;
   println!("Published DID document: {document:#}");
 
   Ok((address, document, fragment))
@@ -102,7 +102,7 @@ async fn main() -> anyhow::Result<()> {
     .finish()
     .await?;
 
-  let mut secret_manager_issuer = SecretManager::Stronghold(
+  let secret_manager_issuer = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password(Password::from("secure_password_1".to_owned()))
       .build(random_stronghold_path())?,
@@ -112,14 +112,14 @@ async fn main() -> anyhow::Result<()> {
 
   let (_, issuer_document, fragment_issuer): (Address, IotaDocument, String) = create_did(
     &client,
-    &mut secret_manager_issuer,
+    &secret_manager_issuer,
     &storage_issuer,
     JwkMemStore::PQ_KEY_TYPE,
     JwsAlgorithm::ML_DSA_87,
   )
   .await?;
 
-  let mut secret_manager_holder = SecretManager::Stronghold(
+  let secret_manager_holder = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password(Password::from("secure_password_2".to_owned()))
       .build(random_stronghold_path())?,
@@ -129,7 +129,7 @@ async fn main() -> anyhow::Result<()> {
 
   let (_, holder_document, fragment_holder): (Address, IotaDocument, String) = create_did(
     &client,
-    &mut secret_manager_holder,
+    &secret_manager_holder,
     &storage_holder,
     JwkMemStore::PQ_KEY_TYPE,
     JwsAlgorithm::SLH_DSA_SHA2_128s,
