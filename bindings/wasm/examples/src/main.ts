@@ -14,8 +14,8 @@ import { createVP } from "./0_basic/6_create_vp";
 import { revokeVC } from "./0_basic/7_revoke_vc";
 import { didControlsDid } from "./1_advanced/0_did_controls_did";
 import { sdJwtVc } from "./1_advanced/10_sd_jwt_vc";
-import { pq } from "./1_advanced/11_pq";
-import { hybrid } from "./1_advanced/12_hybrid";
+import { pq } from "./1_advanced/pq";
+import { hybrid } from "./1_advanced/hybrid";
 import { didIssuesNft } from "./1_advanced/1_did_issues_nft";
 import { nftOwnsDid } from "./1_advanced/2_nft_owns_did";
 import { didIssuesTokens } from "./1_advanced/3_did_issues_tokens";
@@ -72,9 +72,9 @@ async function main() {
             return await zkp_revocation();
         case "10_sd_jwt_vc":
             return await sdJwtVc();
-        case "11_pq":
+        case "pq":
             return await pq();
-        case "12_hybrid":
+        case "hybrid":
             return await hybrid();
         default:
             throw "Unknown example name: '" + argument + "'";

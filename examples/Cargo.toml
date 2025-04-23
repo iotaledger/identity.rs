@@ -109,9 +109,9 @@ path = "1_advanced/11_linked_verifiable_presentation.rs"
 name = "11_linked_verifiable_presentation"
 
 [[example]]
-path = "1_advanced/12_pq.rs"
-name = "12_pq"
+path = "1_advanced/pq.rs"
+name = "pq"
 
 [[example]]
-path = "1_advanced/13_hybrid.rs"
-name = "13_hybrid"
+path = "1_advanced/hybrid.rs"
+name = "hybrid"
