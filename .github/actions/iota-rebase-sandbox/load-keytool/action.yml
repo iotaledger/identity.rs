@@ -47,6 +47,6 @@ runs:
         if [ ${{inputs.faucet}} == "true" ]; then
           iota client faucet
           # wait up tp 5min for Gas to be available
-          timeout 5m bash -c "until [ $(iota client gas --json | jq -r '.[].nanosBalance') -gt 0 ]; do sleep 10; done"
+          timeout 5m bash -c "until [ \"$(iota client gas --json | jq -r '.[].nanosBalance')\" -gt \"0\" ]; do sleep 10; done"
         fi
 
