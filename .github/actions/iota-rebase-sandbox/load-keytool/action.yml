@@ -7,9 +7,6 @@ inputs:
   pk:
     description: 'Private key to load into Keytool'
     required: true
-  bak-pk:
-    description: 'Backup Private key to load into Keytool'
-    required: true
   faucet:
     description: "Whether to faucet"
     required: true
@@ -47,14 +44,9 @@ runs:
         iota client switch --env ${{inputs.network}}
         iota client switch --address deploy-key
 
-        # test backup key
-        iota keytool import $(iota keytool convert ${{inputs.bak-pk}} --json | jq -r '.bech32WithFlag') ed25519 --alias backup-key
-        iota keytool list --json | jq -r '.[] | select(.alias=="deploy-key")'
-        iota keytool list --json | jq -r '.[] | select(.alias=="backup-key")'
-
         if [ ${{inputs.faucet}} == "true" ]; then
           iota client faucet
           # wait up tp 5min for Gas to be available
-          timeout 5m bash -c "until (( $(iota client gas --json | jq -r '.[].nanosBalance') > 0)); do sleep 10; done"
+          timeout 5m bash -c "until [ $(iota client gas --json | jq -r '.[].nanosBalance') -gt 0 ]; do sleep 10; done"
         fi
 

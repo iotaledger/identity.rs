@@ -7,7 +7,7 @@ on:
         description: 'Name of branch to checkout'
         required: true
       network:
-        description: 'Network to deploy to'
+        description: 'Network to deploy to (devnet, testnet, mainnet)'
         required: true
       faucet:
         description: 'Whether to faucet'
@@ -47,7 +47,6 @@ jobs:
       with:
         network: ${{ github.event.inputs.network }}
         pk: ${{secrets.TRUST_FRAMEWORK_PRODUCTS_PRIVATE_KEY}}
-        bak-pk: ${{secrets.TRUST_FRAMEWORK_PRODUCTS_PRIVATE_KEY_BACKUP}} #only for testing, TODO: remove
         faucet: ${{ github.event.inputs.faucet }}
 
     - name: Import GPG key
