@@ -44,6 +44,8 @@ runs:
         iota client switch --env ${{inputs.network}}
         iota client switch --address deploy-key
 
+        iota keytool list
+
         if [ ${{inputs.faucet}} == "true" ]; then
           iota client faucet
           # wait up tp 5min for Gas to be available
