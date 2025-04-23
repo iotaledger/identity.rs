@@ -4,6 +4,7 @@
 use crate::common;
 use crate::common::get_funded_test_client;
 use crate::common::get_key_data;
+use crate::common::TestClient;
 use crate::common::TEST_COIN_TYPE;
 use crate::common::TEST_GAS_BUDGET;
 use identity_iota_core::rebased::client::get_object_id_from_did;
@@ -493,6 +494,37 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
   // Resolution of the DID document through its DID must fail.
   let err = client.resolve_did(&did).await.unwrap_err();
   assert!(matches!(err, identity_iota_core::rebased::Error::DIDResolutionError(_)));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn controller_delegation_works() -> anyhow::Result<()> {
+  let test_client = TestClient::new().await?;
+  let alice_client = test_client.new_user_client().await?;
+  let bob_client = test_client.new_user_client().await?;
+
+  // We create an identity with two controllers, one can delegate the other cannot.
+  let identity = alice_client
+    .create_identity(IotaDocument::new(test_client.network()))
+    .controller(alice_client.sender_address(), 1)
+    .controller_with_delegation(bob_client.sender_address(), 1)
+    .threshold(2)
+    .finish()
+    .build_and_execute(&alice_client)
+    .await?
+    .output;
+
+  let alice_token = identity
+    .get_controller_token(&alice_client)
+    .await?
+    .expect("alice is a controller");
+  assert!(!alice_token.as_controller().unwrap().can_delegate());
+  let bob_token = identity
+    .get_controller_token(&bob_client)
+    .await?
+    .expect("bob is a controller");
+  assert!(bob_token.as_controller().unwrap().can_delegate());
 
   Ok(())
 }

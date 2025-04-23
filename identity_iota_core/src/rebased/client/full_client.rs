@@ -271,9 +271,13 @@ impl PublishDidDocument {
     let did_doc = StateMetadataDocument::from(self.did_document.clone())
       .pack(StateMetadataEncoding::Json)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
-    let programmable_tx_bcs =
-      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), [(self.controller, 1)], 1, client.package_id())
-        .await?;
+    let programmable_tx_bcs = IdentityMoveCallsAdapter::new_with_controllers(
+      Some(&did_doc),
+      [(self.controller, 1, false)],
+      1,
+      client.package_id(),
+    )
+    .await?;
     Ok(bcs::from_bytes(&programmable_tx_bcs)?)
   }
 }

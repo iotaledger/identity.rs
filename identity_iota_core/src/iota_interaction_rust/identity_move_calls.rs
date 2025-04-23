@@ -19,7 +19,6 @@ use identity_iota_interaction::types::programmable_transaction_builder::Programm
 use identity_iota_interaction::types::transaction::Argument;
 use identity_iota_interaction::types::transaction::ObjectArg;
 use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use identity_iota_interaction::BorrowIntentFnInternalT;
 use identity_iota_interaction::ControllerIntentFnInternalT;
 use identity_iota_interaction::IdentityMoveCalls;
@@ -611,30 +610,37 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>
   where
-    C: IntoIterator<Item = (IotaAddress, u64)> + OptionalSend,
+    C: IntoIterator<Item = (IotaAddress, u64, bool)> + OptionalSend,
   {
+    use itertools::Either;
+    use itertools::Itertools as _;
+
     let mut ptb = PrgrTxBuilder::new();
 
-    let controllers = {
-      let (ids, vps): (Vec<IotaAddress>, Vec<u64>) = controllers.into_iter().unzip();
+    let (controllers_that_can_delegate, controllers): (Vec<_>, Vec<_>) =
+      controllers.into_iter().partition_map(|(address, vp, can_delegate)| {
+        if can_delegate {
+          Either::Left((address, vp))
+        } else {
+          Either::Right((address, vp))
+        }
+      });
+
+    let mut make_vec_map = |controllers: Vec<(IotaAddress, u64)>| -> Result<Argument, Error> {
+      let (ids, vps): (Vec<_>, Vec<_>) = controllers.into_iter().unzip();
       let ids = ptb.pure(ids).map_err(|e| Error::InvalidArgument(e.to_string()))?;
       let vps = ptb.pure(vps).map_err(|e| Error::InvalidArgument(e.to_string()))?;
-      ptb.programmable_move_call(
+      Ok(ptb.programmable_move_call(
         package_id,
         ident_str!("utils").into(),
         ident_str!("vec_map_from_keys_values").into(),
         vec![TypeTag::Address, TypeTag::U64],
         vec![ids, vps],
-      )
+      ))
     };
 
-    let controllers_that_can_delegate = ptb.programmable_move_call(
-      IOTA_FRAMEWORK_PACKAGE_ID,
-      ident_str!("vec_map").into(),
-      ident_str!("empty").into(),
-      vec![TypeTag::Address, TypeTag::U64],
-      vec![],
-    );
+    let controllers = make_vec_map(controllers)?;
+    let controllers_that_can_delegate = make_vec_map(controllers_that_can_delegate)?;
     let doc_arg = ptb.pure(did_doc).map_err(|e| Error::InvalidArgument(e.to_string()))?;
     let threshold_arg = ptb.pure(threshold).map_err(|e| Error::InvalidArgument(e.to_string()))?;
     let clock = utils::get_clock_ref(&mut ptb);

@@ -181,7 +181,7 @@ pub trait IdentityMoveCalls {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-  async fn new_with_controllers<C: IntoIterator<Item = (IotaAddress, u64)> + OptionalSend>(
+  async fn new_with_controllers<C: IntoIterator<Item = (IotaAddress, u64, bool)> + OptionalSend>(
     did_doc: Option<&[u8]>,
     controllers: C,
     threshold: u64,
