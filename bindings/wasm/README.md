@@ -10,6 +10,10 @@ Here is an overview of the existing artifacts:
 * `identity_wasm`<br>
   Exports the IdentityClient to TypeScript using wasm-bindgen generated wasm bindings
 
+* `iota_interaction_ts`<br>
+  Imports TypeScript IOTA Client SDK types using wasm-bindgen generated wasm bindings
+  and implements identity_iota_interaction traits (among others, IotaClient and MoveCall traits) for wasm32 platforms.
+
 ## Building an Artifact
 
 For build instructions please have a look into the artifact README file.

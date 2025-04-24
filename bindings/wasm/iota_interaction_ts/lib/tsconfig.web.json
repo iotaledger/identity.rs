@@ -1,0 +1,19 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "baseUrl": "./",
+    "paths": {
+      "../lib": [
+        "."
+      ],
+      "~iota_interaction_ts": [
+        "../web/iota_interaction_ts",
+        "./iota_interaction_ts.js"
+      ]
+    },
+    "outDir": "../web",
+    "declarationDir": "../web",
+    "module": "ES2020"
+  }
+}
