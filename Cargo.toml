@@ -23,14 +23,18 @@ members = [
   "identity_ecdsa_verifier",
   "identity_eddsa_verifier",
   "examples",
-  "identity_iota_interaction",
-  "bindings/wasm/iota_interaction_ts",
+  "identity_iota_move_calls",
+  "bindings/wasm/iota_move_calls_ts",
 ]
 
 exclude = ["bindings/wasm/identity_wasm", "bindings/grpc"]
 
 [workspace.dependencies]
 bls12_381_plus = { version = "0.8.17" }
+#iota_interaction = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction" }
+iota_interaction = { path = "../product-core/iota_interaction" }
+#iota_interaction_rust = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction_rust" }
+iota_interaction_rust = { path = "../product-core/iota_interaction_rust" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 serde_json = { version = "1.0", default-features = false }
 strum = { version = "0.25", default-features = false, features = ["std", "derive"] }

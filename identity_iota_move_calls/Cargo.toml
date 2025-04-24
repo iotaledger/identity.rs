@@ -1,5 +1,5 @@
 [package]
-name = "identity_iota_interaction"
+name = "identity_iota_move_calls"
 version = "1.6.0-alpha"
 authors.workspace = true
 edition.workspace = true
