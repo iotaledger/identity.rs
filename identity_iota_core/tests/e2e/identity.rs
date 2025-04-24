@@ -9,6 +9,7 @@ use crate::common::TEST_COIN_TYPE;
 use crate::common::TEST_GAS_BUDGET;
 use identity_iota_core::rebased::client::get_object_id_from_did;
 use identity_iota_core::rebased::migration::has_previous_version;
+use identity_iota_core::rebased::migration::ControllerToken;
 use identity_iota_core::rebased::migration::Identity;
 use identity_iota_core::rebased::proposals::ProposalResult;
 use identity_iota_core::IotaDID;
@@ -16,6 +17,7 @@ use identity_iota_core::IotaDocument;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use iota_sdk::rpc_types::IotaObjectData;
+use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::SequenceNumber;
 use iota_sdk::types::object::Owner;
@@ -505,7 +507,7 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
   let bob_client = test_client.new_user_client().await?;
 
   // We create an identity with two controllers, one can delegate the other cannot.
-  let identity = alice_client
+  let mut identity = alice_client
     .create_identity(IotaDocument::new(test_client.network()))
     .controller(alice_client.sender_address(), 1)
     .controller_with_delegation(bob_client.sender_address(), 1)
@@ -525,6 +527,40 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
     .await?
     .expect("bob is a controller");
   assert!(bob_token.as_controller().unwrap().can_delegate());
+
+  // Bob delegates its token with full-permissions to Alice.
+  let bobs_delegation_token = bob_token
+    .as_controller()
+    .expect("bob's token is a controller cap")
+    .delegate(alice_client.sender_address(), None)
+    .expect("bob can delegate its token")
+    .build_and_execute(&bob_client)
+    .await?
+    .output;
+  assert!(
+    bobs_delegation_token.controller() == bob_token.id() && bobs_delegation_token.controller_of() == identity.id()
+  );
+  // Ensure Alice is the owner of bob's delegation token.
+  let delegation_token_owner = test_client
+    .get_object_ref_by_id(bobs_delegation_token.id())
+    .await?
+    .expect("delegation token exists")
+    .owner;
+  assert_eq!(
+    delegation_token_owner.get_owner_address()?,
+    alice_client.sender_address()
+  );
+
+  // Alice can interact with the Identity in Bob's stead.
+  let bobs_delegation_token = ControllerToken::Delegate(bobs_delegation_token);
+  let res = identity
+    .update_did_document(IotaDocument::new(test_client.network()), &bobs_delegation_token)
+    .finish(&alice_client)
+    .await?
+    .build_and_execute(&alice_client)
+    .await?
+    .response;
+  assert!(res.effects.unwrap().status().is_ok());
 
   Ok(())
 }

@@ -291,7 +291,7 @@ where
 pub struct ApproveProposal<'p, 'i, A> {
   proposal: &'p mut Proposal<A>,
   identity: &'i OnChainIdentity,
-  controller_token: ObjectID,
+  controller_token: ControllerToken,
   cached_ptb: OnceCell<ProgrammableTransaction>,
 }
 
@@ -313,7 +313,7 @@ impl<'p, 'i, A> ApproveProposal<'p, 'i, A> {
     Ok(Self {
       proposal,
       identity,
-      controller_token: controller_token.id(),
+      controller_token: controller_token.clone(),
       cached_ptb: OnceCell::new(),
     })
   }
@@ -330,13 +330,10 @@ impl<A: MoveType> ApproveProposal<'_, '_, A> {
       .get_object_ref_by_id(identity.id())
       .await?
       .ok_or_else(|| Error::Identity(format!("identity {} doesn't exist", identity.id())))?;
-    let controller_cap = client
-      .get_object_ref_by_id(*controller_token)
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token)))?;
+    let controller_cap = controller_token.controller_ref(client).await?;
     let tx = <IdentityMoveCallsAdapter as IdentityMoveCalls>::approve_proposal::<A>(
       identity_ref.clone(),
-      controller_cap.reference.to_object_ref(),
+      controller_cap,
       proposal.id(),
       client.package_id(),
     )?;
@@ -375,7 +372,7 @@ where
     if proposal_was_updated {
       let vp = self
         .identity
-        .controller_voting_power(self.controller_token)
+        .controller_voting_power(self.controller_token.controller_id())
         .expect("is identity's controller");
       *self.proposal.votes_mut() = self.proposal.votes() + vp;
       (Ok(()), effects)
