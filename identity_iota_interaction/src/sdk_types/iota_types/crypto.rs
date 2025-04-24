@@ -31,8 +31,6 @@ use super::{
     base_types::IotaAddress, error::{IotaError, IotaResult}, iota_serde::Readable
 };
 
-const IOTA_PRIV_KEY_PREFIX: &str = "iotaprivkey";
-
 // Authority Objects
 pub type AuthorityKeyPair = BLS12381KeyPair;
 pub type AuthorityPublicKey = BLS12381PublicKey;
@@ -51,6 +49,9 @@ pub type NetworkPublicKey = Ed25519PublicKey;
 pub type NetworkPrivateKey = Ed25519PrivateKey;
 
 pub type DefaultHash = Blake2b256;
+
+pub const DEFAULT_EPOCH_ID: EpochId = 0;
+const IOTA_PRIV_KEY_PREFIX: &str = "iotaprivkey";
 
 // Account Keys
 //
