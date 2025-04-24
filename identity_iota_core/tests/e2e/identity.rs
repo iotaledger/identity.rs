@@ -12,6 +12,7 @@ use identity_iota_core::rebased::migration::Identity;
 use identity_iota_core::rebased::proposals::ProposalResult;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
+use identity_jose::jwk::ToJwk as _;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use iota_sdk::rpc_types::IotaObjectData;
@@ -22,6 +23,7 @@ use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use move_core_types::ident_str;
+use secret_storage::Signer as _;
 
 #[tokio::test]
 async fn identity_deactivation_works() -> anyhow::Result<()> {
@@ -71,7 +73,7 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
     doc.insert_method(
       VerificationMethod::new_from_jwk(
         did,
-        identity_client.signer().public_key().clone(),
+        identity_client.signer().public_key().await?.to_jwk()?,
         Some(identity_client.signer().key_id().as_str()),
       )?,
       MethodScope::VerificationMethod,
@@ -115,7 +117,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     doc.insert_method(
       VerificationMethod::new_from_jwk(
         did,
-        alice_client.signer().public_key().clone(),
+        alice_client.signer().public_key().await?.to_jwk()?,
         Some(alice_client.signer().key_id().as_str()),
       )?,
       MethodScope::VerificationMethod,

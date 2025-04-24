@@ -60,6 +60,7 @@ iota-document = ["dep:identity_iota_core"]
 # enables support to sign via storage
 storage-signer = [
   "identity_iota_core?/iota-client",
+  "identity_verification/jwk-conversion",
   "dep:secret-storage",
   "dep:identity_iota_interaction",
   "dep:fastcrypto",
@@ -76,6 +77,7 @@ jpt-bbs-plus = [
 keytool = [
   "dep:identity_iota_interaction",
   "identity_iota_interaction/keytool",
+  "identity_verification/jwk-conversion",
   "k256",
   "p256",
   "dep:fastcrypto",
