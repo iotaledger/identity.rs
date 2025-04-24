@@ -264,7 +264,7 @@ impl<V: JwsVerifier> SdJwtCredentialValidator<V> {
 
     if let Some(aud) = &options.aud {
       if *aud != kb_jwt_claims.aud {
-        return Err(KeyBindingJwtError::AudianceMismatch);
+        return Err(KeyBindingJwtError::AudienceMismatch);
       }
     }
 

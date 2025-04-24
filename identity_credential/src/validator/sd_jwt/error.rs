@@ -28,8 +28,8 @@ pub enum KeyBindingJwtError {
   InvalidNonce,
 
   /// Invalid `aud` value.
-  #[error("provided audiance value does not match the KB-JWT `aud` claim")]
-  AudianceMismatch,
+  #[error("provided audience value does not match the KB-JWT `aud` claim")]
+  AudienceMismatch,
 
   /// Issuance date validation error.
   #[error("KB-JWT `iat` value is invalid, {0}")]

@@ -10,9 +10,9 @@ use identity_iota_interaction::shared_crypto::intent::Intent;
 use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::crypto::Signature;
 use identity_iota_interaction::types::crypto::SignatureScheme as IotaSignatureScheme;
+use identity_iota_interaction::types::transaction::TransactionData;
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::OptionalSync;
-use identity_iota_interaction::TransactionDataBcs;
 use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkParams;
 use identity_verification::jwk::JwkParamsEc;
@@ -124,13 +124,15 @@ where
       _ => Err(SecretStorageError::Other(anyhow!("unsupported key"))),
     }
   }
-  async fn sign(&self, data: &TransactionDataBcs) -> Result<Signature, SecretStorageError> {
+  async fn sign(&self, data: &TransactionData) -> Result<Signature, SecretStorageError> {
     use fastcrypto::hash::HashFunction;
 
+    let tx_data_bcs =
+      bcs::to_bytes(data).map_err(|e| SecretStorageError::Other(anyhow!("bcs deserialization failed: {e}")))?;
     let intent_bytes = Intent::iota_transaction().to_bytes();
     let mut hasher = Blake2b256::default();
     hasher.update(intent_bytes);
-    hasher.update(data);
+    hasher.update(&tx_data_bcs);
     let digest = hasher.finalize().digest;
 
     let signature_bytes = self

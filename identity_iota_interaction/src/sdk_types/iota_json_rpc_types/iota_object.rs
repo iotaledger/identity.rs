@@ -7,12 +7,11 @@ use std::string::String;
 use std::fmt::{self, Display, Formatter, Write};
 use std::cmp::Ordering;
 
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_with::{DisplayFromStr, serde_as};
 use serde_json::Value;
-
-use fastcrypto::encoding::{Base64};
 
 use anyhow::anyhow;
 
@@ -29,6 +28,8 @@ use crate::types::{
     error::{IotaObjectResponseError, UserInputResult, UserInputError},
     gas_coin::GasCoin,
 };
+
+use fastcrypto::encoding::Base64;
 
 use super::{
     Page,
@@ -367,7 +368,7 @@ impl IotaObjectResponse {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq, Ord, PartialOrd, JsonSchema)]
 #[serde(rename_all = "camelCase", rename = "ObjectRef")]
 pub struct IotaObjectRef {
     /// Hex code as string representing the object id

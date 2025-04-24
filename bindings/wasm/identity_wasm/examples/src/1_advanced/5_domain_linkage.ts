@@ -34,7 +34,7 @@ export async function domainLinkage() {
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
         .finish()
-        .execute(identityClient);
+        .buildAndExecute(identityClient);
     const document = identity.didDocument();
     const did = document.id();
 
@@ -53,7 +53,8 @@ export async function domainLinkage() {
         domains: [domainFoo, domainBar],
     });
     document.insertService(linkedDomainService.toService());
-    await identity.updateDidDocument(document).execute(identityClient);
+    const controllerToken = await identity.getControllerToken(identityClient);
+    await identity.updateDidDocument(document, controllerToken!).buildAndExecute(identityClient);
 
     let updatedDidDocument = identity.didDocument();
     console.log("Updated DID document:", JSON.stringify(updatedDidDocument, null, 2));

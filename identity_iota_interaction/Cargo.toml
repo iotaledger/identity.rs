@@ -14,22 +14,22 @@ description = "Trait definitions and a wasm32 compatible subset of code, copied 
 [dependencies]
 anyhow = "1.0.75"
 async-trait = { version = "0.1.81", default-features = false }
+bcs = "0.1.4"
 cfg-if = "1.0.0"
-fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "2f502fd8570fe4e9cff36eea5bbd6fef22002898", package = "fastcrypto" }
+fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "2f502fd8570fe4e9cff36eea5bbd6fef22002898", package = "fastcrypto", features = ["copy_key"] }
 jsonpath-rust = { version = "0.5.1", optional = true }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", default-features = false, tag = "v0.3.0" }
 serde.workspace = true
 serde_json.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.11.6-rc" }
-move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.11.6-rc" }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.12.0-rc" }
+move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.12.0-rc" }
 tokio = { version = "1", optional = true, default-features = false, features = ["process"] }
 
-shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.11.6-rc" }
+shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.12.0-rc" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-bcs = "0.1.4"
 eyre = { version = "0.6" }
 fastcrypto-zkp = { git = "https://github.com/MystenLabs/fastcrypto", rev = "2f502fd8570fe4e9cff36eea5bbd6fef22002898", package = "fastcrypto-zkp" }
 getrandom = { version = "0.2", default-features = false, features = ["js"] }
@@ -50,6 +50,8 @@ uint = { version = "0.9" }
 derive_more = "0.99.18"
 enum_dispatch = "0.3.13"
 schemars = "0.8.21"
+tap = "1"
+nonempty = "0.11"
 
 [package.metadata.docs.rs]
 # To build locally:
@@ -58,9 +60,9 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["send-sync-transaction", "secret-storage/default"]
+default = ["send-sync-transaction", "secret-storage/send-sync-storage"]
 send-sync-transaction = ["secret-storage/send-sync-storage"]
-keytool-signer = ["dep:tokio", "dep:jsonpath-rust"]
+keytool = ["dep:tokio", "dep:jsonpath-rust"]
 
 [lints.clippy]
 result_large_err = "allow"

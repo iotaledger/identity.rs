@@ -30,7 +30,7 @@ identity_iota_interaction = { version = "=1.6.0-alpha", path = "../identity_iota
 # required for doc test
 anyhow = "1.0.64"
 identity_iota = { version = "=1.6.0-alpha", path = "./", features = ["memstore"] }
-iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.11.6-rc" }
+iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.12.0-rc" }
 rand = "0.8.5"
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.3.0" }
 tokio = { version = "1.43", features = ["full"] }
@@ -81,6 +81,9 @@ sd-jwt-vc = ["identity_credential/sd-jwt-vc"]
 
 # Enables zero knowledge selective disclosurable VCs
 jpt-bbs-plus = ["identity_storage/jpt-bbs-plus", "identity_credential/jpt-bbs-plus"]
+
+# Enables integration with IOTA Keytool.
+keytool = ["identity_iota_core/keytool", "identity_storage/keytool"]
 
 [package.metadata.docs.rs]
 # To build locally:

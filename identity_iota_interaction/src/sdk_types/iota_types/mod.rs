@@ -22,6 +22,8 @@ pub mod quorum_driver_types;
 pub mod stardust;
 pub mod timelock;
 pub mod transaction;
+pub mod gas;
+pub mod storage;
 
 pub use iota_types_lib::*;
 pub use super::move_core_types::{identifier::Identifier, language_storage::TypeTag};

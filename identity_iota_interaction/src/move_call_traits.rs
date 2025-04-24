@@ -17,13 +17,14 @@ use crate::types::base_types::SequenceNumber;
 use crate::types::transaction::Argument;
 use crate::types::TypeTag;
 use crate::MoveType;
+use crate::OptionalSend;
 use crate::ProgrammableTransactionBcs;
 
 pub trait AssetMoveCalls {
   type Error;
 
   fn new_asset<T: Serialize + MoveType>(
-    inner: T,
+    inner: &T,
     mutable: bool,
     transferable: bool,
     deletable: bool,
@@ -65,7 +66,7 @@ pub trait AssetMoveCalls {
 
   fn update<T: MoveType + Serialize>(
     asset: ObjectRef,
-    new_content: T,
+    new_content: &T,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 }
@@ -180,7 +181,7 @@ pub trait IdentityMoveCalls {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-  fn new_with_controllers<C: IntoIterator<Item = (IotaAddress, u64)>>(
+  async fn new_with_controllers<C: IntoIterator<Item = (IotaAddress, u64)> + OptionalSend>(
     did_doc: Option<&[u8]>,
     controllers: C,
     threshold: u64,
@@ -218,7 +219,7 @@ pub trait IdentityMoveCalls {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-  fn execute_update(
+  async fn execute_update(
     identity: OwnedObjectRef,
     capability: ObjectRef,
     proposal_id: ObjectID,

@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use crate::error::Result;
 use crate::error::WasmResult;
+use fastcrypto::traits::EncodeDecodeBase64 as _;
 use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::KeytoolSigner;
 use identity_iota_interaction::KeytoolSignerBuilder;
@@ -13,8 +14,7 @@ use serde_json::Value;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsError;
 
-use super::WasmIotaSignature;
-use super::WasmPublicKey;
+use crate::WasmPublicKey;
 
 #[wasm_bindgen(module = buffer)]
 extern "C" {
@@ -30,13 +30,18 @@ extern "C" {
   fn exec_cli_cmd(cmd: &str) -> Result<NodeBuffer>;
 }
 
+/// An implementation of the Signer interface that relies on
+/// IOTA Keytool.
 #[wasm_bindgen(js_name = KeytoolSigner)]
 pub struct WasmKeytoolSigner(pub(crate) KeytoolSigner);
 
 #[wasm_bindgen(js_class = KeytoolSigner)]
 impl WasmKeytoolSigner {
-  #[wasm_bindgen(js_name = create)]
-  pub async fn new(address: Option<String>, iota_bin_location: Option<String>) -> Result<WasmKeytoolSigner> {
+  /// Returns a new {@link KeytoolSigner}. The optional parameters respectively
+  /// allow to set the signing address and the `iota` binary to use. Defaults
+  /// to use the current active address and the binary found in $PATH.
+  #[wasm_bindgen(constructor)]
+  pub fn new(address: Option<String>, iota_bin_location: Option<String>) -> Result<WasmKeytoolSigner> {
     let address = address
       .as_deref()
       .map(IotaAddress::from_str)
@@ -52,9 +57,10 @@ impl WasmKeytoolSigner {
       builder
     };
 
-    Ok(WasmKeytoolSigner(builder.build().await.wasm_result()?))
+    Ok(WasmKeytoolSigner(builder.build().wasm_result()?))
   }
 
+  /// Returns the signing address.
   #[wasm_bindgen]
   pub fn address(&self) -> String {
     self.0.address().to_string()
@@ -74,13 +80,14 @@ impl WasmKeytoolSigner {
   }
 
   #[wasm_bindgen]
-  pub async fn sign(&self, data: Vec<u8>) -> Result<WasmIotaSignature> {
+  pub async fn sign(&self, tx_data_bcs: &[u8]) -> Result<String> {
+    let tx_data = bcs::from_bytes(tx_data_bcs).map_err(|e| JsError::new(&e.to_string()))?;
     self
       .0
-      .sign(&data)
+      .sign(&tx_data)
       .await
+      .map(|sig| sig.encode_base64())
       .map_err(|e| JsError::new(&e.to_string()).into())
-      .and_then(|sig| sig.try_into())
   }
 
   #[wasm_bindgen(js_name = iotaPublicKeyBytes)]

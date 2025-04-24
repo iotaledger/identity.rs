@@ -14,6 +14,10 @@ inputs:
     description: "IOTA version to pull from GitHub releases, recognizes well known networks (mainnet, testnet, devnet), defaults to 'testnet'"
     required: false
     default: ""
+  start-sandbox:
+    description: "Wether to start the sandbox or just install"
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -58,8 +62,18 @@ runs:
         
         echo "Looking for platform: $PLATFORM_TRIPLET"
 
-        # Note: Releases might be visible before all binaries are available
-        DOWNLOAD_URL=$(curl "https://api.github.com/repos/iotaledger/iota/releases" | jq -r 'map(select(.name | contains('\"$VERSION_SEARCH_STRING\"'))) | first | .assets | .[] | select(.browser_download_url | contains('\"$PLATFORM_TRIPLET\"')) | .browser_download_url')
+        curl "https://api.github.com/repos/iotaledger/iota/releases" \
+           --header 'authorization: Bearer ${{ github.token }}' > releases.json
+
+        {
+          # Note: Releases might be visible before all binaries are available
+          DOWNLOAD_URL=$(cat releases.json | jq -r 'map(select(.name | contains('\"$VERSION_SEARCH_STRING\"'))) | first | .assets | .[] | select(.browser_download_url | contains('\"$PLATFORM_TRIPLET\"')) | .browser_download_url')
+        } || {
+          # log releases in case of failure
+          cat releases.json
+          echo "could not parse release"
+          exit 1
+        }
 
         # Download and extract
         echo "Downloading from: $DOWNLOAD_URL"
@@ -74,6 +88,7 @@ runs:
     - name: Start the Network
       shell: bash
       working-directory: iota
+      if: ${{ inputs.start-sandbox == 'true' }}
       run: |
         # Clear previous configuration
         rm -rf ~/.iota || true 
