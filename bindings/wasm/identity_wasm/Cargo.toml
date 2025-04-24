@@ -39,6 +39,11 @@ tsify = "0.4.5"
 wasm-bindgen = { version = "0.2.100", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
+# dummy-client dependencies
+#iota_interaction_ts = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction_ts", optional = true }
+iota_interaction_ts = { path = "../../../../product-core/bindings/wasm/iota_interaction_ts", optional = true }
+iota_move_calls_ts = { version = "=1.6.0-alpha", path = "../iota_move_calls_ts", optional = true }
+
 [dependencies.identity_iota]
 path = "../../../identity_iota"
 default-features = false
@@ -52,11 +57,6 @@ features = [
   "status-list-2021",
   "jpt-bbs-plus",
 ]
-
-# dummy-client dependencies
-[dependencies.iota_interaction_ts]
-path = "../iota_interaction_ts"
-optional = true
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 getrandom = { version = "0.2", default-features = false, features = ["js"] }
@@ -81,5 +81,5 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(wasm_bindgen_unstable_test
 
 [features]
 default = ["dummy-client"]
-dummy-client = ["dep:iota_interaction_ts"]
+dummy-client = ["dep:iota_interaction_ts", "iota_move_calls_ts"] # TODO: Rename this feature or remove it
 keytool = ["dep:iota_interaction_ts", "iota_interaction_ts/keytool", "identity_iota/keytool"]

@@ -37,10 +37,12 @@ tokio = { version = "1.43", default-features = false, features = ["macros", "syn
 zkryptium = { workspace = true, optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-identity_iota_move_calls = { version = "=1.6.0-alpha", path = "../identity_iota_move_calls", optional = true }
+#iota_interaction = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction", optional = true }
+iota_interaction = { path = "../../product-core/iota_interaction", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-identity_iota_move_calls = { version = "=1.6.0-alpha", path = "../identity_iota_move_calls", default-features = false, optional = true }
+#iota_interaction = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction", default-features = false, optional = true }
+iota_interaction = { path = "../../product-core/iota_interaction", default-features = false, optional = true }
 
 [dev-dependencies]
 identity_credential = { version = "=1.6.0-alpha", path = "../identity_credential", features = ["revocation-bitmap"] }
@@ -61,7 +63,7 @@ iota-document = ["dep:identity_iota_core"]
 storage-signer = [
   "identity_iota_core?/iota-client",
   "dep:secret-storage",
-  "dep:identity_iota_move_calls",
+  "dep:iota_interaction",
   "dep:fastcrypto",
   "dep:bcs",
 ]
@@ -74,7 +76,7 @@ jpt-bbs-plus = [
 ]
 # Enables integration with IOTA Keytool
 keytool = [
-  "dep:identity_iota_move_calls",
+  "dep:iota_interaction",
   "iota_interaction/keytool",
   "k256",
   "p256",
