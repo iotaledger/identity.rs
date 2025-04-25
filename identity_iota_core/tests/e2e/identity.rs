@@ -562,5 +562,42 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
     .response;
   assert!(res.effects.unwrap().status().is_ok());
 
+  // Bob can revoke its delegation token anytime.
+  identity
+    .revoke_delegation_token(
+      bob_token.as_controller().expect("bob is a controller"),
+      bobs_delegation_token.as_delegate().expect("is a delegation token"),
+    )?
+    .build_and_execute(&bob_client)
+    .await?;
+
+  // Once revoked whoever is holding it won't be able to act in bob's stead.
+  let res = identity
+    .update_did_document(IotaDocument::new(test_client.network()), &bobs_delegation_token)
+    .finish(&alice_client)
+    .await?
+    .build_and_execute(&alice_client)
+    .await;
+  assert!(res.is_err());
+
+  // A revoked token can be unrevoked too.
+  identity
+    .unrevoke_delegation_token(
+      bob_token.as_controller().expect("bob is a controller"),
+      bobs_delegation_token.as_delegate().expect("is a delegation token"),
+    )?
+    .build_and_execute(&bob_client)
+    .await?;
+
+  // Making the token valid again.
+  let res = identity
+    .update_did_document(IotaDocument::new(test_client.network()), &bobs_delegation_token)
+    .finish(&alice_client)
+    .await?
+    .build_and_execute(&alice_client)
+    .await?
+    .output;
+  assert!(matches!(res, ProposalResult::Pending(_)));
+
   Ok(())
 }

@@ -33,6 +33,8 @@ use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::rebased::Error;
 
+use super::OnChainIdentity;
+
 /// A token that proves ownership over an object.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -427,5 +429,123 @@ impl Transaction for DelegateToken {
     effects.created_mut().swap_remove(i);
 
     (Ok(token), effects)
+  }
+}
+
+/// [Transaction] for revoking / unrevoking a [DelegationToken].
+#[derive(Debug, Clone)]
+pub struct DelegationTokenRevocation {
+  identity_id: ObjectID,
+  controller_cap_id: ObjectID,
+  delegation_token_id: ObjectID,
+  // `true` revokes the token, `false` un-revokes it.
+  revoke: bool,
+}
+
+impl DelegationTokenRevocation {
+  /// Returns a new [DelegationTokenRevocation] that will revoke [DelegationToken] `delegation_token_id`.
+  pub fn revoke(
+    identity: &OnChainIdentity,
+    controller_cap: &ControllerCap,
+    delegation_token: &DelegationToken,
+  ) -> Result<Self, Error> {
+    if delegation_token.controller_of != identity.id() {
+      return Err(Error::Identity(format!(
+        "DelegationToken {} has no control over Identity {}",
+        delegation_token.id,
+        identity.id()
+      )));
+    }
+
+    Ok(Self {
+      identity_id: identity.id(),
+      controller_cap_id: controller_cap.id(),
+      delegation_token_id: delegation_token.id,
+      revoke: true,
+    })
+  }
+
+  /// Returns a new [DelegationTokenRevocation] that will un-revoke [DelegationToken] `delegation_token_id`.
+  pub fn unrevoke(
+    identity: &OnChainIdentity,
+    controller_cap: &ControllerCap,
+    delegation_token: &DelegationToken,
+  ) -> Result<Self, Error> {
+    if delegation_token.controller_of != identity.id() {
+      return Err(Error::Identity(format!(
+        "DelegationToken {} has no control over Identity {}",
+        delegation_token.id,
+        identity.id()
+      )));
+    }
+    Ok(Self {
+      identity_id: identity.id(),
+      controller_cap_id: controller_cap.id(),
+      delegation_token_id: delegation_token.id,
+      revoke: false,
+    })
+  }
+
+  /// Returns `true` if this transaction is used to revoke a token.
+  pub fn is_revocation(&self) -> bool {
+    self.revoke
+  }
+
+  /// Return the ID of the [DelegationToken] handled by this transaction.
+  pub fn token_id(&self) -> ObjectID {
+    self.delegation_token_id
+  }
+}
+
+#[cfg_attr(feature = "send-sync", async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+impl Transaction for DelegationTokenRevocation {
+  type Output = ();
+
+  async fn build_programmable_transaction(
+    &self,
+    client: &IdentityClientReadOnly,
+  ) -> Result<ProgrammableTransaction, Error> {
+    let identity_ref = client
+      .get_object_ref_by_id(self.identity_id)
+      .await?
+      .expect("identity exists on-chain");
+    let controller_cap_ref = client
+      .get_object_ref_by_id(self.controller_cap_id)
+      .await?
+      .expect("controller_cap exists on-chain")
+      .reference
+      .to_object_ref();
+
+    let tx_bytes = if self.is_revocation() {
+      IdentityMoveCallsAdapter::revoke_delegation_token(
+        identity_ref,
+        controller_cap_ref,
+        self.delegation_token_id,
+        client.package_id(),
+      )
+    } else {
+      IdentityMoveCallsAdapter::unrevoke_delegation_token(
+        identity_ref,
+        controller_cap_ref,
+        self.delegation_token_id,
+        client.package_id(),
+      )
+    }
+    .await?;
+
+    Ok(bcs::from_bytes(&tx_bytes)?)
+  }
+
+  async fn apply(
+    self,
+    effects: IotaTransactionBlockEffects,
+    _client: &IdentityClientReadOnly,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    if let IotaExecutionStatus::Failure { error } = effects.status() {
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+    }
+
+    (Ok(()), effects)
   }
 }

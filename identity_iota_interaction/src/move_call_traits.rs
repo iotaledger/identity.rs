@@ -274,4 +274,24 @@ pub trait IdentityMoveCalls {
     permissions: u32,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  async fn revoke_delegation_token(
+    identity: OwnedObjectRef,
+    controller_cap: ObjectRef,
+    delegation_token_id: ObjectID,
+    package: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  async fn unrevoke_delegation_token(
+    identity: OwnedObjectRef,
+    controller_cap: ObjectRef,
+    delegation_token_id: ObjectID,
+    package: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  async fn destroy_delegation_token(
+    identity: OwnedObjectRef,
+    delegation_token: ObjectRef,
+    package: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 }

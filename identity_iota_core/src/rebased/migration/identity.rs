@@ -56,6 +56,7 @@ use identity_iota_interaction::MoveType;
 use super::ControllerCap;
 use super::ControllerToken;
 use super::DelegationToken;
+use super::DelegationTokenRevocation;
 use super::Multicontroller;
 use super::UnmigratedAlias;
 
@@ -317,6 +318,24 @@ impl OnChainIdentity {
     }
 
     Ok(history)
+  }
+
+  /// Returns a [Transaction] to revoke a [DelegationToken].
+  pub fn revoke_delegation_token(
+    &self,
+    controller_capability: &ControllerCap,
+    delegation_token: &DelegationToken,
+  ) -> Result<TransactionBuilder<DelegationTokenRevocation>, Error> {
+    DelegationTokenRevocation::revoke(self, controller_capability, delegation_token).map(TransactionBuilder::new)
+  }
+
+  /// Returns a [Transaction] to *un*revoke a [DelegationToken].
+  pub fn unrevoke_delegation_token(
+    &self,
+    controller_capability: &ControllerCap,
+    delegation_token: &DelegationToken,
+  ) -> Result<TransactionBuilder<DelegationTokenRevocation>, Error> {
+    DelegationTokenRevocation::unrevoke(self, controller_capability, delegation_token).map(TransactionBuilder::new)
   }
 }
 

@@ -150,6 +150,8 @@ module iota_identity::multicontroller {
 
     public(package) fun assert_is_member<V>(multi: &Multicontroller<V>, cap: &DelegationToken) {
         assert!(multi.controllers.contains(&cap.controller()), EInvalidController);
+        // Make sure the presented token hasn't been revoked.
+        assert!(!multi.revoked_tokens.contains(&cap.id()), EInvalidController);
     }
 
     /// Creates a new proposal for `Multicontroller` `multi`.
