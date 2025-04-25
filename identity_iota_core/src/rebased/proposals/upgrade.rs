@@ -3,23 +3,23 @@
 
 use std::marker::PhantomData;
 
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::IdentityMoveCalls;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use identity_iota_move_calls::IdentityMoveCalls;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use async_trait::async_trait;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::TypeTag;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::TypeTag;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::migration::Proposal;
 use crate::rebased::Error;
-use identity_iota_interaction::MoveType;
+use iota_interaction::MoveType;
 
 use super::CreateProposal;
 use super::ExecuteProposal;

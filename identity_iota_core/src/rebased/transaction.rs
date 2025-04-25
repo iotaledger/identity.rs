@@ -4,7 +4,7 @@
 use std::ops::Deref;
 
 #[cfg(not(target_arch = "wasm32"))]
-use identity_iota_interaction::rpc_types::IotaTransactionBlockResponse;
+use iota_interaction::rpc_types::IotaTransactionBlockResponse;
 
 use super::transaction_builder::TransactionBuilder;
 use crate::iota_interaction_adapter::IotaTransactionBlockResponseAdaptedTraitObj;

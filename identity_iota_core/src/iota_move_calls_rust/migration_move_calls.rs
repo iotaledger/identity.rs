@@ -1,20 +1,20 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
+use identity_iota_move_calls::MigrationMoveCalls;
 
-use identity_iota_interaction::ident_str;
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::types::transaction::ObjectArg;
-use identity_iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
-use identity_iota_interaction::MigrationMoveCalls;
-use identity_iota_interaction::ProgrammableTransactionBcs;
+use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
+use iota_interaction::ident_str;
+use iota_interaction::rpc_types::OwnedObjectRef;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectRef;
+use iota_interaction::types::transaction::ObjectArg;
+use iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
+use iota_interaction::ProgrammableTransactionBcs;
 
 use crate::rebased::Error;
 
-use super::utils;
+use iota_interaction_rust::utils;
 
 pub(crate) struct MigrationMoveCallsRustSdk {}
 

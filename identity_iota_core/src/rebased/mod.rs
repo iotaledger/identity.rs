@@ -24,4 +24,4 @@ pub use error::*;
 
 /// Integration with IOTA's Keytool.
 #[cfg(feature = "keytool")]
-pub use identity_iota_interaction::keytool;
+pub use iota_interaction::keytool;

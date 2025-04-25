@@ -4,15 +4,15 @@
 use std::collections::HashSet;
 use std::str::FromStr;
 
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use identity_iota_interaction::types::transaction::ObjectArg;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::ident_str;
+use iota_interaction::rpc_types::OwnedObjectRef;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectRef;
+use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use iota_interaction::types::transaction::ObjectArg;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::types::TypeTag;
+use iota_interaction::ident_str;
 
 use super::super::utils;
 

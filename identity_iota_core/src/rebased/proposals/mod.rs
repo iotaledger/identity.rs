@@ -14,10 +14,10 @@ use std::ops::DerefMut;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::IotaClientTrait;
-use identity_iota_interaction::OptionalSend;
-use identity_iota_interaction::OptionalSync;
+use identity_iota_move_calls::IdentityMoveCalls;
+use iota_interaction::IotaClientTrait;
+use iota_interaction::OptionalSend;
+use iota_interaction::OptionalSync;
 use tokio::sync::OnceCell;
 
 use crate::rebased::client::IdentityClientReadOnly;
@@ -29,16 +29,16 @@ use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
 pub use controller::*;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaObjectData;
-use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::types::base_types::ObjectType;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::types::TypeTag;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaObjectData;
+use iota_interaction::rpc_types::IotaObjectDataOptions;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectRef;
+use iota_interaction::types::base_types::ObjectType;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::types::TypeTag;
 pub use send::*;
 use serde::de::DeserializeOwned;
 pub use update_did_doc::*;
@@ -47,7 +47,7 @@ pub use upgrade::*;
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::migration::Proposal;
 use crate::rebased::Error;
-use identity_iota_interaction::MoveType;
+use iota_interaction::MoveType;
 
 use super::migration::ControllerToken;
 

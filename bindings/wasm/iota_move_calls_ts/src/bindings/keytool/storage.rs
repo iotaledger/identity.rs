@@ -3,10 +3,10 @@
 
 use std::str::FromStr;
 
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::crypto::IotaKeyPair;
-use identity_iota_interaction::types::crypto::SignatureScheme;
-use identity_iota_interaction::KeytoolStorage;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::crypto::IotaKeyPair;
+use iota_interaction::types::crypto::SignatureScheme;
+use iota_interaction::KeytoolStorage;
 use js_sys::Array;
 use js_sys::JsString;
 use wasm_bindgen::prelude::*;

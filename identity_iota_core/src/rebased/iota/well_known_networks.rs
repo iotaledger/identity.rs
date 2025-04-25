@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectID;
 use phf::phf_map;
 use phf::Map;
 
@@ -71,7 +71,7 @@ impl IdentityNetworkMetadata {
 
 #[cfg(test)]
 mod test {
-  use identity_iota_interaction::IotaClientBuilder;
+  use iota_interaction::IotaClientBuilder;
 
   use crate::rebased::client::IdentityClientReadOnly;
 

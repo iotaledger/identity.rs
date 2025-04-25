@@ -1,7 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota_interaction::types::execution_status::CommandArgumentError;
+use iota_interaction::types::execution_status::CommandArgumentError;
 use js_sys::Uint8Array;
 use serde::Serialize;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -11,14 +11,14 @@ use crate::bindings::WasmObjectRef;
 use crate::bindings::WasmSharedObjectRef;
 use crate::error::TsSdkError;
 use crate::error::WasmError;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::types::base_types::SequenceNumber;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::AssetMoveCalls;
-use identity_iota_interaction::MoveType;
-use identity_iota_interaction::ProgrammableTransactionBcs;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectRef;
+use iota_interaction::types::base_types::SequenceNumber;
+use iota_interaction::types::TypeTag;
+use iota_interaction::AssetMoveCalls;
+use iota_interaction::MoveType;
+use iota_interaction::ProgrammableTransactionBcs;
 
 #[wasm_bindgen(module = "@iota/iota-interaction-ts/move_calls/asset")]
 extern "C" {

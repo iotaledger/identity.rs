@@ -9,7 +9,7 @@ use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
-use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_move_calls::IdentityMoveCalls;
 use serde::Deserialize;
 use tokio::sync::Mutex;
 
@@ -17,15 +17,15 @@ use crate::rebased::migration::Proposal;
 use crate::rebased::transaction::ProtoTransaction;
 use crate::rebased::Error;
 use async_trait::async_trait;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaObjectData;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::transaction::Argument;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::MoveType;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaObjectData;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::transaction::Argument;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::types::TypeTag;
+use iota_interaction::MoveType;
 use serde::Serialize;
 
 use super::CreateProposal;
@@ -45,7 +45,7 @@ cfg_if::cfg_if! {
       #[allow(unreachable_pub)]
       pub type BorrowIntentFn = Box<dyn BorrowIntentFnT + Send>;
     } else {
-      use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
+      use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
       /// Instances of BorrowIntentFnT can be used as user-provided function to describe how
       /// a borrowed assets shall be used.
       pub trait BorrowIntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}

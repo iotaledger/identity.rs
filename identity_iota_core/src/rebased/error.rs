@@ -3,8 +3,7 @@
 
 //! Errors that may occur for the rebased logic.
 
-#[cfg(target_arch = "wasm32")]
-use iota_interaction_ts::error::TsSdkError;
+use crate::iota_interaction_adapter::AdapterError;
 
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
@@ -12,7 +11,7 @@ use iota_interaction_ts::error::TsSdkError;
 pub enum Error {
   /// failed to connect to network.
   #[error("failed to connect to iota network node; {0:?}")]
-  Network(String, #[source] identity_iota_interaction::error::Error),
+  Network(String, #[source] iota_interaction::error::Error),
   /// could not lookup an object ID.
   #[error("failed to lookup an object; {0}")]
   ObjectLookup(String),
@@ -42,7 +41,7 @@ pub enum Error {
   TransactionSigningFailed(String),
   /// Could not execute transaction.
   #[error("transaction execution failed; {0}")]
-  TransactionExecutionFailed(#[from] identity_iota_interaction::error::Error),
+  TransactionExecutionFailed(#[from] iota_interaction::error::Error),
   /// Transaction yielded invalid response. This usually means that the transaction was executed but did not produce
   /// the expected result.
   #[error("transaction returned an unexpected response; {0}")]
@@ -56,7 +55,7 @@ pub enum Error {
     /// The raw RPC response, as received by the client.
     // Dev-comment: Neeeded to box this to avoid clippy complaining about the size of this variant.
     #[cfg(not(target_arch = "wasm32"))]
-    response: Box<identity_iota_interaction::rpc_types::IotaTransactionBlockResponse>,
+    response: Box<iota_interaction::rpc_types::IotaTransactionBlockResponse>,
     /// JSON-encoded string representation for the actual execution's RPC response.
     #[cfg(target_arch = "wasm32")]
     response: String,
@@ -91,10 +90,12 @@ pub enum Error {
   /// An error caused by a foreign function interface call.
   #[error("FFI error: {0}")]
   FfiError(String),
-  #[cfg(target_arch = "wasm32")]
-  /// An error originating from IOTA typescript SDK import bindings
+  /// Caused by an interaction with the IOTA protocol.
+  #[error("IOTA interaction error")]
+  IotaInteractionError(#[source] iota_interaction::interaction_error::Error),
+  /// Caused by a platform-specific adapter to interact with the IOTA protocol.
   #[error("TsSdkError: {0}")]
-  TsSdkError(#[from] TsSdkError),
+  IotaInteractionAdapterError(#[from] AdapterError),
 }
 
 /// Can be used for example like `map_err(rebased_err)` to convert other error

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::KeytoolStorage;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::KeytoolStorage;
 use identity_verification::jwu::encode_b64;
 
 use crate::KeyId;

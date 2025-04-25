@@ -1,11 +1,11 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::MigrationMoveCalls;
-use identity_iota_interaction::ProgrammableTransactionBcs;
+use iota_interaction::rpc_types::OwnedObjectRef;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectRef;
+use iota_interaction::MigrationMoveCalls;
+use iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;

@@ -2,33 +2,34 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use identity_iota_interaction::OptionalSend;
+use iota_interaction::OptionalSend;
 use itertools::Itertools;
 
 use std::collections::HashSet;
 use std::str::FromStr;
 
-use identity_iota_interaction::ident_str;
-use identity_iota_interaction::rpc_types::IotaObjectData;
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::types::base_types::ObjectType;
-use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as PrgrTxBuilder;
-use identity_iota_interaction::types::transaction::Argument;
-use identity_iota_interaction::types::transaction::ObjectArg;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
-use identity_iota_interaction::BorrowIntentFnInternalT;
-use identity_iota_interaction::ControllerIntentFnInternalT;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::MoveType;
-use identity_iota_interaction::ProgrammableTransactionBcs;
-use identity_iota_interaction::TransactionBuilderT;
+use identity_iota_move_calls::BorrowIntentFnInternalT;
+use identity_iota_move_calls::ControllerIntentFnInternalT;
+use identity_iota_move_calls::IdentityMoveCalls;
 
-use super::transaction_builder::TransactionBuilderRustSdk;
-use super::utils;
+use iota_interaction::ident_str;
+use iota_interaction::rpc_types::IotaObjectData;
+use iota_interaction::rpc_types::OwnedObjectRef;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectRef;
+use iota_interaction::types::base_types::ObjectType;
+use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as PrgrTxBuilder;
+use iota_interaction::types::transaction::Argument;
+use iota_interaction::types::transaction::ObjectArg;
+use iota_interaction::types::TypeTag;
+use iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
+use iota_interaction::MoveType;
+use iota_interaction::ProgrammableTransactionBcs;
+use iota_interaction::TransactionBuilderT;
+
+use iota_interaction_rust::transaction_builder::TransactionBuilderRustSdk;
+use iota_interaction_rust::utils;
 
 use crate::rebased::proposals::BorrowAction;
 use crate::rebased::proposals::ControllerExecution;
@@ -358,7 +359,7 @@ impl IdentityMoveCalls for IdentityMoveCallsRustSdk {
 
     utils::put_back_delegation_token(ptb, controller_cap, delegation_token, borrow, package);
 
-    internal_ptb.finish()
+    internal_ptb.finish().map_err(rebased_err)
   }
 
   fn create_and_execute_borrow<F: BorrowIntentFnInternalT<Self::NativeTxBuilder>>(

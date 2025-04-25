@@ -10,10 +10,10 @@ use std::fmt::Display;
 use wasm_bindgen::JsValue;
 
 use crate::common::into_sdk_type;
-use identity_iota_interaction::types::execution_status::CommandArgumentError;
-use identity_iota_interaction::types::execution_status::ExecutionFailureStatus;
-use identity_iota_interaction::types::execution_status::PackageUpgradeError;
-use identity_iota_interaction::types::execution_status::TypeArgumentError;
+use iota_interaction::types::execution_status::CommandArgumentError;
+use iota_interaction::types::execution_status::ExecutionFailureStatus;
+use iota_interaction::types::execution_status::PackageUpgradeError;
+use iota_interaction::types::execution_status::TypeArgumentError;
 use thiserror::Error as ThisError;
 
 /// Convenience wrapper for `Result<T, JsValue>`.

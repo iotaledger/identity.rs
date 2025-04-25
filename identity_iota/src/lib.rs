@@ -17,8 +17,6 @@
   clippy::missing_errors_doc
 )]
 
-pub use identity_iota_interaction as iota_interaction;
-
 pub mod core {
   //! Core Traits and Types
 

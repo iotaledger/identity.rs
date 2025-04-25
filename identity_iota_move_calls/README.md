@@ -1,6 +1,6 @@
 # Platform Agnostic Interfaces for Identity Move Call
 
-This crate gathers interfaces that provide platform specific implementations to
+This crate gathers interfaces that can be used to provide platform-specific implementations to
 interact with the identity Move package.
 
 Platform specific adapters (implementing the cross-platform-traits defined in this crate) are contained in

@@ -13,12 +13,12 @@ use identity_iota_core::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_core::rebased::utils::request_funds;
 use identity_iota_core::rebased::Error;
 use identity_iota_core::IotaDID;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::IotaKeySignature;
-use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI;
-use identity_iota_interaction::OptionalSync;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::IotaKeySignature;
+use iota_interaction::IotaTransactionBlockEffectsMutAPI;
+use iota_interaction::OptionalSync;
 use identity_jose::jwk::Jwk;
 use identity_jose::jws::JwsAlgorithm;
 use identity_storage::JwkMemStore;
@@ -391,7 +391,7 @@ impl Transaction for GetTestCoin {
     mut effects: IotaTransactionBlockEffects,
     client: &IdentityClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
-    use identity_iota_interaction::IotaClientTrait as _;
+    use iota_interaction::IotaClientTrait as _;
     let created_objects = effects
       .created()
       .iter()

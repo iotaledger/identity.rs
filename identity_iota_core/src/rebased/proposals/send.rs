@@ -4,12 +4,12 @@
 use std::marker::PhantomData;
 
 use async_trait::async_trait;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::MoveType;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::TypeTag;
+use identity_iota_move_calls::IdentityMoveCalls;
+use iota_interaction::MoveType;
 use serde::Deserialize;
 use serde::Serialize;
 

@@ -8,17 +8,17 @@ use std::iter::IntoIterator;
 use async_trait::async_trait;
 use serde::Serialize;
 
-use crate::rpc_types::IotaObjectData;
-use crate::rpc_types::OwnedObjectRef;
-use crate::types::base_types::IotaAddress;
-use crate::types::base_types::ObjectID;
-use crate::types::base_types::ObjectRef;
-use crate::types::base_types::SequenceNumber;
-use crate::types::transaction::Argument;
-use crate::types::TypeTag;
-use crate::MoveType;
-use crate::OptionalSend;
-use crate::ProgrammableTransactionBcs;
+use iota_interaction::rpc_types::IotaObjectData;
+use iota_interaction::rpc_types::OwnedObjectRef;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectRef;
+use iota_interaction::types::base_types::SequenceNumber;
+use iota_interaction::types::transaction::Argument;
+use iota_interaction::types::TypeTag;
+use iota_interaction::MoveType;
+use iota_interaction::OptionalSend;
+use iota_interaction::ProgrammableTransactionBcs;
 
 pub trait AssetMoveCalls {
   type Error;

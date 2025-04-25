@@ -8,24 +8,24 @@ use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::IdentityMoveCalls;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use identity_iota_move_calls::IdentityMoveCalls;
 use tokio::sync::Mutex;
 
 use crate::rebased::migration::Proposal;
 use crate::rebased::transaction::ProtoTransaction;
 use crate::rebased::Error;
 use async_trait::async_trait;
-use identity_iota_interaction::rpc_types::IotaObjectRef;
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::transaction::Argument;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::MoveType;
+use iota_interaction::rpc_types::IotaObjectRef;
+use iota_interaction::rpc_types::OwnedObjectRef;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::transaction::Argument;
+use iota_interaction::types::TypeTag;
+use iota_interaction::MoveType;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -46,7 +46,7 @@ cfg_if::cfg_if! {
       /// Boxed dynamic trait object of {@link ControllerIntentFnT}
       pub type ControllerIntentFn = Box<dyn ControllerIntentFnT + Send>;
     } else {
-      use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
+      use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
       /// Instances of ControllerIntentFnT can be used as user-provided function to describe how
       /// a borrowed identity's controller capability will be used.
       pub trait ControllerIntentFnT: FnOnce(&mut Ptb, &Argument) {}

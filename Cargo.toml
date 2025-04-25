@@ -33,8 +33,8 @@ exclude = ["bindings/wasm/identity_wasm", "bindings/grpc"]
 bls12_381_plus = { version = "0.8.17" }
 #iota_interaction = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction" }
 iota_interaction = { path = "../product-core/iota_interaction" }
-#iota_interaction_rust = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction_rust" }
-iota_interaction_rust = { path = "../product-core/iota_interaction_rust" }
+#product_common = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "product_common" }
+product_common = { path = "../product-core/product_common" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 serde_json = { version = "1.0", default-features = false }
 strum = { version = "0.25", default-features = false, features = ["std", "derive"] }

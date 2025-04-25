@@ -1,10 +1,10 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::id::UID;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::MoveType;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::id::UID;
+use iota_interaction::types::TypeTag;
+use iota_interaction::MoveType;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;

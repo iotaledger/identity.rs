@@ -7,14 +7,14 @@ use std::ops::Deref;
 use std::pin::Pin;
 use std::str::FromStr;
 
-use crate::rebased::iota;
+use crate::rebased::{iota, rebased_err};
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::NetworkName;
 use anyhow::anyhow;
 use anyhow::Context as _;
 use futures::stream::FuturesUnordered;
-use identity_iota_interaction::MoveType;
+use iota_interaction::MoveType;
 
 use crate::iota_interaction_adapter::IotaClientAdapter;
 use crate::rebased::migration::get_alias;
@@ -25,24 +25,24 @@ use crate::rebased::Error;
 use futures::StreamExt as _;
 use identity_core::common::Url;
 use identity_did::DID;
-use identity_iota_interaction::move_types::language_storage::StructTag;
-use identity_iota_interaction::rpc_types::EventFilter;
-use identity_iota_interaction::rpc_types::IotaData as _;
-use identity_iota_interaction::rpc_types::IotaObjectData;
-use identity_iota_interaction::rpc_types::IotaObjectDataFilter;
-use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
-use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
-use identity_iota_interaction::rpc_types::IotaParsedData;
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::IotaClientTrait;
+use iota_interaction::move_types::language_storage::StructTag;
+use iota_interaction::rpc_types::EventFilter;
+use iota_interaction::rpc_types::IotaData as _;
+use iota_interaction::rpc_types::IotaObjectData;
+use iota_interaction::rpc_types::IotaObjectDataFilter;
+use iota_interaction::rpc_types::IotaObjectDataOptions;
+use iota_interaction::rpc_types::IotaObjectResponseQuery;
+use iota_interaction::rpc_types::IotaParsedData;
+use iota_interaction::rpc_types::OwnedObjectRef;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectRef;
+use iota_interaction::IotaClientTrait;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 
 #[cfg(not(target_arch = "wasm32"))]
-use identity_iota_interaction::IotaClient;
+use iota_interaction::IotaClient;
 
 #[cfg(target_arch = "wasm32")]
 use iota_interaction_ts::bindings::WasmIotaClient;
@@ -108,7 +108,7 @@ impl IdentityClientReadOnly {
       /// When trying to connect to a local or unofficial network prefer using
       /// [`IdentityClientReadOnly::new_with_pkg_id`].
       pub async fn new(iota_client: IotaClient) -> Result<Self, Error> {
-        Self::new_internal(IotaClientAdapter::new(iota_client)?).await
+        Self::new_internal(IotaClientAdapter::new(iota_client).map_err(rebased_err)?).await
       }
     }
   }
@@ -148,7 +148,7 @@ impl IdentityClientReadOnly {
       /// the given [`IotaClient`].
       pub async fn new_with_pkg_id(iota_client: IotaClient, iota_identity_pkg_id: ObjectID) -> Result<Self, Error> {
         Self::new_with_pkg_id_internal(
-          IotaClientAdapter::new(iota_client)?,
+          IotaClientAdapter::new(iota_client).map_err(rebased_err)?,
           iota_identity_pkg_id
         ).await
       }

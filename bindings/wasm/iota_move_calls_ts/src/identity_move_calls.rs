@@ -18,17 +18,17 @@ use crate::common::PromiseUint8Array;
 use crate::error::TsSdkError;
 use crate::error::WasmError;
 use crate::transaction_builder::TransactionBuilderTsSdk;
-use identity_iota_interaction::rpc_types::IotaObjectData;
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::BorrowIntentFnInternalT;
-use identity_iota_interaction::ControllerIntentFnInternalT;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::MoveType;
-use identity_iota_interaction::ProgrammableTransactionBcs;
+use iota_interaction::rpc_types::IotaObjectData;
+use iota_interaction::rpc_types::OwnedObjectRef;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectRef;
+use iota_interaction::types::TypeTag;
+use iota_interaction::BorrowIntentFnInternalT;
+use iota_interaction::ControllerIntentFnInternalT;
+use iota_interaction::IdentityMoveCalls;
+use iota_interaction::MoveType;
+use iota_interaction::ProgrammableTransactionBcs;
 
 #[wasm_bindgen]
 extern "C" {
