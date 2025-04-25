@@ -57,6 +57,7 @@ use super::ControllerCap;
 use super::ControllerToken;
 use super::DelegationToken;
 use super::DelegationTokenRevocation;
+use super::DeleteDelegationToken;
 use super::Multicontroller;
 use super::UnmigratedAlias;
 
@@ -336,6 +337,14 @@ impl OnChainIdentity {
     delegation_token: &DelegationToken,
   ) -> Result<TransactionBuilder<DelegationTokenRevocation>, Error> {
     DelegationTokenRevocation::unrevoke(self, controller_capability, delegation_token).map(TransactionBuilder::new)
+  }
+
+  /// Returns a [Transaction] to delete a [DelegationToken].
+  pub fn delete_delegation_token(
+    &self,
+    delegation_token: DelegationToken,
+  ) -> Result<TransactionBuilder<DeleteDelegationToken>, Error> {
+    DeleteDelegationToken::new(self, delegation_token).map(TransactionBuilder::new)
   }
 }
 

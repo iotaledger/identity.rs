@@ -10,6 +10,7 @@ use crate::common::TEST_GAS_BUDGET;
 use identity_iota_core::rebased::client::get_object_id_from_did;
 use identity_iota_core::rebased::migration::has_previous_version;
 use identity_iota_core::rebased::migration::ControllerToken;
+use identity_iota_core::rebased::migration::DelegationToken;
 use identity_iota_core::rebased::migration::Identity;
 use identity_iota_core::rebased::proposals::ProposalResult;
 use identity_iota_core::IotaDID;
@@ -598,6 +599,18 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
     .await?
     .output;
   assert!(matches!(res, ProposalResult::Pending(_)));
+
+  // The owner of the token can delete it whenever.
+  let bobs_delegation_token_id = bobs_delegation_token.id();
+  identity
+    .delete_delegation_token(bobs_delegation_token.try_delegate().unwrap())?
+    .build_and_execute(&alice_client)
+    .await?;
+
+  let maybe_obj = alice_client
+    .get_object_by_id::<DelegationToken>(bobs_delegation_token_id)
+    .await;
+  assert!(maybe_obj.is_err());
 
   Ok(())
 }

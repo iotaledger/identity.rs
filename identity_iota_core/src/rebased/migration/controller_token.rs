@@ -23,6 +23,7 @@ use identity_iota_interaction::ControllerTokenRef;
 use identity_iota_interaction::IdentityMoveCalls;
 use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
 use identity_iota_interaction::MoveType;
+use itertools::Itertools as _;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
@@ -545,6 +546,98 @@ impl Transaction for DelegationTokenRevocation {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
+
+    (Ok(()), effects)
+  }
+}
+
+/// [Transaction] for deleting a given [DelegationToken].
+#[derive(Debug, Clone)]
+pub struct DeleteDelegationToken {
+  identity_id: ObjectID,
+  delegation_token_id: ObjectID,
+}
+
+impl DeleteDelegationToken {
+  /// Returns a new [DeleteDelegationToken] [Transaction], that will delete the given [DelegationToken].
+  pub fn new(identity: &OnChainIdentity, delegation_token: DelegationToken) -> Result<Self, Error> {
+    if identity.id() != delegation_token.controller_of {
+      return Err(Error::Identity(format!(
+        "DelegationToken {} has no control over Identity {}",
+        delegation_token.id,
+        identity.id()
+      )));
+    }
+
+    Ok(Self {
+      identity_id: identity.id(),
+      delegation_token_id: delegation_token.id,
+    })
+  }
+
+  /// Returns the ID of the [DelegationToken] to be deleted.
+  pub fn token_id(&self) -> ObjectID {
+    self.delegation_token_id
+  }
+}
+
+#[cfg_attr(feature = "send-sync", async_trait)]
+#[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
+impl Transaction for DeleteDelegationToken {
+  type Output = ();
+
+  async fn build_programmable_transaction(
+    &self,
+    client: &IdentityClientReadOnly,
+  ) -> Result<ProgrammableTransaction, Error> {
+    let identity_ref = client
+      .get_object_ref_by_id(self.identity_id)
+      .await?
+      .ok_or_else(|| Error::ObjectLookup(format!("Identity {} doesn't exist on-chain", self.identity_id,)))?;
+    let delegation_token_ref = client
+      .get_object_ref_by_id(self.delegation_token_id)
+      .await?
+      .ok_or_else(|| {
+        Error::ObjectLookup(format!(
+          "DelegationToken {} doesn't exist on-chain",
+          self.delegation_token_id,
+        ))
+      })?
+      .reference
+      .to_object_ref();
+
+    let tx_bytes =
+      IdentityMoveCallsAdapter::destroy_delegation_token(identity_ref, delegation_token_ref, client.package_id())
+        .await?;
+
+    Ok(bcs::from_bytes(&tx_bytes)?)
+  }
+
+  async fn apply(
+    self,
+    mut effects: IotaTransactionBlockEffects,
+    _client: &IdentityClientReadOnly,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    if let IotaExecutionStatus::Failure { error } = effects.status() {
+      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+    }
+
+    let Some(deleted_token_pos) = effects
+      .deleted()
+      .iter()
+      .find_position(|obj_ref| obj_ref.object_id == self.delegation_token_id)
+      .map(|(pos, _)| pos)
+    else {
+      return (
+        Err(Error::TransactionUnexpectedResponse(format!(
+          "DelegationToken {} wasn't deleted in this transaction",
+          self.delegation_token_id,
+        ))),
+        effects,
+      );
+    };
+
+    effects.deleted_mut().swap_remove(deleted_token_pos);
 
     (Ok(()), effects)
   }
