@@ -7,9 +7,9 @@
       "../lib": [
         "."
       ],
-      "~iota_interaction_ts": [
-        "../web/iota_interaction_ts",
-        "./iota_interaction_ts.js"
+      "~iota_move_calls_ts": [
+        "../web/iota_move_calls_ts",
+        "./iota_move_calls_ts.js"
       ]
     },
     "outDir": "../web",
