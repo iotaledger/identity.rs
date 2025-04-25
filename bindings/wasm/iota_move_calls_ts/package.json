@@ -1,5 +1,5 @@
 {
-  "name": "@iota/iota-interaction-ts",
+  "name": "@iota/iota-move-calls-identity",
   "author": "IOTA Foundation <info@iota.org>",
   "description": "WASM bindings importing types from the IOTA Client typescript SDK to be used in Rust",
   "homepage": "https://www.iota.org",

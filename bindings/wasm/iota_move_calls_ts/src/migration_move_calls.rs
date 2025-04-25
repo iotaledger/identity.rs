@@ -15,7 +15,7 @@ use iota_interaction_ts::bindings::WasmSharedObjectRef;
 use iota_interaction_ts::error::TsSdkError;
 use iota_interaction_ts::error::WasmError;
 
-#[wasm_bindgen(module = "@iota/iota-interaction-ts/move_calls")]
+#[wasm_bindgen(module = "@iota/iota-move-calls-identity/move_calls")]
 extern "C" {
   #[wasm_bindgen(js_name = "migrateDidOutput", catch)]
   async fn migrate_did_output_impl(

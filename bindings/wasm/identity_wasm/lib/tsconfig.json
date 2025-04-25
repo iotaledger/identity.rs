@@ -10,6 +10,9 @@
       "@iota/iota-interaction-ts/": [
         "@iota/iota-interaction-ts/node/"
       ],
+      "@iota/iota-move-calls-identity/": [
+        "@iota/iota-move-calls-identity/node/"
+      ],
       "../lib": [
         "."
       ]

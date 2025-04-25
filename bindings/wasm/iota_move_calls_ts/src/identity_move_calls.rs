@@ -60,7 +60,7 @@ impl From<(IotaAddress, u64)> for WasmControllerCouple {
   }
 }
 
-#[wasm_bindgen(module = "@iota/iota-interaction-ts/move_calls/identity")]
+#[wasm_bindgen(module = "@iota/iota-move-calls-identity/move_calls/identity")]
 extern "C" {
   #[wasm_bindgen(js_name = "create", catch)]
   fn identity_new(did: Option<&[u8]>, package: &str) -> Result<PromiseUint8Array, JsValue>;

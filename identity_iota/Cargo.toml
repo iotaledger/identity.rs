@@ -22,9 +22,12 @@ identity_verification = { version = "=1.6.0-alpha", path = "../identity_verifica
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 identity_iota_move_calls = { version = "=1.6.0-alpha", path = "../identity_iota_move_calls" }
+iota_interaction.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 identity_iota_move_calls = { version = "=1.6.0-alpha", path = "../identity_iota_move_calls", default-features = false }
+#iota_interaction = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction", default-features = false }
+iota_interaction = { path = "../../product-core/iota_interaction", default-features = false }
 
 [dev-dependencies]
 # required for doc test

@@ -7,7 +7,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@iota/iota-interaction-ts/*": [
+      "@iota/iota-move-calls-identity/*": [
         "./*"
       ],
     }
