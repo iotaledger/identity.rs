@@ -9,24 +9,26 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 
-use crate::bindings::WasmIotaObjectData;
-use crate::bindings::WasmObjectRef;
-use crate::bindings::WasmSharedObjectRef;
-use crate::bindings::WasmTransactionArgument;
-use crate::bindings::WasmTransactionBuilder;
-use crate::common::PromiseUint8Array;
-use crate::error::TsSdkError;
-use crate::error::WasmError;
-use crate::transaction_builder::TransactionBuilderTsSdk;
+use iota_interaction_ts::bindings::WasmIotaObjectData;
+use iota_interaction_ts::bindings::WasmObjectRef;
+use iota_interaction_ts::bindings::WasmSharedObjectRef;
+use iota_interaction_ts::bindings::WasmTransactionArgument;
+use iota_interaction_ts::bindings::WasmTransactionBuilder;
+use iota_interaction_ts::common::PromiseUint8Array;
+use iota_interaction_ts::error::TsSdkError;
+use iota_interaction_ts::error::WasmError;
+use iota_interaction_ts::transaction_builder::TransactionBuilderTsSdk;
+
+use identity_iota_move_calls::BorrowIntentFnInternalT;
+use identity_iota_move_calls::ControllerIntentFnInternalT;
+use identity_iota_move_calls::IdentityMoveCalls;
+
 use iota_interaction::rpc_types::IotaObjectData;
 use iota_interaction::rpc_types::OwnedObjectRef;
 use iota_interaction::types::base_types::IotaAddress;
 use iota_interaction::types::base_types::ObjectID;
 use iota_interaction::types::base_types::ObjectRef;
 use iota_interaction::types::TypeTag;
-use iota_interaction::BorrowIntentFnInternalT;
-use iota_interaction::ControllerIntentFnInternalT;
-use iota_interaction::IdentityMoveCalls;
 use iota_interaction::MoveType;
 use iota_interaction::ProgrammableTransactionBcs;
 

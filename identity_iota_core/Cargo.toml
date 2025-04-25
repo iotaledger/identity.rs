@@ -34,6 +34,7 @@ thiserror.workspace = true
 bcs = { version = "0.1.4", optional = true }
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "2f502fd8570fe4e9cff36eea5bbd6fef22002898", package = "fastcrypto", optional = true }
 identity_eddsa_verifier = { version = "=1.6.0-alpha", path = "../identity_eddsa_verifier", optional = true }
+identity_iota_move_calls = { version = "=1.6.0-alpha", path = "../identity_iota_move_calls", optional = true }
 identity_jose = { version = "=1.6.0-alpha", path = "../identity_jose", optional = true }
 iota-crypto = { version = "0.23", optional = true }
 itertools = { version = "0.13.0", optional = true }
@@ -43,7 +44,6 @@ secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag
 serde-aux = { version = "4.5.0", optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-identity_iota_move_calls = { version = "=1.6.0-alpha", path = "../identity_iota_move_calls", optional = true }
 iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config", tag = "v0.12.0-rc", optional = true }
 #iota_interaction = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction", optional = true }
 iota_interaction = { path = "../../product-core/iota_interaction", optional = true }
@@ -55,18 +55,14 @@ shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "sha
 tokio = { version = "1.43", default-features = false, features = ["macros", "sync", "rt", "process"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-identity_iota_move_calls = { version = "=1.6.0-alpha", path = "../identity_iota_move_calls", optional = true }
 #iota_interaction = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction", default-features = false, optional = true }
 iota_interaction = { path = "../../product-core/iota_interaction", default-features = false, optional = true }
-#iota_interaction_rust = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction_rust", optional = true }
-iota_interaction_rust = { path = "../../product-core/iota_interaction_rust", optional = true }
-tokio = { version = "1.43", default-features = false, features = ["sync"] }
 # Dependency iota_interaction_ts is always used on wasm32 platform. It is not controlled by the "iota-client" feature
 # because it's unclear how to implement this. wasm32 build will most probably always use the "iota-client" feature
 # so this seems to be tolerable for now.
-#iota_interaction_ts = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction_ts" }
-iota_interaction_ts = { path = "../../product-core/bindings/wasm/iota_interaction_ts" }
+iota_interaction_ts.workspace = true
 iota_move_calls_ts = { version = "=1.6.0-alpha", path = "../bindings/wasm/iota_move_calls_ts" }
+tokio = { version = "1.43", default-features = false, features = ["sync"] }
 
 [dev-dependencies]
 iota-crypto = { version = "0.23", default-features = false, features = ["bip39", "bip39-en"] }

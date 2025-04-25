@@ -7,16 +7,18 @@ use serde::Serialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
 
-use crate::bindings::WasmObjectRef;
-use crate::bindings::WasmSharedObjectRef;
-use crate::error::TsSdkError;
-use crate::error::WasmError;
+use iota_interaction_ts::bindings::WasmObjectRef;
+use iota_interaction_ts::bindings::WasmSharedObjectRef;
+use iota_interaction_ts::error::TsSdkError;
+use iota_interaction_ts::error::WasmError;
+
+use identity_iota_move_calls::AssetMoveCalls;
+
 use iota_interaction::types::base_types::IotaAddress;
 use iota_interaction::types::base_types::ObjectID;
 use iota_interaction::types::base_types::ObjectRef;
 use iota_interaction::types::base_types::SequenceNumber;
 use iota_interaction::types::TypeTag;
-use iota_interaction::AssetMoveCalls;
 use iota_interaction::MoveType;
 use iota_interaction::ProgrammableTransactionBcs;
 

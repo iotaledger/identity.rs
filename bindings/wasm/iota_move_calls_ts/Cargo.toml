@@ -28,6 +28,7 @@ identity_core = { version = "=1.6.0-alpha", path = "../../../identity_core" }
 identity_iota_move_calls = { version = "=1.6.0-alpha", path = "../../../identity_iota_move_calls" }
 #iota_interaction = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction", default-features = false }
 iota_interaction = { path = "../../../../product-core/iota_interaction", default-features = false }
+iota_interaction_ts.workspace = true
 js-sys = { version = "0.3.61" }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", default-features = false, tag = "v0.3.0" }
 serde = { version = "1.0", features = ["derive"] }

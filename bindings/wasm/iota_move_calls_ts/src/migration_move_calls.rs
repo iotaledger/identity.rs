@@ -1,19 +1,19 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota_move_calls::MigrationMoveCalls;
 use iota_interaction::rpc_types::OwnedObjectRef;
 use iota_interaction::types::base_types::ObjectID;
 use iota_interaction::types::base_types::ObjectRef;
-use iota_interaction::MigrationMoveCalls;
 use iota_interaction::ProgrammableTransactionBcs;
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
 
-use crate::bindings::WasmObjectRef;
-use crate::bindings::WasmSharedObjectRef;
-use crate::error::TsSdkError;
-use crate::error::WasmError;
+use iota_interaction_ts::bindings::WasmObjectRef;
+use iota_interaction_ts::bindings::WasmSharedObjectRef;
+use iota_interaction_ts::error::TsSdkError;
+use iota_interaction_ts::error::WasmError;
 
 #[wasm_bindgen(module = "@iota/iota-interaction-ts/move_calls")]
 extern "C" {
