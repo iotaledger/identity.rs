@@ -21,7 +21,7 @@ use serde::Serialize;
 use tokio::sync::OnceCell;
 
 use crate::iota_interaction_adapter::MigrationMoveCallsAdapter;
-use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::client::{CoreClientReadOnly, IdentityClientReadOnly};
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::Error;
 use crate::IotaDID;
@@ -89,15 +89,16 @@ impl MigrateLegacyIdentity {
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     // Try to parse a StateMetadataDocument out of this alias.
     let identity = Identity::Legacy(self.alias.clone());
-    let did_doc = identity.did_document(client.network())?;
+    let did_doc = identity.did_document(client.network_name())?;
     let Identity::Legacy(alias) = identity else {
       unreachable!("alias was wrapped by us")
     };
     // Get the ID of the `AliasOutput` that owns this `Alias`.
     let dynamic_field_wrapper = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(*alias.id.object_id(), IotaObjectDataOptions::new().with_owner())
       .await
@@ -108,6 +109,7 @@ impl MigrateLegacyIdentity {
       .expect("alias is a dynamic field")
       .into();
     let alias_output_id = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(dynamic_field_wrapper, IotaObjectDataOptions::new().with_owner())
       .await
@@ -119,6 +121,7 @@ impl MigrateLegacyIdentity {
       .into();
     // Get alias_output's ref.
     let alias_output_ref = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(alias_output_id, IotaObjectDataOptions::default())
       .await
@@ -127,7 +130,7 @@ impl MigrateLegacyIdentity {
       .expect("alias_output exists");
     // Get migration registry ref.
     let migration_registry_ref = client
-      .get_object_ref_by_id(client.migration_registry_id())
+      .get_object_ref_by_id(ObjectID::random())
       .await?
       .expect("migration registry exists");
 
@@ -158,7 +161,7 @@ impl Transaction for MigrateLegacyIdentity {
 
   async fn build_programmable_transaction(
     &self,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
@@ -166,13 +169,13 @@ impl Transaction for MigrateLegacyIdentity {
   async fn apply(
     self,
     mut effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.to_string())), effects);
     }
 
-    let legacy_did: Url = IotaDID::new(&self.alias.id.object_id().into_bytes(), client.network())
+    let legacy_did: Url = IotaDID::new(&self.alias.id.object_id().into_bytes(), client.network_name())
       .to_url()
       .into();
     let is_target_identity =

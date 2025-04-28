@@ -49,6 +49,7 @@ use crate::rebased::migration::Proposal;
 use crate::rebased::Error;
 use identity_iota_interaction::MoveType;
 
+use super::client::CoreClientReadOnly;
 use super::migration::ControllerToken;
 
 /// Interface that allows the creation and execution of an [`OnChainIdentity`]'s [`Proposal`]s.
@@ -189,7 +190,7 @@ where
 
   async fn build_programmable_transaction(
     &self,
-    _client: &IdentityClientReadOnly,
+    _client: &impl CoreClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     Ok(self.ptb.clone())
   }
@@ -197,7 +198,7 @@ where
   async fn apply(
     self,
     effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
+    client: &(impl CoreClientReadOnly + OptionalSync),
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     let Self {
       identity,
@@ -231,8 +232,11 @@ where
         .expect("tx was successful")
         .object_id();
 
-      let apply_result = client.get_object_by_id(proposal_id).await.map(ProposalResult::Pending);
-      (apply_result, effects)
+      // let apply_result = client.get_object_by_id(proposal_id).await.map(ProposalResult::Pending);
+
+      // (apply_result, effects)
+
+      todo!()
     }
   }
 }
@@ -262,14 +266,14 @@ where
   type Output = <Proposal<A> as ProposalT>::Output;
   async fn build_programmable_transaction(
     &self,
-    _client: &IdentityClientReadOnly,
+    _client: &impl CoreClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     Ok(self.ptb.clone())
   }
   async fn apply(
     self,
     effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     let Self { identity, .. } = self;
 
@@ -319,7 +323,10 @@ impl<'p, 'i, A> ApproveProposal<'p, 'i, A> {
   }
 }
 impl<A: MoveType> ApproveProposal<'_, '_, A> {
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(
+    &self,
+    client: &(impl CoreClientReadOnly + OptionalSync),
+  ) -> Result<ProgrammableTransaction, Error> {
     let Self {
       proposal,
       identity,
@@ -355,14 +362,14 @@ where
   type Output = ();
   async fn build_programmable_transaction(
     &self,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
   async fn apply(
     self,
     effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
+    _client: &impl CoreClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
@@ -391,10 +398,11 @@ where
   }
 }
 
-async fn obj_data_for_id(client: &IdentityClientReadOnly, obj_id: ObjectID) -> anyhow::Result<IotaObjectData> {
+async fn obj_data_for_id(client: &impl CoreClientReadOnly, obj_id: ObjectID) -> anyhow::Result<IotaObjectData> {
   use anyhow::Context;
 
   client
+    .client_adapter()
     .read_api()
     .get_object_with_options(obj_id, IotaObjectDataOptions::default().with_type().with_owner())
     .await?
@@ -403,7 +411,7 @@ async fn obj_data_for_id(client: &IdentityClientReadOnly, obj_id: ObjectID) -> a
 }
 
 async fn obj_ref_and_type_for_id(
-  client: &IdentityClientReadOnly,
+  client: &impl CoreClientReadOnly,
   obj_id: ObjectID,
 ) -> anyhow::Result<(ObjectRef, TypeTag)> {
   let res = obj_data_for_id(client, obj_id).await?;

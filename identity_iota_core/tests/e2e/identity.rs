@@ -1,17 +1,18 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common;
 use crate::common::get_funded_test_client;
 use crate::common::get_key_data;
 use crate::common::TEST_COIN_TYPE;
 use crate::common::TEST_GAS_BUDGET;
-use identity_iota_core::rebased::client::get_object_id_from_did;
+use crate::common::{self, TestClient};
+use identity_iota_core::rebased::client::{get_object_id_from_did, CoreClient, CoreClientReadOnly};
 use identity_iota_core::rebased::migration::has_previous_version;
 use identity_iota_core::rebased::migration::Identity;
 use identity_iota_core::rebased::proposals::ProposalResult;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
+use identity_iota_interaction::KeytoolSigner;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use iota_sdk::rpc_types::IotaObjectData;
@@ -463,7 +464,7 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
   let mut identity = client
     .create_identity(IotaDocument::new(client.network()))
     .finish()
-    .build_and_execute(&client)
+    .build_and_execute::<KeytoolSigner, TestClient>(&client)
     .await?
     .output;
   let did = identity.did_document().id().clone();
@@ -473,7 +474,7 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
     .delete_did(&controller_token)
     .finish(&client)
     .await?
-    .build_and_execute(&client)
+    .build_and_execute::<KeytoolSigner, TestClient>(&client)
     .await?
     .output
   else {

@@ -1,8 +1,6 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
-
 use crate::common::get_funded_test_client;
 use crate::common::TEST_GAS_BUDGET;
 use identity_core::common::Object;
@@ -14,6 +12,7 @@ use identity_credential::validator::JwtCredentialValidationOptions;
 use identity_credential::validator::JwtCredentialValidator;
 use identity_document::document::CoreDocument;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
+use identity_iota_core::rebased::client::CoreClient;
 use identity_iota_core::rebased::AuthenticatedAsset;
 use identity_iota_core::rebased::PublicAvailableVC;
 use identity_iota_core::rebased::TransferProposal;
@@ -27,6 +26,7 @@ use identity_verification::VerificationMethod;
 use iota_sdk::types::TypeTag;
 use itertools::Itertools as _;
 use move_core_types::language_storage::StructTag;
+use std::str::FromStr;
 
 #[tokio::test]
 async fn creating_authenticated_asset_works() -> anyhow::Result<()> {

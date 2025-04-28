@@ -5,14 +5,14 @@
 use anyhow::anyhow;
 use anyhow::Context;
 use async_trait::async_trait;
-use identity_iota_core::rebased::client::IdentityClient;
-use identity_iota_core::rebased::client::IdentityClientReadOnly;
+use identity_iota_core::rebased::client::{CoreClient, IdentityClient};
+use identity_iota_core::rebased::client::{CoreClientReadOnly, IdentityClientReadOnly};
 use identity_iota_core::rebased::keytool::KeytoolSigner;
 use identity_iota_core::rebased::transaction_builder::Transaction;
 use identity_iota_core::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_core::rebased::utils::request_funds;
 use identity_iota_core::rebased::Error;
-use identity_iota_core::IotaDID;
+use identity_iota_core::{IotaDID, NetworkName};
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
@@ -35,9 +35,10 @@ use iota_sdk::rpc_types::IotaObjectDataOptions;
 use iota_sdk::rpc_types::IotaObjectResponse;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::crypto::SignatureScheme;
+use iota_sdk::types::crypto::{PublicKey, SignatureScheme};
 use iota_sdk::types::object::Owner;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use iota_sdk::IotaClient;
@@ -314,6 +315,37 @@ impl TestClient {
   }
 }
 
+impl CoreClientReadOnly for TestClient {
+  fn package_id(&self) -> ObjectID {
+    self.client.package_id()
+  }
+
+  fn network_name(&self) -> &NetworkName {
+    self.client.network_name()
+  }
+
+  fn client_adapter(&self) -> &IotaClientAdapter {
+    self.client.client_adapter()
+  }
+}
+
+impl<S> CoreClient<S> for TestClient
+where
+  S: Signer<IotaKeySignature> + OptionalSync,
+{
+  fn signer(&self) -> &S {
+    self.client.signer()
+  }
+
+  fn sender_address(&self) -> IotaAddress {
+    self.client.sender_address()
+  }
+
+  fn sender_public_key(&self) -> &PublicKey {
+    self.client.sender_public_key()
+  }
+}
+
 pub async fn get_test_coin<S>(recipient: IotaAddress, client: &IdentityClient<S>) -> anyhow::Result<ObjectID>
 where
   S: Signer<IotaKeySignature> + OptionalSync,
@@ -372,7 +404,7 @@ impl Transaction for GetTestCoin {
 
   async fn build_programmable_transaction(
     &self,
-    _client: &IdentityClientReadOnly,
+    _client: &impl CoreClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     let mut ptb = ProgrammableTransactionBuilder::new();
     let coin = ptb.programmable_move_call(
@@ -389,7 +421,7 @@ impl Transaction for GetTestCoin {
   async fn apply(
     self,
     mut effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     use identity_iota_interaction::IotaClientTrait as _;
     let created_objects = effects
@@ -406,6 +438,7 @@ impl Transaction for GetTestCoin {
     let mut id = None;
     for (pos, obj) in created_objects {
       let coin_info = client
+        .client_adapter()
         .read_api()
         .get_object_with_options(obj, IotaObjectDataOptions::new().with_type())
         .await;

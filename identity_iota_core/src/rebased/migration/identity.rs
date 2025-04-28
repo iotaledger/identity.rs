@@ -8,8 +8,9 @@ use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use identity_iota_interaction::{IdentityMoveCalls, IotaKeySignature};
+use identity_iota_interaction::{IotaTransactionBlockEffectsMutAPI as _, OptionalSync};
+use secret_storage::Signer;
 use tokio::sync::OnceCell;
 
 use crate::rebased::iota::types::Number;
@@ -40,8 +41,8 @@ use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::rebased::client::IdentityClient;
-use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::client::{CoreClient, IdentityClient};
+use crate::rebased::client::{CoreClientReadOnly, IdentityClientReadOnly};
 use crate::rebased::proposals::BorrowAction;
 use crate::rebased::proposals::ConfigChange;
 use crate::rebased::proposals::ControllerExecution;
@@ -171,12 +172,16 @@ impl OnChainIdentity {
     client
       .find_object_for_address::<ControllerToken, _>(address, |token| token.controller_of() == self.id())
       .await
+      .map_err(Error::from)
   }
 
   /// Returns a [ControllerToken], owned by `client`'s sender address, that grants access to this Identity.
   /// ## Notes
   /// [None] is returned if `client`'s sender address doesn't own a valid [ControllerToken].
-  pub async fn get_controller_token<S>(&self, client: &IdentityClient<S>) -> Result<Option<ControllerToken>, Error> {
+  pub async fn get_controller_token<S: Signer<IotaKeySignature> + Sync>(
+    &self,
+    client: &IdentityClient<S>,
+  ) -> Result<Option<ControllerToken>, Error> {
     self
       .get_controller_token_for_address(client.sender_address(), client)
       .await
@@ -323,10 +328,11 @@ async fn get_previous_version(
 
 /// Returns the [`OnChainIdentity`] having ID `object_id`, if it exists.
 pub async fn get_identity(
-  client: &IdentityClientReadOnly,
+  client: &impl CoreClientReadOnly,
   object_id: ObjectID,
 ) -> Result<Option<OnChainIdentity>, Error> {
   let response = client
+    .client_adapter()
     .read_api()
     .get_object_with_options(object_id, IotaObjectDataOptions::new().with_content())
     .await
@@ -342,7 +348,7 @@ pub async fn get_identity(
     return Ok(None);
   };
 
-  let network = client.network();
+  let network = client.network_name();
   let did = IotaDID::from_object_id(&object_id.to_string(), network);
   let Some(IdentityData {
     id,
@@ -357,7 +363,7 @@ pub async fn get_identity(
   else {
     return Ok(None);
   };
-  let legacy_did = legacy_id.map(|legacy_id| IotaDID::from_object_id(&legacy_id.to_string(), client.network()));
+  let legacy_did = legacy_id.map(|legacy_id| IotaDID::from_object_id(&legacy_id.to_string(), client.network_name()));
 
   let did_doc = multicontroller
     .controlled_value()
@@ -539,7 +545,7 @@ impl CreateIdentity {
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let IdentityBuilder {
       did_doc,
       threshold,
@@ -583,7 +589,7 @@ impl Transaction for CreateIdentity {
 
   async fn build_programmable_transaction(
     &self,
-    client: &IdentityClientReadOnly,
+    client: &(impl CoreClientReadOnly),
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
@@ -591,7 +597,7 @@ impl Transaction for CreateIdentity {
   async fn apply(
     mut self,
     mut effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);

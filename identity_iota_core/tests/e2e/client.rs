@@ -5,6 +5,7 @@ use crate::common::get_funded_test_client;
 use crate::common::TestClient;
 use identity_iota_core::rebased::migration;
 use identity_iota_core::IotaDocument;
+use identity_iota_interaction::KeytoolSigner;
 use iota_sdk::types::crypto::SignatureScheme;
 
 #[tokio::test]
@@ -50,7 +51,7 @@ async fn client_with_keytool_signer_active_address_works() -> anyhow::Result<()>
   let _identity = test_client
     .create_identity(IotaDocument::new(test_client.network()))
     .finish()
-    .build_and_execute(&test_client)
+    .build_and_execute::<KeytoolSigner, TestClient>(&test_client)
     .await?
     .output;
 
@@ -63,7 +64,7 @@ async fn client_with_new_ed25519_keytool_signer_works() -> anyhow::Result<()> {
   let _identity = test_client
     .create_identity(IotaDocument::new(test_client.network()))
     .finish()
-    .build_and_execute(&test_client)
+    .build_and_execute::<KeytoolSigner, TestClient>(&test_client)
     .await?
     .output;
 
@@ -76,7 +77,7 @@ async fn client_with_new_secp256r1_keytool_signer_works() -> anyhow::Result<()> 
   let _identity = test_client
     .create_identity(IotaDocument::new(test_client.network()))
     .finish()
-    .build_and_execute(&test_client)
+    .build_and_execute::<KeytoolSigner, TestClient>(&test_client)
     .await?
     .output;
 
@@ -89,7 +90,7 @@ async fn client_with_new_secp256k1_keytool_signer_works() -> anyhow::Result<()> 
   let _identity = test_client
     .create_identity(IotaDocument::new(test_client.network()))
     .finish()
-    .build_and_execute(&test_client)
+    .build_and_execute::<KeytoolSigner, TestClient>(&test_client)
     .await?
     .output;
 

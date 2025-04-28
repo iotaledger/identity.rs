@@ -4,7 +4,8 @@
 use std::str::FromStr as _;
 
 use crate::iota_interaction_adapter::AssetMoveCallsAdapter;
-use crate::rebased::client::IdentityClientReadOnly;
+
+use crate::rebased::client::CoreClientReadOnly;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::rebased::Error;
@@ -72,8 +73,9 @@ where
   T: DeserializeOwned,
 {
   /// Resolves an [`AuthenticatedAsset`] by its ID `id`.
-  pub async fn get_by_id(id: ObjectID, client: &IdentityClientReadOnly) -> Result<Self, Error> {
+  pub async fn get_by_id(id: ObjectID, client: &impl CoreClientReadOnly) -> Result<Self, Error> {
     let res = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
       .await?;
@@ -92,8 +94,9 @@ where
 }
 
 impl<T: MoveType + Send + Sync> AuthenticatedAsset<T> {
-  async fn object_ref(&self, client: &IdentityClientReadOnly) -> Result<ObjectRef, Error> {
+  async fn object_ref(&self, client: &impl CoreClientReadOnly) -> Result<ObjectRef, Error> {
     client
+      .client_adapter()
       .read_api()
       .get_object_with_options(self.id(), IotaObjectDataOptions::default())
       .await?
@@ -262,8 +265,9 @@ impl MoveType for TransferProposal {
 
 impl TransferProposal {
   /// Resolves a [`TransferProposal`] by its ID `id`.
-  pub async fn get_by_id(id: ObjectID, client: &IdentityClientReadOnly) -> Result<Self, Error> {
+  pub async fn get_by_id(id: ObjectID, client: &impl CoreClientReadOnly) -> Result<Self, Error> {
     let res = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
       .await?;
@@ -280,7 +284,7 @@ impl TransferProposal {
       .map_err(|e| Error::ObjectLookup(e.to_string()))
   }
 
-  async fn get_cap(&self, cap_type: &str, client: &IdentityClientReadOnly) -> Result<ObjectRef, Error> {
+  async fn get_cap(&self, cap_type: &str, client: &impl CoreClientReadOnly) -> Result<ObjectRef, Error> {
     let cap_tag = StructTag::from_str(&format!("{}::asset::{cap_type}", client.package_id()))
       .map_err(|e| Error::ParsingFailed(e.to_string()))?;
     let owner_address = match cap_type {
@@ -302,8 +306,9 @@ impl TransferProposal {
       })
   }
 
-  async fn asset_metadata(&self, client: &IdentityClientReadOnly) -> anyhow::Result<(ObjectRef, TypeTag)> {
+  async fn asset_metadata(&self, client: &impl CoreClientReadOnly) -> anyhow::Result<(ObjectRef, TypeTag)> {
     let res = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(self.asset_id, IotaObjectDataOptions::default().with_type())
       .await?;
@@ -326,8 +331,9 @@ impl TransferProposal {
     Ok((asset_ref, param_type))
   }
 
-  async fn initial_shared_version(&self, client: &IdentityClientReadOnly) -> anyhow::Result<SequenceNumber> {
+  async fn initial_shared_version(&self, client: &impl CoreClientReadOnly) -> anyhow::Result<SequenceNumber> {
     let owner = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(*self.id.object_id(), IotaObjectDataOptions::default().with_owner())
       .await?
@@ -394,7 +400,7 @@ impl<'a, T: MoveType + Send + Sync> UpdateContent<'a, T> {
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let tx_bcs = AssetMoveCallsAdapter::update(
       self.asset.object_ref(client).await?,
       &self.new_content,
@@ -415,14 +421,14 @@ where
 
   async fn build_programmable_transaction(
     &self,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
   async fn apply(
     self,
     mut effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
+    _client: &impl CoreClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
@@ -459,7 +465,7 @@ impl<T: MoveType + Send + Sync> DeleteAsset<T> {
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let asset_ref = self.asset.object_ref(client).await?;
     let tx_bcs = AssetMoveCallsAdapter::delete::<T>(asset_ref, client.package_id())?;
 
@@ -477,14 +483,14 @@ where
 
   async fn build_programmable_transaction(
     &self,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
   async fn apply(
     self,
     mut effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
+    _client: &impl CoreClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
@@ -525,7 +531,7 @@ impl<T: MoveType> CreateAsset<T> {
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let AuthenticatedAssetBuilder {
       ref inner,
       mutable,
@@ -547,7 +553,7 @@ where
 
   async fn build_programmable_transaction(
     &self,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
@@ -555,7 +561,7 @@ where
   async fn apply(
     self,
     mut effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
@@ -621,7 +627,7 @@ impl<T: MoveType + Send + Sync> TransferAsset<T> {
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let bcs = AssetMoveCallsAdapter::transfer::<T>(
       self.asset.object_ref(client).await?,
       self.recipient,
@@ -642,14 +648,14 @@ where
 
   async fn build_programmable_transaction(
     &self,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
   async fn apply(
     self,
     mut effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
@@ -710,7 +716,7 @@ impl AcceptTransfer {
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     if self.proposal.done {
       return Err(Error::TransactionBuildingFailed(
         "the transfer has already been concluded".to_owned(),
@@ -747,7 +753,7 @@ impl Transaction for AcceptTransfer {
 
   async fn build_programmable_transaction(
     &self,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
@@ -755,7 +761,7 @@ impl Transaction for AcceptTransfer {
   async fn apply(
     self,
     mut effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
+    _client: &impl CoreClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
@@ -799,7 +805,7 @@ impl ConcludeTransfer {
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let cap = self.proposal.get_cap("SenderCap", client).await?;
     let (asset_ref, param_type) = self
       .proposal
@@ -831,7 +837,7 @@ impl Transaction for ConcludeTransfer {
 
   async fn build_programmable_transaction(
     &self,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
@@ -839,7 +845,7 @@ impl Transaction for ConcludeTransfer {
   async fn apply(
     self,
     mut effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
+    _client: &impl CoreClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);

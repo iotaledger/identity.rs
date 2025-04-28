@@ -5,11 +5,11 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::client::{CoreClientReadOnly, IdentityClientReadOnly};
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
-use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::{IdentityMoveCalls, OptionalSync};
 use serde::Deserialize;
 use tokio::sync::Mutex;
 
@@ -295,7 +295,10 @@ impl<F> UserDrivenTx<'_, BorrowActionWithIntent<F>>
 where
   F: BorrowIntentFnT,
 {
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(
+    &self,
+    client: &(impl CoreClientReadOnly + OptionalSync),
+  ) -> Result<ProgrammableTransaction, Error> {
     let Self {
       identity,
       action: borrow_action,
@@ -353,14 +356,14 @@ where
   type Output = ();
   async fn build_programmable_transaction(
     &self,
-    client: &IdentityClientReadOnly,
+    client: &impl CoreClientReadOnly,
   ) -> Result<ProgrammableTransaction, Error> {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
   async fn apply(
     self,
     effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
+    _client: &impl CoreClientReadOnly,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
