@@ -40,8 +40,8 @@ wasm-bindgen = { version = "0.2.100", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 # dummy-client dependencies
-#iota_interaction_ts = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/extensions-needed-for-identity", package = "iota_interaction_ts", optional = true }
-iota_interaction_ts = { path = "../../../../product-core/bindings/wasm/iota_interaction_ts", optional = true }
+iota_interaction_ts = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "iota_interaction_ts", optional = true }
+#iota_interaction_ts = { path = "../../../../product-core/bindings/wasm/iota_interaction_ts", optional = true }
 iota_move_calls_ts = { version = "=1.6.0-alpha", path = "../iota_move_calls_ts", optional = true }
 
 [dependencies.identity_iota]

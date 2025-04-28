@@ -40,8 +40,8 @@ flavor = "iota"
 
 [env.testnet]
 chain-id = "2304aa97"
-original-published-id = "0x222741bbdff74b42df48a7b4733185e9b24becb8ccfbafe8eac864ab4e4cc555"
-latest-published-id = "0x222741bbdff74b42df48a7b4733185e9b24becb8ccfbafe8eac864ab4e4cc555"
+original-published-id = "0xfb4494330dfd5076c14e5dd68b2206029572f5133b6ff240665e80242cbfe13d"
+latest-published-id = "0xfb4494330dfd5076c14e5dd68b2206029572f5133b6ff240665e80242cbfe13d"
 published-version = "1"
 
 [env.devnet]
@@ -51,7 +51,7 @@ latest-published-id = "0x03242ae6b87406bd0eb5d669fbe874ed4003694c0be9c6a9ee7c315
 published-version = "1"
 
 [env.localnet]
-chain-id = "461e4e6c"
-original-published-id = "0x7b310d2af24b4d782ebb41d93b4b72bde08546e3e12a00e91b8b8f98442f6656"
-latest-published-id = "0x7b310d2af24b4d782ebb41d93b4b72bde08546e3e12a00e91b8b8f98442f6656"
+chain-id = "39aff582"
+original-published-id = "0x6a507b5765860d7b66d4b07b77af3eb99e373ae31c1108e8b40bc223a34d5e57"
+latest-published-id = "0x6a507b5765860d7b66d4b07b77af3eb99e373ae31c1108e8b40bc223a34d5e57"
 published-version = "1"
