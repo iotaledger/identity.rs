@@ -1,6 +1,8 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::convert::Infallible;
+
 use crate::error::Error;
 use crate::jwk::Jwk;
 use crate::jwk::JwkParams;
@@ -21,7 +23,7 @@ use super::ed25519;
 use super::secp256k1;
 use super::secp256r1;
 
-/// Helper trait to convert implementing conversion to `Jwk`.
+/// Helper trait to convert an arbitrary key type to `Jwk`.
 pub trait ToJwk {
   /// Error type used
   type Error;
@@ -46,7 +48,7 @@ impl ToJwk for PublicKey {
 }
 
 impl ToJwk for Ed25519KeyPair {
-  type Error = Error;
+  type Error = Infallible;
 
   fn to_jwk(&self) -> Result<Jwk, Self::Error> {
     Ok(ed25519::encode_jwk(self.copy()))
@@ -54,14 +56,12 @@ impl ToJwk for Ed25519KeyPair {
 }
 
 /// Helper trait to convert implementing conversion from `Jwk`.
-pub trait FromJwk {
+pub trait FromJwk: Sized {
   /// Error type used
   type Error;
 
   /// Create instance from `Jwk`.
-  fn from_jwk(jwk: &Jwk) -> Result<Self, Self::Error>
-  where
-    Self: Sized;
+  fn from_jwk(jwk: &Jwk) -> Result<Self, Self::Error>;
 }
 
 impl FromJwk for IotaKeyPair {
@@ -153,3 +153,4 @@ impl FromJwk for Ed25519PublicKey {
     ed25519::from_public_jwk(jwk).map_err(|err| Error::KeyConversion(err.to_string()))
   }
 }
+
