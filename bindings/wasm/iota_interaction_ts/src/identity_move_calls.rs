@@ -265,7 +265,7 @@ extern "C" {
 
 impl From<ControllerTokenRef> for WasmControllerTokenRef {
   fn from(value: ControllerTokenRef) -> Self {
-    use js_sys::Object;    
+    use js_sys::Object;
     use js_sys::Reflect;
 
     let wasm_object_ref = WasmObjectRef::from(value.object_ref());

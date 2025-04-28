@@ -21,10 +21,14 @@ use crate::error::WasmResult;
 use crate::iota::WasmIotaDocument;
 use crate::rebased::proposals::WasmCreateConfigChangeProposal;
 use crate::rebased::proposals::WasmCreateUpdateDidProposal;
+use crate::rebased::WasmDeleteDelegationToken;
 
 use super::proposals::StringCouple;
 use super::proposals::WasmConfigChange;
 use super::proposals::WasmCreateSendProposal;
+use super::WasmControllerCap;
+use super::WasmDelegationToken;
+use super::WasmDelegationTokenRevocation;
 use super::WasmIdentityClient;
 use super::WasmIdentityClientReadOnly;
 use super::WasmIotaAddress;
@@ -193,6 +197,38 @@ impl WasmOnChainIdentity {
   ) -> Result<WasmTransactionBuilder> {
     let tx = WasmCreateSendProposal::new(self, controller_token, transfer_map, expiration_epoch).wasm_result()?;
     Ok(WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into()))
+  }
+
+  #[wasm_bindgen(
+    js_name = revokeDelegationToken,
+    unchecked_return_type = "TransactionBuilder<DelegationTokenRevocation>",
+  )]
+  pub fn revoke_delegation_token(
+    &self,
+    controller_cap: &WasmControllerCap,
+    delegation_token: &WasmDelegationToken,
+  ) -> Result<WasmDelegationTokenRevocation> {
+    WasmDelegationTokenRevocation::new(self, controller_cap, delegation_token, Some(true))
+  }
+
+  #[wasm_bindgen(
+    js_name = unrevokeDelegationToken,
+    unchecked_return_type = "TransactionBuilder<DelegationTokenRevocation>",
+  )]
+  pub fn unrevoke_delegation_token(
+    &self,
+    controller_cap: &WasmControllerCap,
+    delegation_token: &WasmDelegationToken,
+  ) -> Result<WasmDelegationTokenRevocation> {
+    WasmDelegationTokenRevocation::new(self, controller_cap, delegation_token, Some(false))
+  }
+
+  #[wasm_bindgen(
+    js_name = deleteDelegationToken,
+    unchecked_return_type = "TransactionBuilder<DeleteDelegationToken>",
+  )]
+  pub fn delete_delegation_token(&self, delegation_token: WasmDelegationToken) -> Result<WasmDeleteDelegationToken> {
+    WasmDeleteDelegationToken::new(self, delegation_token)
   }
 }
 
