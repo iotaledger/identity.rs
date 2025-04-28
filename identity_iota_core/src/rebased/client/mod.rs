@@ -6,7 +6,7 @@ mod read_only;
 
 use anyhow::{anyhow, Context};
 pub use full_client::*;
-use identity_iota_interaction::{IotaClientTrait, MoveType};
+use identity_iota_interaction::{IotaClientTrait, MoveType, OptionalSend};
 use iota_sdk::rpc_types::{
   IotaData, IotaObjectData, IotaObjectDataFilter, IotaObjectDataOptions, IotaObjectResponseQuery, IotaParsedData,
   OwnedObjectRef,
@@ -27,7 +27,7 @@ use async_trait::async_trait;
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync", async_trait)]
 /// A trait that defines the core read-only operations for core clients.
-pub trait CoreClientReadOnly: Sync {
+pub trait CoreClientReadOnly {
   /// Returns the package ID associated with the Client.
   ///
   /// The package ID uniquely identifies the deployed Contract on the
@@ -143,6 +143,16 @@ pub trait CoreClientReadOnly: Sync {
     Ok(None)
   }
 
+  /// Retrieves coins owned by the specified address with a balance of at least `balance`.
+  ///
+  /// # Arguments
+  ///
+  /// * `owner` - The address of the owner of the coins.
+  /// * `balance` - The minimum balance required for the coins.
+  ///
+  /// # Returns
+  ///
+  /// Returns `Ok(Vec<ObjectRef>)` if the coins are found, or an error if the operation fails.
   async fn get_iota_coins_with_at_least_balance(
     &self,
     owner: IotaAddress,

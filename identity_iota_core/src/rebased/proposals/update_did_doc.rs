@@ -7,7 +7,7 @@ use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::IdentityMoveCalls;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::client::{CoreClientReadOnly, IdentityClientReadOnly};
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::IotaDocument;

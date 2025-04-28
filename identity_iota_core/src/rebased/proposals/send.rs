@@ -14,7 +14,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::client::{CoreClientReadOnly, IdentityClientReadOnly};
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::transaction_builder::TransactionBuilder;

@@ -173,67 +173,6 @@ impl IdentityClientReadOnly {
     })
   }
 
-  /// Resolves a _Move_ Object of ID `id` and parses it to a value of type `T`.
-  pub async fn get_object_by_id<T>(&self, id: ObjectID) -> Result<T, Error>
-  where
-    T: DeserializeOwned,
-  {
-    self
-      .read_api()
-      .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
-      .await
-      .context("lookup request failed")
-      .and_then(|res| res.data.context("missing data in response"))
-      .and_then(|data| data.content.context("missing object content in data"))
-      .and_then(|content| content.try_into_move().context("not a move object"))
-      .and_then(|obj| {
-        serde_json::from_value(obj.fields.to_json_value())
-          .map_err(|err| anyhow!("failed to deserialize move object; {err}"))
-      })
-      .map_err(|e| Error::ObjectLookup(e.to_string()))
-  }
-
-  /// Returns an object's [`OwnedObjectRef`], if any.
-  pub async fn get_object_ref_by_id(&self, obj: ObjectID) -> Result<Option<OwnedObjectRef>, Error> {
-    self
-      .read_api()
-      .get_object_with_options(obj, IotaObjectDataOptions::default().with_owner())
-      .await
-      .map(|response| {
-        response.data.map(|obj_data| OwnedObjectRef {
-          owner: obj_data.owner.expect("requested data"),
-          reference: obj_data.object_ref().into(),
-        })
-      })
-      .map_err(Error::from)
-  }
-
-  pub(crate) async fn get_iota_coins_with_at_least_balance(
-    &self,
-    owner: IotaAddress,
-    balance: u64,
-  ) -> anyhow::Result<Vec<ObjectRef>> {
-    let mut coins = self
-      .coin_read_api()
-      .get_coins(owner, Some(String::from("0x2::iota::IOTA")), None, None)
-      .await?
-      .data;
-    coins.sort_unstable_by_key(|coin| coin.balance);
-
-    let mut needed_coins = vec![];
-    let mut needed_coins_balance = 0;
-    while let Some(coin) = coins.pop() {
-      needed_coins_balance += coin.balance;
-      needed_coins.push(coin.object_ref());
-
-      if needed_coins_balance >= balance {
-        return Ok(needed_coins);
-      }
-    }
-
-    anyhow::bail!("address {owner} does not have enough coins to form a balance of {balance}");
-  }
-
   /// Queries an [`IotaDocument`] DID Document through its `did`.
   pub async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument, Error> {
     let identity = self.get_identity(get_object_id_from_did(did)?).await?;

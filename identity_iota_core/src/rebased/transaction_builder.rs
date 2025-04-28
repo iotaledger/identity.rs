@@ -44,10 +44,9 @@ pub trait Transaction {
   type Output;
 
   /// Encode this operation into a [ProgrammableTransaction].
-  async fn build_programmable_transaction(
-    &self,
-    client: &impl CoreClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error>;
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync;
 
   /// Parses a transaction result in order to compute its effects.
   /// ## Notes
@@ -56,11 +55,13 @@ pub trait Transaction {
   /// the ID of the object the transaction created from the `effects`'s list of
   /// created objects.
   /// This is particularly important to enable the batching of transactions.
-  async fn apply(
+  async fn apply<C>(
     self,
     effects: IotaTransactionBlockEffects,
-    client: &impl CoreClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects);
+    client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync;
 }
 
 #[derive(Debug, Default, Clone)]
@@ -164,7 +165,10 @@ where
     }
   }
 
-  async fn transaction_data(&mut self, client: &impl CoreClientReadOnly) -> anyhow::Result<TransactionData> {
+  async fn transaction_data<C>(&mut self, client: &C) -> anyhow::Result<TransactionData>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     // Make sure the partial gas information is actually complete to create a whole GasData.
     let gas_data: GasData = std::mem::take(&mut self.gas).try_into()?;
     self.gas = gas_data.into();
@@ -175,10 +179,10 @@ where
 
   /// Same as [Self::transaction_data] but will not fail with incomplete gas information.
   /// Missing gas data is filled with default values through [PartialGasData::into_gas_data_with_defaults].
-  async fn transaction_data_with_partial_gas(
-    &mut self,
-    client: &impl CoreClientReadOnly,
-  ) -> anyhow::Result<TransactionData> {
+  async fn transaction_data_with_partial_gas<C>(&mut self, client: &C) -> anyhow::Result<TransactionData>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     let sender = self.sender.context("missing sender")?;
     let gas_data = self.gas.clone().into_gas_data_with_defaults();
     let pt = self.get_or_init_programmable_tx(client).await?.clone();
@@ -194,8 +198,9 @@ where
   /// # Notes
   /// This methods asserts that `signer`'s address matches the address of
   /// either this transaction's sender or the gas owner - failing otherwise.
-  pub async fn with_signature<S>(mut self, client: &impl CoreClient<S>) -> Result<Self, Error>
+  pub async fn with_signature<S, C>(mut self, client: &C) -> Result<Self, Error>
   where
+    C: CoreClient<S> + OptionalSync,
     S: Signer<IotaKeySignature> + OptionalSync,
   {
     let pk = client
@@ -228,8 +233,9 @@ where
   /// ## Notes
   /// The [TransactionData] passed to `sponsor_tx` can be constructed from partial gas data; the sponsor is
   /// tasked with setting the gas information appropriately before signing.
-  pub async fn with_sponsor<F>(mut self, client: &impl CoreClientReadOnly, sponsor_tx: F) -> Result<Self, Error>
+  pub async fn with_sponsor<F, C>(mut self, client: &C, sponsor_tx: F) -> Result<Self, Error>
   where
+    C: CoreClientReadOnly + OptionalSync,
     F: AsyncFnOnce(MutGasDataRef<'_>) -> anyhow::Result<Signature>,
   {
     let mut tx_data = self.transaction_data_with_partial_gas(client).await?;
@@ -258,10 +264,10 @@ where
     Ok(self)
   }
 
-  async fn get_or_init_programmable_tx(
-    &mut self,
-    client: &impl CoreClientReadOnly,
-  ) -> Result<&ProgrammableTransaction, Error> {
+  async fn get_or_init_programmable_tx<C>(&mut self, client: &C) -> Result<&ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if self.programmable_tx.is_none() {
       self.programmable_tx = Some(self.tx.build_programmable_transaction(client).await?);
     }

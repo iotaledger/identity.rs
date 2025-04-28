@@ -8,7 +8,7 @@ use std::ops::DerefMut as _;
 use std::str::FromStr as _;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::client::{CoreClientReadOnly, IdentityClientReadOnly};
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_interaction::IdentityMoveCalls;

@@ -329,11 +329,8 @@ impl CoreClientReadOnly for TestClient {
   }
 }
 
-impl<S> CoreClient<S> for TestClient
-where
-  S: Signer<IotaKeySignature> + OptionalSync,
-{
-  fn signer(&self) -> &S {
+impl CoreClient<KeytoolSigner> for TestClient {
+  fn signer(&self) -> &KeytoolSigner {
     self.client.signer()
   }
 
@@ -402,10 +399,10 @@ struct GetTestCoin {
 impl Transaction for GetTestCoin {
   type Output = ObjectID;
 
-  async fn build_programmable_transaction(
-    &self,
-    _client: &impl CoreClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, _client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     let mut ptb = ProgrammableTransactionBuilder::new();
     let coin = ptb.programmable_move_call(
       IOTA_FRAMEWORK_PACKAGE_ID,
@@ -418,11 +415,14 @@ impl Transaction for GetTestCoin {
     Ok(ptb.finish())
   }
 
-  async fn apply(
+  async fn apply<C>(
     self,
     mut effects: IotaTransactionBlockEffects,
-    client: &impl CoreClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     use identity_iota_interaction::IotaClientTrait as _;
     let created_objects = effects
       .created()

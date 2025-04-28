@@ -354,17 +354,20 @@ where
   F: BorrowIntentFnT + Send,
 {
   type Output = ();
-  async fn build_programmable_transaction(
-    &self,
-    client: &impl CoreClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply(
+  async fn apply<C>(
     self,
     effects: IotaTransactionBlockEffects,
-    _client: &impl CoreClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    _client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }

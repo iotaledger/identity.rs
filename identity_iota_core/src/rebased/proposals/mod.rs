@@ -188,18 +188,21 @@ where
 {
   type Output = ProposalResult<Proposal<A>>;
 
-  async fn build_programmable_transaction(
-    &self,
-    _client: &impl CoreClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, _client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     Ok(self.ptb.clone())
   }
 
-  async fn apply(
+  async fn apply<C>(
     self,
     effects: IotaTransactionBlockEffects,
-    client: &(impl CoreClientReadOnly + OptionalSync),
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     let Self {
       identity,
       chained_execution,
@@ -232,11 +235,9 @@ where
         .expect("tx was successful")
         .object_id();
 
-      // let apply_result = client.get_object_by_id(proposal_id).await.map(ProposalResult::Pending);
+      let apply_result = client.get_object_by_id(proposal_id).await.map(ProposalResult::Pending);
 
-      // (apply_result, effects)
-
-      todo!()
+      (apply_result, effects)
     }
   }
 }
@@ -264,17 +265,20 @@ where
   A: OptionalSend + OptionalSync,
 {
   type Output = <Proposal<A> as ProposalT>::Output;
-  async fn build_programmable_transaction(
-    &self,
-    _client: &impl CoreClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, _client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     Ok(self.ptb.clone())
   }
-  async fn apply(
+  async fn apply<C>(
     self,
     effects: IotaTransactionBlockEffects,
-    client: &impl CoreClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     let Self { identity, .. } = self;
 
     if let IotaExecutionStatus::Failure { error } = effects.status() {
@@ -323,10 +327,10 @@ impl<'p, 'i, A> ApproveProposal<'p, 'i, A> {
   }
 }
 impl<A: MoveType> ApproveProposal<'_, '_, A> {
-  async fn make_ptb(
-    &self,
-    client: &(impl CoreClientReadOnly + OptionalSync),
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     let Self {
       proposal,
       identity,
@@ -360,17 +364,20 @@ where
   A: MoveType + OptionalSend + OptionalSync,
 {
   type Output = ();
-  async fn build_programmable_transaction(
-    &self,
-    client: &impl CoreClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply(
+  async fn apply<C>(
     self,
     effects: IotaTransactionBlockEffects,
-    _client: &impl CoreClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    _client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
