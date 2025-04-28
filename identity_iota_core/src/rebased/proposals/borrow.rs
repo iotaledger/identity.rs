@@ -5,11 +5,13 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::{CoreClientReadOnly, IdentityClientReadOnly};
+use crate::rebased::client::CoreClientReadOnly;
+use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
-use identity_iota_interaction::{IdentityMoveCalls, OptionalSync};
+use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::OptionalSync;
 use serde::Deserialize;
 use tokio::sync::Mutex;
 

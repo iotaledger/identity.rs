@@ -11,10 +11,9 @@ use crate::rebased::iota;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::NetworkName;
-use anyhow::anyhow;
-use anyhow::Context as _;
+
 use futures::stream::FuturesUnordered;
-use identity_iota_interaction::MoveType;
+use identity_iota_interaction::IotaClientTrait;
 
 use crate::iota_interaction_adapter::IotaClientAdapter;
 use crate::rebased::migration::get_alias;
@@ -27,18 +26,9 @@ use identity_core::common::Url;
 use identity_did::DID;
 use identity_iota_interaction::move_types::language_storage::StructTag;
 use identity_iota_interaction::rpc_types::EventFilter;
-use identity_iota_interaction::rpc_types::IotaData as _;
-use identity_iota_interaction::rpc_types::IotaObjectData;
-use identity_iota_interaction::rpc_types::IotaObjectDataFilter;
-use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
-use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
-use identity_iota_interaction::rpc_types::IotaParsedData;
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::types::base_types::IotaAddress;
+
 use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::IotaClientTrait;
-use serde::de::DeserializeOwned;
+
 use serde::Deserialize;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -330,14 +320,14 @@ pub fn get_object_id_from_did(did: &IotaDID) -> Result<ObjectID, Error> {
 #[async_trait::async_trait]
 impl CoreClientReadOnly for IdentityClientReadOnly {
   fn package_id(&self) -> ObjectID {
-    todo!()
+    self.iota_identity_pkg_id
   }
 
   fn network_name(&self) -> &NetworkName {
-    todo!()
+    &self.network
   }
 
   fn client_adapter(&self) -> &IotaClientAdapter {
-    todo!()
+    &self.iota_client
   }
 }

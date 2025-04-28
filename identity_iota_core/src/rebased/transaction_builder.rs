@@ -28,8 +28,8 @@ use identity_iota_interaction::OptionalSync;
 use itertools::Itertools;
 use secret_storage::Signer;
 
-use super::client::{CoreClient, IdentityClient};
-use super::client::{CoreClientReadOnly, IdentityClientReadOnly};
+use super::client::CoreClient;
+use super::client::CoreClientReadOnly;
 #[cfg(not(target_arch = "wasm32"))]
 use super::transaction::TransactionOutput;
 #[cfg(target_arch = "wasm32")]

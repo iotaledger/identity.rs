@@ -3,10 +3,13 @@
 
 use crate::common::get_funded_test_client;
 use crate::common::get_key_data;
+use crate::common::TestClient;
 use crate::common::TEST_COIN_TYPE;
 use crate::common::TEST_GAS_BUDGET;
-use crate::common::{self, TestClient};
-use identity_iota_core::rebased::client::{get_object_id_from_did, CoreClient, CoreClientReadOnly};
+use crate::common::{self};
+use identity_iota_core::rebased::client::get_object_id_from_did;
+use identity_iota_core::rebased::client::CoreClient;
+use identity_iota_core::rebased::client::CoreClientReadOnly;
 use identity_iota_core::rebased::migration::has_previous_version;
 use identity_iota_core::rebased::migration::Identity;
 use identity_iota_core::rebased::proposals::ProposalResult;

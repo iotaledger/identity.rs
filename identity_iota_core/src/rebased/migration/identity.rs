@@ -8,8 +8,10 @@ use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::{IdentityMoveCalls, IotaKeySignature};
-use identity_iota_interaction::{IotaTransactionBlockEffectsMutAPI as _, OptionalSync};
+use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::IotaKeySignature;
+use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use identity_iota_interaction::OptionalSync;
 use secret_storage::Signer;
 use tokio::sync::OnceCell;
 
@@ -41,8 +43,10 @@ use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::rebased::client::{CoreClient, IdentityClient};
-use crate::rebased::client::{CoreClientReadOnly, IdentityClientReadOnly};
+use crate::rebased::client::CoreClient;
+use crate::rebased::client::CoreClientReadOnly;
+use crate::rebased::client::IdentityClient;
+use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::proposals::BorrowAction;
 use crate::rebased::proposals::ConfigChange;
 use crate::rebased::proposals::ControllerExecution;

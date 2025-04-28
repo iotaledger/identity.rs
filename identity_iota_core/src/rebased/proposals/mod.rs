@@ -235,7 +235,11 @@ where
         .expect("tx was successful")
         .object_id();
 
-      let apply_result = client.get_object_by_id(proposal_id).await.map(ProposalResult::Pending);
+      let apply_result = client
+        .get_object_by_id(proposal_id)
+        .await
+        .map_err(Error::from)
+        .map(ProposalResult::Pending);
 
       (apply_result, effects)
     }

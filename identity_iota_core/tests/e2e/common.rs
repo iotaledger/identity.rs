@@ -5,17 +5,22 @@
 use anyhow::anyhow;
 use anyhow::Context;
 use async_trait::async_trait;
-use identity_iota_core::rebased::client::{CoreClient, IdentityClient};
-use identity_iota_core::rebased::client::{CoreClientReadOnly, IdentityClientReadOnly};
+use identity_iota_core::iota_interaction_rust::IotaClientAdapter;
+use identity_iota_core::rebased::client::CoreClient;
+use identity_iota_core::rebased::client::CoreClientReadOnly;
+use identity_iota_core::rebased::client::IdentityClient;
+use identity_iota_core::rebased::client::IdentityClientReadOnly;
 use identity_iota_core::rebased::keytool::KeytoolSigner;
 use identity_iota_core::rebased::transaction_builder::Transaction;
 use identity_iota_core::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_core::rebased::utils::request_funds;
 use identity_iota_core::rebased::Error;
-use identity_iota_core::{IotaDID, NetworkName};
+use identity_iota_core::IotaDID;
+use identity_iota_core::NetworkName;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
+
 use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI;
 use identity_iota_interaction::OptionalSync;
@@ -35,7 +40,8 @@ use iota_sdk::rpc_types::IotaObjectDataOptions;
 use iota_sdk::rpc_types::IotaObjectResponse;
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::crypto::{PublicKey, SignatureScheme};
+use iota_sdk::types::crypto::PublicKey;
+use iota_sdk::types::crypto::SignatureScheme;
 use iota_sdk::types::object::Owner;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
 

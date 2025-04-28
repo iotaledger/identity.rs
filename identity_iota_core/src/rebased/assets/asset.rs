@@ -12,6 +12,7 @@ use crate::rebased::Error;
 use anyhow::anyhow;
 use anyhow::Context;
 use async_trait::async_trait;
+use identity_iota_interaction::ident_str;
 use identity_iota_interaction::move_types::language_storage::StructTag;
 use identity_iota_interaction::rpc_types::IotaData as _;
 use identity_iota_interaction::rpc_types::IotaExecutionStatus;
@@ -30,7 +31,7 @@ use identity_iota_interaction::AssetMoveCalls;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
 use identity_iota_interaction::MoveType;
-use identity_iota_interaction::{ident_str, OptionalSync};
+use identity_iota_interaction::OptionalSync;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde::Deserializer;
@@ -431,7 +432,7 @@ where
   async fn apply<C>(
     self,
     mut effects: IotaTransactionBlockEffects,
-    client: &C,
+    _client: &C,
   ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,

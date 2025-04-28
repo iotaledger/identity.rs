@@ -8,10 +8,11 @@ use crate::iota_interaction_rust::IotaClientAdapter;
 use crate::rebased::migration::CreateIdentity;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
+use crate::IotaDID;
 use crate::IotaDocument;
+use crate::NetworkName;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
-use crate::{IotaDID, NetworkName};
 use async_trait::async_trait;
 use identity_iota_interaction::move_types::language_storage::StructTag;
 use identity_iota_interaction::rpc_types::IotaObjectData;
@@ -38,8 +39,10 @@ use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::MoveType;
 use identity_iota_interaction::OptionalSync;
 
-use super::{get_object_id_from_did, CoreClient};
-use super::{CoreClientReadOnly, IdentityClientReadOnly};
+use super::get_object_id_from_did;
+use super::CoreClient;
+use super::CoreClientReadOnly;
+use super::IdentityClientReadOnly;
 
 /// Mirrored types from identity_storage::KeyId
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]

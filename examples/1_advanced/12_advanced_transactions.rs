@@ -6,7 +6,8 @@ use examples::get_memstorage;
 use examples::TEST_GAS_BUDGET;
 
 use anyhow::Context as _;
-use identity_iota::iota::rebased::client::{CoreClient, IdentityClient};
+use identity_iota::iota::rebased::client::CoreClient;
+use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::transaction_builder::MutGasDataRef;
 use identity_iota::iota::rebased::transaction_builder::Transaction as _;
 use identity_iota::iota::IotaDocument;

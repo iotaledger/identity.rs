@@ -14,14 +14,16 @@ use identity_iota_interaction::types::id::UID;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::types::TypeTag;
 use identity_iota_interaction::types::STARDUST_PACKAGE_ID;
-use identity_iota_interaction::{IotaTransactionBlockEffectsMutAPI as _, OptionalSync};
+use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use identity_iota_interaction::OptionalSync;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 use tokio::sync::OnceCell;
 
 use crate::iota_interaction_adapter::MigrationMoveCallsAdapter;
-use crate::rebased::client::{CoreClientReadOnly, IdentityClientReadOnly};
+use crate::rebased::client::CoreClientReadOnly;
+use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::Error;
 use crate::IotaDID;

@@ -4,7 +4,8 @@
 use std::marker::PhantomData;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::{CoreClientReadOnly, IdentityClientReadOnly};
+use crate::rebased::client::CoreClientReadOnly;
+use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
@@ -12,7 +13,8 @@ use identity_iota_interaction::rpc_types::IotaExecutionStatus;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::{IdentityMoveCalls, OptionalSync};
+use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::OptionalSync;
 use tokio::sync::Mutex;
 
 use crate::rebased::migration::Proposal;

@@ -4,14 +4,21 @@
 mod full_client;
 mod read_only;
 
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
+use anyhow::Context;
 pub use full_client::*;
-use identity_iota_interaction::{IotaClientTrait, MoveType, OptionalSend};
-use iota_sdk::rpc_types::{
-  IotaData, IotaObjectData, IotaObjectDataFilter, IotaObjectDataOptions, IotaObjectResponseQuery, IotaParsedData,
-  OwnedObjectRef,
-};
-use iota_sdk::types::base_types::{IotaAddress, ObjectID, ObjectRef};
+use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::MoveType;
+use iota_sdk::rpc_types::IotaData;
+use iota_sdk::rpc_types::IotaObjectData;
+use iota_sdk::rpc_types::IotaObjectDataFilter;
+use iota_sdk::rpc_types::IotaObjectDataOptions;
+use iota_sdk::rpc_types::IotaObjectResponseQuery;
+use iota_sdk::rpc_types::IotaParsedData;
+use iota_sdk::rpc_types::OwnedObjectRef;
+use iota_sdk::types::base_types::IotaAddress;
+use iota_sdk::types::base_types::ObjectID;
+use iota_sdk::types::base_types::ObjectRef;
 use iota_sdk::types::crypto::PublicKey;
 use move_core_types::language_storage::StructTag;
 pub use read_only::*;
@@ -56,7 +63,7 @@ pub trait CoreClientReadOnly {
   ///
   /// Returns `Ok(Some(T))` if the object is found, `Ok(None)` if not found,
   /// or an error if the operation fails.
-  async fn get_object_by_id<T: DeserializeOwned>(&self, object_id: ObjectID) -> anyhow::Result<Option<T>> {
+  async fn get_object_by_id<T: DeserializeOwned>(&self, object_id: ObjectID) -> anyhow::Result<T> {
     self
       .client_adapter()
       .read_api()
