@@ -3,6 +3,7 @@
 
 export * from "./borrow_asset";
 export * from "./config";
+export * from "./controller";
 export * from "./controller_execution";
 export * from "./create";
 export * from "./proposal";

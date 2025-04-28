@@ -28,7 +28,7 @@ use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
 
-use crate::iota_interaction_rust::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
@@ -128,8 +128,7 @@ impl ControllerToken {
   }
 }
 
-/// An object that authenticates the actor presenting it
-/// as a controller of shared object.
+/// A token that authenticates its bearer as a controller of a specific shared object.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ControllerCap {
   #[serde(deserialize_with = "deserialize_from_uid")]
@@ -197,7 +196,7 @@ impl From<ControllerCap> for ControllerToken {
   }
 }
 
-/// A token minted by a controller that allows another to act in
+/// A token minted by a controller that allows another entity to act in
 /// its stead - with full or reduced permissions.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DelegationToken {
@@ -223,6 +222,11 @@ impl DelegationToken {
   /// Returns the ID of the object this token controls.
   pub fn controller_of(&self) -> ObjectID {
     self.controller_of
+  }
+
+  /// Returns the permissions of this token.
+  pub fn permissions(&self) -> DelegatePermissions {
+    self.permissions
   }
 }
 
@@ -256,6 +260,18 @@ pub struct DelegatePermissions(u32);
 impl Default for DelegatePermissions {
   fn default() -> Self {
     Self(u32::MAX)
+  }
+}
+
+impl From<u32> for DelegatePermissions {
+  fn from(value: u32) -> Self {
+    Self(value)
+  }
+}
+
+impl From<DelegatePermissions> for u32 {
+  fn from(value: DelegatePermissions) -> Self {
+    value.0
   }
 }
 
