@@ -3,7 +3,7 @@
 
 import { SharedObjectRef } from "@iota/iota-sdk/dist/cjs/bcs/types";
 import { Transaction } from "@iota/iota-sdk/transactions";
-import { controllerTokenRefToTxArgument, putBackControllerToken } from "move_calls/utils";
+import { controllerTokenRefToTxArgument, putBackControllerToken } from "../utils";
 import { ControllerTokenRef } from "./controller";
 
 export function proposeUpgrade(

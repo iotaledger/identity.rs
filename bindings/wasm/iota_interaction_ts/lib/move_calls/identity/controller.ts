@@ -1,7 +1,6 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { bcs } from "@iota/iota-sdk/bcs";
 import { SharedObjectRef } from "@iota/iota-sdk/dist/cjs/bcs/types";
 import { ObjectRef, Transaction } from "@iota/iota-sdk/transactions";
 
