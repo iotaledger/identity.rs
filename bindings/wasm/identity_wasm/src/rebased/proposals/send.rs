@@ -172,7 +172,7 @@ impl WasmApproveSendProposal {
       .into_inner();
     let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &client.0).await;
     let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
-    Object::assign(&wasm_effects, &wasm_rem_effects);
+    Object::assign(wasm_effects, &wasm_rem_effects);
 
     apply_result.wasm_result()
   }
@@ -230,7 +230,7 @@ impl WasmExecuteSendProposal {
       .await;
 
     let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
-    Object::assign(&wasm_effects, &wasm_rem_effects);
+    Object::assign(wasm_effects, &wasm_rem_effects);
 
     apply_result.wasm_result()
   }
@@ -317,7 +317,7 @@ impl WasmCreateSendProposal {
 
     let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &client.0).await;
     let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
-    Object::assign(&wasm_effects, &wasm_rem_effects);
+    Object::assign(wasm_effects, &wasm_rem_effects);
 
     match apply_result.wasm_result()? {
       ProposalResult::Pending(proposal) => Ok(Some(WasmProposalSend::new(proposal))),
