@@ -19,7 +19,7 @@ serde.workspace = true
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 iota_interaction.workspace = true
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-iota_interaction = { git = "ssh://git@github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "iota_interaction", default-features = false }
+iota_interaction = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "iota_interaction", default-features = false }
 #iota_interaction = { path = "../../product-core/iota_interaction", default-features = false }
 
 
