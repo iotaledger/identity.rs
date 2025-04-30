@@ -1,6 +1,10 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+ * Modifications Copyright 2024 Fondazione LINKS.
+ */
+
 use identity_storage::key_storage::bls::expand_bls_jwk;
 use identity_storage::key_storage::bls::sign_bbs;
 use identity_storage::JwkGenOutput;
