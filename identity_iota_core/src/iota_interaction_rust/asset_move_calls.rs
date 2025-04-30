@@ -17,8 +17,8 @@ use identity_iota_interaction::AssetMoveCalls;
 use identity_iota_interaction::MoveType;
 use identity_iota_interaction::ProgrammableTransactionBcs;
 use identity_iota_interaction::TypedValue;
-use iota_sdk::types::transaction::Argument;
-use iota_sdk::types::transaction::ProgrammableMoveCall;
+use identity_iota_interaction::types::transaction::Argument;
+use identity_iota_interaction::types::transaction::ProgrammableMoveCall;
 
 fn try_to_argument<T: MoveType + Serialize>(
   content: &T,

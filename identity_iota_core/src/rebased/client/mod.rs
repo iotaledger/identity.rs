@@ -7,27 +7,27 @@ mod read_only;
 use anyhow::anyhow;
 use anyhow::Context;
 pub use full_client::*;
-use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::{IotaClientTrait, OptionalSync};
 use identity_iota_interaction::MoveType;
-use iota_sdk::rpc_types::IotaData;
-use iota_sdk::rpc_types::IotaObjectData;
-use iota_sdk::rpc_types::IotaObjectDataFilter;
-use iota_sdk::rpc_types::IotaObjectDataOptions;
-use iota_sdk::rpc_types::IotaObjectResponseQuery;
-use iota_sdk::rpc_types::IotaParsedData;
-use iota_sdk::rpc_types::OwnedObjectRef;
-use iota_sdk::types::base_types::IotaAddress;
-use iota_sdk::types::base_types::ObjectID;
-use iota_sdk::types::base_types::ObjectRef;
-use iota_sdk::types::crypto::PublicKey;
-use move_core_types::language_storage::StructTag;
+use identity_iota_interaction::rpc_types::IotaData;
+use identity_iota_interaction::rpc_types::IotaObjectData;
+use identity_iota_interaction::rpc_types::IotaObjectDataFilter;
+use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
+use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
+use identity_iota_interaction::rpc_types::IotaParsedData;
+use identity_iota_interaction::rpc_types::OwnedObjectRef;
+use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::ObjectRef;
+use identity_iota_interaction::types::crypto::PublicKey;
+use identity_iota_interaction::move_types::language_storage::StructTag;
 pub use read_only::*;
 
 pub use identity_iota_interaction::IotaKeySignature;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 
-use crate::iota_interaction_rust::IotaClientAdapter;
+use crate::iota_interaction_adapter::IotaClientAdapter;
 use crate::NetworkName;
 use async_trait::async_trait;
 
@@ -251,7 +251,7 @@ pub trait CoreClientReadOnly {
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync", async_trait)]
 /// A trait that defines the core read-write operations for core clients.
-pub trait CoreClient<S: Signer<IotaKeySignature>>: CoreClientReadOnly {
+pub trait CoreClient<S: Signer<IotaKeySignature> + OptionalSync>: CoreClientReadOnly {
   /// Returns the signer of the client.
   fn signer(&self) -> &S;
 

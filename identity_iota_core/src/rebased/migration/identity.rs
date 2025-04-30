@@ -182,7 +182,7 @@ impl OnChainIdentity {
   /// Returns a [ControllerToken], owned by `client`'s sender address, that grants access to this Identity.
   /// ## Notes
   /// [None] is returned if `client`'s sender address doesn't own a valid [ControllerToken].
-  pub async fn get_controller_token<S: Signer<IotaKeySignature> + Sync>(
+  pub async fn get_controller_token<S: Signer<IotaKeySignature> + OptionalSync>(
     &self,
     client: &IdentityClient<S>,
   ) -> Result<Option<ControllerToken>, Error> {

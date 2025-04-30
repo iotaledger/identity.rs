@@ -4,7 +4,7 @@
 use std::ops::Deref;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::iota_interaction_rust::IotaClientAdapter;
+use crate::iota_interaction_adapter::IotaClientAdapter;
 use crate::rebased::migration::CreateIdentity;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
@@ -25,7 +25,7 @@ use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::IdentityMoveCalls as _;
 use identity_verification::jwk::Jwk;
-use iota_sdk::types::base_types::ObjectID;
+use identity_iota_interaction::types::base_types::ObjectID;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 use tokio::sync::OnceCell;
@@ -228,7 +228,7 @@ where
 
 impl<S> CoreClientReadOnly for IdentityClient<S>
 where
-  S: Sync,
+  S: OptionalSync,
 {
   fn client_adapter(&self) -> &IotaClientAdapter {
     &self.read_client
@@ -245,7 +245,7 @@ where
 
 impl<S> CoreClient<S> for IdentityClient<S>
 where
-  S: Signer<IotaKeySignature> + Sync,
+  S: Signer<IotaKeySignature> + OptionalSync,
 {
   fn sender_address(&self) -> IotaAddress {
     IotaAddress::from(&self.public_key)

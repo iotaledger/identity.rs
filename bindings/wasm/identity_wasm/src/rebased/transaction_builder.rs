@@ -7,12 +7,12 @@ use anyhow::anyhow;
 use anyhow::Context as _;
 use async_trait::async_trait;
 use fastcrypto::traits::EncodeDecodeBase64;
-use identity_iota::iota::rebased::client::IdentityClientReadOnly;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
 use identity_iota::iota::rebased::transaction_builder::MutGasDataRef;
 use identity_iota::iota::rebased::transaction_builder::Transaction;
 use identity_iota::iota::rebased::transaction_builder::TransactionBuilder;
 use identity_iota::iota::rebased::Error as IotaError;
+use identity_iota::iota::rebased::client::CoreClientReadOnly;
 use identity_iota::iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota::iota_interaction::types::crypto::Signature;
 use identity_iota::iota_interaction::types::transaction::ProgrammableTransaction;
@@ -56,10 +56,10 @@ extern "C" {
 impl Transaction for WasmTransaction {
   type Output = JsValue;
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> StdResult<ProgrammableTransaction, IotaError> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> StdResult<ProgrammableTransaction, IotaError>
+  where
+      C: CoreClientReadOnly
+  {
     let client = WasmIdentityClientReadOnly(client.clone());
     let pt_bcs = Self::build_programmable_transaction(self, client)
       .await
@@ -68,11 +68,14 @@ impl Transaction for WasmTransaction {
     Ok(bcs::from_bytes(&pt_bcs)?)
   }
 
-  async fn apply(
+  async fn apply<C>(
     self,
     effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
-  ) -> (StdResult<Self::Output, IotaError>, IotaTransactionBlockEffects) {
+    client: &C,
+  ) -> (StdResult<Self::Output, IotaError>, IotaTransactionBlockEffects)
+  where
+      C: CoreClientReadOnly
+  {
     let client = WasmIdentityClientReadOnly(client.clone());
     let wasm_effects = WasmIotaTransactionBlockEffects::from(&effects);
 
