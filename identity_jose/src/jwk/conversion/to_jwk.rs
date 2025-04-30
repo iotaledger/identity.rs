@@ -1,6 +1,8 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::convert::Infallible;
+
 use crate::error::Error;
 use crate::jwk::Jwk;
 use fastcrypto::ed25519::Ed25519KeyPair;
@@ -36,7 +38,7 @@ impl ToJwk for PublicKey {
 }
 
 impl ToJwk for Ed25519KeyPair {
-  type Error = Error;
+  type Error = Infallible;
 
   fn to_jwk(&self) -> Result<Jwk, Self::Error> {
     Ok(ed25519::encode_jwk(self.copy()))
