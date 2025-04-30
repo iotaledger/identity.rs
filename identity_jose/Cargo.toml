@@ -33,6 +33,7 @@ identity_iota_interaction = { version = "=1.6.0-alpha", path = "../identity_iota
 [dev-dependencies]
 iota-crypto = { version = "0.23", features = ["ed25519", "random", "hmac"] }
 p256 = { version = "0.13.0", default-features = false, features = ["std", "ecdsa", "ecdsa-core"] }
+rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"] }
 signature = { version = "2", default-features = false }
 
 [[example]]

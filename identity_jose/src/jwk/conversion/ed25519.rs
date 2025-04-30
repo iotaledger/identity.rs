@@ -23,7 +23,7 @@ pub(crate) fn from_public_jwk(jwk: &Jwk) -> anyhow::Result<Ed25519PublicKey> {
 }
 
 pub(crate) fn jwk_to_keypair(jwk: &Jwk) -> Result<Ed25519KeyPair, Error> {
-  let params: &JwkParamsOkp = jwk.try_okp_params().unwrap();
+  let params: &JwkParamsOkp = jwk.try_okp_params()?;
 
   if params
     .try_ed_curve()
