@@ -110,6 +110,7 @@ runs:
         echo "Downloading from: $DOWNLOAD_URL"
         curl -L -o toml-cli.tar.gz $DOWNLOAD_URL
         tar -xzf toml-cli.tar.gz
+        cd $(ls -d */|head -n 1)
 
         echo "$PWD" >> $GITHUB_PATH
         export PATH="$PWD:$PATH"
