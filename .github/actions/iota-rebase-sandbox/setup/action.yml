@@ -106,7 +106,7 @@ runs:
         mkdir -p toml-cli
         cd toml-cli
 
-        DOWNNLOAD_URL = https://github.com/gnprice/toml-cli/releases/download/v0.2.3/toml-0.2.3-x86_64-linux.tar.gz
+        DOWNLOAD_URL=https://github.com/gnprice/toml-cli/releases/download/v0.2.3/toml-0.2.3-x86_64-linux.tar.gz
         echo "Downloading from: $DOWNLOAD_URL"
         curl -L -o toml-cli.tar.gz $DOWNLOAD_URL
         tar -xzf toml-cli.tar.gz
