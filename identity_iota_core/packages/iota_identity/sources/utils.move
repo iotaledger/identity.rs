@@ -5,24 +5,11 @@ module iota_identity::utils;
 
 use iota::vec_map::{Self, VecMap};
 
-const ELengthMismatch: u64 = 0;
-
 public fun vec_map_from_keys_values<K: store + copy, V: store>(
-    mut keys: vector<K>,
-    mut values: vector<V>,
+    keys: vector<K>,
+    values: vector<V>,
 ): VecMap<K, V> {
-    assert!(keys.length() == values.length(), ELengthMismatch);
-
-    let mut map = vec_map::empty<K, V>();
-    while (!keys.is_empty()) {
-        let key = keys.swap_remove(0);
-        let value = values.swap_remove(0);
-        map.insert(key, value);
-    };
-    keys.destroy_empty();
-    values.destroy_empty();
-
-    map
+    vec_map::from_keys_values(keys, values)
 }
 
 #[test]

@@ -72,28 +72,22 @@ public fun new_with_controllers<V>(
     owner: ID,
     ctx: &mut TxContext,
 ): Multicontroller<V> {
-    let (mut addrs, mut vps) = controllers.into_keys_values();
+    let (addrs, vps) = controllers.into_keys_values();
     let mut controllers = vec_map::empty();
-    while (!addrs.is_empty()) {
-        let addr = addrs.pop_back();
-        let vp = vps.pop_back();
-
+    vector::zip_do!(addrs, vps, |addr, vp| {
         let cap = controller::new(false, owner, ctx);
         controllers.insert(cap.id().to_inner(), vp);
 
-        cap.transfer(addr)
-    };
+        cap.transfer(addr);
+    });
 
-    let (mut addrs, mut vps) = controllers_that_can_delegate.into_keys_values();
-    while (!addrs.is_empty()) {
-        let addr = addrs.pop_back();
-        let vp = vps.pop_back();
-
+    let (addrs, vps) = controllers_that_can_delegate.into_keys_values();
+    vector::zip_do!(addrs, vps, |addr, vp| {
         let cap = controller::new(true, owner, ctx);
         controllers.insert(cap.id().to_inner(), vp);
 
         cap.transfer(addr)
-    };
+    });
 
     let mut multi = Multicontroller {
         controlled_value,
