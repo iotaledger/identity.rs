@@ -437,7 +437,7 @@ impl Transaction for DelegateToken {
     let (Some(i), Some(token)) = (target_token_pos, target_token) else {
       return (
         Err(Error::TransactionUnexpectedResponse(
-          "failed to find the correct identity in this transaction's effects".to_owned(),
+          "failed to find the correct delegate token in this transaction's effects".to_owned(),
         )),
         effects,
       );
