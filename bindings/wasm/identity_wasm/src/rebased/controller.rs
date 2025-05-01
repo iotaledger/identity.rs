@@ -55,7 +55,7 @@ impl WasmControllerCap {
   }
 
   /// If this token can be delegated, this function will return
-  /// a {@link DelegateTransaction} that will mint a new {@link DelegationToken}
+  /// a {@link DelegationToken} Transaction that will mint a new {@link DelegationToken}
   /// and send it to `recipient`.
   #[wasm_bindgen]
   pub fn delegate(
