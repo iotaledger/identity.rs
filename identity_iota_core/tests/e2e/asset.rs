@@ -187,7 +187,7 @@ async fn hosting_vc_works() -> anyhow::Result<()> {
 
   let newly_created_identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .with_gas_budget(TEST_GAS_BUDGET)
     .build_and_execute(&identity_client)
     .await?

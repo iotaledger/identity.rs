@@ -20,12 +20,12 @@ use identity_iota_interaction::rpc_types::IotaObjectDataFilter;
 use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::IdentityMoveCalls as _;
 use identity_verification::jwk::Jwk;
-use identity_iota_interaction::types::base_types::ObjectID;
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 use tokio::sync::OnceCell;
@@ -130,7 +130,7 @@ where
 {
   /// Returns a [PublishDidDocument] transaction wrapped by a [TransactionBuilder].
   pub fn publish_did_document(&self, document: IotaDocument) -> TransactionBuilder<PublishDidDocument> {
-    TransactionBuilder::new(PublishDidDocument::new(document, self.sender_address()))
+    TransactionBuilder::new(PublishDidDocument::new(document, self.sender_address(), self))
   }
 
   // TODO: define what happens for (legacy|migrated|new) documents
@@ -278,29 +278,27 @@ pub struct PublishDidDocument {
   did_document: IotaDocument,
   controller: IotaAddress,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl PublishDidDocument {
   /// Creates a new [PublishDidDocument] transaction.
-  pub fn new(did_document: IotaDocument, controller: IotaAddress) -> Self {
+  pub fn new(did_document: IotaDocument, controller: IotaAddress, client: &IdentityClientReadOnly) -> Self {
     Self {
       did_document,
       controller,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
-  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, _client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let did_doc = StateMetadataDocument::from(self.did_document.clone())
       .pack(StateMetadataEncoding::Json)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
-    let programmable_tx_bcs = IdentityMoveCallsAdapter::new_with_controllers(
-      Some(&did_doc),
-      [(self.controller, 1, false)],
-      1,
-      client.package_id(),
-    )
-    .await?;
+    let programmable_tx_bcs =
+      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), [(self.controller, 1, false)], 1, self.package)
+        .await?;
     Ok(bcs::from_bytes(&programmable_tx_bcs)?)
   }
 }
@@ -329,7 +327,7 @@ impl Transaction for PublishDidDocument {
       let builder = IdentityBuilder::new(self.did_document)
         .threshold(1)
         .controller(self.controller, 1);
-      CreateIdentity::new(builder)
+      CreateIdentity::new_unchecked(builder, client.package_id())
     };
 
     let (application_result, remaining_effects) = tx.apply(effects, client).await;

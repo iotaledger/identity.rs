@@ -1,12 +1,12 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::common;
 use crate::common::get_funded_test_client;
 use crate::common::get_key_data;
 use crate::common::TestClient;
 use crate::common::TEST_COIN_TYPE;
 use crate::common::TEST_GAS_BUDGET;
-use crate::common::{self};
 use identity_iota_core::rebased::client::get_object_id_from_did;
 use identity_iota_core::rebased::client::CoreClient;
 use identity_iota_core::rebased::client::CoreClientReadOnly;
@@ -37,7 +37,7 @@ async fn identity_deactivation_works() -> anyhow::Result<()> {
 
   let mut identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .build_and_execute(&identity_client)
     .await?
     .output;
@@ -66,7 +66,7 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
 
   let mut newly_created_identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .with_gas_budget(TEST_GAS_BUDGET)
     .build_and_execute(&identity_client)
     .await?
@@ -112,7 +112,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     .controller(alice_client.sender_address(), 1)
     .controller(bob_client.sender_address(), 1)
     .threshold(2)
-    .finish()
+    .finish(&alice_client)
     .build_and_execute(&alice_client)
     .await?
     .output;
@@ -166,7 +166,7 @@ async fn adding_controller_works() -> anyhow::Result<()> {
 
   let mut identity = alice_client
     .create_identity(IotaDocument::new(alice_client.network()))
-    .finish()
+    .finish(&alice_client)
     .build_and_execute(&alice_client)
     .await?
     .output;
@@ -200,7 +200,7 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
 
   let mut newly_created_identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .with_gas_budget(TEST_GAS_BUDGET)
     .build_and_execute(&identity_client)
     .await?
@@ -299,7 +299,7 @@ async fn send_proposal_works() -> anyhow::Result<()> {
 
   let mut identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .with_gas_budget(TEST_GAS_BUDGET)
     .build_and_execute(&identity_client)
     .await?
@@ -349,7 +349,7 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
 
   let mut identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .build_and_execute(&identity_client)
     .await?
     .output;
@@ -396,7 +396,7 @@ async fn controller_execution_works() -> anyhow::Result<()> {
 
   let mut identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .build_and_execute(&identity_client)
     .await?
     .output;
@@ -407,7 +407,7 @@ async fn controller_execution_works() -> anyhow::Result<()> {
     .create_identity(IotaDocument::new(identity_client.network()))
     .controller(identity_address, 1)
     .threshold(1)
-    .finish()
+    .finish(&identity_client)
     .build_and_execute(&identity_client)
     .await?
     .output;
@@ -469,7 +469,7 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
   let client = get_funded_test_client().await?;
   let mut identity = client
     .create_identity(IotaDocument::new(client.network()))
-    .finish()
+    .finish(&client)
     .build_and_execute::<KeytoolSigner, TestClient>(&client)
     .await?
     .output;
@@ -516,7 +516,7 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
     .controller(alice_client.sender_address(), 1)
     .controller_with_delegation(bob_client.sender_address(), 1)
     .threshold(2)
-    .finish()
+    .finish(&alice_client)
     .build_and_execute(&alice_client)
     .await?
     .output;
@@ -536,7 +536,7 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
   let bobs_delegation_token = bob_token
     .as_controller()
     .expect("bob's token is a controller cap")
-    .delegate(alice_client.sender_address(), None)
+    .delegate(alice_client.sender_address(), None, &bob_client)
     .expect("bob can delegate its token")
     .build_and_execute(&bob_client)
     .await?
@@ -571,6 +571,7 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
     .revoke_delegation_token(
       bob_token.as_controller().expect("bob is a controller"),
       bobs_delegation_token.as_delegate().expect("is a delegation token"),
+      &bob_client,
     )?
     .build_and_execute(&bob_client)
     .await?;
@@ -589,6 +590,7 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
     .unrevoke_delegation_token(
       bob_token.as_controller().expect("bob is a controller"),
       bobs_delegation_token.as_delegate().expect("is a delegation token"),
+      &bob_client,
     )?
     .build_and_execute(&bob_client)
     .await?;
@@ -606,7 +608,7 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
   // The owner of the token can delete it whenever.
   let bobs_delegation_token_id = bobs_delegation_token.id();
   identity
-    .delete_delegation_token(bobs_delegation_token.try_delegate().unwrap())?
+    .delete_delegation_token(bobs_delegation_token.try_delegate().unwrap(), &bob_client)?
     .build_and_execute(&alice_client)
     .await?;
 

@@ -334,8 +334,10 @@ impl OnChainIdentity {
     &self,
     controller_capability: &ControllerCap,
     delegation_token: &DelegationToken,
+    identity_client: &IdentityClientReadOnly,
   ) -> Result<TransactionBuilder<DelegationTokenRevocation>, Error> {
-    DelegationTokenRevocation::revoke(self, controller_capability, delegation_token).map(TransactionBuilder::new)
+    DelegationTokenRevocation::revoke(self, controller_capability, delegation_token, identity_client)
+      .map(TransactionBuilder::new)
   }
 
   /// Returns a [Transaction] to *un*revoke a [DelegationToken].
@@ -343,16 +345,19 @@ impl OnChainIdentity {
     &self,
     controller_capability: &ControllerCap,
     delegation_token: &DelegationToken,
+    identity_client: &IdentityClientReadOnly,
   ) -> Result<TransactionBuilder<DelegationTokenRevocation>, Error> {
-    DelegationTokenRevocation::unrevoke(self, controller_capability, delegation_token).map(TransactionBuilder::new)
+    DelegationTokenRevocation::unrevoke(self, controller_capability, delegation_token, identity_client)
+      .map(TransactionBuilder::new)
   }
 
   /// Returns a [Transaction] to delete a [DelegationToken].
   pub fn delete_delegation_token(
     &self,
     delegation_token: DelegationToken,
+    identity_client: &IdentityClientReadOnly,
   ) -> Result<TransactionBuilder<DeleteDelegationToken>, Error> {
-    DeleteDelegationToken::new(self, delegation_token).map(TransactionBuilder::new)
+    DeleteDelegationToken::new(self, delegation_token, identity_client).map(TransactionBuilder::new)
   }
 }
 
@@ -585,8 +590,8 @@ impl IdentityBuilder {
   }
 
   /// Turns this builder into a [`Transaction`], ready to be executed.
-  pub fn finish(self) -> TransactionBuilder<CreateIdentity> {
-    TransactionBuilder::new(CreateIdentity::new(self))
+  pub fn finish(self, client: &IdentityClientReadOnly) -> TransactionBuilder<CreateIdentity> {
+    TransactionBuilder::new(CreateIdentity::new(self, client))
   }
 }
 
@@ -606,18 +611,24 @@ impl MoveType for OnChainIdentity {
 pub struct CreateIdentity {
   builder: IdentityBuilder,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl CreateIdentity {
   /// Returns a new [CreateIdentity] [Transaction] from an [IdentityBuilder]
-  pub fn new(builder: IdentityBuilder) -> CreateIdentity {
+  pub fn new(builder: IdentityBuilder, client: &IdentityClientReadOnly) -> CreateIdentity {
+    Self::new_unchecked(builder, client.package_id())
+  }
+
+  pub(crate) fn new_unchecked(builder: IdentityBuilder, package: ObjectID) -> Self {
     Self {
       builder,
       cached_ptb: OnceCell::new(),
+      package,
     }
   }
 
-  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, _client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let IdentityBuilder {
       did_doc,
       threshold,
@@ -627,7 +638,7 @@ impl CreateIdentity {
       .pack(StateMetadataEncoding::default())
       .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
     let pt_bcs = if controllers.is_empty() {
-      IdentityMoveCallsAdapter::new_identity(Some(&did_doc), client.package_id()).await?
+      IdentityMoveCallsAdapter::new_identity(Some(&did_doc), self.package).await?
     } else {
       let threshold = match threshold {
         Some(t) => t,
@@ -647,8 +658,7 @@ impl CreateIdentity {
       let controllers = controllers
         .iter()
         .map(|(addr, (vp, can_delegate))| (*addr, *vp, *can_delegate));
-      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), controllers, *threshold, client.package_id())
-        .await?
+      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), controllers, *threshold, self.package).await?
     };
 
     Ok(bcs::from_bytes(&pt_bcs)?)

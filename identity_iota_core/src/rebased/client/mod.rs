@@ -7,8 +7,7 @@ mod read_only;
 use anyhow::anyhow;
 use anyhow::Context;
 pub use full_client::*;
-use identity_iota_interaction::{IotaClientTrait, OptionalSync};
-use identity_iota_interaction::MoveType;
+use identity_iota_interaction::move_types::language_storage::StructTag;
 use identity_iota_interaction::rpc_types::IotaData;
 use identity_iota_interaction::rpc_types::IotaObjectData;
 use identity_iota_interaction::rpc_types::IotaObjectDataFilter;
@@ -20,7 +19,9 @@ use identity_iota_interaction::types::base_types::IotaAddress;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::crypto::PublicKey;
-use identity_iota_interaction::move_types::language_storage::StructTag;
+use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::MoveType;
+use identity_iota_interaction::OptionalSync;
 pub use read_only::*;
 
 pub use identity_iota_interaction::IotaKeySignature;
@@ -110,8 +111,8 @@ pub trait CoreClientReadOnly {
   /// # Arguments
   ///
   /// * `address` - The address of the owner of the object.
-  /// * `predicate` - A closure that takes a reference to the object and returns a boolean indicating
-  ///   whether the object matches the desired criteria.
+  /// * `predicate` - A closure that takes a reference to the object and returns a boolean indicating whether the object
+  ///   matches the desired criteria.
   ///
   /// # Returns
   ///
@@ -203,8 +204,8 @@ pub trait CoreClientReadOnly {
   ///
   /// * `address` - The address of the owner of the object.
   /// * `tag` - The tag of the object to retrieve.
-  /// * `predicate` - A closure that takes a reference to the object and returns a boolean indicating
-  ///   whether the object matches the desired criteria.
+  /// * `predicate` - A closure that takes a reference to the object and returns a boolean indicating whether the object
+  ///   matches the desired criteria.
   ///
   /// # Returns
   ///

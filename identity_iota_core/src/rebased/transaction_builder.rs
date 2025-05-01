@@ -476,7 +476,7 @@ async fn complete_gas_data_for_tx<S, C>(
 ) -> anyhow::Result<GasData>
 where
   C: CoreClient<S> + OptionalSync,
-  S: Signer<IotaKeySignature>,
+  S: Signer<IotaKeySignature> + OptionalSync,
 {
   let owner = partial_gas_data.owner.unwrap_or(client.sender_address());
   let price = if let Some(price) = partial_gas_data.price {
