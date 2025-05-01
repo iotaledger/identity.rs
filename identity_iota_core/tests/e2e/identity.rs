@@ -149,7 +149,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     .await?
     .expect("bob is a controller");
   proposal
-    .approve(&identity, &bob_token)?
+    .approve(&identity, &bob_token, &bob_client)?
     .build_and_execute(&bob_client)
     .await?;
 

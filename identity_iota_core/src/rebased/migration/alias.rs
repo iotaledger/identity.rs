@@ -81,15 +81,17 @@ pub struct MigrateLegacyIdentity {
   alias: UnmigratedAlias,
   cached_ptb: OnceCell<ProgrammableTransaction>,
   migration_registry_id: ObjectID,
+  package: ObjectID,
 }
 
 impl MigrateLegacyIdentity {
   /// Returns a new [MigrateLegacyIdentity] transaction.
-  pub fn new(alias: UnmigratedAlias, migration_registry_id: ObjectID) -> Self {
+  pub fn new(alias: UnmigratedAlias, identity_client: &IdentityClientReadOnly) -> Self {
     Self {
       alias,
       cached_ptb: OnceCell::new(),
-      migration_registry_id,
+      migration_registry_id: identity_client.migration_registry_id(),
+      package: identity_client.package_id(),
     }
   }
 
@@ -149,13 +151,9 @@ impl MigrateLegacyIdentity {
       .map(|timestamp| timestamp.to_unix() as u64 * 1000);
 
     // Build migration tx.
-    let tx = MigrationMoveCallsAdapter::migrate_did_output(
-      alias_output_ref,
-      created,
-      migration_registry_ref,
-      client.package_id(),
-    )
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx =
+      MigrationMoveCallsAdapter::migrate_did_output(alias_output_ref, created, migration_registry_ref, self.package)
+        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(bcs::from_bytes(&tx)?)
   }

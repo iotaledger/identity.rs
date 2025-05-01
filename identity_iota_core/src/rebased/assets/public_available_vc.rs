@@ -64,7 +64,7 @@ impl PublicAvailableVC {
       .transferable(false)
       .mutable(true)
       .deletable(true)
-      .finish();
+      .finish(client);
 
     let tx_builder = if let Some(gas_budget) = gas_budget {
       tx_builder.with_gas_budget(gas_budget)

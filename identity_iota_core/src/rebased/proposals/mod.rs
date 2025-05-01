@@ -92,8 +92,9 @@ where
     &mut self,
     identity: &'i OnChainIdentity,
     controller_token: &ControllerToken,
+    client: &IdentityClientReadOnly,
   ) -> Result<TransactionBuilder<ApproveProposal<'_, 'i, A>>, Error> {
-    ApproveProposal::new(self, identity, controller_token).map(TransactionBuilder::new)
+    ApproveProposal::new(self, identity, controller_token, client).map(TransactionBuilder::new)
   }
 }
 
@@ -305,6 +306,7 @@ pub struct ApproveProposal<'p, 'i, A> {
   identity: &'i OnChainIdentity,
   controller_token: ControllerToken,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl<'p, 'i, A> ApproveProposal<'p, 'i, A> {
@@ -313,6 +315,7 @@ impl<'p, 'i, A> ApproveProposal<'p, 'i, A> {
     proposal: &'p mut Proposal<A>,
     identity: &'i OnChainIdentity,
     controller_token: &ControllerToken,
+    client: &IdentityClientReadOnly,
   ) -> Result<Self, Error> {
     if identity.id() != controller_token.controller_of() {
       return Err(Error::Identity(format!(
@@ -327,6 +330,7 @@ impl<'p, 'i, A> ApproveProposal<'p, 'i, A> {
       identity,
       controller_token: controller_token.clone(),
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     })
   }
 }
@@ -350,7 +354,7 @@ impl<A: MoveType> ApproveProposal<'_, '_, A> {
       identity_ref.clone(),
       controller_cap,
       proposal.id(),
-      client.package_id(),
+      self.package,
     )?;
 
     Ok(bcs::from_bytes(&tx)?)

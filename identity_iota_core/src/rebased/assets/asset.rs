@@ -6,6 +6,7 @@ use std::str::FromStr as _;
 use crate::iota_interaction_adapter::AssetMoveCallsAdapter;
 
 use crate::rebased::client::CoreClientReadOnly;
+use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::rebased::Error;
@@ -121,14 +122,18 @@ impl<T: MoveType + Send + Sync> AuthenticatedAsset<T> {
   /// can be executed to carry out the transfer.
   /// # Failures
   /// * Returns an [`Error::InvalidConfig`] if this asset is not transferable.
-  pub fn transfer(self, recipient: IotaAddress) -> Result<TransactionBuilder<TransferAsset<T>>, Error> {
+  pub fn transfer(
+    self,
+    recipient: IotaAddress,
+    client: &IdentityClientReadOnly,
+  ) -> Result<TransactionBuilder<TransferAsset<T>>, Error> {
     if !self.transferable {
       return Err(Error::InvalidConfig(format!(
         "`AuthenticatedAsset` {} is not transferable",
         self.id()
       )));
     }
-    Ok(TransactionBuilder::new(TransferAsset::new(self, recipient)))
+    Ok(TransactionBuilder::new(TransferAsset::new(self, recipient, client)))
   }
 
   /// Destroys this [`AuthenticatedAsset`].
@@ -137,7 +142,7 @@ impl<T: MoveType + Send + Sync> AuthenticatedAsset<T> {
   /// can be executed in order to destroy the asset.
   /// # Failures
   /// * Returns an [`Error::InvalidConfig`] if this asset cannot be deleted.
-  pub fn delete(self) -> Result<TransactionBuilder<DeleteAsset<T>>, Error> {
+  pub fn delete(self, client: &IdentityClientReadOnly) -> Result<TransactionBuilder<DeleteAsset<T>>, Error> {
     if !self.deletable {
       return Err(Error::InvalidConfig(format!(
         "`AuthenticatedAsset` {} cannot be deleted",
@@ -145,7 +150,7 @@ impl<T: MoveType + Send + Sync> AuthenticatedAsset<T> {
       )));
     }
 
-    Ok(TransactionBuilder::new(DeleteAsset::new(self)))
+    Ok(TransactionBuilder::new(DeleteAsset::new(self, client)))
   }
 
   /// Changes this [`AuthenticatedAsset`]'s content.
@@ -154,7 +159,11 @@ impl<T: MoveType + Send + Sync> AuthenticatedAsset<T> {
   /// can be executed in order to update the asset's content.
   /// # Failures
   /// * Returns an [`Error::InvalidConfig`] if this asset cannot be updated.
-  pub fn set_content(&mut self, new_content: T) -> Result<TransactionBuilder<UpdateContent<'_, T>>, Error> {
+  pub fn set_content(
+    &mut self,
+    new_content: T,
+    client: &IdentityClientReadOnly,
+  ) -> Result<TransactionBuilder<UpdateContent<'_, T>>, Error> {
     if !self.mutable {
       return Err(Error::InvalidConfig(format!(
         "`AuthenticatedAsset` {} is immutable",
@@ -162,7 +171,7 @@ impl<T: MoveType + Send + Sync> AuthenticatedAsset<T> {
       )));
     }
 
-    Ok(TransactionBuilder::new(UpdateContent::new(self, new_content)))
+    Ok(TransactionBuilder::new(UpdateContent::new(self, new_content, client)))
   }
 }
 
@@ -225,8 +234,8 @@ where
   }
 
   /// Returns a [`Transaction`] that will create the specified [`AuthenticatedAsset`] when executed.
-  pub fn finish(self) -> TransactionBuilder<CreateAsset<T>> {
-    TransactionBuilder::new(CreateAsset::new(self))
+  pub fn finish(self, client: &IdentityClientReadOnly) -> TransactionBuilder<CreateAsset<T>> {
+    TransactionBuilder::new(CreateAsset::new(self, client))
   }
 }
 
@@ -352,8 +361,8 @@ impl TransferProposal {
   /// Accepts this [`TransferProposal`].
   /// # Warning
   /// This operation only has an effects when it's invoked by this [`TransferProposal`]'s `recipient`.
-  pub fn accept(self) -> TransactionBuilder<AcceptTransfer> {
-    TransactionBuilder::new(AcceptTransfer::new(self))
+  pub fn accept(self, client: &IdentityClientReadOnly) -> TransactionBuilder<AcceptTransfer> {
+    TransactionBuilder::new(AcceptTransfer::new(self, client))
   }
 
   /// Concludes or cancels this [`TransferProposal`].
@@ -361,8 +370,8 @@ impl TransferProposal {
   /// * This operation only has an effects when it's invoked by this [`TransferProposal`]'s `sender`.
   /// * Accepting a [`TransferProposal`] **doesn't** consume it from the ledger. This function must be used to correctly
   ///   consume both [`TransferProposal`] and `SenderCap`.
-  pub fn conclude_or_cancel(self) -> TransactionBuilder<ConcludeTransfer> {
-    TransactionBuilder::new(ConcludeTransfer::new(self))
+  pub fn conclude_or_cancel(self, client: &IdentityClientReadOnly) -> TransactionBuilder<ConcludeTransfer> {
+    TransactionBuilder::new(ConcludeTransfer::new(self, client))
   }
 
   /// Returns this [`TransferProposal`]'s ID.
@@ -392,24 +401,22 @@ pub struct UpdateContent<'a, T> {
   asset: &'a mut AuthenticatedAsset<T>,
   new_content: T,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl<'a, T: MoveType + Send + Sync> UpdateContent<'a, T> {
   /// Returns a [Transaction] to update the content of `asset`.
-  pub fn new(asset: &'a mut AuthenticatedAsset<T>, new_content: T) -> Self {
+  pub fn new(asset: &'a mut AuthenticatedAsset<T>, new_content: T, client: &IdentityClientReadOnly) -> Self {
     Self {
       asset,
       new_content,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
   async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
-    let tx_bcs = AssetMoveCallsAdapter::update(
-      self.asset.object_ref(client).await?,
-      &self.new_content,
-      client.package_id(),
-    )?;
+    let tx_bcs = AssetMoveCallsAdapter::update(self.asset.object_ref(client).await?, &self.new_content, self.package)?;
 
     Ok(bcs::from_bytes(&tx_bcs)?)
   }
@@ -461,20 +468,22 @@ where
 pub struct DeleteAsset<T> {
   asset: AuthenticatedAsset<T>,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl<T: MoveType + Send + Sync> DeleteAsset<T> {
   /// Returns a [Transaction] to delete `asset`.
-  pub fn new(asset: AuthenticatedAsset<T>) -> Self {
+  pub fn new(asset: AuthenticatedAsset<T>, client: &IdentityClientReadOnly) -> Self {
     Self {
       asset,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
   async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let asset_ref = self.asset.object_ref(client).await?;
-    let tx_bcs = AssetMoveCallsAdapter::delete::<T>(asset_ref, client.package_id())?;
+    let tx_bcs = AssetMoveCallsAdapter::delete::<T>(asset_ref, self.package)?;
 
     Ok(bcs::from_bytes(&tx_bcs)?)
   }
@@ -530,25 +539,27 @@ where
 pub struct CreateAsset<T> {
   builder: AuthenticatedAssetBuilder<T>,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl<T: MoveType> CreateAsset<T> {
   /// Returns a [Transaction] to create the asset described by `builder`.
-  pub fn new(builder: AuthenticatedAssetBuilder<T>) -> Self {
+  pub fn new(builder: AuthenticatedAssetBuilder<T>, client: &IdentityClientReadOnly) -> Self {
     Self {
       builder,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
-  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, _client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let AuthenticatedAssetBuilder {
       ref inner,
       mutable,
       transferable,
       deletable,
     } = self.builder;
-    let pt_bcs = AssetMoveCallsAdapter::new_asset(inner, mutable, transferable, deletable, client.package_id())?;
+    let pt_bcs = AssetMoveCallsAdapter::new_asset(inner, mutable, transferable, deletable, self.package)?;
     Ok(bcs::from_bytes(&pt_bcs)?)
   }
 }
@@ -628,24 +639,22 @@ pub struct TransferAsset<T> {
   asset: AuthenticatedAsset<T>,
   recipient: IotaAddress,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl<T: MoveType + Send + Sync> TransferAsset<T> {
   /// Returns a [Transaction] to transfer `asset` to `recipient`.
-  pub fn new(asset: AuthenticatedAsset<T>, recipient: IotaAddress) -> Self {
+  pub fn new(asset: AuthenticatedAsset<T>, recipient: IotaAddress, client: &IdentityClientReadOnly) -> Self {
     Self {
       asset,
       recipient,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
   async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
-    let bcs = AssetMoveCallsAdapter::transfer::<T>(
-      self.asset.object_ref(client).await?,
-      self.recipient,
-      client.package_id(),
-    )?;
+    let bcs = AssetMoveCallsAdapter::transfer::<T>(self.asset.object_ref(client).await?, self.recipient, self.package)?;
 
     Ok(bcs::from_bytes(&bcs)?)
   }
@@ -721,14 +730,16 @@ where
 pub struct AcceptTransfer {
   proposal: TransferProposal,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl AcceptTransfer {
   /// Returns a [Transaction] to accept `proposal`.
-  pub fn new(proposal: TransferProposal) -> Self {
+  pub fn new(proposal: TransferProposal, client: &IdentityClientReadOnly) -> Self {
     Self {
       proposal,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
@@ -758,7 +769,7 @@ impl AcceptTransfer {
       cap,
       asset_ref,
       param_type,
-      client.package_id(),
+      self.package,
     )?;
 
     Ok(bcs::from_bytes(&bcs)?)
@@ -816,14 +827,16 @@ impl Transaction for AcceptTransfer {
 pub struct ConcludeTransfer {
   proposal: TransferProposal,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl ConcludeTransfer {
   /// Returns a [Transaction] to consume `proposal`.
-  pub fn new(proposal: TransferProposal) -> Self {
+  pub fn new(proposal: TransferProposal, client: &IdentityClientReadOnly) -> Self {
     Self {
       proposal,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
@@ -848,7 +861,7 @@ impl ConcludeTransfer {
       cap,
       asset_ref,
       param_type,
-      client.package_id(),
+      self.package,
     )?;
 
     Ok(bcs::from_bytes(&tx_bcs)?)
