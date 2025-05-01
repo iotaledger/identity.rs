@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 module iota_identity::migration {
-    use iota_identity::{migration_registry::MigrationRegistry, identity};
-    use stardust::{alias::Alias, alias_output::AliasOutput};
-    use iota::{coin, iota::IOTA, clock::Clock};
+    use iota::clock::Clock;
+    use iota::coin;
+    use iota::iota::IOTA;
+    use iota_identity::identity;
+    use iota_identity::migration_registry::MigrationRegistry;
+    use stardust::alias::Alias;
+    use stardust::alias_output::AliasOutput;
 
     const ENotADidOutput: u64 = 1;
 
@@ -23,14 +27,17 @@ module iota_identity::migration {
         alias.destroy();
 
         // Check if `state_metadata` contains a DID document.
-        assert!(state_metadata.is_some() && identity::is_did_output(state_metadata.borrow()), ENotADidOutput);
+        assert!(
+            state_metadata.is_some() && identity::is_did_output(state_metadata.borrow()),
+            ENotADidOutput,
+        );
 
         let identity_id = identity::new_with_migration_data(
             option::some(state_metadata.extract()),
             creation_timestamp,
             alias_id,
             clock,
-            ctx
+            ctx,
         );
 
         // Add a migration record.
@@ -45,7 +52,7 @@ module iota_identity::migration {
         migration_registry: &mut MigrationRegistry,
         creation_timestamp: u64,
         clock: &Clock,
-        ctx: &mut TxContext
+        ctx: &mut TxContext,
     ) {
         // Extract required data from output.
         let (iota, native_tokens, alias_data) = alias_output.extract_assets();
@@ -55,7 +62,7 @@ module iota_identity::migration {
             migration_registry,
             creation_timestamp,
             clock,
-            ctx
+            ctx,
         );
 
         let coin = coin::from_balance(iota, ctx);
@@ -64,16 +71,19 @@ module iota_identity::migration {
     }
 }
 
-
 #[test_only]
 module iota_identity::migration_tests {
-    use iota::{test_scenario, balance, bag, iota::IOTA, clock};
-    use stardust::alias_output::{Self, AliasOutput};
-    use iota_identity::identity::{Identity};
-    use iota_identity::migration::migrate_alias_output;
-    use stardust::alias::{Self, Alias};
-    use iota_identity::migration_registry::{MigrationRegistry, init_testing};
+    use iota::bag;
+    use iota::balance;
+    use iota::clock;
+    use iota::iota::IOTA;
+    use iota::test_scenario;
     use iota_identity::controller::ControllerCap;
+    use iota_identity::identity::Identity;
+    use iota_identity::migration::migrate_alias_output;
+    use iota_identity::migration_registry::{MigrationRegistry, init_testing};
+    use stardust::alias::{Self, Alias};
+    use stardust::alias_output::{Self, AliasOutput};
 
     fun create_did_alias(ctx: &mut TxContext): Alias {
         let sender = ctx.sender();
@@ -85,12 +95,16 @@ module iota_identity::migration_tests {
             option::none(),
             option::none(),
             option::none(),
-            ctx
+            ctx,
         )
-    } 
-    
+    }
+
     fun create_empty_did_output(ctx: &mut TxContext): (AliasOutput<IOTA>, ID) {
-        let mut alias_output = alias_output::create_for_testing(balance::zero(), bag::new(ctx), ctx);
+        let mut alias_output = alias_output::create_for_testing(
+            balance::zero(),
+            bag::new(ctx),
+            ctx,
+        );
         let alias = create_did_alias(ctx);
         let alias_id = object::id(&alias);
         alias_output.attach_alias(alias);
@@ -103,7 +117,7 @@ module iota_identity::migration_tests {
         let controller_a = @0x1;
         let mut scenario = test_scenario::begin(controller_a);
         let clock = clock::create_for_testing(scenario.ctx());
-        
+
         let (did_output, alias_id) = create_empty_did_output(scenario.ctx());
 
         init_testing(scenario.ctx());
@@ -111,7 +125,13 @@ module iota_identity::migration_tests {
         scenario.next_tx(controller_a);
         let mut registry = scenario.take_shared<MigrationRegistry>();
 
-        migrate_alias_output(did_output, &mut registry, clock.timestamp_ms(), &clock, scenario.ctx());
+        migrate_alias_output(
+            did_output,
+            &mut registry,
+            clock.timestamp_ms(),
+            &clock,
+            scenario.ctx(),
+        );
 
         scenario.next_tx(controller_a);
         let identity = scenario.take_shared<Identity>();

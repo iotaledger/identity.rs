@@ -57,7 +57,7 @@ module iota_identity::asset {
         mutable: bool,
         transferable: bool,
         deletable: bool,
-        ctx: &mut TxContext
+        ctx: &mut TxContext,
     ) {
         new_with_address(inner, ctx.sender(), mutable, transferable, deletable, ctx);
     }
@@ -71,7 +71,7 @@ module iota_identity::asset {
     public fun borrow<T: store>(self: &AuthenticatedAsset<T>): &T {
         &self.inner
     }
-    
+
     /// Mutably borrow the content of an `AuthenticatedAsset`.
     /// This operation will fail if `AuthenticatedAsset` is configured as non-mutable.
     public fun borrow_mut<T: store>(self: &mut AuthenticatedAsset<T>): &mut T {
@@ -184,7 +184,7 @@ module iota_identity::asset {
     public fun accept<T: store>(
         self: &mut TransferProposal,
         cap: RecipientCap,
-        asset: transfer::Receiving<AuthenticatedAsset<T>>
+        asset: transfer::Receiving<AuthenticatedAsset<T>>,
     ) {
         assert!(self.recipient_cap_id == object::id(&cap), EInvalidRecipient);
         let mut asset = transfer::receive(&mut self.id, asset);
@@ -230,11 +230,11 @@ module iota_identity::asset {
         delete_transfer(proposal);
         delete_sender_cap(cap);
     }
-    
+
     public(package) fun delete_sender_cap(cap: SenderCap) {
         let SenderCap {
             id,
-            ..
+            ..,
         } = cap;
         object::delete(id);
     }
@@ -242,7 +242,7 @@ module iota_identity::asset {
     public fun delete_recipient_cap(cap: RecipientCap) {
         let RecipientCap {
             id,
-            ..
+            ..,
         } = cap;
         object::delete(id);
     }
@@ -263,8 +263,14 @@ module iota_identity::asset {
 
 #[test_only]
 module iota_identity::asset_tests {
-    use iota_identity::asset::{Self, AuthenticatedAsset, EImmutable, ENonTransferable, ENonDeletable};
     use iota::test_scenario;
+    use iota_identity::asset::{
+        Self,
+        AuthenticatedAsset,
+        EImmutable,
+        ENonTransferable,
+        ENonDeletable
+    };
 
     const ALICE: address = @0x471c3;
     const BOB: address = @0xb0b;
@@ -276,7 +282,7 @@ module iota_identity::asset_tests {
         asset::new<u32>(42, scenario.ctx());
         scenario.next_tx(ALICE);
 
-        // Alice fetches her newly created asset and attempts to modify it. 
+        // Alice fetches her newly created asset and attempts to modify it.
         let mut asset = scenario.take_from_address<AuthenticatedAsset<u32>>(ALICE);
         *asset.borrow_mut() = 420;
 
@@ -292,7 +298,7 @@ module iota_identity::asset_tests {
         asset::new<u32>(42, scenario.ctx());
         scenario.next_tx(ALICE);
 
-        // Alice fetches her newly created asset and attempts to send it to Bob. 
+        // Alice fetches her newly created asset and attempts to send it to Bob.
         let asset = scenario.take_from_address<AuthenticatedAsset<u32>>(ALICE);
         asset.transfer(BOB, scenario.ctx());
 
@@ -307,9 +313,9 @@ module iota_identity::asset_tests {
         asset::new<u32>(42, scenario.ctx());
         scenario.next_tx(ALICE);
 
-        // Alice fetches her newly created asset and attempts to delete it. 
+        // Alice fetches her newly created asset and attempts to delete it.
         let asset = scenario.take_from_address<AuthenticatedAsset<u32>>(ALICE);
-        asset.delete(); 
+        asset.delete();
 
         scenario.next_tx(ALICE);
         scenario.end();

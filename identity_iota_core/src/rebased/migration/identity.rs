@@ -58,7 +58,11 @@ use crate::rebased::Error;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::MoveType;
 
+use super::ControllerCap;
 use super::ControllerToken;
+use super::DelegationToken;
+use super::DelegationTokenRevocation;
+use super::DeleteDelegationToken;
 use super::Multicontroller;
 use super::UnmigratedAlias;
 
@@ -173,10 +177,24 @@ impl OnChainIdentity {
     address: IotaAddress,
     client: &IdentityClientReadOnly,
   ) -> Result<Option<ControllerToken>, Error> {
+    let maybe_controller_cap = client
+      .find_object_for_address::<ControllerCap, _>(address, |token| token.controller_of() == self.id())
+      .await;
+
+    if let Ok(Some(controller_cap)) = maybe_controller_cap {
+      return Ok(Some(controller_cap.into()));
+    }
+
     client
-      .find_object_for_address::<ControllerToken, _>(address, |token| token.controller_of() == self.id())
+      .find_object_for_address::<DelegationToken, _>(address, |token| token.controller_of() == self.id())
       .await
-      .map_err(Error::from)
+      .map(|maybe_delegate| maybe_delegate.map(ControllerToken::from))
+      .map_err(|e| {
+        Error::Identity(format!(
+          "address {address} is not a controller nor a controller delegate for identity {}; {e}",
+          self.id()
+        ))
+      })
   }
 
   /// Returns a [ControllerToken], owned by `client`'s sender address, that grants access to this Identity.
@@ -309,6 +327,32 @@ impl OnChainIdentity {
     }
 
     Ok(history)
+  }
+
+  /// Returns a [Transaction] to revoke a [DelegationToken].
+  pub fn revoke_delegation_token(
+    &self,
+    controller_capability: &ControllerCap,
+    delegation_token: &DelegationToken,
+  ) -> Result<TransactionBuilder<DelegationTokenRevocation>, Error> {
+    DelegationTokenRevocation::revoke(self, controller_capability, delegation_token).map(TransactionBuilder::new)
+  }
+
+  /// Returns a [Transaction] to *un*revoke a [DelegationToken].
+  pub fn unrevoke_delegation_token(
+    &self,
+    controller_capability: &ControllerCap,
+    delegation_token: &DelegationToken,
+  ) -> Result<TransactionBuilder<DelegationTokenRevocation>, Error> {
+    DelegationTokenRevocation::unrevoke(self, controller_capability, delegation_token).map(TransactionBuilder::new)
+  }
+
+  /// Returns a [Transaction] to delete a [DelegationToken].
+  pub fn delete_delegation_token(
+    &self,
+    delegation_token: DelegationToken,
+  ) -> Result<TransactionBuilder<DeleteDelegationToken>, Error> {
+    DeleteDelegationToken::new(self, delegation_token).map(TransactionBuilder::new)
   }
 }
 
@@ -478,14 +522,14 @@ impl From<OnChainIdentity> for IotaDocument {
 pub struct IdentityBuilder {
   did_doc: IotaDocument,
   threshold: Option<u64>,
-  controllers: HashMap<IotaAddress, u64>,
+  controllers: HashMap<IotaAddress, (u64, bool)>,
 }
 
 impl IdentityBuilder {
   /// Initializes a new builder for an [`OnChainIdentity`], where the passed `did_doc` will be
   /// used as the identity's DID Document.
   /// ## Warning
-  /// Validation of `did_doc` is deferred to [`CreateIdentityTx`].
+  /// Validation of `did_doc` is deferred to [CreateIdentity].
   pub fn new(did_doc: IotaDocument) -> Self {
     Self {
       did_doc,
@@ -496,7 +540,14 @@ impl IdentityBuilder {
 
   /// Gives `address` the capability to act as a controller with voting power `voting_power`.
   pub fn controller(mut self, address: IotaAddress, voting_power: u64) -> Self {
-    self.controllers.insert(address, voting_power);
+    self.controllers.insert(address, (voting_power, false));
+    self
+  }
+
+  /// Gives `address` the capability to act as a controller with voting power `voting_power` and
+  /// the ability to delegate its access to third parties.
+  pub fn controller_with_delegation(mut self, address: IotaAddress, voting_power: u64) -> Self {
+    self.controllers.insert(address, (voting_power, true));
     self
   }
 
@@ -514,6 +565,23 @@ impl IdentityBuilder {
     controllers
       .into_iter()
       .fold(self, |builder, (addr, vp)| builder.controller(addr, vp))
+  }
+
+  /// Sets multiple controllers in a single step.
+  /// Differently from [IdentityBuilder::controllers], this method requires
+  /// the controller's data to be passed as the triple `(address, voting power, delegate-ability)`.
+  /// A `true` value as the tuple's third value means the controller *CAN* delegate its access.
+  pub fn controllers_with_delegation<I>(self, controllers: I) -> Self
+  where
+    I: IntoIterator<Item = (IotaAddress, u64, bool)>,
+  {
+    controllers.into_iter().fold(self, |builder, (addr, vp, can_delegate)| {
+      if can_delegate {
+        builder.controller_with_delegation(addr, vp)
+      } else {
+        builder.controller(addr, vp)
+      }
+    })
   }
 
   /// Turns this builder into a [`Transaction`], ready to be executed.
@@ -563,23 +631,24 @@ impl CreateIdentity {
     } else {
       let threshold = match threshold {
         Some(t) => t,
-        None if controllers.len() == 1 => controllers
-          .values()
-          .next()
-          .ok_or_else(|| Error::Identity("could not get controller".to_string()))?,
+        None if controllers.len() == 1 => {
+          &controllers
+            .values()
+            .next()
+            .ok_or_else(|| Error::Identity("could not get controller".to_string()))?
+            .0
+        }
         None => {
           return Err(Error::TransactionBuildingFailed(
             "Missing field `threshold` in identity creation".to_owned(),
           ))
         }
       };
-      IdentityMoveCallsAdapter::new_with_controllers(
-        Some(&did_doc),
-        controllers.clone(),
-        *threshold,
-        client.package_id(),
-      )
-      .await?
+      let controllers = controllers
+        .iter()
+        .map(|(addr, (vp, can_delegate))| (*addr, *vp, *can_delegate));
+      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), controllers, *threshold, client.package_id())
+        .await?
     };
 
     Ok(bcs::from_bytes(&pt_bcs)?)

@@ -174,16 +174,11 @@ where
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(controller_token.id())
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
-      .reference
-      .to_object_ref();
+    let controller_cap_ref = controller_token.controller_ref(client).await?;
     let maybe_intent_fn = action.intent_fn.into_inner();
     let chained_execution = maybe_intent_fn.is_some()
       && identity
-        .controller_voting_power(controller_cap_ref.0)
+        .controller_voting_power(controller_token.controller_id())
         .expect("is an identity's controller")
         >= identity.threshold();
 
@@ -313,12 +308,8 @@ where
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(*controller_token)
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token)))?
-      .reference
-      .to_object_ref();
+    let controller_token = client.get_object_by_id::<ControllerToken>(*controller_token).await?;
+    let controller_cap_ref = controller_token.controller_ref(client).await?;
 
     let borrowing_cap_id = action.0.controller_cap;
     let borrowing_controller_cap_ref = client

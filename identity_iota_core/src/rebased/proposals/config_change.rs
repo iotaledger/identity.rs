@@ -244,14 +244,9 @@ impl ProposalT for Proposal<ConfigChange> {
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(controller_token.id())
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
-      .reference
-      .to_object_ref();
+    let controller_cap_ref = controller_token.controller_ref(client).await?;
     let sender_vp = identity
-      .controller_voting_power(controller_cap_ref.0)
+      .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
     let tx = IdentityMoveCallsAdapter::propose_config_change(
@@ -293,12 +288,7 @@ impl ProposalT for Proposal<ConfigChange> {
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(controller_token.id())
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
-      .reference
-      .to_object_ref();
+    let controller_cap_ref = controller_token.controller_ref(client).await?;
 
     let tx = IdentityMoveCallsAdapter::execute_config_change(
       identity_ref,

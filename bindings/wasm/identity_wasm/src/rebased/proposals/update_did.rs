@@ -191,7 +191,7 @@ impl WasmApproveUpdateDidDocumentProposal {
       .into_inner();
     let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &client.0).await;
     let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
-    Object::assign(&wasm_effects, &wasm_rem_effects);
+    Object::assign(wasm_effects, &wasm_rem_effects);
 
     apply_result.wasm_result()
   }
@@ -244,7 +244,7 @@ impl WasmExecuteUpdateDidDocumentProposal {
       .into_inner();
     let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &client.0).await;
     let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
-    Object::assign(&wasm_effects, &wasm_rem_effects);
+    Object::assign(wasm_effects, &wasm_rem_effects);
 
     apply_result.wasm_result()
   }
@@ -360,7 +360,7 @@ impl WasmCreateUpdateDidProposal {
 
     let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &client.0).await;
     let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
-    Object::assign(&wasm_effects, &wasm_rem_effects);
+    Object::assign(wasm_effects, &wasm_rem_effects);
 
     let ProposalResult::Pending(proposal) = apply_result.wasm_result()? else {
       return Ok(None);

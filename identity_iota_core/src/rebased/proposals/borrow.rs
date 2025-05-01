@@ -184,14 +184,9 @@ where
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(controller_token.id())
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
-      .reference
-      .to_object_ref();
+    let controller_cap_ref = controller_token.controller_ref(client).await?;
     let can_execute = identity
-      .controller_voting_power(controller_cap_ref.0)
+      .controller_voting_power(controller_token.controller_id())
       .expect("is a controller of identity")
       >= identity.threshold();
     let maybe_intent_fn = action.intent_fn.into_inner();
@@ -312,12 +307,8 @@ where
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(*controller_token)
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token)))?
-      .reference
-      .to_object_ref();
+    let controller_token = client.get_object_by_id::<ControllerToken>(*controller_token).await?;
+    let controller_token_ref = controller_token.controller_ref(client).await?;
 
     // Construct a list of `(ObjectRef, TypeTag)` from the list of objects to send.
     let object_data_list = {
@@ -333,7 +324,7 @@ where
 
     let tx = IdentityMoveCallsAdapter::execute_borrow(
       identity_ref,
-      controller_cap_ref,
+      controller_token_ref,
       *proposal_id,
       object_data_list,
       borrow_action

@@ -59,5 +59,6 @@ import {
   ExecuteProposal,
   UpdateDid,
   ProposalResult,
+  DelegatePermissions
 } from '../lib/index';
 "#;
