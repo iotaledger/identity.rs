@@ -1,5 +1,6 @@
 import { ObjectRef, Transaction, TransactionArgument } from "@iota/iota-sdk/transactions";
 import { IOTA_CLOCK_OBJECT_ID } from "@iota/iota-sdk/utils";
+import { ControllerTokenRef } from "./identity";
 
 const PLACEHOLDER_SENDER = "0x00000000000000090807060504030201";
 const PLACEHOLDER_GAS_BUDGET = 9;
@@ -10,29 +11,40 @@ export function getClockRef(tx: Transaction): TransactionArgument {
     return tx.sharedObjectRef({ objectId: IOTA_CLOCK_OBJECT_ID, initialSharedVersion: 1, mutable: false });
 }
 
-export function getControllerDelegation(
-    tx: Transaction,
-    controllerCap: TransactionArgument,
-    packageId: string,
-): [TransactionArgument, TransactionArgument] {
-    const [token, borrow] = tx.moveCall({
-        target: `${packageId}::controller::borrow`,
-        arguments: [controllerCap],
-    });
-    return [token, borrow];
+export interface ControllerTokenArg {
+    cap?: TransactionArgument;
+    token: TransactionArgument;
+    borrow?: TransactionArgument;
 }
 
-export function putBackDelegationToken(
+export function controllerTokenRefToTxArgument(
     tx: Transaction,
-    controllerCap: TransactionArgument,
-    delegationToken: TransactionArgument,
-    borrow: TransactionArgument,
+    controllerToken: ControllerTokenRef,
+    packageId: string,
+): ControllerTokenArg {
+    const token = tx.objectRef(controllerToken.objectRef);
+    if (controllerToken.type == "DelegationToken") {
+        return { token };
+    } else {
+        const [delegation_token, borrow] = tx.moveCall({
+            target: `${packageId}::controller::borrow`,
+            arguments: [token],
+        });
+        return { cap: token, token: delegation_token, borrow };
+    }
+}
+
+export function putBackControllerToken(
+    tx: Transaction,
+    controllerToken: ControllerTokenArg,
     packageId: string,
 ) {
-    tx.moveCall({
-        target: `${packageId}::controller::put_back`,
-        arguments: [controllerCap, delegationToken, borrow],
-    });
+    if (controllerToken.cap && controllerToken.borrow) {
+        tx.moveCall({
+            target: `${packageId}::controller::put_back`,
+            arguments: [controllerToken.cap, controllerToken.token, controllerToken.borrow],
+        });
+    }
 }
 
 /**
