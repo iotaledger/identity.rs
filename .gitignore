@@ -33,4 +33,3 @@ build
 # ignore folder created in CI for downloaded iota binaries
 /iota/
 /toml-cli/
-
