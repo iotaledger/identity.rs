@@ -43,6 +43,7 @@ impl IdentityContainer {
 ///
 /// Used for read operations, so does not need an account and signing capabilities.
 /// If you want to write to the chain, use {@link IdentityClient}.
+#[derive(Clone)]
 #[wasm_bindgen(js_name = IdentityClientReadOnly)]
 pub struct WasmIdentityClientReadOnly(pub(crate) IdentityClientReadOnly);
 

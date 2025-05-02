@@ -7,12 +7,12 @@ use anyhow::anyhow;
 use anyhow::Context as _;
 use async_trait::async_trait;
 use fastcrypto::traits::EncodeDecodeBase64;
+use identity_iota::iota::rebased::client::CoreClientReadOnly;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
 use identity_iota::iota::rebased::transaction_builder::MutGasDataRef;
 use identity_iota::iota::rebased::transaction_builder::Transaction;
 use identity_iota::iota::rebased::transaction_builder::TransactionBuilder;
 use identity_iota::iota::rebased::Error as IotaError;
-use identity_iota::iota::rebased::client::CoreClientReadOnly;
 use identity_iota::iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota::iota_interaction::types::crypto::Signature;
 use identity_iota::iota_interaction::types::transaction::ProgrammableTransaction;
@@ -28,8 +28,10 @@ use wasm_bindgen::JsCast as _;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
-use super::WasmIdentityClient;
-use super::WasmIdentityClientReadOnly;
+use super::WasmCoreClient;
+use super::WasmCoreClientReadOnly;
+use super::WasmManagedCoreClient;
+use super::WasmManagedCoreClientReadOnly;
 use crate::error::Result;
 use crate::error::WasmResult as _;
 
@@ -42,13 +44,13 @@ extern "C" {
   #[wasm_bindgen(method, catch, js_name = buildProgrammableTransaction)]
   pub async fn build_programmable_transaction(
     this: &WasmTransaction,
-    client: WasmIdentityClientReadOnly,
+    client: &WasmCoreClientReadOnly,
   ) -> Result<js_sys::Uint8Array>;
   #[wasm_bindgen(method, catch)]
   pub async fn apply(
     this: &WasmTransaction,
     effects: &WasmIotaTransactionBlockEffects,
-    client: WasmIdentityClientReadOnly,
+    client: &WasmCoreClientReadOnly,
   ) -> Result<JsValue>;
 }
 
@@ -58,10 +60,11 @@ impl Transaction for WasmTransaction {
 
   async fn build_programmable_transaction<C>(&self, client: &C) -> StdResult<ProgrammableTransaction, IotaError>
   where
-      C: CoreClientReadOnly
+    C: CoreClientReadOnly,
   {
-    let client = WasmIdentityClientReadOnly(client.clone());
-    let pt_bcs = Self::build_programmable_transaction(self, client)
+    let managed_client = WasmManagedCoreClientReadOnly::from_rust(client);
+    let core_client = managed_client.into_wasm();
+    let pt_bcs = Self::build_programmable_transaction(self, &core_client)
       .await
       .map_err(|e| IotaError::FfiError(format!("{e:?}")))?
       .to_vec();
@@ -74,12 +77,13 @@ impl Transaction for WasmTransaction {
     client: &C,
   ) -> (StdResult<Self::Output, IotaError>, IotaTransactionBlockEffects)
   where
-      C: CoreClientReadOnly
+    C: CoreClientReadOnly,
   {
-    let client = WasmIdentityClientReadOnly(client.clone());
+    let managed_client = WasmManagedCoreClientReadOnly::from_rust(client);
+    let core_client = managed_client.into_wasm();
     let wasm_effects = WasmIotaTransactionBlockEffects::from(&effects);
 
-    let apply_result = Self::apply(&self, &wasm_effects, client)
+    let apply_result = Self::apply(&self, &wasm_effects, &core_client)
       .await
       .map_err(|e| IotaError::FfiError(format!("failed to apply effects from WASM Transaction: {e:?}")));
 
@@ -144,15 +148,16 @@ impl WasmTransactionBuilder {
   }
 
   #[wasm_bindgen(js_name = withSignature)]
-  pub async fn with_signature(mut self, client: &WasmIdentityClient) -> Result<Self> {
-    self.0 = self.0.with_signature(client).await.wasm_result()?;
+  pub async fn with_signature(mut self, client: &WasmCoreClient) -> Result<Self> {
+    let managed_client = WasmManagedCoreClient::from_wasm(client)?;
+    self.0 = self.0.with_signature(&managed_client).await.wasm_result()?;
     Ok(self)
   }
 
   #[wasm_bindgen(js_name = withSponsor)]
   pub async fn with_sponsor(
     mut self,
-    client: &WasmIdentityClientReadOnly,
+    client: &WasmCoreClientReadOnly,
     #[wasm_bindgen(unchecked_param_type = "SponsorFn")] sponsor_fn: &js_sys::Function,
   ) -> Result<Self> {
     let closure = async |mut tx_data_ref: MutGasDataRef<'_>| -> anyhow::Result<Signature> {
@@ -180,13 +185,15 @@ impl WasmTransactionBuilder {
       Ok(signature)
     };
 
-    self.0 = self.0.with_sponsor(&client.0, closure).await.wasm_result()?;
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
+    self.0 = self.0.with_sponsor(&managed_client, closure).await.wasm_result()?;
     Ok(self)
   }
 
   #[wasm_bindgen(unchecked_return_type = "[Uint8Array, string[], Transaction]")]
-  pub async fn build(self, client: &WasmIdentityClient) -> Result<JsValue> {
-    let (tx_data, signatures, inner_tx) = self.0.build(&client.0).await.wasm_result()?;
+  pub async fn build(self, client: &WasmCoreClient) -> Result<JsValue> {
+    let managed_client = WasmManagedCoreClient::from_wasm(client)?;
+    let (tx_data, signatures, inner_tx) = self.0.build(&managed_client).await.wasm_result()?;
     let tx_data_bcs = bcs::to_bytes(&tx_data)
       .wasm_result()
       .map(|bcs_bytes| js_sys::Uint8Array::from(bcs_bytes.as_slice()))?;
@@ -209,8 +216,14 @@ impl WasmTransactionBuilder {
   }
 
   #[wasm_bindgen(js_name = buildAndExecute, unchecked_return_type = "TransactionOutput<unknown>")]
-  pub async fn build_and_execute(self, client: &WasmIdentityClient) -> Result<WasmTransactionOutput> {
-    self.0.build_and_execute(&client.0).await.wasm_result().map(Into::into)
+  pub async fn build_and_execute(self, client: &WasmCoreClient) -> Result<WasmTransactionOutput> {
+    let managed_client = WasmManagedCoreClient::from_wasm(client)?;
+    self
+      .0
+      .build_and_execute(&managed_client)
+      .await
+      .wasm_result()
+      .map(Into::into)
   }
 }
 
