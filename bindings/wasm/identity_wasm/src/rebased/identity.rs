@@ -185,12 +185,14 @@ impl WasmOnChainIdentity {
     &self,
     controller_token: &WasmControllerToken,
     config: WasmConfigChange,
+    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> WasmTransactionBuilder {
     let tx = JsValue::from(WasmCreateConfigChangeProposal::new(
       self,
       controller_token,
       config,
+      identity_client,
       expiration_epoch,
     ));
     WasmTransactionBuilder::new(tx.unchecked_into())
@@ -204,9 +206,11 @@ impl WasmOnChainIdentity {
     &self,
     controller_token: &WasmControllerToken,
     transfer_map: Vec<StringCouple>,
+    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> Result<WasmTransactionBuilder> {
-    let tx = WasmCreateSendProposal::new(self, controller_token, transfer_map, expiration_epoch).wasm_result()?;
+    let tx = WasmCreateSendProposal::new(self, controller_token, transfer_map, identity_client, expiration_epoch)
+      .wasm_result()?;
     Ok(WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into()))
   }
 

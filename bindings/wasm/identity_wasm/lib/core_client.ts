@@ -1,4 +1,4 @@
-import { IotaClient, OwnedObjectRef } from "@iota/iota-sdk/client";
+import { IotaClient } from "@iota/iota-sdk/client";
 import { PublicKey } from "@iota/iota-sdk/cryptography";
 import { TransactionSigner } from "~identity_wasm";
 

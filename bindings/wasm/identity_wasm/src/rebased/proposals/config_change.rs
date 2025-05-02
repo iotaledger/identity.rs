@@ -22,7 +22,9 @@ use super::StringSet;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::rebased::WasmControllerToken;
+use crate::rebased::WasmCoreClientReadOnly;
 use crate::rebased::WasmIdentityClientReadOnly;
+use crate::rebased::WasmManagedCoreClientReadOnly;
 use crate::rebased::WasmOnChainIdentity;
 use crate::rebased::WasmTransactionBuilder;
 
@@ -132,8 +134,14 @@ impl WasmConfigChangeProposal {
     &self,
     identity: &WasmOnChainIdentity,
     controller_token: &WasmControllerToken,
+    identity_client: &WasmIdentityClientReadOnly,
   ) -> WasmTransactionBuilder {
-    let tx = JsValue::from(WasmApproveConfigChangeProposal::new(self, identity, controller_token));
+    let tx = JsValue::from(WasmApproveConfigChangeProposal::new(
+      self,
+      identity,
+      controller_token,
+      identity_client,
+    ));
     WasmTransactionBuilder::new(tx.unchecked_into())
   }
 
@@ -145,8 +153,14 @@ impl WasmConfigChangeProposal {
     self,
     identity: &WasmOnChainIdentity,
     controller_token: &WasmControllerToken,
+    identity_client: &WasmIdentityClientReadOnly,
   ) -> WasmTransactionBuilder {
-    let tx = JsValue::from(WasmExecuteConfigChangeProposal::new(self, identity, controller_token));
+    let tx = JsValue::from(WasmExecuteConfigChangeProposal::new(
+      self,
+      identity,
+      controller_token,
+      identity_client,
+    ));
     WasmTransactionBuilder::new(tx.unchecked_into())
   }
 }
@@ -156,6 +170,7 @@ pub struct WasmApproveConfigChangeProposal {
   proposal: WasmConfigChangeProposal,
   identity: WasmOnChainIdentity,
   controller_token: WasmControllerToken,
+  identity_client: WasmIdentityClientReadOnly,
 }
 
 #[wasm_bindgen(js_class = ApproveConfigChangeProposal)]
@@ -164,24 +179,27 @@ impl WasmApproveConfigChangeProposal {
     proposal: &WasmConfigChangeProposal,
     identity: &WasmOnChainIdentity,
     controller_token: &WasmControllerToken,
+    identity_client: &WasmIdentityClientReadOnly,
   ) -> Self {
     Self {
       proposal: proposal.clone(),
       identity: identity.clone(),
       controller_token: controller_token.clone(),
+      identity_client: identity_client.clone(),
     }
   }
 
   #[wasm_bindgen(js_name = buildProgrammableTransaction)]
-  pub async fn build_programmable_transaction(&self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
+  pub async fn build_programmable_transaction(&self, client: &WasmCoreClientReadOnly) -> Result<Vec<u8>> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
     let mut proposal = self.proposal.0.write().await;
     let identity = self.identity.0.read().await;
 
     let tx = proposal
-      .approve(&identity, &self.controller_token.0)
+      .approve(&identity, &self.controller_token.0, &self.identity_client.0)
       .wasm_result()?
       .into_inner();
-    let ptb = tx.build_programmable_transaction(&client.0).await.wasm_result()?;
+    let ptb = tx.build_programmable_transaction(&managed_client).await.wasm_result()?;
     bcs::to_bytes(&ptb).wasm_result()
   }
 
@@ -189,15 +207,16 @@ impl WasmApproveConfigChangeProposal {
   pub async fn apply(
     &self,
     wasm_effects: &WasmIotaTransactionBlockEffects,
-    client: &WasmIdentityClientReadOnly,
+    client: &WasmCoreClientReadOnly,
   ) -> Result<()> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
     let mut proposal = self.proposal.0.write().await;
     let identity = self.identity.0.read().await;
     let tx = proposal
-      .approve(&identity, &self.controller_token.0)
+      .approve(&identity, &self.controller_token.0, &self.identity_client.0)
       .wasm_result()?
       .into_inner();
-    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &client.0).await;
+    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &managed_client).await;
     let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
     Object::assign(wasm_effects, &wasm_rem_effects);
 
@@ -210,6 +229,7 @@ pub struct WasmExecuteConfigChangeProposal {
   proposal: WasmConfigChangeProposal,
   identity: WasmOnChainIdentity,
   controller_token: WasmControllerToken,
+  identity_client: WasmIdentityClientReadOnly,
 }
 
 #[wasm_bindgen(js_class = ExecuteConfigChangeProposal)]
@@ -218,25 +238,28 @@ impl WasmExecuteConfigChangeProposal {
     proposal: WasmConfigChangeProposal,
     identity: &WasmOnChainIdentity,
     controller_token: &WasmControllerToken,
+    identity_client: &WasmIdentityClientReadOnly,
   ) -> Self {
     Self {
       proposal,
       identity: identity.clone(),
       controller_token: controller_token.clone(),
+      identity_client: identity_client.clone(),
     }
   }
 
   #[wasm_bindgen(js_name = buildProgrammableTransaction)]
-  pub async fn build_programmable_transaction(&self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
+  pub async fn build_programmable_transaction(&self, client: &WasmCoreClientReadOnly) -> Result<Vec<u8>> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
     let proposal = self.proposal.0.read().await.clone();
     let mut identity = self.identity.0.write().await;
 
     let tx = proposal
-      .into_tx(&mut identity, &self.controller_token.0, &client.0)
+      .into_tx(&mut identity, &self.controller_token.0, &self.identity_client.0)
       .await
       .wasm_result()?
       .into_inner();
-    let ptb = tx.build_programmable_transaction(&client.0).await.wasm_result()?;
+    let ptb = tx.build_programmable_transaction(&managed_client).await.wasm_result()?;
     bcs::to_bytes(&ptb).wasm_result()
   }
 
@@ -244,16 +267,17 @@ impl WasmExecuteConfigChangeProposal {
   pub async fn apply(
     &self,
     wasm_effects: &WasmIotaTransactionBlockEffects,
-    client: &WasmIdentityClientReadOnly,
+    client: &WasmCoreClientReadOnly,
   ) -> Result<()> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
     let proposal = self.proposal.0.read().await.clone();
     let mut identity = self.identity.0.write().await;
     let tx = proposal
-      .into_tx(&mut identity, &self.controller_token.0, &client.0)
+      .into_tx(&mut identity, &self.controller_token.0, &self.identity_client.0)
       .await
       .wasm_result()?
       .into_inner();
-    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &client.0).await;
+    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &managed_client).await;
     let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
     Object::assign(wasm_effects, &wasm_rem_effects);
 
@@ -270,6 +294,7 @@ pub struct WasmCreateConfigChangeProposal {
   controllers_to_remove: Option<StringSet>,
   controllers_to_update: Option<MapStringNumber>,
   expiration_epoch: Option<u64>,
+  identity_client: WasmIdentityClientReadOnly,
 }
 
 #[wasm_bindgen(js_class = CreateConfigChangeProposal)]
@@ -278,6 +303,7 @@ impl WasmCreateConfigChangeProposal {
     identity: &WasmOnChainIdentity,
     controller_token: &WasmControllerToken,
     config: WasmConfigChange,
+    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> Self {
     let WasmConfigChange {
@@ -294,11 +320,13 @@ impl WasmCreateConfigChangeProposal {
       controllers_to_update,
       expiration_epoch,
       controller_token: controller_token.clone(),
+      identity_client: identity_client.clone(),
     }
   }
 
   #[wasm_bindgen(js_name = buildProgrammableTransaction)]
-  pub async fn build_programmable_transaction(&self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
+  pub async fn build_programmable_transaction(&self, client: &WasmCoreClientReadOnly) -> Result<Vec<u8>> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
     let mut identity_ref = self.identity.0.write().await;
     let controllers_to_add = self
       .controllers_to_add
@@ -335,9 +363,13 @@ impl WasmCreateConfigChangeProposal {
       builder
     };
 
-    let tx = builder.finish(&client.0).await.wasm_result()?.into_inner();
+    let tx = builder
+      .finish(&self.identity_client.0)
+      .await
+      .wasm_result()?
+      .into_inner();
 
-    let pt = tx.build_programmable_transaction(&client.0).await.wasm_result()?;
+    let pt = tx.build_programmable_transaction(&managed_client).await.wasm_result()?;
     bcs::to_bytes(&pt).wasm_result()
   }
 
@@ -345,8 +377,9 @@ impl WasmCreateConfigChangeProposal {
   pub async fn apply(
     self,
     wasm_effects: &WasmIotaTransactionBlockEffects,
-    client: &WasmIdentityClientReadOnly,
+    client: &WasmCoreClientReadOnly,
   ) -> Result<Option<WasmConfigChangeProposal>> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
     let mut identity_ref = self.identity.0.write().await;
     let controllers_to_add = self
       .controllers_to_add
@@ -383,9 +416,13 @@ impl WasmCreateConfigChangeProposal {
       builder
     };
 
-    let tx = builder.finish(&client.0).await.wasm_result()?.into_inner();
+    let tx = builder
+      .finish(&self.identity_client.0)
+      .await
+      .wasm_result()?
+      .into_inner();
 
-    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &client.0).await;
+    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &managed_client).await;
     let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
     Object::assign(wasm_effects, &rem_wasm_effects);
 

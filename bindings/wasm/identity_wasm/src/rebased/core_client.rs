@@ -152,6 +152,9 @@ impl WasmManagedCoreClient {
     })
   }
 
+  // Note: we don't have any use for this, but will be needed when a duck typed interface will
+  // require a CoreClient<S>.
+  #[allow(dead_code)]
   pub(crate) fn from_rust<C>(core_client: &C) -> Self
   where
     C: CoreClient<WasmTransactionSigner>,
