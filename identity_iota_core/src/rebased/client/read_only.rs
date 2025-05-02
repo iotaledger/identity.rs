@@ -182,10 +182,10 @@ impl IdentityClientReadOnly {
     cfg_if::cfg_if! {
       // Unfortunately the compiler runs into lifetime problems if we try to use a 'type ='
       // instead of the below ugly platform specific code
-      if #[cfg(target_arch = "wasm32")] {
-        let all_futures = FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>>>>>::new();
-      } else {
+      if #[cfg(feature = "send-sync-client-ext")] {
         let all_futures = FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
+      } else {
+        let all_futures = FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>>>>>::new();
       }
     }
     all_futures.push(Box::pin(resolve_new(self, object_id)));
