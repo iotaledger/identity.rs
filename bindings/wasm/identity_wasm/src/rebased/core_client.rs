@@ -203,7 +203,7 @@ impl WasmManagedCoreClient {
 
   #[wasm_bindgen(js_name = senderPublicKey)]
   pub fn sender_public_key(&self) -> Result<WasmPublicKey> {
-    Ok(WasmPublicKey::try_from(&self.public_key)?)
+    WasmPublicKey::try_from(&self.public_key)
   }
 }
 

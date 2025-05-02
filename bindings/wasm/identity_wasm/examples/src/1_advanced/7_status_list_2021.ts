@@ -33,7 +33,7 @@ export async function statusList2021() {
     const [unpublishedIssuerDocument, issuerFragment] = await createDocumentForNetwork(issuerStorage, network);
     const { output: issuerIdentity } = await issuerClient
         .createIdentity(unpublishedIssuerDocument)
-        .finish()
+        .finish(issuerClient)
         .buildAndExecute(issuerClient);
     const issuerDocument = issuerIdentity.didDocument();
 
@@ -43,7 +43,7 @@ export async function statusList2021() {
     const [unpublishedAliceDocument] = await createDocumentForNetwork(aliceStorage, network);
     const { output: aliceIdentity } = await aliceClient
         .createIdentity(unpublishedAliceDocument)
-        .finish()
+        .finish(aliceClient)
         .buildAndExecute(aliceClient);
     const aliceDocument = aliceIdentity.didDocument();
 
