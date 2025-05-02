@@ -24,7 +24,7 @@ export async function updateIdentity() {
     // create new identity for this account and publish document for it
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
-        .finish(identityClient)
+        .finish(identityClient.readOnly())
         .buildAndExecute(identityClient);
     const did = identity.didDocument().id();
 
@@ -59,7 +59,7 @@ export async function updateIdentity() {
     let controllerToken = await identity.getControllerToken(identityClient);
 
     let maybePendingProposal = await identity
-        .updateDidDocument(resolved.clone(), controllerToken!, identityClient)
+        .updateDidDocument(resolved.clone(), controllerToken!, identityClient.readOnly())
         .withGasBudget(TEST_GAS_BUDGET)
         .buildAndExecute(identityClient)
         .then(result => result.output);

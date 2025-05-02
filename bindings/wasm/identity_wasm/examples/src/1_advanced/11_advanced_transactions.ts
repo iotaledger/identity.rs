@@ -21,7 +21,7 @@ export async function advancedTransaction(): Promise<void> {
 
     const [txDataBcs, signatures, tx] = await aliceClient
         .createIdentity(new IotaDocument(aliceClient.network()))
-        .finish(aliceClient)
+        .finish(aliceClient.readOnly())
         .withSender(aliceClient.senderAddress())
         .withSponsor(aliceClient.readOnly(), (tx_data: TransactionDataBuilder) => bobSponsorFn(tx_data, bobClient))
         .then(txBuilder => txBuilder.build(aliceClient));
@@ -35,7 +35,7 @@ export async function advancedTransaction(): Promise<void> {
     });
     await iotaClient.waitForTransaction({ digest: tx_response.digest });
 
-    const identity = await tx.apply(tx_response.effects!, aliceClient);
+    const identity = await tx.apply(tx_response.effects!, aliceClient.readOnly());
 
     console.log(`Alice successfully created Identity ${identity.id()}! Thanks for the gas Bob!`);
 }

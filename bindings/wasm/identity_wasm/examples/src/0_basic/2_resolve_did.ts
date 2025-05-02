@@ -27,7 +27,7 @@ export async function resolveIdentity() {
     // create new identity for this account and publish document for it
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
-        .finish(identityClient)
+        .finish(identityClient.readOnly())
         .buildAndExecute(identityClient);
     const did = identity.didDocument().id();
 

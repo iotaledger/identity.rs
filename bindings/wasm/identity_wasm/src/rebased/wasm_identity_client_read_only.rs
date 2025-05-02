@@ -71,6 +71,11 @@ impl WasmIdentityClientReadOnly {
     self.0.package_id().to_string()
   }
 
+  #[wasm_bindgen(js_name = iotaClient)]
+  pub fn iota_client(&self) -> WasmIotaClient {
+    (*self.0).clone().into_inner()
+  }
+
   #[wasm_bindgen]
   pub fn network(&self) -> String {
     self.0.network().to_string()

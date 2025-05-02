@@ -16,7 +16,7 @@ export async function deleteIdentityDID() {
     // create new identity for this account and publish document for it
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
-        .finish(identityClient)
+        .finish(identityClient.readOnly())
         .buildAndExecute(identityClient);
     const did = identity.didDocument().id();
 
@@ -29,7 +29,7 @@ export async function deleteIdentityDID() {
 
     // delete the DID.
     await identity
-        .deleteDid(controllerToken!, identityClient)
+        .deleteDid(controllerToken!, identityClient.readOnly())
         .withGasBudget(TEST_GAS_BUDGET)
         .buildAndExecute(identityClient);
 
@@ -51,7 +51,7 @@ export async function deleteIdentityDID() {
     // Trying to update a deleted DID must fail!
     try {
         await identity
-            .updateDidDocument(resolved, controllerToken!, identityClient)
+            .updateDidDocument(resolved, controllerToken!, identityClient.readOnly())
             .withGasBudget(TEST_GAS_BUDGET)
             .buildAndExecute(identityClient);
     } catch (_) {

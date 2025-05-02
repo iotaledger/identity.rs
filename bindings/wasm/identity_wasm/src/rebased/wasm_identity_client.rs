@@ -23,6 +23,7 @@ use js_sys::Object;
 
 use super::identity::WasmIdentityBuilder;
 use super::IdentityContainer;
+use super::WasmCoreClientReadOnly;
 use super::WasmIdentityClientReadOnly;
 use super::WasmIotaAddress;
 use super::WasmObjectID;
@@ -33,6 +34,7 @@ use crate::error::WasmResult;
 use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
+use crate::rebased::WasmManagedCoreClientReadOnly;
 use crate::storage::WasmTransactionSigner;
 use identity_iota::iota::IotaDocument;
 use wasm_bindgen::prelude::*;
@@ -227,8 +229,13 @@ impl WasmPublishDidDocument {
   }
 
   #[wasm_bindgen(js_name = buildProgrammableTransaction)]
-  pub async fn build_programmable_transaction(&self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
-    let pt = self.0.build_programmable_transaction(&client.0).await.wasm_result()?;
+  pub async fn build_programmable_transaction(&self, client: &WasmCoreClientReadOnly) -> Result<Vec<u8>> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
+    let pt = self
+      .0
+      .build_programmable_transaction(&managed_client)
+      .await
+      .wasm_result()?;
     bcs::to_bytes(&pt).wasm_result()
   }
 
@@ -236,10 +243,11 @@ impl WasmPublishDidDocument {
   pub async fn apply(
     self,
     wasm_effects: &WasmIotaTransactionBlockEffects,
-    client: &WasmIdentityClientReadOnly,
+    client: &WasmCoreClientReadOnly,
   ) -> Result<WasmIotaDocument> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
     let effects = wasm_effects.clone().into();
-    let (apply_result, rem_effects) = self.0.apply(effects, &client.0).await;
+    let (apply_result, rem_effects) = self.0.apply(effects, &managed_client).await;
     let wasm_remaining_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
     Object::assign(wasm_effects.as_ref(), wasm_remaining_effects.as_ref());
 

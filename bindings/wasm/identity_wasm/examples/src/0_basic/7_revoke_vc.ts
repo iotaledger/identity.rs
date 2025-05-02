@@ -51,7 +51,7 @@ export async function revokeVC() {
     const [unpublishedIssuerDocument, issuerFragment] = await createDocumentForNetwork(issuerStorage, network);
     const { output: issuerIdentity } = await issuerClient
         .createIdentity(unpublishedIssuerDocument)
-        .finish(issuerClient)
+        .finish(issuerClient.readOnly())
         .buildAndExecute(issuerClient);
     let issuerDocument = issuerIdentity.didDocument();
 
@@ -61,7 +61,7 @@ export async function revokeVC() {
     const [unpublishedAliceDocument, aliceFragment] = await createDocumentForNetwork(aliceStorage, network);
     const { output: aliceIdentity } = await aliceClient
         .createIdentity(unpublishedAliceDocument)
-        .finish(aliceClient)
+        .finish(aliceClient.readOnly())
         .buildAndExecute(aliceClient);
     const aliceDocument = aliceIdentity.didDocument();
 
@@ -77,7 +77,7 @@ export async function revokeVC() {
 
     // Publish the updated document.
     await issuerIdentity
-        .updateDidDocument(issuerDocument, issuerIdentityToken!, issuerClient)
+        .updateDidDocument(issuerDocument, issuerIdentityToken!, issuerClient.readOnly())
         .withGasBudget(TEST_GAS_BUDGET)
         .buildAndExecute(issuerClient);
 
@@ -133,7 +133,7 @@ export async function revokeVC() {
 
     // Publish the changes.
     await issuerIdentity
-        .updateDidDocument(issuerDocument, issuerIdentityToken!, issuerClient)
+        .updateDidDocument(issuerDocument, issuerIdentityToken!, issuerClient.readOnly())
         .withGasBudget(TEST_GAS_BUDGET)
         .buildAndExecute(issuerClient);
 
@@ -163,7 +163,7 @@ export async function revokeVC() {
 
     // Publish the changes.
     await issuerIdentity
-        .updateDidDocument(issuerDocument, issuerIdentityToken!, issuerClient)
+        .updateDidDocument(issuerDocument, issuerIdentityToken!, issuerClient.readOnly())
         .withGasBudget(TEST_GAS_BUDGET)
         .buildAndExecute(issuerClient);
 

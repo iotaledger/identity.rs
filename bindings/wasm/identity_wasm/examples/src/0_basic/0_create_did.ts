@@ -23,7 +23,7 @@ export async function createIdentity(): Promise<void> {
     console.log("Creating new identity");
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
-        .finish(identityClient)
+        .finish(identityClient.readOnly())
         .buildAndExecute(identityClient);
     did = identity.didDocument().id();
 
