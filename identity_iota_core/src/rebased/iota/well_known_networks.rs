@@ -21,6 +21,11 @@ pub(crate) static IOTA_NETWORKS: Map<&str, IdentityNetworkMetadata> = phf_map! {
       "0x222741bbdff74b42df48a7b4733185e9b24becb8ccfbafe8eac864ab4e4cc555"],
     "0xaacb529c289aec9de2a474faaa4ef68b04632bb6a5d08372ca5b60e3df659f59",
   ),
+  "6364aad5" => IdentityNetworkMetadata::new(
+    Some("mainnet"),
+    &["0x84cf5d12de2f9731a89bb519bc0c982a941b319a33abefdd5ed2054ad931de08"],
+    "0xa884c72da9971da8ec32efade0a9b05faa114770ba85f10925d0edbc3fa3edc3",
+  ),
 };
 
 /// `iota_identity` package information for a given network.
