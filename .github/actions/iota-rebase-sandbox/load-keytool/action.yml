@@ -29,9 +29,7 @@ runs:
             ;;
 
           mainnet)
-            RPC=
-            echo "network ${{inputs.network}} not configured"
-            exit 1
+            RPC=https://api.mainnet.iota.cafe
             ;;
 
           *)
