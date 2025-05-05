@@ -9,6 +9,8 @@ export * from "./key_id_storage";
 
 export * from "~identity_wasm";
 
+export * from "./controller";
+export * from "./core_client";
 export * from "./proposal";
 export * from "./transaction_internal";
 

@@ -3,7 +3,7 @@
 
 [package]
 name = "IotaIdentity"
-edition = "2024.beta"
+edition = "2024"
 
 [dependencies]
 # 'tag' keyword not supported here, therefore use rev instead

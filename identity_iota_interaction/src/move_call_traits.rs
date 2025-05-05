@@ -20,6 +20,25 @@ use crate::MoveType;
 use crate::OptionalSend;
 use crate::ProgrammableTransactionBcs;
 
+#[derive(Debug, Clone, Copy)]
+pub enum ControllerTokenRef {
+  Controller(ObjectRef),
+  Delegate(ObjectRef),
+}
+
+impl ControllerTokenRef {
+  pub fn is_controller_cap(&self) -> bool {
+    matches!(self, ControllerTokenRef::Controller(_))
+  }
+
+  pub fn object_ref(&self) -> ObjectRef {
+    match self {
+      Self::Controller(obj_ref) => *obj_ref,
+      Self::Delegate(obj_ref) => *obj_ref,
+    }
+  }
+}
+
 pub trait AssetMoveCalls {
   type Error;
 
@@ -96,7 +115,7 @@ pub trait IdentityMoveCalls {
 
   fn propose_borrow(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     objects: Vec<ObjectID>,
     expiration: Option<u64>,
     package_id: ObjectID,
@@ -104,7 +123,7 @@ pub trait IdentityMoveCalls {
 
   fn execute_borrow<F: BorrowIntentFnInternalT<Self::NativeTxBuilder>>(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     proposal_id: ObjectID,
     objects: Vec<IotaObjectData>,
     intent_fn: F,
@@ -113,7 +132,7 @@ pub trait IdentityMoveCalls {
 
   fn create_and_execute_borrow<F>(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     objects: Vec<IotaObjectData>,
     intent_fn: F,
     expiration: Option<u64>,
@@ -129,7 +148,7 @@ pub trait IdentityMoveCalls {
   #[allow(clippy::too_many_arguments)]
   fn propose_config_change<I1, I2>(
     identity: OwnedObjectRef,
-    controller_cap: ObjectRef,
+    controller_cap: ControllerTokenRef,
     expiration: Option<u64>,
     threshold: Option<u64>,
     controllers_to_add: I1,
@@ -143,14 +162,14 @@ pub trait IdentityMoveCalls {
 
   fn execute_config_change(
     identity: OwnedObjectRef,
-    controller_cap: ObjectRef,
+    controller_cap: ControllerTokenRef,
     proposal_id: ObjectID,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
   fn propose_controller_execution(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     controller_cap_id: ObjectID,
     expiration: Option<u64>,
     package_id: ObjectID,
@@ -158,7 +177,7 @@ pub trait IdentityMoveCalls {
 
   fn execute_controller_execution<F: ControllerIntentFnInternalT<Self::NativeTxBuilder>>(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     proposal_id: ObjectID,
     borrowing_controller_cap_ref: ObjectRef,
     intent_fn: F,
@@ -167,7 +186,7 @@ pub trait IdentityMoveCalls {
 
   fn create_and_execute_controller_execution<F>(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     expiration: Option<u64>,
     borrowing_controller_cap_ref: ObjectRef,
     intent_fn: F,
@@ -181,7 +200,7 @@ pub trait IdentityMoveCalls {
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
-  async fn new_with_controllers<C: IntoIterator<Item = (IotaAddress, u64)> + OptionalSend>(
+  async fn new_with_controllers<C: IntoIterator<Item = (IotaAddress, u64, bool)> + OptionalSend>(
     did_doc: Option<&[u8]>,
     controllers: C,
     threshold: u64,
@@ -190,14 +209,14 @@ pub trait IdentityMoveCalls {
 
   fn approve_proposal<T: MoveType>(
     identity: OwnedObjectRef,
-    controller_cap: ObjectRef,
+    controller_cap: ControllerTokenRef,
     proposal_id: ObjectID,
     package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
   fn propose_send(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     transfer_map: Vec<(ObjectID, IotaAddress)>,
     expiration: Option<u64>,
     package_id: ObjectID,
@@ -205,7 +224,7 @@ pub trait IdentityMoveCalls {
 
   fn execute_send(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     proposal_id: ObjectID,
     objects: Vec<(ObjectRef, TypeTag)>,
     package: ObjectID,
@@ -213,7 +232,7 @@ pub trait IdentityMoveCalls {
 
   async fn propose_update(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     did_doc: Option<&[u8]>,
     expiration: Option<u64>,
     package_id: ObjectID,
@@ -221,14 +240,14 @@ pub trait IdentityMoveCalls {
 
   async fn execute_update(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     proposal_id: ObjectID,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
   fn create_and_execute_send(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     transfer_map: Vec<(ObjectID, IotaAddress)>,
     expiration: Option<u64>,
     objects: Vec<(ObjectRef, TypeTag)>,
@@ -237,15 +256,42 @@ pub trait IdentityMoveCalls {
 
   fn propose_upgrade(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     expiration: Option<u64>,
     package_id: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 
   fn execute_upgrade(
     identity: OwnedObjectRef,
-    capability: ObjectRef,
+    capability: ControllerTokenRef,
     proposal_id: ObjectID,
     package_id: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  async fn delegate_controller_cap(
+    controller_cap: ObjectRef,
+    recipient: IotaAddress,
+    permissions: u32,
+    package: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  async fn revoke_delegation_token(
+    identity: OwnedObjectRef,
+    controller_cap: ObjectRef,
+    delegation_token_id: ObjectID,
+    package: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  async fn unrevoke_delegation_token(
+    identity: OwnedObjectRef,
+    controller_cap: ObjectRef,
+    delegation_token_id: ObjectID,
+    package: ObjectID,
+  ) -> Result<ProgrammableTransactionBcs, Self::Error>;
+
+  async fn destroy_delegation_token(
+    identity: OwnedObjectRef,
+    delegation_token: ObjectRef,
+    package: ObjectID,
   ) -> Result<ProgrammableTransactionBcs, Self::Error>;
 }

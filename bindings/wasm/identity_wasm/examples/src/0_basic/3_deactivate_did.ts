@@ -16,7 +16,7 @@ export async function deactivateIdentity() {
     // create new identity for this account and publish document for it
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
-        .finish()
+        .finish(identityClient.readOnly())
         .buildAndExecute(identityClient);
     const did = identity.didDocument().id();
 
@@ -28,7 +28,7 @@ export async function deactivateIdentity() {
     const controllerToken = await identity.getControllerToken(identityClient);
     // Deactivate the DID.
     await identity
-        .deactivateDid(controllerToken!)
+        .deactivateDid(controllerToken!, identityClient.readOnly())
         .withGasBudget(TEST_GAS_BUDGET)
         .buildAndExecute(identityClient);
 
@@ -43,7 +43,7 @@ export async function deactivateIdentity() {
     // Re-activate the DID by publishing a valid DID document.
     console.log("Publishing this:", JSON.stringify(resolved, null, 2));
     await identity
-        .updateDidDocument(resolved, controllerToken!)
+        .updateDidDocument(resolved, controllerToken!, identityClient.readOnly())
         .withGasBudget(TEST_GAS_BUDGET)
         .buildAndExecute(identityClient);
 

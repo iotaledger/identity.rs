@@ -276,6 +276,7 @@ impl EventTrait for EventAdapter<'_> {
   }
 }
 
+/// Wraps the IotaClient to implement the IotaClientTrait.
 #[derive(Clone)]
 pub struct IotaClientRustSdk {
   iota_client: IotaClient,
@@ -411,6 +412,7 @@ impl IotaClientTrait for IotaClientRustSdk {
 }
 
 impl IotaClientRustSdk {
+  /// Creates a new IotaClientRustSdk instance.
   pub fn new(iota_client: IotaClient) -> Result<Self, Error> {
     Ok(Self { iota_client })
   }

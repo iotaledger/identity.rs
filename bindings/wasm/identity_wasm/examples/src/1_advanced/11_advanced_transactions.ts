@@ -21,7 +21,7 @@ export async function advancedTransaction(): Promise<void> {
 
     const [txDataBcs, signatures, tx] = await aliceClient
         .createIdentity(new IotaDocument(aliceClient.network()))
-        .finish()
+        .finish(aliceClient.readOnly())
         .withSender(aliceClient.senderAddress())
         .withSponsor(aliceClient.readOnly(), (tx_data: TransactionDataBuilder) => bobSponsorFn(tx_data, bobClient))
         .then(txBuilder => txBuilder.build(aliceClient));

@@ -59,5 +59,8 @@ import {
   ExecuteProposal,
   UpdateDid,
   ProposalResult,
+  DelegatePermissions,
+  CoreClient,
+  CoreClientReadOnly
 } from '../lib/index';
 "#;

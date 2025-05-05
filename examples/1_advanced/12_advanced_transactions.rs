@@ -6,6 +6,7 @@ use examples::get_memstorage;
 use examples::TEST_GAS_BUDGET;
 
 use anyhow::Context as _;
+use identity_iota::iota::rebased::client::CoreClient;
 use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::transaction_builder::MutGasDataRef;
 use identity_iota::iota::rebased::transaction_builder::Transaction as _;
@@ -36,7 +37,7 @@ async fn main() -> anyhow::Result<()> {
   // Alice wants to create a new Identity with only her as its controller.
   let (tx_data, sigs, tx) = alice_client
     .create_identity(IotaDocument::new(alice_client.network()))
-    .finish()
+    .finish(&alice_client)
     // Alice is the sender of this transaction
     .with_sender(alice_client.sender_address())
     // but Bob will provide Gas for it - i.e. he'll sponsor it.

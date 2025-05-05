@@ -1,10 +1,8 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
+use std::str::FromStr as _;
 
-use crate::common::get_funded_test_client;
-use crate::common::TEST_GAS_BUDGET;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
@@ -14,6 +12,7 @@ use identity_credential::validator::JwtCredentialValidationOptions;
 use identity_credential::validator::JwtCredentialValidator;
 use identity_document::document::CoreDocument;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
+use identity_iota_core::rebased::client::CoreClient;
 use identity_iota_core::rebased::AuthenticatedAsset;
 use identity_iota_core::rebased::PublicAvailableVC;
 use identity_iota_core::rebased::TransferProposal;
@@ -30,6 +29,9 @@ use itertools::Itertools as _;
 use move_core_types::language_storage::StructTag;
 use secret_storage::Signer as _;
 
+use crate::common::get_funded_test_client;
+use crate::common::TEST_GAS_BUDGET;
+
 #[tokio::test]
 async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
   let test_client = get_funded_test_client().await?;
@@ -37,7 +39,7 @@ async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
 
   let asset = alice_client
     .create_authenticated_asset::<u64>(42)
-    .finish()
+    .finish(&alice_client)
     .build_and_execute(&alice_client)
     .await?
     .output;
@@ -56,7 +58,7 @@ async fn transferring_asset_works() -> anyhow::Result<()> {
   let asset = alice_client
     .create_authenticated_asset::<u64>(42)
     .transferable(true)
-    .finish()
+    .finish(&alice_client)
     .build_and_execute(&alice_client)
     .await?
     .output;
@@ -64,13 +66,13 @@ async fn transferring_asset_works() -> anyhow::Result<()> {
 
   // Alice propose to Bob the transfer of the asset.
   let proposal = asset
-    .transfer(bob_client.sender_address())?
+    .transfer(bob_client.sender_address(), &alice_client)?
     .build_and_execute(&alice_client)
     .await?
     .output;
   let proposal_id = proposal.id();
   // Bob accepts the transfer.
-  proposal.accept().build_and_execute(&bob_client).await?;
+  proposal.accept(&bob_client).build_and_execute(&bob_client).await?;
   let TypeTag::Struct(asset_type) = AuthenticatedAsset::<u64>::move_type(test_client.package_id()) else {
     unreachable!("asset is a struct");
   };
@@ -83,7 +85,10 @@ async fn transferring_asset_works() -> anyhow::Result<()> {
   // Alice concludes the transfer.
   let proposal = TransferProposal::get_by_id(proposal_id, &alice_client).await?;
   assert!(proposal.is_concluded());
-  proposal.conclude_or_cancel().build_and_execute(&alice_client).await?;
+  proposal
+    .conclude_or_cancel(&alice_client)
+    .build_and_execute(&alice_client)
+    .await?;
 
   // After the transfer is concluded all capabilities as well as the proposal bound to the transfer are deleted.
   let alice_has_sender_cap = alice_client
@@ -117,20 +122,24 @@ async fn accepting_the_transfer_of_an_asset_requires_capability() -> anyhow::Res
   let asset = alice_client
     .create_authenticated_asset::<u64>(42)
     .transferable(true)
-    .finish()
+    .finish(&alice_client)
     .build_and_execute(&alice_client)
     .await?
     .output;
 
   // Alice propose to Bob the transfer of the asset.
   let proposal = asset
-    .transfer(bob_client.sender_address())?
+    .transfer(bob_client.sender_address(), &alice_client)?
     .build_and_execute(&alice_client)
     .await?
     .output;
 
   // Caty attempts to accept the transfer instead of Bob but gets an error
-  let _error = proposal.accept().build_and_execute(&caty_client).await.unwrap_err();
+  let _error = proposal
+    .accept(&caty_client)
+    .build_and_execute(&caty_client)
+    .await
+    .unwrap_err();
 
   Ok(())
 }
@@ -143,12 +152,15 @@ async fn modifying_mutable_asset_works() -> anyhow::Result<()> {
   let mut asset = alice_client
     .create_authenticated_asset::<u64>(42)
     .mutable(true)
-    .finish()
+    .finish(&alice_client)
     .build_and_execute(&alice_client)
     .await?
     .output;
 
-  asset.set_content(420)?.build_and_execute(&alice_client).await?;
+  asset
+    .set_content(420, &alice_client)?
+    .build_and_execute(&alice_client)
+    .await?;
   assert_eq!(asset.content(), &420);
 
   Ok(())
@@ -162,13 +174,13 @@ async fn deleting_asset_works() -> anyhow::Result<()> {
   let asset = alice_client
     .create_authenticated_asset::<u64>(42)
     .deletable(true)
-    .finish()
+    .finish(&alice_client)
     .build_and_execute(&alice_client)
     .await?
     .output;
   let asset_id = asset.id();
 
-  asset.delete()?.build_and_execute(&alice_client).await?;
+  asset.delete(&alice_client)?.build_and_execute(&alice_client).await?;
   let alice_owns_asset = alice_client
     .read_api()
     .get_owned_objects(alice_client.sender_address(), None, None, None)
@@ -189,7 +201,7 @@ async fn hosting_vc_works() -> anyhow::Result<()> {
 
   let newly_created_identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .with_gas_budget(TEST_GAS_BUDGET)
     .build_and_execute(&identity_client)
     .await?

@@ -9,7 +9,10 @@ use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use identity_iota_interaction::OptionalSync;
+use secret_storage::Signer;
 use tokio::sync::OnceCell;
 
 use crate::rebased::iota::types::Number;
@@ -40,6 +43,8 @@ use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::rebased::client::CoreClient;
+use crate::rebased::client::CoreClientReadOnly;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::proposals::BorrowAction;
@@ -53,7 +58,11 @@ use crate::rebased::Error;
 use identity_iota_interaction::IotaClientTrait;
 use identity_iota_interaction::MoveType;
 
+use super::ControllerCap;
 use super::ControllerToken;
+use super::DelegationToken;
+use super::DelegationTokenRevocation;
+use super::DeleteDelegationToken;
 use super::Multicontroller;
 use super::UnmigratedAlias;
 
@@ -168,15 +177,33 @@ impl OnChainIdentity {
     address: IotaAddress,
     client: &IdentityClientReadOnly,
   ) -> Result<Option<ControllerToken>, Error> {
+    let maybe_controller_cap = client
+      .find_object_for_address::<ControllerCap, _>(address, |token| token.controller_of() == self.id())
+      .await;
+
+    if let Ok(Some(controller_cap)) = maybe_controller_cap {
+      return Ok(Some(controller_cap.into()));
+    }
+
     client
-      .find_object_for_address::<ControllerToken, _>(address, |token| token.controller_of() == self.id())
+      .find_object_for_address::<DelegationToken, _>(address, |token| token.controller_of() == self.id())
       .await
+      .map(|maybe_delegate| maybe_delegate.map(ControllerToken::from))
+      .map_err(|e| {
+        Error::Identity(format!(
+          "address {address} is not a controller nor a controller delegate for identity {}; {e}",
+          self.id()
+        ))
+      })
   }
 
   /// Returns a [ControllerToken], owned by `client`'s sender address, that grants access to this Identity.
   /// ## Notes
   /// [None] is returned if `client`'s sender address doesn't own a valid [ControllerToken].
-  pub async fn get_controller_token<S>(&self, client: &IdentityClient<S>) -> Result<Option<ControllerToken>, Error> {
+  pub async fn get_controller_token<S: Signer<IotaKeySignature> + OptionalSync>(
+    &self,
+    client: &IdentityClient<S>,
+  ) -> Result<Option<ControllerToken>, Error> {
     self
       .get_controller_token_for_address(client.sender_address(), client)
       .await
@@ -301,6 +328,37 @@ impl OnChainIdentity {
 
     Ok(history)
   }
+
+  /// Returns a [Transaction] to revoke a [DelegationToken].
+  pub fn revoke_delegation_token(
+    &self,
+    controller_capability: &ControllerCap,
+    delegation_token: &DelegationToken,
+    identity_client: &IdentityClientReadOnly,
+  ) -> Result<TransactionBuilder<DelegationTokenRevocation>, Error> {
+    DelegationTokenRevocation::revoke(self, controller_capability, delegation_token, identity_client)
+      .map(TransactionBuilder::new)
+  }
+
+  /// Returns a [Transaction] to *un*revoke a [DelegationToken].
+  pub fn unrevoke_delegation_token(
+    &self,
+    controller_capability: &ControllerCap,
+    delegation_token: &DelegationToken,
+    identity_client: &IdentityClientReadOnly,
+  ) -> Result<TransactionBuilder<DelegationTokenRevocation>, Error> {
+    DelegationTokenRevocation::unrevoke(self, controller_capability, delegation_token, identity_client)
+      .map(TransactionBuilder::new)
+  }
+
+  /// Returns a [Transaction] to delete a [DelegationToken].
+  pub fn delete_delegation_token(
+    &self,
+    delegation_token: DelegationToken,
+    identity_client: &IdentityClientReadOnly,
+  ) -> Result<TransactionBuilder<DeleteDelegationToken>, Error> {
+    DeleteDelegationToken::new(self, delegation_token, identity_client).map(TransactionBuilder::new)
+  }
 }
 
 /// Returns the previous version of the given `history_item`.
@@ -323,10 +381,11 @@ async fn get_previous_version(
 
 /// Returns the [`OnChainIdentity`] having ID `object_id`, if it exists.
 pub async fn get_identity(
-  client: &IdentityClientReadOnly,
+  client: &impl CoreClientReadOnly,
   object_id: ObjectID,
 ) -> Result<Option<OnChainIdentity>, Error> {
   let response = client
+    .client_adapter()
     .read_api()
     .get_object_with_options(object_id, IotaObjectDataOptions::new().with_content())
     .await
@@ -342,7 +401,7 @@ pub async fn get_identity(
     return Ok(None);
   };
 
-  let network = client.network();
+  let network = client.network_name();
   let did = IotaDID::from_object_id(&object_id.to_string(), network);
   let Some(IdentityData {
     id,
@@ -357,7 +416,7 @@ pub async fn get_identity(
   else {
     return Ok(None);
   };
-  let legacy_did = legacy_id.map(|legacy_id| IotaDID::from_object_id(&legacy_id.to_string(), client.network()));
+  let legacy_did = legacy_id.map(|legacy_id| IotaDID::from_object_id(&legacy_id.to_string(), client.network_name()));
 
   let did_doc = multicontroller
     .controlled_value()
@@ -468,14 +527,14 @@ impl From<OnChainIdentity> for IotaDocument {
 pub struct IdentityBuilder {
   did_doc: IotaDocument,
   threshold: Option<u64>,
-  controllers: HashMap<IotaAddress, u64>,
+  controllers: HashMap<IotaAddress, (u64, bool)>,
 }
 
 impl IdentityBuilder {
   /// Initializes a new builder for an [`OnChainIdentity`], where the passed `did_doc` will be
   /// used as the identity's DID Document.
   /// ## Warning
-  /// Validation of `did_doc` is deferred to [`CreateIdentityTx`].
+  /// Validation of `did_doc` is deferred to [CreateIdentity].
   pub fn new(did_doc: IotaDocument) -> Self {
     Self {
       did_doc,
@@ -486,7 +545,14 @@ impl IdentityBuilder {
 
   /// Gives `address` the capability to act as a controller with voting power `voting_power`.
   pub fn controller(mut self, address: IotaAddress, voting_power: u64) -> Self {
-    self.controllers.insert(address, voting_power);
+    self.controllers.insert(address, (voting_power, false));
+    self
+  }
+
+  /// Gives `address` the capability to act as a controller with voting power `voting_power` and
+  /// the ability to delegate its access to third parties.
+  pub fn controller_with_delegation(mut self, address: IotaAddress, voting_power: u64) -> Self {
+    self.controllers.insert(address, (voting_power, true));
     self
   }
 
@@ -506,9 +572,26 @@ impl IdentityBuilder {
       .fold(self, |builder, (addr, vp)| builder.controller(addr, vp))
   }
 
+  /// Sets multiple controllers in a single step.
+  /// Differently from [IdentityBuilder::controllers], this method requires
+  /// the controller's data to be passed as the triple `(address, voting power, delegate-ability)`.
+  /// A `true` value as the tuple's third value means the controller *CAN* delegate its access.
+  pub fn controllers_with_delegation<I>(self, controllers: I) -> Self
+  where
+    I: IntoIterator<Item = (IotaAddress, u64, bool)>,
+  {
+    controllers.into_iter().fold(self, |builder, (addr, vp, can_delegate)| {
+      if can_delegate {
+        builder.controller_with_delegation(addr, vp)
+      } else {
+        builder.controller(addr, vp)
+      }
+    })
+  }
+
   /// Turns this builder into a [`Transaction`], ready to be executed.
-  pub fn finish(self) -> TransactionBuilder<CreateIdentity> {
-    TransactionBuilder::new(CreateIdentity::new(self))
+  pub fn finish(self, client: &IdentityClientReadOnly) -> TransactionBuilder<CreateIdentity> {
+    TransactionBuilder::new(CreateIdentity::new(self, client))
   }
 }
 
@@ -528,18 +611,24 @@ impl MoveType for OnChainIdentity {
 pub struct CreateIdentity {
   builder: IdentityBuilder,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl CreateIdentity {
   /// Returns a new [CreateIdentity] [Transaction] from an [IdentityBuilder]
-  pub fn new(builder: IdentityBuilder) -> CreateIdentity {
+  pub fn new(builder: IdentityBuilder, client: &IdentityClientReadOnly) -> CreateIdentity {
+    Self::new_unchecked(builder, client.package_id())
+  }
+
+  pub(crate) fn new_unchecked(builder: IdentityBuilder, package: ObjectID) -> Self {
     Self {
       builder,
       cached_ptb: OnceCell::new(),
+      package,
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, _client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let IdentityBuilder {
       did_doc,
       threshold,
@@ -549,27 +638,27 @@ impl CreateIdentity {
       .pack(StateMetadataEncoding::default())
       .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
     let pt_bcs = if controllers.is_empty() {
-      IdentityMoveCallsAdapter::new_identity(Some(&did_doc), client.package_id()).await?
+      IdentityMoveCallsAdapter::new_identity(Some(&did_doc), self.package).await?
     } else {
       let threshold = match threshold {
         Some(t) => t,
-        None if controllers.len() == 1 => controllers
-          .values()
-          .next()
-          .ok_or_else(|| Error::Identity("could not get controller".to_string()))?,
+        None if controllers.len() == 1 => {
+          &controllers
+            .values()
+            .next()
+            .ok_or_else(|| Error::Identity("could not get controller".to_string()))?
+            .0
+        }
         None => {
           return Err(Error::TransactionBuildingFailed(
             "Missing field `threshold` in identity creation".to_owned(),
           ))
         }
       };
-      IdentityMoveCallsAdapter::new_with_controllers(
-        Some(&did_doc),
-        controllers.clone(),
-        *threshold,
-        client.package_id(),
-      )
-      .await?
+      let controllers = controllers
+        .iter()
+        .map(|(addr, (vp, can_delegate))| (*addr, *vp, *can_delegate));
+      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), controllers, *threshold, self.package).await?
     };
 
     Ok(bcs::from_bytes(&pt_bcs)?)
@@ -581,18 +670,21 @@ impl CreateIdentity {
 impl Transaction for CreateIdentity {
   type Output = OnChainIdentity;
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply(
+  async fn apply<C>(
     mut self,
     mut effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }

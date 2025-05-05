@@ -4,6 +4,7 @@
 use std::marker::PhantomData;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::rebased::client::CoreClientReadOnly;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::Transaction;
@@ -13,6 +14,7 @@ use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::OptionalSync;
 use tokio::sync::Mutex;
 
 use crate::rebased::migration::Proposal;
@@ -172,16 +174,11 @@ where
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(controller_token.id())
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
-      .reference
-      .to_object_ref();
+    let controller_cap_ref = controller_token.controller_ref(client).await?;
     let maybe_intent_fn = action.intent_fn.into_inner();
     let chained_execution = maybe_intent_fn.is_some()
       && identity
-        .controller_voting_power(controller_cap_ref.0)
+        .controller_voting_power(controller_token.controller_id())
         .expect("is an identity's controller")
         >= identity.threshold();
 
@@ -296,7 +293,10 @@ impl<F> UserDrivenTx<'_, ControllerExecutionWithIntent<F>>
 where
   F: ControllerIntentFnT + Send,
 {
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     let Self {
       identity,
       action,
@@ -308,12 +308,8 @@ where
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(*controller_token)
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token)))?
-      .reference
-      .to_object_ref();
+    let controller_token = client.get_object_by_id::<ControllerToken>(*controller_token).await?;
+    let controller_cap_ref = controller_token.controller_ref(client).await?;
 
     let borrowing_cap_id = action.0.controller_cap;
     let borrowing_controller_cap_ref = client
@@ -349,17 +345,20 @@ where
   F: ControllerIntentFnT + Send,
 {
   type Output = ();
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply(
+  async fn apply<C>(
     self,
     effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
-  ) -> (Result<(), Error>, IotaTransactionBlockEffects) {
+    _client: &C,
+  ) -> (Result<(), Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }

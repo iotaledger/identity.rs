@@ -10,7 +10,7 @@ mod utils;
 
 pub(crate) use asset_move_calls::AssetMoveCallsRustSdk as AssetMoveCallsAdapter;
 pub(crate) use identity_move_calls::IdentityMoveCallsRustSdk as IdentityMoveCallsAdapter;
-pub(crate) use iota_client_rust_sdk::IotaClientRustSdk as IotaClientAdapter;
+pub use iota_client_rust_sdk::IotaClientRustSdk as IotaClientAdapter;
 pub(crate) use migration_move_calls::MigrationMoveCallsRustSdk as MigrationMoveCallsAdapter;
 #[allow(unused_imports)]
 pub(crate) use transaction_builder::TransactionBuilderRustSdk as TransactionBuilderAdapter;

@@ -62,7 +62,7 @@ jobs:
     - name: Run script
       if: ${{ github.event.inputs.dry-run == 'false' }}
       run: |
-        source ${{ github.event.inputs.script-path}}
+        bash ${{ github.event.inputs.script-path}}
 
     - name: Commit changes
       if: ${{ github.event.inputs.dry-run == 'false' }}

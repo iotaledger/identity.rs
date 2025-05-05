@@ -7,6 +7,7 @@ use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::IdentityMoveCalls;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::rebased::client::CoreClientReadOnly;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::TransactionBuilder;
@@ -69,14 +70,9 @@ impl ProposalT for Proposal<Upgrade> {
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(controller_token.id())
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
-      .reference
-      .to_object_ref();
+    let controller_cap_ref = controller_token.controller_ref(client).await?;
     let sender_vp = identity
-      .controller_voting_power(controller_cap_ref.0)
+      .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
     let tx =
@@ -110,12 +106,7 @@ impl ProposalT for Proposal<Upgrade> {
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(controller_token.id())
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
-      .reference
-      .to_object_ref();
+    let controller_cap_ref = controller_token.controller_ref(client).await?;
 
     let tx =
       IdentityMoveCallsAdapter::execute_upgrade(identity_ref, controller_cap_ref, proposal_id, client.package_id())
