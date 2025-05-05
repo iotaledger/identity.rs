@@ -13,7 +13,7 @@ async fn main() -> anyhow::Result<()> {
   let client = get_funded_client(&storage).await?;
   let mut identity = client
     .create_identity(IotaDocument::new(client.network()))
-    .finish()
+    .finish(&client)
     .build_and_execute(&client)
     .await?
     .output;

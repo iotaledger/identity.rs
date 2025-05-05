@@ -9,7 +9,10 @@ use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
 use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::IotaKeySignature;
 use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use identity_iota_interaction::OptionalSync;
+use secret_storage::Signer;
 use tokio::sync::OnceCell;
 
 use crate::rebased::iota::types::Number;
@@ -40,6 +43,8 @@ use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::rebased::client::CoreClient;
+use crate::rebased::client::CoreClientReadOnly;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::proposals::BorrowAction;
@@ -195,7 +200,10 @@ impl OnChainIdentity {
   /// Returns a [ControllerToken], owned by `client`'s sender address, that grants access to this Identity.
   /// ## Notes
   /// [None] is returned if `client`'s sender address doesn't own a valid [ControllerToken].
-  pub async fn get_controller_token<S>(&self, client: &IdentityClient<S>) -> Result<Option<ControllerToken>, Error> {
+  pub async fn get_controller_token<S: Signer<IotaKeySignature> + OptionalSync>(
+    &self,
+    client: &IdentityClient<S>,
+  ) -> Result<Option<ControllerToken>, Error> {
     self
       .get_controller_token_for_address(client.sender_address(), client)
       .await
@@ -326,8 +334,10 @@ impl OnChainIdentity {
     &self,
     controller_capability: &ControllerCap,
     delegation_token: &DelegationToken,
+    identity_client: &IdentityClientReadOnly,
   ) -> Result<TransactionBuilder<DelegationTokenRevocation>, Error> {
-    DelegationTokenRevocation::revoke(self, controller_capability, delegation_token).map(TransactionBuilder::new)
+    DelegationTokenRevocation::revoke(self, controller_capability, delegation_token, identity_client)
+      .map(TransactionBuilder::new)
   }
 
   /// Returns a [Transaction] to *un*revoke a [DelegationToken].
@@ -335,16 +345,19 @@ impl OnChainIdentity {
     &self,
     controller_capability: &ControllerCap,
     delegation_token: &DelegationToken,
+    identity_client: &IdentityClientReadOnly,
   ) -> Result<TransactionBuilder<DelegationTokenRevocation>, Error> {
-    DelegationTokenRevocation::unrevoke(self, controller_capability, delegation_token).map(TransactionBuilder::new)
+    DelegationTokenRevocation::unrevoke(self, controller_capability, delegation_token, identity_client)
+      .map(TransactionBuilder::new)
   }
 
   /// Returns a [Transaction] to delete a [DelegationToken].
   pub fn delete_delegation_token(
     &self,
     delegation_token: DelegationToken,
+    identity_client: &IdentityClientReadOnly,
   ) -> Result<TransactionBuilder<DeleteDelegationToken>, Error> {
-    DeleteDelegationToken::new(self, delegation_token).map(TransactionBuilder::new)
+    DeleteDelegationToken::new(self, delegation_token, identity_client).map(TransactionBuilder::new)
   }
 }
 
@@ -368,10 +381,11 @@ async fn get_previous_version(
 
 /// Returns the [`OnChainIdentity`] having ID `object_id`, if it exists.
 pub async fn get_identity(
-  client: &IdentityClientReadOnly,
+  client: &impl CoreClientReadOnly,
   object_id: ObjectID,
 ) -> Result<Option<OnChainIdentity>, Error> {
   let response = client
+    .client_adapter()
     .read_api()
     .get_object_with_options(object_id, IotaObjectDataOptions::new().with_content())
     .await
@@ -387,7 +401,7 @@ pub async fn get_identity(
     return Ok(None);
   };
 
-  let network = client.network();
+  let network = client.network_name();
   let did = IotaDID::from_object_id(&object_id.to_string(), network);
   let Some(IdentityData {
     id,
@@ -402,7 +416,7 @@ pub async fn get_identity(
   else {
     return Ok(None);
   };
-  let legacy_did = legacy_id.map(|legacy_id| IotaDID::from_object_id(&legacy_id.to_string(), client.network()));
+  let legacy_did = legacy_id.map(|legacy_id| IotaDID::from_object_id(&legacy_id.to_string(), client.network_name()));
 
   let did_doc = multicontroller
     .controlled_value()
@@ -576,8 +590,8 @@ impl IdentityBuilder {
   }
 
   /// Turns this builder into a [`Transaction`], ready to be executed.
-  pub fn finish(self) -> TransactionBuilder<CreateIdentity> {
-    TransactionBuilder::new(CreateIdentity::new(self))
+  pub fn finish(self, client: &IdentityClientReadOnly) -> TransactionBuilder<CreateIdentity> {
+    TransactionBuilder::new(CreateIdentity::new(self, client))
   }
 }
 
@@ -597,18 +611,24 @@ impl MoveType for OnChainIdentity {
 pub struct CreateIdentity {
   builder: IdentityBuilder,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl CreateIdentity {
   /// Returns a new [CreateIdentity] [Transaction] from an [IdentityBuilder]
-  pub fn new(builder: IdentityBuilder) -> CreateIdentity {
+  pub fn new(builder: IdentityBuilder, client: &IdentityClientReadOnly) -> CreateIdentity {
+    Self::new_unchecked(builder, client.package_id())
+  }
+
+  pub(crate) fn new_unchecked(builder: IdentityBuilder, package: ObjectID) -> Self {
     Self {
       builder,
       cached_ptb: OnceCell::new(),
+      package,
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, _client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let IdentityBuilder {
       did_doc,
       threshold,
@@ -618,7 +638,7 @@ impl CreateIdentity {
       .pack(StateMetadataEncoding::default())
       .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
     let pt_bcs = if controllers.is_empty() {
-      IdentityMoveCallsAdapter::new_identity(Some(&did_doc), client.package_id()).await?
+      IdentityMoveCallsAdapter::new_identity(Some(&did_doc), self.package).await?
     } else {
       let threshold = match threshold {
         Some(t) => t,
@@ -638,8 +658,7 @@ impl CreateIdentity {
       let controllers = controllers
         .iter()
         .map(|(addr, (vp, can_delegate))| (*addr, *vp, *can_delegate));
-      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), controllers, *threshold, client.package_id())
-        .await?
+      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), controllers, *threshold, self.package).await?
     };
 
     Ok(bcs::from_bytes(&pt_bcs)?)
@@ -651,18 +670,21 @@ impl CreateIdentity {
 impl Transaction for CreateIdentity {
   type Output = OnChainIdentity;
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply(
+  async fn apply<C>(
     mut self,
     mut effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }

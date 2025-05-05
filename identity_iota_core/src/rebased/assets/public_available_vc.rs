@@ -16,6 +16,7 @@ use identity_jose::jwu;
 use itertools::Itertools;
 use secret_storage::Signer;
 
+use crate::rebased::client::CoreClientReadOnly;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IdentityClientReadOnly;
 
@@ -63,7 +64,7 @@ impl PublicAvailableVC {
       .transferable(false)
       .mutable(true)
       .deletable(true)
-      .finish();
+      .finish(client);
 
     let tx_builder = if let Some(gas_budget) = gas_budget {
       tx_builder.with_gas_budget(gas_budget)
@@ -81,6 +82,7 @@ impl PublicAvailableVC {
     let asset = client
       .get_object_by_id::<AuthenticatedAsset<IotaVerifiableCredential>>(id)
       .await?;
+
     Self::try_from_asset(asset).map_err(|e| {
       crate::rebased::Error::ObjectLookup(format!(
         "object at address {id} is not a valid publicly available VC: {e}"

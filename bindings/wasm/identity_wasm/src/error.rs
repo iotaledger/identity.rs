@@ -9,6 +9,7 @@ use identity_iota::storage::key_id_storage::KeyIdStorageResult;
 use identity_iota::storage::key_storage::KeyStorageError;
 use identity_iota::storage::key_storage::KeyStorageErrorKind;
 use identity_iota::storage::key_storage::KeyStorageResult;
+use iota_interaction_ts::AdapterError;
 use std::borrow::Cow;
 use std::fmt::Debug;
 use std::fmt::Display;
@@ -307,6 +308,15 @@ impl From<identity_iota::credential::sd_jwt_vc::Error> for WasmError<'_> {
   fn from(error: identity_iota::credential::sd_jwt_vc::Error) -> Self {
     Self {
       name: Cow::Borrowed("SdJwtVcError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<AdapterError> for WasmError<'_> {
+  fn from(error: AdapterError) -> Self {
+    Self {
+      name: Cow::Borrowed("TsSdkError"),
       message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }

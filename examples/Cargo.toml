@@ -26,7 +26,7 @@ features = [
   "domain-linkage",
   "jpt-bbs-plus",
   "iota-client",
-  "send-sync-storage",
+  "send-sync",
   "memstore",
   "resolver",
   "revocation-bitmap",

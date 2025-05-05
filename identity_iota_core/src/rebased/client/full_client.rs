@@ -4,11 +4,13 @@
 use std::ops::Deref;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::iota_interaction_adapter::IotaClientAdapter;
 use crate::rebased::migration::CreateIdentity;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::IotaDID;
 use crate::IotaDocument;
+use crate::NetworkName;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 use async_trait::async_trait;
@@ -18,6 +20,7 @@ use identity_iota_interaction::rpc_types::IotaObjectDataFilter;
 use identity_iota_interaction::rpc_types::IotaObjectResponseQuery;
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::types::base_types::IotaAddress;
+use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::base_types::ObjectRef;
 use identity_iota_interaction::types::crypto::PublicKey;
 use identity_iota_interaction::types::transaction::ProgrammableTransaction;
@@ -37,6 +40,8 @@ use identity_iota_interaction::MoveType;
 use identity_iota_interaction::OptionalSync;
 
 use super::get_object_id_from_did;
+use super::CoreClient;
+use super::CoreClientReadOnly;
 use super::IdentityClientReadOnly;
 
 /// Mirrored types from identity_storage::KeyId
@@ -105,22 +110,6 @@ where
 }
 
 impl<S> IdentityClient<S> {
-  /// Returns the bytes of the sender's public key.
-  pub fn sender_public_key(&self) -> &PublicKey {
-    &self.public_key
-  }
-
-  /// Returns this [`IdentityClient`]'s sender address.
-  #[inline(always)]
-  pub fn sender_address(&self) -> IotaAddress {
-    IotaAddress::from(&self.public_key)
-  }
-
-  /// Returns a reference to this [`IdentityClient`]'s [`Signer`].
-  pub fn signer(&self) -> &S {
-    &self.signer
-  }
-
   /// Returns a new [`IdentityBuilder`] in order to build a new [`crate::rebased::migration::OnChainIdentity`].
   pub fn create_identity(&self, iota_document: IotaDocument) -> IdentityBuilder {
     IdentityBuilder::new(iota_document)
@@ -133,38 +122,6 @@ impl<S> IdentityClient<S> {
   {
     AuthenticatedAssetBuilder::new(content)
   }
-
-  /// Query the objects owned by the address wrapped by this client to find the object of type `tag`
-  /// and that satisfies `predicate`.
-  pub async fn find_owned_ref<P>(&self, tag: StructTag, predicate: P) -> Result<Option<ObjectRef>, Error>
-  where
-    P: Fn(&IotaObjectData) -> bool,
-  {
-    let filter = IotaObjectResponseQuery::new_with_filter(IotaObjectDataFilter::StructType(tag));
-
-    let mut cursor = None;
-    loop {
-      let mut page = self
-        .read_api()
-        .get_owned_objects(self.sender_address(), Some(filter.clone()), cursor, None)
-        .await?;
-      let obj_ref = std::mem::take(&mut page.data)
-        .into_iter()
-        .filter_map(|res| res.data)
-        .find(|obj| predicate(obj))
-        .map(|obj_data| obj_data.object_ref());
-      cursor = page.next_cursor;
-
-      if obj_ref.is_some() {
-        return Ok(obj_ref);
-      }
-      if !page.has_next_page {
-        break;
-      }
-    }
-
-    Ok(None)
-  }
 }
 
 impl<S> IdentityClient<S>
@@ -173,7 +130,7 @@ where
 {
   /// Returns a [PublishDidDocument] transaction wrapped by a [TransactionBuilder].
   pub fn publish_did_document(&self, document: IotaDocument) -> TransactionBuilder<PublishDidDocument> {
-    TransactionBuilder::new(PublishDidDocument::new(document, self.sender_address()))
+    TransactionBuilder::new(PublishDidDocument::new(document, self.sender_address(), self))
   }
 
   // TODO: define what happens for (legacy|migrated|new) documents
@@ -235,6 +192,72 @@ where
 
     Ok(())
   }
+
+  /// Query the objects owned by the address wrapped by this client to find the object of type `tag`
+  /// and that satisfies `predicate`.
+  pub async fn find_owned_ref<P>(&self, tag: StructTag, predicate: P) -> Result<Option<ObjectRef>, Error>
+  where
+    P: Fn(&IotaObjectData) -> bool,
+  {
+    let filter = IotaObjectResponseQuery::new_with_filter(IotaObjectDataFilter::StructType(tag));
+
+    let mut cursor = None;
+    loop {
+      let mut page = self
+        .read_api()
+        .get_owned_objects(self.sender_address(), Some(filter.clone()), cursor, None)
+        .await?;
+      let obj_ref = std::mem::take(&mut page.data)
+        .into_iter()
+        .filter_map(|res| res.data)
+        .find(|obj| predicate(obj))
+        .map(|obj_data| obj_data.object_ref());
+      cursor = page.next_cursor;
+
+      if obj_ref.is_some() {
+        return Ok(obj_ref);
+      }
+      if !page.has_next_page {
+        break;
+      }
+    }
+
+    Ok(None)
+  }
+}
+
+impl<S> CoreClientReadOnly for IdentityClient<S>
+where
+  S: OptionalSync,
+{
+  fn client_adapter(&self) -> &IotaClientAdapter {
+    &self.read_client
+  }
+
+  fn package_id(&self) -> ObjectID {
+    self.read_client.package_id()
+  }
+
+  fn network_name(&self) -> &NetworkName {
+    self.read_client.network()
+  }
+}
+
+impl<S> CoreClient<S> for IdentityClient<S>
+where
+  S: Signer<IotaKeySignature> + OptionalSync,
+{
+  fn sender_address(&self) -> IotaAddress {
+    IotaAddress::from(&self.public_key)
+  }
+
+  fn signer(&self) -> &S {
+    &self.signer
+  }
+
+  fn sender_public_key(&self) -> &PublicKey {
+    &self.public_key
+  }
 }
 
 /// Utility function that returns the key's bytes of a JWK encoded public ed25519 key.
@@ -255,29 +278,27 @@ pub struct PublishDidDocument {
   did_document: IotaDocument,
   controller: IotaAddress,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl PublishDidDocument {
   /// Creates a new [PublishDidDocument] transaction.
-  pub fn new(did_document: IotaDocument, controller: IotaAddress) -> Self {
+  pub fn new(did_document: IotaDocument, controller: IotaAddress, client: &IdentityClientReadOnly) -> Self {
     Self {
       did_document,
       controller,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, _client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let did_doc = StateMetadataDocument::from(self.did_document.clone())
       .pack(StateMetadataEncoding::Json)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
-    let programmable_tx_bcs = IdentityMoveCallsAdapter::new_with_controllers(
-      Some(&did_doc),
-      [(self.controller, 1, false)],
-      1,
-      client.package_id(),
-    )
-    .await?;
+    let programmable_tx_bcs =
+      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), [(self.controller, 1, false)], 1, self.package)
+        .await?;
     Ok(bcs::from_bytes(&programmable_tx_bcs)?)
   }
 }
@@ -287,23 +308,26 @@ impl PublishDidDocument {
 impl Transaction for PublishDidDocument {
   type Output = IotaDocument;
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply(
+  async fn apply<C>(
     self,
     effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     let tx = {
       let builder = IdentityBuilder::new(self.did_document)
         .threshold(1)
         .controller(self.controller, 1);
-      CreateIdentity::new(builder)
+      CreateIdentity::new_unchecked(builder, client.package_id())
     };
 
     let (application_result, remaining_effects) = tx.apply(effects, client).await;
