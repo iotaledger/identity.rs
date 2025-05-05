@@ -29,7 +29,7 @@ runs:
             ;;
 
           mainnet)
-            RPC=https://api.testnet.iota.cafe
+            RPC=https://api.mainnet.iota.cafe
             ;;
 
           *)
