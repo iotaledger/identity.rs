@@ -11,7 +11,7 @@ repository.workspace = true
 description = "A library for JOSE (JSON Object Signing and Encryption)"
 
 [dependencies]
-anyhow = { version = "1.0.82", optional = true }
+anyhow = { version = "1", optional = true }
 bls12_381_plus.workspace = true
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "2f502fd8570fe4e9cff36eea5bbd6fef22002898", package = "fastcrypto", optional = true }
 identity_core = { version = "=1.6.0-alpha", path = "../identity_core" }
