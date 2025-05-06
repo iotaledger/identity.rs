@@ -1,6 +1,5 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
 use crate::common;
 use crate::common::get_funded_test_client;
 use crate::common::get_key_data;
@@ -8,18 +7,15 @@ use crate::common::TestClient;
 use crate::common::TEST_COIN_TYPE;
 use crate::common::TEST_GAS_BUDGET;
 use identity_iota_core::rebased::client::get_object_id_from_did;
-use identity_iota_core::rebased::client::CoreClient;
-use identity_iota_core::rebased::client::CoreClientReadOnly;
-use identity_iota_core::rebased::migration::has_previous_version;
-use identity_iota_core::rebased::migration::ControllerToken;
 use identity_iota_core::rebased::migration::DelegationToken;
 use identity_iota_core::rebased::migration::Identity;
+use identity_iota_core::rebased::migration::{has_previous_version, ControllerToken};
 use identity_iota_core::rebased::proposals::ProposalResult;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
-use identity_iota_interaction::KeytoolSigner;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
+use iota_interaction::KeytoolSigner;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
 use iota_sdk::types::base_types::ObjectID;
@@ -29,6 +25,8 @@ use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use move_core_types::ident_str;
+use product_core::core_client::CoreClient;
+use product_core::core_client::CoreClientReadOnly;
 
 #[tokio::test]
 async fn identity_deactivation_works() -> anyhow::Result<()> {
@@ -470,7 +468,7 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
   let mut identity = client
     .create_identity(IotaDocument::new(client.network()))
     .finish(&client)
-    .build_and_execute::<KeytoolSigner, TestClient>(&client)
+    .build_and_execute::<TestClient, KeytoolSigner>(&client)
     .await?
     .output;
   let did = identity.did_document().id().clone();
@@ -480,7 +478,7 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
     .delete_did(&controller_token)
     .finish(&client)
     .await?
-    .build_and_execute::<KeytoolSigner, TestClient>(&client)
+    .build_and_execute::<TestClient, KeytoolSigner>(&client)
     .await?
     .output
   else {

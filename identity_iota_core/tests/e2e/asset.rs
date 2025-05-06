@@ -12,20 +12,19 @@ use identity_credential::validator::JwtCredentialValidationOptions;
 use identity_credential::validator::JwtCredentialValidator;
 use identity_document::document::CoreDocument;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
-use identity_iota_core::rebased::client::CoreClient;
-use identity_iota_core::rebased::AuthenticatedAsset;
-use identity_iota_core::rebased::PublicAvailableVC;
 use identity_iota_core::rebased::TransferProposal;
+use identity_iota_core::rebased::{AuthenticatedAsset, PublicAvailableVC};
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
-use iota_interaction::IotaClientTrait;
-use iota_interaction::MoveType as _;
 use identity_storage::JwkDocumentExt;
 use identity_storage::JwsSignatureOptions;
 use identity_verification::VerificationMethod;
+use iota_interaction::IotaClientTrait;
+use iota_interaction::MoveType as _;
 use iota_sdk::types::TypeTag;
 use itertools::Itertools as _;
 use move_core_types::language_storage::StructTag;
+use product_core::core_client::CoreClient;
 use std::str::FromStr;
 
 #[tokio::test]

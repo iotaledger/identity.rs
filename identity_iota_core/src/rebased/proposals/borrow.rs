@@ -7,16 +7,15 @@ use std::marker::PhantomData;
 use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_move_calls::IdentityMoveCalls;
 
 use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::transaction_builder::{Transaction, TransactionBuilder};
+use product_core::transaction::ProtoTransaction;
 use serde::Deserialize;
 use tokio::sync::Mutex;
 
 use crate::rebased::migration::Proposal;
-use crate::rebased::transaction::ProtoTransaction;
 use crate::rebased::Error;
 use async_trait::async_trait;
 use iota_interaction::rpc_types::IotaExecutionStatus;
@@ -347,17 +346,20 @@ where
   F: BorrowIntentFnT + Send,
 {
   type Output = ();
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  type Error = Error;
+
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
+
   async fn apply<C>(
     self,
     effects: IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {

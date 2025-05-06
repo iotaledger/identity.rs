@@ -6,11 +6,11 @@ use std::marker::PhantomData;
 use identity_iota_move_calls::IdentityMoveCalls;
 use iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::transaction_builder::TransactionBuilder;
 
 use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
-use crate::rebased::transaction_builder::TransactionBuilder;
 use async_trait::async_trait;
 use iota_interaction::types::base_types::ObjectID;
 use iota_interaction::types::TypeTag;

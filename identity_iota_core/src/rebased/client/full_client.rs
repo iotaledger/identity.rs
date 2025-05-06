@@ -6,8 +6,6 @@ use std::ops::Deref;
 use crate::iota_interaction_adapter::IotaClientAdapter;
 use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
 use crate::rebased::migration::CreateIdentity;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::StateMetadataDocument;
@@ -26,6 +24,7 @@ use iota_interaction::types::crypto::PublicKey;
 use iota_interaction::types::transaction::ProgrammableTransaction;
 use product_core::core_client::{CoreClient, CoreClientReadOnly};
 use product_core::network_name::NetworkName;
+use product_core::transaction::transaction_builder::{Transaction, TransactionBuilder};
 use secret_storage::Signer;
 use serde::de::DeserializeOwned;
 use tokio::sync::OnceCell;
@@ -160,7 +159,8 @@ where
       .await?
       .with_gas_budget(gas_budget)
       .build_and_execute(self)
-      .await?;
+      .await
+      .map_err(|e| Error::TransactionUnexpectedResponse(e.to_string()))?;
 
     Ok(document)
   }
@@ -187,7 +187,8 @@ where
       .await?
       .with_gas_budget(gas_budget)
       .build_and_execute(self)
-      .await?;
+      .await
+      .map_err(|e| Error::TransactionUnexpectedResponse(e.to_string()))?;
 
     Ok(())
   }
@@ -306,8 +307,9 @@ impl PublishDidDocument {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for PublishDidDocument {
   type Output = IotaDocument;
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -318,7 +320,7 @@ impl Transaction for PublishDidDocument {
     self,
     effects: IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {

@@ -5,13 +5,13 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 
 use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
+
 use identity_iota_move_calls::IdentityMoveCalls;
 use iota_interaction::types::transaction::ProgrammableTransaction;
 use iota_interaction::{IotaKeySignature, IotaTransactionBlockEffectsMutAPI as _, OptionalSync};
 use product_core::core_client::{CoreClient, CoreClientReadOnly};
 use product_core::network_name::NetworkName;
+use product_core::transaction::transaction_builder::{Transaction, TransactionBuilder};
 use secret_storage::Signer;
 use tokio::sync::OnceCell;
 
@@ -667,8 +667,9 @@ impl CreateIdentity {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for CreateIdentity {
   type Output = OnChainIdentity;
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -679,7 +680,7 @@ impl Transaction for CreateIdentity {
     mut self,
     mut effects: IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {

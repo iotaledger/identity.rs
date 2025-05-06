@@ -17,12 +17,13 @@ use iota_interaction::IotaClientTrait;
 use iota_interaction::OptionalSend;
 use iota_interaction::OptionalSync;
 use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::transaction_builder::{Transaction, TransactionBuilder};
+use product_core::transaction::ProtoTransaction;
 use tokio::sync::OnceCell;
 
 use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::get_identity;
-use crate::rebased::transaction::ProtoTransaction;
 use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
@@ -49,7 +50,6 @@ use crate::rebased::Error;
 use iota_interaction::MoveType;
 
 use super::migration::ControllerToken;
-use super::transaction_builder::{Transaction, TransactionBuilder};
 
 /// Interface that allows the creation and execution of an [`OnChainIdentity`]'s [`Proposal`]s.
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
@@ -187,6 +187,7 @@ where
   A: OptionalSend + OptionalSync,
 {
   type Output = ProposalResult<Proposal<A>>;
+  type Error = Error;
 
   async fn build_programmable_transaction<C>(&self, _client: &C) -> Result<ProgrammableTransaction, Error>
   where
@@ -269,6 +270,8 @@ where
   A: OptionalSend + OptionalSync,
 {
   type Output = <Proposal<A> as ProposalT>::Output;
+  type Error = Error;
+
   async fn build_programmable_transaction<C>(&self, _client: &C) -> Result<ProgrammableTransaction, Error>
   where
     C: CoreClientReadOnly + OptionalSync,
@@ -368,7 +371,9 @@ where
   A: MoveType + OptionalSend + OptionalSync,
 {
   type Output = ();
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  type Error = Error;
+
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -378,7 +383,7 @@ where
     self,
     effects: IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {

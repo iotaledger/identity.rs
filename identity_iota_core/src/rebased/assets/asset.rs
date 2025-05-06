@@ -6,7 +6,6 @@ use std::str::FromStr as _;
 use crate::iota_move_calls_rust::AssetMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 
-use crate::rebased::transaction_builder::{Transaction, TransactionBuilder};
 use crate::rebased::Error;
 use anyhow::anyhow;
 use anyhow::Context;
@@ -33,6 +32,7 @@ use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
 use iota_interaction::MoveType;
 use iota_interaction::{ident_str, OptionalSync};
 use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::transaction_builder::{Transaction, TransactionBuilder};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde::Deserializer;
@@ -429,8 +429,9 @@ where
   T: MoveType + Send + Sync,
 {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -440,7 +441,7 @@ where
     self,
     mut effects: IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -496,8 +497,9 @@ where
   T: MoveType + Send + Sync,
 {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -507,7 +509,7 @@ where
     self,
     mut effects: IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -571,8 +573,9 @@ where
   T: MoveType + DeserializeOwned + PartialEq + Send + Sync,
 {
   type Output = AuthenticatedAsset<T>;
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -583,7 +586,7 @@ where
     self,
     mut effects: IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -667,8 +670,9 @@ where
   T: MoveType + Send + Sync,
 {
   type Output = TransferProposal;
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -678,7 +682,7 @@ where
     self,
     mut effects: IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -780,8 +784,9 @@ impl AcceptTransfer {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for AcceptTransfer {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -792,7 +797,7 @@ impl Transaction for AcceptTransfer {
     self,
     mut effects: IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -872,8 +877,9 @@ impl ConcludeTransfer {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for ConcludeTransfer {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {

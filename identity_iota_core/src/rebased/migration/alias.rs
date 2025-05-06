@@ -17,6 +17,7 @@ use iota_interaction::types::STARDUST_PACKAGE_ID;
 use iota_interaction::{IotaTransactionBlockEffectsMutAPI as _, OptionalSync};
 
 use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::transaction_builder::Transaction;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -24,7 +25,7 @@ use tokio::sync::OnceCell;
 
 use crate::iota_move_calls_rust::MigrationMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::transaction_builder::Transaction;
+
 use crate::rebased::Error;
 use crate::IotaDID;
 use identity_iota_move_calls::MigrationMoveCalls;
@@ -163,8 +164,9 @@ impl MigrateLegacyIdentity {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for MigrateLegacyIdentity {
   type Output = OnChainIdentity;
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -175,7 +177,7 @@ impl Transaction for MigrateLegacyIdentity {
     self,
     mut effects: IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {

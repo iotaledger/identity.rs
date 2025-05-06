@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
+use identity_verification::jwk::Jwk;
+use identity_verification::jws::JwsAlgorithm;
 use iota_interaction::types::base_types::IotaAddress;
 use iota_interaction::types::crypto::IotaKeyPair;
 use iota_interaction::types::crypto::PublicKey;
 use iota_interaction::types::crypto::SignatureScheme;
 use iota_interaction::KeytoolStorage;
-use identity_verification::jwk::Jwk;
-use identity_verification::jws::JwsAlgorithm;
 
 use super::ed25519;
 use super::secp256k1;
@@ -142,10 +142,10 @@ mod tests {
   use identity_did::DID;
   use identity_ecdsa_verifier::EcDSAJwsVerifier;
   use identity_iota_core::IotaDocument;
-  use identity_iota_core::NetworkName;
-  use iota_interaction::KeytoolStorage as Keytool;
   use identity_verification::jws::JwsAlgorithm;
   use identity_verification::MethodScope;
+  use iota_interaction::KeytoolStorage as Keytool;
+  use product_core::network_name::NetworkName;
   use serde_json::Value;
 
   fn make_storage() -> KeytoolStorage {

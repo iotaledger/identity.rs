@@ -12,12 +12,11 @@ use identity_did::BaseDIDUrl;
 use identity_did::CoreDID;
 use identity_did::Error as DIDError;
 use identity_did::DID;
+use product_core::network_name::NetworkName;
 use ref_cast::ref_cast_custom;
 use ref_cast::RefCastCustom;
 use serde::Deserialize;
 use serde::Serialize;
-
-use crate::NetworkName;
 
 /// Alias for a `Result` with the error type [`DIDError`].
 type Result<T> = std::result::Result<T, DIDError>;

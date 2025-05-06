@@ -5,25 +5,12 @@
 use anyhow::anyhow;
 use anyhow::Context;
 use async_trait::async_trait;
-use identity_iota_core::iota_interaction_rust::IotaClientAdapter;
-use identity_iota_core::rebased::client::CoreClient;
-use identity_iota_core::rebased::client::CoreClientReadOnly;
 use identity_iota_core::rebased::client::IdentityClient;
 use identity_iota_core::rebased::client::IdentityClientReadOnly;
 use identity_iota_core::rebased::keytool::KeytoolSigner;
-use identity_iota_core::rebased::transaction_builder::Transaction;
-use identity_iota_core::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_core::rebased::utils::request_funds;
 use identity_iota_core::rebased::Error;
 use identity_iota_core::IotaDID;
-use identity_iota_core::NetworkName;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-
-use identity_iota_interaction::IotaKeySignature;
-use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI;
-use identity_iota_interaction::OptionalSync;
 use identity_jose::jwk::Jwk;
 use identity_jose::jws::JwsAlgorithm;
 use identity_storage::JwkMemStore;
@@ -36,15 +23,24 @@ use identity_storage::MethodDigest;
 use identity_storage::Storage;
 use identity_storage::StorageSigner;
 use identity_verification::VerificationMethod;
-use iota_sdk::rpc_types::IotaObjectDataOptions;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::IotaKeySignature;
+use iota_interaction::IotaTransactionBlockEffectsMutAPI;
+use iota_interaction::OptionalSync;
+use iota_interaction_rust::IotaClientAdapter;
 use iota_sdk::rpc_types::IotaObjectResponse;
+use iota_sdk::rpc_types::{IotaObjectDataOptions, IotaTransactionBlockEffects};
 use iota_sdk::types::base_types::IotaAddress;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::crypto::PublicKey;
 use iota_sdk::types::crypto::SignatureScheme;
 use iota_sdk::types::object::Owner;
 use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use product_core::core_client::{CoreClient, CoreClientReadOnly};
+use product_core::network_name::NetworkName;
 
+use iota_interaction::IotaClientTrait;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use iota_sdk::IotaClient;
@@ -53,6 +49,7 @@ use iota_sdk::IOTA_LOCAL_NETWORK_URL;
 use lazy_static::lazy_static;
 use move_core_types::ident_str;
 use move_core_types::language_storage::StructTag;
+use product_core::transaction::transaction_builder::{Transaction, TransactionBuilder};
 use secret_storage::Signer;
 use serde::Deserialize;
 use serde_json::Value;
@@ -62,7 +59,6 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tokio::process::Command;
 use tokio::sync::OnceCell;
-
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 pub type MemSigner<'s> = StorageSigner<'s, JwkMemStore, KeyIdMemstore>;
 
@@ -405,7 +401,9 @@ struct GetTestCoin {
 impl Transaction for GetTestCoin {
   type Output = ObjectID;
 
-  async fn build_programmable_transaction<C>(&self, _client: &C) -> Result<ProgrammableTransaction, Error>
+  type Error = Error;
+
+  async fn build_programmable_transaction<C>(&self, _client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -425,11 +423,10 @@ impl Transaction for GetTestCoin {
     self,
     mut effects: IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
-    use identity_iota_interaction::IotaClientTrait as _;
     let created_objects = effects
       .created()
       .iter()

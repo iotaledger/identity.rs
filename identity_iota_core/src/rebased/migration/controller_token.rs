@@ -4,8 +4,7 @@
 use super::OnChainIdentity;
 use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
+
 use crate::rebased::Error;
 use async_trait::async_trait;
 use identity_iota_move_calls::{ControllerTokenRef, IdentityMoveCalls};
@@ -19,6 +18,7 @@ use iota_interaction::IotaTransactionBlockEffectsMutAPI;
 use iota_interaction::{MoveType, OptionalSync};
 use itertools::Itertools as _;
 use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::transaction_builder::{Transaction, TransactionBuilder};
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
@@ -381,8 +381,8 @@ impl DelegateToken {
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 impl Transaction for DelegateToken {
   type Output = DelegationToken;
-
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  type Error = Error;
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -407,7 +407,7 @@ impl Transaction for DelegateToken {
     self,
     mut effects: IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -523,8 +523,9 @@ impl DelegationTokenRevocation {
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 impl Transaction for DelegationTokenRevocation {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -563,7 +564,7 @@ impl Transaction for DelegationTokenRevocation {
     self,
     effects: IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -615,8 +616,9 @@ impl DeleteDelegationToken {
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 impl Transaction for DeleteDelegationToken {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -646,7 +648,7 @@ impl Transaction for DeleteDelegationToken {
     self,
     mut effects: IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
