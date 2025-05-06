@@ -3,10 +3,10 @@
 
 use std::str::FromStr as _;
 
-use crate::iota_interaction_adapter::AssetMoveCallsAdapter;
+use crate::iota_move_calls_rust::AssetMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
+
+use crate::rebased::transaction_builder::{Transaction, TransactionBuilder};
 use crate::rebased::Error;
 use anyhow::anyhow;
 use anyhow::Context;
@@ -14,7 +14,6 @@ use async_trait::async_trait;
 
 use identity_iota_move_calls::AssetMoveCalls;
 
-use iota_interaction::ident_str;
 use iota_interaction::move_types::language_storage::StructTag;
 use iota_interaction::rpc_types::IotaData as _;
 use iota_interaction::rpc_types::IotaExecutionStatus;
@@ -32,6 +31,8 @@ use iota_interaction::types::TypeTag;
 use iota_interaction::IotaClientTrait;
 use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
 use iota_interaction::MoveType;
+use iota_interaction::{ident_str, OptionalSync};
+use product_core::core_client::CoreClientReadOnly;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde::Deserializer;
@@ -74,8 +75,9 @@ where
   T: DeserializeOwned,
 {
   /// Resolves an [`AuthenticatedAsset`] by its ID `id`.
-  pub async fn get_by_id(id: ObjectID, client: &IdentityClientReadOnly) -> Result<Self, Error> {
+  pub async fn get_by_id(id: ObjectID, client: &impl CoreClientReadOnly) -> Result<Self, Error> {
     let res = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
       .await?;
@@ -94,8 +96,9 @@ where
 }
 
 impl<T: MoveType + Send + Sync> AuthenticatedAsset<T> {
-  async fn object_ref(&self, client: &IdentityClientReadOnly) -> Result<ObjectRef, Error> {
+  async fn object_ref(&self, client: &impl CoreClientReadOnly) -> Result<ObjectRef, Error> {
     client
+      .client_adapter()
       .read_api()
       .get_object_with_options(self.id(), IotaObjectDataOptions::default())
       .await?
@@ -119,14 +122,18 @@ impl<T: MoveType + Send + Sync> AuthenticatedAsset<T> {
   /// can be executed to carry out the transfer.
   /// # Failures
   /// * Returns an [`Error::InvalidConfig`] if this asset is not transferable.
-  pub fn transfer(self, recipient: IotaAddress) -> Result<TransactionBuilder<TransferAsset<T>>, Error> {
+  pub fn transfer(
+    self,
+    recipient: IotaAddress,
+    client: &IdentityClientReadOnly,
+  ) -> Result<TransactionBuilder<TransferAsset<T>>, Error> {
     if !self.transferable {
       return Err(Error::InvalidConfig(format!(
         "`AuthenticatedAsset` {} is not transferable",
         self.id()
       )));
     }
-    Ok(TransactionBuilder::new(TransferAsset::new(self, recipient)))
+    Ok(TransactionBuilder::new(TransferAsset::new(self, recipient, client)))
   }
 
   /// Destroys this [`AuthenticatedAsset`].
@@ -135,7 +142,7 @@ impl<T: MoveType + Send + Sync> AuthenticatedAsset<T> {
   /// can be executed in order to destroy the asset.
   /// # Failures
   /// * Returns an [`Error::InvalidConfig`] if this asset cannot be deleted.
-  pub fn delete(self) -> Result<TransactionBuilder<DeleteAsset<T>>, Error> {
+  pub fn delete(self, client: &IdentityClientReadOnly) -> Result<TransactionBuilder<DeleteAsset<T>>, Error> {
     if !self.deletable {
       return Err(Error::InvalidConfig(format!(
         "`AuthenticatedAsset` {} cannot be deleted",
@@ -143,7 +150,7 @@ impl<T: MoveType + Send + Sync> AuthenticatedAsset<T> {
       )));
     }
 
-    Ok(TransactionBuilder::new(DeleteAsset::new(self)))
+    Ok(TransactionBuilder::new(DeleteAsset::new(self, client)))
   }
 
   /// Changes this [`AuthenticatedAsset`]'s content.
@@ -152,7 +159,11 @@ impl<T: MoveType + Send + Sync> AuthenticatedAsset<T> {
   /// can be executed in order to update the asset's content.
   /// # Failures
   /// * Returns an [`Error::InvalidConfig`] if this asset cannot be updated.
-  pub fn set_content(&mut self, new_content: T) -> Result<TransactionBuilder<UpdateContent<'_, T>>, Error> {
+  pub fn set_content(
+    &mut self,
+    new_content: T,
+    client: &IdentityClientReadOnly,
+  ) -> Result<TransactionBuilder<UpdateContent<'_, T>>, Error> {
     if !self.mutable {
       return Err(Error::InvalidConfig(format!(
         "`AuthenticatedAsset` {} is immutable",
@@ -160,7 +171,7 @@ impl<T: MoveType + Send + Sync> AuthenticatedAsset<T> {
       )));
     }
 
-    Ok(TransactionBuilder::new(UpdateContent::new(self, new_content)))
+    Ok(TransactionBuilder::new(UpdateContent::new(self, new_content, client)))
   }
 }
 
@@ -223,8 +234,8 @@ where
   }
 
   /// Returns a [`Transaction`] that will create the specified [`AuthenticatedAsset`] when executed.
-  pub fn finish(self) -> TransactionBuilder<CreateAsset<T>> {
-    TransactionBuilder::new(CreateAsset::new(self))
+  pub fn finish(self, client: &IdentityClientReadOnly) -> TransactionBuilder<CreateAsset<T>> {
+    TransactionBuilder::new(CreateAsset::new(self, client))
   }
 }
 
@@ -264,8 +275,9 @@ impl MoveType for TransferProposal {
 
 impl TransferProposal {
   /// Resolves a [`TransferProposal`] by its ID `id`.
-  pub async fn get_by_id(id: ObjectID, client: &IdentityClientReadOnly) -> Result<Self, Error> {
+  pub async fn get_by_id(id: ObjectID, client: &impl CoreClientReadOnly) -> Result<Self, Error> {
     let res = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
       .await?;
@@ -282,7 +294,10 @@ impl TransferProposal {
       .map_err(|e| Error::ObjectLookup(e.to_string()))
   }
 
-  async fn get_cap(&self, cap_type: &str, client: &IdentityClientReadOnly) -> Result<ObjectRef, Error> {
+  async fn get_cap<C>(&self, cap_type: &str, client: &C) -> Result<ObjectRef, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     let cap_tag = StructTag::from_str(&format!("{}::asset::{cap_type}", client.package_id()))
       .map_err(|e| Error::ParsingFailed(e.to_string()))?;
     let owner_address = match cap_type {
@@ -304,8 +319,9 @@ impl TransferProposal {
       })
   }
 
-  async fn asset_metadata(&self, client: &IdentityClientReadOnly) -> anyhow::Result<(ObjectRef, TypeTag)> {
+  async fn asset_metadata(&self, client: &impl CoreClientReadOnly) -> anyhow::Result<(ObjectRef, TypeTag)> {
     let res = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(self.asset_id, IotaObjectDataOptions::default().with_type())
       .await?;
@@ -328,8 +344,9 @@ impl TransferProposal {
     Ok((asset_ref, param_type))
   }
 
-  async fn initial_shared_version(&self, client: &IdentityClientReadOnly) -> anyhow::Result<SequenceNumber> {
+  async fn initial_shared_version(&self, client: &impl CoreClientReadOnly) -> anyhow::Result<SequenceNumber> {
     let owner = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(*self.id.object_id(), IotaObjectDataOptions::default().with_owner())
       .await?
@@ -344,8 +361,8 @@ impl TransferProposal {
   /// Accepts this [`TransferProposal`].
   /// # Warning
   /// This operation only has an effects when it's invoked by this [`TransferProposal`]'s `recipient`.
-  pub fn accept(self) -> TransactionBuilder<AcceptTransfer> {
-    TransactionBuilder::new(AcceptTransfer::new(self))
+  pub fn accept(self, client: &IdentityClientReadOnly) -> TransactionBuilder<AcceptTransfer> {
+    TransactionBuilder::new(AcceptTransfer::new(self, client))
   }
 
   /// Concludes or cancels this [`TransferProposal`].
@@ -353,8 +370,8 @@ impl TransferProposal {
   /// * This operation only has an effects when it's invoked by this [`TransferProposal`]'s `sender`.
   /// * Accepting a [`TransferProposal`] **doesn't** consume it from the ledger. This function must be used to correctly
   ///   consume both [`TransferProposal`] and `SenderCap`.
-  pub fn conclude_or_cancel(self) -> TransactionBuilder<ConcludeTransfer> {
-    TransactionBuilder::new(ConcludeTransfer::new(self))
+  pub fn conclude_or_cancel(self, client: &IdentityClientReadOnly) -> TransactionBuilder<ConcludeTransfer> {
+    TransactionBuilder::new(ConcludeTransfer::new(self, client))
   }
 
   /// Returns this [`TransferProposal`]'s ID.
@@ -384,24 +401,22 @@ pub struct UpdateContent<'a, T> {
   asset: &'a mut AuthenticatedAsset<T>,
   new_content: T,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl<'a, T: MoveType + Send + Sync> UpdateContent<'a, T> {
   /// Returns a [Transaction] to update the content of `asset`.
-  pub fn new(asset: &'a mut AuthenticatedAsset<T>, new_content: T) -> Self {
+  pub fn new(asset: &'a mut AuthenticatedAsset<T>, new_content: T, client: &IdentityClientReadOnly) -> Self {
     Self {
       asset,
       new_content,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
-    let tx_bcs = AssetMoveCallsAdapter::update(
-      self.asset.object_ref(client).await?,
-      &self.new_content,
-      client.package_id(),
-    )?;
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+    let tx_bcs = AssetMoveCallsAdapter::update(self.asset.object_ref(client).await?, &self.new_content, self.package)?;
 
     Ok(bcs::from_bytes(&tx_bcs)?)
   }
@@ -415,17 +430,20 @@ where
 {
   type Output = ();
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply(
+  async fn apply<C>(
     self,
     mut effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    _client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
@@ -450,20 +468,22 @@ where
 pub struct DeleteAsset<T> {
   asset: AuthenticatedAsset<T>,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl<T: MoveType + Send + Sync> DeleteAsset<T> {
   /// Returns a [Transaction] to delete `asset`.
-  pub fn new(asset: AuthenticatedAsset<T>) -> Self {
+  pub fn new(asset: AuthenticatedAsset<T>, client: &IdentityClientReadOnly) -> Self {
     Self {
       asset,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let asset_ref = self.asset.object_ref(client).await?;
-    let tx_bcs = AssetMoveCallsAdapter::delete::<T>(asset_ref, client.package_id())?;
+    let tx_bcs = AssetMoveCallsAdapter::delete::<T>(asset_ref, self.package)?;
 
     Ok(bcs::from_bytes(&tx_bcs)?)
   }
@@ -477,17 +497,20 @@ where
 {
   type Output = ();
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply(
+  async fn apply<C>(
     self,
     mut effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    _client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
@@ -516,25 +539,27 @@ where
 pub struct CreateAsset<T> {
   builder: AuthenticatedAssetBuilder<T>,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl<T: MoveType> CreateAsset<T> {
   /// Returns a [Transaction] to create the asset described by `builder`.
-  pub fn new(builder: AuthenticatedAssetBuilder<T>) -> Self {
+  pub fn new(builder: AuthenticatedAssetBuilder<T>, client: &IdentityClientReadOnly) -> Self {
     Self {
       builder,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, _client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let AuthenticatedAssetBuilder {
       ref inner,
       mutable,
       transferable,
       deletable,
     } = self.builder;
-    let pt_bcs = AssetMoveCallsAdapter::new_asset(inner, mutable, transferable, deletable, client.package_id())?;
+    let pt_bcs = AssetMoveCallsAdapter::new_asset(inner, mutable, transferable, deletable, self.package)?;
     Ok(bcs::from_bytes(&pt_bcs)?)
   }
 }
@@ -547,18 +572,21 @@ where
 {
   type Output = AuthenticatedAsset<T>;
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply(
+  async fn apply<C>(
     self,
     mut effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
@@ -611,24 +639,22 @@ pub struct TransferAsset<T> {
   asset: AuthenticatedAsset<T>,
   recipient: IotaAddress,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl<T: MoveType + Send + Sync> TransferAsset<T> {
   /// Returns a [Transaction] to transfer `asset` to `recipient`.
-  pub fn new(asset: AuthenticatedAsset<T>, recipient: IotaAddress) -> Self {
+  pub fn new(asset: AuthenticatedAsset<T>, recipient: IotaAddress, client: &IdentityClientReadOnly) -> Self {
     Self {
       asset,
       recipient,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
-    let bcs = AssetMoveCallsAdapter::transfer::<T>(
-      self.asset.object_ref(client).await?,
-      self.recipient,
-      client.package_id(),
-    )?;
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+    let bcs = AssetMoveCallsAdapter::transfer::<T>(self.asset.object_ref(client).await?, self.recipient, self.package)?;
 
     Ok(bcs::from_bytes(&bcs)?)
   }
@@ -642,17 +668,20 @@ where
 {
   type Output = TransferProposal;
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply(
+  async fn apply<C>(
     self,
     mut effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
@@ -701,18 +730,23 @@ where
 pub struct AcceptTransfer {
   proposal: TransferProposal,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl AcceptTransfer {
   /// Returns a [Transaction] to accept `proposal`.
-  pub fn new(proposal: TransferProposal) -> Self {
+  pub fn new(proposal: TransferProposal, client: &IdentityClientReadOnly) -> Self {
     Self {
       proposal,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if self.proposal.done {
       return Err(Error::TransactionBuildingFailed(
         "the transfer has already been concluded".to_owned(),
@@ -735,7 +769,7 @@ impl AcceptTransfer {
       cap,
       asset_ref,
       param_type,
-      client.package_id(),
+      self.package,
     )?;
 
     Ok(bcs::from_bytes(&bcs)?)
@@ -747,18 +781,21 @@ impl AcceptTransfer {
 impl Transaction for AcceptTransfer {
   type Output = ();
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply(
+  async fn apply<C>(
     self,
     mut effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    _client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }
@@ -790,18 +827,23 @@ impl Transaction for AcceptTransfer {
 pub struct ConcludeTransfer {
   proposal: TransferProposal,
   cached_ptb: OnceCell<ProgrammableTransaction>,
+  package: ObjectID,
 }
 
 impl ConcludeTransfer {
   /// Returns a [Transaction] to consume `proposal`.
-  pub fn new(proposal: TransferProposal) -> Self {
+  pub fn new(proposal: TransferProposal, client: &IdentityClientReadOnly) -> Self {
     Self {
       proposal,
       cached_ptb: OnceCell::new(),
+      package: client.package_id(),
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     let cap = self.proposal.get_cap("SenderCap", client).await?;
     let (asset_ref, param_type) = self
       .proposal
@@ -819,7 +861,7 @@ impl ConcludeTransfer {
       cap,
       asset_ref,
       param_type,
-      client.package_id(),
+      self.package,
     )?;
 
     Ok(bcs::from_bytes(&tx_bcs)?)
@@ -831,18 +873,21 @@ impl ConcludeTransfer {
 impl Transaction for ConcludeTransfer {
   type Output = ();
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply(
+  async fn apply<C>(
     self,
     mut effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    _client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }

@@ -42,12 +42,15 @@ phf = { version = "0.11.2", features = ["macros"] }
 rand = { version = "0.8.5", optional = true }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.3.0", default-features = false, optional = true }
 serde-aux = { version = "4.5.0", optional = true }
+product-core = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", features = ["core-client", "transaction"], optional = true }
+
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 iota-config = { git = "https://github.com/iotaledger/iota.git", package = "iota-config", tag = "v0.12.0-rc", optional = true }
 iota_interaction = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "iota_interaction", optional = true }
 #iota_interaction = { path = "../../product-core/iota_interaction", optional = true }
 iota_interaction_rust = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "iota_interaction_rust", optional = true }
+
 #iota_interaction_rust = { path = "../../product-core/iota_interaction_rust", optional = true }
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.12.0-rc", optional = true }
 move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.12.0-rc", optional = true }
@@ -107,7 +110,7 @@ iota-client = [
 revocation-bitmap = ["identity_credential/revocation-bitmap"]
 
 # Enables `Send` + `Sync` bounds for the storage and client interaction traits.
-send-sync = ["send-sync-storage", "send-sync-client-ext", "iota_interaction/send-sync-transaction"]
+send-sync = ["send-sync-storage", "send-sync-client-ext", "iota_interaction/send-sync-transaction", "product-core/send-sync"]
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = ["secret-storage?/send-sync-storage"]
 # Enables `Send` + `Sync` bounds for IOTA client interaction traits.

@@ -1,20 +1,22 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::rebased::{iota, rebased_err};
+use crate::IotaDID;
+use crate::IotaDocument;
 use std::fmt::Debug;
 use std::future::Future;
 use std::ops::Deref;
 use std::pin::Pin;
 use std::str::FromStr;
 
-use crate::rebased::{iota, rebased_err};
-use crate::IotaDID;
-use crate::IotaDocument;
-use crate::NetworkName;
-use anyhow::anyhow;
-use anyhow::Context as _;
 use futures::stream::FuturesUnordered;
-use iota_interaction::MoveType;
+use iota_interaction::move_types::language_storage::StructTag;
+use iota_interaction::rpc_types::EventFilter;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::IotaClientTrait;
+use product_core::core_client::CoreClientReadOnly;
+use product_core::network_name::NetworkName;
 
 use crate::iota_interaction_adapter::IotaClientAdapter;
 use crate::rebased::migration::get_alias;
@@ -25,20 +27,7 @@ use crate::rebased::Error;
 use futures::StreamExt as _;
 use identity_core::common::Url;
 use identity_did::DID;
-use iota_interaction::move_types::language_storage::StructTag;
-use iota_interaction::rpc_types::EventFilter;
-use iota_interaction::rpc_types::IotaData as _;
-use iota_interaction::rpc_types::IotaObjectData;
-use iota_interaction::rpc_types::IotaObjectDataFilter;
-use iota_interaction::rpc_types::IotaObjectDataOptions;
-use iota_interaction::rpc_types::IotaObjectResponseQuery;
-use iota_interaction::rpc_types::IotaParsedData;
-use iota_interaction::rpc_types::OwnedObjectRef;
-use iota_interaction::types::base_types::IotaAddress;
-use iota_interaction::types::base_types::ObjectID;
-use iota_interaction::types::base_types::ObjectRef;
-use iota_interaction::IotaClientTrait;
-use serde::de::DeserializeOwned;
+
 use serde::Deserialize;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -171,148 +160,6 @@ impl IdentityClientReadOnly {
     })
   }
 
-  /// Resolves a _Move_ Object of ID `id` and parses it to a value of type `T`.
-  pub async fn get_object_by_id<T>(&self, id: ObjectID) -> Result<T, Error>
-  where
-    T: DeserializeOwned,
-  {
-    self
-      .read_api()
-      .get_object_with_options(id, IotaObjectDataOptions::new().with_content())
-      .await
-      .context("lookup request failed")
-      .and_then(|res| res.data.context("missing data in response"))
-      .and_then(|data| data.content.context("missing object content in data"))
-      .and_then(|content| content.try_into_move().context("not a move object"))
-      .and_then(|obj| {
-        serde_json::from_value(obj.fields.to_json_value())
-          .map_err(|err| anyhow!("failed to deserialize move object; {err}"))
-      })
-      .map_err(|e| Error::ObjectLookup(e.to_string()))
-  }
-
-  /// Returns an object's [`OwnedObjectRef`], if any.
-  pub async fn get_object_ref_by_id(&self, obj: ObjectID) -> Result<Option<OwnedObjectRef>, Error> {
-    self
-      .read_api()
-      .get_object_with_options(obj, IotaObjectDataOptions::default().with_owner())
-      .await
-      .map(|response| {
-        response.data.map(|obj_data| OwnedObjectRef {
-          owner: obj_data.owner.expect("requested data"),
-          reference: obj_data.object_ref().into(),
-        })
-      })
-      .map_err(Error::from)
-  }
-
-  pub(crate) async fn get_iota_coins_with_at_least_balance(
-    &self,
-    owner: IotaAddress,
-    balance: u64,
-  ) -> anyhow::Result<Vec<ObjectRef>> {
-    let mut coins = self
-      .coin_read_api()
-      .get_coins(owner, Some(String::from("0x2::iota::IOTA")), None, None)
-      .await?
-      .data;
-    coins.sort_unstable_by_key(|coin| coin.balance);
-
-    let mut needed_coins = vec![];
-    let mut needed_coins_balance = 0;
-    while let Some(coin) = coins.pop() {
-      needed_coins_balance += coin.balance;
-      needed_coins.push(coin.object_ref());
-
-      if needed_coins_balance >= balance {
-        return Ok(needed_coins);
-      }
-    }
-
-    anyhow::bail!("address {owner} does not have enough coins to form a balance of {balance}");
-  }
-
-  /// Queries `address` owned objects, returning the first object for which `predicate` returns `true`.
-  pub async fn find_object_for_address<T, P>(&self, address: IotaAddress, predicate: P) -> Result<Option<T>, Error>
-  where
-    T: MoveType + DeserializeOwned,
-    P: Fn(&T) -> bool,
-  {
-    let tag = T::move_type(self.package_id())
-      .to_string()
-      .parse()
-      .expect("type tag is a valid struct tag");
-    let filter = IotaObjectResponseQuery::new(
-      Some(IotaObjectDataFilter::StructType(tag)),
-      Some(IotaObjectDataOptions::default().with_content()),
-    );
-    let mut cursor = None;
-    loop {
-      let mut page = self
-        .read_api()
-        .get_owned_objects(address, Some(filter.clone()), cursor, Some(25))
-        .await?;
-      let maybe_obj = std::mem::take(&mut page.data)
-        .into_iter()
-        .filter_map(|res| res.data)
-        .filter_map(|data| data.content)
-        .filter_map(|obj_data| {
-          let IotaParsedData::MoveObject(move_object) = obj_data else {
-            unreachable!()
-          };
-          serde_json::from_value(move_object.fields.to_json_value()).ok()
-        })
-        .find(&predicate);
-      cursor = page.next_cursor;
-
-      if maybe_obj.is_some() {
-        return Ok(maybe_obj);
-      }
-      if !page.has_next_page {
-        break;
-      }
-    }
-
-    Ok(None)
-  }
-
-  /// Queries the object owned by this sender address and returns the first one
-  /// that matches `tag` and for which `predicate` returns `true`.
-  pub async fn find_owned_ref_for_address<P>(
-    &self,
-    address: IotaAddress,
-    tag: StructTag,
-    predicate: P,
-  ) -> Result<Option<ObjectRef>, Error>
-  where
-    P: Fn(&IotaObjectData) -> bool,
-  {
-    let filter = IotaObjectResponseQuery::new_with_filter(IotaObjectDataFilter::StructType(tag));
-
-    let mut cursor = None;
-    loop {
-      let mut page = self
-        .read_api()
-        .get_owned_objects(address, Some(filter.clone()), cursor, None)
-        .await?;
-      let obj_ref = std::mem::take(&mut page.data)
-        .into_iter()
-        .filter_map(|res| res.data)
-        .find(|obj| predicate(obj))
-        .map(|obj_data| obj_data.object_ref());
-      cursor = page.next_cursor;
-
-      if obj_ref.is_some() {
-        return Ok(obj_ref);
-      }
-      if !page.has_next_page {
-        break;
-      }
-    }
-
-    Ok(None)
-  }
-
   /// Queries an [`IotaDocument`] DID Document through its `did`.
   pub async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument, Error> {
     let identity = self.get_identity(get_object_id_from_did(did)?).await?;
@@ -332,10 +179,10 @@ impl IdentityClientReadOnly {
     cfg_if::cfg_if! {
       // Unfortunately the compiler runs into lifetime problems if we try to use a 'type ='
       // instead of the below ugly platform specific code
-      if #[cfg(target_arch = "wasm32")] {
-        let all_futures = FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>>>>>::new();
-      } else {
+      if #[cfg(feature = "send-sync")] {
         let all_futures = FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>> + Send>>>::new();
+      } else {
+        let all_futures = FuturesUnordered::<Pin<Box<dyn Future<Output = Result<Option<Identity>, Error>>>>>::new();
       }
     }
     all_futures.push(Box::pin(resolve_new(self, object_id)));
@@ -465,4 +312,19 @@ async fn resolve_unmigrated(client: &IdentityClientReadOnly, object_id: ObjectID
 pub fn get_object_id_from_did(did: &IotaDID) -> Result<ObjectID, Error> {
   ObjectID::from_str(did.tag_str())
     .map_err(|err| Error::DIDResolutionError(format!("could not parse object id from did {did}; {err}")))
+}
+
+#[async_trait::async_trait]
+impl CoreClientReadOnly for IdentityClientReadOnly {
+  fn package_id(&self) -> ObjectID {
+    self.iota_identity_pkg_id
+  }
+
+  fn network_name(&self) -> &NetworkName {
+    &self.network
+  }
+
+  fn client_adapter(&self) -> &IotaClientAdapter {
+    &self.iota_client
+  }
 }

@@ -18,7 +18,6 @@ pub use did::IotaDID;
 #[cfg(feature = "iota-client")]
 pub use did_resolution::DidResolutionHandler;
 pub use document::*;
-pub use network::NetworkName;
 pub use state_metadata::*;
 
 pub use self::error::Error;
@@ -27,7 +26,6 @@ pub use self::error::Result;
 mod did;
 mod document;
 mod error;
-mod network;
 mod state_metadata;
 
 #[cfg(feature = "iota-client")]

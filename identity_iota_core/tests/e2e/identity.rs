@@ -4,17 +4,24 @@
 use crate::common;
 use crate::common::get_funded_test_client;
 use crate::common::get_key_data;
+use crate::common::TestClient;
 use crate::common::TEST_COIN_TYPE;
 use crate::common::TEST_GAS_BUDGET;
 use identity_iota_core::rebased::client::get_object_id_from_did;
+use identity_iota_core::rebased::client::CoreClient;
+use identity_iota_core::rebased::client::CoreClientReadOnly;
 use identity_iota_core::rebased::migration::has_previous_version;
+use identity_iota_core::rebased::migration::ControllerToken;
+use identity_iota_core::rebased::migration::DelegationToken;
 use identity_iota_core::rebased::migration::Identity;
 use identity_iota_core::rebased::proposals::ProposalResult;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
+use identity_iota_interaction::KeytoolSigner;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use iota_sdk::rpc_types::IotaObjectData;
+use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
 use iota_sdk::types::base_types::ObjectID;
 use iota_sdk::types::base_types::SequenceNumber;
 use iota_sdk::types::object::Owner;
@@ -30,7 +37,7 @@ async fn identity_deactivation_works() -> anyhow::Result<()> {
 
   let mut identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .build_and_execute(&identity_client)
     .await?
     .output;
@@ -59,7 +66,7 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
 
   let mut newly_created_identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .with_gas_budget(TEST_GAS_BUDGET)
     .build_and_execute(&identity_client)
     .await?
@@ -105,7 +112,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     .controller(alice_client.sender_address(), 1)
     .controller(bob_client.sender_address(), 1)
     .threshold(2)
-    .finish()
+    .finish(&alice_client)
     .build_and_execute(&alice_client)
     .await?
     .output;
@@ -142,7 +149,7 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     .await?
     .expect("bob is a controller");
   proposal
-    .approve(&identity, &bob_token)?
+    .approve(&identity, &bob_token, &bob_client)?
     .build_and_execute(&bob_client)
     .await?;
 
@@ -159,7 +166,7 @@ async fn adding_controller_works() -> anyhow::Result<()> {
 
   let mut identity = alice_client
     .create_identity(IotaDocument::new(alice_client.network()))
-    .finish()
+    .finish(&alice_client)
     .build_and_execute(&alice_client)
     .await?
     .output;
@@ -193,7 +200,7 @@ async fn can_get_historical_identity_data() -> anyhow::Result<()> {
 
   let mut newly_created_identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .with_gas_budget(TEST_GAS_BUDGET)
     .build_and_execute(&identity_client)
     .await?
@@ -292,7 +299,7 @@ async fn send_proposal_works() -> anyhow::Result<()> {
 
   let mut identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .with_gas_budget(TEST_GAS_BUDGET)
     .build_and_execute(&identity_client)
     .await?
@@ -342,7 +349,7 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
 
   let mut identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .build_and_execute(&identity_client)
     .await?
     .output;
@@ -389,7 +396,7 @@ async fn controller_execution_works() -> anyhow::Result<()> {
 
   let mut identity = identity_client
     .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
+    .finish(&identity_client)
     .build_and_execute(&identity_client)
     .await?
     .output;
@@ -400,7 +407,7 @@ async fn controller_execution_works() -> anyhow::Result<()> {
     .create_identity(IotaDocument::new(identity_client.network()))
     .controller(identity_address, 1)
     .threshold(1)
-    .finish()
+    .finish(&identity_client)
     .build_and_execute(&identity_client)
     .await?
     .output;
@@ -462,8 +469,8 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
   let client = get_funded_test_client().await?;
   let mut identity = client
     .create_identity(IotaDocument::new(client.network()))
-    .finish()
-    .build_and_execute(&client)
+    .finish(&client)
+    .build_and_execute::<KeytoolSigner, TestClient>(&client)
     .await?
     .output;
   let did = identity.did_document().id().clone();
@@ -473,7 +480,7 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
     .delete_did(&controller_token)
     .finish(&client)
     .await?
-    .build_and_execute(&client)
+    .build_and_execute::<KeytoolSigner, TestClient>(&client)
     .await?
     .output
   else {
@@ -493,6 +500,122 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
   // Resolution of the DID document through its DID must fail.
   let err = client.resolve_did(&did).await.unwrap_err();
   assert!(matches!(err, identity_iota_core::rebased::Error::DIDResolutionError(_)));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn controller_delegation_works() -> anyhow::Result<()> {
+  let test_client = TestClient::new().await?;
+  let alice_client = test_client.new_user_client().await?;
+  let bob_client = test_client.new_user_client().await?;
+
+  // We create an identity with two controllers, one can delegate the other cannot.
+  let mut identity = alice_client
+    .create_identity(IotaDocument::new(test_client.network()))
+    .controller(alice_client.sender_address(), 1)
+    .controller_with_delegation(bob_client.sender_address(), 1)
+    .threshold(2)
+    .finish(&alice_client)
+    .build_and_execute(&alice_client)
+    .await?
+    .output;
+
+  let alice_token = identity
+    .get_controller_token(&alice_client)
+    .await?
+    .expect("alice is a controller");
+  assert!(!alice_token.as_controller().unwrap().can_delegate());
+  let bob_token = identity
+    .get_controller_token(&bob_client)
+    .await?
+    .expect("bob is a controller");
+  assert!(bob_token.as_controller().unwrap().can_delegate());
+
+  // Bob delegates its token with full-permissions to Alice.
+  let bobs_delegation_token = bob_token
+    .as_controller()
+    .expect("bob's token is a controller cap")
+    .delegate(alice_client.sender_address(), None, &bob_client)
+    .expect("bob can delegate its token")
+    .build_and_execute(&bob_client)
+    .await?
+    .output;
+  assert!(
+    bobs_delegation_token.controller() == bob_token.id() && bobs_delegation_token.controller_of() == identity.id()
+  );
+  // Ensure Alice is the owner of bob's delegation token.
+  let delegation_token_owner = test_client
+    .get_object_ref_by_id(bobs_delegation_token.id())
+    .await?
+    .expect("delegation token exists")
+    .owner;
+  assert_eq!(
+    delegation_token_owner.get_owner_address()?,
+    alice_client.sender_address()
+  );
+
+  // Alice can interact with the Identity in Bob's stead.
+  let bobs_delegation_token = ControllerToken::Delegate(bobs_delegation_token);
+  let res = identity
+    .update_did_document(IotaDocument::new(test_client.network()), &bobs_delegation_token)
+    .finish(&alice_client)
+    .await?
+    .build_and_execute(&alice_client)
+    .await?
+    .response;
+  assert!(res.effects.unwrap().status().is_ok());
+
+  // Bob can revoke its delegation token anytime.
+  identity
+    .revoke_delegation_token(
+      bob_token.as_controller().expect("bob is a controller"),
+      bobs_delegation_token.as_delegate().expect("is a delegation token"),
+      &bob_client,
+    )?
+    .build_and_execute(&bob_client)
+    .await?;
+
+  // Once revoked whoever is holding it won't be able to act in bob's stead.
+  let res = identity
+    .update_did_document(IotaDocument::new(test_client.network()), &bobs_delegation_token)
+    .finish(&alice_client)
+    .await?
+    .build_and_execute(&alice_client)
+    .await;
+  assert!(res.is_err());
+
+  // A revoked token can be unrevoked too.
+  identity
+    .unrevoke_delegation_token(
+      bob_token.as_controller().expect("bob is a controller"),
+      bobs_delegation_token.as_delegate().expect("is a delegation token"),
+      &bob_client,
+    )?
+    .build_and_execute(&bob_client)
+    .await?;
+
+  // Making the token valid again.
+  let res = identity
+    .update_did_document(IotaDocument::new(test_client.network()), &bobs_delegation_token)
+    .finish(&alice_client)
+    .await?
+    .build_and_execute(&alice_client)
+    .await?
+    .output;
+  assert!(matches!(res, ProposalResult::Pending(_)));
+
+  // The owner of the token can delete it whenever.
+  let bobs_delegation_token_id = bobs_delegation_token.id();
+  identity
+    .delete_delegation_token(bobs_delegation_token.try_delegate().unwrap(), &bob_client)?
+    .build_and_execute(&alice_client)
+    .await?;
+
+  let maybe_obj = alice_client
+    .get_object_by_id::<DelegationToken>(bobs_delegation_token_id)
+    .await;
+  assert!(maybe_obj.is_err());
 
   Ok(())
 }

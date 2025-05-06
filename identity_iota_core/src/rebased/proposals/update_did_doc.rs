@@ -3,17 +3,17 @@
 
 use std::marker::PhantomData;
 
-use iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_move_calls::IdentityMoveCalls;
-
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::IotaDocument;
 use async_trait::async_trait;
+use identity_iota_move_calls::IdentityMoveCalls;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use iota_interaction::types::base_types::ObjectID;
 use iota_interaction::types::TypeTag;
+use product_core::core_client::CoreClientReadOnly;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -92,14 +92,9 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(controller_token.id())
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
-      .reference
-      .to_object_ref();
+    let controller_cap_ref = controller_token.controller_ref(client).await?;
     let sender_vp = identity
-      .controller_voting_power(controller_cap_ref.0)
+      .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
     let tx = IdentityMoveCallsAdapter::propose_update(
@@ -144,12 +139,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(controller_token.id())
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
-      .reference
-      .to_object_ref();
+    let controller_cap_ref = controller_token.controller_ref(client).await?;
 
     let tx =
       IdentityMoveCallsAdapter::execute_update(identity_ref, controller_cap_ref, proposal_id, client.package_id())

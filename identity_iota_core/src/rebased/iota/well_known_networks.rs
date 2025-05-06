@@ -4,19 +4,20 @@
 use iota_interaction::types::base_types::ObjectID;
 use phf::phf_map;
 use phf::Map;
-
-use crate::NetworkName;
+use product_core::network_name::NetworkName;
 
 /// A Mapping `network_id` -> metadata needed by the library.
 pub(crate) static IOTA_NETWORKS: Map<&str, IdentityNetworkMetadata> = phf_map! {
   "e678123a" => IdentityNetworkMetadata::new(
     Some("devnet"),
-    &["0x03242ae6b87406bd0eb5d669fbe874ed4003694c0be9c6a9ee7c315e6461a553"],
+    &["0x6a976d3da90db5d27f8a0c13b3268a37e582b455cfc7bf72d6461f6e8f668823",
+      "0x03242ae6b87406bd0eb5d669fbe874ed4003694c0be9c6a9ee7c315e6461a553"],
     "0x0x940ae1c2c48dade9ec01cc1eebab33ab6fecadda422ea18b105c47839fc64425",
   ),
   "2304aa97" => IdentityNetworkMetadata::new(
     Some("testnet"),
-    &["0x222741bbdff74b42df48a7b4733185e9b24becb8ccfbafe8eac864ab4e4cc555"],
+    &["0x3403da7ec4cd2ff9bdf6f34c0b8df5a2bd62c798089feb0d2ebf1c2e953296dc",
+      "0x222741bbdff74b42df48a7b4733185e9b24becb8ccfbafe8eac864ab4e4cc555"],
     "0xaacb529c289aec9de2a474faaa4ef68b04632bb6a5d08372ca5b60e3df659f59",
   ),
 };

@@ -5,6 +5,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 use anyhow::anyhow;
+use identity_iota::iota::rebased::client::CoreClient as _;
 use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::client::PublishDidDocument;
 use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
@@ -22,6 +23,7 @@ use js_sys::Object;
 
 use super::identity::WasmIdentityBuilder;
 use super::IdentityContainer;
+use super::WasmCoreClientReadOnly;
 use super::WasmIdentityClientReadOnly;
 use super::WasmIotaAddress;
 use super::WasmObjectID;
@@ -32,6 +34,7 @@ use crate::error::WasmResult;
 use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
+use crate::rebased::WasmManagedCoreClientReadOnly;
 use crate::storage::WasmTransactionSigner;
 use identity_iota::iota::IotaDocument;
 use wasm_bindgen::prelude::*;
@@ -132,7 +135,7 @@ impl WasmIdentityClient {
     document: &WasmIotaDocument,
     controller: WasmIotaAddress,
   ) -> Result<WasmTransactionBuilder> {
-    let js_value: JsValue = WasmPublishDidDocument::new(document, controller)?.into();
+    let js_value: JsValue = WasmPublishDidDocument::new(document, controller, &self.read_only())?.into();
     Ok(WasmTransactionBuilder::new(js_value.unchecked_into()))
   }
 
@@ -205,7 +208,11 @@ pub struct WasmPublishDidDocument(pub(crate) PublishDidDocument);
 #[wasm_bindgen(js_class = PublishDidDocument)]
 impl WasmPublishDidDocument {
   #[wasm_bindgen(constructor)]
-  pub fn new(did_document: &WasmIotaDocument, controller: WasmIotaAddress) -> Result<Self> {
+  pub fn new(
+    did_document: &WasmIotaDocument,
+    controller: WasmIotaAddress,
+    identity_client: &WasmIdentityClientReadOnly,
+  ) -> Result<Self> {
     let did_document = did_document
       .0
       .try_read()
@@ -214,12 +221,21 @@ impl WasmPublishDidDocument {
       .clone();
     let controller = controller.parse().wasm_result()?;
 
-    Ok(Self(PublishDidDocument::new(did_document, controller)))
+    Ok(Self(PublishDidDocument::new(
+      did_document,
+      controller,
+      &identity_client.0,
+    )))
   }
 
   #[wasm_bindgen(js_name = buildProgrammableTransaction)]
-  pub async fn build_programmable_transaction(&self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
-    let pt = self.0.build_programmable_transaction(&client.0).await.wasm_result()?;
+  pub async fn build_programmable_transaction(&self, client: &WasmCoreClientReadOnly) -> Result<Vec<u8>> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
+    let pt = self
+      .0
+      .build_programmable_transaction(&managed_client)
+      .await
+      .wasm_result()?;
     bcs::to_bytes(&pt).wasm_result()
   }
 
@@ -227,10 +243,11 @@ impl WasmPublishDidDocument {
   pub async fn apply(
     self,
     wasm_effects: &WasmIotaTransactionBlockEffects,
-    client: &WasmIdentityClientReadOnly,
+    client: &WasmCoreClientReadOnly,
   ) -> Result<WasmIotaDocument> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
     let effects = wasm_effects.clone().into();
-    let (apply_result, rem_effects) = self.0.apply(effects, &client.0).await;
+    let (apply_result, rem_effects) = self.0.apply(effects, &managed_client).await;
     let wasm_remaining_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
     Object::assign(wasm_effects.as_ref(), wasm_remaining_effects.as_ref());
 

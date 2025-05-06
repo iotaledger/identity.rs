@@ -4,12 +4,14 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
+use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use identity_iota_move_calls::IdentityMoveCalls;
+
+use product_core::core_client::CoreClientReadOnly;
 use serde::Deserialize;
 use tokio::sync::Mutex;
 
@@ -25,7 +27,7 @@ use iota_interaction::types::base_types::ObjectID;
 use iota_interaction::types::transaction::Argument;
 use iota_interaction::types::transaction::ProgrammableTransaction;
 use iota_interaction::types::TypeTag;
-use iota_interaction::MoveType;
+use iota_interaction::{MoveType, OptionalSync};
 use serde::Serialize;
 
 use super::CreateProposal;
@@ -182,14 +184,9 @@ where
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(controller_token.id())
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token.id())))?
-      .reference
-      .to_object_ref();
+    let controller_cap_ref = controller_token.controller_ref(client).await?;
     let can_execute = identity
-      .controller_voting_power(controller_cap_ref.0)
+      .controller_voting_power(controller_token.controller_id())
       .expect("is a controller of identity")
       >= identity.threshold();
     let maybe_intent_fn = action.intent_fn.into_inner();
@@ -295,7 +292,10 @@ impl<F> UserDrivenTx<'_, BorrowActionWithIntent<F>>
 where
   F: BorrowIntentFnT,
 {
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(
+    &self,
+    client: &(impl CoreClientReadOnly + OptionalSync),
+  ) -> Result<ProgrammableTransaction, Error> {
     let Self {
       identity,
       action: borrow_action,
@@ -307,12 +307,8 @@ where
       .get_object_ref_by_id(identity.id())
       .await?
       .expect("identity exists on-chain");
-    let controller_cap_ref = client
-      .get_object_ref_by_id(*controller_token)
-      .await?
-      .ok_or_else(|| Error::Identity(format!("controller token {} doesn't exist", controller_token)))?
-      .reference
-      .to_object_ref();
+    let controller_token = client.get_object_by_id::<ControllerToken>(*controller_token).await?;
+    let controller_token_ref = controller_token.controller_ref(client).await?;
 
     // Construct a list of `(ObjectRef, TypeTag)` from the list of objects to send.
     let object_data_list = {
@@ -328,7 +324,7 @@ where
 
     let tx = IdentityMoveCallsAdapter::execute_borrow(
       identity_ref,
-      controller_cap_ref,
+      controller_token_ref,
       *proposal_id,
       object_data_list,
       borrow_action
@@ -351,17 +347,20 @@ where
   F: BorrowIntentFnT + Send,
 {
   type Output = ();
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply(
+  async fn apply<C>(
     self,
     effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    _client: &C,
+  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
       return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
     }

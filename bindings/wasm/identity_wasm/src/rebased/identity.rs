@@ -21,10 +21,16 @@ use crate::error::WasmResult;
 use crate::iota::WasmIotaDocument;
 use crate::rebased::proposals::WasmCreateConfigChangeProposal;
 use crate::rebased::proposals::WasmCreateUpdateDidProposal;
+use crate::rebased::WasmDeleteDelegationToken;
+use crate::rebased::WasmManagedCoreClientReadOnly;
 
 use super::proposals::StringCouple;
 use super::proposals::WasmConfigChange;
 use super::proposals::WasmCreateSendProposal;
+use super::WasmControllerCap;
+use super::WasmCoreClientReadOnly;
+use super::WasmDelegationToken;
+use super::WasmDelegationTokenRevocation;
 use super::WasmIdentityClient;
 use super::WasmIdentityClientReadOnly;
 use super::WasmIotaAddress;
@@ -34,13 +40,13 @@ use super::WasmTransactionBuilder;
 // Has getters to support `Clone` for serialization
 #[derive(Debug)]
 #[wasm_bindgen(getter_with_clone)]
-pub struct ControllerAndVotingPower(pub WasmIotaAddress, pub u64);
+pub struct ControllerAndVotingPower(pub WasmIotaAddress, pub u64, pub bool);
 
 #[wasm_bindgen(js_class = ControllerAndVotingPower)]
 impl ControllerAndVotingPower {
   #[wasm_bindgen(constructor)]
-  pub fn new(address: WasmIotaAddress, voting_power: u64) -> Self {
-    Self(address, voting_power)
+  pub fn new(address: WasmIotaAddress, voting_power: u64, can_delegate: bool) -> Self {
+    Self(address, voting_power, can_delegate)
   }
 }
 
@@ -129,10 +135,16 @@ impl WasmOnChainIdentity {
     &self,
     updated_doc: &WasmIotaDocument,
     controller_token: &WasmControllerToken,
+    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> WasmTransactionBuilder {
-    let create_proposal_tx =
-      WasmCreateUpdateDidProposal::new(self, updated_doc.clone(), controller_token.clone(), expiration_epoch);
+    let create_proposal_tx = WasmCreateUpdateDidProposal::new(
+      self,
+      updated_doc.clone(),
+      controller_token.clone(),
+      identity_client,
+      expiration_epoch,
+    );
     WasmTransactionBuilder::new(JsValue::from(create_proposal_tx).unchecked_into())
   }
 
@@ -143,9 +155,11 @@ impl WasmOnChainIdentity {
   pub fn deactivate_did(
     &self,
     controller_token: &WasmControllerToken,
+    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> WasmTransactionBuilder {
-    let create_proposal_tx = WasmCreateUpdateDidProposal::deactivate(self, controller_token.clone(), expiration_epoch);
+    let create_proposal_tx =
+      WasmCreateUpdateDidProposal::deactivate(self, controller_token.clone(), identity_client, expiration_epoch);
     WasmTransactionBuilder::new(JsValue::from(create_proposal_tx).unchecked_into())
   }
 
@@ -156,9 +170,10 @@ impl WasmOnChainIdentity {
   pub fn delete_did(
     &self,
     controller_token: &WasmControllerToken,
+    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> WasmTransactionBuilder {
-    let tx = WasmCreateUpdateDidProposal::delete(self, controller_token, expiration_epoch);
+    let tx = WasmCreateUpdateDidProposal::delete(self, controller_token, identity_client, expiration_epoch);
     WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into())
   }
 
@@ -170,12 +185,14 @@ impl WasmOnChainIdentity {
     &self,
     controller_token: &WasmControllerToken,
     config: WasmConfigChange,
+    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> WasmTransactionBuilder {
     let tx = JsValue::from(WasmCreateConfigChangeProposal::new(
       self,
       controller_token,
       config,
+      identity_client,
       expiration_epoch,
     ));
     WasmTransactionBuilder::new(tx.unchecked_into())
@@ -189,10 +206,50 @@ impl WasmOnChainIdentity {
     &self,
     controller_token: &WasmControllerToken,
     transfer_map: Vec<StringCouple>,
+    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> Result<WasmTransactionBuilder> {
-    let tx = WasmCreateSendProposal::new(self, controller_token, transfer_map, expiration_epoch).wasm_result()?;
+    let tx = WasmCreateSendProposal::new(self, controller_token, transfer_map, identity_client, expiration_epoch)
+      .wasm_result()?;
     Ok(WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into()))
+  }
+
+  #[wasm_bindgen(
+    js_name = revokeDelegationToken,
+    unchecked_return_type = "TransactionBuilder<DelegationTokenRevocation>",
+  )]
+  pub fn revoke_delegation_token(
+    &self,
+    controller_cap: &WasmControllerCap,
+    delegation_token: &WasmDelegationToken,
+    client: &WasmIdentityClientReadOnly,
+  ) -> Result<WasmDelegationTokenRevocation> {
+    WasmDelegationTokenRevocation::new(self, controller_cap, delegation_token, client, Some(true))
+  }
+
+  #[wasm_bindgen(
+    js_name = unrevokeDelegationToken,
+    unchecked_return_type = "TransactionBuilder<DelegationTokenRevocation>",
+  )]
+  pub fn unrevoke_delegation_token(
+    &self,
+    controller_cap: &WasmControllerCap,
+    delegation_token: &WasmDelegationToken,
+    client: &WasmIdentityClientReadOnly,
+  ) -> Result<WasmDelegationTokenRevocation> {
+    WasmDelegationTokenRevocation::new(self, controller_cap, delegation_token, client, Some(false))
+  }
+
+  #[wasm_bindgen(
+    js_name = deleteDelegationToken,
+    unchecked_return_type = "TransactionBuilder<DeleteDelegationToken>",
+  )]
+  pub fn delete_delegation_token(
+    &self,
+    delegation_token: WasmDelegationToken,
+    client: &WasmIdentityClientReadOnly,
+  ) -> Result<WasmDeleteDelegationToken> {
+    WasmDeleteDelegationToken::new(self, delegation_token, client)
   }
 }
 
@@ -207,42 +264,38 @@ impl WasmIdentityBuilder {
     Ok(WasmIdentityBuilder(IdentityBuilder::new(document)))
   }
 
-  pub fn controller(self, address: WasmIotaAddress, voting_power: u64) -> Self {
-    Self(
-      self.0.controller(
-        address
-          .parse()
-          .expect("Parameter address could not be parsed into valid IotaAddress"),
-        voting_power,
-      ),
-    )
+  pub fn controller(self, address: WasmIotaAddress, voting_power: u64, can_delegate: Option<bool>) -> Result<Self> {
+    let can_delegate = can_delegate.unwrap_or(false);
+    let address = address.parse().map_err(wasm_error)?;
+
+    let inner_builder = if can_delegate {
+      self.0.controller_with_delegation(address, voting_power)
+    } else {
+      self.0.controller(address, voting_power)
+    };
+
+    Ok(Self(inner_builder))
   }
 
   pub fn threshold(self, threshold: u64) -> Self {
     Self(self.0.threshold(threshold))
   }
 
-  pub fn controllers(self, controllers: Vec<ControllerAndVotingPower>) -> Self {
-    Self(
-      self.0.controllers(
-        controllers
-          .into_iter()
-          .map(|v| {
-            (
-              v.0
-                .parse()
-                .expect("controller can not be parsed into valid IotaAddress"),
-              v.1,
-            )
-          })
-          .collect::<Vec<_>>(),
-      ),
-    )
+  pub fn controllers(self, controllers: Vec<ControllerAndVotingPower>) -> Result<Self> {
+    let inner_builder = self.0.controllers_with_delegation(
+      controllers
+        .into_iter()
+        .map(|ControllerAndVotingPower(addr, vp, can_delegate)| {
+          Ok((addr.parse().map_err(wasm_error)?, vp, can_delegate))
+        })
+        .collect::<Result<Vec<_>>>()?,
+    );
+    Ok(Self(inner_builder))
   }
 
   #[wasm_bindgen(unchecked_return_type = "TransactionBuilder<CreateIdentity>")]
-  pub fn finish(self) -> WasmTransactionBuilder {
-    WasmTransactionBuilder::new(JsValue::from(WasmCreateIdentity::new(self)).unchecked_into())
+  pub fn finish(self, client: &WasmIdentityClientReadOnly) -> WasmTransactionBuilder {
+    WasmTransactionBuilder::new(JsValue::from(WasmCreateIdentity::new(self, client)).unchecked_into())
   }
 }
 
@@ -252,13 +305,18 @@ pub struct WasmCreateIdentity(pub(crate) CreateIdentity);
 #[wasm_bindgen(js_class = CreateIdentity)]
 impl WasmCreateIdentity {
   #[wasm_bindgen(constructor)]
-  pub fn new(builder: WasmIdentityBuilder) -> Self {
-    Self(CreateIdentity::new(builder.0))
+  pub fn new(builder: WasmIdentityBuilder, client: &WasmIdentityClientReadOnly) -> Self {
+    Self(CreateIdentity::new(builder.0, &client.0))
   }
 
   #[wasm_bindgen(js_name = buildProgrammableTransaction)]
-  pub async fn build_programmable_transaction(&self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
-    let pt = self.0.build_programmable_transaction(&client.0).await.wasm_result()?;
+  pub async fn build_programmable_transaction(&self, client: &WasmCoreClientReadOnly) -> Result<Vec<u8>> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
+    let pt = self
+      .0
+      .build_programmable_transaction(&managed_client)
+      .await
+      .wasm_result()?;
     bcs::to_bytes(&pt).wasm_result()
   }
 
@@ -266,12 +324,13 @@ impl WasmCreateIdentity {
   pub async fn apply(
     self,
     wasm_effects: &WasmIotaTransactionBlockEffects,
-    client: &WasmIdentityClientReadOnly,
+    client: &WasmCoreClientReadOnly,
   ) -> Result<WasmOnChainIdentity> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
     let effects = wasm_effects.clone().into();
-    let (apply_result, rem_effects) = self.0.apply(effects, &client.0).await;
+    let (apply_result, rem_effects) = self.0.apply(effects, &managed_client).await;
     let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
-    Object::assign(&wasm_effects, &rem_wasm_effects);
+    Object::assign(wasm_effects, &rem_wasm_effects);
 
     apply_result.wasm_result().map(WasmOnChainIdentity::new)
   }

@@ -61,9 +61,9 @@ status-list-2021 = ["revocation-bitmap", "identity_credential/status-list-2021"]
 resolver = ["dep:identity_resolver"]
 
 # Enables `Send` + `Sync` bounds for the storage and client interaction traits.
-send-sync = ["send-sync-storage", "send-sync-client"]
+send-sync = ["send-sync-storage", "send-sync-client", "identity_iota_core/send-sync"]
 # Enables `Send` + `Sync` bounds for the storage traits.
-send-sync-storage = ["identity_storage/send-sync-storage"]
+send-sync-storage = ["identity_storage/send-sync-storage", "identity_iota_core/send-sync-storage"]
 # Enables `Send` + `Sync` bounds for IOTA client interaction traits.
 send-sync-client = ["identity_iota_core/send-sync-client-ext"]
 

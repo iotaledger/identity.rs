@@ -10,6 +10,7 @@ use identity_did::DIDUrl;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::DecodedJws;
 use identity_verification::jose::jws::JwsVerifier;
+use product_core::network_name::NetworkName;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -29,7 +30,6 @@ use crate::error::Result;
 use crate::Error;
 use crate::IotaDID;
 use crate::IotaDocumentMetadata;
-use crate::NetworkName;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 
