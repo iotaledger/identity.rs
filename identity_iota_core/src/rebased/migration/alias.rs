@@ -14,7 +14,8 @@ use iota_interaction::types::id::UID;
 use iota_interaction::types::transaction::ProgrammableTransaction;
 use iota_interaction::types::TypeTag;
 use iota_interaction::types::STARDUST_PACKAGE_ID;
-use iota_interaction::{IotaTransactionBlockEffectsMutAPI as _, OptionalSync};
+use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use iota_interaction::OptionalSync;
 
 use product_core::core_client::CoreClientReadOnly;
 use product_core::transaction::transaction_builder::Transaction;

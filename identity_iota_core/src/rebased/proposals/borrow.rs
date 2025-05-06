@@ -10,7 +10,8 @@ use crate::rebased::migration::ControllerToken;
 use identity_iota_move_calls::IdentityMoveCalls;
 
 use product_core::core_client::CoreClientReadOnly;
-use product_core::transaction::transaction_builder::{Transaction, TransactionBuilder};
+use product_core::transaction::transaction_builder::Transaction;
+use product_core::transaction::transaction_builder::TransactionBuilder;
 use product_core::transaction::ProtoTransaction;
 use serde::Deserialize;
 use tokio::sync::Mutex;
@@ -26,7 +27,8 @@ use iota_interaction::types::base_types::ObjectID;
 use iota_interaction::types::transaction::Argument;
 use iota_interaction::types::transaction::ProgrammableTransaction;
 use iota_interaction::types::TypeTag;
-use iota_interaction::{MoveType, OptionalSync};
+use iota_interaction::MoveType;
+use iota_interaction::OptionalSync;
 use serde::Serialize;
 
 use super::CreateProposal;

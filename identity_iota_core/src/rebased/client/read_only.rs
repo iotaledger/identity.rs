@@ -1,7 +1,8 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rebased::{iota, rebased_err};
+use crate::rebased::iota;
+use crate::rebased::rebased_err;
 use crate::IotaDID;
 use crate::IotaDocument;
 use std::fmt::Debug;

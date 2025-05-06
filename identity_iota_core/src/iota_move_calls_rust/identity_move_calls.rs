@@ -9,9 +9,10 @@ use itertools::Itertools;
 use std::collections::HashSet;
 use std::str::FromStr;
 
+use identity_iota_move_calls::BorrowIntentFnInternalT;
 use identity_iota_move_calls::ControllerIntentFnInternalT;
+use identity_iota_move_calls::ControllerTokenRef;
 use identity_iota_move_calls::IdentityMoveCalls;
-use identity_iota_move_calls::{BorrowIntentFnInternalT, ControllerTokenRef};
 
 use iota_interaction::ident_str;
 use iota_interaction::rpc_types::IotaObjectData;
