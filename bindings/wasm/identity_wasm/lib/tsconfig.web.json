@@ -7,9 +7,6 @@
         "../web/identity_wasm",
         "./identity_wasm.js"
       ],
-      "@iota/iota-interaction-ts/": [
-        "@iota/iota-interaction-ts/web/"
-      ],
       "@iota/iota-move-calls-identity/": [
         "@iota/iota-move-calls-identity/web/"
       ],
