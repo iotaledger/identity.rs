@@ -25,7 +25,6 @@ use iota_interaction::types::programmable_transaction_builder::ProgrammableTrans
 use iota_interaction::types::transaction::Argument;
 use iota_interaction::types::transaction::ObjectArg;
 use iota_interaction::types::TypeTag;
-use iota_interaction::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use iota_interaction::MoveType;
 use iota_interaction::ProgrammableTransactionBcs;
 use iota_interaction::TransactionBuilderT;
