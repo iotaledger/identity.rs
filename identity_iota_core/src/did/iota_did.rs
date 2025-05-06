@@ -73,7 +73,7 @@ impl IotaDID {
   ///
   /// ```
   /// # use identity_did::DID;
-  /// # use identity_iota_core::NetworkName;
+  /// # use product_core::network_name::NetworkName;
   /// # use identity_iota_core::IotaDID;
   /// #
   /// let did = IotaDID::new(&[1;32], &NetworkName::try_from("smr").unwrap());
@@ -97,7 +97,7 @@ impl IotaDID {
   ///
   /// ```
   /// # use identity_did::DID;
-  /// # use identity_iota_core::NetworkName;
+  /// # use product_core::network_name::NetworkName;
   /// # use identity_iota_core::IotaDID;
   /// #
   /// let placeholder = IotaDID::placeholder(&NetworkName::try_from("smr").unwrap());
@@ -113,7 +113,7 @@ impl IotaDID {
   ///
   /// ```
   /// # use identity_did::DID;
-  /// # use identity_iota_core::NetworkName;
+  /// # use product_core::network_name::NetworkName;
   /// # use identity_iota_core::IotaDID;
   /// #
   /// let placeholder = IotaDID::placeholder(&NetworkName::try_from("smr").unwrap());
