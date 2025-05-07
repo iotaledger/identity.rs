@@ -16,7 +16,9 @@ async-trait = { version = "0.1.81", default-features = false, optional = true }
 cfg-if = "1.0.0"
 futures = { version = "0.3", default-features = false }
 identity_core = { version = "=1.6.0-alpha", path = "../identity_core", default-features = false }
-identity_credential = { version = "=1.6.0-alpha", path = "../identity_credential", default-features = false, features = ["validator"] }
+identity_credential = { version = "=1.6.0-alpha", path = "../identity_credential", default-features = false, features = [
+  "validator",
+] }
 identity_did = { version = "=1.6.0-alpha", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.6.0-alpha", path = "../identity_document", default-features = false }
 identity_verification = { version = "=1.6.0-alpha", path = "../identity_verification", default-features = false }
@@ -29,6 +31,9 @@ serde.workspace = true
 serde_json.workspace = true
 strum.workspace = true
 thiserror.workspace = true
+product-core = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", features = [
+  "transaction",
+] }
 
 # for feature `iota-client`
 bcs = { version = "0.1.4", optional = true }
@@ -39,7 +44,7 @@ identity_jose = { version = "=1.6.0-alpha", path = "../identity_jose", optional 
 iota-crypto = { version = "0.23", optional = true }
 itertools = { version = "0.13.0", optional = true }
 phf = { version = "0.11.2", features = ["macros"] }
-product-core = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", features = ["core-client", "transaction"], optional = true }
+
 rand = { version = "0.8.5", optional = true }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", tag = "v0.3.0", default-features = false, optional = true }
 serde-aux = { version = "4.5.0", optional = true }
@@ -54,7 +59,12 @@ iota_interaction_rust = { git = "https://github.com/iotaledger/product-core.git"
 iota-sdk = { git = "https://github.com/iotaledger/iota.git", package = "iota-sdk", tag = "v0.12.0-rc", optional = true }
 move-core-types = { git = "https://github.com/iotaledger/iota.git", package = "move-core-types", tag = "v0.12.0-rc", optional = true }
 shared-crypto = { git = "https://github.com/iotaledger/iota.git", package = "shared-crypto", tag = "v0.12.0-rc", optional = true }
-tokio = { version = "1.43", default-features = false, features = ["macros", "sync", "rt", "process"] }
+tokio = { version = "1.43", default-features = false, features = [
+  "macros",
+  "sync",
+  "rt",
+  "process",
+] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 iota_interaction = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "iota_interaction", default-features = false, optional = true }
@@ -67,12 +77,22 @@ iota_interaction_ts.workspace = true
 tokio = { version = "1.43", default-features = false, features = ["sync"] }
 
 [dev-dependencies]
-iota-crypto = { version = "0.23", default-features = false, features = ["bip39", "bip39-en"] }
+iota-crypto = { version = "0.23", default-features = false, features = [
+  "bip39",
+  "bip39-en",
+] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 
 # for feature iota-client tests
-identity_iota_core = { path = ".", features = ["iota-client", "keytool"] } # enable for e2e tests
-identity_storage = { path = "../identity_storage", features = ["send-sync-storage", "storage-signer", "keytool"] }
+identity_iota_core = { path = ".", features = [
+  "iota-client",
+  "keytool",
+] } # enable for e2e tests
+identity_storage = { path = "../identity_storage", features = [
+  "send-sync-storage",
+  "storage-signer",
+  "keytool",
+] }
 lazy_static = "1.5.0"
 serial_test = "3.1.1"
 

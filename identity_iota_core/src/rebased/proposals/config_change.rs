@@ -7,7 +7,7 @@ use std::marker::PhantomData;
 use std::ops::DerefMut as _;
 use std::str::FromStr as _;
 
-use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
+use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use identity_iota_move_calls::IdentityMoveCalls;
@@ -249,7 +249,7 @@ impl ProposalT for Proposal<ConfigChange> {
       .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
-    let tx = IdentityMoveCallsAdapter::propose_config_change(
+    let tx = iota_move_calls::identity_move_calls::propose_config_change(
       identity_ref,
       controller_cap_ref,
       expiration,
@@ -290,7 +290,7 @@ impl ProposalT for Proposal<ConfigChange> {
       .expect("identity exists on-chain");
     let controller_cap_ref = controller_token.controller_ref(client).await?;
 
-    let tx = IdentityMoveCallsAdapter::execute_config_change(
+    let tx = iota_move_calls::identity_move_calls::execute_config_change(
       identity_ref,
       controller_cap_ref,
       proposal_id,

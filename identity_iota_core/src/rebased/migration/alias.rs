@@ -24,11 +24,10 @@ use serde::Deserialize;
 use serde::Serialize;
 use tokio::sync::OnceCell;
 
-use crate::iota_move_calls_rust::MigrationMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
 
 use crate::rebased::Error;
-use crate::IotaDID;
+use crate::{iota_move_calls, IotaDID};
 use identity_iota_move_calls::MigrationMoveCalls;
 use iota_interaction::IotaClientTrait;
 use iota_interaction::MoveType;
@@ -153,9 +152,13 @@ impl MigrateLegacyIdentity {
       .map(|timestamp| timestamp.to_unix() as u64 * 1000);
 
     // Build migration tx.
-    let tx =
-      MigrationMoveCallsAdapter::migrate_did_output(alias_output_ref, created, migration_registry_ref, self.package)
-        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = iota_move_calls::migration_move_calls::migrate_did_output(
+      alias_output_ref,
+      created,
+      migration_registry_ref,
+      self.package,
+    )
+    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(bcs::from_bytes(&tx)?)
   }

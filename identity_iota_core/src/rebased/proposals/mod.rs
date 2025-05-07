@@ -12,23 +12,14 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
-use identity_iota_move_calls::IdentityMoveCalls;
-use iota_interaction::IotaClientTrait;
-use iota_interaction::OptionalSend;
-use iota_interaction::OptionalSync;
-use product_core::core_client::CoreClientReadOnly;
-use product_core::transaction::transaction_builder::Transaction;
-use product_core::transaction::transaction_builder::TransactionBuilder;
-use product_core::transaction::ProtoTransaction;
-use tokio::sync::OnceCell;
-
-use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
+use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::get_identity;
 use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
 pub use controller::*;
+use identity_iota_move_calls::IdentityMoveCalls;
 use iota_interaction::rpc_types::IotaExecutionStatus;
 use iota_interaction::rpc_types::IotaObjectData;
 use iota_interaction::rpc_types::IotaObjectDataOptions;
@@ -39,6 +30,14 @@ use iota_interaction::types::base_types::ObjectRef;
 use iota_interaction::types::base_types::ObjectType;
 use iota_interaction::types::transaction::ProgrammableTransaction;
 use iota_interaction::types::TypeTag;
+use iota_interaction::IotaClientTrait;
+use iota_interaction::OptionalSend;
+use iota_interaction::OptionalSync;
+use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::transaction_builder::Transaction;
+use product_core::transaction::transaction_builder::TransactionBuilder;
+use product_core::transaction::ProtoTransaction;
+use tokio::sync::OnceCell;
 
 pub use send::*;
 use serde::de::DeserializeOwned;
@@ -353,7 +352,7 @@ impl<A: MoveType> ApproveProposal<'_, '_, A> {
       .await?
       .ok_or_else(|| Error::Identity(format!("identity {} doesn't exist", identity.id())))?;
     let controller_cap = controller_token.controller_ref(client).await?;
-    let tx = <IdentityMoveCallsAdapter as IdentityMoveCalls>::approve_proposal::<A>(
+    let tx = iota_move_calls::identity_move_calls::approve_proposal::<A>(
       identity_ref.clone(),
       controller_cap,
       proposal.id(),

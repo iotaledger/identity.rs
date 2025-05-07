@@ -15,7 +15,7 @@ use product_core::transaction::transaction_builder::TransactionBuilder;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
+use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::migration::OnChainIdentity;
@@ -122,7 +122,7 @@ impl ProposalT for Proposal<SendAction> {
         }
         object_and_type_list
       };
-      IdentityMoveCallsAdapter::create_and_execute_send(
+      iota_move_calls::identity_move_calls::create_and_execute_send(
         identity_ref,
         controller_cap_ref,
         action.0,
@@ -131,7 +131,7 @@ impl ProposalT for Proposal<SendAction> {
         client.package_id(),
       )
     } else {
-      IdentityMoveCallsAdapter::propose_send(
+      iota_move_calls::identity_move_calls::propose_send(
         identity_ref,
         controller_cap_ref,
         action.0,
@@ -181,7 +181,7 @@ impl ProposalT for Proposal<SendAction> {
       object_and_type_list
     };
 
-    let tx = IdentityMoveCallsAdapter::execute_send(
+    let tx = iota_move_calls::identity_move_calls::execute_send(
       identity_ref,
       controller_cap_ref,
       proposal_id,

@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
+use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use identity_iota_move_calls::IdentityMoveCalls;
@@ -39,7 +39,7 @@ use super::UserDrivenTx;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-      use iota_interaction_ts::NativeTsTransactionBuilderBindingWrapper as Ptb;
+      use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
       /// Instances of BorrowIntentFnT can be used as user-provided function to describe how
       /// a borrowed assets shall be used.
       pub trait BorrowIntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
@@ -204,7 +204,7 @@ where
         }
         object_data_list
       };
-      IdentityMoveCallsAdapter::create_and_execute_borrow(
+      iota_move_calls::identity_move_calls::create_and_execute_borrow(
         identity_ref,
         controller_cap_ref,
         object_data_list,
@@ -213,7 +213,7 @@ where
         client.package_id(),
       )
     } else {
-      IdentityMoveCallsAdapter::propose_borrow(
+      iota_move_calls::identity_move_calls::propose_borrow(
         identity_ref,
         controller_cap_ref,
         action.objects,
@@ -323,7 +323,7 @@ where
       object_data_list
     };
 
-    let tx = IdentityMoveCallsAdapter::execute_borrow(
+    let tx = iota_move_calls::identity_move_calls::execute_borrow(
       identity_ref,
       controller_token_ref,
       *proposal_id,

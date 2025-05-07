@@ -11,6 +11,5 @@ cfg_if::cfg_if! {
         pub(crate) use iota_interaction_ts::*;
     } else {
         pub(crate) use iota_interaction_rust::*;
-        pub(crate) use crate::iota_move_calls_rust::*;
     }
 }

@@ -3,7 +3,7 @@
 
 use std::marker::PhantomData;
 
-use crate::iota_move_calls_rust::IdentityMoveCallsAdapter;
+use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::migration::Proposal;
@@ -39,7 +39,7 @@ use super::UserDrivenTx;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-      use iota_interaction_ts::NativeTsTransactionBuilderBindingWrapper as Ptb;
+      use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
       /// Instances of ControllerIntentFnT can be used as user-provided function to describe how
       /// a borrowed identity's controller capability will be used.
       pub trait ControllerIntentFnT: FnOnce(&mut Ptb, &Argument) {}
@@ -196,7 +196,7 @@ where
         })
         .ok_or_else(|| Error::ObjectLookup(format!("object {} doesn't exist", action.controller_cap)))?;
 
-      IdentityMoveCallsAdapter::create_and_execute_controller_execution(
+      iota_move_calls::identity_move_calls::create_and_execute_controller_execution(
         identity_ref,
         controller_cap_ref,
         expiration,
@@ -205,7 +205,7 @@ where
         client.package_id(),
       )
     } else {
-      IdentityMoveCallsAdapter::propose_controller_execution(
+      iota_move_calls::identity_move_calls::propose_controller_execution(
         identity_ref,
         controller_cap_ref,
         action.controller_cap,
@@ -318,7 +318,7 @@ where
       .map(|object_ref| object_ref.reference.to_object_ref())
       .ok_or_else(|| Error::ObjectLookup(format!("object {borrowing_cap_id} doesn't exist")))?;
 
-    let tx = IdentityMoveCallsAdapter::execute_controller_execution(
+    let tx = iota_move_calls::identity_move_calls::execute_controller_execution(
       identity_ref,
       controller_cap_ref,
       *proposal_id,
