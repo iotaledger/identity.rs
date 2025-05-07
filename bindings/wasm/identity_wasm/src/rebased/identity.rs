@@ -7,7 +7,7 @@ use identity_iota::iota::rebased::migration::ControllerToken;
 use identity_iota::iota::rebased::migration::CreateIdentity;
 use identity_iota::iota::rebased::migration::IdentityBuilder;
 use identity_iota::iota::rebased::migration::OnChainIdentity;
-use identity_iota::iota::rebased::transaction_builder::Transaction;
+use product_core::transaction::transaction_builder::{Transaction};
 use identity_iota::iota::IotaDocument;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use iota_interaction_ts::error::WasmResult as _;

@@ -7,11 +7,11 @@ use anyhow::anyhow;
 use anyhow::Context as _;
 use async_trait::async_trait;
 use fastcrypto::traits::EncodeDecodeBase64;
-use identity_iota::iota::rebased::client::CoreClientReadOnly;
-use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
-use identity_iota::iota::rebased::transaction_builder::MutGasDataRef;
-use identity_iota::iota::rebased::transaction_builder::Transaction;
-use identity_iota::iota::rebased::transaction_builder::TransactionBuilder;
+use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::TransactionOutputInternal;
+use product_core::transaction::transaction_builder::MutGasDataRef;
+use product_core::transaction::transaction_builder::Transaction;
+use product_core::transaction::transaction_builder::TransactionBuilder;
 use identity_iota::iota::rebased::Error as IotaError;
 use identity_iota::iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota::iota_interaction::types::crypto::Signature;
@@ -57,8 +57,9 @@ extern "C" {
 #[async_trait(?Send)]
 impl Transaction for WasmTransaction {
   type Output = JsValue;
+  type Error = IotaError;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> StdResult<ProgrammableTransaction, IotaError>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> StdResult<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly,
   {

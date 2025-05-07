@@ -64,7 +64,6 @@ iota_interaction = { git = "https://github.com/iotaledger/product-core.git", bra
 # because it's unclear how to implement this. wasm32 build will most probably always use the "iota-client" feature
 # so this seems to be tolerable for now.
 iota_interaction_ts.workspace = true
-iota_move_calls_ts = { version = "=1.6.0-alpha", path = "../bindings/wasm/iota_move_calls_ts" }
 tokio = { version = "1.43", default-features = false, features = ["sync"] }
 
 [dev-dependencies]

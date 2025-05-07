@@ -5,10 +5,10 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 use anyhow::anyhow;
-use identity_iota::iota::rebased::client::CoreClient as _;
+use product_core::core_client::CoreClient as _;
 use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::client::PublishDidDocument;
-use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
+use product_core::transaction::TransactionOutputInternal;
 
 use identity_iota::iota::rebased::transaction_builder::Transaction as _;
 use iota_interaction_ts::bindings::WasmExecutionStatus;
