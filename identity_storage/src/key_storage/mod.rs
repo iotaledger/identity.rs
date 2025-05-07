@@ -9,8 +9,6 @@
 #[cfg(feature = "jpt-bbs-plus")]
 /// BLS12381 utils.
 pub mod bls;
-#[cfg(any(feature = "memstore", feature = "keytool"))]
-mod ed25519;
 mod jwk_gen_output;
 mod jwk_storage;
 #[cfg(feature = "jpt-bbs-plus")]
@@ -22,10 +20,6 @@ mod key_type;
 mod keytool;
 #[cfg(feature = "memstore")]
 mod memstore;
-#[cfg(feature = "keytool")]
-mod secp256k1;
-#[cfg(feature = "keytool")]
-mod secp256r1;
 
 #[cfg(test)]
 pub(crate) mod tests;

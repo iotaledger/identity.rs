@@ -1,24 +1,26 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::key_storage::ed25519;
 use crate::key_storage::JwkStorage;
 use crate::key_storage::KeyId;
 use crate::key_storage::KeyStorageErrorKind;
 use crate::key_storage::KeyType;
 use fastcrypto::ed25519::Ed25519KeyPair;
+use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::ed25519::Ed25519Signature;
 use fastcrypto::traits::KeyPair;
 use fastcrypto::traits::ToFromBytes as _;
 use fastcrypto::traits::VerifyingKey as _;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jwk::EcCurve;
+use identity_verification::jwk::FromJwk;
 use identity_verification::jwk::JwkParamsEc;
+use identity_verification::jwk::ToJwk as _;
 use identity_verification::jws::JwsAlgorithm;
 
 pub(crate) async fn test_insertion(store: impl JwkStorage) {
   let key_pair = generate_ed25519();
-  let mut jwk: Jwk = crate::key_storage::ed25519::encode_jwk(key_pair);
+  let mut jwk: Jwk = key_pair.to_jwk().unwrap();
 
   // INVALID: Inserting a Jwk without an `alg` parameter should fail.
   let err = store.insert(jwk.clone()).await.unwrap_err();
@@ -35,7 +37,7 @@ pub(crate) async fn test_insertion(store: impl JwkStorage) {
 
 pub(crate) async fn test_incompatible_key_alg(store: impl JwkStorage) {
   let key_pair = generate_ed25519();
-  let mut jwk: Jwk = crate::key_storage::ed25519::encode_jwk(key_pair);
+  let mut jwk: Jwk = key_pair.to_jwk().unwrap();
   jwk.set_alg(JwsAlgorithm::ES256.name());
 
   // INVALID: Inserting an Ed25519 key with the ES256 alg is not compatible.
@@ -65,7 +67,7 @@ pub(crate) async fn test_generate_and_sign(store: impl JwkStorage) {
   let signature = store.sign(&generate.key_id, test_msg, &generate.jwk).await.unwrap();
 
   let signature = Ed25519Signature::from_bytes(&signature).unwrap();
-  let public_key = ed25519::from_public_jwk(&generate.jwk).unwrap();
+  let public_key = Ed25519PublicKey::from_jwk(&generate.jwk).unwrap();
   assert!(public_key.verify(test_msg, &signature).is_ok());
 
   let key_id: KeyId = generate.key_id;

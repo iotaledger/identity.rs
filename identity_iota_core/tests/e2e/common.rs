@@ -12,6 +12,7 @@ use identity_iota_core::rebased::utils::request_funds;
 use identity_iota_core::rebased::Error;
 use identity_iota_core::IotaDID;
 use identity_jose::jwk::Jwk;
+use identity_jose::jwk::ToJwk as _;
 use identity_jose::jws::JwsAlgorithm;
 use identity_storage::JwkMemStore;
 use identity_storage::JwkStorage;
@@ -291,7 +292,7 @@ impl TestClient {
     let public_key = identity_client.signer().public_key();
     let key_id = identity_client.signer().key_id();
     let fragment = key_id.as_str();
-    let method = VerificationMethod::new_from_jwk(did, public_key.clone(), Some(fragment))?;
+    let method = VerificationMethod::new_from_jwk(did, public_key.await?.to_jwk()?, Some(fragment))?;
     let method_digest: MethodDigest = MethodDigest::new(&method)?;
 
     self

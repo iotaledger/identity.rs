@@ -1,8 +1,8 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::get_funded_test_client;
-use crate::common::TEST_GAS_BUDGET;
+use std::str::FromStr as _;
+
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
@@ -17,6 +17,9 @@ use identity_iota_core::rebased::PublicAvailableVC;
 use identity_iota_core::rebased::TransferProposal;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
+use identity_iota_interaction::IotaClientTrait;
+use identity_iota_interaction::MoveType as _;
+use identity_jose::jwk::ToJwk as _;
 use identity_storage::JwkDocumentExt;
 use identity_storage::JwsSignatureOptions;
 use identity_verification::VerificationMethod;
@@ -25,8 +28,10 @@ use iota_interaction::MoveType as _;
 use iota_sdk::types::TypeTag;
 use itertools::Itertools as _;
 use move_core_types::language_storage::StructTag;
-use product_core::core_client::CoreClient;
-use std::str::FromStr;
+use secret_storage::Signer as _;
+
+use crate::common::get_funded_test_client;
+use crate::common::TEST_GAS_BUDGET;
 
 #[tokio::test]
 async fn creating_authenticated_asset_works() -> anyhow::Result<()> {
@@ -212,7 +217,7 @@ async fn hosting_vc_works() -> anyhow::Result<()> {
     .id(did.clone().into())
     .verification_method(VerificationMethod::new_from_jwk(
       did.clone(),
-      identity_client.signer().public_key().clone(),
+      identity_client.signer().public_key().await?.to_jwk()?,
       Some(identity_client.signer().key_id().as_str()),
     )?)
     .build()?;

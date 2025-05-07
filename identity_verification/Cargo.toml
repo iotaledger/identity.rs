@@ -21,3 +21,8 @@ thiserror.workspace = true
 
 [lints]
 workspace = true
+
+[features]
+jwk-conversion = [
+  "identity_jose/jwk-conversion",
+]
