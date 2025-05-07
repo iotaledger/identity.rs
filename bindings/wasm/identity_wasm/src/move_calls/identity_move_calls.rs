@@ -36,16 +36,16 @@ use iota_interaction::ProgrammableTransactionBcs;
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "[string, number, bool]")]
-  pub(crate) type WasmControllerData;
+  pub type WasmControllerData;
 
   #[wasm_bindgen(typescript_type = "[string, string]")]
-  pub(crate) type WasmTransferCouple;
+  pub type WasmTransferCouple;
 
   #[wasm_bindgen(typescript_type = "[ObjectRef, string]")]
-  pub(crate) type WasmObjectRefAndType;
+  pub type WasmObjectRefAndType;
 
   #[wasm_bindgen(typescript_type = "Map<string, [TransactionArgument, IotaObjectData]>")]
-  pub(crate) type WasmTxArgumentMap;
+  pub type WasmTxArgumentMap;
 }
 
 impl From<(IotaAddress, u64, bool)> for WasmControllerData {

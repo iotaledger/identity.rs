@@ -25,7 +25,7 @@ use iota_interaction::ProgrammableTransactionBcs;
 #[wasm_bindgen(module = "@iota/iota-move-calls-identity/move_calls/asset")]
 extern "C" {
   #[wasm_bindgen(js_name = "create", catch)]
-  pub(crate) async fn new_asset(
+  pub async fn new_asset(
     inner_bytes: &[u8],
     inner_type: &str,
     mutable: bool,
@@ -35,10 +35,10 @@ extern "C" {
   ) -> Result<Uint8Array, JsValue>;
 
   #[wasm_bindgen(catch, js_name = "remove")]
-  pub(crate) async fn delete(asset: WasmObjectRef, asset_type: &str, package: &str) -> Result<Uint8Array, JsValue>;
+  pub async fn delete(asset: WasmObjectRef, asset_type: &str, package: &str) -> Result<Uint8Array, JsValue>;
 
   #[wasm_bindgen(catch)]
-  pub(crate) async fn update(
+  pub async fn update(
     asset: WasmObjectRef,
     content: &[u8],
     content_type: &str,
@@ -46,7 +46,7 @@ extern "C" {
   ) -> Result<Uint8Array, JsValue>;
 
   #[wasm_bindgen(catch)]
-  pub(crate) async fn transfer(
+  pub async fn transfer(
     asset: WasmObjectRef,
     asset_type: &str,
     recipient: &str,
@@ -54,7 +54,7 @@ extern "C" {
   ) -> Result<Uint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "acceptProposal", catch)]
-  pub(crate) async fn accept_proposal(
+  pub async fn accept_proposal(
     proposal: WasmSharedObjectRef,
     recipient_cap: WasmObjectRef,
     asset: WasmObjectRef,
@@ -63,7 +63,7 @@ extern "C" {
   ) -> Result<Uint8Array, JsValue>;
 
   #[wasm_bindgen(js_name = "concludeOrCancel", catch)]
-  pub(crate) async fn conclude_or_cancel(
+  pub async fn conclude_or_cancel(
     proposal: WasmSharedObjectRef,
     sender_cap: WasmObjectRef,
     asset: WasmObjectRef,

@@ -33,6 +33,7 @@ pub mod verification;
 
 // Currently it's unclear if this module will be removed or can be used for integration or unit tests.
 pub(crate) mod rebased;
+mod move_calls;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]
