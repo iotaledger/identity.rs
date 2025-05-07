@@ -22,7 +22,7 @@ identity_credential = { version = "=1.6.0-alpha", path = "../identity_credential
 identity_did = { version = "=1.6.0-alpha", path = "../identity_did", default-features = false }
 identity_document = { version = "=1.6.0-alpha", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=1.6.0-alpha", path = "../identity_iota_core", default-features = false, optional = true }
-identity_verification = { version = "=1.6.0-alpha", path = "../identity_verification", default-features = false }
+identity_verification = { version = "=1.6.0-alpha", path = "../identity_verification", default-features = false, features = ["jwk-conversion"] }
 iota-crypto = { version = "0.23.2", default-features = false, features = ["ed25519", "random"], optional = true }
 json-proof-token = { workspace = true, optional = true }
 k256 = { version = "0.13.3", default-features = false, features = ["std", "ecdsa", "ecdsa-core", "jwk"], optional = true }
@@ -60,6 +60,7 @@ iota-document = ["dep:identity_iota_core"]
 # enables support to sign via storage
 storage-signer = [
   "identity_iota_core?/iota-client",
+  "identity_verification/jwk-conversion",
   "dep:secret-storage",
   "dep:identity_iota_interaction",
   "dep:fastcrypto",
@@ -76,6 +77,7 @@ jpt-bbs-plus = [
 keytool = [
   "dep:identity_iota_interaction",
   "identity_iota_interaction/keytool",
+  "identity_verification/jwk-conversion",
   "k256",
   "p256",
   "dep:fastcrypto",

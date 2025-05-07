@@ -3,6 +3,8 @@
 
 //! JSON Web Keys ([JWK](https://tools.ietf.org/html/rfc7517))
 
+#[cfg(feature = "jwk-conversion")]
+mod conversion;
 mod curve;
 mod jwk_ext;
 mod key;
@@ -12,6 +14,8 @@ mod key_set;
 mod key_type;
 mod key_use;
 
+#[cfg(feature = "jwk-conversion")]
+pub use self::conversion::*;
 pub use self::curve::*;
 pub use self::key::*;
 pub use self::key_operation::*;

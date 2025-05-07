@@ -1,14 +1,15 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::Context as _;
+use anyhow::Context;
 use fastcrypto::secp256k1::Secp256k1KeyPair;
 use fastcrypto::secp256k1::Secp256k1PublicKeyAsBytes;
 use fastcrypto::traits::ToFromBytes;
-use identity_verification::jwk::Jwk;
-use identity_verification::jws::JwsAlgorithm;
 use k256::PublicKey;
 use k256::SecretKey;
+
+use crate::jwk::Jwk;
+use crate::jws::JwsAlgorithm;
 
 pub(crate) fn pk_to_jwk(pk: &Secp256k1PublicKeyAsBytes) -> Jwk {
   let jwk_str = PublicKey::from_sec1_bytes(&pk.0)

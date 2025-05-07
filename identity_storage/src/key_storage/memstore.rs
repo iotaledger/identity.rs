@@ -16,13 +16,13 @@ use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkType;
 use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::jwk::BlsCurve;
+use identity_verification::jwk::FromJwk as _;
+use identity_verification::jwk::ToJwk as _;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 
-use super::ed25519;
-use super::ed25519::jwk_to_keypair;
 use super::jwk_gen_output::JwkGenOutput;
 use super::KeyId;
 use super::KeyStorageError;
@@ -75,7 +75,11 @@ impl JwkStorage for JwkMemStore {
 
     let kid: KeyId = random_key_id();
 
-    let mut jwk: Jwk = ed25519::encode_jwk(keypair);
+    let mut jwk: Jwk = keypair.to_jwk().map_err(|err| {
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+        .with_custom_message("could not convert `Ed25519KeyPair` to `Jwk`")
+        .with_source(err)
+    })?;
     jwk.set_alg(alg.name());
     jwk.set_kid(jwk.thumbprint_sha256_b64());
     let public_jwk: Jwk = jwk.to_public().expect("should only panic if kty == oct");
@@ -166,7 +170,11 @@ impl JwkStorage for JwkMemStore {
     let jwk: &Jwk = jwk_store
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
-    let secret_key = jwk_to_keypair(jwk)?;
+    let secret_key = Ed25519KeyPair::from_jwk(jwk).map_err(|err| {
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+        .with_custom_message("could not convert `Jwk` to `Ed25519KeyPair`")
+        .with_source(err)
+    })?;
     Ok(Signer::<Ed25519Signature>::sign(&secret_key, data).as_ref().to_vec())
   }
 
@@ -451,12 +459,13 @@ pub(crate) mod shared {
 
 #[cfg(test)]
 mod tests {
-  use crate::key_storage::ed25519;
   use crate::key_storage::tests::utils::generate_ed25519;
+  use fastcrypto::ed25519::Ed25519PublicKey;
   use fastcrypto::traits::ToFromBytes as _;
   use fastcrypto::traits::VerifyingKey as _;
   use identity_verification::jose::jwk::EcCurve;
   use identity_verification::jose::jwk::JwkParamsEc;
+  use identity_verification::jwk::FromJwk as _;
 
   use super::*;
 
@@ -472,7 +481,7 @@ mod tests {
 
     let signature = store.sign(&key_id, test_msg, &jwk.to_public().unwrap()).await.unwrap();
 
-    let public_key = ed25519::from_public_jwk(&jwk).unwrap();
+    let public_key = Ed25519PublicKey::from_jwk(&jwk).unwrap();
     let signature = Ed25519Signature::from_bytes(&signature).unwrap();
 
     assert!(public_key.verify(test_msg, &signature).is_ok());
@@ -485,7 +494,7 @@ mod tests {
     let store: JwkMemStore = JwkMemStore::new();
 
     let key_pair = generate_ed25519();
-    let mut jwk: Jwk = ed25519::encode_jwk(key_pair);
+    let mut jwk: Jwk = key_pair.to_jwk().unwrap();
 
     // INVALID: Inserting a Jwk without an `alg` parameter should fail.
     let err = store.insert(jwk.clone()).await.unwrap_err();
@@ -526,7 +535,7 @@ mod tests {
     let store: JwkMemStore = JwkMemStore::new();
 
     let key_pair = generate_ed25519();
-    let mut jwk: Jwk = ed25519::encode_jwk(key_pair);
+    let mut jwk: Jwk = key_pair.to_jwk().unwrap();
     jwk.set_alg(JwsAlgorithm::ES256.name());
 
     // INVALID: Inserting an Ed25519 key with the ES256 alg is not compatible.
