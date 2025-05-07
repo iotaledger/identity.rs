@@ -85,15 +85,7 @@ pub enum Error {
 /// Lookup a legacy `alias_id` into the migration registry
 /// to get the ID of the corresponding migrated DID document, if any.
 pub async fn lookup(id_client: &IdentityClientReadOnly, alias_id: ObjectID) -> Result<Option<OnChainIdentity>, Error> {
-  let chain_id = id_client.chain_id();
-  let registry_id = MIGRATION_REGISTRY_ON_IOTA_NETWORK
-    .get(chain_id)
-    .map(|id| id.parse().unwrap())
-    .ok_or_else(|| {
-      Error::NotFound(format!(
-        "cannot find migration registry for network {chain_id}, supply the migration registry's ID through IdentityClientReadOnly::set_migration_registry_id"
-      ))
-    })?;
+  let registry_id = migration_registry_id(id_client).await?;
   let dynamic_field_name = serde_json::from_value(serde_json::json!({
     "type": "0x2::object::ID",
     "value": alias_id.to_string()

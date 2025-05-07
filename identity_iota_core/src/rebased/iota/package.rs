@@ -193,3 +193,34 @@ where
     .package_id(network)
     .ok_or_else(|| Error::InvalidConfig(format!("cannot find IdentityIota package ID for network {network}")))
 }
+
+#[cfg(test)]
+mod tests {
+  use iota_sdk::IotaClientBuilder;
+
+  use crate::rebased::client::IdentityClientReadOnly;
+
+  #[tokio::test]
+  async fn can_connect_to_testnet() -> anyhow::Result<()> {
+    let iota_client = IotaClientBuilder::default().build_testnet().await?;
+    let _identity_client = IdentityClientReadOnly::new(iota_client).await?;
+
+    Ok(())
+  }
+
+  #[tokio::test]
+  async fn can_connect_to_devnet() -> anyhow::Result<()> {
+    let iota_client = IotaClientBuilder::default().build_devnet().await?;
+    let _identity_client = IdentityClientReadOnly::new(iota_client).await?;
+
+    Ok(())
+  }
+
+  #[tokio::test]
+  async fn can_connect_to_mainnet() -> anyhow::Result<()> {
+    let iota_client = IotaClientBuilder::default().build_mainnet().await?;
+    let _identity_client = IdentityClientReadOnly::new(iota_client).await?;
+
+    Ok(())
+  }
+}
