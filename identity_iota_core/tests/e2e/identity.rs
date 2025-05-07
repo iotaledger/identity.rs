@@ -14,7 +14,6 @@ use identity_iota_core::rebased::migration::Identity;
 use identity_iota_core::rebased::proposals::ProposalResult;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
-use identity_iota_interaction::KeytoolSigner;
 use identity_jose::jwk::ToJwk as _;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
@@ -28,9 +27,9 @@ use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use move_core_types::ident_str;
-use secret_storage::Signer as _;
 use product_core::core_client::CoreClient;
 use product_core::core_client::CoreClientReadOnly;
+use secret_storage::Signer as _;
 
 #[tokio::test]
 async fn identity_deactivation_works() -> anyhow::Result<()> {

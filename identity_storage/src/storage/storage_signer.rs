@@ -5,21 +5,14 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 use fastcrypto::hash::Blake2b256;
 use fastcrypto::traits::ToFromBytes;
-use identity_iota_interaction::shared_crypto::intent::Intent;
-use identity_iota_interaction::types::crypto::PublicKey;
-use identity_iota_interaction::types::crypto::Signature;
-use identity_iota_interaction::types::transaction::TransactionData;
-use identity_iota_interaction::IotaKeySignature;
-use identity_iota_interaction::OptionalSync;
+
 use identity_verification::jwk::FromJwk as _;
 use identity_verification::jwk::Jwk;
-use identity_verification::jwk::JwkParams;
-use identity_verification::jwk::JwkParamsEc;
-use identity_verification::jwu;
+
 use iota_interaction::shared_crypto::intent::Intent;
 use iota_interaction::types::crypto::PublicKey;
 use iota_interaction::types::crypto::Signature;
-use iota_interaction::types::crypto::SignatureScheme as IotaSignatureScheme;
+
 use iota_interaction::types::transaction::TransactionData;
 use iota_interaction::IotaKeySignature;
 use iota_interaction::OptionalSync;

@@ -7,7 +7,7 @@ use crate::error::Error;
 use crate::jwk::Jwk;
 use fastcrypto::ed25519::Ed25519KeyPair;
 use fastcrypto::traits::KeyPair;
-use identity_iota_interaction::types::crypto::PublicKey;
+use iota_interaction::types::crypto::PublicKey;
 
 use super::ed25519;
 use super::secp256k1;
@@ -54,7 +54,7 @@ mod tests {
   mod iota_public_key {
     use super::*;
 
-    use identity_iota_interaction::types::crypto::IotaKeyPair;
+    use iota_interaction::types::crypto::IotaKeyPair;
 
     #[test]
     fn can_convert_from_ed25519_public_key_to_jwk() {
