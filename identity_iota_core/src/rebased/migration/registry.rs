@@ -5,12 +5,12 @@ use std::collections::HashMap;
 use std::str::FromStr as _;
 use std::sync::LazyLock;
 
+use identity_iota_interaction::move_types::language_storage::StructTag;
+use identity_iota_interaction::rpc_types::EventFilter;
 use identity_iota_interaction::rpc_types::IotaData;
 use identity_iota_interaction::types::base_types::ObjectID;
 use identity_iota_interaction::types::id::ID;
 use identity_iota_interaction::IotaClientTrait;
-use iota_sdk::rpc_types::EventFilter;
-use move_core_types::language_storage::StructTag;
 use phf::phf_map;
 use phf::Map;
 use tokio::sync::RwLock;

@@ -3,7 +3,6 @@
 
 use std::future::Future;
 use std::ops::Deref;
-use std::path::Path;
 use std::pin::Pin;
 use std::str::FromStr;
 
@@ -147,13 +146,13 @@ impl IdentityClientReadOnly {
   pub async fn new_with_move_lock(
     #[cfg(target_arch = "wasm32")] iota_client: WasmIotaClient,
     #[cfg(not(target_arch = "wasm32"))] iota_client: IotaClient,
-    move_lock_path: impl AsRef<Path>,
+    move_lock: &str,
   ) -> Result<Self, Error> {
     let client = IotaClientAdapter::new(iota_client);
     let network = network_id(&client).await?;
 
-    let custom_registry = PackageRegistry::from_lock_file(move_lock_path)?;
-    // Update the package's registry with the information coming from the given Move.lock file.
+    let custom_registry = PackageRegistry::from_move_lock_content(move_lock)?;
+    // Update the package's registry with the information coming from the given Move.lock.
     {
       let mut registry = iota::package::identity_package_registry_mut().await;
       registry.join(custom_registry);

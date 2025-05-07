@@ -81,11 +81,6 @@ impl WasmIdentityClientReadOnly {
     self.0.network().to_string()
   }
 
-  #[wasm_bindgen(js_name = migrationRegistryId)]
-  pub fn migration_registry_id(&self) -> String {
-    self.0.migration_registry_id().to_string()
-  }
-
   // TODO: implement later on
   // <
 

@@ -45,7 +45,7 @@ export async function zkp_revocation() {
     unpublishedIssuerDocument.insertService(service);
     const { output: issuerIdentity } = await issuerClient
         .createIdentity(unpublishedIssuerDocument)
-        .finish(issuerClient.readOnly())
+        .finish()
         .buildAndExecute(issuerClient);
     let issuerDocument = issuerIdentity.didDocument();
 
@@ -55,7 +55,7 @@ export async function zkp_revocation() {
     const [unpublishedholderDocument] = await createDocumentForNetwork(holderStorage, network);
     const { output: holderIdentity } = await holderClient
         .createIdentity(unpublishedholderDocument)
-        .finish(holderClient.readOnly())
+        .finish()
         .buildAndExecute(holderClient);
     const holderDocument = holderIdentity.didDocument();
 
@@ -196,7 +196,7 @@ export async function zkp_revocation() {
     // Update the RevocationBitmap service in the issuer's DID Document.
     // This revokes the credential's unique index.
     issuerDocument.revokeCredentials("my-revocation-service", 5);
-    await issuerIdentity.updateDidDocument(issuerDocument, issuerIdentityToken!, issuerClient.readOnly())
+    await issuerIdentity.updateDidDocument(issuerDocument, issuerIdentityToken!)
         .buildAndExecute(
             issuerClient,
         );

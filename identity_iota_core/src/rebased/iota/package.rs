@@ -4,7 +4,6 @@
 #![allow(dead_code)]
 
 use std::collections::HashMap;
-use std::path::Path;
 use std::sync::LazyLock;
 
 use anyhow::Context;
@@ -26,8 +25,8 @@ type PackageRegistryLock = RwLockReadGuard<'static, PackageRegistry>;
 type PackageRegistryLockMut = RwLockWriteGuard<'static, PackageRegistry>;
 
 static IDENTITY_PACKAGE_REGISTRY: LazyLock<RwLock<PackageRegistry>> = LazyLock::new(|| {
-  let move_lock_location = concat!(env!("CARGO_MANIFEST_DIR"), "/packages/iota_identity/Move.lock");
-  RwLock::new(PackageRegistry::from_lock_file(move_lock_location).expect("Move.lock exists and it's valid"))
+  let move_lock_content = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/packages/iota_identity/Move.lock"));
+  RwLock::new(PackageRegistry::from_move_lock_content(move_lock_content).expect("Move.lock exists and it's valid"))
 });
 
 pub(crate) async fn identity_package_registry() -> PackageRegistryLock {
@@ -153,10 +152,8 @@ impl PackageRegistry {
   }
 
   /// Creates a [PackageRegistry] from a Move.lock file.
-  pub(crate) fn from_lock_file(path: impl AsRef<Path>) -> anyhow::Result<Self> {
-    let mut move_lock: toml::Table = std::fs::read_to_string(path)
-      .context("failed to read lock file")?
-      .parse()?;
+  pub(crate) fn from_move_lock_content(move_lock: &str) -> anyhow::Result<Self> {
+    let mut move_lock: toml::Table = move_lock.parse()?;
 
     move_lock
       .remove("env")

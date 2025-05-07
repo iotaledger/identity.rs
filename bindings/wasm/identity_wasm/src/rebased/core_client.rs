@@ -62,7 +62,7 @@ impl WasmManagedCoreClientReadOnly {
       .parse()
       .map_err(|e: ObjectIDParseError| JsError::new(&e.to_string()))?;
     let network = wasm_core_client.network().parse().wasm_result()?;
-    let iota_client_adapter = IotaClientAdapter::new(wasm_core_client.iota_client()).wasm_result()?;
+    let iota_client_adapter = IotaClientAdapter::new(wasm_core_client.iota_client());
 
     Ok(Self {
       package_id,
