@@ -27,7 +27,6 @@ iota-crypto = { version = "0.23.2", default-features = false, features = ["ed255
 json-proof-token = { workspace = true, optional = true }
 k256 = { version = "0.13.3", default-features = false, features = ["std", "ecdsa", "ecdsa-core", "jwk"], optional = true }
 p256 = { version = "0.13.2", default-features = false, features = ["std", "ecdsa", "ecdsa-core", "jwk"], optional = true }
-product-core = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", default-features = false }
 rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"], optional = true }
 seahash = { version = "4.1.0", default-features = false }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", default-features = false, tag = "v0.3.0", optional = true }
@@ -51,6 +50,7 @@ identity_ecdsa_verifier = { version = "=1.6.0-alpha", path = "../identity_ecdsa_
 identity_eddsa_verifier = { version = "=1.6.0-alpha", path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 once_cell = { version = "1.18", default-features = false }
 tokio = { version = "1.43", default-features = false, features = ["macros", "sync", "rt"] }
+product-core = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", default-features = false }
 
 [features]
 default = ["iota-document", "memstore"]
