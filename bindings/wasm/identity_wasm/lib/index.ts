@@ -14,5 +14,7 @@ export * from "./core_client";
 export * from "./proposal";
 export * from "./transaction_internal";
 
+export * as move_calls from "./move_calls";
+
 // keep this export last to override the original `Resolver` from `identity_wasm` in the exports
 export { Resolver } from "./resolver";
