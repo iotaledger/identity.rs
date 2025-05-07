@@ -38,11 +38,10 @@ zkryptium = { workspace = true, optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 iota_interaction = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "iota_interaction", optional = true }
-# iota_interaction = { path = "../../product-core/iota_interaction", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 iota_interaction = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "iota_interaction", default-features = false, optional = true }
-# iota_interaction = { path = "../../product-core/iota_interaction", default-features = false, optional = true }
+
 
 [dev-dependencies]
 identity_credential = { version = "=1.6.0-alpha", path = "../identity_credential", features = ["revocation-bitmap"] }
