@@ -7,11 +7,11 @@ use identity_iota::iota::rebased::migration::ControllerToken;
 use identity_iota::iota::rebased::migration::CreateIdentity;
 use identity_iota::iota::rebased::migration::IdentityBuilder;
 use identity_iota::iota::rebased::migration::OnChainIdentity;
-use product_core::transaction::transaction_builder::{Transaction};
 use identity_iota::iota::IotaDocument;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use iota_interaction_ts::error::WasmResult as _;
 use js_sys::Object;
+use product_core::transaction::transaction_builder::Transaction;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::*;
 

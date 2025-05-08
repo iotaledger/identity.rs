@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::rebased::iota;
-use crate::rebased::rebased_err;
 use crate::IotaDID;
 use crate::IotaDocument;
 use std::fmt::Debug;
@@ -98,7 +97,7 @@ impl IdentityClientReadOnly {
       /// When trying to connect to a local or unofficial network prefer using
       /// [`IdentityClientReadOnly::new_with_pkg_id`].
       pub async fn new(iota_client: IotaClient) -> Result<Self, Error> {
-        Self::new_internal(IotaClientAdapter::new(iota_client).map_err(rebased_err)?).await
+        Self::new_internal(IotaClientAdapter::new(iota_client).map_err(crate::rebased::rebased_err)?).await
       }
     }
   }
@@ -138,7 +137,7 @@ impl IdentityClientReadOnly {
       /// the given [`IotaClient`].
       pub async fn new_with_pkg_id(iota_client: IotaClient, iota_identity_pkg_id: ObjectID) -> Result<Self, Error> {
         Self::new_with_pkg_id_internal(
-          IotaClientAdapter::new(iota_client).map_err(rebased_err)?,
+          IotaClientAdapter::new(iota_client).map_err(crate::rebased::rebased_err)?,
           iota_identity_pkg_id
         ).await
       }
