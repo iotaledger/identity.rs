@@ -6,7 +6,6 @@ use std::collections::HashSet;
 
 use crate::iota_move_calls;
 
-use identity_iota_move_calls::IdentityMoveCalls;
 use iota_interaction::types::transaction::ProgrammableTransaction;
 use iota_interaction::IotaKeySignature;
 use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;

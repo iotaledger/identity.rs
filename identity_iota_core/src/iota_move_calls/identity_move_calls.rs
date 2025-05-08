@@ -408,6 +408,7 @@ pub(crate) fn create_and_execute_borrow<F: BorrowIntentFnInternalT<PrgrTxBuilder
   Ok(bcs::to_bytes(&ptb.finish())?)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn propose_config_change<I1, I2>(
   identity: OwnedObjectRef,
   controller_cap: ControllerTokenRef,

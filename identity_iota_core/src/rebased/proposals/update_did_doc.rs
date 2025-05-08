@@ -8,7 +8,6 @@ use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
 use crate::IotaDocument;
 use async_trait::async_trait;
-use identity_iota_move_calls::IdentityMoveCalls;
 use iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use iota_interaction::types::base_types::ObjectID;
 use iota_interaction::types::TypeTag;

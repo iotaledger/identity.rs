@@ -5,13 +5,13 @@ use std::ops::Deref;
 
 use crate::iota_interaction_adapter::IotaClientAdapter;
 
+use crate::iota_move_calls;
 use crate::rebased::migration::CreateIdentity;
+use crate::IotaDID;
 use crate::IotaDocument;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
-use crate::{iota_move_calls, IotaDID};
 use async_trait::async_trait;
-use identity_iota_move_calls::IdentityMoveCalls as _;
 use identity_verification::jwk::Jwk;
 use iota_interaction::move_types::language_storage::StructTag;
 use iota_interaction::rpc_types::IotaObjectData;

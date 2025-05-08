@@ -7,7 +7,6 @@ use std::marker::PhantomData;
 use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
-use identity_iota_move_calls::IdentityMoveCalls;
 
 use product_core::core_client::CoreClientReadOnly;
 use product_core::transaction::transaction_builder::Transaction;

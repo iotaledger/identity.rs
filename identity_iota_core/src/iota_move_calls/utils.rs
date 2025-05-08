@@ -1,6 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use iota_interaction::ident_str;
 use iota_interaction::rpc_types::OwnedObjectRef;
 use iota_interaction::types::base_types::ObjectID;
 use iota_interaction::types::base_types::STD_OPTION_MODULE_NAME;
@@ -11,7 +12,7 @@ use iota_interaction::types::transaction::ObjectArg;
 use iota_interaction::types::IOTA_CLOCK_OBJECT_ID;
 use iota_interaction::types::IOTA_CLOCK_OBJECT_SHARED_VERSION;
 use iota_interaction::types::MOVE_STDLIB_PACKAGE_ID;
-use iota_interaction::{ident_str, MoveType};
+use iota_interaction::MoveType;
 use serde::Serialize;
 
 use crate::rebased::Error;

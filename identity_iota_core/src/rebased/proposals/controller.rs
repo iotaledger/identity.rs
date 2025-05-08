@@ -10,7 +10,6 @@ use crate::rebased::migration::Proposal;
 
 use crate::rebased::Error;
 use async_trait::async_trait;
-use identity_iota_move_calls::IdentityMoveCalls;
 use iota_interaction::rpc_types::IotaExecutionStatus;
 use iota_interaction::rpc_types::IotaObjectRef;
 use iota_interaction::rpc_types::IotaTransactionBlockEffects;

@@ -4,7 +4,6 @@
 use serde::Serialize;
 
 use crate::rebased::Error;
-use identity_iota_move_calls::AssetMoveCalls;
 use iota_interaction::ident_str;
 use iota_interaction::types::base_types::IotaAddress;
 use iota_interaction::types::base_types::ObjectID;

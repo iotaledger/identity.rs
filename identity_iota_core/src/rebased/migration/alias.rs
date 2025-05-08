@@ -26,9 +26,9 @@ use tokio::sync::OnceCell;
 
 use crate::rebased::client::IdentityClientReadOnly;
 
+use crate::iota_move_calls;
 use crate::rebased::Error;
-use crate::{iota_move_calls, IotaDID};
-use identity_iota_move_calls::MigrationMoveCalls;
+use crate::IotaDID;
 use iota_interaction::IotaClientTrait;
 use iota_interaction::MoveType;
 

@@ -19,7 +19,6 @@ use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
 pub use controller::*;
-use identity_iota_move_calls::IdentityMoveCalls;
 use iota_interaction::rpc_types::IotaExecutionStatus;
 use iota_interaction::rpc_types::IotaObjectData;
 use iota_interaction::rpc_types::IotaObjectDataOptions;
