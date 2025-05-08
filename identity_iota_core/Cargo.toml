@@ -31,9 +31,7 @@ serde.workspace = true
 serde_json.workspace = true
 strum.workspace = true
 thiserror.workspace = true
-product-core = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", features = [
-  "transaction",
-] }
+product-core = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", default-features = false }
 
 # for feature `iota-client`
 bcs = { version = "0.1.4", optional = true }
@@ -122,6 +120,7 @@ iota-client = [
   "dep:rand",
   "dep:secret-storage",
   "dep:serde-aux",
+  "product-core/transaction",
 ]
 
 # Enables revocation with `RevocationBitmap2022`.
