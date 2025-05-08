@@ -107,8 +107,7 @@ impl IdentityClientReadOnly {
       })?;
       let maybe_alias = package_registry
         .chain_alias(&chain_id)
-        .map(|alias| NetworkName::try_from(alias).ok())
-        .flatten();
+        .and_then(|alias| NetworkName::try_from(alias).ok());
       let network = match chain_id.as_str() {
         // Replace Mainnet's name with "iota".
         MAINNET_CHAIN_ID => NetworkName::try_from("iota").expect("valid network name"),
