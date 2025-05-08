@@ -105,13 +105,13 @@ impl IdentityClientReadOnly {
           "no information for a published `iota_identity` package on network {network}; try to use `IdentityClientReadOnly::new_with_package_id`"
         ))
       })?;
-      let maybe_alias = package_registry
-        .chain_alias(&chain_id)
-        .and_then(|alias| NetworkName::try_from(alias).ok());
       let network = match chain_id.as_str() {
         // Replace Mainnet's name with "iota".
         MAINNET_CHAIN_ID => NetworkName::try_from("iota").expect("valid network name"),
-        _ => maybe_alias.unwrap_or(network),
+        _ => package_registry
+          .chain_alias(&chain_id)
+          .and_then(|alias| NetworkName::try_from(alias).ok())
+          .unwrap_or(network),
       };
 
       (network, package_id)
