@@ -83,7 +83,7 @@ impl IdentityClientReadOnly {
   /// network.
   ///
   /// # Notes
-  /// When trying to connect to a local or unofficial network prefer using
+  /// When trying to connect to a local or unofficial network, prefer using
   /// [`IdentityClientReadOnly::new_with_pkg_id`].
   pub async fn new(
     #[cfg(target_arch = "wasm32")] iota_client: WasmIotaClient,

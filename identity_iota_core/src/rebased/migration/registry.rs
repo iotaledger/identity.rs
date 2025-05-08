@@ -140,7 +140,7 @@ where
     returned_events.swap_remove(0)
   } else {
     return Err(Error::NotFound(format!(
-      "No MigrationRegistyrCreated event on network {}",
+      "No MigrationRegistryCreated event on network {}",
       iota_client.network_name()
     )));
   };
