@@ -98,17 +98,21 @@ impl IdentityClientReadOnly {
     let chain_id = network.as_ref().to_string();
     let (network, iota_identity_pkg_id) = {
       let package_registry = iota::package::identity_package_registry().await;
-      let alias = package_registry.chain_alias(&network).ok_or_else(|| {
+      let package_id = package_registry
+        .package_id(&network)
+        .ok_or_else(|| {
         Error::InvalidConfig(format!(
           "no information for a published `iota_identity` package on network {network}; try to use `IdentityClientReadOnly::new_with_package_id`"
         ))
       })?;
-      let package_id = package_registry
-        .package_id(&network)
-        .expect("alias exists so does the package metadata");
-      let network = match network.as_ref() {
+      let maybe_alias = package_registry
+        .chain_alias(&chain_id)
+        .map(|alias| NetworkName::try_from(alias).ok())
+        .flatten();
+      let network = match chain_id.as_str() {
+        // Replace Mainnet's name with "iota".
         MAINNET_CHAIN_ID => NetworkName::try_from("iota").expect("valid network name"),
-        _ => NetworkName::try_from(alias).unwrap_or(network),
+        _ => maybe_alias.unwrap_or(network),
       };
 
       (network, package_id)
