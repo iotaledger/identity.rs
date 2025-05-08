@@ -16,7 +16,7 @@ use identity_iota::credential::Presentation;
 use identity_iota::did::DIDUrl;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::NetworkName;
+use product_core::network_name::NetworkName;
 use identity_iota::iota::StateMetadataEncoding;
 use identity_iota::storage::key_storage::KeyType;
 use identity_iota::storage::storage::JwkDocumentExt;

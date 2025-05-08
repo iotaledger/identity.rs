@@ -7,7 +7,7 @@ use identity_iota::iota::rebased::migration::Proposal;
 use identity_iota::iota::rebased::proposals::ProposalResult;
 use identity_iota::iota::rebased::proposals::ProposalT;
 use identity_iota::iota::rebased::proposals::UpdateDidDocument;
-use identity_iota::iota::rebased::transaction_builder::Transaction;
+use product_core::transaction::transaction_builder::Transaction;
 use identity_iota::iota::StateMetadataDocument;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use js_sys::Object;
