@@ -243,7 +243,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: identity-wasm-bindings-build
-          path: bindings/wasm/
+          path: bindings/wasm/identity_wasm
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
@@ -289,7 +289,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: identity-wasm-bindings-build
-          path: bindings/wasm/
+          path: bindings/wasm/identity_wasm
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
