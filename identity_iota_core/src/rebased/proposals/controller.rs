@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::client::CoreClientReadOnly;
-use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::package::identity_package_id;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
@@ -156,13 +156,16 @@ where
   type Action = ControllerExecution<F>;
   type Output = ();
 
-  async fn create<'i>(
+  async fn create<'i, C>(
     action: Self::Action,
     expiration: Option<u64>,
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
-    client: &IdentityClientReadOnly,
-  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error> {
+    client: &C,
+  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if identity.id() != controller_token.controller_of() {
       return Err(Error::Identity(format!(
         "token {} doesn't grant access to identity {}",
@@ -182,6 +185,7 @@ where
         .expect("is an identity's controller")
         >= identity.threshold();
 
+    let package = identity_package_id(client).await?;
     let ptb = if chained_execution {
       let borrowing_controller_cap_ref = client
         .get_object_ref_by_id(action.controller_cap)
@@ -202,7 +206,7 @@ where
         expiration,
         borrowing_controller_cap_ref,
         maybe_intent_fn.unwrap(),
-        client.package_id(),
+        package,
       )
     } else {
       IdentityMoveCallsAdapter::propose_controller_execution(
@@ -210,7 +214,7 @@ where
         controller_cap_ref,
         action.controller_cap,
         expiration,
-        client.package_id(),
+        package,
       )
     }
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
@@ -223,11 +227,11 @@ where
     }))
   }
 
-  async fn into_tx<'i>(
+  async fn into_tx<'i, C>(
     self,
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
-    _: &IdentityClientReadOnly,
+    _client: &C,
   ) -> Result<UserDrivenTx<'i, Self::Action>, Error> {
     if identity.id() != controller_token.controller_of() {
       return Err(Error::Identity(format!(
@@ -318,6 +322,7 @@ where
       .map(|object_ref| object_ref.reference.to_object_ref())
       .ok_or_else(|| Error::ObjectLookup(format!("object {borrowing_cap_id} doesn't exist")))?;
 
+    let package = identity_package_id(client).await?;
     let tx = IdentityMoveCallsAdapter::execute_controller_execution(
       identity_ref,
       controller_cap_ref,
@@ -330,7 +335,7 @@ where
         .await
         .take()
         .expect("BorrowActionWithIntent makes sure intent_fn is present"),
-      client.package_id(),
+      package,
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 

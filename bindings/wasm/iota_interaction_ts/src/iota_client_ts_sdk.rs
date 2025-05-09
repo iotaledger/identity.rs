@@ -379,10 +379,10 @@ impl IotaClientTrait for IotaClientTsSdk {
 }
 
 impl IotaClientTsSdk {
-  pub fn new(iota_client: WasmIotaClient) -> Result<Self, TsSdkError> {
-    Ok(Self {
+  pub fn new(iota_client: WasmIotaClient) -> Self {
+    Self {
       iota_client: ManagedWasmIotaClient::new(iota_client),
-    })
+    }
   }
 
   pub fn into_inner(self) -> WasmIotaClient {

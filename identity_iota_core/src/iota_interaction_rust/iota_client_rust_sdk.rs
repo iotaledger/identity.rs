@@ -413,8 +413,8 @@ impl IotaClientTrait for IotaClientRustSdk {
 
 impl IotaClientRustSdk {
   /// Creates a new IotaClientRustSdk instance.
-  pub fn new(iota_client: IotaClient) -> Result<Self, Error> {
-    Ok(Self { iota_client })
+  pub fn new(iota_client: IotaClient) -> Self {
+    Self { iota_client }
   }
 
   async fn sdk_execute_transaction<S: Signer<IotaKeySignature>>(
