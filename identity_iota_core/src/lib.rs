@@ -33,9 +33,6 @@ mod did_resolution;
 #[cfg(feature = "iota-client")]
 mod iota_interaction_adapter;
 
-/// IOTA Rust SDK based implementation of the identity_iota_move_calls interface for non wasm targets.
-#[cfg(feature = "iota-client")]
-mod iota_move_calls;
 #[cfg(feature = "iota-client")]
 /// Contains the rebased Identity and the interaction with the IOTA Client.
 pub mod rebased;

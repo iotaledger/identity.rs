@@ -3,12 +3,12 @@
 
 use super::OnChainIdentity;
 
-use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::move_calls;
 
+use crate::rebased::iota::move_calls::ControllerTokenRef;
 use crate::rebased::Error;
 use async_trait::async_trait;
-use identity_iota_move_calls::ControllerTokenRef;
 use iota_interaction::move_types::language_storage::TypeTag;
 use iota_interaction::rpc_types::IotaExecutionStatus;
 use iota_interaction::rpc_types::IotaTransactionBlockEffects;
@@ -399,7 +399,7 @@ impl Transaction for DelegateToken {
       .reference
       .to_object_ref();
 
-    let ptb_bcs = iota_move_calls::identity_move_calls::delegate_controller_cap(
+    let ptb_bcs = move_calls::identity::delegate_controller_cap(
       controller_cap_ref,
       self.recipient,
       self.permissions.0,
@@ -547,14 +547,14 @@ impl Transaction for DelegationTokenRevocation {
       .to_object_ref();
 
     let tx_bytes = if self.is_revocation() {
-      iota_move_calls::identity_move_calls::revoke_delegation_token(
+      move_calls::identity::revoke_delegation_token(
         identity_ref,
         controller_cap_ref,
         self.delegation_token_id,
         self.package,
       )
     } else {
-      iota_move_calls::identity_move_calls::unrevoke_delegation_token(
+      move_calls::identity::unrevoke_delegation_token(
         identity_ref,
         controller_cap_ref,
         self.delegation_token_id,
@@ -644,8 +644,7 @@ impl Transaction for DeleteDelegationToken {
       .to_object_ref();
 
     let tx_bytes =
-      iota_move_calls::identity_move_calls::destroy_delegation_token(identity_ref, delegation_token_ref, self.package)
-        .await?;
+      move_calls::identity::destroy_delegation_token(identity_ref, delegation_token_ref, self.package).await?;
 
     Ok(bcs::from_bytes(&tx_bytes)?)
   }

@@ -3,8 +3,8 @@
 
 use std::str::FromStr as _;
 
-use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::move_calls;
 
 use crate::rebased::Error;
 use anyhow::anyhow;
@@ -416,11 +416,7 @@ impl<'a, T: MoveType + Send + Sync> UpdateContent<'a, T> {
   }
 
   async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
-    let tx_bcs = crate::iota_move_calls::asset_move_calls::update(
-      self.asset.object_ref(client).await?,
-      &self.new_content,
-      self.package,
-    )?;
+    let tx_bcs = move_calls::asset::update(self.asset.object_ref(client).await?, &self.new_content, self.package)?;
 
     Ok(bcs::from_bytes(&tx_bcs)?)
   }
@@ -488,7 +484,7 @@ impl<T: MoveType + Send + Sync> DeleteAsset<T> {
 
   async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let asset_ref = self.asset.object_ref(client).await?;
-    let tx_bcs = iota_move_calls::asset_move_calls::delete::<T>(asset_ref, self.package)?;
+    let tx_bcs = move_calls::asset::delete::<T>(asset_ref, self.package)?;
 
     Ok(bcs::from_bytes(&tx_bcs)?)
   }
@@ -565,7 +561,7 @@ impl<T: MoveType> CreateAsset<T> {
       transferable,
       deletable,
     } = self.builder;
-    let pt_bcs = iota_move_calls::asset_move_calls::new_asset(inner, mutable, transferable, deletable, self.package)?;
+    let pt_bcs = move_calls::asset::new_asset(inner, mutable, transferable, deletable, self.package)?;
     Ok(bcs::from_bytes(&pt_bcs)?)
   }
 }
@@ -661,11 +657,7 @@ impl<T: MoveType + Send + Sync> TransferAsset<T> {
   }
 
   async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
-    let bcs = iota_move_calls::asset_move_calls::transfer::<T>(
-      self.asset.object_ref(client).await?,
-      self.recipient,
-      self.package,
-    )?;
+    let bcs = move_calls::asset::transfer::<T>(self.asset.object_ref(client).await?, self.recipient, self.package)?;
 
     Ok(bcs::from_bytes(&bcs)?)
   }
@@ -776,7 +768,7 @@ impl AcceptTransfer {
       .initial_shared_version(client)
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
-    let bcs = iota_move_calls::asset_move_calls::accept_proposal(
+    let bcs = move_calls::asset::accept_proposal(
       (self.proposal.id(), initial_shared_version),
       cap,
       asset_ref,
@@ -869,7 +861,7 @@ impl ConcludeTransfer {
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
 
-    let tx_bcs = iota_move_calls::asset_move_calls::conclude_or_cancel(
+    let tx_bcs = move_calls::asset::conclude_or_cancel(
       (self.proposal.id(), initial_shared_version),
       cap,
       asset_ref,

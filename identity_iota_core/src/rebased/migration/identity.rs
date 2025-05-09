@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use crate::iota_move_calls;
+use crate::rebased::iota::move_calls;
 
 use iota_interaction::types::transaction::ProgrammableTransaction;
 use iota_interaction::IotaKeySignature;
@@ -639,7 +639,7 @@ impl CreateIdentity {
       .pack(StateMetadataEncoding::default())
       .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
     let pt_bcs = if controllers.is_empty() {
-      iota_move_calls::identity_move_calls::new_identity(Some(&did_doc), self.package).await?
+      move_calls::identity::new_identity(Some(&did_doc), self.package).await?
     } else {
       let threshold = match threshold {
         Some(t) => t,
@@ -659,8 +659,7 @@ impl CreateIdentity {
       let controllers = controllers
         .iter()
         .map(|(addr, (vp, can_delegate))| (*addr, *vp, *can_delegate));
-      iota_move_calls::identity_move_calls::new_with_controllers(Some(&did_doc), controllers, *threshold, self.package)
-        .await?
+      move_calls::identity::new_with_controllers(Some(&did_doc), controllers, *threshold, self.package).await?
     };
 
     Ok(bcs::from_bytes(&pt_bcs)?)

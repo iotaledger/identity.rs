@@ -3,8 +3,8 @@
 
 use std::marker::PhantomData;
 
-use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::migration::Proposal;
 
@@ -195,7 +195,7 @@ where
         })
         .ok_or_else(|| Error::ObjectLookup(format!("object {} doesn't exist", action.controller_cap)))?;
 
-      iota_move_calls::identity_move_calls::create_and_execute_controller_execution(
+      move_calls::identity::create_and_execute_controller_execution(
         identity_ref,
         controller_cap_ref,
         expiration,
@@ -204,7 +204,7 @@ where
         client.package_id(),
       )
     } else {
-      iota_move_calls::identity_move_calls::propose_controller_execution(
+      move_calls::identity::propose_controller_execution(
         identity_ref,
         controller_cap_ref,
         action.controller_cap,
@@ -317,7 +317,7 @@ where
       .map(|object_ref| object_ref.reference.to_object_ref())
       .ok_or_else(|| Error::ObjectLookup(format!("object {borrowing_cap_id} doesn't exist")))?;
 
-    let tx = iota_move_calls::identity_move_calls::execute_controller_execution(
+    let tx = move_calls::identity::execute_controller_execution(
       identity_ref,
       controller_cap_ref,
       *proposal_id,

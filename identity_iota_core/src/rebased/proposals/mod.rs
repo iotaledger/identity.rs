@@ -12,8 +12,8 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
-use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::get_identity;
 use async_trait::async_trait;
 pub use borrow::*;
@@ -351,12 +351,8 @@ impl<A: MoveType> ApproveProposal<'_, '_, A> {
       .await?
       .ok_or_else(|| Error::Identity(format!("identity {} doesn't exist", identity.id())))?;
     let controller_cap = controller_token.controller_ref(client).await?;
-    let tx = iota_move_calls::identity_move_calls::approve_proposal::<A>(
-      identity_ref.clone(),
-      controller_cap,
-      proposal.id(),
-      self.package,
-    )?;
+    let tx =
+      move_calls::identity::approve_proposal::<A>(identity_ref.clone(), controller_cap, proposal.id(), self.package)?;
 
     Ok(bcs::from_bytes(&tx)?)
   }

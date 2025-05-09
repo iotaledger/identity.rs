@@ -23,7 +23,6 @@ members = [
   "identity_ecdsa_verifier",
   "identity_eddsa_verifier",
   "examples",
-  "identity_iota_move_calls",
 ]
 
 exclude = ["bindings/wasm/identity_wasm", "bindings/grpc"]

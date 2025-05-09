@@ -1,8 +1,7 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_interaction::MoveType;
-use crate::rebased::Error;
+use iota_interaction::ident_str;
 use iota_interaction::rpc_types::OwnedObjectRef;
 use iota_interaction::types::base_types::ObjectID;
 use iota_interaction::types::base_types::STD_OPTION_MODULE_NAME;
@@ -13,8 +12,10 @@ use iota_interaction::types::transaction::ObjectArg;
 use iota_interaction::types::IOTA_CLOCK_OBJECT_ID;
 use iota_interaction::types::IOTA_CLOCK_OBJECT_SHARED_VERSION;
 use iota_interaction::types::MOVE_STDLIB_PACKAGE_ID;
-use iota_interaction::ident_str;
+use iota_interaction::MoveType;
 use serde::Serialize;
+
+use crate::rebased::Error;
 
 /// Adds a reference to the on-chain clock to `ptb`'s arguments.
 pub(crate) fn get_clock_ref(ptb: &mut Ptb) -> Argument {
@@ -67,7 +68,7 @@ pub(crate) fn owned_ref_to_shared_object_arg(
   mutable: bool,
 ) -> anyhow::Result<Argument> {
   let Owner::Shared { initial_shared_version } = owned_ref.owner else {
-    anyhow::bail!("Identity \"{}\" is not a shared object", owned_ref.object_id());
+    anyhow::bail!("Object \"{}\" is not a shared object", owned_ref.object_id());
   };
   ptb.obj(ObjectArg::SharedObject {
     id: owned_ref.object_id(),

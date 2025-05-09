@@ -35,7 +35,6 @@ thiserror.workspace = true
 bcs = { version = "0.1.4", optional = true }
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "2f502fd8570fe4e9cff36eea5bbd6fef22002898", package = "fastcrypto", optional = true }
 identity_eddsa_verifier = { version = "=1.6.0-alpha", path = "../identity_eddsa_verifier", optional = true }
-identity_iota_move_calls = { version = "=1.6.0-alpha", path = "../identity_iota_move_calls", optional = true }
 identity_jose = { version = "=1.6.0-alpha", path = "../identity_jose", optional = true }
 iota-crypto = { version = "0.23", optional = true }
 itertools = { version = "0.13.0", optional = true }
@@ -87,7 +86,6 @@ iota-client = [
   "dep:bcs",
   "dep:fastcrypto",
   "dep:identity_eddsa_verifier",
-  "dep:identity_iota_move_calls",
   "dep:identity_jose",
   "dep:iota-config",
   "dep:iota-crypto",

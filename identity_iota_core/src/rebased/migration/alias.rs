@@ -26,7 +26,7 @@ use tokio::sync::OnceCell;
 
 use crate::rebased::client::IdentityClientReadOnly;
 
-use crate::iota_move_calls;
+use crate::rebased::iota::move_calls;
 use crate::rebased::Error;
 use crate::IotaDID;
 use iota_interaction::IotaClientTrait;
@@ -152,13 +152,8 @@ impl MigrateLegacyIdentity {
       .map(|timestamp| timestamp.to_unix() as u64 * 1000);
 
     // Build migration tx.
-    let tx = iota_move_calls::migration_move_calls::migrate_did_output(
-      alias_output_ref,
-      created,
-      migration_registry_ref,
-      self.package,
-    )
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = move_calls::migration::migrate_did_output(alias_output_ref, created, migration_registry_ref, self.package)
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(bcs::from_bytes(&tx)?)
   }

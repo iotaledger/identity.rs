@@ -4,8 +4,8 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::ControllerToken;
 
 use product_core::core_client::CoreClientReadOnly;
@@ -203,7 +203,7 @@ where
         }
         object_data_list
       };
-      iota_move_calls::identity_move_calls::create_and_execute_borrow(
+      move_calls::identity::create_and_execute_borrow(
         identity_ref,
         controller_cap_ref,
         object_data_list,
@@ -212,7 +212,7 @@ where
         client.package_id(),
       )
     } else {
-      iota_move_calls::identity_move_calls::propose_borrow(
+      move_calls::identity::propose_borrow(
         identity_ref,
         controller_cap_ref,
         action.objects,
@@ -322,7 +322,7 @@ where
       object_data_list
     };
 
-    let tx = iota_move_calls::identity_move_calls::execute_borrow(
+    let tx = move_calls::identity::execute_borrow(
       identity_ref,
       controller_token_ref,
       *proposal_id,

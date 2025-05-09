@@ -3,8 +3,8 @@
 
 use std::marker::PhantomData;
 
-use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::ControllerToken;
 use crate::IotaDocument;
 use async_trait::async_trait;
@@ -96,7 +96,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
-    let tx = iota_move_calls::identity_move_calls::propose_update(
+    let tx = move_calls::identity::propose_update(
       identity_ref,
       controller_cap_ref,
       action.0.as_deref(),
@@ -140,14 +140,9 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       .expect("identity exists on-chain");
     let controller_cap_ref = controller_token.controller_ref(client).await?;
 
-    let tx = iota_move_calls::identity_move_calls::execute_update(
-      identity_ref,
-      controller_cap_ref,
-      proposal_id,
-      client.package_id(),
-    )
-    .await
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = move_calls::identity::execute_update(identity_ref, controller_cap_ref, proposal_id, client.package_id())
+      .await
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     let ptb = bcs::from_bytes(&tx)?;
 

@@ -7,8 +7,8 @@ use std::marker::PhantomData;
 use std::ops::DerefMut as _;
 use std::str::FromStr as _;
 
-use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::ControllerToken;
 use product_core::core_client::CoreClientReadOnly;
 use product_core::transaction::transaction_builder::TransactionBuilder;
@@ -248,7 +248,7 @@ impl ProposalT for Proposal<ConfigChange> {
       .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
-    let tx = iota_move_calls::identity_move_calls::propose_config_change(
+    let tx = move_calls::identity::propose_config_change(
       identity_ref,
       controller_cap_ref,
       expiration,
@@ -289,13 +289,9 @@ impl ProposalT for Proposal<ConfigChange> {
       .expect("identity exists on-chain");
     let controller_cap_ref = controller_token.controller_ref(client).await?;
 
-    let tx = iota_move_calls::identity_move_calls::execute_config_change(
-      identity_ref,
-      controller_cap_ref,
-      proposal_id,
-      client.package_id(),
-    )
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx =
+      move_calls::identity::execute_config_change(identity_ref, controller_cap_ref, proposal_id, client.package_id())
+        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(TransactionBuilder::new(ExecuteProposal {
       identity,

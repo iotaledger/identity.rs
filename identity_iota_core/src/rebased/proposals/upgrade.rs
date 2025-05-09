@@ -7,8 +7,8 @@ use iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use product_core::core_client::CoreClientReadOnly;
 use product_core::transaction::transaction_builder::TransactionBuilder;
 
-use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::ControllerToken;
 use async_trait::async_trait;
 use iota_interaction::types::base_types::ObjectID;
@@ -74,13 +74,8 @@ impl ProposalT for Proposal<Upgrade> {
       .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
-    let tx = iota_move_calls::identity_move_calls::propose_upgrade(
-      identity_ref,
-      controller_cap_ref,
-      expiration,
-      client.package_id(),
-    )
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = move_calls::identity::propose_upgrade(identity_ref, controller_cap_ref, expiration, client.package_id())
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(TransactionBuilder::new(CreateProposal {
       identity,
@@ -111,13 +106,8 @@ impl ProposalT for Proposal<Upgrade> {
       .expect("identity exists on-chain");
     let controller_cap_ref = controller_token.controller_ref(client).await?;
 
-    let tx = iota_move_calls::identity_move_calls::execute_upgrade(
-      identity_ref,
-      controller_cap_ref,
-      proposal_id,
-      client.package_id(),
-    )
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = move_calls::identity::execute_upgrade(identity_ref, controller_cap_ref, proposal_id, client.package_id())
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(TransactionBuilder::new(ExecuteProposal {
       identity,

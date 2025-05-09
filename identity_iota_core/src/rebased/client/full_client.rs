@@ -5,7 +5,7 @@ use std::ops::Deref;
 
 use crate::iota_interaction_adapter::IotaClientAdapter;
 
-use crate::iota_move_calls;
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::CreateIdentity;
 use crate::IotaDID;
 use crate::IotaDocument;
@@ -298,13 +298,9 @@ impl PublishDidDocument {
     let did_doc = StateMetadataDocument::from(self.did_document.clone())
       .pack(StateMetadataEncoding::Json)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
-    let programmable_tx_bcs = iota_move_calls::identity_move_calls::new_with_controllers(
-      Some(&did_doc),
-      [(self.controller, 1, false)],
-      1,
-      self.package,
-    )
-    .await?;
+    let programmable_tx_bcs =
+      move_calls::identity::new_with_controllers(Some(&did_doc), [(self.controller, 1, false)], 1, self.package)
+        .await?;
     Ok(bcs::from_bytes(&programmable_tx_bcs)?)
   }
 }
