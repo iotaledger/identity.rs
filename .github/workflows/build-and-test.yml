@@ -243,7 +243,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: identity-wasm-bindings-build
-          path: bindings/wasm/
+          path: bindings/wasm/identity_wasm
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'
@@ -258,14 +258,6 @@ jobs:
 
       - name: Install JS dependencies
         run: npm ci
-        working-directory: bindings/wasm/identity_wasm
-
-      - name: Install JS dependencies # This is problematic: @iota/iota-sdk seems to not get used from the identity_wasm package, that is why reinstall deps here
-        run: npm ci
-        working-directory: bindings/wasm/iota_interaction_ts
-
-      - name: Setup link
-        run: npm link ../iota_interaction_ts
         working-directory: bindings/wasm/identity_wasm
 
       - name: Run Wasm examples
@@ -297,15 +289,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: identity-wasm-bindings-build
-          path: bindings/wasm/
-
-      - name: Install JS dependencies # This is problematic: @iota/iota-sdk seems to not get used from the identity_wasm package, that is why reinstall deps here
-        run: npm ci
-        working-directory: bindings/wasm/iota_interaction_ts
-
-      - name: Setup link
-        run: npm link ../iota_interaction_ts
-        working-directory: bindings/wasm/identity_wasm
+          path: bindings/wasm/identity_wasm
 
       - name: Start iota sandbox
         uses: './.github/actions/iota-rebase-sandbox/setup'

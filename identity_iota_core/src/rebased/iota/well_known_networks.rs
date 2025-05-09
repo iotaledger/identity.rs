@@ -1,11 +1,10 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectID;
 use phf::phf_map;
 use phf::Map;
-
-use crate::NetworkName;
+use product_core::network_name::NetworkName;
 
 /// A Mapping `network_id` -> metadata needed by the library.
 pub(crate) static IOTA_NETWORKS: Map<&str, IdentityNetworkMetadata> = phf_map! {
@@ -78,7 +77,7 @@ impl IdentityNetworkMetadata {
 
 #[cfg(test)]
 mod test {
-  use identity_iota_interaction::IotaClientBuilder;
+  use iota_interaction::IotaClientBuilder;
 
   use crate::rebased::client::IdentityClientReadOnly;
 

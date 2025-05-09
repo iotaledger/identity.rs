@@ -7,28 +7,27 @@ use std::marker::PhantomData;
 use std::ops::DerefMut as _;
 use std::str::FromStr as _;
 
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::CoreClientReadOnly;
+use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
-use crate::rebased::transaction_builder::TransactionBuilder;
-use identity_iota_interaction::IdentityMoveCalls;
+use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::transaction_builder::TransactionBuilder;
 
 use crate::rebased::migration::Proposal;
 use async_trait::async_trait;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::collection_types::Entry;
-use identity_iota_interaction::types::collection_types::VecMap;
-use identity_iota_interaction::types::TypeTag;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::collection_types::Entry;
+use iota_interaction::types::collection_types::VecMap;
+use iota_interaction::types::TypeTag;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::rebased::iota::types::Number;
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::Error;
-use identity_iota_interaction::MoveType;
+use iota_interaction::MoveType;
 
 use super::CreateProposal;
 use super::ExecuteProposal;
@@ -249,7 +248,7 @@ impl ProposalT for Proposal<ConfigChange> {
       .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
-    let tx = IdentityMoveCallsAdapter::propose_config_change(
+    let tx = iota_move_calls::identity_move_calls::propose_config_change(
       identity_ref,
       controller_cap_ref,
       expiration,
@@ -290,7 +289,7 @@ impl ProposalT for Proposal<ConfigChange> {
       .expect("identity exists on-chain");
     let controller_cap_ref = controller_token.controller_ref(client).await?;
 
-    let tx = IdentityMoveCallsAdapter::execute_config_change(
+    let tx = iota_move_calls::identity_move_calls::execute_config_change(
       identity_ref,
       controller_cap_ref,
       proposal_id,

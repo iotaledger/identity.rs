@@ -3,36 +3,36 @@
 
 use std::str::FromStr as _;
 
-use crate::iota_interaction_adapter::AssetMoveCallsAdapter;
-
-use crate::rebased::client::CoreClientReadOnly;
+use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
+
 use crate::rebased::Error;
 use anyhow::anyhow;
 use anyhow::Context;
 use async_trait::async_trait;
-use identity_iota_interaction::ident_str;
-use identity_iota_interaction::move_types::language_storage::StructTag;
-use identity_iota_interaction::rpc_types::IotaData as _;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::types::base_types::SequenceNumber;
-use identity_iota_interaction::types::id::UID;
-use identity_iota_interaction::types::object::Owner;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::AssetMoveCalls;
-use identity_iota_interaction::IotaClientTrait;
-use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
-use identity_iota_interaction::MoveType;
-use identity_iota_interaction::OptionalSync;
+
+use iota_interaction::ident_str;
+use iota_interaction::move_types::language_storage::StructTag;
+use iota_interaction::rpc_types::IotaData as _;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaObjectDataOptions;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectRef;
+use iota_interaction::types::base_types::SequenceNumber;
+use iota_interaction::types::id::UID;
+use iota_interaction::types::object::Owner;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::types::TypeTag;
+use iota_interaction::IotaClientTrait;
+use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use iota_interaction::MoveType;
+use iota_interaction::OptionalSync;
+use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::transaction_builder::Transaction;
+use product_core::transaction::transaction_builder::TransactionBuilder;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde::Deserializer;
@@ -416,7 +416,11 @@ impl<'a, T: MoveType + Send + Sync> UpdateContent<'a, T> {
   }
 
   async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
-    let tx_bcs = AssetMoveCallsAdapter::update(self.asset.object_ref(client).await?, &self.new_content, self.package)?;
+    let tx_bcs = crate::iota_move_calls::asset_move_calls::update(
+      self.asset.object_ref(client).await?,
+      &self.new_content,
+      self.package,
+    )?;
 
     Ok(bcs::from_bytes(&tx_bcs)?)
   }
@@ -429,8 +433,9 @@ where
   T: MoveType + Send + Sync,
 {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -440,7 +445,7 @@ where
     self,
     mut effects: IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -483,7 +488,7 @@ impl<T: MoveType + Send + Sync> DeleteAsset<T> {
 
   async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let asset_ref = self.asset.object_ref(client).await?;
-    let tx_bcs = AssetMoveCallsAdapter::delete::<T>(asset_ref, self.package)?;
+    let tx_bcs = iota_move_calls::asset_move_calls::delete::<T>(asset_ref, self.package)?;
 
     Ok(bcs::from_bytes(&tx_bcs)?)
   }
@@ -496,8 +501,9 @@ where
   T: MoveType + Send + Sync,
 {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -507,7 +513,7 @@ where
     self,
     mut effects: IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -559,7 +565,7 @@ impl<T: MoveType> CreateAsset<T> {
       transferable,
       deletable,
     } = self.builder;
-    let pt_bcs = AssetMoveCallsAdapter::new_asset(inner, mutable, transferable, deletable, self.package)?;
+    let pt_bcs = iota_move_calls::asset_move_calls::new_asset(inner, mutable, transferable, deletable, self.package)?;
     Ok(bcs::from_bytes(&pt_bcs)?)
   }
 }
@@ -571,8 +577,9 @@ where
   T: MoveType + DeserializeOwned + PartialEq + Send + Sync,
 {
   type Output = AuthenticatedAsset<T>;
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -583,7 +590,7 @@ where
     self,
     mut effects: IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -654,7 +661,11 @@ impl<T: MoveType + Send + Sync> TransferAsset<T> {
   }
 
   async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
-    let bcs = AssetMoveCallsAdapter::transfer::<T>(self.asset.object_ref(client).await?, self.recipient, self.package)?;
+    let bcs = iota_move_calls::asset_move_calls::transfer::<T>(
+      self.asset.object_ref(client).await?,
+      self.recipient,
+      self.package,
+    )?;
 
     Ok(bcs::from_bytes(&bcs)?)
   }
@@ -667,8 +678,9 @@ where
   T: MoveType + Send + Sync,
 {
   type Output = TransferProposal;
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -678,7 +690,7 @@ where
     self,
     mut effects: IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -764,7 +776,7 @@ impl AcceptTransfer {
       .initial_shared_version(client)
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
-    let bcs = AssetMoveCallsAdapter::accept_proposal(
+    let bcs = iota_move_calls::asset_move_calls::accept_proposal(
       (self.proposal.id(), initial_shared_version),
       cap,
       asset_ref,
@@ -780,8 +792,9 @@ impl AcceptTransfer {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for AcceptTransfer {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -792,7 +805,7 @@ impl Transaction for AcceptTransfer {
     self,
     mut effects: IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -856,7 +869,7 @@ impl ConcludeTransfer {
       .await
       .map_err(|e| Error::ObjectLookup(e.to_string()))?;
 
-    let tx_bcs = AssetMoveCallsAdapter::conclude_or_cancel(
+    let tx_bcs = iota_move_calls::asset_move_calls::conclude_or_cancel(
       (self.proposal.id(), initial_shared_version),
       cap,
       asset_ref,
@@ -872,8 +885,9 @@ impl ConcludeTransfer {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for ConcludeTransfer {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {

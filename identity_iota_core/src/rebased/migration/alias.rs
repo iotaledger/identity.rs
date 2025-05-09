@@ -4,32 +4,33 @@
 use async_trait::async_trait;
 use identity_core::common::Url;
 use identity_did::DID as _;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::id::UID;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::types::STARDUST_PACKAGE_ID;
-use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
-use identity_iota_interaction::OptionalSync;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaObjectDataOptions;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::id::UID;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::types::TypeTag;
+use iota_interaction::types::STARDUST_PACKAGE_ID;
+use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use iota_interaction::OptionalSync;
+
+use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::transaction_builder::Transaction;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 use tokio::sync::OnceCell;
 
-use crate::iota_interaction_adapter::MigrationMoveCallsAdapter;
-use crate::rebased::client::CoreClientReadOnly;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::transaction_builder::Transaction;
+
+use crate::iota_move_calls;
 use crate::rebased::Error;
 use crate::IotaDID;
-use identity_iota_interaction::IotaClientTrait;
-use identity_iota_interaction::MigrationMoveCalls;
-use identity_iota_interaction::MoveType;
+use iota_interaction::IotaClientTrait;
+use iota_interaction::MoveType;
 
 use super::get_identity;
 use super::Identity;
@@ -151,9 +152,13 @@ impl MigrateLegacyIdentity {
       .map(|timestamp| timestamp.to_unix() as u64 * 1000);
 
     // Build migration tx.
-    let tx =
-      MigrationMoveCallsAdapter::migrate_did_output(alias_output_ref, created, migration_registry_ref, self.package)
-        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = iota_move_calls::migration_move_calls::migrate_did_output(
+      alias_output_ref,
+      created,
+      migration_registry_ref,
+      self.package,
+    )
+    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(bcs::from_bytes(&tx)?)
   }
@@ -163,8 +168,9 @@ impl MigrateLegacyIdentity {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for MigrateLegacyIdentity {
   type Output = OnChainIdentity;
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -175,7 +181,7 @@ impl Transaction for MigrateLegacyIdentity {
     self,
     mut effects: IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {

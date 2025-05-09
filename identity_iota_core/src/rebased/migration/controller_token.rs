@@ -1,6 +1,33 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::OnChainIdentity;
+
+use crate::iota_move_calls;
+use crate::rebased::client::IdentityClientReadOnly;
+
+use crate::rebased::Error;
+use async_trait::async_trait;
+use identity_iota_move_calls::ControllerTokenRef;
+use iota_interaction::move_types::language_storage::TypeTag;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::id::UID;
+use iota_interaction::types::object::Owner;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::IotaTransactionBlockEffectsMutAPI;
+use iota_interaction::MoveType;
+use iota_interaction::OptionalSync;
+use itertools::Itertools as _;
+use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::transaction_builder::Transaction;
+use product_core::transaction::transaction_builder::TransactionBuilder;
+use serde::Deserialize;
+use serde::Deserializer;
+use serde::Serialize;
 use std::ops::BitAnd;
 use std::ops::BitAndAssign;
 use std::ops::BitOr;
@@ -8,35 +35,6 @@ use std::ops::BitOrAssign;
 use std::ops::BitXor;
 use std::ops::BitXorAssign;
 use std::ops::Not;
-
-use async_trait::async_trait;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::id::UID;
-use identity_iota_interaction::types::object::Owner;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::ControllerTokenRef;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
-use identity_iota_interaction::MoveType;
-use identity_iota_interaction::OptionalSync;
-use itertools::Itertools as _;
-use serde::Deserialize;
-use serde::Deserializer;
-use serde::Serialize;
-
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::CoreClientReadOnly;
-use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
-use crate::rebased::Error;
-
-use super::OnChainIdentity;
 
 /// A token that proves ownership over an object.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -389,8 +387,8 @@ impl DelegateToken {
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 impl Transaction for DelegateToken {
   type Output = DelegationToken;
-
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  type Error = Error;
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -401,7 +399,7 @@ impl Transaction for DelegateToken {
       .reference
       .to_object_ref();
 
-    let ptb_bcs = IdentityMoveCallsAdapter::delegate_controller_cap(
+    let ptb_bcs = iota_move_calls::identity_move_calls::delegate_controller_cap(
       controller_cap_ref,
       self.recipient,
       self.permissions.0,
@@ -415,7 +413,7 @@ impl Transaction for DelegateToken {
     self,
     mut effects: IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -531,8 +529,9 @@ impl DelegationTokenRevocation {
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 impl Transaction for DelegationTokenRevocation {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -548,21 +547,20 @@ impl Transaction for DelegationTokenRevocation {
       .to_object_ref();
 
     let tx_bytes = if self.is_revocation() {
-      IdentityMoveCallsAdapter::revoke_delegation_token(
+      iota_move_calls::identity_move_calls::revoke_delegation_token(
         identity_ref,
         controller_cap_ref,
         self.delegation_token_id,
         self.package,
       )
     } else {
-      IdentityMoveCallsAdapter::unrevoke_delegation_token(
+      iota_move_calls::identity_move_calls::unrevoke_delegation_token(
         identity_ref,
         controller_cap_ref,
         self.delegation_token_id,
         self.package,
       )
-    }
-    .await?;
+    }?;
 
     Ok(bcs::from_bytes(&tx_bytes)?)
   }
@@ -571,7 +569,7 @@ impl Transaction for DelegationTokenRevocation {
     self,
     effects: IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -623,8 +621,9 @@ impl DeleteDelegationToken {
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 impl Transaction for DeleteDelegationToken {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -645,7 +644,8 @@ impl Transaction for DeleteDelegationToken {
       .to_object_ref();
 
     let tx_bytes =
-      IdentityMoveCallsAdapter::destroy_delegation_token(identity_ref, delegation_token_ref, self.package).await?;
+      iota_move_calls::identity_move_calls::destroy_delegation_token(identity_ref, delegation_token_ref, self.package)
+        .await?;
 
     Ok(bcs::from_bytes(&tx_bytes)?)
   }
@@ -654,7 +654,7 @@ impl Transaction for DeleteDelegationToken {
     self,
     mut effects: IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {

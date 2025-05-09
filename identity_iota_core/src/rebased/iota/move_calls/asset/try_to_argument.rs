@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use serde::Serialize;
-use identity_iota_interaction::{ident_str, MoveType, TypedValue};
-use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::transaction::{Argument, Command, ProgrammableMoveCall};
+use iota_interaction::{ident_str, MoveType, TypedValue};
+use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::transaction::{Argument, Command, ProgrammableMoveCall};
 use crate::rebased::Error;
 
 pub(crate) fn try_to_argument<T: MoveType + Serialize>(

@@ -3,8 +3,8 @@
 
 mod number;
 
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::id::UID;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::id::UID;
 pub(crate) use number::*;
 use serde::Deserialize;
 use serde::Serialize;

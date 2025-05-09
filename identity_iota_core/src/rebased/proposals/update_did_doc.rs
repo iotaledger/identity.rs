@@ -3,25 +3,23 @@
 
 use std::marker::PhantomData;
 
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::IdentityMoveCalls;
-
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::CoreClientReadOnly;
+use crate::iota_move_calls;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::ControllerToken;
-use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::IotaDocument;
 use async_trait::async_trait;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::TypeTag;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::TypeTag;
+use product_core::core_client::CoreClientReadOnly;
+use product_core::transaction::transaction_builder::TransactionBuilder;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::migration::Proposal;
 use crate::rebased::Error;
-use identity_iota_interaction::MoveType;
+use iota_interaction::MoveType;
 
 use super::CreateProposal;
 use super::ExecuteProposal;
@@ -98,7 +96,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
-    let tx = IdentityMoveCallsAdapter::propose_update(
+    let tx = iota_move_calls::identity_move_calls::propose_update(
       identity_ref,
       controller_cap_ref,
       action.0.as_deref(),
@@ -142,10 +140,14 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       .expect("identity exists on-chain");
     let controller_cap_ref = controller_token.controller_ref(client).await?;
 
-    let tx =
-      IdentityMoveCallsAdapter::execute_update(identity_ref, controller_cap_ref, proposal_id, client.package_id())
-        .await
-        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = iota_move_calls::identity_move_calls::execute_update(
+      identity_ref,
+      controller_cap_ref,
+      proposal_id,
+      client.package_id(),
+    )
+    .await
+    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     let ptb = bcs::from_bytes(&tx)?;
 

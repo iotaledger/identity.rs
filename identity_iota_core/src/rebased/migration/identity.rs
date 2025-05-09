@@ -4,14 +4,17 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::IotaKeySignature;
-use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
-use identity_iota_interaction::OptionalSync;
+use crate::iota_move_calls;
+
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::IotaKeySignature;
+use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use iota_interaction::OptionalSync;
+use product_core::core_client::CoreClient;
+use product_core::core_client::CoreClientReadOnly;
+use product_core::network_name::NetworkName;
+use product_core::transaction::transaction_builder::Transaction;
+use product_core::transaction::transaction_builder::TransactionBuilder;
 use secret_storage::Signer;
 use tokio::sync::OnceCell;
 
@@ -19,32 +22,30 @@ use crate::rebased::iota::types::Number;
 use crate::rebased::proposals::Upgrade;
 use crate::IotaDID;
 use crate::IotaDocument;
-use crate::NetworkName;
+
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 use async_trait::async_trait;
 use identity_core::common::Timestamp;
-use identity_iota_interaction::ident_str;
-use identity_iota_interaction::move_types::language_storage::StructTag;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaObjectData;
-use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
-use identity_iota_interaction::rpc_types::IotaParsedData;
-use identity_iota_interaction::rpc_types::IotaParsedMoveObject;
-use identity_iota_interaction::rpc_types::IotaPastObjectResponse;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::id::UID;
-use identity_iota_interaction::types::object::Owner;
-use identity_iota_interaction::types::TypeTag;
+use iota_interaction::ident_str;
+use iota_interaction::move_types::language_storage::StructTag;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaObjectData;
+use iota_interaction::rpc_types::IotaObjectDataOptions;
+use iota_interaction::rpc_types::IotaParsedData;
+use iota_interaction::rpc_types::IotaParsedMoveObject;
+use iota_interaction::rpc_types::IotaPastObjectResponse;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::id::UID;
+use iota_interaction::types::object::Owner;
+use iota_interaction::types::TypeTag;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::rebased::client::CoreClient;
-use crate::rebased::client::CoreClientReadOnly;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::proposals::BorrowAction;
@@ -55,8 +56,8 @@ use crate::rebased::proposals::SendAction;
 use crate::rebased::proposals::UpdateDidDocument;
 use crate::rebased::rebased_err;
 use crate::rebased::Error;
-use identity_iota_interaction::IotaClientTrait;
-use identity_iota_interaction::MoveType;
+use iota_interaction::IotaClientTrait;
+use iota_interaction::MoveType;
 
 use super::ControllerCap;
 use super::ControllerToken;
@@ -302,7 +303,7 @@ impl OnChainIdentity {
     } else {
       // no version given, this version will be included in history
       let version = identity_ref.version();
-      let response = client.get_past_object(object_id, version).await?;
+      let response = client.get_past_object(object_id, version).await.map_err(rebased_err)?;
       let latest_version = if let IotaPastObjectResponse::VersionFound(response_value) = response {
         response_value
       } else {
@@ -638,7 +639,7 @@ impl CreateIdentity {
       .pack(StateMetadataEncoding::default())
       .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
     let pt_bcs = if controllers.is_empty() {
-      IdentityMoveCallsAdapter::new_identity(Some(&did_doc), self.package).await?
+      iota_move_calls::identity_move_calls::new_identity(Some(&did_doc), self.package).await?
     } else {
       let threshold = match threshold {
         Some(t) => t,
@@ -658,7 +659,8 @@ impl CreateIdentity {
       let controllers = controllers
         .iter()
         .map(|(addr, (vp, can_delegate))| (*addr, *vp, *can_delegate));
-      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), controllers, *threshold, self.package).await?
+      iota_move_calls::identity_move_calls::new_with_controllers(Some(&did_doc), controllers, *threshold, self.package)
+        .await?
     };
 
     Ok(bcs::from_bytes(&pt_bcs)?)
@@ -669,8 +671,9 @@ impl CreateIdentity {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for CreateIdentity {
   type Output = OnChainIdentity;
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -681,7 +684,7 @@ impl Transaction for CreateIdentity {
     mut self,
     mut effects: IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
   where
     C: CoreClientReadOnly + OptionalSync,
   {

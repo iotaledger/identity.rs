@@ -1,18 +1,18 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use identity_iota_interaction::types::transaction::Argument;
-use identity_iota_interaction::types::transaction::ObjectArg;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::ident_str;
+use iota_interaction::rpc_types::OwnedObjectRef;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectRef;
+use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
+use iota_interaction::types::transaction::Argument;
+use iota_interaction::types::transaction::ObjectArg;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::ident_str;
 
 use crate::rebased::iota::move_calls::utils;
 use crate::rebased::proposals::ControllerExecution;
-use identity_iota_interaction::MoveType;
+use iota_interaction::MoveType;
 
 use super::ProposalContext;
 
