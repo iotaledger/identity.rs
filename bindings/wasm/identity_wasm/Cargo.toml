@@ -60,7 +60,7 @@ optional = true
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 getrandom = { version = "0.2", default-features = false, features = ["js"] }
-getrandom_0_3 = { version = "0.3", default-features = false, features = ["wasm_js"] }
+getrandom_0_3 = { package = "getrandom", version = "0.3", default-features = false, features = ["wasm_js"] }
 
 [profile.release]
 opt-level = 's'
