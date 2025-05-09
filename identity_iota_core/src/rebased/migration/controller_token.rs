@@ -31,7 +31,7 @@ use serde::Serialize;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::client::CoreClientReadOnly;
-use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::package::identity_package_id;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::rebased::Error;
@@ -181,7 +181,6 @@ impl ControllerCap {
     &self,
     recipient: IotaAddress,
     permissions: Option<DelegatePermissions>,
-    client: &IdentityClientReadOnly,
   ) -> Option<TransactionBuilder<DelegateToken>> {
     if !self.can_delegate {
       return None;
@@ -189,7 +188,7 @@ impl ControllerCap {
 
     let tx = {
       let permissions = permissions.unwrap_or_default();
-      DelegateToken::new_with_permissions(self, recipient, permissions, client)
+      DelegateToken::new_with_permissions(self, recipient, permissions)
     };
 
     Some(TransactionBuilder::new(tx))
@@ -359,14 +358,13 @@ pub struct DelegateToken {
   cap_id: ObjectID,
   permissions: DelegatePermissions,
   recipient: IotaAddress,
-  package: ObjectID,
 }
 
 impl DelegateToken {
   /// Creates a new [DelegateToken] transaction that will create a new [DelegationToken] with all permissions
   /// for `controller_cap` and send it to `recipient`.
-  pub fn new(controller_cap: &ControllerCap, recipient: IotaAddress, client: &IdentityClientReadOnly) -> Self {
-    Self::new_with_permissions(controller_cap, recipient, DelegatePermissions::default(), client)
+  pub fn new(controller_cap: &ControllerCap, recipient: IotaAddress) -> Self {
+    Self::new_with_permissions(controller_cap, recipient, DelegatePermissions::default())
   }
 
   /// Same as [DelegateToken::new] but permissions for the new token can be specified.
@@ -374,13 +372,11 @@ impl DelegateToken {
     controller_cap: &ControllerCap,
     recipient: IotaAddress,
     permissions: DelegatePermissions,
-    client: &IdentityClientReadOnly,
   ) -> Self {
     Self {
       cap_id: controller_cap.id(),
       permissions,
       recipient,
-      package: client.package_id(),
     }
   }
 }
@@ -394,6 +390,7 @@ impl Transaction for DelegateToken {
   where
     C: CoreClientReadOnly + OptionalSync,
   {
+    let package = identity_package_id(client).await?;
     let controller_cap_ref = client
       .get_object_ref_by_id(self.cap_id)
       .await?
@@ -405,7 +402,7 @@ impl Transaction for DelegateToken {
       controller_cap_ref,
       self.recipient,
       self.permissions.0,
-      self.package,
+      package,
     )
     .await?;
     Ok(bcs::from_bytes(&ptb_bcs)?)
@@ -469,7 +466,6 @@ pub struct DelegationTokenRevocation {
   delegation_token_id: ObjectID,
   // `true` revokes the token, `false` un-revokes it.
   revoke: bool,
-  package: ObjectID,
 }
 
 impl DelegationTokenRevocation {
@@ -477,7 +473,6 @@ impl DelegationTokenRevocation {
     identity: &OnChainIdentity,
     controller_cap: &ControllerCap,
     delegation_token: &DelegationToken,
-    client: &IdentityClientReadOnly,
     is_revocation: bool,
   ) -> Result<Self, Error> {
     if delegation_token.controller_of != identity.id() {
@@ -493,7 +488,6 @@ impl DelegationTokenRevocation {
       controller_cap_id: controller_cap.id(),
       delegation_token_id: delegation_token.id,
       revoke: is_revocation,
-      package: client.package_id(),
     })
   }
   /// Returns a new [DelegationTokenRevocation] that will revoke [DelegationToken] `delegation_token_id`.
@@ -501,9 +495,8 @@ impl DelegationTokenRevocation {
     identity: &OnChainIdentity,
     controller_cap: &ControllerCap,
     delegation_token: &DelegationToken,
-    client: &IdentityClientReadOnly,
   ) -> Result<Self, Error> {
-    Self::revocation_impl(identity, controller_cap, delegation_token, client, true)
+    Self::revocation_impl(identity, controller_cap, delegation_token, true)
   }
 
   /// Returns a new [DelegationTokenRevocation] that will un-revoke [DelegationToken] `delegation_token_id`.
@@ -511,9 +504,8 @@ impl DelegationTokenRevocation {
     identity: &OnChainIdentity,
     controller_cap: &ControllerCap,
     delegation_token: &DelegationToken,
-    client: &IdentityClientReadOnly,
   ) -> Result<Self, Error> {
-    Self::revocation_impl(identity, controller_cap, delegation_token, client, false)
+    Self::revocation_impl(identity, controller_cap, delegation_token, false)
   }
 
   /// Returns `true` if this transaction is used to revoke a token.
@@ -536,6 +528,7 @@ impl Transaction for DelegationTokenRevocation {
   where
     C: CoreClientReadOnly + OptionalSync,
   {
+    let package = identity_package_id(client).await?;
     let identity_ref = client
       .get_object_ref_by_id(self.identity_id)
       .await?
@@ -552,14 +545,14 @@ impl Transaction for DelegationTokenRevocation {
         identity_ref,
         controller_cap_ref,
         self.delegation_token_id,
-        self.package,
+        package,
       )
     } else {
       IdentityMoveCallsAdapter::unrevoke_delegation_token(
         identity_ref,
         controller_cap_ref,
         self.delegation_token_id,
-        self.package,
+        package,
       )
     }
     .await?;
@@ -588,16 +581,11 @@ impl Transaction for DelegationTokenRevocation {
 pub struct DeleteDelegationToken {
   identity_id: ObjectID,
   delegation_token_id: ObjectID,
-  package: ObjectID,
 }
 
 impl DeleteDelegationToken {
   /// Returns a new [DeleteDelegationToken] [Transaction], that will delete the given [DelegationToken].
-  pub fn new(
-    identity: &OnChainIdentity,
-    delegation_token: DelegationToken,
-    client: &IdentityClientReadOnly,
-  ) -> Result<Self, Error> {
+  pub fn new(identity: &OnChainIdentity, delegation_token: DelegationToken) -> Result<Self, Error> {
     if identity.id() != delegation_token.controller_of {
       return Err(Error::Identity(format!(
         "DelegationToken {} has no control over Identity {}",
@@ -609,7 +597,6 @@ impl DeleteDelegationToken {
     Ok(Self {
       identity_id: identity.id(),
       delegation_token_id: delegation_token.id,
-      package: client.package_id(),
     })
   }
 
@@ -628,6 +615,7 @@ impl Transaction for DeleteDelegationToken {
   where
     C: CoreClientReadOnly + OptionalSync,
   {
+    let package = identity_package_id(client).await?;
     let identity_ref = client
       .get_object_ref_by_id(self.identity_id)
       .await?
@@ -645,7 +633,7 @@ impl Transaction for DeleteDelegationToken {
       .to_object_ref();
 
     let tx_bytes =
-      IdentityMoveCallsAdapter::destroy_delegation_token(identity_ref, delegation_token_ref, self.package).await?;
+      IdentityMoveCallsAdapter::destroy_delegation_token(identity_ref, delegation_token_ref, package).await?;
 
     Ok(bcs::from_bytes(&tx_bytes)?)
   }

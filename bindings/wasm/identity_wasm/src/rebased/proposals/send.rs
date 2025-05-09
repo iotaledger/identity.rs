@@ -21,7 +21,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use crate::rebased::WasmControllerToken;
 use crate::rebased::WasmCoreClientReadOnly;
-use crate::rebased::WasmIdentityClientReadOnly;
 use crate::rebased::WasmManagedCoreClientReadOnly;
 use crate::rebased::WasmOnChainIdentity;
 use crate::rebased::WasmTransactionBuilder;
@@ -109,9 +108,8 @@ impl WasmProposalSend {
     &self,
     identity: &WasmOnChainIdentity,
     controller_token: &WasmControllerToken,
-    identity_client: &WasmIdentityClientReadOnly,
   ) -> WasmTransactionBuilder {
-    let tx = WasmApproveSendProposal::new(self, identity, controller_token, identity_client);
+    let tx = WasmApproveSendProposal::new(self, identity, controller_token);
     WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into())
   }
 
@@ -120,9 +118,8 @@ impl WasmProposalSend {
     self,
     identity: &WasmOnChainIdentity,
     controller_token: &WasmControllerToken,
-    identity_client: &WasmIdentityClientReadOnly,
   ) -> WasmTransactionBuilder {
-    let tx = WasmExecuteSendProposal::new(self, identity, controller_token, identity_client);
+    let tx = WasmExecuteSendProposal::new(self, identity, controller_token);
     WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into())
   }
 }
@@ -132,22 +129,15 @@ pub struct WasmApproveSendProposal {
   proposal: WasmProposalSend,
   identity: WasmOnChainIdentity,
   controller_token: WasmControllerToken,
-  identity_client: WasmIdentityClientReadOnly,
 }
 
 #[wasm_bindgen(js_class = ApproveSendProposal)]
 impl WasmApproveSendProposal {
-  fn new(
-    proposal: &WasmProposalSend,
-    identity: &WasmOnChainIdentity,
-    controller_token: &WasmControllerToken,
-    identity_client: &WasmIdentityClientReadOnly,
-  ) -> Self {
+  fn new(proposal: &WasmProposalSend, identity: &WasmOnChainIdentity, controller_token: &WasmControllerToken) -> Self {
     Self {
       proposal: proposal.clone(),
       identity: identity.clone(),
       controller_token: controller_token.clone(),
-      identity_client: identity_client.clone(),
     }
   }
 
@@ -157,7 +147,7 @@ impl WasmApproveSendProposal {
     let identity_ref = self.identity.0.read().await;
     let mut proposal_ref = self.proposal.0.write().await;
     let tx = proposal_ref
-      .approve(&identity_ref, &self.controller_token.0, &self.identity_client.0)
+      .approve(&identity_ref, &self.controller_token.0)
       .wasm_result()?
       .into_inner();
 
@@ -179,7 +169,7 @@ impl WasmApproveSendProposal {
       .write()
       .await
       .clone()
-      .into_tx(&mut identity_ref, &self.controller_token.0, &self.identity_client.0)
+      .into_tx(&mut identity_ref, &self.controller_token.0, &managed_client)
       .await
       .wasm_result()?
       .into_inner();
@@ -196,22 +186,15 @@ pub struct WasmExecuteSendProposal {
   proposal: WasmProposalSend,
   identity: WasmOnChainIdentity,
   controller_token: WasmControllerToken,
-  identity_client: WasmIdentityClientReadOnly,
 }
 
 #[wasm_bindgen(js_class = ExecuteSendProposal)]
 impl WasmExecuteSendProposal {
-  fn new(
-    proposal: WasmProposalSend,
-    identity: &WasmOnChainIdentity,
-    controller_token: &WasmControllerToken,
-    identity_client: &WasmIdentityClientReadOnly,
-  ) -> Self {
+  fn new(proposal: WasmProposalSend, identity: &WasmOnChainIdentity, controller_token: &WasmControllerToken) -> Self {
     Self {
       proposal,
       identity: identity.clone(),
       controller_token: controller_token.clone(),
-      identity_client: identity_client.clone(),
     }
   }
 
@@ -222,7 +205,7 @@ impl WasmExecuteSendProposal {
     let proposal = self.proposal.0.read().await.clone();
 
     let pt = proposal
-      .into_tx(&mut identity_ref, &self.controller_token.0, &self.identity_client.0)
+      .into_tx(&mut identity_ref, &self.controller_token.0, &managed_client)
       .await
       .wasm_result()?
       .into_inner()
@@ -244,7 +227,7 @@ impl WasmExecuteSendProposal {
     let proposal = self.proposal.0.read().await.clone();
 
     let (apply_result, rem_effects) = proposal
-      .into_tx(&mut identity_ref, &self.controller_token.0, &self.identity_client.0)
+      .into_tx(&mut identity_ref, &self.controller_token.0, &managed_client)
       .await
       .wasm_result()?
       .into_inner()
@@ -264,7 +247,6 @@ pub struct WasmCreateSendProposal {
   action: SendAction,
   expiration_epoch: Option<u64>,
   controller_token: WasmControllerToken,
-  identity_client: WasmIdentityClientReadOnly,
 }
 
 #[wasm_bindgen(js_class = CreateSendProposal)]
@@ -273,7 +255,6 @@ impl WasmCreateSendProposal {
     identity: &WasmOnChainIdentity,
     controller_token: &WasmControllerToken,
     object_recipient_map: Vec<StringCouple>,
-    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> Result<Self> {
     let action = object_recipient_map
@@ -300,7 +281,6 @@ impl WasmCreateSendProposal {
       action,
       expiration_epoch,
       controller_token: controller_token.clone(),
-      identity_client: identity_client.clone(),
     })
   }
 
@@ -313,7 +293,7 @@ impl WasmCreateSendProposal {
       self.expiration_epoch,
       &mut identity_ref,
       &self.controller_token.0,
-      &self.identity_client.0,
+      &managed_client,
     )
     .await
     .wasm_result()?
@@ -336,7 +316,7 @@ impl WasmCreateSendProposal {
       self.expiration_epoch,
       &mut identity_ref,
       &self.controller_token.0,
-      &self.identity_client.0,
+      &managed_client,
     )
     .await
     .wasm_result()?

@@ -20,7 +20,6 @@ use identity_iota_interaction::OptionalSend;
 use identity_iota_interaction::OptionalSync;
 use tokio::sync::OnceCell;
 
-use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::migration::get_identity;
 use crate::rebased::transaction::ProtoTransaction;
 use crate::rebased::transaction_builder::Transaction;
@@ -50,6 +49,7 @@ use crate::rebased::Error;
 use identity_iota_interaction::MoveType;
 
 use super::client::CoreClientReadOnly;
+use super::iota::package::identity_package_id;
 use super::migration::ControllerToken;
 
 /// Interface that allows the creation and execution of an [`OnChainIdentity`]'s [`Proposal`]s.
@@ -62,21 +62,25 @@ pub trait ProposalT: Sized {
   type Output;
 
   /// Creates a new [`Proposal`] with the provided action and expiration.
-  async fn create<'i>(
+  async fn create<'i, C>(
     action: Self::Action,
     expiration: Option<u64>,
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
-    client: &IdentityClientReadOnly,
-  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error>;
+    client: &C,
+  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync;
 
   /// Converts the [`Proposal`] into a transaction that can be executed.
-  async fn into_tx<'i>(
+  async fn into_tx<'i, C>(
     self,
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
-    client: &IdentityClientReadOnly,
-  ) -> Result<impl ProtoTransaction, Error>;
+    client: &C,
+  ) -> Result<impl ProtoTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync;
 
   /// Parses the transaction's effects and returns the output of the [`Proposal`].
   fn parse_tx_effects(effects: &IotaTransactionBlockEffects) -> Result<Self::Output, Error>;
@@ -92,9 +96,8 @@ where
     &mut self,
     identity: &'i OnChainIdentity,
     controller_token: &ControllerToken,
-    client: &IdentityClientReadOnly,
   ) -> Result<TransactionBuilder<ApproveProposal<'_, 'i, A>>, Error> {
-    ApproveProposal::new(self, identity, controller_token, client).map(TransactionBuilder::new)
+    ApproveProposal::new(self, identity, controller_token).map(TransactionBuilder::new)
   }
 }
 
@@ -138,9 +141,10 @@ impl<'i, 'c, A> ProposalBuilder<'i, 'c, A> {
 
   /// Creates a [`Proposal`] with the provided arguments. If `forbid_chained_execution` is set to `true`,
   /// the [`Proposal`] won't be executed even if creator alone has enough voting power.
-  pub async fn finish(self, client: &IdentityClientReadOnly) -> Result<TransactionBuilder<CreateProposal<'i, A>>, Error>
+  pub async fn finish<C>(self, client: &C) -> Result<TransactionBuilder<CreateProposal<'i, A>>, Error>
   where
     Proposal<A>: ProposalT<Action = A>,
+    C: CoreClientReadOnly + OptionalSync,
   {
     let Self {
       action,
@@ -306,7 +310,6 @@ pub struct ApproveProposal<'p, 'i, A> {
   identity: &'i OnChainIdentity,
   controller_token: ControllerToken,
   cached_ptb: OnceCell<ProgrammableTransaction>,
-  package: ObjectID,
 }
 
 impl<'p, 'i, A> ApproveProposal<'p, 'i, A> {
@@ -315,7 +318,6 @@ impl<'p, 'i, A> ApproveProposal<'p, 'i, A> {
     proposal: &'p mut Proposal<A>,
     identity: &'i OnChainIdentity,
     controller_token: &ControllerToken,
-    client: &IdentityClientReadOnly,
   ) -> Result<Self, Error> {
     if identity.id() != controller_token.controller_of() {
       return Err(Error::Identity(format!(
@@ -330,7 +332,6 @@ impl<'p, 'i, A> ApproveProposal<'p, 'i, A> {
       identity,
       controller_token: controller_token.clone(),
       cached_ptb: OnceCell::new(),
-      package: client.package_id(),
     })
   }
 }
@@ -350,11 +351,12 @@ impl<A: MoveType> ApproveProposal<'_, '_, A> {
       .await?
       .ok_or_else(|| Error::Identity(format!("identity {} doesn't exist", identity.id())))?;
     let controller_cap = controller_token.controller_ref(client).await?;
+    let package = identity_package_id(client).await?;
     let tx = <IdentityMoveCallsAdapter as IdentityMoveCalls>::approve_proposal::<A>(
       identity_ref.clone(),
       controller_cap,
       proposal.id(),
-      self.package,
+      package,
     )?;
 
     Ok(bcs::from_bytes(&tx)?)

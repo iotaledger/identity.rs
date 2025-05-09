@@ -5,10 +5,11 @@ use std::marker::PhantomData;
 
 use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota_interaction::IdentityMoveCalls;
+use identity_iota_interaction::OptionalSync;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::rebased::client::CoreClientReadOnly;
-use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::package::identity_package_id;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::IotaDocument;
@@ -71,13 +72,16 @@ impl ProposalT for Proposal<UpdateDidDocument> {
   type Action = UpdateDidDocument;
   type Output = ();
 
-  async fn create<'i>(
+  async fn create<'i, C>(
     action: Self::Action,
     expiration: Option<u64>,
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
-    client: &IdentityClientReadOnly,
-  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error> {
+    client: &C,
+  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if identity.id() != controller_token.controller_of() {
       return Err(Error::Identity(format!(
         "token {} doesn't grant access to identity {}",
@@ -89,6 +93,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       return Err(Error::Identity("cannot update a deleted DID Document".into()));
     }
 
+    let package = identity_package_id(client).await?;
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
       .await?
@@ -103,7 +108,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       controller_cap_ref,
       action.0.as_deref(),
       expiration,
-      client.package_id(),
+      package,
     )
     .await
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
@@ -118,12 +123,15 @@ impl ProposalT for Proposal<UpdateDidDocument> {
     }))
   }
 
-  async fn into_tx<'i>(
+  async fn into_tx<'i, C>(
     self,
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
-    client: &IdentityClientReadOnly,
-  ) -> Result<TransactionBuilder<ExecuteProposal<'i, Self::Action>>, Error> {
+    client: &C,
+  ) -> Result<TransactionBuilder<ExecuteProposal<'i, Self::Action>>, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if identity.id() != controller_token.controller_of() {
       return Err(Error::Identity(format!(
         "token {} doesn't grant access to identity {}",
@@ -142,10 +150,10 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       .expect("identity exists on-chain");
     let controller_cap_ref = controller_token.controller_ref(client).await?;
 
-    let tx =
-      IdentityMoveCallsAdapter::execute_update(identity_ref, controller_cap_ref, proposal_id, client.package_id())
-        .await
-        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let package = identity_package_id(client).await?;
+    let tx = IdentityMoveCallsAdapter::execute_update(identity_ref, controller_cap_ref, proposal_id, package)
+      .await
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     let ptb = bcs::from_bytes(&tx)?;
 

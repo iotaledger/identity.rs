@@ -5,6 +5,7 @@ use std::ops::Deref;
 
 use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
 use crate::iota_interaction_adapter::IotaClientAdapter;
+use crate::rebased::iota::package::identity_package_id;
 use crate::rebased::migration::CreateIdentity;
 use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::transaction_builder::TransactionBuilder;
@@ -130,7 +131,7 @@ where
 {
   /// Returns a [PublishDidDocument] transaction wrapped by a [TransactionBuilder].
   pub fn publish_did_document(&self, document: IotaDocument) -> TransactionBuilder<PublishDidDocument> {
-    TransactionBuilder::new(PublishDidDocument::new(document, self.sender_address(), self))
+    TransactionBuilder::new(PublishDidDocument::new(document, self.sender_address()))
   }
 
   // TODO: define what happens for (legacy|migrated|new) documents
@@ -278,27 +279,25 @@ pub struct PublishDidDocument {
   did_document: IotaDocument,
   controller: IotaAddress,
   cached_ptb: OnceCell<ProgrammableTransaction>,
-  package: ObjectID,
 }
 
 impl PublishDidDocument {
   /// Creates a new [PublishDidDocument] transaction.
-  pub fn new(did_document: IotaDocument, controller: IotaAddress, client: &IdentityClientReadOnly) -> Self {
+  pub fn new(did_document: IotaDocument, controller: IotaAddress) -> Self {
     Self {
       did_document,
       controller,
       cached_ptb: OnceCell::new(),
-      package: client.package_id(),
     }
   }
 
-  async fn make_ptb(&self, _client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+    let package = identity_package_id(client).await?;
     let did_doc = StateMetadataDocument::from(self.did_document.clone())
       .pack(StateMetadataEncoding::Json)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
     let programmable_tx_bcs =
-      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), [(self.controller, 1, false)], 1, self.package)
-        .await?;
+      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), [(self.controller, 1, false)], 1, package).await?;
     Ok(bcs::from_bytes(&programmable_tx_bcs)?)
   }
 }
@@ -327,7 +326,7 @@ impl Transaction for PublishDidDocument {
       let builder = IdentityBuilder::new(self.did_document)
         .threshold(1)
         .controller(self.controller, 1);
-      CreateIdentity::new_unchecked(builder, client.package_id())
+      CreateIdentity::new(builder)
     };
 
     let (application_result, remaining_effects) = tx.apply(effects, client).await;

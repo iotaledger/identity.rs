@@ -87,11 +87,6 @@ impl WasmIdentityClient {
     self.0.network().to_string()
   }
 
-  #[wasm_bindgen(js_name = migrationRegistryId)]
-  pub fn migration_registry_id(&self) -> String {
-    self.0.migration_registry_id().to_string()
-  }
-
   #[wasm_bindgen(js_name = createIdentity)]
   pub fn create_identity(&self, iota_document: &WasmIotaDocument) -> Result<WasmIdentityBuilder> {
     Ok(
@@ -135,7 +130,7 @@ impl WasmIdentityClient {
     document: &WasmIotaDocument,
     controller: WasmIotaAddress,
   ) -> Result<WasmTransactionBuilder> {
-    let js_value: JsValue = WasmPublishDidDocument::new(document, controller, &self.read_only())?.into();
+    let js_value: JsValue = WasmPublishDidDocument::new(document, controller)?.into();
     Ok(WasmTransactionBuilder::new(js_value.unchecked_into()))
   }
 
@@ -208,11 +203,7 @@ pub struct WasmPublishDidDocument(pub(crate) PublishDidDocument);
 #[wasm_bindgen(js_class = PublishDidDocument)]
 impl WasmPublishDidDocument {
   #[wasm_bindgen(constructor)]
-  pub fn new(
-    did_document: &WasmIotaDocument,
-    controller: WasmIotaAddress,
-    identity_client: &WasmIdentityClientReadOnly,
-  ) -> Result<Self> {
+  pub fn new(did_document: &WasmIotaDocument, controller: WasmIotaAddress) -> Result<Self> {
     let did_document = did_document
       .0
       .try_read()
@@ -221,11 +212,7 @@ impl WasmPublishDidDocument {
       .clone();
     let controller = controller.parse().wasm_result()?;
 
-    Ok(Self(PublishDidDocument::new(
-      did_document,
-      controller,
-      &identity_client.0,
-    )))
+    Ok(Self(PublishDidDocument::new(did_document, controller)))
   }
 
   #[wasm_bindgen(js_name = buildProgrammableTransaction)]
