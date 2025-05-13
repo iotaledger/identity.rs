@@ -27,12 +27,14 @@ use tokio::sync::OnceCell;
 use crate::rebased::client::IdentityClientReadOnly;
 
 use crate::rebased::iota::move_calls;
+use crate::rebased::iota::package::identity_package_id;
 use crate::rebased::Error;
 use crate::IotaDID;
 use iota_interaction::IotaClientTrait;
 use iota_interaction::MoveType;
 
 use super::get_identity;
+use super::migration_registry_id;
 use super::Identity;
 use super::OnChainIdentity;
 
@@ -81,18 +83,14 @@ pub async fn get_alias(client: &IdentityClientReadOnly, object_id: ObjectID) -> 
 pub struct MigrateLegacyIdentity {
   alias: UnmigratedAlias,
   cached_ptb: OnceCell<ProgrammableTransaction>,
-  migration_registry_id: ObjectID,
-  package: ObjectID,
 }
 
 impl MigrateLegacyIdentity {
   /// Returns a new [MigrateLegacyIdentity] transaction.
-  pub fn new(alias: UnmigratedAlias, identity_client: &IdentityClientReadOnly) -> Self {
+  pub fn new(alias: UnmigratedAlias) -> Self {
     Self {
       alias,
       cached_ptb: OnceCell::new(),
-      migration_registry_id: identity_client.migration_registry_id(),
-      package: identity_client.package_id(),
     }
   }
 
@@ -139,8 +137,11 @@ impl MigrateLegacyIdentity {
       .object_ref_if_exists()
       .expect("alias_output exists");
     // Get migration registry ref.
+    let migration_registry_id = migration_registry_id(client)
+      .await
+      .map_err(Error::MigrationRegistryNotFound)?;
     let migration_registry_ref = client
-      .get_object_ref_by_id(self.migration_registry_id)
+      .get_object_ref_by_id(migration_registry_id)
       .await?
       .expect("migration registry exists");
 
@@ -151,8 +152,10 @@ impl MigrateLegacyIdentity {
       // `to_unix` returns the seconds since EPOCH; we need milliseconds.
       .map(|timestamp| timestamp.to_unix() as u64 * 1000);
 
+    let package = identity_package_id(client).await?;
+
     // Build migration tx.
-    let tx = move_calls::migration::migrate_did_output(alias_output_ref, created, migration_registry_ref, self.package)
+    let tx = move_calls::migration::migrate_did_output(alias_output_ref, created, migration_registry_ref, package)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(bcs::from_bytes(&tx)?)

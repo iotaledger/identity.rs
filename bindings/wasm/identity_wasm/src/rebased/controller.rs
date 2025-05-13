@@ -61,7 +61,6 @@ impl WasmControllerCap {
   pub fn delegate(
     &self,
     recipient: &str,
-    client: &WasmIdentityClientReadOnly,
     #[wasm_bindgen(unchecked_param_type = "DelegatePermissions | undefined | null")] permissions: Option<u32>,
   ) -> Result<WasmTransactionBuilder> {
     let recipient = recipient.parse().wasm_result()?;
@@ -69,7 +68,7 @@ impl WasmControllerCap {
 
     let js_tx = self
       .0
-      .delegate(recipient, permissions, &client.0)
+      .delegate(recipient, permissions)
       .map(TransactionBuilder::into_inner)
       .map(WasmDelegateToken)
       .map(JsValue::from)
@@ -121,14 +120,13 @@ impl WasmDelegateToken {
   pub fn new(
     controller_cap: &WasmControllerCap,
     recipient: &str,
-    client: &WasmIdentityClientReadOnly,
     #[wasm_bindgen(unchecked_param_type = "DelegatePermissions | undefined | null")] permissions: Option<u32>,
   ) -> Result<Self> {
     let recipient = recipient.parse().map_err(wasm_error)?;
     let token = if let Some(permissions) = permissions {
-      DelegateToken::new_with_permissions(&controller_cap.0, recipient, permissions.into(), &client.0)
+      DelegateToken::new_with_permissions(&controller_cap.0, recipient, permissions.into())
     } else {
-      DelegateToken::new(&controller_cap.0, recipient, &client.0)
+      DelegateToken::new(&controller_cap.0, recipient)
     };
     Ok(Self(token))
   }
@@ -167,16 +165,15 @@ impl WasmDelegationTokenRevocation {
     identity: &WasmOnChainIdentity,
     controller_cap: &WasmControllerCap,
     delegation_token: &WasmDelegationToken,
-    client: &WasmIdentityClientReadOnly,
     revoke: Option<bool>,
   ) -> Result<Self> {
     let revoke = revoke.unwrap_or(true);
     let identity = identity.0.try_read().wasm_result()?;
 
     let inner = if revoke {
-      DelegationTokenRevocation::revoke(&identity, &controller_cap.0, &delegation_token.0, &client.0).wasm_result()?
+      DelegationTokenRevocation::revoke(&identity, &controller_cap.0, &delegation_token.0).wasm_result()?
     } else {
-      DelegationTokenRevocation::unrevoke(&identity, &controller_cap.0, &delegation_token.0, &client.0).wasm_result()?
+      DelegationTokenRevocation::unrevoke(&identity, &controller_cap.0, &delegation_token.0).wasm_result()?
     };
 
     Ok(Self(inner))
@@ -222,13 +219,9 @@ pub struct WasmDeleteDelegationToken(pub(crate) DeleteDelegationToken);
 #[wasm_bindgen(js_class = DeleteDelegationToken)]
 impl WasmDeleteDelegationToken {
   #[wasm_bindgen(constructor)]
-  pub fn new(
-    identity: &WasmOnChainIdentity,
-    delegation_token: WasmDelegationToken,
-    client: &WasmIdentityClientReadOnly,
-  ) -> Result<Self> {
+  pub fn new(identity: &WasmOnChainIdentity, delegation_token: WasmDelegationToken) -> Result<Self> {
     let identity = identity.0.try_read().wasm_result()?;
-    let inner = DeleteDelegationToken::new(&identity, delegation_token.0, &client.0).wasm_result()?;
+    let inner = DeleteDelegationToken::new(&identity, delegation_token.0).wasm_result()?;
 
     Ok(Self(inner))
   }

@@ -65,7 +65,7 @@ export async function customResolution() {
     // create new identity for this account and publish document for it, DID of it will be resolved later on
     const { output: identity } = await identityClient
         .createIdentity(unpublished)
-        .finish(identityClient.readOnly())
+        .finish()
         .buildAndExecute(identityClient);
     const did = identity.didDocument().id();
 

@@ -23,7 +23,6 @@ export interface Proposal<A extends Action> {
     approve: (
         identity: OnChainIdentity,
         controllerToken: ControllerToken,
-        client: IdentityClient,
     ) => TransactionBuilder<ApproveProposal>;
-    intoTx: (controllerToken: ControllerToken, client: IdentityClient) => TransactionBuilder<ExecuteProposal<A>>;
+    intoTx: (controllerToken: ControllerToken) => TransactionBuilder<ExecuteProposal<A>>;
 }

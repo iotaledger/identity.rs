@@ -1,13 +1,14 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::rebased::iota::package::identity_package_id;
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::ops::DerefMut as _;
 use std::str::FromStr as _;
 
-use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::iota::move_calls;
 use crate::rebased::migration::ControllerToken;
 use product_core::core_client::CoreClientReadOnly;
@@ -27,7 +28,7 @@ use serde::Serialize;
 use crate::rebased::iota::types::Number;
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::Error;
-use iota_interaction::MoveType;
+use iota_interaction::{MoveType, OptionalSync};
 
 use super::CreateProposal;
 use super::ExecuteProposal;
@@ -221,13 +222,16 @@ impl ProposalT for Proposal<ConfigChange> {
   type Action = ConfigChange;
   type Output = ();
 
-  async fn create<'i>(
+  async fn create<'i, C>(
     action: Self::Action,
     expiration: Option<u64>,
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
-    client: &IdentityClientReadOnly,
-  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error> {
+    client: &C,
+  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     // Check the validity of the proposed changes.
     action.validate(identity)?;
 
@@ -239,6 +243,7 @@ impl ProposalT for Proposal<ConfigChange> {
       )));
     }
 
+    let package = identity_package_id(client).await?;
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
       .await?
@@ -256,7 +261,7 @@ impl ProposalT for Proposal<ConfigChange> {
       action.controllers_to_add,
       action.controllers_to_remove,
       action.controllers_voting_power,
-      client.package_id(),
+      package,
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
@@ -268,12 +273,15 @@ impl ProposalT for Proposal<ConfigChange> {
     }))
   }
 
-  async fn into_tx<'i>(
+  async fn into_tx<'i, C>(
     self,
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
-    client: &IdentityClientReadOnly,
-  ) -> Result<TransactionBuilder<ExecuteProposal<'i, Self::Action>>, Error> {
+    client: &C,
+  ) -> Result<TransactionBuilder<ExecuteProposal<'i, Self::Action>>, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if identity.id() != controller_token.controller_of() {
       return Err(Error::Identity(format!(
         "token {} doesn't grant access to identity {}",
@@ -288,10 +296,9 @@ impl ProposalT for Proposal<ConfigChange> {
       .await?
       .expect("identity exists on-chain");
     let controller_cap_ref = controller_token.controller_ref(client).await?;
-
-    let tx =
-      move_calls::identity::execute_config_change(identity_ref, controller_cap_ref, proposal_id, client.package_id())
-        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let package = identity_package_id(client).await?;
+    let tx = move_calls::identity::execute_config_change(identity_ref, controller_cap_ref, proposal_id, package)
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(TransactionBuilder::new(ExecuteProposal {
       identity,

@@ -32,7 +32,6 @@ use super::WasmCoreClientReadOnly;
 use super::WasmDelegationToken;
 use super::WasmDelegationTokenRevocation;
 use super::WasmIdentityClient;
-use super::WasmIdentityClientReadOnly;
 use super::WasmIotaAddress;
 use super::WasmTransactionBuilder;
 
@@ -135,16 +134,10 @@ impl WasmOnChainIdentity {
     &self,
     updated_doc: &WasmIotaDocument,
     controller_token: &WasmControllerToken,
-    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> WasmTransactionBuilder {
-    let create_proposal_tx = WasmCreateUpdateDidProposal::new(
-      self,
-      updated_doc.clone(),
-      controller_token.clone(),
-      identity_client,
-      expiration_epoch,
-    );
+    let create_proposal_tx =
+      WasmCreateUpdateDidProposal::new(self, updated_doc.clone(), controller_token.clone(), expiration_epoch);
     WasmTransactionBuilder::new(JsValue::from(create_proposal_tx).unchecked_into())
   }
 
@@ -155,11 +148,9 @@ impl WasmOnChainIdentity {
   pub fn deactivate_did(
     &self,
     controller_token: &WasmControllerToken,
-    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> WasmTransactionBuilder {
-    let create_proposal_tx =
-      WasmCreateUpdateDidProposal::deactivate(self, controller_token.clone(), identity_client, expiration_epoch);
+    let create_proposal_tx = WasmCreateUpdateDidProposal::deactivate(self, controller_token.clone(), expiration_epoch);
     WasmTransactionBuilder::new(JsValue::from(create_proposal_tx).unchecked_into())
   }
 
@@ -170,10 +161,9 @@ impl WasmOnChainIdentity {
   pub fn delete_did(
     &self,
     controller_token: &WasmControllerToken,
-    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> WasmTransactionBuilder {
-    let tx = WasmCreateUpdateDidProposal::delete(self, controller_token, identity_client, expiration_epoch);
+    let tx = WasmCreateUpdateDidProposal::delete(self, controller_token, expiration_epoch);
     WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into())
   }
 
@@ -185,14 +175,12 @@ impl WasmOnChainIdentity {
     &self,
     controller_token: &WasmControllerToken,
     config: WasmConfigChange,
-    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> WasmTransactionBuilder {
     let tx = JsValue::from(WasmCreateConfigChangeProposal::new(
       self,
       controller_token,
       config,
-      identity_client,
       expiration_epoch,
     ));
     WasmTransactionBuilder::new(tx.unchecked_into())
@@ -206,11 +194,9 @@ impl WasmOnChainIdentity {
     &self,
     controller_token: &WasmControllerToken,
     transfer_map: Vec<StringCouple>,
-    identity_client: &WasmIdentityClientReadOnly,
     expiration_epoch: Option<u64>,
   ) -> Result<WasmTransactionBuilder> {
-    let tx = WasmCreateSendProposal::new(self, controller_token, transfer_map, identity_client, expiration_epoch)
-      .wasm_result()?;
+    let tx = WasmCreateSendProposal::new(self, controller_token, transfer_map, expiration_epoch).wasm_result()?;
     Ok(WasmTransactionBuilder::new(JsValue::from(tx).unchecked_into()))
   }
 
@@ -222,9 +208,8 @@ impl WasmOnChainIdentity {
     &self,
     controller_cap: &WasmControllerCap,
     delegation_token: &WasmDelegationToken,
-    client: &WasmIdentityClientReadOnly,
   ) -> Result<WasmDelegationTokenRevocation> {
-    WasmDelegationTokenRevocation::new(self, controller_cap, delegation_token, client, Some(true))
+    WasmDelegationTokenRevocation::new(self, controller_cap, delegation_token, Some(true))
   }
 
   #[wasm_bindgen(
@@ -235,21 +220,16 @@ impl WasmOnChainIdentity {
     &self,
     controller_cap: &WasmControllerCap,
     delegation_token: &WasmDelegationToken,
-    client: &WasmIdentityClientReadOnly,
   ) -> Result<WasmDelegationTokenRevocation> {
-    WasmDelegationTokenRevocation::new(self, controller_cap, delegation_token, client, Some(false))
+    WasmDelegationTokenRevocation::new(self, controller_cap, delegation_token, Some(false))
   }
 
   #[wasm_bindgen(
     js_name = deleteDelegationToken,
     unchecked_return_type = "TransactionBuilder<DeleteDelegationToken>",
   )]
-  pub fn delete_delegation_token(
-    &self,
-    delegation_token: WasmDelegationToken,
-    client: &WasmIdentityClientReadOnly,
-  ) -> Result<WasmDeleteDelegationToken> {
-    WasmDeleteDelegationToken::new(self, delegation_token, client)
+  pub fn delete_delegation_token(&self, delegation_token: WasmDelegationToken) -> Result<WasmDeleteDelegationToken> {
+    WasmDeleteDelegationToken::new(self, delegation_token)
   }
 }
 
@@ -294,8 +274,8 @@ impl WasmIdentityBuilder {
   }
 
   #[wasm_bindgen(unchecked_return_type = "TransactionBuilder<CreateIdentity>")]
-  pub fn finish(self, client: &WasmIdentityClientReadOnly) -> WasmTransactionBuilder {
-    WasmTransactionBuilder::new(JsValue::from(WasmCreateIdentity::new(self, client)).unchecked_into())
+  pub fn finish(self) -> WasmTransactionBuilder {
+    WasmTransactionBuilder::new(JsValue::from(WasmCreateIdentity::new(self)).unchecked_into())
   }
 }
 
@@ -305,8 +285,8 @@ pub struct WasmCreateIdentity(pub(crate) CreateIdentity);
 #[wasm_bindgen(js_class = CreateIdentity)]
 impl WasmCreateIdentity {
   #[wasm_bindgen(constructor)]
-  pub fn new(builder: WasmIdentityBuilder, client: &WasmIdentityClientReadOnly) -> Self {
-    Self(CreateIdentity::new(builder.0, &client.0))
+  pub fn new(builder: WasmIdentityBuilder) -> Self {
+    Self(CreateIdentity::new(builder.0))
   }
 
   #[wasm_bindgen(js_name = buildProgrammableTransaction)]

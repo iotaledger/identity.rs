@@ -1,18 +1,21 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rebased::iota;
-use crate::IotaDID;
-use crate::IotaDocument;
-use std::fmt::Debug;
 use std::future::Future;
 use std::ops::Deref;
 use std::pin::Pin;
 use std::str::FromStr;
 
+use crate::rebased::iota;
+use crate::rebased::iota::package::Env;
+use crate::rebased::iota::package::Metadata;
+
+use crate::rebased::iota::package::MAINNET_CHAIN_ID;
+use crate::IotaDID;
+use crate::IotaDocument;
+
 use futures::stream::FuturesUnordered;
-use iota_interaction::move_types::language_storage::StructTag;
-use iota_interaction::rpc_types::EventFilter;
+
 use iota_interaction::types::base_types::ObjectID;
 use iota_interaction::IotaClientTrait;
 use product_core::core_client::CoreClientReadOnly;
@@ -28,8 +31,6 @@ use futures::StreamExt as _;
 use identity_core::common::Url;
 use identity_did::DID;
 
-use serde::Deserialize;
-
 #[cfg(not(target_arch = "wasm32"))]
 use iota_interaction::IotaClient;
 
@@ -42,8 +43,8 @@ use iota_interaction_ts::bindings::WasmIotaClient;
 pub struct IdentityClientReadOnly {
   iota_client: IotaClientAdapter,
   iota_identity_pkg_id: ObjectID,
-  migration_registry_id: ObjectID,
   network: NetworkName,
+  chain_id: String,
 }
 
 impl Deref for IdentityClientReadOnly {
@@ -67,97 +68,86 @@ impl IdentityClientReadOnly {
     &self.network
   }
 
-  /// Returns the migration registry's ID.
-  pub const fn migration_registry_id(&self) -> ObjectID {
-    self.migration_registry_id
+  /// Returns the chain identifier for the network this client is connected to.
+  /// This method differs from [IdentityClientReadOnly::network] as it doesn't
+  /// return the human-readable network ID when available.
+  pub fn chain_id(&self) -> &str {
+    &self.chain_id
   }
 
-  cfg_if::cfg_if! {
-    if #[cfg(target_arch = "wasm32")] {
-      /// Attempts to create a new [`IdentityClientReadOnly`] from a given [`IotaClient`].
-      ///
-      /// # Failures
-      /// This function fails if the provided `iota_client` is connected to an unrecognized
-      /// network.
-      ///
-      /// # Notes
-      /// When trying to connect to a local or unofficial network prefer using
-      /// [`IdentityClientReadOnly::new_with_pkg_id`].
-      pub async fn new(iota_client: WasmIotaClient) -> Result<Self, Error> {
-        Self::new_internal(IotaClientAdapter::new(iota_client)?).await
-      }
-    } else {
-      /// Attempts to create a new [`IdentityClientReadOnly`] from a given [`IotaClient`].
-      ///
-      /// # Failures
-      /// This function fails if the provided `iota_client` is connected to an unrecognized
-      /// network.
-      ///
-      /// # Notes
-      /// When trying to connect to a local or unofficial network prefer using
-      /// [`IdentityClientReadOnly::new_with_pkg_id`].
-      pub async fn new(iota_client: IotaClient) -> Result<Self, Error> {
-        Self::new_internal(IotaClientAdapter::new(iota_client).map_err(crate::rebased::rebased_err)?).await
-      }
-    }
+  /// Attempts to create a new [`IdentityClientReadOnly`] from a given [`IotaClient`].
+  ///
+  /// # Failures
+  /// This function fails if the provided `iota_client` is connected to an unrecognized
+  /// network.
+  ///
+  /// # Notes
+  /// When trying to connect to a local or unofficial network, prefer using
+  /// [`IdentityClientReadOnly::new_with_pkg_id`].
+  pub async fn new(
+    #[cfg(target_arch = "wasm32")] iota_client: WasmIotaClient,
+    #[cfg(not(target_arch = "wasm32"))] iota_client: IotaClient,
+  ) -> Result<Self, Error> {
+    let client = IotaClientAdapter::new(iota_client);
+    let network = network_id(&client).await?;
+    Self::new_internal(client, network).await
   }
 
-  async fn new_internal(iota_client: IotaClientAdapter) -> Result<Self, Error> {
-    let network = network_id(&iota_client).await?;
-    let metadata = iota::well_known_networks::network_metadata(&network).ok_or_else(|| {
-      Error::InvalidConfig(format!(
-        "unrecognized network \"{network}\". Use `new_with_pkg_id` instead."
-      ))
-    })?;
-    // If the network has a well known alias use it otherwise default to the network's chain ID.
-    let network = metadata.network_alias().unwrap_or(network);
+  async fn new_internal(iota_client: IotaClientAdapter, network: NetworkName) -> Result<Self, Error> {
+    let chain_id = network.as_ref().to_string();
+    let (network, iota_identity_pkg_id) = {
+      let package_registry = iota::package::identity_package_registry().await;
+      let package_id = package_registry
+        .package_id(&network)
+        .ok_or_else(|| {
+        Error::InvalidConfig(format!(
+          "no information for a published `iota_identity` package on network {network}; try to use `IdentityClientReadOnly::new_with_package_id`"
+        ))
+      })?;
+      let network = match chain_id.as_str() {
+        // Replace Mainnet's name with "iota".
+        MAINNET_CHAIN_ID => NetworkName::try_from("iota").expect("valid network name"),
+        _ => package_registry
+          .chain_alias(&chain_id)
+          .and_then(|alias| NetworkName::try_from(alias).ok())
+          .unwrap_or(network),
+      };
 
-    let pkg_id = metadata.latest_pkg_id();
-
+      (network, package_id)
+    };
     Ok(IdentityClientReadOnly {
       iota_client,
-      iota_identity_pkg_id: pkg_id,
-      migration_registry_id: metadata.migration_registry(),
-      network,
-    })
-  }
-
-  cfg_if::cfg_if! {
-    if #[cfg(target_arch = "wasm32")] {
-      /// Attempts to create a new [`IdentityClientReadOnly`] from
-      /// the given [`IotaClient`].
-      pub async fn new_with_pkg_id(iota_client: WasmIotaClient, iota_identity_pkg_id: ObjectID) -> Result<Self, Error> {
-        Self::new_with_pkg_id_internal(
-          IotaClientAdapter::new(iota_client)?,
-          iota_identity_pkg_id
-        ).await
-      }
-    } else {
-      /// Attempts to create a new [`IdentityClientReadOnly`] from
-      /// the given [`IotaClient`].
-      pub async fn new_with_pkg_id(iota_client: IotaClient, iota_identity_pkg_id: ObjectID) -> Result<Self, Error> {
-        Self::new_with_pkg_id_internal(
-          IotaClientAdapter::new(iota_client).map_err(crate::rebased::rebased_err)?,
-          iota_identity_pkg_id
-        ).await
-      }
-    }
-  }
-
-  async fn new_with_pkg_id_internal(
-    iota_client: IotaClientAdapter,
-    iota_identity_pkg_id: ObjectID,
-  ) -> Result<Self, Error> {
-    let IdentityPkgMetadata {
-      migration_registry_id, ..
-    } = identity_pkg_metadata(&iota_client, iota_identity_pkg_id).await?;
-    let network = network_id(&iota_client).await?;
-    Ok(Self {
-      iota_client,
       iota_identity_pkg_id,
-      migration_registry_id,
       network,
+      chain_id,
     })
+  }
+
+  /// Attempts to create a new [`IdentityClientReadOnly`] from the given IOTA client
+  /// and the ID of the IotaIdentity package published on the network the client is
+  /// connected to.
+  pub async fn new_with_pkg_id(
+    #[cfg(target_arch = "wasm32")] iota_client: WasmIotaClient,
+    #[cfg(not(target_arch = "wasm32"))] iota_client: IotaClient,
+    package_id: ObjectID,
+  ) -> Result<Self, Error> {
+    let client = IotaClientAdapter::new(iota_client);
+    let network = network_id(&client).await?;
+
+    // Use the passed pkg_id to add a new env or override the information of an existing one.
+    {
+      let mut registry = iota::package::identity_package_registry_mut().await;
+      registry.insert_env(Env::new(network.as_ref()), Metadata::from_package_id(package_id));
+    }
+
+    Self::new_internal(client, network).await
+  }
+
+  /// Sets the migration registry ID for the current network.
+  /// # Notes
+  /// This is only needed when automatic retrival of MigrationRegistry's ID fails.
+  pub fn set_migration_registry_id(&mut self, id: ObjectID) {
+    crate::rebased::migration::set_migration_registry_id(&self.chain_id, id);
   }
 
   /// Queries an [`IotaDocument`] DID Document through its `did`.
@@ -204,62 +194,6 @@ async fn network_id(iota_client: &IotaClientAdapter) -> Result<NetworkName, Erro
     .await
     .map_err(|e| Error::RpcError(e.to_string()))?;
   Ok(network_id.try_into().expect("chain ID is a valid network name"))
-}
-
-#[derive(Debug)]
-struct IdentityPkgMetadata {
-  migration_registry_id: ObjectID,
-}
-
-#[derive(Deserialize)]
-struct MigrationRegistryCreatedEvent {
-  #[allow(dead_code)]
-  id: ObjectID,
-}
-
-// TODO: remove argument `package_id` and use `EventFilter::MoveEventField` to find the beacon event and thus the
-// package id.
-// TODO: authenticate the beacon event with though sender's ID.
-async fn identity_pkg_metadata(
-  iota_client: &IotaClientAdapter,
-  package_id: ObjectID,
-) -> Result<IdentityPkgMetadata, Error> {
-  // const EVENT_BEACON_PATH: &str = "/beacon";
-  // const EVENT_BEACON_VALUE: &[u8] = b"identity.rs_pkg";
-
-  // let event_filter = EventFilter::MoveEventField {
-  //   path: EVENT_BEACON_PATH.to_string(),
-  //   value: EVENT_BEACON_VALUE.to_json_value().expect("valid json representation"),
-  // };
-  let event_filter = EventFilter::MoveEventType(
-    StructTag::from_str(&format!("{package_id}::migration_registry::MigrationRegistryCreated")).expect("valid utf8"),
-  );
-  let mut returned_events = iota_client
-    .event_api()
-    .query_events(event_filter, None, Some(1), false)
-    .await
-    .map_err(|e| Error::RpcError(e.to_string()))?
-    .data;
-  let event = if !returned_events.is_empty() {
-    returned_events.swap_remove(0)
-  } else {
-    return Err(Error::InvalidConfig(
-      "no \"iota_identity\" package found on the provided network".to_string(),
-    ));
-  };
-
-  let registry_id = serde_json::from_value::<MigrationRegistryCreatedEvent>(event.parsed_json)
-    .map(|e| e.id)
-    .map_err(|e| {
-      Error::MigrationRegistryNotFound(crate::rebased::migration::Error::NotFound(format!(
-        "Malformed \"MigrationRegistryEvent\": {}",
-        e
-      )))
-    })?;
-
-  Ok(IdentityPkgMetadata {
-    migration_registry_id: registry_id,
-  })
 }
 
 async fn resolve_new(client: &IdentityClientReadOnly, object_id: ObjectID) -> Result<Option<Identity>, Error> {
