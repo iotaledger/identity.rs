@@ -3,7 +3,6 @@
 
 use super::OnChainIdentity;
 
-
 use crate::rebased::iota::move_calls;
 
 use crate::rebased::iota::move_calls::ControllerTokenRef;
@@ -622,8 +621,7 @@ impl Transaction for DeleteDelegationToken {
       .reference
       .to_object_ref();
 
-    let tx_bytes =
-      move_calls::identity::destroy_delegation_token(identity_ref, delegation_token_ref, package).await?;
+    let tx_bytes = move_calls::identity::destroy_delegation_token(identity_ref, delegation_token_ref, package).await?;
 
     Ok(bcs::from_bytes(&tx_bytes)?)
   }

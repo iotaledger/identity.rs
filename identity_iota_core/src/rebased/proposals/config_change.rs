@@ -28,7 +28,8 @@ use serde::Serialize;
 use crate::rebased::iota::types::Number;
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::Error;
-use iota_interaction::{MoveType, OptionalSync};
+use iota_interaction::MoveType;
+use iota_interaction::OptionalSync;
 
 use super::CreateProposal;
 use super::ExecuteProposal;
