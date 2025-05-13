@@ -4,7 +4,7 @@
 use std::process::Output;
 
 use anyhow::Context as _;
-use identity_iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectID;
 use iota_sdk::IotaClient;
 use iota_sdk::IotaClientBuilder;
 use serde::Deserialize;
@@ -12,7 +12,7 @@ use serde::Deserialize;
 use tokio::process::Command;
 
 use crate::rebased::Error;
-use identity_iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::IotaAddress;
 
 const FUND_WITH_ACTIVE_ADDRESS_FUNDING_TX_BUDGET: u64 = 5_000_000;
 const FUND_WITH_ACTIVE_ADDRESS_FUNDING_VALUE: u64 = 500_000_000;

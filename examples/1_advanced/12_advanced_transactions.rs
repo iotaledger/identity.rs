@@ -6,10 +6,7 @@ use examples::get_memstorage;
 use examples::TEST_GAS_BUDGET;
 
 use anyhow::Context as _;
-use identity_iota::iota::rebased::client::CoreClient;
 use identity_iota::iota::rebased::client::IdentityClient;
-use identity_iota::iota::rebased::transaction_builder::MutGasDataRef;
-use identity_iota::iota::rebased::transaction_builder::Transaction as _;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota_interaction::IotaClientTrait as _;
 use identity_iota::iota_interaction::IotaKeySignature;
@@ -20,6 +17,9 @@ use iota_sdk::types::transaction::GasData;
 use iota_sdk::types::transaction::Transaction;
 use iota_sdk::IotaClientBuilder;
 use iota_sdk::IOTA_COIN_TYPE;
+use product_core::core_client::CoreClient;
+use product_core::transaction::transaction_builder::MutGasDataRef;
+use product_core::transaction::transaction_builder::Transaction as _;
 use secret_storage::Signer;
 
 /// This example demonstrates:

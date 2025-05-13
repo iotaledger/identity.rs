@@ -5,17 +5,17 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 use anyhow::anyhow;
-use identity_iota::iota::rebased::client::CoreClient as _;
 use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::client::PublishDidDocument;
-use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
+use product_core::core_client::CoreClient as _;
+use product_core::transaction::TransactionOutputInternal;
 
-use identity_iota::iota::rebased::transaction_builder::Transaction as _;
 use iota_interaction_ts::bindings::WasmExecutionStatus;
 use iota_interaction_ts::bindings::WasmIotaClient;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use iota_interaction_ts::bindings::WasmOwnedObjectRef;
 use iota_interaction_ts::WasmPublicKey;
+use product_core::transaction::transaction_builder::Transaction;
 
 use identity_iota::iota::rebased::Error;
 use iota_interaction_ts::NativeTransactionBlockResponse;

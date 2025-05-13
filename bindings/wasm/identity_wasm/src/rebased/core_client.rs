@@ -1,16 +1,16 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::iota::rebased::client::CoreClient;
-use identity_iota::iota::rebased::client::CoreClientReadOnly;
-use identity_iota::iota::NetworkName;
 use identity_iota::iota_interaction::types::base_types::IotaAddress;
-use identity_iota::iota_interaction::types::base_types::ObjectID;
-use identity_iota::iota_interaction::types::base_types::ObjectIDParseError;
-use identity_iota::iota_interaction::types::crypto::PublicKey;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectIDParseError;
+use iota_interaction::types::crypto::PublicKey;
 use iota_interaction_ts::bindings::WasmIotaClient;
 use iota_interaction_ts::IotaClientAdapter;
 use iota_interaction_ts::WasmPublicKey;
+use product_core::core_client::CoreClient;
+use product_core::core_client::CoreClientReadOnly;
+use product_core::network_name::NetworkName;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
