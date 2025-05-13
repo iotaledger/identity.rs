@@ -1,12 +1,12 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rebased::iota::package::identity_package_id;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
 use crate::rebased::iota::move_calls;
 
+use crate::rebased::iota::package::identity_package_id;
 use iota_interaction::types::transaction::ProgrammableTransaction;
 use iota_interaction::IotaKeySignature;
 use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;

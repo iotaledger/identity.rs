@@ -17,7 +17,6 @@ use identity_iota_core::IotaDocument;
 use identity_jose::jwk::ToJwk as _;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
-use iota_interaction::KeytoolSigner;
 use iota_sdk::rpc_types::IotaObjectData;
 use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
 use iota_sdk::types::base_types::ObjectID;
@@ -471,7 +470,7 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
   let mut identity = client
     .create_identity(IotaDocument::new(client.network()))
     .finish()
-    .build_and_execute::<KeytoolSigner, TestClient>(&client)
+    .build_and_execute(&client)
     .await?
     .output;
   let did = identity.did_document().id().clone();
@@ -481,7 +480,7 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
     .delete_did(&controller_token)
     .finish(&client)
     .await?
-    .build_and_execute::<TestClient, KeytoolSigner>(&client)
+    .build_and_execute(&client)
     .await?
     .output
   else {
