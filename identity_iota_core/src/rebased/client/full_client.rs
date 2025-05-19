@@ -317,11 +317,7 @@ impl Transaction for PublishDidDocument {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply<C>(
-    self,
-    effects: &mut IotaTransactionBlockEffects,
-    client: &C,
-  ) -> Result<Self::Output, Self::Error>
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {

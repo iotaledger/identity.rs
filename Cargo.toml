@@ -41,6 +41,7 @@ zkryptium = { version = "0.2.2", default-features = false, features = ["bbsplus"
 
 [workspace.lints.clippy]
 result_large_err = "allow"
+large_enum_variant = "allow"
 
 [profile.release.package.iota_interaction_ts]
 opt-level = 's'

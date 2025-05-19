@@ -355,11 +355,7 @@ where
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply<C>(
-    self,
-    effects: &mut IotaTransactionBlockEffects,
-    _client: &C,
-  ) -> Result<Self::Output, Self::Error>
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, _client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {

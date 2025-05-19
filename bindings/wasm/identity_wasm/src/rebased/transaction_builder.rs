@@ -72,11 +72,7 @@ impl Transaction for WasmTransaction {
     Ok(bcs::from_bytes(&pt_bcs)?)
   }
 
-  async fn apply<C>(
-    self,
-    effects: &mut IotaTransactionBlockEffects,
-    client: &C,
-  ) -> StdResult<Self::Output, IotaError>
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> StdResult<Self::Output, IotaError>
   where
     C: CoreClientReadOnly,
   {
