@@ -221,7 +221,7 @@ where
 
     if chained_execution {
       // The proposal has been created and executed right-away. Parse its effects.
-      Proposal::<A>::parse_tx_effects(&effects).map(ProposalResult::Executed)
+      Proposal::<A>::parse_tx_effects(effects).map(ProposalResult::Executed)
     } else {
       // 2 objects are created, one is the Bag's Field and the other is our Proposal. Proposal is not owned by the bag,
       // but the field is.
@@ -288,7 +288,7 @@ where
       .await?
       .ok_or_else(|| Error::Identity(format!("identity {} cannot be found", identity.id())))?;
 
-    Proposal::<A>::parse_tx_effects(&effects)
+    Proposal::<A>::parse_tx_effects(effects)
   }
 }
 
