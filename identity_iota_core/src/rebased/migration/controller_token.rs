@@ -401,16 +401,12 @@ impl Transaction for DelegateToken {
     Ok(bcs::from_bytes(&ptb_bcs)?)
   }
 
-  async fn apply<C>(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    client: &C,
-  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     let created_objects = effects
@@ -437,17 +433,14 @@ impl Transaction for DelegateToken {
     }
 
     let (Some(i), Some(token)) = (target_token_pos, target_token) else {
-      return (
-        Err(Error::TransactionUnexpectedResponse(
-          "failed to find the correct identity in this transaction's effects".to_owned(),
-        )),
-        effects,
-      );
+      return Err(Error::TransactionUnexpectedResponse(
+        "failed to find the correct identity in this transaction's effects".to_owned(),
+      ));
     };
 
     effects.created_mut().swap_remove(i);
 
-    (Ok(token), effects)
+    Ok(token)
   }
 }
 
@@ -548,19 +541,15 @@ impl Transaction for DelegationTokenRevocation {
     Ok(bcs::from_bytes(&tx_bytes)?)
   }
 
-  async fn apply<C>(
-    self,
-    effects: IotaTransactionBlockEffects,
-    _client: &C,
-  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, _client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
-    (Ok(()), effects)
+    Ok(())
   }
 }
 
@@ -626,16 +615,12 @@ impl Transaction for DeleteDelegationToken {
     Ok(bcs::from_bytes(&tx_bytes)?)
   }
 
-  async fn apply<C>(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    _client: &C,
-  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, _client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     let Some(deleted_token_pos) = effects
@@ -644,17 +629,14 @@ impl Transaction for DeleteDelegationToken {
       .find_position(|obj_ref| obj_ref.object_id == self.delegation_token_id)
       .map(|(pos, _)| pos)
     else {
-      return (
-        Err(Error::TransactionUnexpectedResponse(format!(
-          "DelegationToken {} wasn't deleted in this transaction",
-          self.delegation_token_id,
-        ))),
-        effects,
-      );
+      return Err(Error::TransactionUnexpectedResponse(format!(
+        "DelegationToken {} wasn't deleted in this transaction",
+        self.delegation_token_id,
+      )));
     };
 
     effects.deleted_mut().swap_remove(deleted_token_pos);
 
-    (Ok(()), effects)
+    Ok(())
   }
 }

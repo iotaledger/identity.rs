@@ -74,21 +74,19 @@ impl Transaction for WasmTransaction {
 
   async fn apply<C>(
     self,
-    effects: IotaTransactionBlockEffects,
+    effects: &mut IotaTransactionBlockEffects,
     client: &C,
-  ) -> (StdResult<Self::Output, IotaError>, IotaTransactionBlockEffects)
+  ) -> StdResult<Self::Output, IotaError>
   where
     C: CoreClientReadOnly,
   {
     let managed_client = WasmManagedCoreClientReadOnly::from_rust(client);
     let core_client = managed_client.into_wasm();
-    let wasm_effects = WasmIotaTransactionBlockEffects::from(&effects);
+    let wasm_effects = WasmIotaTransactionBlockEffects::from(&*effects);
 
-    let apply_result = Self::apply(&self, &wasm_effects, &core_client)
+    Self::apply(&self, &wasm_effects, &core_client)
       .await
-      .map_err(|e| IotaError::FfiError(format!("failed to apply effects from WASM Transaction: {e:?}")));
-
-    (apply_result, wasm_effects.into())
+      .map_err(|e| IotaError::FfiError(format!("failed to apply effects from WASM Transaction: {e:?}")))
   }
 }
 

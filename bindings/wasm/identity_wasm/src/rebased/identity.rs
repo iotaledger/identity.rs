@@ -307,9 +307,9 @@ impl WasmCreateIdentity {
     client: &WasmCoreClientReadOnly,
   ) -> Result<WasmOnChainIdentity> {
     let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
-    let effects = wasm_effects.clone().into();
-    let (apply_result, rem_effects) = self.0.apply(effects, &managed_client).await;
-    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    let mut effects = wasm_effects.clone().into();
+    let apply_result = self.0.apply(&mut effects, &managed_client).await;
+    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&effects);
     Object::assign(wasm_effects, &rem_wasm_effects);
 
     apply_result.wasm_result().map(WasmOnChainIdentity::new)

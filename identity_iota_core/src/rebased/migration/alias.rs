@@ -175,16 +175,12 @@ impl Transaction for MigrateLegacyIdentity {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply<C>(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    client: &C,
-  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.to_string())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.to_string()));
     }
 
     let legacy_did: Url = IotaDID::new(&self.alias.id.object_id().into_bytes(), client.network_name())
@@ -214,16 +210,13 @@ impl Transaction for MigrateLegacyIdentity {
     }
 
     let (Some(i), Some(identity)) = (target_identity_pos, target_identity) else {
-      return (
-        Err(Error::TransactionUnexpectedResponse(
-          "failed to find the correct identity in this transaction's effects".to_owned(),
-        )),
-        effects,
-      );
+      return Err(Error::TransactionUnexpectedResponse(
+        "failed to find the correct identity in this transaction's effects".to_owned(),
+      ));
     };
 
     effects.created_mut().swap_remove(i);
 
-    (Ok(identity), effects)
+    Ok(identity)
   }
 }

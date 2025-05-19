@@ -437,16 +437,12 @@ where
   {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply<C>(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    _client: &C,
-  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, _client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     if let Some(asset_pos) = effects
@@ -460,7 +456,7 @@ where
       self.asset.inner = self.new_content;
     }
 
-    (Ok(()), effects)
+    Ok(())
   }
 }
 
@@ -505,16 +501,12 @@ where
   {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply<C>(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    _client: &C,
-  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, _client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     if let Some(asset_pos) = effects
@@ -524,15 +516,12 @@ where
       .find_map(|(i, obj)| (obj.object_id == self.asset.id()).then_some(i))
     {
       effects.deleted_mut().swap_remove(asset_pos);
-      (Ok(()), effects)
+      Ok(())
     } else {
-      (
-        Err(Error::TransactionUnexpectedResponse(format!(
-          "cannot find asset {} in the list of delete objects",
-          self.asset.id()
-        ))),
-        effects,
-      )
+      Err(Error::TransactionUnexpectedResponse(format!(
+        "cannot find asset {} in the list of delete objects",
+        self.asset.id()
+      )))
     }
   }
 }
@@ -582,16 +571,12 @@ where
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply<C>(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    client: &C,
-  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     let created_objects = effects
@@ -622,17 +607,14 @@ where
     }
 
     let (Some(pos), Some(asset)) = (target_asset_pos, target_asset) else {
-      return (
-        Err(Error::TransactionUnexpectedResponse(
-          "failed to find the asset created by this operation in transaction's effects".to_owned(),
-        )),
-        effects,
-      );
+      return Err(Error::TransactionUnexpectedResponse(
+        "failed to find the asset created by this operation in transaction's effects".to_owned(),
+      ));
     };
 
     effects.created_mut().swap_remove(pos);
 
-    (Ok(asset), effects)
+    Ok(asset)
   }
 }
 
@@ -678,16 +660,12 @@ where
   {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply<C>(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    client: &C,
-  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     let created_objects = effects
@@ -715,17 +693,14 @@ where
     }
 
     let (Some(pos), Some(proposal)) = (target_proposal_pos, target_proposal) else {
-      return (
-        Err(Error::TransactionUnexpectedResponse(
-          "failed to find the TransferProposal created by this operation in transaction's effects".to_owned(),
-        )),
-        effects,
-      );
+      return Err(Error::TransactionUnexpectedResponse(
+        "failed to find the TransferProposal created by this operation in transaction's effects".to_owned(),
+      ));
     };
 
     effects.created_mut().swap_remove(pos);
 
-    (Ok(proposal), effects)
+    Ok(proposal)
   }
 }
 
@@ -793,16 +768,12 @@ impl Transaction for AcceptTransfer {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply<C>(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    _client: &C,
-  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, _client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     if let Some(i) = effects
@@ -813,16 +784,13 @@ impl Transaction for AcceptTransfer {
       .find_map(|(i, obj)| (obj.object_id == self.proposal.recipient_cap_id).then_some(i))
     {
       effects.deleted_mut().swap_remove(i);
-      (Ok(()), effects)
+      Ok(())
     } else {
-      (
-        Err(Error::TransactionUnexpectedResponse(format!(
-          "transfer of asset {} through proposal {} wasn't successful",
-          self.proposal.asset_id,
-          self.proposal.id.object_id()
-        ))),
-        effects,
-      )
+      Err(Error::TransactionUnexpectedResponse(format!(
+        "transfer of asset {} through proposal {} wasn't successful",
+        self.proposal.asset_id,
+        self.proposal.id.object_id()
+      )))
     }
   }
 }
@@ -886,16 +854,12 @@ impl Transaction for ConcludeTransfer {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply<C>(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, _client: &C) -> Result<Self::Output, Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     let mut idx_to_remove = effects
@@ -908,13 +872,10 @@ impl Transaction for ConcludeTransfer {
       .collect::<Vec<_>>();
 
     if idx_to_remove.len() < 2 {
-      return (
-        Err(Error::TransactionUnexpectedResponse(format!(
-          "conclusion or canceling of proposal {} wasn't successful",
-          self.proposal.id.object_id()
-        ))),
-        effects,
-      );
+      return Err(Error::TransactionUnexpectedResponse(format!(
+        "conclusion or canceling of proposal {} wasn't successful",
+        self.proposal.id.object_id()
+      )));
     }
 
     // Ordering the list of indexis to remove is important to avoid invalidating the positions
@@ -925,6 +886,6 @@ impl Transaction for ConcludeTransfer {
       effects.deleted_mut().swap_remove(i);
     }
 
-    (Ok(()), effects)
+    Ok(())
   }
 }

@@ -357,16 +357,16 @@ where
 
   async fn apply<C>(
     self,
-    effects: IotaTransactionBlockEffects,
+    effects: &mut IotaTransactionBlockEffects,
     _client: &C,
-  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
+  ) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
-    (Ok(()), effects)
+    Ok(())
   }
 }

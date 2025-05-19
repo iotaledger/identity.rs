@@ -200,8 +200,9 @@ impl WasmApproveConfigChangeProposal {
       .approve(&identity, &self.controller_token.0)
       .wasm_result()?
       .into_inner();
-    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &managed_client).await;
-    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    let mut effects = wasm_effects.clone().into();
+    let apply_result = tx.apply(&mut effects, &managed_client).await;
+    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&effects);
     Object::assign(wasm_effects, &wasm_rem_effects);
 
     apply_result.wasm_result()
@@ -258,8 +259,9 @@ impl WasmExecuteConfigChangeProposal {
       .await
       .wasm_result()?
       .into_inner();
-    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &managed_client).await;
-    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    let mut effects = wasm_effects.clone().into();
+    let apply_result = tx.apply(&mut effects, &managed_client).await;
+    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&effects);
     Object::assign(wasm_effects, &wasm_rem_effects);
 
     apply_result.wasm_result()
@@ -392,8 +394,9 @@ impl WasmCreateConfigChangeProposal {
 
     let tx = builder.finish(&managed_client).await.wasm_result()?.into_inner();
 
-    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &managed_client).await;
-    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    let mut effects = wasm_effects.clone().into();
+    let apply_result = tx.apply(&mut effects, &managed_client).await;
+    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&effects);
     Object::assign(wasm_effects, &rem_wasm_effects);
 
     match apply_result.wasm_result()? {

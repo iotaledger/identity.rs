@@ -319,9 +319,9 @@ impl Transaction for PublishDidDocument {
 
   async fn apply<C>(
     self,
-    effects: IotaTransactionBlockEffects,
+    effects: &mut IotaTransactionBlockEffects,
     client: &C,
-  ) -> (Result<Self::Output, Self::Error>, IotaTransactionBlockEffects)
+  ) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -332,7 +332,6 @@ impl Transaction for PublishDidDocument {
       CreateIdentity::new(builder)
     };
 
-    let (application_result, remaining_effects) = tx.apply(effects, client).await;
-    (application_result.map(IotaDocument::from), remaining_effects)
+    tx.apply(effects, client).await.map(IotaDocument::from)
   }
 }
