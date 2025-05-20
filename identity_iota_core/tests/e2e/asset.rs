@@ -28,7 +28,7 @@ use iota_interaction::MoveType as _;
 use iota_sdk::types::TypeTag;
 use itertools::Itertools as _;
 use move_core_types::language_storage::StructTag;
-use product_core::core_client::CoreClient;
+use product_common::core_client::CoreClient;
 use secret_storage::Signer as _;
 
 #[tokio::test]

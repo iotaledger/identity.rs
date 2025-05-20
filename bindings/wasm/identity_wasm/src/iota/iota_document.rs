@@ -24,7 +24,7 @@ use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
 use js_sys::Promise;
-use product_core::network_name::NetworkName;
+use product_common::network_name::NetworkName;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;

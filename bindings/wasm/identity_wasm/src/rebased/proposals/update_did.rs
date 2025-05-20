@@ -10,7 +10,7 @@ use identity_iota::iota::rebased::proposals::UpdateDidDocument;
 use identity_iota::iota::StateMetadataDocument;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use js_sys::Object;
-use product_core::transaction::transaction_builder::Transaction;
+use product_common::transaction::transaction_builder::Transaction;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::JsCast;

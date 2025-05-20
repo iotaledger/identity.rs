@@ -9,10 +9,10 @@ use crate::rebased::iota::package::identity_package_id;
 
 use crate::rebased::migration::ControllerToken;
 
-use product_core::core_client::CoreClientReadOnly;
-use product_core::transaction::transaction_builder::Transaction;
-use product_core::transaction::transaction_builder::TransactionBuilder;
-use product_core::transaction::ProtoTransaction;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::Transaction;
+use product_common::transaction::transaction_builder::TransactionBuilder;
+use product_common::transaction::ProtoTransaction;
 use serde::Deserialize;
 use tokio::sync::Mutex;
 

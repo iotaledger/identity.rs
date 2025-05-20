@@ -13,7 +13,7 @@ use iota_interaction::types::id::ID;
 use iota_interaction::IotaClientTrait;
 use phf::phf_map;
 use phf::Map;
-use product_core::core_client::CoreClientReadOnly;
+use product_common::core_client::CoreClientReadOnly;
 use tokio::sync::RwLock;
 
 use crate::rebased::client::IdentityClientReadOnly;

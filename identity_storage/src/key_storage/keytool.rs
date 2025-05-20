@@ -122,7 +122,7 @@ mod tests {
   use identity_verification::jws::JwsAlgorithm;
   use identity_verification::MethodScope;
   use iota_interaction::KeytoolStorage as Keytool;
-  use product_core::network_name::NetworkName;
+  use product_common::network_name::NetworkName;
   use serde_json::Value;
 
   fn make_storage() -> KeytoolStorage {

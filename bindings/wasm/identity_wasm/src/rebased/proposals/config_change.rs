@@ -11,7 +11,7 @@ use identity_iota::iota::rebased::proposals::ProposalResult;
 use identity_iota::iota::rebased::proposals::ProposalT;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use js_sys::Object;
-use product_core::transaction::transaction_builder::Transaction;
+use product_common::transaction::transaction_builder::Transaction;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::JsCast;

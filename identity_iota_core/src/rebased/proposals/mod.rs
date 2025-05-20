@@ -31,10 +31,10 @@ use iota_interaction::types::TypeTag;
 use iota_interaction::IotaClientTrait;
 use iota_interaction::OptionalSend;
 use iota_interaction::OptionalSync;
-use product_core::core_client::CoreClientReadOnly;
-use product_core::transaction::transaction_builder::Transaction;
-use product_core::transaction::transaction_builder::TransactionBuilder;
-use product_core::transaction::ProtoTransaction;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::Transaction;
+use product_common::transaction::transaction_builder::TransactionBuilder;
+use product_common::transaction::ProtoTransaction;
 use tokio::sync::OnceCell;
 
 pub use send::*;

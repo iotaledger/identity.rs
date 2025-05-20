@@ -12,7 +12,7 @@ use identity_did::BaseDIDUrl;
 use identity_did::CoreDID;
 use identity_did::Error as DIDError;
 use identity_did::DID;
-use product_core::network_name::NetworkName;
+use product_common::network_name::NetworkName;
 use ref_cast::ref_cast_custom;
 use ref_cast::RefCastCustom;
 use serde::Deserialize;
@@ -73,7 +73,7 @@ impl IotaDID {
   ///
   /// ```
   /// # use identity_did::DID;
-  /// # use product_core::network_name::NetworkName;
+  /// # use product_common::network_name::NetworkName;
   /// # use identity_iota_core::IotaDID;
   /// #
   /// let did = IotaDID::new(&[1;32], &NetworkName::try_from("smr").unwrap());
@@ -97,7 +97,7 @@ impl IotaDID {
   ///
   /// ```
   /// # use identity_did::DID;
-  /// # use product_core::network_name::NetworkName;
+  /// # use product_common::network_name::NetworkName;
   /// # use identity_iota_core::IotaDID;
   /// #
   /// let placeholder = IotaDID::placeholder(&NetworkName::try_from("smr").unwrap());
@@ -113,7 +113,7 @@ impl IotaDID {
   ///
   /// ```
   /// # use identity_did::DID;
-  /// # use product_core::network_name::NetworkName;
+  /// # use product_common::network_name::NetworkName;
   /// # use identity_iota_core::IotaDID;
   /// #
   /// let placeholder = IotaDID::placeholder(&NetworkName::try_from("smr").unwrap());

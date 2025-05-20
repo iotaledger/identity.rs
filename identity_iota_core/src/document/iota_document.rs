@@ -10,7 +10,7 @@ use identity_did::DIDUrl;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::DecodedJws;
 use identity_verification::jose::jws::JwsVerifier;
-use product_core::network_name::NetworkName;
+use product_common::network_name::NetworkName;
 use serde::Deserialize;
 use serde::Serialize;
 

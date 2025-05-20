@@ -30,7 +30,7 @@ iota_interaction_ts = { git = "https://github.com/iotaledger/product-core.git", 
 js-sys = { version = "0.3.61" }
 json-proof-token = "0.3.4"
 proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
-product-core = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", features = ["core-client", "transaction"] }
+product_common = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", features = ["core-client", "transaction"] }
 secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", default-features = false, tag = "v0.3.0" }
 serde = { version = "1.0", features = ["derive"] }
 serde-wasm-bindgen = "0.6.5"
@@ -41,8 +41,6 @@ tokio = { version = "1.43", default-features = false, features = ["sync"] }
 tsify = "0.4.5"
 wasm-bindgen = { version = "0.2.100", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
-
-# iota_interaction_ts = { path = "../../../../product-core/bindings/wasm/iota_interaction_ts", optional = true }
 
 [dependencies.identity_iota]
 path = "../../../identity_iota"
@@ -61,6 +59,14 @@ features = [
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 getrandom_0_2 = { package = "getrandom", version = "0.2", default-features = false, features = ["js"] }
 getrandom = { version = "0.3", default-features = false, features = ["wasm_js"] }
+
+# Uncomment the following patch if you need to use a local `product-core` repository for development purposes.
+# IMPORTANT: Do not forget to comment out the patch before creating your PR.
+[patch."https://github.com/iotaledger/product-core.git"]
+iota_interaction = { version = "1.6.0-alpha", path = "../../../../product-core/iota_interaction" }
+iota_interaction_rust = { version = "1.6.0-alpha", path = "../../../../product-core/iota_interaction_rust" }
+iota_interaction_ts = { version = "1.6.0-alpha", path = "../../../../product-core/bindings/wasm/iota_interaction_ts" }
+product_common = { version = "1.6.0-alpha", path = "../../../../product-core/product_common" }
 
 [profile.release]
 opt-level = 's'

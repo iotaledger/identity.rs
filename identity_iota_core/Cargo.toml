@@ -24,7 +24,7 @@ num-derive = { version = "0.4", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
 prefix-hex = { version = "0.7", default-features = false }
-product-core = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", default-features = false }
+product_common = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", default-features = false }
 ref-cast = { version = "1.0.14", default-features = false }
 serde.workspace = true
 serde_json.workspace = true
@@ -98,7 +98,7 @@ iota-client = [
   "dep:rand",
   "dep:secret-storage",
   "dep:serde-aux",
-  "product-core/transaction",
+  "product_common/transaction",
 ]
 
 # Enables revocation with `RevocationBitmap2022`.
@@ -109,7 +109,7 @@ send-sync = [
   "send-sync-storage",
   "send-sync-client-ext",
   "iota_interaction/send-sync-transaction",
-  "product-core/send-sync",
+  "product_common/send-sync",
 ]
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = ["secret-storage?/send-sync-storage"]

@@ -17,8 +17,8 @@ use iota_interaction::types::STARDUST_PACKAGE_ID;
 use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
 use iota_interaction::OptionalSync;
 
-use product_core::core_client::CoreClientReadOnly;
-use product_core::transaction::transaction_builder::Transaction;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::Transaction;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;

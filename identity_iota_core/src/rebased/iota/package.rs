@@ -8,7 +8,7 @@ use std::sync::LazyLock;
 
 use anyhow::Context;
 use iota_interaction::types::base_types::ObjectID;
-use product_core::core_client::CoreClientReadOnly;
+use product_common::core_client::CoreClientReadOnly;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;

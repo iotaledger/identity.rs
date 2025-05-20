@@ -17,9 +17,9 @@ use iota_sdk::types::transaction::GasData;
 use iota_sdk::types::transaction::Transaction;
 use iota_sdk::IotaClientBuilder;
 use iota_sdk::IOTA_COIN_TYPE;
-use product_core::core_client::CoreClient;
-use product_core::transaction::transaction_builder::MutGasDataRef;
-use product_core::transaction::transaction_builder::Transaction as _;
+use product_common::core_client::CoreClient;
+use product_common::transaction::transaction_builder::MutGasDataRef;
+use product_common::transaction::transaction_builder::Transaction as _;
 use secret_storage::Signer;
 
 /// This example demonstrates:

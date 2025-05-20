@@ -10,7 +10,7 @@ use identity_iota::storage::key_storage::KeyStorageError;
 use identity_iota::storage::key_storage::KeyStorageErrorKind;
 use identity_iota::storage::key_storage::KeyStorageResult;
 use iota_interaction_ts::AdapterError;
-use product_core::Error as ProductCommonError;
+use product_common::Error as ProductCommonError;
 use std::borrow::Cow;
 use std::fmt::Debug;
 use std::fmt::Display;

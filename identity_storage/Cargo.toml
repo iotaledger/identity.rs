@@ -47,7 +47,7 @@ identity_credential = { version = "=1.6.0-alpha", path = "../identity_credential
 identity_ecdsa_verifier = { version = "=1.6.0-alpha", path = "../identity_ecdsa_verifier", default-features = false, features = ["es256"] }
 identity_eddsa_verifier = { version = "=1.6.0-alpha", path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 once_cell = { version = "1.18", default-features = false }
-product-core = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", default-features = false }
+product_common = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common", default-features = false }
 tokio = { version = "1.43", default-features = false, features = ["macros", "sync", "rt"] }
 
 [features]
