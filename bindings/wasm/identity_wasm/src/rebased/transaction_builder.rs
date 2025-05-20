@@ -17,6 +17,8 @@ use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockResponse;
 use iota_interaction_ts::bindings::WasmObjectRef;
 use iota_interaction_ts::bindings::WasmTransactionDataBuilder;
+use iota_interaction_ts::core_client::WasmCoreClient;
+use iota_interaction_ts::core_client::WasmCoreClientReadOnly;
 use js_sys::JsString;
 use product_common::core_client::CoreClientReadOnly;
 use product_common::transaction::transaction_builder::MutGasDataRef;
@@ -28,8 +30,6 @@ use wasm_bindgen::JsCast as _;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
-use super::WasmCoreClient;
-use super::WasmCoreClientReadOnly;
 use super::WasmManagedCoreClient;
 use super::WasmManagedCoreClientReadOnly;
 use crate::error::Result;
