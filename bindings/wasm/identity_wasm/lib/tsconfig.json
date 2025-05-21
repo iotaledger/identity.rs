@@ -7,8 +7,8 @@
         "../node/identity_wasm",
         "./identity_wasm.js"
       ],
-      "@iota/iota-interaction-ts/": [
-        "@iota/iota-interaction-ts/node/"
+      "@iota/iota-interaction-ts/*": [
+        "../node_modules/@iota/iota-interaction-ts/node/*"
       ],
       "../lib": [
         "."
