@@ -8,7 +8,8 @@
         "./identity_wasm.js"
       ],
       "@iota/iota-interaction-ts/*": [
-        "../node_modules/@iota/iota-interaction-ts/web/*"
+        "../node_modules/@iota/iota-interaction-ts/web/*",
+        "@iota/iota-interaction-ts/web/"
       ],
       "../lib": [
         "."
