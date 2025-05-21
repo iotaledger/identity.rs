@@ -40,7 +40,11 @@ json-proof-token = { version = "0.3.5" }
 zkryptium = { version = "0.2.2", default-features = false, features = ["bbsplus"] }
 
 # Uncomment the following patch if you need to use a local `product-core` repository for development purposes.
-# IMPORTANT: Do not forget to comment out the patch before creating your PR.
+# --------------------------------------------------------------------------
+# IMPORTANT:
+# * Remember to comment out the patch before committing your changes.
+# * Remember also to comment out the patch in `bindings/wasm/identity_wasm/Cargo.toml`
+# --------------------------------------------------------------------------
 #[patch."https://github.com/iotaledger/product-core.git"]
 #iota_interaction = { version = "1.6.0-alpha", path = "../product-core/iota_interaction" }
 #iota_interaction_rust = { version = "1.6.0-alpha", path = "../product-core/iota_interaction_rust" }
