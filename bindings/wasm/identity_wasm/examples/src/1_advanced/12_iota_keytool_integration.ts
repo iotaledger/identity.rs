@@ -54,7 +54,7 @@ export async function iotaKeytoolIntegration() {
     let publishedDidDocument = await identityClient
         .publishDidDocument(didDocument, identityClient.senderAddress())
         .buildAndExecute(identityClient)
-        .then(res => res.output);
+        .then((res: { output: any; }) => res.output);
 
     console.log(`Here is our published DID document: ${JSON.stringify(publishedDidDocument, null, 2)}`);
 }
