@@ -29,9 +29,9 @@ exclude = ["bindings/wasm/identity_wasm", "bindings/grpc"]
 
 [workspace.dependencies]
 bls12_381_plus = { version = "0.8.17" }
-iota_interaction = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "iota_interaction" }
-iota_interaction_ts = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "iota_interaction_ts" }
-product_common = { git = "https://github.com/iotaledger/product-core.git", branch = "feat/transaction-client-core-for-identity", package = "product_common" }
+iota_interaction = { git = "https://github.com/iotaledger/product-core.git", branch = "chore/extend-tx-client-core", package = "iota_interaction" }
+iota_interaction_ts = { git = "https://github.com/iotaledger/product-core.git", branch = "chore/extend-tx-client-core", package = "iota_interaction_ts" }
+product_common = { git = "https://github.com/iotaledger/product-core.git", branch = "chore/extend-tx-client-core", package = "product_common" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 serde_json = { version = "1.0", default-features = false }
 strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
@@ -41,11 +41,11 @@ zkryptium = { version = "0.2.2", default-features = false, features = ["bbsplus"
 
 # Uncomment the following patch if you need to use a local `product-core` repository for development purposes.
 # IMPORTANT: Do not forget to comment out the patch before creating your PR.
-[patch."https://github.com/iotaledger/product-core.git"]
-iota_interaction = { version = "1.6.0-alpha", path = "../product-core/iota_interaction" }
-iota_interaction_rust = { version = "1.6.0-alpha", path = "../product-core/iota_interaction_rust" }
-iota_interaction_ts = { version = "1.6.0-alpha", path = "../product-core/bindings/wasm/iota_interaction_ts" }
-product_common = { version = "1.6.0-alpha", path = "../product-core/product_common" }
+#[patch."https://github.com/iotaledger/product-core.git"]
+#iota_interaction = { version = "1.6.0-alpha", path = "../product-core/iota_interaction" }
+#iota_interaction_rust = { version = "1.6.0-alpha", path = "../product-core/iota_interaction_rust" }
+#iota_interaction_ts = { version = "1.6.0-alpha", path = "../product-core/bindings/wasm/iota_interaction_ts" }
+#product_common = { version = "1.6.0-alpha", path = "../product-core/product_common" }
 
 [workspace.lints.clippy]
 result_large_err = "allow"
