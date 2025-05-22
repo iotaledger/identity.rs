@@ -7,13 +7,14 @@ use anyhow::Context as _;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jwt;
 use identity_credential::credential::JwtCredential;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::IotaKeySignature;
-use identity_iota_interaction::IotaVerifiableCredential;
-use identity_iota_interaction::OptionalSync;
 use identity_jose::jwt::JwtHeader;
 use identity_jose::jwu;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::IotaKeySignature;
+use iota_interaction::IotaVerifiableCredential;
+use iota_interaction::OptionalSync;
 use itertools::Itertools;
+use product_common::core_client::CoreClientReadOnly;
 use secret_storage::Signer;
 
 use crate::rebased::client::IdentityClient;
@@ -63,7 +64,7 @@ impl PublicAvailableVC {
       .transferable(false)
       .mutable(true)
       .deletable(true)
-      .finish();
+      .finish(client);
 
     let tx_builder = if let Some(gas_budget) = gas_budget {
       tx_builder.with_gas_budget(gas_budget)
@@ -81,6 +82,7 @@ impl PublicAvailableVC {
     let asset = client
       .get_object_by_id::<AuthenticatedAsset<IotaVerifiableCredential>>(id)
       .await?;
+
     Self::try_from_asset(asset).map_err(|e| {
       crate::rebased::Error::ObjectLookup(format!(
         "object at address {id} is not a valid publicly available VC: {e}"

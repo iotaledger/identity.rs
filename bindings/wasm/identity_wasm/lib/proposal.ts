@@ -1,8 +1,8 @@
 // Copyright 2021-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { ConfigChange, IdentityClient, SendAction, UpdateDid } from "~identity_wasm";
-import { Transaction, TransactionBuilder } from "./transaction_internal";
+import { Transaction, TransactionBuilder } from "@iota/iota-interaction-ts/transaction_internal";
+import { ConfigChange, ControllerToken, IdentityClient, OnChainIdentity, SendAction, UpdateDid } from "~identity_wasm";
 
 export type Action = UpdateDid | SendAction | ConfigChange;
 export type ProposalOutput<A extends Action> = A extends UpdateDid ? void
@@ -20,6 +20,9 @@ export interface Proposal<A extends Action> {
     votes: bigint;
     voters: Set<string>;
     expirationEpoch?: bigint;
-    approve: (client: IdentityClient) => TransactionBuilder<ApproveProposal>;
-    intoTx: (client: IdentityClient) => TransactionBuilder<ExecuteProposal<A>>;
+    approve: (
+        identity: OnChainIdentity,
+        controllerToken: ControllerToken,
+    ) => TransactionBuilder<ApproveProposal>;
+    intoTx: (controllerToken: ControllerToken) => TransactionBuilder<ExecuteProposal<A>>;
 }

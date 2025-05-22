@@ -2,21 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::anyhow;
-use anyhow::Context as _;
 use async_trait::async_trait;
 use fastcrypto::hash::Blake2b256;
 use fastcrypto::traits::ToFromBytes;
-use identity_iota_interaction::shared_crypto::intent::Intent;
-use identity_iota_interaction::types::crypto::PublicKey;
-use identity_iota_interaction::types::crypto::Signature;
-use identity_iota_interaction::types::crypto::SignatureScheme as IotaSignatureScheme;
-use identity_iota_interaction::types::transaction::TransactionData;
-use identity_iota_interaction::IotaKeySignature;
-use identity_iota_interaction::OptionalSync;
+
+use identity_verification::jwk::FromJwk as _;
 use identity_verification::jwk::Jwk;
-use identity_verification::jwk::JwkParams;
-use identity_verification::jwk::JwkParamsEc;
-use identity_verification::jwu;
+
+use iota_interaction::shared_crypto::intent::Intent;
+use iota_interaction::types::crypto::PublicKey;
+use iota_interaction::types::crypto::Signature;
+
+use iota_interaction::types::transaction::TransactionData;
+use iota_interaction::IotaKeySignature;
+use iota_interaction::OptionalSync;
 use secret_storage::Error as SecretStorageError;
 use secret_storage::Signer;
 
@@ -60,7 +59,7 @@ impl<'a, K, I> StorageSigner<'a, K, I> {
   }
 
   /// Returns this [`Signer`]'s public key as [`Jwk`].
-  pub fn public_key(&self) -> &Jwk {
+  pub fn public_key_jwk(&self) -> &Jwk {
     &self.public_key
   }
 
@@ -84,45 +83,8 @@ where
   }
 
   async fn public_key(&self) -> Result<PublicKey, SecretStorageError> {
-    match self.public_key.params() {
-      JwkParams::Okp(params) => {
-        if params.crv != "Ed25519" {
-          return Err(SecretStorageError::Other(anyhow!(
-            "unsupported key type {}",
-            params.crv
-          )));
-        }
-
-        jwu::decode_b64(&params.x)
-          .context("failed to base64 decode key")
-          .and_then(|pk_bytes| {
-            PublicKey::try_from_bytes(IotaSignatureScheme::ED25519, &pk_bytes).map_err(|e| anyhow!("{e}"))
-          })
-          .map_err(SecretStorageError::Other)
-      }
-      JwkParams::Ec(JwkParamsEc { crv, x, y, .. }) => {
-        let pk_bytes = {
-          let mut decoded_x_bytes = jwu::decode_b64(x)
-            .map_err(|e| SecretStorageError::Other(anyhow!("failed to decode b64 x parameter: {e}")))?;
-          let mut decoded_y_bytes = jwu::decode_b64(y)
-            .map_err(|e| SecretStorageError::Other(anyhow!("failed to decode b64 y parameter: {e}")))?;
-          decoded_x_bytes.append(&mut decoded_y_bytes);
-
-          decoded_x_bytes
-        };
-
-        if self.public_key.alg() == Some("ES256") || crv == "P-256" {
-          PublicKey::try_from_bytes(IotaSignatureScheme::Secp256r1, &pk_bytes)
-            .map_err(|e| SecretStorageError::Other(anyhow!("not a secp256r1 key: {e}")))
-        } else if self.public_key.alg() == Some("ES256K") || crv == "K-256" {
-          PublicKey::try_from_bytes(IotaSignatureScheme::Secp256k1, &pk_bytes)
-            .map_err(|e| SecretStorageError::Other(anyhow!("not a secp256k1 key: {e}")))
-        } else {
-          Err(SecretStorageError::Other(anyhow!("invalid EC key")))
-        }
-      }
-      _ => Err(SecretStorageError::Other(anyhow!("unsupported key"))),
-    }
+    PublicKey::from_jwk(&self.public_key)
+      .map_err(|e| SecretStorageError::Other(anyhow!("failed to convert public key: {e}")))
   }
   async fn sign(&self, data: &TransactionData) -> Result<Signature, SecretStorageError> {
     use fastcrypto::hash::HashFunction;

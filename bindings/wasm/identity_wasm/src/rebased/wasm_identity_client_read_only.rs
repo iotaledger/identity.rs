@@ -43,6 +43,7 @@ impl IdentityContainer {
 ///
 /// Used for read operations, so does not need an account and signing capabilities.
 /// If you want to write to the chain, use {@link IdentityClient}.
+#[derive(Clone)]
 #[wasm_bindgen(js_name = IdentityClientReadOnly)]
 pub struct WasmIdentityClientReadOnly(pub(crate) IdentityClientReadOnly);
 
@@ -70,14 +71,14 @@ impl WasmIdentityClientReadOnly {
     self.0.package_id().to_string()
   }
 
+  #[wasm_bindgen(js_name = iotaClient)]
+  pub fn iota_client(&self) -> WasmIotaClient {
+    (*self.0).clone().into_inner()
+  }
+
   #[wasm_bindgen]
   pub fn network(&self) -> String {
     self.0.network().to_string()
-  }
-
-  #[wasm_bindgen(js_name = migrationRegistryId)]
-  pub fn migration_registry_id(&self) -> String {
-    self.0.migration_registry_id().to_string()
   }
 
   // TODO: implement later on

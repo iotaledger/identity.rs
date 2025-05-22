@@ -4,32 +4,37 @@
 use async_trait::async_trait;
 use identity_core::common::Url;
 use identity_did::DID as _;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::id::UID;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::types::STARDUST_PACKAGE_ID;
-use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaObjectDataOptions;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::id::UID;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::types::TypeTag;
+use iota_interaction::types::STARDUST_PACKAGE_ID;
+use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use iota_interaction::OptionalSync;
+
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::Transaction;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 use tokio::sync::OnceCell;
 
-use crate::iota_interaction_adapter::MigrationMoveCallsAdapter;
 use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::transaction_builder::Transaction;
+
+use crate::rebased::iota::move_calls;
+use crate::rebased::iota::package::identity_package_id;
 use crate::rebased::Error;
 use crate::IotaDID;
-use identity_iota_interaction::IotaClientTrait;
-use identity_iota_interaction::MigrationMoveCalls;
-use identity_iota_interaction::MoveType;
+use iota_interaction::IotaClientTrait;
+use iota_interaction::MoveType;
 
 use super::get_identity;
+use super::migration_registry_id;
 use super::Identity;
 use super::OnChainIdentity;
 
@@ -67,9 +72,9 @@ impl MoveType for UnmigratedAlias {
 /// Resolves an [`UnmigratedAlias`] given its ID `object_id`.
 pub async fn get_alias(client: &IdentityClientReadOnly, object_id: ObjectID) -> Result<Option<UnmigratedAlias>, Error> {
   match client.get_object_by_id(object_id).await {
-    Ok(alias) => Ok(Some(alias)),
-    Err(Error::ObjectLookup(err_msg)) if err_msg.contains("missing data") => Ok(None),
-    Err(e) => Err(e),
+    Ok(Some(alias)) => Ok(Some(alias)),
+    Ok(None) => Ok(None),
+    Err(e) => Err(e.into()),
   }
 }
 
@@ -89,15 +94,19 @@ impl MigrateLegacyIdentity {
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     // Try to parse a StateMetadataDocument out of this alias.
     let identity = Identity::Legacy(self.alias.clone());
-    let did_doc = identity.did_document(client.network())?;
+    let did_doc = identity.did_document(client.network_name())?;
     let Identity::Legacy(alias) = identity else {
       unreachable!("alias was wrapped by us")
     };
     // Get the ID of the `AliasOutput` that owns this `Alias`.
     let dynamic_field_wrapper = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(*alias.id.object_id(), IotaObjectDataOptions::new().with_owner())
       .await
@@ -108,6 +117,7 @@ impl MigrateLegacyIdentity {
       .expect("alias is a dynamic field")
       .into();
     let alias_output_id = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(dynamic_field_wrapper, IotaObjectDataOptions::new().with_owner())
       .await
@@ -119,6 +129,7 @@ impl MigrateLegacyIdentity {
       .into();
     // Get alias_output's ref.
     let alias_output_ref = client
+      .client_adapter()
       .read_api()
       .get_object_with_options(alias_output_id, IotaObjectDataOptions::default())
       .await
@@ -126,8 +137,11 @@ impl MigrateLegacyIdentity {
       .object_ref_if_exists()
       .expect("alias_output exists");
     // Get migration registry ref.
+    let migration_registry_id = migration_registry_id(client)
+      .await
+      .map_err(Error::MigrationRegistryNotFound)?;
     let migration_registry_ref = client
-      .get_object_ref_by_id(client.migration_registry_id())
+      .get_object_ref_by_id(migration_registry_id)
       .await?
       .expect("migration registry exists");
 
@@ -138,14 +152,11 @@ impl MigrateLegacyIdentity {
       // `to_unix` returns the seconds since EPOCH; we need milliseconds.
       .map(|timestamp| timestamp.to_unix() as u64 * 1000);
 
+    let package = identity_package_id(client).await?;
+
     // Build migration tx.
-    let tx = MigrationMoveCallsAdapter::migrate_did_output(
-      alias_output_ref,
-      created,
-      migration_registry_ref,
-      client.package_id(),
-    )
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx = move_calls::migration::migrate_did_output(alias_output_ref, created, migration_registry_ref, package)
+      .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(bcs::from_bytes(&tx)?)
   }
@@ -155,24 +166,24 @@ impl MigrateLegacyIdentity {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for MigrateLegacyIdentity {
   type Output = OnChainIdentity;
+  type Error = Error;
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> Result<Self::Output, Self::Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.to_string())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.to_string()));
     }
 
-    let legacy_did: Url = IotaDID::new(&self.alias.id.object_id().into_bytes(), client.network())
+    let legacy_did: Url = IotaDID::new(&self.alias.id.object_id().into_bytes(), client.network_name())
       .to_url()
       .into();
     let is_target_identity =
@@ -199,16 +210,13 @@ impl Transaction for MigrateLegacyIdentity {
     }
 
     let (Some(i), Some(identity)) = (target_identity_pos, target_identity) else {
-      return (
-        Err(Error::TransactionUnexpectedResponse(
-          "failed to find the correct identity in this transaction's effects".to_owned(),
-        )),
-        effects,
-      );
+      return Err(Error::TransactionUnexpectedResponse(
+        "failed to find the correct identity in this transaction's effects".to_owned(),
+      ));
     };
 
     effects.created_mut().swap_remove(i);
 
-    (Ok(identity), effects)
+    Ok(identity)
   }
 }

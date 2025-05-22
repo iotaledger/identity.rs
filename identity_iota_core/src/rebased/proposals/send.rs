@@ -3,21 +3,22 @@
 
 use std::marker::PhantomData;
 
+use crate::rebased::iota::package::identity_package_id;
 use async_trait::async_trait;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::MoveType;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::TypeTag;
+use iota_interaction::MoveType;
+use iota_interaction::OptionalSync;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::TransactionBuilder;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::migration::OnChainIdentity;
-use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::rebased::Error;
 
 use super::CreateProposal;
@@ -85,13 +86,16 @@ impl ProposalT for Proposal<SendAction> {
   type Action = SendAction;
   type Output = ();
 
-  async fn create<'i>(
+  async fn create<'i, C>(
     action: Self::Action,
     expiration: Option<u64>,
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
-    client: &IdentityClientReadOnly,
-  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error> {
+    client: &C,
+  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if identity.id() != controller_token.controller_of() {
       return Err(Error::Identity(format!(
         "token {} doesn't grant access to identity {}",
@@ -99,6 +103,7 @@ impl ProposalT for Proposal<SendAction> {
         identity.id()
       )));
     }
+    let package = identity_package_id(client).await?;
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
       .await?
@@ -121,22 +126,16 @@ impl ProposalT for Proposal<SendAction> {
         }
         object_and_type_list
       };
-      IdentityMoveCallsAdapter::create_and_execute_send(
+      move_calls::identity::create_and_execute_send(
         identity_ref,
         controller_cap_ref,
         action.0,
         expiration,
         object_type_list,
-        client.package_id(),
+        package,
       )
     } else {
-      IdentityMoveCallsAdapter::propose_send(
-        identity_ref,
-        controller_cap_ref,
-        action.0,
-        expiration,
-        client.package_id(),
-      )
+      move_calls::identity::propose_send(identity_ref, controller_cap_ref, action.0, expiration, package)
     }
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
     Ok(TransactionBuilder::new(CreateProposal {
@@ -147,12 +146,15 @@ impl ProposalT for Proposal<SendAction> {
     }))
   }
 
-  async fn into_tx<'i>(
+  async fn into_tx<'i, C>(
     self,
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
-    client: &IdentityClientReadOnly,
-  ) -> Result<TransactionBuilder<ExecuteProposal<'i, Self::Action>>, Error> {
+    client: &C,
+  ) -> Result<TransactionBuilder<ExecuteProposal<'i, Self::Action>>, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if identity.id() != controller_token.controller_of() {
       return Err(Error::Identity(format!(
         "token {} doesn't grant access to identity {}",
@@ -179,15 +181,11 @@ impl ProposalT for Proposal<SendAction> {
       }
       object_and_type_list
     };
+    let package = identity_package_id(client).await?;
 
-    let tx = IdentityMoveCallsAdapter::execute_send(
-      identity_ref,
-      controller_cap_ref,
-      proposal_id,
-      object_type_list,
-      client.package_id(),
-    )
-    .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
+    let tx =
+      move_calls::identity::execute_send(identity_ref, controller_cap_ref, proposal_id, object_type_list, package)
+        .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(TransactionBuilder::new(ExecuteProposal {
       identity,

@@ -5,6 +5,7 @@ use crate::common::get_funded_test_client;
 use crate::common::TestClient;
 use identity_iota_core::rebased::migration;
 use identity_iota_core::IotaDocument;
+
 use iota_sdk::types::crypto::SignatureScheme;
 
 #[tokio::test]

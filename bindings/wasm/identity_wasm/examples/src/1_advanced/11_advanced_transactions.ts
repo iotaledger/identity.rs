@@ -35,7 +35,7 @@ export async function advancedTransaction(): Promise<void> {
     });
     await iotaClient.waitForTransaction({ digest: tx_response.digest });
 
-    const identity = await tx.apply(tx_response.effects!, aliceClient.readOnly());
+    const identity = await tx.apply(tx_response.effects!, aliceClient);
 
     console.log(`Alice successfully created Identity ${identity.id()}! Thanks for the gas Bob!`);
 }

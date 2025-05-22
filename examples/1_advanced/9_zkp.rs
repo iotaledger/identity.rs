@@ -27,7 +27,6 @@ use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use identity_iota::iota_interaction::OptionalSync;
 
-use identity_iota::iota::rebased::transaction::TransactionOutput;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
 use identity_iota::storage::JwkMemStore;
@@ -39,6 +38,7 @@ use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::client::IotaKeySignature;
 use identity_storage::Storage;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
+use product_common::transaction::TransactionOutput;
 use secret_storage::Signer;
 
 // Creates a DID with a JWP verification method.

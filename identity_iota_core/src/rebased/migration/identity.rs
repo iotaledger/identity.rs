@@ -4,38 +4,45 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use crate::rebased::iota::move_calls;
+
+use crate::rebased::iota::package::identity_package_id;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::IotaKeySignature;
+use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use iota_interaction::OptionalSync;
+use product_common::core_client::CoreClient;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::network_name::NetworkName;
+use product_common::transaction::transaction_builder::Transaction;
+use product_common::transaction::transaction_builder::TransactionBuilder;
+use secret_storage::Signer;
 use tokio::sync::OnceCell;
 
 use crate::rebased::iota::types::Number;
 use crate::rebased::proposals::Upgrade;
 use crate::IotaDID;
 use crate::IotaDocument;
-use crate::NetworkName;
+
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 use async_trait::async_trait;
 use identity_core::common::Timestamp;
-use identity_iota_interaction::ident_str;
-use identity_iota_interaction::move_types::language_storage::StructTag;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaObjectData;
-use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
-use identity_iota_interaction::rpc_types::IotaParsedData;
-use identity_iota_interaction::rpc_types::IotaParsedMoveObject;
-use identity_iota_interaction::rpc_types::IotaPastObjectResponse;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::id::UID;
-use identity_iota_interaction::types::object::Owner;
-use identity_iota_interaction::types::TypeTag;
+use iota_interaction::ident_str;
+use iota_interaction::move_types::language_storage::StructTag;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaObjectData;
+use iota_interaction::rpc_types::IotaObjectDataOptions;
+use iota_interaction::rpc_types::IotaParsedData;
+use iota_interaction::rpc_types::IotaParsedMoveObject;
+use iota_interaction::rpc_types::IotaPastObjectResponse;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::id::UID;
+use iota_interaction::types::object::Owner;
+use iota_interaction::types::TypeTag;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -50,8 +57,8 @@ use crate::rebased::proposals::SendAction;
 use crate::rebased::proposals::UpdateDidDocument;
 use crate::rebased::rebased_err;
 use crate::rebased::Error;
-use identity_iota_interaction::IotaClientTrait;
-use identity_iota_interaction::MoveType;
+use iota_interaction::IotaClientTrait;
+use iota_interaction::MoveType;
 
 use super::ControllerCap;
 use super::ControllerToken;
@@ -195,7 +202,10 @@ impl OnChainIdentity {
   /// Returns a [ControllerToken], owned by `client`'s sender address, that grants access to this Identity.
   /// ## Notes
   /// [None] is returned if `client`'s sender address doesn't own a valid [ControllerToken].
-  pub async fn get_controller_token<S>(&self, client: &IdentityClient<S>) -> Result<Option<ControllerToken>, Error> {
+  pub async fn get_controller_token<S: Signer<IotaKeySignature> + OptionalSync>(
+    &self,
+    client: &IdentityClient<S>,
+  ) -> Result<Option<ControllerToken>, Error> {
     self
       .get_controller_token_for_address(client.sender_address(), client)
       .await
@@ -294,7 +304,7 @@ impl OnChainIdentity {
     } else {
       // no version given, this version will be included in history
       let version = identity_ref.version();
-      let response = client.get_past_object(object_id, version).await?;
+      let response = client.get_past_object(object_id, version).await.map_err(rebased_err)?;
       let latest_version = if let IotaPastObjectResponse::VersionFound(response_value) = response {
         response_value
       } else {
@@ -368,10 +378,11 @@ async fn get_previous_version(
 
 /// Returns the [`OnChainIdentity`] having ID `object_id`, if it exists.
 pub async fn get_identity(
-  client: &IdentityClientReadOnly,
+  client: &impl CoreClientReadOnly,
   object_id: ObjectID,
 ) -> Result<Option<OnChainIdentity>, Error> {
   let response = client
+    .client_adapter()
     .read_api()
     .get_object_with_options(object_id, IotaObjectDataOptions::new().with_content())
     .await
@@ -387,7 +398,7 @@ pub async fn get_identity(
     return Ok(None);
   };
 
-  let network = client.network();
+  let network = client.network_name();
   let did = IotaDID::from_object_id(&object_id.to_string(), network);
   let Some(IdentityData {
     id,
@@ -402,7 +413,7 @@ pub async fn get_identity(
   else {
     return Ok(None);
   };
-  let legacy_did = legacy_id.map(|legacy_id| IotaDID::from_object_id(&legacy_id.to_string(), client.network()));
+  let legacy_did = legacy_id.map(|legacy_id| IotaDID::from_object_id(&legacy_id.to_string(), client.network_name()));
 
   let did_doc = multicontroller
     .controlled_value()
@@ -608,17 +619,18 @@ impl CreateIdentity {
     }
   }
 
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(&self, client: &impl CoreClientReadOnly) -> Result<ProgrammableTransaction, Error> {
     let IdentityBuilder {
       did_doc,
       threshold,
       controllers,
     } = &self.builder;
+    let package = identity_package_id(client).await?;
     let did_doc = StateMetadataDocument::from(did_doc.clone())
       .pack(StateMetadataEncoding::default())
       .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
     let pt_bcs = if controllers.is_empty() {
-      IdentityMoveCallsAdapter::new_identity(Some(&did_doc), client.package_id()).await?
+      move_calls::identity::new_identity(Some(&did_doc), package).await?
     } else {
       let threshold = match threshold {
         Some(t) => t,
@@ -638,8 +650,7 @@ impl CreateIdentity {
       let controllers = controllers
         .iter()
         .map(|(addr, (vp, can_delegate))| (*addr, *vp, *can_delegate));
-      IdentityMoveCallsAdapter::new_with_controllers(Some(&did_doc), controllers, *threshold, client.package_id())
-        .await?
+      move_calls::identity::new_with_controllers(Some(&did_doc), controllers, *threshold, package).await?
     };
 
     Ok(bcs::from_bytes(&pt_bcs)?)
@@ -650,21 +661,25 @@ impl CreateIdentity {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for CreateIdentity {
   type Output = OnChainIdentity;
+  type Error = Error;
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply(
+  async fn apply<C>(
     mut self,
-    mut effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+    effects: &mut IotaTransactionBlockEffects,
+    client: &C,
+  ) -> Result<Self::Output, Self::Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     let created_objects = effects
@@ -674,13 +689,10 @@ impl Transaction for CreateIdentity {
       .filter(|(_, elem)| matches!(elem.owner, Owner::Shared { .. }))
       .map(|(i, obj)| (i, obj.object_id()));
 
-    let target_did_bytes = match StateMetadataDocument::from(self.builder.did_doc)
+    let target_did_bytes = StateMetadataDocument::from(self.builder.did_doc)
       .pack(StateMetadataEncoding::Json)
-      .map_err(|e| Error::DidDocSerialization(e.to_string()))
-    {
-      Ok(did_doc_bytes) => did_doc_bytes,
-      Err(e) => return (Err(e), effects),
-    };
+      .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
+
     let is_target_identity = |identity: &OnChainIdentity| -> bool {
       let did_bytes = identity
         .multicontroller()
@@ -704,16 +716,13 @@ impl Transaction for CreateIdentity {
     }
 
     let (Some(i), Some(identity)) = (target_identity_pos, target_identity) else {
-      return (
-        Err(Error::TransactionUnexpectedResponse(
-          "failed to find the correct identity in this transaction's effects".to_owned(),
-        )),
-        effects,
-      );
+      return Err(Error::TransactionUnexpectedResponse(
+        "failed to find the correct identity in this transaction's effects".to_owned(),
+      ));
     };
 
     effects.created_mut().swap_remove(i);
 
-    (Ok(identity), effects)
+    Ok(identity)
   }
 }

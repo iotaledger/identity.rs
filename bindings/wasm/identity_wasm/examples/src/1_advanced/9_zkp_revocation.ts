@@ -196,7 +196,10 @@ export async function zkp_revocation() {
     // Update the RevocationBitmap service in the issuer's DID Document.
     // This revokes the credential's unique index.
     issuerDocument.revokeCredentials("my-revocation-service", 5);
-    await issuerIdentity.updateDidDocument(issuerDocument, issuerIdentityToken!).buildAndExecute(issuerClient);
+    await issuerIdentity.updateDidDocument(issuerDocument, issuerIdentityToken!)
+        .buildAndExecute(
+            issuerClient,
+        );
     issuerDocument = issuerIdentity.didDocument();
 
     // Holder checks if his credential has been revoked by the Issuer

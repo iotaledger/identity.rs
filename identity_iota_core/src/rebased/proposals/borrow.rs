@@ -4,28 +4,31 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::IdentityClientReadOnly;
+use crate::rebased::iota::move_calls;
+use crate::rebased::iota::package::identity_package_id;
+
 use crate::rebased::migration::ControllerToken;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
-use identity_iota_interaction::IdentityMoveCalls;
+
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::Transaction;
+use product_common::transaction::transaction_builder::TransactionBuilder;
+use product_common::transaction::ProtoTransaction;
 use serde::Deserialize;
 use tokio::sync::Mutex;
 
 use crate::rebased::migration::Proposal;
-use crate::rebased::transaction::ProtoTransaction;
 use crate::rebased::Error;
 use async_trait::async_trait;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaObjectData;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::transaction::Argument;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::MoveType;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaObjectData;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::transaction::Argument;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::types::TypeTag;
+use iota_interaction::MoveType;
+use iota_interaction::OptionalSync;
 use serde::Serialize;
 
 use super::CreateProposal;
@@ -36,7 +39,7 @@ use super::UserDrivenTx;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-      use iota_interaction_ts::NativeTsTransactionBuilderBindingWrapper as Ptb;
+      use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
       /// Instances of BorrowIntentFnT can be used as user-provided function to describe how
       /// a borrowed assets shall be used.
       pub trait BorrowIntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
@@ -45,7 +48,7 @@ cfg_if::cfg_if! {
       #[allow(unreachable_pub)]
       pub type BorrowIntentFn = Box<dyn BorrowIntentFnT + Send>;
     } else {
-      use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
+      use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
       /// Instances of BorrowIntentFnT can be used as user-provided function to describe how
       /// a borrowed assets shall be used.
       pub trait BorrowIntentFnT: FnOnce(&mut Ptb, &HashMap<ObjectID, (Argument, IotaObjectData)>) {}
@@ -163,13 +166,16 @@ where
   type Action = BorrowAction<F>;
   type Output = ();
 
-  async fn create<'i>(
+  async fn create<'i, C>(
     action: Self::Action,
     expiration: Option<u64>,
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
-    client: &IdentityClientReadOnly,
-  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error> {
+    client: &C,
+  ) -> Result<TransactionBuilder<CreateProposal<'i, Self::Action>>, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if identity.id() != controller_token.controller_of() {
       return Err(Error::Identity(format!(
         "token {} doesn't grant access to identity {}",
@@ -178,6 +184,7 @@ where
       )));
     }
 
+    let package = identity_package_id(client).await?;
     let identity_ref = client
       .get_object_ref_by_id(identity.id())
       .await?
@@ -201,22 +208,16 @@ where
         }
         object_data_list
       };
-      IdentityMoveCallsAdapter::create_and_execute_borrow(
+      move_calls::identity::create_and_execute_borrow(
         identity_ref,
         controller_cap_ref,
         object_data_list,
         maybe_intent_fn.unwrap(),
         expiration,
-        client.package_id(),
+        package,
       )
     } else {
-      IdentityMoveCallsAdapter::propose_borrow(
-        identity_ref,
-        controller_cap_ref,
-        action.objects,
-        expiration,
-        client.package_id(),
-      )
+      move_calls::identity::propose_borrow(identity_ref, controller_cap_ref, action.objects, expiration, package)
     }
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
@@ -228,11 +229,11 @@ where
     }))
   }
 
-  async fn into_tx<'i>(
+  async fn into_tx<'i, C>(
     self,
     identity: &'i mut OnChainIdentity,
     controller_token: &ControllerToken,
-    _: &IdentityClientReadOnly,
+    _client: &C,
   ) -> Result<UserDrivenTx<'i, Self::Action>, Error> {
     if identity.id() != controller_token.controller_of() {
       return Err(Error::Identity(format!(
@@ -290,7 +291,10 @@ impl<F> UserDrivenTx<'_, BorrowActionWithIntent<F>>
 where
   F: BorrowIntentFnT,
 {
-  async fn make_ptb(&self, client: &IdentityClientReadOnly) -> Result<ProgrammableTransaction, Error> {
+  async fn make_ptb(
+    &self,
+    client: &(impl CoreClientReadOnly + OptionalSync),
+  ) -> Result<ProgrammableTransaction, Error> {
     let Self {
       identity,
       action: borrow_action,
@@ -316,8 +320,8 @@ where
       }
       object_data_list
     };
-
-    let tx = IdentityMoveCallsAdapter::execute_borrow(
+    let package = identity_package_id(client).await?;
+    let tx = move_calls::identity::execute_borrow(
       identity_ref,
       controller_token_ref,
       *proposal_id,
@@ -327,7 +331,7 @@ where
         .take_intent()
         .await
         .expect("BorrowActionWithIntent makes sure intent_fn is there"),
-      client.package_id(),
+      package,
     )
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
@@ -342,21 +346,23 @@ where
   F: BorrowIntentFnT + Send,
 {
   type Output = ();
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  type Error = Error;
+
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply(
-    self,
-    effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, _client: &C) -> Result<Self::Output, Self::Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
-    (Ok(()), effects)
+    Ok(())
   }
 }

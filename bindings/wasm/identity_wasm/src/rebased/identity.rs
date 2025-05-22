@@ -7,11 +7,12 @@ use identity_iota::iota::rebased::migration::ControllerToken;
 use identity_iota::iota::rebased::migration::CreateIdentity;
 use identity_iota::iota::rebased::migration::IdentityBuilder;
 use identity_iota::iota::rebased::migration::OnChainIdentity;
-use identity_iota::iota::rebased::transaction_builder::Transaction;
 use identity_iota::iota::IotaDocument;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
+use iota_interaction_ts::core_client::WasmCoreClientReadOnly;
 use iota_interaction_ts::error::WasmResult as _;
 use js_sys::Object;
+use product_common::transaction::transaction_builder::Transaction;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::*;
 
@@ -22,6 +23,7 @@ use crate::iota::WasmIotaDocument;
 use crate::rebased::proposals::WasmCreateConfigChangeProposal;
 use crate::rebased::proposals::WasmCreateUpdateDidProposal;
 use crate::rebased::WasmDeleteDelegationToken;
+use crate::rebased::WasmManagedCoreClientReadOnly;
 
 use super::proposals::StringCouple;
 use super::proposals::WasmConfigChange;
@@ -30,7 +32,6 @@ use super::WasmControllerCap;
 use super::WasmDelegationToken;
 use super::WasmDelegationTokenRevocation;
 use super::WasmIdentityClient;
-use super::WasmIdentityClientReadOnly;
 use super::WasmIotaAddress;
 use super::WasmTransactionBuilder;
 
@@ -289,8 +290,13 @@ impl WasmCreateIdentity {
   }
 
   #[wasm_bindgen(js_name = buildProgrammableTransaction)]
-  pub async fn build_programmable_transaction(&self, client: &WasmIdentityClientReadOnly) -> Result<Vec<u8>> {
-    let pt = self.0.build_programmable_transaction(&client.0).await.wasm_result()?;
+  pub async fn build_programmable_transaction(&self, client: &WasmCoreClientReadOnly) -> Result<Vec<u8>> {
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
+    let pt = self
+      .0
+      .build_programmable_transaction(&managed_client)
+      .await
+      .wasm_result()?;
     bcs::to_bytes(&pt).wasm_result()
   }
 
@@ -298,11 +304,12 @@ impl WasmCreateIdentity {
   pub async fn apply(
     self,
     wasm_effects: &WasmIotaTransactionBlockEffects,
-    client: &WasmIdentityClientReadOnly,
+    client: &WasmCoreClientReadOnly,
   ) -> Result<WasmOnChainIdentity> {
-    let effects = wasm_effects.clone().into();
-    let (apply_result, rem_effects) = self.0.apply(effects, &client.0).await;
-    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
+    let mut effects = wasm_effects.clone().into();
+    let apply_result = self.0.apply(&mut effects, &managed_client).await;
+    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&effects);
     Object::assign(wasm_effects, &rem_wasm_effects);
 
     apply_result.wasm_result().map(WasmOnChainIdentity::new)

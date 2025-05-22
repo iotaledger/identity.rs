@@ -1,6 +1,33 @@
 // Copyright 2020-2025 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::OnChainIdentity;
+
+use crate::rebased::iota::move_calls;
+
+use crate::rebased::iota::move_calls::ControllerTokenRef;
+use crate::rebased::iota::package::identity_package_id;
+use crate::rebased::Error;
+use async_trait::async_trait;
+use iota_interaction::move_types::language_storage::TypeTag;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::id::UID;
+use iota_interaction::types::object::Owner;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::IotaTransactionBlockEffectsMutAPI;
+use iota_interaction::MoveType;
+use iota_interaction::OptionalSync;
+use itertools::Itertools as _;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::Transaction;
+use product_common::transaction::transaction_builder::TransactionBuilder;
+use serde::Deserialize;
+use serde::Deserializer;
+use serde::Serialize;
 use std::ops::BitAnd;
 use std::ops::BitAndAssign;
 use std::ops::BitOr;
@@ -8,34 +35,6 @@ use std::ops::BitOrAssign;
 use std::ops::BitXor;
 use std::ops::BitXorAssign;
 use std::ops::Not;
-
-use async_trait::async_trait;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::id::UID;
-use identity_iota_interaction::types::object::Owner;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::ControllerTokenRef;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
-use identity_iota_interaction::MoveType;
-use itertools::Itertools as _;
-use serde::Deserialize;
-use serde::Deserializer;
-use serde::Serialize;
-
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::IdentityClientReadOnly;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
-use crate::rebased::Error;
-
-use super::OnChainIdentity;
-
 /// A token that proves ownership over an object.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -113,7 +112,10 @@ impl ControllerToken {
     }
   }
 
-  pub(crate) async fn controller_ref(&self, client: &IdentityClientReadOnly) -> Result<ControllerTokenRef, Error> {
+  pub(crate) async fn controller_ref<C>(&self, client: &C) -> Result<ControllerTokenRef, Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     let obj_ref = client
       .get_object_ref_by_id(self.id())
       .await?
@@ -380,11 +382,12 @@ impl DelegateToken {
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 impl Transaction for DelegateToken {
   type Output = DelegationToken;
-
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  type Error = Error;
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
+    let package = identity_package_id(client).await?;
     let controller_cap_ref = client
       .get_object_ref_by_id(self.cap_id)
       .await?
@@ -392,23 +395,18 @@ impl Transaction for DelegateToken {
       .reference
       .to_object_ref();
 
-    let ptb_bcs = IdentityMoveCallsAdapter::delegate_controller_cap(
-      controller_cap_ref,
-      self.recipient,
-      self.permissions.0,
-      client.package_id(),
-    )
-    .await?;
+    let ptb_bcs =
+      move_calls::identity::delegate_controller_cap(controller_cap_ref, self.recipient, self.permissions.0, package)
+        .await?;
     Ok(bcs::from_bytes(&ptb_bcs)?)
   }
 
-  async fn apply(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> Result<Self::Output, Self::Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     let created_objects = effects
@@ -435,17 +433,14 @@ impl Transaction for DelegateToken {
     }
 
     let (Some(i), Some(token)) = (target_token_pos, target_token) else {
-      return (
-        Err(Error::TransactionUnexpectedResponse(
-          "failed to find the correct delegate token in this transaction's effects".to_owned(),
-        )),
-        effects,
-      );
+      return Err(Error::TransactionUnexpectedResponse(
+        "failed to find the correct identity in this transaction's effects".to_owned(),
+      ));
     };
 
     effects.created_mut().swap_remove(i);
 
-    (Ok(token), effects)
+    Ok(token)
   }
 }
 
@@ -460,11 +455,11 @@ pub struct DelegationTokenRevocation {
 }
 
 impl DelegationTokenRevocation {
-  /// Returns a new [DelegationTokenRevocation] that will revoke [DelegationToken] `delegation_token_id`.
-  pub fn revoke(
+  fn revocation_impl(
     identity: &OnChainIdentity,
     controller_cap: &ControllerCap,
     delegation_token: &DelegationToken,
+    is_revocation: bool,
   ) -> Result<Self, Error> {
     if delegation_token.controller_of != identity.id() {
       return Err(Error::Identity(format!(
@@ -478,8 +473,16 @@ impl DelegationTokenRevocation {
       identity_id: identity.id(),
       controller_cap_id: controller_cap.id(),
       delegation_token_id: delegation_token.id,
-      revoke: true,
+      revoke: is_revocation,
     })
+  }
+  /// Returns a new [DelegationTokenRevocation] that will revoke [DelegationToken] `delegation_token_id`.
+  pub fn revoke(
+    identity: &OnChainIdentity,
+    controller_cap: &ControllerCap,
+    delegation_token: &DelegationToken,
+  ) -> Result<Self, Error> {
+    Self::revocation_impl(identity, controller_cap, delegation_token, true)
   }
 
   /// Returns a new [DelegationTokenRevocation] that will un-revoke [DelegationToken] `delegation_token_id`.
@@ -488,19 +491,7 @@ impl DelegationTokenRevocation {
     controller_cap: &ControllerCap,
     delegation_token: &DelegationToken,
   ) -> Result<Self, Error> {
-    if delegation_token.controller_of != identity.id() {
-      return Err(Error::Identity(format!(
-        "DelegationToken {} has no control over Identity {}",
-        delegation_token.id,
-        identity.id()
-      )));
-    }
-    Ok(Self {
-      identity_id: identity.id(),
-      controller_cap_id: controller_cap.id(),
-      delegation_token_id: delegation_token.id,
-      revoke: false,
-    })
+    Self::revocation_impl(identity, controller_cap, delegation_token, false)
   }
 
   /// Returns `true` if this transaction is used to revoke a token.
@@ -518,11 +509,13 @@ impl DelegationTokenRevocation {
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 impl Transaction for DelegationTokenRevocation {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
+    let package = identity_package_id(client).await?;
     let identity_ref = client
       .get_object_ref_by_id(self.identity_id)
       .await?
@@ -535,35 +528,28 @@ impl Transaction for DelegationTokenRevocation {
       .to_object_ref();
 
     let tx_bytes = if self.is_revocation() {
-      IdentityMoveCallsAdapter::revoke_delegation_token(
-        identity_ref,
-        controller_cap_ref,
-        self.delegation_token_id,
-        client.package_id(),
-      )
+      move_calls::identity::revoke_delegation_token(identity_ref, controller_cap_ref, self.delegation_token_id, package)
     } else {
-      IdentityMoveCallsAdapter::unrevoke_delegation_token(
+      move_calls::identity::unrevoke_delegation_token(
         identity_ref,
         controller_cap_ref,
         self.delegation_token_id,
-        client.package_id(),
+        package,
       )
-    }
-    .await?;
+    }?;
 
     Ok(bcs::from_bytes(&tx_bytes)?)
   }
 
-  async fn apply(
-    self,
-    effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, _client: &C) -> Result<Self::Output, Self::Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
-    (Ok(()), effects)
+    Ok(())
   }
 }
 
@@ -601,15 +587,17 @@ impl DeleteDelegationToken {
 #[cfg_attr(not(feature = "send-sync"), async_trait(?Send))]
 impl Transaction for DeleteDelegationToken {
   type Output = ();
+  type Error = Error;
 
-  async fn build_programmable_transaction(
-    &self,
-    client: &IdentityClientReadOnly,
-  ) -> Result<ProgrammableTransaction, Error> {
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
+    let package = identity_package_id(client).await?;
     let identity_ref = client
       .get_object_ref_by_id(self.identity_id)
       .await?
-      .ok_or_else(|| Error::ObjectLookup(format!("Identity {} doesn't exist on-chain", self.identity_id,)))?;
+      .ok_or_else(|| Error::ObjectLookup(format!("Identity {} doesn't exist on-chain", self.identity_id)))?;
     let delegation_token_ref = client
       .get_object_ref_by_id(self.delegation_token_id)
       .await?
@@ -622,20 +610,17 @@ impl Transaction for DeleteDelegationToken {
       .reference
       .to_object_ref();
 
-    let tx_bytes =
-      IdentityMoveCallsAdapter::destroy_delegation_token(identity_ref, delegation_token_ref, client.package_id())
-        .await?;
+    let tx_bytes = move_calls::identity::destroy_delegation_token(identity_ref, delegation_token_ref, package).await?;
 
     Ok(bcs::from_bytes(&tx_bytes)?)
   }
 
-  async fn apply(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    _client: &IdentityClientReadOnly,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects) {
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, _client: &C) -> Result<Self::Output, Self::Error>
+  where
+    C: CoreClientReadOnly + OptionalSync,
+  {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     let Some(deleted_token_pos) = effects
@@ -644,17 +629,14 @@ impl Transaction for DeleteDelegationToken {
       .find_position(|obj_ref| obj_ref.object_id == self.delegation_token_id)
       .map(|(pos, _)| pos)
     else {
-      return (
-        Err(Error::TransactionUnexpectedResponse(format!(
-          "DelegationToken {} wasn't deleted in this transaction",
-          self.delegation_token_id,
-        ))),
-        effects,
-      );
+      return Err(Error::TransactionUnexpectedResponse(format!(
+        "DelegationToken {} wasn't deleted in this transaction",
+        self.delegation_token_id,
+      )));
     };
 
     effects.deleted_mut().swap_remove(deleted_token_pos);
 
-    (Ok(()), effects)
+    Ok(())
   }
 }

@@ -13,7 +13,6 @@ mod method_digest;
 mod signature_options;
 mod wasm_storage;
 mod wasm_storage_signer;
-mod wasm_transaction_signer;
 
 pub use jpt_timeframe_revocation_ext::*;
 pub use jwk_gen_output::*;
@@ -26,4 +25,3 @@ pub use method_digest::*;
 pub use signature_options::*;
 pub use wasm_storage::*;
 pub use wasm_storage_signer::*;
-pub use wasm_transaction_signer::*;

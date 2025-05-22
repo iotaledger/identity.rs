@@ -2,17 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::crypto::IotaKeyPair;
-use identity_iota_interaction::types::crypto::PublicKey;
-use identity_iota_interaction::types::crypto::SignatureScheme;
-use identity_iota_interaction::KeytoolStorage;
+use identity_verification::jwk::FromJwk as _;
 use identity_verification::jwk::Jwk;
+use identity_verification::jwk::ToJwk as _;
 use identity_verification::jws::JwsAlgorithm;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::crypto::IotaKeyPair;
+use iota_interaction::types::crypto::SignatureScheme;
+use iota_interaction::KeytoolStorage;
 
-use super::ed25519;
-use super::secp256k1;
-use super::secp256r1;
 use super::JwkGenOutput;
 use super::JwkStorage;
 use super::KeyId;
@@ -39,7 +37,9 @@ impl JwkStorage for KeytoolStorage {
       .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(e))?;
 
     let address = IotaAddress::from(&pk);
-    let mut jwk = encode_public_key_to_jwk(&pk)?;
+    let mut jwk = pk
+      .to_jwk()
+      .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(e))?;
     jwk.set_kid(jwk.thumbprint_sha256_b64());
 
     Ok(JwkGenOutput {
@@ -49,7 +49,8 @@ impl JwkStorage for KeytoolStorage {
   }
 
   async fn insert(&self, jwk: Jwk) -> KeyStorageResult<KeyId> {
-    let sk = jwk_to_keypair(&jwk)?;
+    let sk = IotaKeyPair::from_jwk(&jwk)
+      .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(e))?;
     let pk = sk.public();
     let _alias = self
       .insert_key(sk)
@@ -101,30 +102,6 @@ fn check_key_alg_compatibility(key_type: &KeyType, alg: &JwsAlgorithm) -> KeySto
     ),
   }
 }
-
-fn encode_public_key_to_jwk(pk: &PublicKey) -> KeyStorageResult<Jwk> {
-  let jwk = match pk {
-    PublicKey::Ed25519(pk) => ed25519::pk_to_jwk(pk),
-    PublicKey::Secp256r1(pk) => secp256r1::pk_to_jwk(pk),
-    PublicKey::Secp256k1(pk) => secp256k1::pk_to_jwk(pk),
-    _ => return Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)),
-  };
-
-  Ok(jwk)
-}
-
-fn jwk_to_keypair(jwk: &Jwk) -> KeyStorageResult<IotaKeyPair> {
-  let maybe_ed22519 = ed25519::jwk_to_keypair(jwk).map(IotaKeyPair::from);
-  let maybe_secp256r1 = secp256r1::jwk_to_keypair(jwk)
-    .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(e))
-    .map(IotaKeyPair::from);
-  let maybe_secp256k1 = secp256k1::jwk_to_keypair(jwk)
-    .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(e))
-    .map(IotaKeyPair::from);
-
-  maybe_ed22519.or(maybe_secp256k1).or(maybe_secp256r1)
-}
-
 #[cfg(test)]
 mod tests {
   use crate::JwkDocumentExt as _;
@@ -142,10 +119,10 @@ mod tests {
   use identity_did::DID;
   use identity_ecdsa_verifier::EcDSAJwsVerifier;
   use identity_iota_core::IotaDocument;
-  use identity_iota_core::NetworkName;
-  use identity_iota_interaction::KeytoolStorage as Keytool;
   use identity_verification::jws::JwsAlgorithm;
   use identity_verification::MethodScope;
+  use iota_interaction::KeytoolStorage as Keytool;
+  use product_common::network_name::NetworkName;
   use serde_json::Value;
 
   fn make_storage() -> KeytoolStorage {
