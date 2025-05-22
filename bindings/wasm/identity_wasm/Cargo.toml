@@ -66,11 +66,11 @@ getrandom = { version = "0.3", default-features = false, features = ["wasm_js"] 
 # * Remember to comment out the patch before committing your changes.
 # * Remember also to comment out the patch in the root workspace Cargo.toml file
 # --------------------------------------------------------------------------
-#[patch."https://github.com/iotaledger/product-core.git"]
-#iota_interaction = { version = "1.6.0-alpha", path = "../../../../product-core/iota_interaction" }
-#iota_interaction_rust = { version = "1.6.0-alpha", path = "../../../../product-core/iota_interaction_rust" }
-#iota_interaction_ts = { version = "1.6.0-alpha", path = "../../../../product-core/bindings/wasm/iota_interaction_ts" }
-#product_common = { version = "1.6.0-alpha", path = "../../../../product-core/product_common" }
+# [patch."https://github.com/iotaledger/product-core.git"]
+# iota_interaction = { version = "1.6.0-alpha", path = "../../../../product-core/iota_interaction" }
+# iota_interaction_rust = { version = "1.6.0-alpha", path = "../../../../product-core/iota_interaction_rust" }
+# iota_interaction_ts = { version = "1.6.0-alpha", path = "../../../../product-core/bindings/wasm/iota_interaction_ts" }
+# product_common = { version = "1.6.0-alpha", path = "../../../../product-core/product_common" }
 
 [profile.release]
 opt-level = 's'
