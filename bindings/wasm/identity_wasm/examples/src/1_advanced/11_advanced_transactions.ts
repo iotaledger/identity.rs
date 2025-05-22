@@ -24,7 +24,7 @@ export async function advancedTransaction(): Promise<void> {
         .finish()
         .withSender(aliceClient.senderAddress())
         .withSponsor(aliceClient.readOnly(), (tx_data: TransactionDataBuilder) => bobSponsorFn(tx_data, bobClient))
-        .then((txBuilder: { build: (arg0: IdentityClient) => any; }) => txBuilder.build(aliceClient));
+        .then(txBuilder => txBuilder.build(aliceClient));
 
     // create new client to connect to IOTA network
     const iotaClient = new IotaClient({ url: NETWORK_URL });

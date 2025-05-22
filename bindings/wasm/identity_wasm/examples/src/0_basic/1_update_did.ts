@@ -62,7 +62,7 @@ export async function updateIdentity() {
         .updateDidDocument(resolved.clone(), controllerToken!)
         .withGasBudget(TEST_GAS_BUDGET)
         .buildAndExecute(identityClient)
-        .then((result: { output: any; }) => result.output);
+        .then(result => result.output);
 
     console.assert(maybePendingProposal == null, "the proposal should have been executed right away!");
 
