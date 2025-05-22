@@ -1,7 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::convert::TryFrom;
 use fastcrypto::traits::EncodeDecodeBase64;
 use identity_iota::storage::KeyId;
 use identity_iota::storage::StorageSigner;
