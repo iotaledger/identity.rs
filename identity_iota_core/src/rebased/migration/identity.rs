@@ -11,11 +11,11 @@ use iota_interaction::types::transaction::ProgrammableTransaction;
 use iota_interaction::IotaKeySignature;
 use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
 use iota_interaction::OptionalSync;
-use product_core::core_client::CoreClient;
-use product_core::core_client::CoreClientReadOnly;
-use product_core::network_name::NetworkName;
-use product_core::transaction::transaction_builder::Transaction;
-use product_core::transaction::transaction_builder::TransactionBuilder;
+use product_common::core_client::CoreClient;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::network_name::NetworkName;
+use product_common::transaction::transaction_builder::Transaction;
+use product_common::transaction::transaction_builder::TransactionBuilder;
 use secret_storage::Signer;
 use tokio::sync::OnceCell;
 

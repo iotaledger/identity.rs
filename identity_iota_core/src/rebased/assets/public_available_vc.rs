@@ -14,7 +14,7 @@ use iota_interaction::IotaKeySignature;
 use iota_interaction::IotaVerifiableCredential;
 use iota_interaction::OptionalSync;
 use itertools::Itertools;
-use product_core::core_client::CoreClientReadOnly;
+use product_common::core_client::CoreClientReadOnly;
 use secret_storage::Signer;
 
 use crate::rebased::client::IdentityClient;

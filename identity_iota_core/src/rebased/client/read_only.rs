@@ -18,8 +18,8 @@ use futures::stream::FuturesUnordered;
 
 use iota_interaction::types::base_types::ObjectID;
 use iota_interaction::IotaClientTrait;
-use product_core::core_client::CoreClientReadOnly;
-use product_core::network_name::NetworkName;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::network_name::NetworkName;
 
 use crate::iota_interaction_adapter::IotaClientAdapter;
 use crate::rebased::migration::get_alias;

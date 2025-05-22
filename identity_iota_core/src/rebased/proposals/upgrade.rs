@@ -4,8 +4,8 @@
 use std::marker::PhantomData;
 
 use iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use product_core::core_client::CoreClientReadOnly;
-use product_core::transaction::transaction_builder::TransactionBuilder;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::TransactionBuilder;
 
 use crate::rebased::iota::move_calls;
 use crate::rebased::iota::package::identity_package_id;

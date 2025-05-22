@@ -26,8 +26,8 @@ use iota_sdk::types::transaction::ObjectArg;
 use iota_sdk::types::TypeTag;
 use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
 use move_core_types::ident_str;
-use product_core::core_client::CoreClient;
-use product_core::core_client::CoreClientReadOnly;
+use product_common::core_client::CoreClient;
+use product_common::core_client::CoreClientReadOnly;
 use secret_storage::Signer as _;
 
 #[tokio::test]

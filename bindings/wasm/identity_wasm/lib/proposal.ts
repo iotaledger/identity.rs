@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ConfigChange, ControllerToken, IdentityClient, OnChainIdentity, SendAction, UpdateDid } from "~identity_wasm";
-import { Transaction, TransactionBuilder } from "./transaction_internal";
+import { Transaction, TransactionBuilder } from "@iota/iota-interaction-ts/transaction_internal";
 
 export type Action = UpdateDid | SendAction | ConfigChange;
 export type ProposalOutput<A extends Action> = A extends UpdateDid ? void

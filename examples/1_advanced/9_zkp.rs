@@ -38,7 +38,7 @@ use identity_iota::iota::rebased::client::IdentityClient;
 use identity_iota::iota::rebased::client::IotaKeySignature;
 use identity_storage::Storage;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
-use product_core::transaction::TransactionOutput;
+use product_common::transaction::TransactionOutput;
 use secret_storage::Signer;
 
 // Creates a DID with a JWP verification method.
