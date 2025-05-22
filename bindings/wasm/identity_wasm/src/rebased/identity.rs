@@ -7,11 +7,12 @@ use identity_iota::iota::rebased::migration::ControllerToken;
 use identity_iota::iota::rebased::migration::CreateIdentity;
 use identity_iota::iota::rebased::migration::IdentityBuilder;
 use identity_iota::iota::rebased::migration::OnChainIdentity;
-use identity_iota::iota::rebased::transaction_builder::Transaction;
 use identity_iota::iota::IotaDocument;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
+use iota_interaction_ts::core_client::WasmCoreClientReadOnly;
 use iota_interaction_ts::error::WasmResult as _;
 use js_sys::Object;
+use product_common::transaction::transaction_builder::Transaction;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::*;
 
@@ -28,7 +29,6 @@ use super::proposals::StringCouple;
 use super::proposals::WasmConfigChange;
 use super::proposals::WasmCreateSendProposal;
 use super::WasmControllerCap;
-use super::WasmCoreClientReadOnly;
 use super::WasmDelegationToken;
 use super::WasmDelegationTokenRevocation;
 use super::WasmIdentityClient;
@@ -307,9 +307,9 @@ impl WasmCreateIdentity {
     client: &WasmCoreClientReadOnly,
   ) -> Result<WasmOnChainIdentity> {
     let managed_client = WasmManagedCoreClientReadOnly::from_wasm(client)?;
-    let effects = wasm_effects.clone().into();
-    let (apply_result, rem_effects) = self.0.apply(effects, &managed_client).await;
-    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    let mut effects = wasm_effects.clone().into();
+    let apply_result = self.0.apply(&mut effects, &managed_client).await;
+    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&effects);
     Object::assign(wasm_effects, &rem_wasm_effects);
 
     apply_result.wasm_result().map(WasmOnChainIdentity::new)

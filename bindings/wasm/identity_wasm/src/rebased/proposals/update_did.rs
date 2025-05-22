@@ -7,10 +7,11 @@ use identity_iota::iota::rebased::migration::Proposal;
 use identity_iota::iota::rebased::proposals::ProposalResult;
 use identity_iota::iota::rebased::proposals::ProposalT;
 use identity_iota::iota::rebased::proposals::UpdateDidDocument;
-use identity_iota::iota::rebased::transaction_builder::Transaction;
 use identity_iota::iota::StateMetadataDocument;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
+use iota_interaction_ts::core_client::WasmCoreClientReadOnly;
 use js_sys::Object;
+use product_common::transaction::transaction_builder::Transaction;
 use tokio::sync::RwLock;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::JsCast;
@@ -21,7 +22,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use crate::iota::WasmIotaDocument;
 use crate::rebased::WasmControllerToken;
-use crate::rebased::WasmCoreClientReadOnly;
 use crate::rebased::WasmManagedCoreClientReadOnly;
 use crate::rebased::WasmOnChainIdentity;
 use crate::rebased::WasmTransactionBuilder;
@@ -192,8 +192,9 @@ impl WasmApproveUpdateDidDocumentProposal {
       .approve(&identity, &self.controller_token.0)
       .wasm_result()?
       .into_inner();
-    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &managed_client).await;
-    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    let mut effects = wasm_effects.clone().into();
+    let apply_result = tx.apply(&mut effects, &managed_client).await;
+    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&effects);
     Object::assign(wasm_effects, &wasm_rem_effects);
 
     apply_result.wasm_result()
@@ -247,8 +248,9 @@ impl WasmExecuteUpdateDidDocumentProposal {
       .await
       .wasm_result()?
       .into_inner();
-    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &managed_client).await;
-    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    let mut effects = wasm_effects.clone().into();
+    let apply_result = tx.apply(&mut effects, &managed_client).await;
+    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&effects);
     Object::assign(wasm_effects, &wasm_rem_effects);
 
     apply_result.wasm_result()
@@ -364,8 +366,9 @@ impl WasmCreateUpdateDidProposal {
     .wasm_result()?
     .into_inner();
 
-    let (apply_result, rem_effects) = tx.apply(wasm_effects.clone().into(), &managed_client).await;
-    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    let mut effects = wasm_effects.clone().into();
+    let apply_result = tx.apply(&mut effects, &managed_client).await;
+    let wasm_rem_effects = WasmIotaTransactionBlockEffects::from(&effects);
     Object::assign(wasm_effects, &wasm_rem_effects);
 
     let ProposalResult::Pending(proposal) = apply_result.wasm_result()? else {

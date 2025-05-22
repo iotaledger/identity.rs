@@ -11,10 +11,6 @@ mod iota;
 pub mod migration;
 /// Contains the operations of proposals.
 pub mod proposals;
-/// Module for handling transactions.
-pub mod transaction;
-/// Module for creating transactions using a builder style pattern.
-pub mod transaction_builder;
 /// Contains utility functions.
 #[cfg(not(target_arch = "wasm32"))]
 pub mod utils;
@@ -24,4 +20,4 @@ pub use error::*;
 
 /// Integration with IOTA's Keytool.
 #[cfg(feature = "keytool")]
-pub use identity_iota_interaction::keytool;
+pub use iota_interaction::keytool;

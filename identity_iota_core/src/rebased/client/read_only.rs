@@ -9,14 +9,17 @@ use std::str::FromStr;
 use crate::rebased::iota;
 use crate::rebased::iota::package::Env;
 use crate::rebased::iota::package::Metadata;
-use crate::rebased::iota::package::PackageRegistry;
+
 use crate::rebased::iota::package::MAINNET_CHAIN_ID;
 use crate::IotaDID;
 use crate::IotaDocument;
-use crate::NetworkName;
 
 use futures::stream::FuturesUnordered;
-use identity_iota_interaction::IotaClientTrait;
+
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::IotaClientTrait;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::network_name::NetworkName;
 
 use crate::iota_interaction_adapter::IotaClientAdapter;
 use crate::rebased::migration::get_alias;
@@ -28,15 +31,11 @@ use futures::StreamExt as _;
 use identity_core::common::Url;
 use identity_did::DID;
 
-use identity_iota_interaction::types::base_types::ObjectID;
-
 #[cfg(not(target_arch = "wasm32"))]
-use identity_iota_interaction::IotaClient;
+use iota_interaction::IotaClient;
 
 #[cfg(target_arch = "wasm32")]
 use iota_interaction_ts::bindings::WasmIotaClient;
-
-use super::CoreClientReadOnly;
 
 /// An [`IotaClient`] enriched with identity-related
 /// functionalities.
@@ -139,26 +138,6 @@ impl IdentityClientReadOnly {
     {
       let mut registry = iota::package::identity_package_registry_mut().await;
       registry.insert_env(Env::new(network.as_ref()), Metadata::from_package_id(package_id));
-    }
-
-    Self::new_internal(client, network).await
-  }
-
-  /// Attempts to create a new [`IdentityClientReadOnly`] from the given IOTA client
-  /// and IotaIdentity package's Move.lock file.
-  pub async fn new_with_move_lock(
-    #[cfg(target_arch = "wasm32")] iota_client: WasmIotaClient,
-    #[cfg(not(target_arch = "wasm32"))] iota_client: IotaClient,
-    move_lock: &str,
-  ) -> Result<Self, Error> {
-    let client = IotaClientAdapter::new(iota_client);
-    let network = network_id(&client).await?;
-
-    let custom_registry = PackageRegistry::from_move_lock_content(move_lock)?;
-    // Update the package's registry with the information coming from the given Move.lock.
-    {
-      let mut registry = iota::package::identity_package_registry_mut().await;
-      registry.join(custom_registry);
     }
 
     Self::new_internal(client, network).await

@@ -7,7 +7,8 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use anyhow::Context;
-use identity_iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectID;
+use product_common::core_client::CoreClientReadOnly;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
@@ -16,7 +17,6 @@ use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 use tokio::sync::TryLockError;
 
-use crate::rebased::client::CoreClientReadOnly;
 use crate::rebased::Error;
 
 pub(crate) const MAINNET_CHAIN_ID: &str = "6364aad5";

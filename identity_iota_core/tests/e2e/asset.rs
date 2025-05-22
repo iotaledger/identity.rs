@@ -3,6 +3,8 @@
 
 use std::str::FromStr as _;
 
+use crate::common::get_funded_test_client;
+use crate::common::TEST_GAS_BUDGET;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
@@ -12,25 +14,22 @@ use identity_credential::validator::JwtCredentialValidationOptions;
 use identity_credential::validator::JwtCredentialValidator;
 use identity_document::document::CoreDocument;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
-use identity_iota_core::rebased::client::CoreClient;
 use identity_iota_core::rebased::AuthenticatedAsset;
 use identity_iota_core::rebased::PublicAvailableVC;
 use identity_iota_core::rebased::TransferProposal;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
-use identity_iota_interaction::IotaClientTrait;
-use identity_iota_interaction::MoveType as _;
 use identity_jose::jwk::ToJwk as _;
 use identity_storage::JwkDocumentExt;
 use identity_storage::JwsSignatureOptions;
 use identity_verification::VerificationMethod;
+use iota_interaction::IotaClientTrait;
+use iota_interaction::MoveType as _;
 use iota_sdk::types::TypeTag;
 use itertools::Itertools as _;
 use move_core_types::language_storage::StructTag;
+use product_common::core_client::CoreClient;
 use secret_storage::Signer as _;
-
-use crate::common::get_funded_test_client;
-use crate::common::TEST_GAS_BUDGET;
 
 #[tokio::test]
 async fn creating_authenticated_asset_works() -> anyhow::Result<()> {

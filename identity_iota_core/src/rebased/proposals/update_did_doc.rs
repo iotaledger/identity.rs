@@ -1,28 +1,26 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+use iota_interaction::OptionalSync;
 
+use crate::rebased::iota::package::identity_package_id;
 use std::marker::PhantomData;
 
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::OptionalSync;
-
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::CoreClientReadOnly;
-use crate::rebased::iota::package::identity_package_id;
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::ControllerToken;
-use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::IotaDocument;
 use async_trait::async_trait;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::TypeTag;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::TypeTag;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::TransactionBuilder;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::migration::Proposal;
 use crate::rebased::Error;
-use identity_iota_interaction::MoveType;
+use iota_interaction::MoveType;
 
 use super::CreateProposal;
 use super::ExecuteProposal;
@@ -103,7 +101,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
-    let tx = IdentityMoveCallsAdapter::propose_update(
+    let tx = move_calls::identity::propose_update(
       identity_ref,
       controller_cap_ref,
       action.0.as_deref(),
@@ -149,9 +147,9 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       .await?
       .expect("identity exists on-chain");
     let controller_cap_ref = controller_token.controller_ref(client).await?;
-
     let package = identity_package_id(client).await?;
-    let tx = IdentityMoveCallsAdapter::execute_update(identity_ref, controller_cap_ref, proposal_id, package)
+
+    let tx = move_calls::identity::execute_update(identity_ref, controller_cap_ref, proposal_id, package)
       .await
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 

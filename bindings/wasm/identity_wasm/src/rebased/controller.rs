@@ -7,10 +7,10 @@ use identity_iota::iota::rebased::migration::DelegateToken;
 use identity_iota::iota::rebased::migration::DelegationToken;
 use identity_iota::iota::rebased::migration::DelegationTokenRevocation;
 use identity_iota::iota::rebased::migration::DeleteDelegationToken;
-use identity_iota::iota::rebased::transaction_builder::Transaction as _;
-use identity_iota::iota::rebased::transaction_builder::TransactionBuilder;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use js_sys::Object;
+use product_common::transaction::transaction_builder::Transaction as _;
+use product_common::transaction::transaction_builder::TransactionBuilder;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast as _;
 use wasm_bindgen::JsError;
@@ -143,9 +143,9 @@ impl WasmDelegateToken {
     wasm_effects: &WasmIotaTransactionBlockEffects,
     client: &WasmIdentityClientReadOnly,
   ) -> Result<WasmDelegationToken> {
-    let effects = wasm_effects.clone().into();
-    let (apply_result, rem_effects) = self.0.apply(effects, &client.0).await;
-    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    let mut effects = wasm_effects.clone().into();
+    let apply_result = self.0.apply(&mut effects, &client.0).await;
+    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&effects);
     Object::assign(wasm_effects, &rem_wasm_effects);
 
     apply_result.wasm_result().map(WasmDelegationToken)
@@ -203,9 +203,9 @@ impl WasmDelegationTokenRevocation {
     wasm_effects: &WasmIotaTransactionBlockEffects,
     client: &WasmIdentityClientReadOnly,
   ) -> Result<()> {
-    let effects = wasm_effects.clone().into();
-    let (apply_result, rem_effects) = self.0.apply(effects, &client.0).await;
-    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    let mut effects = wasm_effects.clone().into();
+    let apply_result = self.0.apply(&mut effects, &client.0).await;
+    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&effects);
     Object::assign(wasm_effects, &rem_wasm_effects);
 
     apply_result.wasm_result()
@@ -243,9 +243,9 @@ impl WasmDeleteDelegationToken {
     wasm_effects: &WasmIotaTransactionBlockEffects,
     client: &WasmIdentityClientReadOnly,
   ) -> Result<()> {
-    let effects = wasm_effects.clone().into();
-    let (apply_result, rem_effects) = self.0.apply(effects, &client.0).await;
-    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&rem_effects);
+    let mut effects = wasm_effects.clone().into();
+    let apply_result = self.0.apply(&mut effects, &client.0).await;
+    let rem_wasm_effects = WasmIotaTransactionBlockEffects::from(&effects);
     Object::assign(wasm_effects, &rem_wasm_effects);
 
     apply_result.wasm_result()

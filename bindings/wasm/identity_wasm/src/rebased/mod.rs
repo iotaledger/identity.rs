@@ -10,7 +10,7 @@ mod wasm_identity_client;
 mod wasm_identity_client_read_only;
 
 pub use controller::*;
-pub use core_client::*;
+pub(crate) use core_client::*;
 pub use identity::*;
 pub use transaction_builder::*;
 pub use wasm_identity_client::*;

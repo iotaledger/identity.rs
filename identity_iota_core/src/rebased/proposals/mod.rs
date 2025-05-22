@@ -12,44 +12,42 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::IotaClientTrait;
-use identity_iota_interaction::OptionalSend;
-use identity_iota_interaction::OptionalSync;
-use tokio::sync::OnceCell;
-
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::get_identity;
-use crate::rebased::transaction::ProtoTransaction;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
 use async_trait::async_trait;
 pub use borrow::*;
 pub use config_change::*;
 pub use controller::*;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaObjectData;
-use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::base_types::ObjectRef;
-use identity_iota_interaction::types::base_types::ObjectType;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::types::TypeTag;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaObjectData;
+use iota_interaction::rpc_types::IotaObjectDataOptions;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::base_types::ObjectRef;
+use iota_interaction::types::base_types::ObjectType;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::types::TypeTag;
+use iota_interaction::IotaClientTrait;
+use iota_interaction::OptionalSend;
+use iota_interaction::OptionalSync;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::Transaction;
+use product_common::transaction::transaction_builder::TransactionBuilder;
+use product_common::transaction::ProtoTransaction;
+use tokio::sync::OnceCell;
+
 pub use send::*;
 use serde::de::DeserializeOwned;
 pub use update_did_doc::*;
 pub use upgrade::*;
 
+use super::iota::package::identity_package_id;
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::migration::Proposal;
 use crate::rebased::Error;
-use identity_iota_interaction::MoveType;
+use iota_interaction::MoveType;
 
-use super::client::CoreClientReadOnly;
-use super::iota::package::identity_package_id;
 use super::migration::ControllerToken;
 
 /// Interface that allows the creation and execution of an [`OnChainIdentity`]'s [`Proposal`]s.
@@ -192,6 +190,7 @@ where
   A: OptionalSend + OptionalSync,
 {
   type Output = ProposalResult<Proposal<A>>;
+  type Error = Error;
 
   async fn build_programmable_transaction<C>(&self, _client: &C) -> Result<ProgrammableTransaction, Error>
   where
@@ -200,11 +199,7 @@ where
     Ok(self.ptb.clone())
   }
 
-  async fn apply<C>(
-    self,
-    effects: IotaTransactionBlockEffects,
-    client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> Result<Self::Output, Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
@@ -215,20 +210,18 @@ where
     } = self;
 
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     // Identity has been changed regardless of whether the proposal has been executed
     // or simply created. Refetch it, to sync it with its on-chain state.
-    match get_identity(client, identity.id()).await {
-      Ok(maybe_identity) => *identity = maybe_identity.expect("This identity already exists on-chain"),
-      Err(e) => return (Err(e), effects),
-    }
+    *identity = get_identity(client, identity.id())
+      .await?
+      .ok_or_else(|| Error::Identity(format!("identity {} cannot be found", identity.id())))?;
 
     if chained_execution {
       // The proposal has been created and executed right-away. Parse its effects.
-      let apply_result = Proposal::<A>::parse_tx_effects(&effects).map(ProposalResult::Executed);
-      (apply_result, effects)
+      Proposal::<A>::parse_tx_effects(effects).map(ProposalResult::Executed)
     } else {
       // 2 objects are created, one is the Bag's Field and the other is our Proposal. Proposal is not owned by the bag,
       // but the field is.
@@ -240,13 +233,11 @@ where
         .expect("tx was successful")
         .object_id();
 
-      let apply_result = client
+      client
         .get_object_by_id(proposal_id)
         .await
         .map_err(Error::from)
-        .map(ProposalResult::Pending);
-
-      (apply_result, effects)
+        .map(ProposalResult::Pending)
     }
   }
 }
@@ -274,32 +265,30 @@ where
   A: OptionalSend + OptionalSync,
 {
   type Output = <Proposal<A> as ProposalT>::Output;
+  type Error = Error;
+
   async fn build_programmable_transaction<C>(&self, _client: &C) -> Result<ProgrammableTransaction, Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     Ok(self.ptb.clone())
   }
-  async fn apply<C>(
-    self,
-    effects: IotaTransactionBlockEffects,
-    client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> Result<Self::Output, Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     let Self { identity, .. } = self;
 
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
-    match get_identity(client, identity.id()).await {
-      Ok(maybe_identity) => *identity = maybe_identity.expect("This identity already exists on-chain"),
-      Err(e) => return (Err(e), effects),
-    }
+    *identity = get_identity(client, identity.id())
+      .await?
+      .ok_or_else(|| Error::Identity(format!("identity {} cannot be found", identity.id())))?;
 
-    (Proposal::<A>::parse_tx_effects(&effects), effects)
+    Proposal::<A>::parse_tx_effects(effects)
   }
 }
 
@@ -352,12 +341,8 @@ impl<A: MoveType> ApproveProposal<'_, '_, A> {
       .ok_or_else(|| Error::Identity(format!("identity {} doesn't exist", identity.id())))?;
     let controller_cap = controller_token.controller_ref(client).await?;
     let package = identity_package_id(client).await?;
-    let tx = <IdentityMoveCallsAdapter as IdentityMoveCalls>::approve_proposal::<A>(
-      identity_ref.clone(),
-      controller_cap,
-      proposal.id(),
-      package,
-    )?;
+
+    let tx = move_calls::identity::approve_proposal::<A>(identity_ref.clone(), controller_cap, proposal.id(), package)?;
 
     Ok(bcs::from_bytes(&tx)?)
   }
@@ -371,22 +356,20 @@ where
   A: MoveType + OptionalSend + OptionalSync,
 {
   type Output = ();
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  type Error = Error;
+
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply<C>(
-    self,
-    effects: IotaTransactionBlockEffects,
-    _client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, _client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
     let proposal_was_updated = effects
@@ -399,15 +382,12 @@ where
         .controller_voting_power(self.controller_token.controller_id())
         .expect("is identity's controller");
       *self.proposal.votes_mut() = self.proposal.votes() + vp;
-      (Ok(()), effects)
+      Ok(())
     } else {
-      (
-        Err(Error::TransactionUnexpectedResponse(format!(
-          "proposal {} wasn't updated in this transaction",
-          self.proposal.id()
-        ))),
-        effects,
-      )
+      Err(Error::TransactionUnexpectedResponse(format!(
+        "proposal {} wasn't updated in this transaction",
+        self.proposal.id()
+      )))
     }
   }
 }

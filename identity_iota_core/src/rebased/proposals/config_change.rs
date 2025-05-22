@@ -1,35 +1,35 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::rebased::iota::package::identity_package_id;
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::ops::DerefMut as _;
 use std::str::FromStr as _;
 
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::CoreClientReadOnly;
-use crate::rebased::iota::package::identity_package_id;
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::ControllerToken;
-use crate::rebased::transaction_builder::TransactionBuilder;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::OptionalSync;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::TransactionBuilder;
 
 use crate::rebased::migration::Proposal;
 use async_trait::async_trait;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::collection_types::Entry;
-use identity_iota_interaction::types::collection_types::VecMap;
-use identity_iota_interaction::types::TypeTag;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::collection_types::Entry;
+use iota_interaction::types::collection_types::VecMap;
+use iota_interaction::types::TypeTag;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::rebased::iota::types::Number;
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::Error;
-use identity_iota_interaction::MoveType;
+use iota_interaction::MoveType;
+use iota_interaction::OptionalSync;
 
 use super::CreateProposal;
 use super::ExecuteProposal;
@@ -254,7 +254,7 @@ impl ProposalT for Proposal<ConfigChange> {
       .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
-    let tx = IdentityMoveCallsAdapter::propose_config_change(
+    let tx = move_calls::identity::propose_config_change(
       identity_ref,
       controller_cap_ref,
       expiration,
@@ -297,9 +297,8 @@ impl ProposalT for Proposal<ConfigChange> {
       .await?
       .expect("identity exists on-chain");
     let controller_cap_ref = controller_token.controller_ref(client).await?;
-
     let package = identity_package_id(client).await?;
-    let tx = IdentityMoveCallsAdapter::execute_config_change(identity_ref, controller_cap_ref, proposal_id, package)
+    let tx = move_calls::identity::execute_config_change(identity_ref, controller_cap_ref, proposal_id, package)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(TransactionBuilder::new(ExecuteProposal {

@@ -12,9 +12,9 @@ use fastcrypto::ed25519::Ed25519KeyPair;
 use fastcrypto::ed25519::Ed25519PublicKey;
 use fastcrypto::secp256k1::Secp256k1KeyPair;
 use fastcrypto::secp256r1::Secp256r1KeyPair;
-use identity_iota_interaction::types::crypto::IotaKeyPair;
-use identity_iota_interaction::types::crypto::PublicKey;
-use identity_iota_interaction::types::crypto::SignatureScheme as IotaSignatureScheme;
+use iota_interaction::types::crypto::IotaKeyPair;
+use iota_interaction::types::crypto::PublicKey;
+use iota_interaction::types::crypto::SignatureScheme as IotaSignatureScheme;
 
 use super::ed25519;
 use super::secp256k1;
@@ -184,7 +184,7 @@ mod tests {
   #[test]
   fn can_convert_from_jwk_to_ed22519_iota_keypair() {
     let jwk = get_ed25519_jwk(KeyType::Private);
-    let result = identity_iota_interaction::types::crypto::IotaKeyPair::from_jwk(&jwk);
+    let result = iota_interaction::types::crypto::IotaKeyPair::from_jwk(&jwk);
 
     assert!(result.is_ok());
   }
@@ -192,7 +192,7 @@ mod tests {
   #[test]
   fn can_convert_from_jwk_to_ecp256r1_iota_keypair() {
     let jwk = get_secp256r1_jwk(KeyType::Private);
-    let result = identity_iota_interaction::types::crypto::IotaKeyPair::from_jwk(&jwk);
+    let result = iota_interaction::types::crypto::IotaKeyPair::from_jwk(&jwk);
     dbg!(&result);
 
     assert!(result.is_ok());
@@ -201,7 +201,7 @@ mod tests {
   #[test]
   fn can_convert_from_jwk_to_secp256k1_iota_keypair() {
     let jwk = get_secp256k1_jwk(KeyType::Private);
-    let result = identity_iota_interaction::types::crypto::IotaKeyPair::from_jwk(&jwk);
+    let result = iota_interaction::types::crypto::IotaKeyPair::from_jwk(&jwk);
     dbg!(&result);
 
     assert!(result.is_ok());
@@ -210,7 +210,7 @@ mod tests {
   #[test]
   fn can_convert_from_octet_keypair_jwk_to_iota_public_key() {
     let jwk = get_ed25519_jwk(KeyType::Public);
-    let result = identity_iota_interaction::types::crypto::PublicKey::from_jwk(&jwk);
+    let result = iota_interaction::types::crypto::PublicKey::from_jwk(&jwk);
 
     assert!(result.is_ok());
   }
@@ -218,7 +218,7 @@ mod tests {
   #[test]
   fn can_convert_from_secp256r1_jwk_to_iota_public_key() {
     let jwk = get_secp256r1_jwk(KeyType::Public);
-    let result = identity_iota_interaction::types::crypto::PublicKey::from_jwk(&jwk);
+    let result = iota_interaction::types::crypto::PublicKey::from_jwk(&jwk);
 
     assert!(result.is_ok());
   }
@@ -226,7 +226,7 @@ mod tests {
   #[test]
   fn can_convert_from_secp256k1_jwk_to_iota_public_key() {
     let jwk = get_secp256k1_jwk(KeyType::Public);
-    let result = identity_iota_interaction::types::crypto::PublicKey::from_jwk(&jwk);
+    let result = iota_interaction::types::crypto::PublicKey::from_jwk(&jwk);
 
     assert!(result.is_ok());
   }

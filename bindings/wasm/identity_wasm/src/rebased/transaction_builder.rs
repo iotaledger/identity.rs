@@ -7,11 +7,6 @@ use anyhow::anyhow;
 use anyhow::Context as _;
 use async_trait::async_trait;
 use fastcrypto::traits::EncodeDecodeBase64;
-use identity_iota::iota::rebased::client::CoreClientReadOnly;
-use identity_iota::iota::rebased::transaction::TransactionOutputInternal;
-use identity_iota::iota::rebased::transaction_builder::MutGasDataRef;
-use identity_iota::iota::rebased::transaction_builder::Transaction;
-use identity_iota::iota::rebased::transaction_builder::TransactionBuilder;
 use identity_iota::iota::rebased::Error as IotaError;
 use identity_iota::iota_interaction::rpc_types::IotaTransactionBlockEffects;
 use identity_iota::iota_interaction::types::crypto::Signature;
@@ -22,14 +17,19 @@ use iota_interaction_ts::bindings::WasmIotaTransactionBlockEffects;
 use iota_interaction_ts::bindings::WasmIotaTransactionBlockResponse;
 use iota_interaction_ts::bindings::WasmObjectRef;
 use iota_interaction_ts::bindings::WasmTransactionDataBuilder;
+use iota_interaction_ts::core_client::WasmCoreClient;
+use iota_interaction_ts::core_client::WasmCoreClientReadOnly;
 use js_sys::JsString;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::MutGasDataRef;
+use product_common::transaction::transaction_builder::Transaction;
+use product_common::transaction::transaction_builder::TransactionBuilder;
+use product_common::transaction::TransactionOutputInternal;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast as _;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
-use super::WasmCoreClient;
-use super::WasmCoreClientReadOnly;
 use super::WasmManagedCoreClient;
 use super::WasmManagedCoreClientReadOnly;
 use crate::error::Result;
@@ -57,8 +57,9 @@ extern "C" {
 #[async_trait(?Send)]
 impl Transaction for WasmTransaction {
   type Output = JsValue;
+  type Error = IotaError;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> StdResult<ProgrammableTransaction, IotaError>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> StdResult<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly,
   {
@@ -71,23 +72,17 @@ impl Transaction for WasmTransaction {
     Ok(bcs::from_bytes(&pt_bcs)?)
   }
 
-  async fn apply<C>(
-    self,
-    effects: IotaTransactionBlockEffects,
-    client: &C,
-  ) -> (StdResult<Self::Output, IotaError>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> StdResult<Self::Output, IotaError>
   where
     C: CoreClientReadOnly,
   {
     let managed_client = WasmManagedCoreClientReadOnly::from_rust(client);
     let core_client = managed_client.into_wasm();
-    let wasm_effects = WasmIotaTransactionBlockEffects::from(&effects);
+    let wasm_effects = WasmIotaTransactionBlockEffects::from(&*effects);
 
-    let apply_result = Self::apply(&self, &wasm_effects, &core_client)
+    Self::apply(&self, &wasm_effects, &core_client)
       .await
-      .map_err(|e| IotaError::FfiError(format!("failed to apply effects from WASM Transaction: {e:?}")));
-
-    (apply_result, wasm_effects.into())
+      .map_err(|e| IotaError::FfiError(format!("failed to apply effects from WASM Transaction: {e:?}")))
   }
 }
 

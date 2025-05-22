@@ -3,33 +3,32 @@
 
 use std::marker::PhantomData;
 
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::CoreClientReadOnly;
+use crate::rebased::iota::move_calls;
 use crate::rebased::iota::package::identity_package_id;
 use crate::rebased::migration::ControllerToken;
-use crate::rebased::transaction_builder::Transaction;
-use crate::rebased::transaction_builder::TransactionBuilder;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::OptionalSync;
-use tokio::sync::Mutex;
-
 use crate::rebased::migration::Proposal;
-use crate::rebased::transaction::ProtoTransaction;
+
 use crate::rebased::Error;
 use async_trait::async_trait;
-use identity_iota_interaction::rpc_types::IotaObjectRef;
-use identity_iota_interaction::rpc_types::OwnedObjectRef;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::transaction::Argument;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::MoveType;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaObjectRef;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
+use iota_interaction::rpc_types::OwnedObjectRef;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::transaction::Argument;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::types::TypeTag;
+use iota_interaction::MoveType;
+use iota_interaction::OptionalSync;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::Transaction;
+use product_common::transaction::transaction_builder::TransactionBuilder;
+use product_common::transaction::ProtoTransaction;
 use serde::Deserialize;
 use serde::Serialize;
+use tokio::sync::Mutex;
 
 use super::CreateProposal;
 use super::OnChainIdentity;
@@ -39,7 +38,7 @@ use super::UserDrivenTx;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-      use iota_interaction_ts::NativeTsTransactionBuilderBindingWrapper as Ptb;
+      use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
       /// Instances of ControllerIntentFnT can be used as user-provided function to describe how
       /// a borrowed identity's controller capability will be used.
       pub trait ControllerIntentFnT: FnOnce(&mut Ptb, &Argument) {}
@@ -48,7 +47,7 @@ cfg_if::cfg_if! {
       /// Boxed dynamic trait object of {@link ControllerIntentFnT}
       pub type ControllerIntentFn = Box<dyn ControllerIntentFnT + Send>;
     } else {
-      use identity_iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
+      use iota_interaction::types::programmable_transaction_builder::ProgrammableTransactionBuilder as Ptb;
       /// Instances of ControllerIntentFnT can be used as user-provided function to describe how
       /// a borrowed identity's controller capability will be used.
       pub trait ControllerIntentFnT: FnOnce(&mut Ptb, &Argument) {}
@@ -200,7 +199,7 @@ where
         })
         .ok_or_else(|| Error::ObjectLookup(format!("object {} doesn't exist", action.controller_cap)))?;
 
-      IdentityMoveCallsAdapter::create_and_execute_controller_execution(
+      move_calls::identity::create_and_execute_controller_execution(
         identity_ref,
         controller_cap_ref,
         expiration,
@@ -209,7 +208,7 @@ where
         package,
       )
     } else {
-      IdentityMoveCallsAdapter::propose_controller_execution(
+      move_calls::identity::propose_controller_execution(
         identity_ref,
         controller_cap_ref,
         action.controller_cap,
@@ -321,9 +320,9 @@ where
       .await?
       .map(|object_ref| object_ref.reference.to_object_ref())
       .ok_or_else(|| Error::ObjectLookup(format!("object {borrowing_cap_id} doesn't exist")))?;
-
     let package = identity_package_id(client).await?;
-    let tx = IdentityMoveCallsAdapter::execute_controller_execution(
+
+    let tx = move_calls::identity::execute_controller_execution(
       identity_ref,
       controller_cap_ref,
       *proposal_id,
@@ -350,24 +349,22 @@ where
   F: ControllerIntentFnT + Send,
 {
   type Output = ();
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  type Error = Error;
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
-  async fn apply<C>(
-    self,
-    effects: IotaTransactionBlockEffects,
-    _client: &C,
-  ) -> (Result<(), Error>, IotaTransactionBlockEffects)
+
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, _client: &C) -> Result<(), Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.clone())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.clone()));
     }
 
-    (Ok(()), effects)
+    Ok(())
   }
 }

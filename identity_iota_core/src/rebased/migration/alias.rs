@@ -4,33 +4,34 @@
 use async_trait::async_trait;
 use identity_core::common::Url;
 use identity_did::DID as _;
-use identity_iota_interaction::rpc_types::IotaExecutionStatus;
-use identity_iota_interaction::rpc_types::IotaObjectDataOptions;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::id::UID;
-use identity_iota_interaction::types::transaction::ProgrammableTransaction;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::types::STARDUST_PACKAGE_ID;
-use identity_iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
-use identity_iota_interaction::OptionalSync;
+use iota_interaction::rpc_types::IotaExecutionStatus;
+use iota_interaction::rpc_types::IotaObjectDataOptions;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI as _;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::id::UID;
+use iota_interaction::types::transaction::ProgrammableTransaction;
+use iota_interaction::types::TypeTag;
+use iota_interaction::types::STARDUST_PACKAGE_ID;
+use iota_interaction::IotaTransactionBlockEffectsMutAPI as _;
+use iota_interaction::OptionalSync;
+
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::Transaction;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 use tokio::sync::OnceCell;
 
-use crate::iota_interaction_adapter::MigrationMoveCallsAdapter;
-use crate::rebased::client::CoreClientReadOnly;
 use crate::rebased::client::IdentityClientReadOnly;
+
+use crate::rebased::iota::move_calls;
 use crate::rebased::iota::package::identity_package_id;
-use crate::rebased::transaction_builder::Transaction;
 use crate::rebased::Error;
 use crate::IotaDID;
-use identity_iota_interaction::IotaClientTrait;
-use identity_iota_interaction::MigrationMoveCalls;
-use identity_iota_interaction::MoveType;
+use iota_interaction::IotaClientTrait;
+use iota_interaction::MoveType;
 
 use super::get_identity;
 use super::migration_registry_id;
@@ -154,7 +155,7 @@ impl MigrateLegacyIdentity {
     let package = identity_package_id(client).await?;
 
     // Build migration tx.
-    let tx = MigrationMoveCallsAdapter::migrate_did_output(alias_output_ref, created, migration_registry_ref, package)
+    let tx = move_calls::migration::migrate_did_output(alias_output_ref, created, migration_registry_ref, package)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(bcs::from_bytes(&tx)?)
@@ -165,24 +166,21 @@ impl MigrateLegacyIdentity {
 #[cfg_attr(feature = "send-sync", async_trait)]
 impl Transaction for MigrateLegacyIdentity {
   type Output = OnChainIdentity;
+  type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Error>
+  async fn build_programmable_transaction<C>(&self, client: &C) -> Result<ProgrammableTransaction, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     self.cached_ptb.get_or_try_init(|| self.make_ptb(client)).await.cloned()
   }
 
-  async fn apply<C>(
-    self,
-    mut effects: IotaTransactionBlockEffects,
-    client: &C,
-  ) -> (Result<Self::Output, Error>, IotaTransactionBlockEffects)
+  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> Result<Self::Output, Self::Error>
   where
     C: CoreClientReadOnly + OptionalSync,
   {
     if let IotaExecutionStatus::Failure { error } = effects.status() {
-      return (Err(Error::TransactionUnexpectedResponse(error.to_string())), effects);
+      return Err(Error::TransactionUnexpectedResponse(error.to_string()));
     }
 
     let legacy_did: Url = IotaDID::new(&self.alias.id.object_id().into_bytes(), client.network_name())
@@ -212,16 +210,13 @@ impl Transaction for MigrateLegacyIdentity {
     }
 
     let (Some(i), Some(identity)) = (target_identity_pos, target_identity) else {
-      return (
-        Err(Error::TransactionUnexpectedResponse(
-          "failed to find the correct identity in this transaction's effects".to_owned(),
-        )),
-        effects,
-      );
+      return Err(Error::TransactionUnexpectedResponse(
+        "failed to find the correct identity in this transaction's effects".to_owned(),
+      ));
     };
 
     effects.created_mut().swap_remove(i);
 
-    (Ok(identity), effects)
+    Ok(identity)
   }
 }

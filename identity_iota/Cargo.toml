@@ -21,10 +21,10 @@ identity_storage = { version = "=1.6.0-alpha", path = "../identity_storage", def
 identity_verification = { version = "=1.6.0-alpha", path = "../identity_verification", default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-identity_iota_interaction = { version = "=1.6.0-alpha", path = "../identity_iota_interaction" }
+iota_interaction.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-identity_iota_interaction = { version = "=1.6.0-alpha", path = "../identity_iota_interaction", default-features = false }
+iota_interaction = { git = "https://github.com/iotaledger/product-core.git", tag = "v0.1.0-alpha", package = "iota_interaction", default-features = false }
 
 [dev-dependencies]
 # required for doc test

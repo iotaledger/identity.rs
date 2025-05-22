@@ -5,17 +5,17 @@ use std::collections::HashMap;
 use std::str::FromStr as _;
 use std::sync::LazyLock;
 
-use identity_iota_interaction::move_types::language_storage::StructTag;
-use identity_iota_interaction::rpc_types::EventFilter;
-use identity_iota_interaction::rpc_types::IotaData;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::id::ID;
-use identity_iota_interaction::IotaClientTrait;
+use iota_interaction::move_types::language_storage::StructTag;
+use iota_interaction::rpc_types::EventFilter;
+use iota_interaction::rpc_types::IotaData;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::id::ID;
+use iota_interaction::IotaClientTrait;
 use phf::phf_map;
 use phf::Map;
+use product_common::core_client::CoreClientReadOnly;
 use tokio::sync::RwLock;
 
-use crate::rebased::client::CoreClientReadOnly;
 use crate::rebased::client::IdentityClientReadOnly;
 use crate::rebased::iota::package::identity_package_registry;
 

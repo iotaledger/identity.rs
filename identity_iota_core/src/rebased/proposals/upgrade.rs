@@ -3,25 +3,24 @@
 
 use std::marker::PhantomData;
 
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::OptionalSync;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::TransactionBuilder;
 
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::CoreClientReadOnly;
+use crate::rebased::iota::move_calls;
 use crate::rebased::iota::package::identity_package_id;
 use crate::rebased::migration::ControllerToken;
-use crate::rebased::transaction_builder::TransactionBuilder;
 use async_trait::async_trait;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::TypeTag;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::TypeTag;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::rebased::migration::OnChainIdentity;
 use crate::rebased::migration::Proposal;
 use crate::rebased::Error;
-use identity_iota_interaction::MoveType;
+use iota_interaction::MoveType;
+use iota_interaction::OptionalSync;
 
 use super::CreateProposal;
 use super::ExecuteProposal;
@@ -80,7 +79,8 @@ impl ProposalT for Proposal<Upgrade> {
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
     let package = identity_package_id(client).await?;
-    let tx = IdentityMoveCallsAdapter::propose_upgrade(identity_ref, controller_cap_ref, expiration, package)
+
+    let tx = move_calls::identity::propose_upgrade(identity_ref, controller_cap_ref, expiration, package)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(TransactionBuilder::new(CreateProposal {
@@ -114,9 +114,9 @@ impl ProposalT for Proposal<Upgrade> {
       .await?
       .expect("identity exists on-chain");
     let controller_cap_ref = controller_token.controller_ref(client).await?;
-
     let package = identity_package_id(client).await?;
-    let tx = IdentityMoveCallsAdapter::execute_upgrade(identity_ref, controller_cap_ref, proposal_id, package)
+
+    let tx = move_calls::identity::execute_upgrade(identity_ref, controller_cap_ref, proposal_id, package)
       .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(TransactionBuilder::new(ExecuteProposal {

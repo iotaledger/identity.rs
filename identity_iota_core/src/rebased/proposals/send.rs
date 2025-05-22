@@ -3,23 +3,22 @@
 
 use std::marker::PhantomData;
 
+use crate::rebased::iota::package::identity_package_id;
 use async_trait::async_trait;
-use identity_iota_interaction::rpc_types::IotaTransactionBlockEffects;
-use identity_iota_interaction::types::base_types::IotaAddress;
-use identity_iota_interaction::types::base_types::ObjectID;
-use identity_iota_interaction::types::TypeTag;
-use identity_iota_interaction::IdentityMoveCalls;
-use identity_iota_interaction::MoveType;
-use identity_iota_interaction::OptionalSync;
+use iota_interaction::rpc_types::IotaTransactionBlockEffects;
+use iota_interaction::types::base_types::IotaAddress;
+use iota_interaction::types::base_types::ObjectID;
+use iota_interaction::types::TypeTag;
+use iota_interaction::MoveType;
+use iota_interaction::OptionalSync;
+use product_common::core_client::CoreClientReadOnly;
+use product_common::transaction::transaction_builder::TransactionBuilder;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::iota_interaction_adapter::IdentityMoveCallsAdapter;
-use crate::rebased::client::CoreClientReadOnly;
-use crate::rebased::iota::package::identity_package_id;
+use crate::rebased::iota::move_calls;
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::migration::OnChainIdentity;
-use crate::rebased::transaction_builder::TransactionBuilder;
 use crate::rebased::Error;
 
 use super::CreateProposal;
@@ -127,7 +126,7 @@ impl ProposalT for Proposal<SendAction> {
         }
         object_and_type_list
       };
-      IdentityMoveCallsAdapter::create_and_execute_send(
+      move_calls::identity::create_and_execute_send(
         identity_ref,
         controller_cap_ref,
         action.0,
@@ -136,7 +135,7 @@ impl ProposalT for Proposal<SendAction> {
         package,
       )
     } else {
-      IdentityMoveCallsAdapter::propose_send(identity_ref, controller_cap_ref, action.0, expiration, package)
+      move_calls::identity::propose_send(identity_ref, controller_cap_ref, action.0, expiration, package)
     }
     .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
     Ok(TransactionBuilder::new(CreateProposal {
@@ -182,10 +181,10 @@ impl ProposalT for Proposal<SendAction> {
       }
       object_and_type_list
     };
-
     let package = identity_package_id(client).await?;
+
     let tx =
-      IdentityMoveCallsAdapter::execute_send(identity_ref, controller_cap_ref, proposal_id, object_type_list, package)
+      move_calls::identity::execute_send(identity_ref, controller_cap_ref, proposal_id, object_type_list, package)
         .map_err(|e| Error::TransactionBuildingFailed(e.to_string()))?;
 
     Ok(TransactionBuilder::new(ExecuteProposal {
