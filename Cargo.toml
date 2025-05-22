@@ -39,18 +39,6 @@ thiserror = { version = "1.0", default-features = false }
 json-proof-token = { version = "0.3.5" }
 zkryptium = { version = "0.2.2", default-features = false, features = ["bbsplus"] }
 
-# Uncomment the following patch if you need to use a local `product-core` repository for development purposes.
-# --------------------------------------------------------------------------
-# IMPORTANT:
-# * Remember to comment out the patch before committing your changes.
-# * Remember also to comment out the patch in `bindings/wasm/identity_wasm/Cargo.toml`
-# --------------------------------------------------------------------------
-#[patch."https://github.com/iotaledger/product-core.git"]
-#iota_interaction = { version = "1.6.0-alpha", path = "../product-core/iota_interaction" }
-#iota_interaction_rust = { version = "1.6.0-alpha", path = "../product-core/iota_interaction_rust" }
-#iota_interaction_ts = { version = "1.6.0-alpha", path = "../product-core/bindings/wasm/iota_interaction_ts" }
-#product_common = { version = "1.6.0-alpha", path = "../product-core/product_common" }
-
 [workspace.lints.clippy]
 result_large_err = "allow"
 large_enum_variant = "allow"
