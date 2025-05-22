@@ -7,8 +7,8 @@ use iota_interaction::types::base_types::ObjectIDParseError;
 use iota_interaction::types::crypto::PublicKey;
 use iota_interaction_ts::bindings::WasmIotaClient;
 use iota_interaction_ts::bindings::WasmTransactionSigner;
-use iota_interaction_ts::core_client::WasmCoreClientReadOnly;
 use iota_interaction_ts::core_client::WasmCoreClient;
+use iota_interaction_ts::core_client::WasmCoreClientReadOnly;
 use iota_interaction_ts::IotaClientAdapter;
 use iota_interaction_ts::WasmPublicKey;
 use product_common::core_client::CoreClient;
@@ -18,7 +18,6 @@ use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
 use crate::error::WasmResult;
-
 
 #[derive(Clone)]
 #[wasm_bindgen]
