@@ -1,6 +1,6 @@
 [package]
 name = "identity_jose"
-version = "1.6.0-alpha"
+version = "1.6.0-beta"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -14,7 +14,7 @@ description = "A library for JOSE (JSON Object Signing and Encryption)"
 anyhow = { version = "1", optional = true }
 bls12_381_plus.workspace = true
 fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "2f502fd8570fe4e9cff36eea5bbd6fef22002898", package = "fastcrypto", optional = true }
-identity_core = { version = "=1.6.0-alpha", path = "../identity_core" }
+identity_core = { version = "=1.6.0-beta", path = "../identity_core" }
 iota-crypto = { version = "0.23.2", default-features = false, features = ["std", "sha"] }
 json-proof-token.workspace = true
 k256 = { version = "0.13.3", default-features = false, features = ["std", "ecdsa", "ecdsa-core", "jwk"], optional = true }
