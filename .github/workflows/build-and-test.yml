@@ -16,6 +16,7 @@ on:
       - '.github/actions/**'
       - '**.rs'
       - '**.toml'
+      - '**.lock'
       - 'bindings/**'
       - '!bindings/**.md'
       - 'bindings/wasm/identity_wasm/README.md' # the Readme contain txm tests
