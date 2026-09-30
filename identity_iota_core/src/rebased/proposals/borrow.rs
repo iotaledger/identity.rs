@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::iota::move_calls;
-use crate::rebased::iota::package::identity_package_id;
+
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::proposals::ProtoOperation;
 
@@ -198,7 +198,7 @@ where
     }
 
     let mut ptb = TransactionBuilder::new(Address::ZERO).with_client(client.as_ref().clone());
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
     let can_execute = identity
       .controller_voting_power(controller_token.controller_id())
       .expect("is a controller of identity")
@@ -337,7 +337,7 @@ where
       .try_collect()
       .await
       .map_err(|e| Error::RpcError(e.to_string()))?;
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
     move_calls::identity::execute_borrow(
       &mut ptb,
       identity.id(),

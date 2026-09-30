@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::rebased::client::IdentityClient;
-use crate::rebased::iota::package::identity_package_id;
+
 use std::marker::PhantomData;
 
 use crate::rebased::iota::move_calls;
@@ -90,7 +90,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
       return Err(Error::Identity("cannot update a deleted DID Document".into()));
     }
 
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
     let sender_vp = identity
       .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
@@ -132,7 +132,7 @@ impl ProposalT for Proposal<UpdateDidDocument> {
     }
 
     let proposal_id = self.id();
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
     let mut ptb = TransactionBuilder::new(Address::ZERO).with_client(client.as_ref().clone());
 
     // We need to check the capability again here, as the proposal could have been created with a token that has since

@@ -1,30 +1,52 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{future::Future, ops::Deref, pin::Pin, sync::Arc};
+use std::future::Future;
+use std::ops::Deref;
+use std::pin::Pin;
+use std::sync::Arc;
 
-use futures::{stream::FuturesUnordered, Stream, StreamExt as _, TryStreamExt as _};
+use futures::stream::FuturesUnordered;
+use futures::Stream;
+use futures::StreamExt as _;
+use futures::TryStreamExt as _;
 use identity_core::common::Url;
 use identity_did::DID as _;
-use iota_sdk::{
-  graphql_client::{error::Error as IotaClientError, query_types::ObjectFilter, Client as IotaClient},
-  types::{Address, ObjectId},
-};
-use product_core::{
-  move_type::MoveType,
-  network::Network,
-  product_client::ProductClient,
-  type_origin_table::{TypeOriginTable, TypeOriginTableCreationError},
-};
+use iota_sdk::graphql_client::error::Error as IotaClientError;
+use iota_sdk::graphql_client::query_types::ObjectFilter;
+use iota_sdk::graphql_client::Client as IotaClient;
+use iota_sdk::transaction_builder::TransactionBuilder;
+use iota_sdk::types::Address;
+use iota_sdk::types::ObjectId;
+use iota_sdk::types::TransactionEffects;
+use product_core::move_type::MoveType;
+use product_core::network::Network;
+use product_core::operation::Operation;
+use product_core::operation::OperationBuilder;
+use product_core::product_client::ProductClient;
+use product_core::type_origin_table::TypeOriginTable;
+use product_core::type_origin_table::TypeOriginTableCreationError;
+use secret_storage::iota::TransactionSigner;
+use tokio::sync::RwLock;
 
-use crate::{
-  rebased::{
-    iota::package::identity_package_registry,
-    migration::{get_identity, ControllerCap, DelegationToken, Identity},
-    Error,
-  },
-  IotaDID, IotaDocument,
-};
+use crate::rebased::iota::package::identity_package_registry;
+use crate::rebased::migration::get_identity;
+use crate::rebased::migration::get_identity_impl;
+use crate::rebased::migration::ControllerCap;
+use crate::rebased::migration::ControllerToken;
+use crate::rebased::migration::DelegationToken;
+use crate::rebased::migration::Identity;
+use crate::rebased::migration::IdentityBuilder;
+use crate::rebased::migration::IdentityResolutionError;
+use crate::rebased::migration::InsufficientControllerVotingPower;
+use crate::rebased::migration::NotAController;
+use crate::rebased::migration::OnChainIdentity;
+use crate::rebased::proposals::ProposalResult;
+use crate::rebased::Error;
+use crate::IotaDID;
+use crate::IotaDocument;
+use crate::StateMetadataDocument;
+use crate::StateMetadataEncoding;
 
 /// A client for interacting with IOTA Identity on the IOTA network.
 #[derive(Debug, Clone)]
@@ -101,7 +123,7 @@ impl IdentityClient {
     } else {
       identity_package_registry()
         .await
-        .package_id(network.as_str())
+        .package_id(network.as_chain_id())
         .expect("package id for official networks is tracked by this library")
     };
     let type_origin_table = TypeOriginTable::new(package_id, &iota_client)
@@ -262,6 +284,329 @@ impl IdentityClient {
   }
 }
 
+impl IdentityClient {
+  /// Returns a new [`IdentityBuilder`] in order to build a new [`crate::rebased::migration::OnChainIdentity`].
+  pub fn create_identity(&self, iota_document: IotaDocument) -> IdentityBuilder {
+    IdentityBuilder::new(iota_document)
+  }
+
+  /// Returns an [Operation] to publish the given DID Document on-chain.
+  pub fn publish_did_document(
+    &self,
+    document: IotaDocument,
+    signer: &impl TransactionSigner,
+  ) -> OperationBuilder<PublishDidDocument> {
+    OperationBuilder::new(PublishDidDocument::new(document, signer.address()))
+  }
+
+  /// Deactivates a DID document.
+  pub async fn deactivate_did_output(&self, did: &IotaDID, signer: &impl TransactionSigner) -> Result<(), Error> {
+    let mut oci = if let Identity::FullFledged(value) = self.get_identity(did.to_object_id()).await? {
+      value
+    } else {
+      return Err(Error::Identity("only new identities can be deactivated".to_string()));
+    };
+
+    let controller_token = oci.get_controller_token(signer.address(), self).await?.ok_or_else(|| {
+      Error::Identity(format!(
+        "address {} has no control over Identity {}",
+        signer.address(),
+        oci.id()
+      ))
+    })?;
+
+    oci
+      .deactivate_did(&controller_token)
+      .finish(self)
+      .await?
+      .execute(signer, self)
+      .await
+      .map_err(|e| Error::TransactionUnexpectedResponse(e.to_string()))?;
+
+    Ok(())
+  }
+
+  /// A shorthand for
+  /// [OnChainIdentity::update_did_document](crate::rebased::migration::OnChainIdentity::update_did_document)'s DID
+  /// Document.
+  ///
+  /// This method makes the following assumptions:
+  /// - The given `did_document` has already been published on-chain within an Identity.
+  /// - This [IdentityClient] is a controller of the corresponding Identity with enough voting power to execute the
+  ///   transaction without any other controller approval.
+  pub async fn publish_did_update(
+    &self,
+    did_document: IotaDocument,
+    signer: &impl TransactionSigner,
+  ) -> Result<OperationBuilder<ShorthandDidUpdate>, MakeUpdateDidDocTxError> {
+    use MakeUpdateDidDocTxError as Error;
+    use MakeUpdateDidDocTxErrorKind as ErrorKind;
+
+    let make_err = |kind| Error {
+      did_document: did_document.clone(),
+      kind,
+    };
+
+    let identity_id = did_document.id().to_object_id();
+    let identity = get_identity_impl(self, identity_id)
+      .await
+      .map_err(|e| make_err(e.into()))?;
+
+    if identity.has_deleted_did() {
+      return Err(make_err(ErrorKind::DeletedIdentityDocument));
+    }
+
+    let controller_token = identity
+      .get_controller_token(signer.address(), self)
+      .await
+      .map_err(|e| make_err(ErrorKind::RpcError(e.into())))?
+      .ok_or_else(|| {
+        make_err(
+          NotAController {
+            address: signer.address(),
+            identity: did_document.id().clone(),
+          }
+          .into(),
+        )
+      })?;
+
+    let vp = identity
+      .controller_voting_power(controller_token.controller_id())
+      .expect("is a controller");
+    let threshold = identity.threshold();
+    if vp < threshold {
+      return Err(make_err(
+        InsufficientControllerVotingPower {
+          controller_token_id: controller_token.controller_id(),
+          controller_voting_power: vp,
+          required: threshold,
+        }
+        .into(),
+      ));
+    }
+
+    Ok(OperationBuilder::new(ShorthandDidUpdate {
+      identity: RwLock::new(identity),
+      controller_token,
+      did_document,
+    }))
+  }
+}
+
+/// Publishes a new DID Document on-chain. An [`OnChainIdentity`](crate::rebased::migration::OnChainIdentity)
+/// will be created to contain the provided document.
+#[derive(Debug, Clone)]
+pub struct PublishDidDocument {
+  did_document: IotaDocument,
+  controller: Address,
+}
+
+impl PublishDidDocument {
+  /// Creates a new [PublishDidDocument] transaction.
+  pub fn new(did_document: IotaDocument, controller: Address) -> Self {
+    Self {
+      did_document,
+      controller,
+    }
+  }
+}
+
+impl Operation for PublishDidDocument {
+  type Client = IdentityClient;
+  type Output = IotaDocument;
+  type Error = Error;
+
+  async fn to_transaction(
+    &self,
+    client: &IdentityClient,
+    mut ptb: TransactionBuilder<IotaClient>,
+  ) -> Result<TransactionBuilder<IotaClient>, Self::Error> {
+    let package = client.package_id();
+    let did_document_bytes = StateMetadataDocument::from(self.did_document.clone())
+      .pack(StateMetadataEncoding::Json)
+      .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
+
+    super::iota::move_calls::identity::new_with_controllers(
+      &mut ptb,
+      Some(&did_document_bytes),
+      [(self.controller, 1, false)],
+      1,
+      package,
+    );
+
+    Ok(ptb)
+  }
+
+  async fn apply_effects(
+    self,
+    client: &IdentityClient,
+    tx_effects: &mut TransactionEffects,
+  ) -> Result<Self::Output, Self::Error> {
+    if tx_effects.as_v1().status.is_failure() {
+      return Err(tx_effects.as_v1().status.clone().unwrap_err().0.into());
+    }
+
+    let target_did_bytes = StateMetadataDocument::from(self.did_document)
+      .pack(StateMetadataEncoding::Json)
+      .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
+
+    let is_target_identity = |identity: &OnChainIdentity| -> bool {
+      let did_bytes = identity
+        .multicontroller()
+        .controlled_value()
+        .as_deref()
+        .unwrap_or_default();
+      target_did_bytes == did_bytes && identity.threshold() == 1
+    };
+
+    let create_identity_candidates = tx_effects
+      .as_v1()
+      .changed_objects
+      .iter()
+      .filter(|obj| {
+        obj.id_operation.is_created()
+          && obj
+            .output_state
+            .opt_object_owner()
+            .is_some_and(|owner| owner.is_shared())
+      })
+      .map(|obj| obj.object_id);
+
+    let mut target_identity = None;
+    for id in create_identity_candidates {
+      let Some(identity) = get_identity(client, id)
+        .await
+        .map_err(|e| Error::Identity(e.to_string()))?
+      else {
+        continue;
+      };
+
+      if is_target_identity(&identity) {
+        target_identity = Some(identity);
+      }
+    }
+
+    if let Some(identity) = target_identity {
+      // tx_effects
+      //   .as_mut_v1()
+      //   .changed_objects
+      //   .retain(|obj| obj.object_id != identity.id().to_object_id());
+      Ok(identity.did_doc)
+    } else {
+      Err(Error::TransactionUnexpectedResponse(
+        "failed to find the correct identity in this transaction's effects".to_owned(),
+      ))
+    }
+  }
+}
+
+/// The actual Transaction type returned by [IdentityClient::publish_did_update].
+#[derive(Debug)]
+pub struct ShorthandDidUpdate {
+  identity: RwLock<OnChainIdentity>,
+  controller_token: ControllerToken,
+  did_document: IotaDocument,
+}
+
+impl Operation for ShorthandDidUpdate {
+  type Client = IdentityClient;
+  type Error = MakeUpdateDidDocTxError;
+  type Output = IotaDocument;
+
+  async fn to_transaction(
+    &self,
+    client: &Self::Client,
+    tx_builder: TransactionBuilder<IotaClient>,
+  ) -> Result<TransactionBuilder<IotaClient>, Self::Error> {
+    let mut identity = self.identity.write().await;
+    identity
+      .update_did_document(self.did_document.clone(), &self.controller_token)
+      .finish(client)
+      .await
+      .map_err(|e| MakeUpdateDidDocTxError {
+        did_document: self.did_document.clone(),
+        kind: MakeUpdateDidDocTxErrorKind::RpcError(e.into()),
+      })?
+      .to_transaction(client, tx_builder)
+      .await
+      .map_err(|e| MakeUpdateDidDocTxError {
+        did_document: self.did_document.clone(),
+        kind: MakeUpdateDidDocTxErrorKind::RpcError(e.into()),
+      })
+  }
+
+  async fn apply_effects(
+    self,
+    client: &Self::Client,
+    tx_effects: &mut TransactionEffects,
+  ) -> Result<Self::Output, Self::Error> {
+    let mut identity = self.identity.write().await;
+    let ProposalResult::Executed(_) = identity
+      .update_did_document(self.did_document.clone(), &self.controller_token)
+      .finish(client)
+      .await
+      .map_err(|e| MakeUpdateDidDocTxError {
+        did_document: self.did_document.clone(),
+        kind: MakeUpdateDidDocTxErrorKind::RpcError(e.into()),
+      })?
+      .apply_effects(client, tx_effects)
+      .await
+      .map_err(|e| MakeUpdateDidDocTxError {
+        did_document: self.did_document.clone(),
+        kind: MakeUpdateDidDocTxErrorKind::RpcError(e.into()),
+      })?
+    else {
+      unreachable!("all precondition have been checked before creating this operation")
+    };
+
+    // Re-sync identity.
+    let updated_identity = get_identity(client, identity.id())
+      .await
+      .map_err(|e| MakeUpdateDidDocTxError {
+        did_document: self.did_document.clone(),
+        kind: MakeUpdateDidDocTxErrorKind::RpcError(e.into()),
+      })?
+      .expect("identity exists");
+
+    *identity = updated_identity;
+
+    Ok(identity.did_doc.clone())
+  }
+}
+
+/// [IdentityClient::publish_did_update] error.
+#[derive(Debug, thiserror::Error)]
+#[error("failed to prepare transaction to update DID '{}'", did_document.id())]
+#[non_exhaustive]
+pub struct MakeUpdateDidDocTxError {
+  /// The DID document that was being published.
+  pub did_document: IotaDocument,
+  /// Specific type of failure for this error.
+  pub kind: MakeUpdateDidDocTxErrorKind,
+}
+
+/// Types of failure for [MakeUpdateDidDocTxError].
+#[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
+pub enum MakeUpdateDidDocTxErrorKind {
+  /// Node RPC failure.
+  #[error(transparent)]
+  RpcError(Box<dyn std::error::Error + Send + Sync>),
+  /// Failed to resolve the corresponding [OnChainIdentity].
+  #[error(transparent)]
+  IdentityResolution(#[from] IdentityResolutionError),
+  /// The invoking client is not a controller of the given DID document.
+  #[error(transparent)]
+  NotAController(#[from] NotAController),
+  /// The DID document has been deleted and cannot be updated.
+  #[error("Identity's DID Document is deleted")]
+  DeletedIdentityDocument,
+  /// The invoking client is a controller but doesn't have enough voting power
+  /// to perform the update.
+  #[error(transparent)]
+  InsufficientVotingPower(#[from] InsufficientControllerVotingPower),
+}
+
 /// Error that might occur when querying an address for its controlled DIDs.
 #[derive(Debug, thiserror::Error)]
 #[error("failed to query the DIDs controlled by address `{address}`")]
@@ -353,14 +698,14 @@ pub enum FromIotaClientErrorKind {
 mod tests {
   use crate::IotaDID;
 
-  use super::IdentityClientReadOnly;
-  use iota_sdk::IotaClientBuilder;
+  use super::IdentityClient;
+  use iota_sdk::graphql_client::Client as IotaClient;
   use product_core::network::Network;
 
   #[tokio::test]
   async fn resolution_of_a_did_for_a_different_network_fails() -> anyhow::Result<()> {
-    let iota_client = IotaClientBuilder::default().build_testnet().await?;
-    let identity_client = IdentityClientReadOnly::new(iota_client).await?;
+    let iota_client = IotaClient::new_testnet();
+    let identity_client = IdentityClient::from_iota_client(iota_client, None).await?;
 
     let did = IotaDID::new(&[1; 32], Network::Devnet);
     let error = identity_client.resolve_did(&did).await.unwrap_err();

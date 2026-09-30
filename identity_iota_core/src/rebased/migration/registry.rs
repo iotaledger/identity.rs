@@ -8,9 +8,9 @@ use std::sync::LazyLock;
 use iota_sdk::graphql_client::query_types::EventFilter;
 use iota_sdk::graphql_client::Direction;
 use iota_sdk::graphql_client::PaginationFilter;
+use iota_sdk::move_types::iota_framework::object::ID;
 use iota_sdk::types::ObjectId;
 use iota_sdk::types::TypeTag;
-use iota_sdk::move_types::iota_framework::object::ID;
 use phf::phf_map;
 use phf::Map;
 use product_core::network::Network;
@@ -18,7 +18,7 @@ use product_core::product_client::ProductClient;
 use tokio::sync::RwLock;
 
 use crate::rebased::client::IdentityClient;
-use crate::rebased::iota::package::identity_package_id;
+
 use crate::rebased::migration::IdentityResolutionError;
 
 use super::get_identity;
@@ -47,9 +47,7 @@ pub(crate) async fn migration_registry_id(client: &IdentityClient) -> Result<Obj
     return Ok(registry.parse().unwrap());
   }
 
-  let package_id = identity_package_id(network)
-    .await
-    .map_err(|_| Error::UnknownNetwork(network))?;
+  let package_id = client.package_id();
   let registry_id = find_migration_registry(client, package_id).await?;
 
   // Cache registry for network.
@@ -121,12 +119,8 @@ async fn find_migration_registry(client: &IdentityClient, package_id: ObjectId) 
     ..Default::default()
   };
 
-  let mut events = client
-    .as_ref()
-    .events(event_filter, pagination_filter)
-    .await?
-    .data;
-  
+  let mut events = client.as_ref().events(event_filter, pagination_filter).await?.data;
+
   if events.is_empty() {
     return Err(Error::NotFound(format!(
       "No MigrationRegistryCreated event on network {}",

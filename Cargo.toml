@@ -32,6 +32,7 @@ exclude = ["bindings/wasm/identity_wasm", "bindings/grpc"]
 bls12_381_plus = { version = "0.8.17" }
 iota-sdk = "3.0.0-beta.1"
 product-core = { git = "https://github.com/iotaledger/product-core.git", package = "product-core", branch = "prototype/iota-rust-sdk-integration" }
+secret-storage = { git = "https://github.com/iotaledger/secret-storage.git", branch = "prototype/new-signer-api", features = ["iota"] }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 serde_json = { version = "1.0", default-features = false }
 oqs = { version = "0.10", default-features = false, features = ["sigs", "std", "vendored"] }

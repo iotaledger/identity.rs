@@ -26,8 +26,7 @@ pub(crate) fn propose_config_change<I1, I2>(
   controllers_to_remove: HashSet<ObjectId>,
   controllers_to_update: I2,
   package: ObjectId,
-)
-where
+) where
   I1: IntoIterator<Item = (Address, u64)>,
   I2: IntoIterator<Item = (ObjectId, u64)>,
 {

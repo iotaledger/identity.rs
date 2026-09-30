@@ -7,10 +7,6 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 use async_trait::async_trait;
-use fastcrypto::ed25519::Ed25519KeyPair;
-use fastcrypto::ed25519::Ed25519Signature;
-use fastcrypto::traits::KeyPair as _;
-use fastcrypto::traits::Signer;
 use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkType;
@@ -18,6 +14,9 @@ use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::jwk::BlsCurve;
 use identity_verification::jwk::FromJwk as _;
 use identity_verification::jwk::ToJwk as _;
+use iota_sdk::crypto::ed25519::Ed25519PrivateKey;
+use iota_sdk::crypto::Signer;
+use iota_sdk::types::crypto::Ed25519Signature;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
@@ -64,7 +63,7 @@ impl JwkStorage for JwkMemStore {
     check_key_alg_compatibility(key_type, &alg)?;
 
     let keypair = match key_type {
-      MemStoreKeyType::Ed25519 => Ed25519KeyPair::generate(&mut rand::thread_rng()),
+      MemStoreKeyType::Ed25519 => Ed25519PrivateKey::random(),
       other => {
         return Err(
           KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
@@ -75,11 +74,7 @@ impl JwkStorage for JwkMemStore {
 
     let kid: KeyId = random_key_id();
 
-    let mut jwk: Jwk = keypair.to_jwk().map_err(|err| {
-      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-        .with_custom_message("could not convert `Ed25519KeyPair` to `Jwk`")
-        .with_source(err)
-    })?;
+    let mut jwk: Jwk = keypair.to_jwk().unwrap();
     jwk.set_alg(alg.name());
     jwk.set_kid(jwk.thumbprint_sha256_b64());
     let public_jwk: Jwk = jwk.to_public().expect("should only panic if kty == oct");
@@ -170,12 +165,16 @@ impl JwkStorage for JwkMemStore {
     let jwk: &Jwk = jwk_store
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
-    let secret_key = Ed25519KeyPair::from_jwk(jwk).map_err(|err| {
+    let secret_key = Ed25519PrivateKey::from_jwk(jwk).map_err(|err| {
       KeyStorageError::new(KeyStorageErrorKind::Unspecified)
         .with_custom_message("could not convert `Jwk` to `Ed25519KeyPair`")
         .with_source(err)
     })?;
-    Ok(Signer::<Ed25519Signature>::sign(&secret_key, data).as_ref().to_vec())
+    Ok(
+      Signer::<Ed25519Signature>::sign(&secret_key, data)
+        .into_inner()
+        .to_vec(),
+    )
   }
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
@@ -708,12 +707,12 @@ pub(crate) mod shared {
 #[cfg(test)]
 mod tests {
   use crate::key_storage::tests::utils::generate_ed25519;
-  use fastcrypto::ed25519::Ed25519PublicKey;
-  use fastcrypto::traits::ToFromBytes as _;
-  use fastcrypto::traits::VerifyingKey as _;
   use identity_verification::jose::jwk::EcCurve;
   use identity_verification::jose::jwk::JwkParamsEc;
-  use identity_verification::jwk::FromJwk as _;
+  use iota_sdk::crypto::ed25519::Ed25519Verifier;
+  use iota_sdk::crypto::Verifier;
+  use iota_sdk::types::Ed25519PublicKey;
+  use iota_sdk::types::SimpleSignature;
 
   use super::*;
 
@@ -730,9 +729,9 @@ mod tests {
     let signature = store.sign(&key_id, test_msg, &jwk.to_public().unwrap()).await.unwrap();
 
     let public_key = Ed25519PublicKey::from_jwk(&jwk).unwrap();
-    let signature = Ed25519Signature::from_bytes(&signature).unwrap();
+    let signature = SimpleSignature::new_ed25519(Ed25519Signature::from_bytes(&signature).unwrap(), public_key);
 
-    assert!(public_key.verify(test_msg, &signature).is_ok());
+    assert!(Ed25519Verifier::new().verify(test_msg, &signature).is_ok());
     assert!(store.exists(&key_id).await.unwrap());
     store.delete(&key_id).await.unwrap();
   }

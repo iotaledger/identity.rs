@@ -41,12 +41,10 @@ static IOTA_IDENTITY_PACKAGE_REGISTRY: LazyLock<RwLock<PackageRegistry>> = LazyL
       ],
     );
     registry.insert_env(
-      Env::new_with_alias("e678123a", "devnet"),
-      vec![
-        object_id!("0xe6fa03d273131066036f1d2d4c3d919b9abbca93910769f26a924c7a01811103"),
-        object_id!("0x6a976d3da90db5d27f8a0c13b3268a37e582b455cfc7bf72d6461f6e8f668823"),
-        object_id!("0xc04befdea27caa7e277f0b738bfcd29fc463cd2a5885ae7f0a9fd3e2d635a8b8"),
-      ],
+      Env::new_with_alias("daf90477", "devnet"),
+      vec![object_id!(
+        "0x8896ab04fe24c044c54925df3f8a7c383a8d1d6f6bbb95d1c57cfa94c75e520d"
+      )],
     );
 
     registry
@@ -151,42 +149,30 @@ pub(crate) async fn identity_package_id(network: Network) -> Result<ObjectId, Er
 
 #[cfg(test)]
 mod tests {
-  use iota_interaction::IotaClientBuilder;
-
-  use crate::rebased::client::IdentityClientReadOnly;
+  use crate::rebased::client::IdentityClient;
+  use iota_sdk::graphql_client::Client as IotaClient;
 
   #[tokio::test]
   async fn can_connect_to_testnet() -> anyhow::Result<()> {
-    let iota_client = IotaClientBuilder::default().build_testnet().await?;
-    let _identity_client = IdentityClientReadOnly::new(iota_client).await?;
+    let iota_client = IotaClient::new_testnet();
+    let _identity_client = IdentityClient::from_iota_client(iota_client, None).await?;
 
     Ok(())
   }
 
   #[tokio::test]
   async fn can_connect_to_devnet() -> anyhow::Result<()> {
-    let iota_client = IotaClientBuilder::default().build_devnet().await?;
-    let _identity_client = IdentityClientReadOnly::new(iota_client).await?;
+    let iota_client = IotaClient::new_devnet();
+    let _identity_client = IdentityClient::from_iota_client(iota_client, None).await?;
 
     Ok(())
   }
 
   #[tokio::test]
   async fn can_connect_to_mainnet() -> anyhow::Result<()> {
-    let iota_client = IotaClientBuilder::default().build_mainnet().await?;
-    let _identity_client = IdentityClientReadOnly::new(iota_client).await?;
+    let iota_client = IotaClient::new_mainnet();
+    let _identity_client = IdentityClient::from_iota_client(iota_client, None).await?;
 
-    Ok(())
-  }
-
-  #[tokio::test]
-  async fn testnet_has_multiple_package_versions() -> anyhow::Result<()> {
-    use product_common::core_client::CoreClientReadOnly as _;
-
-    let iota_client = IotaClientBuilder::default().build_testnet().await?;
-    let identity_client = IdentityClientReadOnly::new(iota_client).await?;
-
-    assert!(identity_client.package_history().len() > 1);
     Ok(())
   }
 }

@@ -18,8 +18,6 @@ mod jwk_storage_pqc;
 mod key_id;
 mod key_storage_error;
 mod key_type;
-#[cfg(feature = "keytool")]
-mod keytool;
 #[cfg(feature = "memstore")]
 mod memstore;
 

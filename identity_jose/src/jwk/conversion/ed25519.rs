@@ -42,7 +42,7 @@ pub(crate) fn jwk_to_keypair(jwk: &Jwk) -> Result<Ed25519PrivateKey, Error> {
     .try_into()
     .map_err(|_| Error::KeyConversion(format!("expected key of length {}", Ed25519PrivateKey::LENGTH)))?;
 
-  Ed25519PrivateKey::from_bytes(&sk).map_err(|_| Error::KeyConversion("invalid key".to_string()))
+  Ed25519PrivateKey::from_bytes(sk).map_err(|_| Error::KeyConversion("invalid key".to_string()))
 }
 
 #[allow(dead_code)]

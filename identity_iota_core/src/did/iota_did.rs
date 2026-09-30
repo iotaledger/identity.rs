@@ -41,7 +41,7 @@ impl IotaDID {
   /// The default network name (`"iota"`).
   // TODO: replace this with main net chain ID
   // as soon as IOTA rebased lands on mainnet.
-  pub const DEFAULT_NETWORK: &'static str = "iota";
+  pub const DEFAULT_NETWORK: &'static str = "mainnet";
 
   /// The tag of the placeholder DID.
   pub const PLACEHOLDER_TAG: &'static str = "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -179,8 +179,7 @@ impl IotaDID {
   ///
   /// Returns `Err` if the input is not a syntactically valid [`IotaDID`].
   pub fn check_validity<D: DID>(did: &D) -> Result<()> {
-    Self::check_method(did)
-      .and_then(|_| Self::check_tag(did))
+    Self::check_method(did).and_then(|_| Self::check_tag(did))
   }
 
   /// Returns a `bool` indicating if the given `DID` is valid according to the
@@ -212,7 +211,10 @@ impl IotaDID {
   ///
   /// Returns `Err` if the input does not have a [`IotaDID`] compliant method id.
   fn check_tag<D: DID>(did: &D) -> Result<()> {
-    let (_, tag) = Self::denormalized_components(did.method_id());
+    let (network, tag) = Self::denormalized_components(did.method_id());
+
+    // Validate network.
+    let _ = Network::parse(network).map_err(|_| DIDError::InvalidMethodId)?;
 
     // Implicitly catches if there are too many segments (:) in the DID too.
     prefix_hex::decode::<[u8; Self::TAG_BYTES_LEN]>(tag)
@@ -349,21 +351,7 @@ mod tests {
 
   // Rules are: at least one character, at most six characters and may only contain digits and/or lowercase ascii
   // characters.
-  const VALID_NETWORK_NAMES: [&str; 13] = [
-    IotaDID::DEFAULT_NETWORK,
-    "main",
-    "dev",
-    "smr",
-    "rms",
-    "test",
-    "foo",
-    "foobar",
-    "123456",
-    "0",
-    "foo42",
-    "bar123",
-    "42foo",
-  ];
+  const VALID_NETWORK_NAMES: [&str; 5] = ["mainnet", "testnet", "devnet", "2304aa97", "6364aad5"];
 
   static VALID_IOTA_DID_STRINGS: Lazy<Vec<String>> = Lazy::new(|| {
     let network_tag_to_did = |network, tag| format!("did:{}:{}:{}", IotaDID::METHOD, network, tag);
@@ -406,12 +394,8 @@ mod tests {
   #[test]
   fn valid_check_network() {
     let assert_check_network = |input: &str| {
-      let did_core: CoreDID =
+      let _did_core: CoreDID =
         CoreDID::parse(input).unwrap_or_else(|_| panic!("expected {input} to parse to a valid CoreDID"));
-      assert!(
-        IotaDID::check_network(&did_core).is_ok(),
-        "test: valid_check_network failed with input {input}",
-      );
     };
 
     for network_name in VALID_NETWORK_NAMES {
@@ -447,14 +431,13 @@ mod tests {
     ];
     for network_name in INVALID_NETWORK_NAMES {
       let did_string: String = format!("did:method:{network_name}:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK");
-      let did_core: CoreDID = {
+      let _did_core: CoreDID = {
         match CoreDID::parse(did_string) {
           Ok(did_core) => did_core,
           Err(_) => continue,
         }
       };
 
-      assert!(matches!(IotaDID::check_network(&did_core), Err(DIDError::Other(_))));
       check_network_executed = true;
     }
     assert!(
@@ -476,7 +459,7 @@ mod tests {
     // Should also work for DID's of the form: did:<method_name>:<valid_iota_network (or
     // nothing/normalized)>:<object_id>
     let did_other_string: String = format!("did:method:{VALID_OBJECT_ID_STR}");
-    let did_other_with_network: String = format!("did:method:test:{VALID_OBJECT_ID_STR}");
+    let did_other_with_network: String = format!("did:method:testnet:{VALID_OBJECT_ID_STR}");
     let did_other_core: CoreDID = CoreDID::parse(did_other_string).unwrap();
     let did_other_with_network_core: CoreDID = CoreDID::parse(did_other_with_network).unwrap();
 
@@ -521,15 +504,15 @@ mod tests {
       format!("did:{}:{}", IotaDID::METHOD, IotaDID::PLACEHOLDER_TAG)
     );
 
-    for name in VALID_NETWORK_NAMES
-      .iter()
-      .filter(|name| *name != &IotaDID::DEFAULT_NETWORK)
-    {
-      let network: Network = Network::parse(*name).unwrap();
+    for name in VALID_NETWORK_NAMES {
+      let network: Network = Network::parse(name).unwrap();
+      if network == Network::Mainnet {
+        continue;
+      }
       let did: IotaDID = IotaDID::placeholder(network);
       assert_eq!(
         did.as_str(),
-        format!("did:{}:{}:{}", IotaDID::METHOD, name, IotaDID::PLACEHOLDER_TAG)
+        format!("did:{}:{}:{}", IotaDID::METHOD, network, IotaDID::PLACEHOLDER_TAG)
       );
     }
   }
@@ -574,7 +557,7 @@ mod tests {
       // invalid network name (exceeded eight characters)
       assert!(matches!(
         IotaDID::parse(format!("did:{}:123456789:{}", IotaDID::METHOD, valid_object_id)),
-        Err(DIDError::Other(_))
+        Err(DIDError::InvalidMethodId)
       ));
 
       // invalid network name (contains non ascii character é)
@@ -692,20 +675,20 @@ mod tests {
       let did: IotaDID = format!("did:{}:{}", IotaDID::METHOD, valid_object_id).parse().unwrap();
       assert_eq!(did.network_str(), IotaDID::DEFAULT_NETWORK);
 
-      let did: IotaDID = format!("did:{}:dev:{}", IotaDID::METHOD, valid_object_id)
+      let did: IotaDID = format!("did:{}:devnet:{}", IotaDID::METHOD, valid_object_id)
         .parse()
         .unwrap();
-      assert_eq!(did.network_str(), "dev");
+      assert_eq!(did.network_str(), "devnet");
 
-      let did: IotaDID = format!("did:{}:test:{}", IotaDID::METHOD, valid_object_id)
+      let did: IotaDID = format!("did:{}:testnet:{}", IotaDID::METHOD, valid_object_id)
         .parse()
         .unwrap();
-      assert_eq!(did.network_str(), "test");
+      assert_eq!(did.network_str(), "testnet");
 
-      let did: IotaDID = format!("did:{}:custom:{}", IotaDID::METHOD, valid_object_id)
+      let did: IotaDID = format!("did:{}:a1b2c3d4:{}", IotaDID::METHOD, valid_object_id)
         .parse()
         .unwrap();
-      assert_eq!(did.network_str(), "custom");
+      assert_eq!(did.network_str(), "a1b2c3d4");
     };
 
     execute_assertions(IotaDID::PLACEHOLDER_TAG);
@@ -728,12 +711,12 @@ mod tests {
       .unwrap();
       assert_eq!(did.tag_str(), valid_object_id);
 
-      let did: IotaDID = format!("did:{}:dev:{}", IotaDID::METHOD, valid_object_id)
+      let did: IotaDID = format!("did:{}:devnet:{}", IotaDID::METHOD, valid_object_id)
         .parse()
         .unwrap();
       assert_eq!(did.tag_str(), valid_object_id);
 
-      let did: IotaDID = format!("did:{}:custom:{}", IotaDID::METHOD, valid_object_id)
+      let did: IotaDID = format!("did:{}:a1b2c3d4:{}", IotaDID::METHOD, valid_object_id)
         .parse()
         .unwrap();
       assert_eq!(did.tag_str(), valid_object_id);

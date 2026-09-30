@@ -69,7 +69,9 @@ pub(crate) fn execute_borrow_impl<F>(
   let mut obj_arg_map = HashMap::new();
   for obj in objects {
     let type_ = obj.object_type().into_struct();
-    let recv_obj = ptb.apply_argument(Receiving(obj.id()));
+    // Pass a fully resolved object reference: the transaction builder resolves `Receiving<ObjectId>`
+    // inputs as owned objects instead of receiving ones.
+    let recv_obj = ptb.apply_argument(Receiving(obj.object_ref()));
     let obj_arg = ptb
       .move_call(package, "identity", "execute_borrow")
       .type_tags([type_.into()])
@@ -86,7 +88,7 @@ pub(crate) fn execute_borrow_impl<F>(
   for (obj_arg, obj_data) in obj_arg_map.into_values() {
     let obj_type = obj_data.object_type().into_struct();
     ptb
-      .move_call(package, "identity", "put_back")
+      .move_call(package, "borrow_proposal", "put_back")
       .type_tags([obj_type.into()])
       .arguments([borrow_action, obj_arg]);
   }
@@ -154,7 +156,7 @@ pub(crate) fn create_and_execute_borrow<F>(
   F: FnOnce(&mut TransactionBuilder<Client>, &HashMap<ObjectId, (Argument, Object)>),
 {
   let ProposalContext {
-    mut ptb,
+    ptb,
     capability,
     identity,
     proposal_id,
@@ -168,7 +170,7 @@ pub(crate) fn create_and_execute_borrow<F>(
   );
 
   execute_borrow_impl(
-    &mut ptb,
+    ptb,
     identity,
     capability.arg(),
     proposal_id,
@@ -178,5 +180,5 @@ pub(crate) fn create_and_execute_borrow<F>(
     client,
   );
 
-  capability.put_back(&mut ptb, package_id);
+  capability.put_back(ptb, package_id);
 }

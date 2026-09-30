@@ -3,7 +3,7 @@
 
 use crate::common::get_funded_test_client;
 use identity_iota_core::rebased::migration;
-use iota_sdk::types::base_types::ObjectId;
+use iota_sdk::types::ObjectId;
 
 #[tokio::test]
 async fn migration_registry_is_found() -> anyhow::Result<()> {

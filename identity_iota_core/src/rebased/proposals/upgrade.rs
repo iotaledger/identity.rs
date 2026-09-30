@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::iota::move_calls;
-use crate::rebased::iota::package::identity_package_id;
+
 use crate::rebased::migration::ControllerToken;
 use async_trait::async_trait;
 use iota_sdk::transaction_builder::TransactionBuilder;
@@ -74,7 +74,7 @@ impl ProposalT for Proposal<Upgrade> {
       .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
     let chained_execution = sender_vp >= identity.threshold();
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
     let mut ptb = TransactionBuilder::new(Address::ZERO).with_client(client.as_ref().clone());
 
     move_calls::identity::propose_upgrade(&mut ptb, identity.id(), controller_token, expiration, package);
@@ -102,7 +102,7 @@ impl ProposalT for Proposal<Upgrade> {
     }
 
     let proposal_id = self.id();
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
     let mut ptb = TransactionBuilder::new(Address::ZERO).with_client(client.as_ref().clone());
 
     move_calls::identity::execute_upgrade(&mut ptb, identity.id(), controller_token, proposal_id, package);

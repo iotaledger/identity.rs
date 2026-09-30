@@ -2,57 +2,44 @@
 // SPDX-License-Identifier: Apache-2.0
 use crate::common;
 use crate::common::get_funded_test_client;
-use crate::common::get_key_data;
 use crate::common::TestClient;
-use crate::common::TEST_COIN_TYPE;
-use crate::common::TEST_GAS_BUDGET;
-use identity_iota_core::rebased::client::get_object_id_from_did;
 use identity_iota_core::rebased::migration::get_identity;
-use identity_iota_core::rebased::migration::has_previous_version;
 use identity_iota_core::rebased::migration::ControllerToken;
-use identity_iota_core::rebased::migration::DelegationToken;
-use identity_iota_core::rebased::migration::Identity;
 use identity_iota_core::rebased::proposals::ProposalResult;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use identity_jose::jwk::ToJwk as _;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
-use iota_sdk::rpc_types::IotaObjectData;
-use iota_sdk::rpc_types::IotaTransactionBlockEffectsAPI;
-use iota_sdk::types::base_types::ObjectId;
-use iota_sdk::types::base_types::SequenceNumber;
-use iota_sdk::types::object::Owner;
-use iota_sdk::types::transaction::ObjectArg;
+use iota_sdk::transaction_builder::TransactionBuilder;
+use iota_sdk::types::ObjectId;
 use iota_sdk::types::TypeTag;
-use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
-use move_core_types::ident_str;
-use product_common::core_client::CoreClient;
-use product_common::core_client::CoreClientReadOnly;
-use secret_storage::Signer as _;
+use product_core::operation::Operation;
+use product_core::product_client::ProductClient as _;
+use secret_storage::iota::TransactionSigner as _;
 
 #[tokio::test]
 async fn identity_deactivation_works() -> anyhow::Result<()> {
   let test_client = get_funded_test_client().await?;
-  let identity_client = test_client.new_user_client().await?;
+  let signer = test_client.new_signer().await?;
 
-  let mut identity = identity_client
-    .create_identity(IotaDocument::new(identity_client.network()))
+  let mut identity = test_client
+    .create_identity(IotaDocument::new(test_client.network()))
     .finish()
-    .build_and_execute(&identity_client)
+    .execute(&signer, &test_client)
     .await?
     .output;
 
   let controller_token = identity
-    .get_controller_token(&identity_client)
+    .get_controller_token(signer.address(), &test_client)
     .await?
     .expect("this address is a controller");
 
   identity
     .deactivate_did(&controller_token)
-    .finish(&identity_client)
+    .finish(&test_client)
     .await?
-    .build_and_execute(&identity_client)
+    .execute(&signer, &test_client)
     .await?;
 
   assert!(identity.did_document().metadata.deactivated == Some(true));
@@ -63,13 +50,12 @@ async fn identity_deactivation_works() -> anyhow::Result<()> {
 #[tokio::test]
 async fn updating_onchain_identity_did_doc_with_single_controller_works() -> anyhow::Result<()> {
   let test_client = get_funded_test_client().await?;
-  let identity_client = test_client.new_user_client().await?;
+  let signer = test_client.new_signer().await?;
 
-  let mut newly_created_identity = identity_client
-    .create_identity(IotaDocument::new(identity_client.network()))
+  let mut newly_created_identity = test_client
+    .create_identity(IotaDocument::new(test_client.network()))
     .finish()
-    .with_gas_budget(TEST_GAS_BUDGET)
-    .build_and_execute(&identity_client)
+    .execute(&signer, &test_client)
     .await?
     .output;
 
@@ -77,26 +63,22 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
     let did = IotaDID::parse(format!("did:iota:{}", newly_created_identity.id()))?;
     let mut doc = IotaDocument::new_with_id(did.clone());
     doc.insert_method(
-      VerificationMethod::new_from_jwk(
-        did,
-        identity_client.signer().public_key().await?.to_jwk()?,
-        Some(identity_client.signer().key_id().as_str()),
-      )?,
+      VerificationMethod::new_from_jwk(did, signer.public_key().to_jwk()?, Some(signer.key_id().as_str()))?,
       MethodScope::VerificationMethod,
     )?;
     doc
   };
 
   let controller_token = newly_created_identity
-    .get_controller_token(&identity_client)
+    .get_controller_token(signer.address(), &test_client)
     .await?
     .expect("this address is a controller");
 
   newly_created_identity
     .update_did_document(updated_did_doc, &controller_token)
-    .finish(&identity_client)
+    .finish(&test_client)
     .await?
-    .build_and_execute(&identity_client)
+    .execute(&signer, &test_client)
     .await?;
 
   Ok(())
@@ -105,16 +87,16 @@ async fn updating_onchain_identity_did_doc_with_single_controller_works() -> any
 #[tokio::test]
 async fn approving_proposal_works() -> anyhow::Result<()> {
   let test_client = get_funded_test_client().await?;
-  let alice_client = test_client.new_user_client().await?;
-  let bob_client = test_client.new_user_client().await?;
+  let alice_signer = test_client.new_signer().await?;
+  let bob_signer = test_client.new_signer().await?;
 
-  let mut identity = alice_client
-    .create_identity(IotaDocument::new(alice_client.network()))
-    .controller(alice_client.sender_address(), 1)
-    .controller(bob_client.sender_address(), 1)
+  let mut identity = test_client
+    .create_identity(IotaDocument::new(test_client.network()))
+    .controller(alice_signer.address(), 1)
+    .controller(bob_signer.address(), 1)
     .threshold(2)
     .finish()
-    .build_and_execute(&alice_client)
+    .execute(&alice_signer, &test_client)
     .await?
     .output;
   let did_doc = {
@@ -123,8 +105,8 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
     doc.insert_method(
       VerificationMethod::new_from_jwk(
         did,
-        alice_client.signer().public_key().await?.to_jwk()?,
-        Some(alice_client.signer().key_id().as_str()),
+        alice_signer.public_key().to_jwk()?,
+        Some(alice_signer.key_id().as_str()),
       )?,
       MethodScope::VerificationMethod,
     )?;
@@ -132,26 +114,26 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
   };
 
   let alice_token = identity
-    .get_controller_token(&alice_client)
+    .get_controller_token(alice_signer.address(), &test_client)
     .await?
     .expect("alice is a controller");
   let ProposalResult::Pending(mut proposal) = identity
     .update_did_document(did_doc, &alice_token)
-    .finish(&alice_client)
+    .finish(&test_client)
     .await?
-    .build_and_execute(&alice_client)
+    .execute(&alice_signer, &test_client)
     .await?
     .output
   else {
     anyhow::bail!("the proposal is executed");
   };
   let bob_token = identity
-    .get_controller_token(&bob_client)
+    .get_controller_token(bob_signer.address(), &test_client)
     .await?
     .expect("bob is a controller");
   proposal
     .approve(&identity, &bob_token)?
-    .build_and_execute(&bob_client)
+    .execute(&bob_signer, &test_client)
     .await?;
 
   assert_eq!(proposal.votes(), 2);
@@ -162,32 +144,32 @@ async fn approving_proposal_works() -> anyhow::Result<()> {
 #[tokio::test]
 async fn adding_controller_works() -> anyhow::Result<()> {
   let test_client = get_funded_test_client().await?;
-  let alice_client = test_client.new_user_client().await?;
-  let bob_client = test_client.new_user_client().await?;
+  let alice_signer = test_client.new_signer().await?;
+  let bob_signer = test_client.new_signer().await?;
 
-  let mut identity = alice_client
-    .create_identity(IotaDocument::new(alice_client.network()))
+  let mut identity = test_client
+    .create_identity(IotaDocument::new(test_client.network()))
     .finish()
-    .build_and_execute(&alice_client)
+    .execute(&alice_signer, &test_client)
     .await?
     .output;
 
   let alice_token = identity
-    .get_controller_token(&alice_client)
+    .get_controller_token(alice_signer.address(), &test_client)
     .await?
     .expect("alice is a controller");
   // Alice proposes to add Bob as a controller. Since Alice has enough voting power the proposal
   // is executed directly after creation.
   identity
     .update_config(&alice_token)
-    .add_controller(bob_client.sender_address(), 1)
-    .finish(&alice_client)
+    .add_controller(bob_signer.address(), 1)
+    .finish(&test_client)
     .await?
-    .build_and_execute(&alice_client)
+    .execute(&alice_signer, &test_client)
     .await?;
 
   let _bob_token = identity
-    .get_controller_token(&bob_client)
+    .get_controller_token(bob_signer.address(), &test_client)
     .await?
     .expect("bob is a controller");
 
@@ -195,150 +177,59 @@ async fn adding_controller_works() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn can_get_historical_identity_data() -> anyhow::Result<()> {
-  let test_client = get_funded_test_client().await?;
-  let identity_client = test_client.new_user_client().await?;
-
-  let mut newly_created_identity = identity_client
-    .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
-    .with_gas_budget(TEST_GAS_BUDGET)
-    .build_and_execute(&identity_client)
-    .await?
-    .output;
-
-  let did = IotaDID::parse(format!("did:iota:{}", newly_created_identity.id()))?;
-  let updated_did_doc = {
-    let mut doc = IotaDocument::new_with_id(did.clone());
-    let (_, key_id, public_key_jwk, _) = get_key_data().await?;
-    doc.insert_method(
-      VerificationMethod::new_from_jwk(did.clone(), public_key_jwk, Some(key_id.as_str()))?,
-      MethodScope::VerificationMethod,
-    )?;
-    doc
-  };
-
-  let token = newly_created_identity
-    .get_controller_token(&identity_client)
-    .await?
-    .expect("is a controller");
-  newly_created_identity
-    .update_did_document(updated_did_doc, &token)
-    .finish(&identity_client)
-    .await?
-    .with_gas_budget(TEST_GAS_BUDGET)
-    .build_and_execute(&identity_client)
-    .await?;
-
-  let Identity::FullFledged(updated_identity) = identity_client.get_identity(get_object_id_from_did(&did)?).await?
-  else {
-    anyhow::bail!("resolved identity should be an onchain identity");
-  };
-
-  let history = updated_identity.get_history(&identity_client, None, None).await?;
-
-  // test check for previous version
-  let has_previous_version_responses: Vec<bool> = history
-    .iter()
-    .map(has_previous_version)
-    .collect::<Result<Vec<bool>, identity_iota_core::rebased::Error>>()?;
-  assert_eq!(has_previous_version_responses, vec![true, false]);
-
-  let versions: Vec<SequenceNumber> = history.iter().map(|elem| elem.version).collect();
-  let version_numbers: Vec<usize> = versions.iter().map(|v| (*v).into()).collect();
-
-  // Check that we have 2 versions (original and updated)
-  assert_eq!(version_numbers.len(), 2);
-  // Check that versions are in descending order (newest to oldest)
-  assert!(
-    version_numbers[0] > version_numbers[1],
-    "versions should be in descending order"
-  );
-
-  // paging:
-  //   you can either loop until no result is returned
-  let mut result_index = 0;
-  let mut current_item: Option<&IotaObjectData> = None;
-  let mut history: Vec<IotaObjectData>;
-  loop {
-    history = updated_identity
-      .get_history(&identity_client, current_item, Some(1))
-      .await?;
-    if history.is_empty() {
-      break;
-    }
-    current_item = history.first();
-    assert_eq!(current_item.unwrap().version, *versions.get(result_index).unwrap());
-    result_index += 1;
-  }
-
-  //   or check before fetching next page
-  let mut result_index = 0;
-  let mut current_item: Option<&IotaObjectData> = None;
-  let mut history: Vec<IotaObjectData>;
-  loop {
-    history = updated_identity
-      .get_history(&identity_client, current_item, Some(1))
-      .await?;
-
-    current_item = history.first();
-    assert_eq!(current_item.unwrap().version, *versions.get(result_index).unwrap());
-    result_index += 1;
-
-    if !has_previous_version(current_item.unwrap())? {
-      break;
-    }
-  }
-
-  Ok(())
-}
-
-#[tokio::test]
 async fn send_proposal_works() -> anyhow::Result<()> {
   let test_client = get_funded_test_client().await?;
-  let identity_client = test_client.new_user_client().await?;
+  let signer = test_client.new_signer().await?;
 
-  let mut identity = identity_client
-    .create_identity(IotaDocument::new(identity_client.network()))
+  let mut identity = test_client
+    .create_identity(IotaDocument::new(test_client.network()))
     .finish()
-    .with_gas_budget(TEST_GAS_BUDGET)
-    .build_and_execute(&identity_client)
+    .execute(&signer, &test_client)
     .await?
     .output;
   let identity_address = identity.id().into();
   let token = identity
-    .get_controller_token(&identity_client)
+    .get_controller_token(signer.address(), &test_client)
     .await?
     .expect("is a controller");
 
   // Let's give the identity 2 coins in order to have something to move.
-  let coin1 = common::get_test_coin(identity_address, &identity_client).await?;
-  let coin2 = common::get_test_coin(identity_address, &identity_client).await?;
+  let coin1 = common::get_test_coin(identity_address, &signer, &test_client).await?;
+  let coin2 = common::get_test_coin(identity_address, &signer, &test_client).await?;
 
-  // Let's propose the send of those two coins to the identity_client's address.
+  // Let's propose the send of those two coins to the signer's address.
   let ProposalResult::Executed(_) = identity
     .send_assets(&token)
-    .object(coin1, identity_client.sender_address())
-    .object(coin2, identity_client.sender_address())
-    .finish(&identity_client)
+    .object(coin1, signer.address())
+    .object(coin2, signer.address())
+    .finish(&test_client)
     .await?
-    .build_and_execute(&identity_client)
+    .execute(&signer, &test_client)
     .await?
     .output
   else {
     panic!("the controller has enough voting power and the proposal should have been executed");
   };
 
-  // Assert that identity_client's address now owns those coins.
-  identity_client
-    .find_owned_ref(TEST_COIN_TYPE.clone(), |obj| obj.object_id == coin1)
-    .await?
-    .expect("coin1 was transfered to this address");
-
-  identity_client
-    .find_owned_ref(TEST_COIN_TYPE.clone(), |obj| obj.object_id == coin2)
-    .await?
-    .expect("coin2 was transfered to this address");
+  // Assert that signer's address now owns those coins.
+  assert!(
+    test_client
+      .object(coin1, None)
+      .await?
+      .expect("coin1 was transfered to this address")
+      .owner
+      .as_address()
+      == &signer.address()
+  );
+  assert!(
+    test_client
+      .object(coin2, None)
+      .await?
+      .expect("coin2 was transfered to this address")
+      .owner
+      .as_address()
+      == &signer.address()
+  );
 
   Ok(())
 }
@@ -346,41 +237,38 @@ async fn send_proposal_works() -> anyhow::Result<()> {
 #[tokio::test]
 async fn borrow_proposal_works() -> anyhow::Result<()> {
   let test_client = get_funded_test_client().await?;
-  let identity_client = test_client.new_user_client().await?;
+  let signer = test_client.new_signer().await?;
 
-  let mut identity = identity_client
-    .create_identity(IotaDocument::new(identity_client.network()))
+  let mut identity = test_client
+    .create_identity(IotaDocument::new(test_client.network()))
     .finish()
-    .build_and_execute(&identity_client)
+    .execute(&signer, &test_client)
     .await?
     .output;
   let identity_address = identity.id().into();
 
   let token = identity
-    .get_controller_token(&identity_client)
+    .get_controller_token(signer.address(), &test_client)
     .await?
     .expect("is a controller");
 
-  let coin1 = common::get_test_coin(identity_address, &identity_client).await?;
-  let coin2 = common::get_test_coin(identity_address, &identity_client).await?;
+  let coin1 = common::get_test_coin(identity_address, &signer, &test_client).await?;
+  let coin2 = common::get_test_coin(identity_address, &signer, &test_client).await?;
 
-  // Let's propose the borrow of those two coins to the identity_client's address.
+  // Let's propose the borrow of those two coins to the signer's address.
   let ProposalResult::Executed(_) = identity
     .borrow_assets(&token)
     .borrow(coin1)
     .borrow(coin2)
     .with_intent(move |ptb, objs| {
-      ptb.programmable_move_call(
-        IOTA_FRAMEWORK_PACKAGE_ID,
-        ident_str!("coin").into(),
-        ident_str!("value").into(),
-        vec![TypeTag::Bool],
-        vec![objs.get(&coin1).expect("coin1 data is borrowed").0],
-      );
+      ptb
+        .move_call(ObjectId::FRAMEWORK, "coin", "value")
+        .type_tags([TypeTag::Bool])
+        .arguments([objs.get(&coin1).unwrap().0]);
     })
-    .finish(&identity_client)
+    .finish(&test_client)
     .await?
-    .build_and_execute(&identity_client)
+    .execute(&signer, &test_client)
     .await?
     .output
   else {
@@ -390,99 +278,27 @@ async fn borrow_proposal_works() -> anyhow::Result<()> {
   Ok(())
 }
 
-#[allow(deprecated)]
-#[tokio::test]
-async fn controller_execution_works() -> anyhow::Result<()> {
-  let test_client = get_funded_test_client().await?;
-  let identity_client = test_client.new_user_client().await?;
-
-  let mut identity = identity_client
-    .create_identity(IotaDocument::new(identity_client.network()))
-    .finish()
-    .build_and_execute(&identity_client)
-    .await?
-    .output;
-  let identity_address = identity.id().into();
-
-  // Create a second identity owned by the first.
-  let identity2 = identity_client
-    .create_identity(IotaDocument::new(identity_client.network()))
-    .controller(identity_address, 1)
-    .threshold(1)
-    .finish()
-    .build_and_execute(&identity_client)
-    .await?
-    .output;
-
-  // Let's find identity's controller cap for identity2.
-  let controller_cap = identity_client
-    .find_owned_ref_for_address(
-      identity_address,
-      format!("{}::controller::ControllerCap", identity_client.package_id()).parse()?,
-      |_| true,
-    )
-    .await?
-    .expect("identity is a controller of identity2");
-
-  let identity2_ref = identity_client.get_object_ref_by_id(identity2.id()).await?.unwrap();
-  let Owner::Shared { initial_shared_version } = identity2_ref.owner else {
-    panic!("identity2 is shared")
-  };
-
-  let token = identity
-    .get_controller_token(&identity_client)
-    .await?
-    .expect("is a controller");
-  // Perform an action on `identity2` as a controller of `identity`.
-  let result = identity
-    .controller_execution(controller_cap.0, &token)
-    .with_intent(|ptb, controller_cap| {
-      let identity2 = ptb
-        .obj(ObjectArg::SharedObject {
-          id: identity2_ref.object_id(),
-          initial_shared_version,
-          mutable: true,
-        })
-        .unwrap();
-
-      let token_to_revoke = ptb.pure(ObjectId::ZERO).unwrap();
-
-      ptb.programmable_move_call(
-        identity_client.package_id(),
-        ident_str!("identity").into(),
-        ident_str!("revoke_token").into(),
-        vec![],
-        vec![identity2, *controller_cap, token_to_revoke],
-      );
-    })
-    .finish(&identity_client)
-    .await?
-    .build_and_execute(&identity_client)
-    .await?;
-
-  assert!(result.response.status_ok().unwrap());
-  assert!(matches!(result.output, ProposalResult::Executed(_)));
-
-  Ok(())
-}
-
 #[tokio::test]
 async fn identity_delete_did_works() -> anyhow::Result<()> {
   let client = get_funded_test_client().await?;
+  let signer = client.new_signer().await?;
   let mut identity = client
     .create_identity(IotaDocument::new(client.network()))
     .finish()
-    .build_and_execute(&client)
+    .execute(&signer, &client)
     .await?
     .output;
   let did = identity.did_document().id().clone();
-  let controller_token = identity.get_controller_token(&client).await?.expect("is a controller");
+  let controller_token = identity
+    .get_controller_token(signer.address(), &client)
+    .await?
+    .expect("is a controller");
 
   let ProposalResult::Executed(_) = identity
     .delete_did(&controller_token)
     .finish(&client)
     .await?
-    .build_and_execute(&client)
+    .execute(&signer, &client)
     .await?
     .output
   else {
@@ -509,27 +325,27 @@ async fn identity_delete_did_works() -> anyhow::Result<()> {
 #[tokio::test]
 async fn controller_delegation_works() -> anyhow::Result<()> {
   let test_client = TestClient::new().await?;
-  let alice_client = test_client.new_user_client().await?;
-  let bob_client = test_client.new_user_client().await?;
+  let alice_signer = test_client.new_signer().await?;
+  let bob_signer = test_client.new_signer().await?;
 
   // We create an identity with two controllers, one can delegate the other cannot.
-  let mut identity = alice_client
+  let mut identity = test_client
     .create_identity(IotaDocument::new(test_client.network()))
-    .controller(alice_client.sender_address(), 1)
-    .controller_with_delegation(bob_client.sender_address(), 1)
+    .controller(alice_signer.address(), 1)
+    .controller_with_delegation(bob_signer.address(), 1)
     .threshold(2)
     .finish()
-    .build_and_execute(&alice_client)
+    .execute(&alice_signer, &test_client)
     .await?
     .output;
 
   let alice_token = identity
-    .get_controller_token(&alice_client)
+    .get_controller_token(alice_signer.address(), &test_client)
     .await?
     .expect("alice is a controller");
   assert!(!alice_token.as_controller().unwrap().can_delegate());
   let bob_token = identity
-    .get_controller_token(&bob_client)
+    .get_controller_token(bob_signer.address(), &test_client)
     .await?
     .expect("bob is a controller");
   assert!(bob_token.as_controller().unwrap().can_delegate());
@@ -538,9 +354,9 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
   let bobs_delegation_token = bob_token
     .as_controller()
     .expect("bob's token is a controller cap")
-    .delegate(alice_client.sender_address(), None)
+    .delegate(alice_signer.address(), None)
     .expect("bob can delegate its token")
-    .build_and_execute(&bob_client)
+    .execute(&bob_signer, &test_client)
     .await?
     .output;
   assert!(
@@ -548,25 +364,22 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
   );
   // Ensure Alice is the owner of bob's delegation token.
   let delegation_token_owner = test_client
-    .get_object_ref_by_id(bobs_delegation_token.id())
+    .object(bobs_delegation_token.id(), None)
     .await?
     .expect("delegation token exists")
     .owner;
-  assert_eq!(
-    delegation_token_owner.get_owner_address()?,
-    alice_client.sender_address()
-  );
+  assert_eq!(*delegation_token_owner.as_address(), alice_signer.address());
 
   // Alice can interact with the Identity in Bob's stead.
   let bobs_delegation_token = ControllerToken::Delegate(bobs_delegation_token);
-  let res = identity
+  let effects = identity
     .update_did_document(IotaDocument::new(test_client.network()), &bobs_delegation_token)
-    .finish(&alice_client)
+    .finish(&test_client)
     .await?
-    .build_and_execute(&alice_client)
+    .execute(&alice_signer, &test_client)
     .await?
-    .response;
-  assert!(res.effects.unwrap().status().is_ok());
+    .effects;
+  assert!(effects.as_v1().status.is_success());
 
   // Bob can revoke its delegation token anytime.
   identity
@@ -574,15 +387,15 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
       bob_token.as_controller().expect("bob is a controller"),
       bobs_delegation_token.as_delegate().expect("is a delegation token"),
     )?
-    .build_and_execute(&bob_client)
+    .execute(&bob_signer, &test_client)
     .await?;
 
   // Once revoked whoever is holding it won't be able to act in bob's stead.
   let res = identity
     .update_did_document(IotaDocument::new(test_client.network()), &bobs_delegation_token)
-    .finish(&alice_client)
+    .finish(&test_client)
     .await?
-    .build_and_execute(&alice_client)
+    .execute(&alice_signer, &test_client)
     .await;
   assert!(res.is_err());
 
@@ -592,15 +405,15 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
       bob_token.as_controller().expect("bob is a controller"),
       bobs_delegation_token.as_delegate().expect("is a delegation token"),
     )?
-    .build_and_execute(&bob_client)
+    .execute(&bob_signer, &test_client)
     .await?;
 
   // Making the token valid again.
   let res = identity
     .update_did_document(IotaDocument::new(test_client.network()), &bobs_delegation_token)
-    .finish(&alice_client)
+    .finish(&test_client)
     .await?
-    .build_and_execute(&alice_client)
+    .execute(&alice_signer, &test_client)
     .await?
     .output;
   assert!(matches!(res, ProposalResult::Pending(_)));
@@ -609,35 +422,37 @@ async fn controller_delegation_works() -> anyhow::Result<()> {
   let bobs_delegation_token_id = bobs_delegation_token.id();
   identity
     .delete_delegation_token(bobs_delegation_token.try_delegate().unwrap())?
-    .build_and_execute(&alice_client)
+    .execute(&alice_signer, &test_client)
     .await?;
 
-  let maybe_obj = alice_client
-    .get_object_by_id::<DelegationToken>(bobs_delegation_token_id)
-    .await;
-  assert!(maybe_obj.is_err());
+  let maybe_obj = test_client.object(bobs_delegation_token_id, None).await?;
+  assert!(maybe_obj.is_none());
 
   Ok(())
 }
 
 #[tokio::test]
 async fn access_sub_identity_works() -> anyhow::Result<()> {
-  let client = TestClient::new().await?;
+  let client = get_funded_test_client().await?;
+  let signer = client.new_signer().await?;
   let network = client.network();
   let mut identity = client
     .create_identity(IotaDocument::new(network))
     .finish()
-    .build_and_execute(&client)
+    .execute(&signer, &client)
     .await?
     .output;
   let mut sub_identity = client
     .create_identity(IotaDocument::new(network))
     .controller(identity.id().into(), 1)
     .finish()
-    .build_and_execute(&client)
+    .execute(&signer, &client)
     .await?
     .output;
-  let controller_token = identity.get_controller_token(&client).await?.expect("is a controller");
+  let controller_token = identity
+    .get_controller_token(signer.address(), &client)
+    .await?
+    .expect("is a controller");
   let client_ref = &client;
 
   identity
@@ -645,7 +460,7 @@ async fn access_sub_identity_works() -> anyhow::Result<()> {
     .to_perform(|sub_identity, token| async move { sub_identity.deactivate_did(&token).finish(client_ref).await })
     .finish(&client)
     .await?
-    .build_and_execute(&client)
+    .execute(&signer, &client)
     .await?;
 
   assert!(sub_identity.did_document().metadata.deactivated == Some(true));

@@ -810,12 +810,12 @@ mod tests {
     const JSON_DOC_INVALID_CONTROLLER_ID: &str = r#"
     {
     "doc": {
-      "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
-      "controller": "did:example:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
+      "id": "did:iota:testnet:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+      "controller": "did:example:testnet:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
       "verificationMethod": [
         {
-          "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38#key-2",
-          "controller": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+          "id": "did:iota:testnet:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38#key-2",
+          "controller": "did:iota:testnet:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
           "type": "Ed25519VerificationKey2018",
           "publicKeyMultibase": "z7eTUXFdLCFg1LFVFhG8qUAM2aSjfTuPLB2x9XGXgQh6G"
         }
@@ -835,12 +835,12 @@ mod tests {
     const JSON_DOC_CORRECT_CONTROLLER_ID: &str = r#"
   {
   "doc": {
-    "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
-    "controller": "did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
+    "id": "did:iota:testnet:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+    "controller": "did:iota:testnet:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
     "verificationMethod": [
       {
-        "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38#key-2",
-        "controller": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+        "id": "did:iota:testnet:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38#key-2",
+        "controller": "did:iota:testnet:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
         "type": "Ed25519VerificationKey2018",
         "publicKeyMultibase": "z7eTUXFdLCFg1LFVFhG8qUAM2aSjfTuPLB2x9XGXgQh6G"
       }
@@ -879,8 +879,8 @@ mod tests {
     const DOC_JSON: &str = r#"
   {
     "doc": {
-      "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
-      "controller": "did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343"
+      "id": "did:iota:testnet:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+      "controller": "did:iota:testnet:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343"
     },
     "meta": {
       "created": "2023-01-25T15:48:09Z",
@@ -890,7 +890,7 @@ mod tests {
   "#;
     let doc = IotaDocument::from_json(DOC_JSON).unwrap();
     let expected_controller =
-      IotaDID::parse("did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343").unwrap();
+      IotaDID::parse("did:iota:testnet:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343").unwrap();
     let controllers: Vec<&IotaDID> = doc.controller().collect();
     assert_eq!(&controllers, &[&expected_controller]);
   }
@@ -913,12 +913,12 @@ mod tests {
 
     const DOC_JSON_NOT_IOTA_DOCUMENT_BECAUSE_OF_CONTROLLER: &str = r#"
     {
-      "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
-      "controller": "did:example:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
+      "id": "did:iota:testnet:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+      "controller": "did:example:testnet:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
       "verificationMethod": [
         {
-          "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38#key-2",
-          "controller": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+          "id": "did:iota:testnet:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38#key-2",
+          "controller": "did:iota:testnet:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
           "type": "Ed25519VerificationKey2018",
           "publicKeyMultibase": "z7eTUXFdLCFg1LFVFhG8qUAM2aSjfTuPLB2x9XGXgQh6G"
         }
@@ -935,8 +935,8 @@ mod tests {
 
     const DOCUMENT_WITH_IOTA_ID_AND_CONTROLLER_JSON: &str = r#"
     {
-      "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
-      "controller": "did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
+      "id": "did:iota:testnet:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+      "controller": "did:iota:testnet:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
       "verificationMethod": [
         {
           "id": "did:foo:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",

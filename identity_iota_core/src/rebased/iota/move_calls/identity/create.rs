@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use iota_sdk::graphql_client::Client;
-use iota_sdk::transaction_builder::Shared;
 use iota_sdk::transaction_builder::unresolved::Argument;
+use iota_sdk::transaction_builder::Shared;
 use iota_sdk::transaction_builder::TransactionBuilder;
 use iota_sdk::types::Address;
 use iota_sdk::types::ObjectId;

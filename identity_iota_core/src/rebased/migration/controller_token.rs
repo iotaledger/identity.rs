@@ -2,15 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::OnChainIdentity;
-
-use crate::IotaDID;
-
 use crate::rebased::client::IdentityClient;
-use crate::rebased::iota::package::identity_package_id;
 use crate::rebased::Error;
+use crate::IotaDID;
 use futures::StreamExt;
 use iota_sdk::graphql_client::query_types::ObjectFilter;
 use iota_sdk::graphql_client::Client as IotaClient;
+use iota_sdk::transaction_builder::SharedMut;
 use iota_sdk::transaction_builder::TransactionBuilder;
 use iota_sdk::types::Address;
 use iota_sdk::types::ExecutionStatus;
@@ -19,7 +17,6 @@ use iota_sdk::types::StructTag;
 use iota_sdk::types::TransactionEffects;
 use iota_sdk::types::TypeTag;
 use itertools::Itertools as _;
-use product_core::move_type::deserialize_object_id_from_uid;
 use product_core::move_type::MoveType;
 use product_core::operation::Operation;
 use product_core::operation::OperationBuilder;
@@ -130,7 +127,6 @@ impl ControllerToken {
 /// A token that authenticates its bearer as a controller of a specific shared object.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ControllerCap {
-  #[serde(deserialize_with = "deserialize_object_id_from_uid")]
   id: ObjectId,
   controller_of: ObjectId,
   can_delegate: bool,
@@ -192,7 +188,6 @@ impl From<ControllerCap> for ControllerToken {
 /// its stead - with full or reduced permissions.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DelegationToken {
-  #[serde(deserialize_with = "deserialize_object_id_from_uid")]
   id: ObjectId,
   permissions: DelegatePermissions,
   controller: ObjectId,
@@ -230,7 +225,7 @@ impl From<DelegationToken> for ControllerToken {
 
 impl MoveType for DelegationToken {
   fn move_type(client: &impl ProductClient) -> TypeTag {
-    let mut tag = StructTag::new(client.package_id(), "controller", "ControllerCap", vec![]).into();
+    let mut tag = StructTag::new(client.package_id(), "controller", "DelegationToken", vec![]).into();
     client.type_origin_table().canonicalize_type(&mut tag);
     tag
   }
@@ -377,7 +372,7 @@ impl Operation for DelegateToken {
     client: &IdentityClient,
     mut ptb: TransactionBuilder<IotaClient>,
   ) -> Result<TransactionBuilder<IotaClient>, Self::Error> {
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
 
     let cap = ptb.apply_argument(self.cap_id);
     let permissions = ptb.pure::<u32>(self.permissions.into());
@@ -508,10 +503,10 @@ impl Operation for DelegationTokenRevocation {
     client: &IdentityClient,
     mut ptb: TransactionBuilder<IotaClient>,
   ) -> Result<TransactionBuilder<IotaClient>, Self::Error> {
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
 
     let cap = ptb.apply_argument(self.controller_cap_id);
-    let identity = ptb.apply_argument(self.identity_id);
+    let identity = ptb.apply_argument(SharedMut(self.identity_id));
     let delegation_token_id = ptb.pure(self.delegation_token_id);
 
     let fn_name = if self.is_revocation() {
@@ -580,9 +575,9 @@ impl Operation for DeleteDelegationToken {
     client: &IdentityClient,
     mut ptb: TransactionBuilder<IotaClient>,
   ) -> Result<TransactionBuilder<IotaClient>, Self::Error> {
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
 
-    let identity = ptb.apply_argument(self.identity_id);
+    let identity = ptb.apply_argument(SharedMut(self.identity_id));
     let delegation_token = ptb.apply_argument(self.delegation_token_id);
 
     ptb

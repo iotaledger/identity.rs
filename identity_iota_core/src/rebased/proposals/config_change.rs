@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::rebased::client::IdentityClient;
-use crate::rebased::iota::package::identity_package_id;
 
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -57,7 +56,7 @@ impl MoveType for ConfigChange {
     let mut tag = format!("{package}::config_proposal::Modify")
       .parse()
       .expect("valid TypeTag");
-    
+
     client.type_origin_table().canonicalize_type(&mut tag);
     tag
   }
@@ -248,7 +247,7 @@ impl ProposalT for Proposal<ConfigChange> {
       )));
     }
 
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
     let sender_vp = identity
       .controller_voting_power(controller_token.controller_id())
       .expect("controller exists");
@@ -289,7 +288,7 @@ impl ProposalT for Proposal<ConfigChange> {
     }
 
     let proposal_id = self.id();
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
     let mut ptb = TransactionBuilder::new(Address::ZERO).with_client(client.as_ref().clone());
 
     move_calls::identity::execute_config_change(&mut ptb, identity.id(), controller_token, proposal_id, package);

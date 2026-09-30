@@ -6,7 +6,6 @@ use std::str::FromStr as _;
 use identity_core::common::Url;
 use identity_did::DID as _;
 use iota_sdk::graphql_client::Client;
-use iota_sdk::move_types::iota_framework::object::UID;
 use iota_sdk::transaction_builder::TransactionBuilder;
 use iota_sdk::types::Address;
 use iota_sdk::types::ObjectId;
@@ -21,7 +20,6 @@ use serde::Serialize;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::iota::move_calls;
-use crate::rebased::iota::package::identity_package_id;
 use crate::rebased::migration::get_identity;
 use crate::rebased::Error;
 use crate::IotaDID;
@@ -35,7 +33,7 @@ use super::OnChainIdentity;
 pub struct UnmigratedAlias {
   /// The ID of the Alias = hash of the Output ID that created the Alias Output in Stardust.
   /// This is the AliasID from Stardust.
-  pub id: UID,
+  pub id: ObjectId,
 
   /// The last State Controller address assigned before the migration.
   pub legacy_state_controller: Option<Address>,
@@ -92,7 +90,7 @@ impl MigrateLegacyIdentity {
     };
     // Get the ID of the `AliasOutput` that owns this `Alias`.
     let dynamic_field_wrapper = client
-      .object(*alias.id.object_id(), None)
+      .object(alias.id, None)
       .await
       .map_err(|e| Error::RpcError(e.to_string()))?
       .expect("alias exists")
@@ -117,7 +115,7 @@ impl MigrateLegacyIdentity {
       // `to_unix` returns the seconds since EPOCH; we need milliseconds.
       .map(|timestamp| timestamp.to_unix() as u64 * 1000);
 
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
 
     // Build migration tx.
     move_calls::migration::migrate_did_output(ptb, alias_output, created, migration_registry, package);
@@ -149,9 +147,7 @@ impl Operation for MigrateLegacyIdentity {
       return Err(tx_error.clone().into());
     }
 
-    let legacy_did: Url = IotaDID::from_object_id(*self.alias.id.object_id(), client.network())
-      .to_url()
-      .into();
+    let legacy_did: Url = IotaDID::from_object_id(self.alias.id, client.network()).to_url().into();
     let is_target_identity =
       |identity: &OnChainIdentity| -> bool { identity.did_document().also_known_as().contains(&legacy_did) };
 

@@ -5,18 +5,18 @@ use crate::key_storage::JwkStorage;
 use crate::key_storage::KeyId;
 use crate::key_storage::KeyStorageErrorKind;
 use crate::key_storage::KeyType;
-use fastcrypto::ed25519::Ed25519KeyPair;
-use fastcrypto::ed25519::Ed25519PublicKey;
-use fastcrypto::ed25519::Ed25519Signature;
-use fastcrypto::traits::KeyPair;
-use fastcrypto::traits::ToFromBytes as _;
-use fastcrypto::traits::VerifyingKey as _;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jwk::EcCurve;
 use identity_verification::jwk::FromJwk;
 use identity_verification::jwk::JwkParamsEc;
 use identity_verification::jwk::ToJwk as _;
 use identity_verification::jws::JwsAlgorithm;
+use iota_sdk::crypto::Verifier;
+use iota_sdk::crypto::ed25519::Ed25519PrivateKey;
+use iota_sdk::crypto::ed25519::Ed25519Verifier;
+use iota_sdk::types::Ed25519PublicKey;
+use iota_sdk::types::Ed25519Signature;
+use iota_sdk::types::SimpleSignature;
 
 pub(crate) async fn test_insertion(store: impl JwkStorage) {
   let key_pair = generate_ed25519();
@@ -66,9 +66,9 @@ pub(crate) async fn test_generate_and_sign(store: impl JwkStorage) {
 
   let signature = store.sign(&generate.key_id, test_msg, &generate.jwk).await.unwrap();
 
-  let signature = Ed25519Signature::from_bytes(&signature).unwrap();
   let public_key = Ed25519PublicKey::from_jwk(&generate.jwk).unwrap();
-  assert!(public_key.verify(test_msg, &signature).is_ok());
+  let signature = SimpleSignature::new_ed25519(Ed25519Signature::from_bytes(&signature).unwrap(), public_key);
+  assert!(Ed25519Verifier::new().verify(test_msg, &signature).is_ok());
 
   let key_id: KeyId = generate.key_id;
   assert!(store.exists(&key_id).await.unwrap());
@@ -79,6 +79,6 @@ pub(crate) async fn test_key_exists(store: impl JwkStorage) {
   assert!(!store.exists(&KeyId::new("non-existent-id")).await.unwrap());
 }
 
-pub(crate) fn generate_ed25519() -> Ed25519KeyPair {
-  Ed25519KeyPair::generate(&mut rand::thread_rng())
+pub(crate) fn generate_ed25519() -> Ed25519PrivateKey {
+  Ed25519PrivateKey::random()
 }

@@ -4,7 +4,7 @@
 use std::marker::PhantomData;
 
 use crate::rebased::client::IdentityClient;
-use crate::rebased::iota::package::identity_package_id;
+
 use async_trait::async_trait;
 use iota_sdk::transaction_builder::TransactionBuilder;
 use iota_sdk::types::Address;
@@ -105,15 +105,15 @@ impl ProposalT for Proposal<SendAction> {
         identity.id()
       )));
     }
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
     let can_execute = identity
       .controller_voting_power(controller_token.controller_id())
       .expect("controller_cap is for this identity")
       >= identity.threshold();
     let mut ptb = TransactionBuilder::new(Address::ZERO).with_client(client.as_ref().clone());
     if can_execute {
-      // Construct a list of `(ObjectId, TypeTag)` from the list of objects to send.
-      let object_type_list = super::object_type_for_ids(client, action.0.iter().map(|(id, _)| *id)).await?;
+      // Construct a list of `(ObjectReference, TypeTag)` from the list of objects to send.
+      let object_type_list = super::object_ref_and_type_for_ids(client, action.0.iter().map(|(id, _)| *id)).await?;
       move_calls::identity::create_and_execute_send(
         &mut ptb,
         identity.id(),
@@ -125,14 +125,7 @@ impl ProposalT for Proposal<SendAction> {
         client,
       )
     } else {
-      move_calls::identity::propose_send(
-        &mut ptb,
-        identity.id(),
-        controller_token,
-        action.0,
-        expiration,
-        package,
-      )
+      move_calls::identity::propose_send(&mut ptb, identity.id(), controller_token, action.0, expiration, package)
     }
 
     Ok(OperationBuilder::new(CreateProposal {
@@ -162,7 +155,7 @@ impl ProposalT for Proposal<SendAction> {
 
     // Construct a list of `(ObjectRef, TypeTag)` from the list of objects to send.
     let object_type_list =
-      super::object_type_for_ids(client, self.into_action().0.into_iter().map(|(id, _)| id)).await?;
+      super::object_ref_and_type_for_ids(client, self.into_action().0.into_iter().map(|(id, _)| id)).await?;
     let package = client.package_id();
 
     move_calls::identity::execute_send(

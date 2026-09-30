@@ -8,10 +8,8 @@ use std::error::Error as StdError;
 use crate::rebased::client::IdentityClient;
 use crate::rebased::iota::move_calls;
 
-use crate::rebased::iota::package::identity_package_id;
 use crate::rebased::proposals::AccessSubIdentityBuilder;
 use iota_sdk::graphql_client::Client;
-use iota_sdk::move_types::iota_framework::object::UID;
 use iota_sdk::transaction_builder::TransactionBuilder;
 use iota_sdk::types::Address;
 use iota_sdk::types::ObjectId;
@@ -52,7 +50,7 @@ use super::UnmigratedAlias;
 
 /// The data stored in an on-chain identity.
 pub(crate) struct IdentityData {
-  pub(crate) id: UID,
+  pub(crate) id: ObjectId,
   pub(crate) multicontroller: Multicontroller<Option<Vec<u8>>>,
   pub(crate) legacy_id: Option<ObjectId>,
   pub(crate) created: Timestamp,
@@ -80,7 +78,7 @@ impl Identity {
         let state_metadata = alias.state_metadata.as_deref().ok_or_else(|| {
           Error::DidDocParsingFailed("legacy stardust alias doesn't contain a DID Document".to_string())
         })?;
-        let did = IotaDID::from_object_id(*alias.id.object_id(), network);
+        let did = IotaDID::from_object_id(alias.id, network);
         StateMetadataDocument::unpack(state_metadata)
           .and_then(|state_metadata_doc| state_metadata_doc.into_iota_document(&did))
           .map_err(|e| Error::DidDocParsingFailed(e.to_string()))
@@ -92,7 +90,7 @@ impl Identity {
 /// An on-chain entity that wraps an optional DID Document.
 #[derive(Debug, Clone, Serialize)]
 pub struct OnChainIdentity {
-  id: UID,
+  id: ObjectId,
   multi_controller: Multicontroller<Option<Vec<u8>>>,
   pub(crate) did_doc: IotaDocument,
   version: u64,
@@ -103,7 +101,7 @@ pub struct OnChainIdentity {
 impl OnChainIdentity {
   /// Returns the [`ObjectId`] of this [`OnChainIdentity`].
   pub fn id(&self) -> ObjectId {
-    *self.id.object_id()
+    self.id
   }
 
   /// Returns the [`IotaDocument`] contained in this [`OnChainIdentity`].
@@ -152,7 +150,7 @@ impl OnChainIdentity {
   /// Returns a [ControllerToken] owned by `address` that grants access to this Identity.
   /// ## Notes
   /// [None] is returned if `address` doesn't own a valid [ControllerToken].
-  pub async fn get_controller_token_for_address(
+  pub async fn get_controller_token(
     &self,
     address: Address,
     client: &impl ProductClient,
@@ -171,17 +169,6 @@ impl OnChainIdentity {
       .await
       .map(|maybe_delegate| maybe_delegate.map(ControllerToken::from))
       .map_err(|e| Error::RpcError(format!("{e:#}")))
-  }
-
-  /// Returns a [ControllerToken], owned by `client`'s sender address, that grants access to this Identity.
-  /// ## Notes
-  /// [None] is returned if `client`'s sender address doesn't own a valid [ControllerToken].
-  pub async fn get_controller_token(
-    &self,
-    address: Address,
-    client: &impl ProductClient,
-  ) -> Result<Option<ControllerToken>, Error> {
-    self.get_controller_token_for_address(address, client).await
   }
 
   pub(crate) fn multicontroller(&self) -> &Multicontroller<Option<Vec<u8>>> {
@@ -254,53 +241,6 @@ impl OnChainIdentity {
     AccessSubIdentityBuilder::new(self, sub_identity, controller_token)
   }
 
-  /// Returns historical data for this [`OnChainIdentity`].
-  // pub async fn get_history(
-  //   &self,
-  //   client: &IdentityClientReadOnly,
-  //   last_version: Option<&IotaObjectData>,
-  //   page_size: Option<usize>,
-  // ) -> Result<Vec<IotaObjectData>, Error> {
-  //   let identity_ref = client
-  //     .get_object_ref_by_id(self.id())
-  //     .await?
-  //     .ok_or_else(|| Error::InvalidIdentityHistory("no reference to identity loaded".to_string()))?;
-  //   let object_id = identity_ref.object_id();
-
-  //   let mut history: Vec<IotaObjectData> = vec![];
-  //   let mut current_version = if let Some(last_version_value) = last_version {
-  //     // starting version given, this will be skipped in paging
-  //     last_version_value.clone()
-  //   } else {
-  //     // no version given, this version will be included in history
-  //     let version = identity_ref.version();
-  //     let response = client.get_past_object(object_id, version).await.map_err(rebased_err)?;
-  //     let latest_version = if let IotaPastObjectResponse::VersionFound(response_value) = response {
-  //       response_value
-  //     } else {
-  //       return Err(Error::InvalidIdentityHistory(format!(
-  //         "could not find current version {version} of object {object_id}, response {response:?}"
-  //       )));
-  //     };
-  //     history.push(latest_version.clone()); // include current version in history if we start from now
-  //     latest_version
-  //   };
-
-  //   // limit lookup count to prevent locking on large histories
-  //   let page_size = page_size.unwrap_or(HISTORY_DEFAULT_PAGE_SIZE);
-  //   while history.len() < page_size {
-  //     let lookup = get_previous_version(client, current_version).await?;
-  //     if let Some(value) = lookup {
-  //       current_version = value;
-  //       history.push(current_version.clone());
-  //     } else {
-  //       break;
-  //     }
-  //   }
-
-  //   Ok(history)
-  // }
-
   /// Returns an [Operation] to revoke a [DelegationToken].
   pub fn revoke_delegation_token(
     &self,
@@ -330,7 +270,7 @@ impl OnChainIdentity {
 
 /// Returns the [`OnChainIdentity`] having ID `object_id`, if it exists.
 pub async fn get_identity(
-  client: &impl ProductClient,
+  client: &IdentityClient,
   object_id: ObjectId,
 ) -> Result<Option<OnChainIdentity>, IdentityResolutionError> {
   use IdentityResolutionErrorKind::NotFound;
@@ -445,7 +385,7 @@ pub(crate) fn unpack_identity_json_value(
 ) -> Result<IdentityData, IdentityResolutionError> {
   #[derive(Deserialize)]
   struct TempOnChainIdentity {
-    id: UID,
+    id: ObjectId,
     did_doc: Multicontroller<Option<Vec<u8>>>,
     legacy_id: Option<ObjectId>,
     created: Number<u64>,
@@ -610,7 +550,7 @@ impl Operation for CreateIdentity {
       threshold,
       controllers,
     } = &self.builder;
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
     let did_doc = StateMetadataDocument::from(did_doc.clone())
       .pack(StateMetadataEncoding::default())
       .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
@@ -650,6 +590,7 @@ impl Operation for CreateIdentity {
       return Err(tx_effects.as_v1().status.clone().unwrap_err().0.into());
     }
 
+    let target_threshold = self.builder.threshold.unwrap_or(1);
     let target_did_bytes = StateMetadataDocument::from(self.builder.did_doc)
       .pack(StateMetadataEncoding::Json)
       .map_err(|e| Error::DidDocSerialization(e.to_string()))?;
@@ -660,7 +601,7 @@ impl Operation for CreateIdentity {
         .controlled_value()
         .as_deref()
         .unwrap_or_default();
-      target_did_bytes == did_bytes && identity.threshold() == 1
+      target_did_bytes == did_bytes && identity.threshold() == target_threshold
     };
 
     let create_identity_candidates = tx_effects

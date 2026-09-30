@@ -25,6 +25,7 @@ use iota_sdk::graphql_client::Client as IotaClient;
 use iota_sdk::graphql_client::Direction;
 use iota_sdk::transaction_builder::TransactionBuilder;
 use iota_sdk::types::ObjectId;
+use iota_sdk::types::ObjectReference;
 use iota_sdk::types::TransactionEffects;
 use iota_sdk::types::TypeTag;
 use itertools::Itertools;
@@ -237,7 +238,14 @@ where
         .as_v1()
         .changed_objects
         .iter()
-        .find(|obj_ref| obj_ref.output_state.object_owner().as_opt_object() != Some(&proposals_bag_id))
+        .find(|obj| {
+          obj.id_operation.is_created()
+            && obj
+              .output_state
+              .opt_object_owner()
+              .and_then(|owner| owner.as_opt_object().copied())
+              != Some(proposals_bag_id)
+        })
         .expect("tx was successful")
         .object_id;
 
@@ -402,14 +410,14 @@ struct ProposalEvent {
   executed: bool,
 }
 
-pub(self) async fn object_type_for_ids(
+async fn object_ref_and_type_for_ids(
   client: &IdentityClient,
   ids: impl IntoIterator<Item = ObjectId>,
-) -> Result<Vec<(ObjectId, TypeTag)>, Error> {
+) -> Result<Vec<(ObjectReference, TypeTag)>, Error> {
   let filter = ObjectFilter::default().with_object_ids(ids.into_iter().collect_vec());
   client
     .objects_stream(filter, Direction::Forward)
-    .try_filter_map(|res| async move { Ok(Some((res.id(), res.object_type().into_struct().into()))) })
+    .try_filter_map(|res| async move { Ok(Some((res.object_ref(), res.object_type().into_struct().into()))) })
     .try_collect()
     .await
     .map_err(|e| Error::RpcError(e.to_string()))

@@ -5,7 +5,6 @@ use std::ops::Deref;
 
 use crate::rebased::client::FromIotaClientError;
 use crate::rebased::client::QueryControlledDidsError;
-use crate::rebased::iota::package::identity_package_id;
 use crate::rebased::migration::get_identity;
 use crate::rebased::migration::get_identity_impl;
 use crate::rebased::migration::ControllerToken;
@@ -346,7 +345,7 @@ impl Operation for PublishDidDocument {
     client: &impl ProductClient,
     mut ptb: TransactionBuilder<IotaClient>,
   ) -> Result<TransactionBuilder<IotaClient>, Self::Error> {
-    let package = identity_package_id(client.network()).await?;
+    let package = client.package_id();
 
     let clock = ptb.apply_argument(Shared(ObjectId::CLOCK));
     let serialized_did_doc = StateMetadataDocument::from(self.did_document.clone())

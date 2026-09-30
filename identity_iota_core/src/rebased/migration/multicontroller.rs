@@ -6,7 +6,6 @@ use std::collections::HashSet;
 
 use crate::rebased::iota::types::Bag;
 use crate::rebased::iota::types::Number;
-use iota_sdk::move_types::iota_framework::object::UID;
 use iota_sdk::move_types::iota_framework::vec_map::Entry;
 use iota_sdk::move_types::iota_framework::vec_map::VecMap;
 use iota_sdk::move_types::iota_framework::vec_set::VecSet;
@@ -22,7 +21,7 @@ use serde::Serialize;
   bound(serialize = "T: Serialize + Clone")
 )]
 pub struct Proposal<T> {
-  id: UID,
+  id: ObjectId,
   expiration_epoch: Option<u64>,
   votes: u64,
   voters: HashSet<ObjectId>,
@@ -32,7 +31,7 @@ pub struct Proposal<T> {
 impl<T> Proposal<T> {
   /// Returns this [Proposal]'s ID.
   pub fn id(&self) -> ObjectId {
-    *self.id.object_id()
+    self.id
   }
 
   /// Returns the votes received by this [`Proposal`].
@@ -67,7 +66,7 @@ impl<T> Proposal<T> {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct IotaProposal<T> {
-  id: UID,
+  id: ObjectId,
   expiration_epoch: Option<Number<u64>>,
   votes: Number<u64>,
   voters: VecSet<ObjectId>,
@@ -146,7 +145,7 @@ impl<T> Multicontroller<T> {
   }
 
   pub(crate) fn proposals_bag_id(&self) -> ObjectId {
-    *self.proposals.id.object_id()
+    self.proposals.id
   }
 
   /// Returns the voting power for controller with ID `controller_cap_id`, if any.

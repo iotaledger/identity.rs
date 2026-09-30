@@ -8,6 +8,7 @@ use iota_sdk::transaction_builder::SharedMut;
 use iota_sdk::transaction_builder::TransactionBuilder;
 use iota_sdk::types::Address;
 use iota_sdk::types::ObjectId;
+use iota_sdk::types::ObjectReference;
 use iota_sdk::types::TypeTag;
 use product_core::move_type::MoveType as _;
 
@@ -26,11 +27,10 @@ pub(crate) fn propose_send(
   expiration: Option<u64>,
   package_id: ObjectId,
 ) {
-  let ProposalContext {
-    mut ptb, capability, ..
-  } = send_proposal_impl(ptb, identity, capability, transfer_map, expiration, package_id);
+  let ProposalContext { ptb, capability, .. } =
+    send_proposal_impl(ptb, identity, capability, transfer_map, expiration, package_id);
 
-  capability.put_back(&mut ptb, package_id);
+  capability.put_back(ptb, package_id);
 }
 
 pub(crate) fn execute_send(
@@ -38,7 +38,7 @@ pub(crate) fn execute_send(
   identity: ObjectId,
   capability: &ControllerToken,
   proposal_id: ObjectId,
-  objects: Vec<(ObjectId, TypeTag)>,
+  objects: Vec<(ObjectReference, TypeTag)>,
   package: ObjectId,
   client: &IdentityClient,
 ) {
@@ -46,15 +46,7 @@ pub(crate) fn execute_send(
   let capability = ControllerTokenArg::from_token(capability, ptb, package);
   let proposal_id = ptb.pure(proposal_id);
 
-  execute_send_impl(
-    ptb,
-    identity,
-    capability.arg(),
-    proposal_id,
-    objects,
-    package,
-    client,
-  );
+  execute_send_impl(ptb, identity, capability.arg(), proposal_id, objects, package, client);
 
   capability.put_back(ptb, package);
 }
@@ -65,28 +57,20 @@ pub(crate) fn create_and_execute_send(
   capability: &ControllerToken,
   transfer_map: Vec<(ObjectId, Address)>,
   expiration: Option<u64>,
-  objects: Vec<(ObjectId, TypeTag)>,
+  objects: Vec<(ObjectReference, TypeTag)>,
   package: ObjectId,
   client: &IdentityClient,
 ) {
   let ProposalContext {
-    mut ptb,
+    ptb,
     identity,
     capability,
     proposal_id,
   } = send_proposal_impl(ptb, identity, capability, transfer_map, expiration, package);
 
-  execute_send_impl(
-    &mut ptb,
-    identity,
-    capability.arg(),
-    proposal_id,
-    objects,
-    package,
-    client,
-  );
+  execute_send_impl(ptb, identity, capability.arg(), proposal_id, objects, package, client);
 
-  capability.put_back(&mut ptb, package);
+  capability.put_back(ptb, package);
 }
 
 fn send_proposal_impl<'a>(
@@ -126,7 +110,7 @@ pub(crate) fn execute_send_impl(
   identity: Argument,
   delegation_token: Argument,
   proposal_id: Argument,
-  objects: Vec<(ObjectId, TypeTag)>,
+  objects: Vec<(ObjectReference, TypeTag)>,
   package: ObjectId,
   client: &IdentityClient,
 ) {
@@ -140,6 +124,8 @@ pub(crate) fn execute_send_impl(
   // Send each object in this send action.
   // Traversing the map in reverse reduces the number of operations on the move side.
   for (obj, obj_type) in objects.into_iter().rev() {
+    // Pass a fully resolved object reference: the transaction builder resolves `Receiving<ObjectId>`
+    // inputs as owned objects instead of receiving ones.
     let recv_obj = ptb.apply_argument(Receiving(obj));
 
     ptb

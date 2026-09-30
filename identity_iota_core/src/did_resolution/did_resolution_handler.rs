@@ -1,11 +1,11 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::rebased::client::IdentityClient;
 use crate::Error;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::Result;
-use crate::rebased::client::IdentityClient;
 
 /// An extension trait that provides helper functions for publication
 /// and resolution of DID documents in identities.

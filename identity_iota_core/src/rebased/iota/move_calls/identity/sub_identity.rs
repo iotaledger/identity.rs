@@ -9,6 +9,7 @@ use iota_sdk::transaction_builder::Receiving;
 use iota_sdk::transaction_builder::SharedMut;
 use iota_sdk::transaction_builder::TransactionBuilder;
 use iota_sdk::types::ObjectId;
+use iota_sdk::types::ObjectReference;
 use iota_sdk::types::ProgrammableTransaction;
 use product_core::move_type::MoveType as _;
 
@@ -28,10 +29,9 @@ pub(crate) fn propose_identity_sub_access(
   expiration: Option<u64>,
   package_id: ObjectId,
 ) {
-  let ProposalContext {
-    mut ptb, capability, ..
-  } = identity_sub_access_impl(ptb, identity, sub_identity, identity_token, expiration, package_id);
-  capability.put_back(&mut ptb, package_id);
+  let ProposalContext { ptb, capability, .. } =
+    identity_sub_access_impl(ptb, identity, sub_identity, identity_token, expiration, package_id);
+  capability.put_back(ptb, package_id);
 }
 
 pub(crate) fn execute_sub_identity_access(
@@ -40,6 +40,7 @@ pub(crate) fn execute_sub_identity_access(
   identity_token: &ControllerToken,
   proposal_id: ObjectId,
   sub_identity_token: &ControllerToken,
+  sub_identity_token_ref: ObjectReference,
   inner_pt: ProgrammableTransaction,
   package: ObjectId,
   client: &IdentityClient,
@@ -54,6 +55,7 @@ pub(crate) fn execute_sub_identity_access(
     proposal_id,
     identity_token.arg(),
     sub_identity_token,
+    sub_identity_token_ref,
     inner_pt,
     package,
     client,
@@ -68,6 +70,7 @@ pub(crate) fn propose_and_execute_sub_identity_access(
   sub_identity: ObjectId,
   identity_token: &ControllerToken,
   sub_identity_token: &ControllerToken,
+  sub_identity_token_ref: ObjectReference,
   inner_pt: ProgrammableTransaction,
   expiration: Option<u64>,
   package_id: ObjectId,
@@ -86,6 +89,7 @@ pub(crate) fn propose_and_execute_sub_identity_access(
     proposal_id,
     capability.arg(),
     sub_identity_token,
+    sub_identity_token_ref,
     inner_pt,
     package_id,
     client,
@@ -126,6 +130,7 @@ pub(crate) fn execute_sub_identity_access_impl(
   proposal_id: Argument,
   identity_token: Argument,
   sub_identity_token: &ControllerToken,
+  sub_identity_token_ref: ObjectReference,
   inner_pt: ProgrammableTransaction,
   package: ObjectId,
   client: &IdentityClient,
@@ -138,7 +143,9 @@ pub(crate) fn execute_sub_identity_access_impl(
     .result();
 
   // Borrow the sub_identity_token into this transaction.
-  let receiving_sub_identity_token = ptb.apply_argument(Receiving(sub_identity_token.id()));
+  // Pass a fully resolved object reference: the transaction builder resolves `Receiving<ObjectId>`
+  // inputs as owned objects instead of receiving ones.
+  let receiving_sub_identity_token = ptb.apply_argument(Receiving(sub_identity_token_ref));
   let borrowed_token_to_sub_identity = {
     let fn_name = if sub_identity_token.is_controller_cap() {
       "borrow_controller_cap_to_sub_identity"
@@ -173,6 +180,6 @@ pub(crate) fn execute_sub_identity_access_impl(
 
   // Return the the borrowed controller token.
   ptb
-    .move_call(package, "identity", put_back_fn_name)
+    .move_call(package, "access_sub_entity_proposal", put_back_fn_name)
     .arguments([action, borrowed_token_to_sub_identity]);
 }

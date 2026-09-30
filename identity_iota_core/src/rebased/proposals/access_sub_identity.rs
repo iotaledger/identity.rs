@@ -6,13 +6,13 @@ use std::future::Future;
 use std::marker::PhantomData;
 
 use identity_jose::jwu::decode_b64;
-use iota_sdk::graphql_client::query_types::Event;
 use iota_sdk::graphql_client::query_types::EventFilter;
 use iota_sdk::graphql_client::Client;
 use iota_sdk::graphql_client::PaginationFilter;
 use iota_sdk::transaction_builder::TransactionBuilder;
 use iota_sdk::types::Address;
 use iota_sdk::types::ObjectId;
+use iota_sdk::types::ObjectReference;
 use iota_sdk::types::ProgrammableTransaction;
 use iota_sdk::types::TransactionEffects;
 use iota_sdk::types::TypeTag;
@@ -25,7 +25,7 @@ use serde::Serialize;
 
 use crate::rebased::client::IdentityClient;
 use crate::rebased::iota::move_calls;
-use crate::rebased::iota::package::identity_package_id;
+
 use crate::rebased::migration::ControllerToken;
 use crate::rebased::migration::InvalidControllerTokenForIdentity;
 use crate::rebased::migration::OnChainIdentity;
@@ -96,6 +96,13 @@ impl Operation for EmptyOp {
     _tx_effects: &mut iota_sdk::types::TransactionEffects,
   ) -> Result<Self::Output, Self::Error> {
     Ok(())
+  }
+}
+
+impl<O: Operation> IntoOperation for O {
+  type Op = O;
+  fn into_operation(self) -> Self::Op {
+    self
   }
 }
 
@@ -187,7 +194,7 @@ impl<'i, 'sub, F> AccessSubIdentityBuilder<'i, 'sub, F> {
     // Retrieve from `identity` owned asset any token granting access to `sub_identity`.
     self
       .sub_identity
-      .get_controller_token_for_address(self.identity.id().into(), client)
+      .get_controller_token(self.identity.id().into(), client)
       .await
       .map_err(|e| AccessSubIdentityBuilderErrorKind::RpcError(e.into()))?
       // If no token was found, the two identities are unrelated, AKA `identity` is not a controller of `sub_identity`.
@@ -399,10 +406,7 @@ where
     &self,
     client: &IdentityClient,
   ) -> Result<TransactionBuilder<Client>, AccessSubIdentityErrorKind> {
-    let package_id = identity_package_id(client.network())
-      .await
-      .map_err(|e| AccessSubIdentityErrorKind::RpcError(e.into()))?;
-
+    let package_id = client.package_id();
     let mut ptb = TransactionBuilder::new(Address::ZERO).with_client(client.as_ref().clone());
 
     match &self.tx_kind {
@@ -419,6 +423,7 @@ where
         sub_identity_token,
       } => {
         let sub_pt = sub_op_to_pt(sub_tx, client).await?;
+        let sub_identity_token_ref = object_ref(sub_identity_token.id(), client).await?;
 
         move_calls::identity::sub_identity::propose_and_execute_sub_identity_access(
           &mut ptb,
@@ -426,6 +431,7 @@ where
           self.sub_identity,
           &self.identity_token,
           sub_identity_token,
+          sub_identity_token_ref,
           sub_pt,
           None, // We are gonna execute it right away no need for expiration.
           package_id,
@@ -438,6 +444,7 @@ where
         sub_identity_token,
       } => {
         let sub_pt = sub_op_to_pt(sub_tx, client).await?;
+        let sub_identity_token_ref = object_ref(sub_identity_token.id(), client).await?;
 
         move_calls::identity::sub_identity::execute_sub_identity_access(
           &mut ptb,
@@ -445,6 +452,7 @@ where
           &self.identity_token,
           *proposal_id,
           sub_identity_token,
+          sub_identity_token_ref,
           sub_pt,
           package_id,
           client,
@@ -454,6 +462,18 @@ where
 
     Ok(ptb)
   }
+}
+
+async fn object_ref(
+  object_id: ObjectId,
+  client: &IdentityClient,
+) -> Result<ObjectReference, AccessSubIdentityErrorKind> {
+  client
+    .object(object_id, None)
+    .await
+    .map_err(|e| AccessSubIdentityErrorKind::RpcError(e.into()))?
+    .map(|obj| obj.object_ref())
+    .ok_or_else(|| AccessSubIdentityErrorKind::RpcError(format!("object {object_id} doesn't exist").into()))
 }
 
 async fn sub_op_to_pt<Op: Operation>(
@@ -502,34 +522,6 @@ where
     client: &IdentityClient,
     effects: &mut TransactionEffects,
   ) -> Result<Self::Output, Self::Error> {
-    let make_err = |kind| AccessSubIdentityError {
-      identity: self.identity.id(),
-      sub_identity: self.sub_identity,
-      kind,
-    };
-
-    let events = client
-      .events(
-        EventFilter::default().with_transaction_digest(effects.digest().to_string()),
-        PaginationFilter::default(),
-      )
-      .await
-      .map_err(|e| make_err(AccessSubIdentityErrorKind::RpcError(e.into())))?
-      .data;
-
-    // Extract the event for the proposal we are expecting.
-    let extract_proposal_id = |event: &Event| -> Option<ProposalEvent> {
-      if event.move_type.repr.contains("identity::ProposalEvent") {
-        bcs::from_bytes(&decode_b64(event.bcs.0.as_str()).unwrap())
-          .ok()
-          .filter(|event: &ProposalEvent| {
-            event.identity == self.identity.id() && event.controller == self.identity_token.id()
-          })
-      } else {
-        None
-      }
-    };
-
     if let Some(tx_error) = effects.as_v1().status.error() {
       return Err(AccessSubIdentityError {
         identity: self.identity.id(),
@@ -538,27 +530,43 @@ where
       });
     }
 
-    let maybe_proposal_id = {
-      let maybe_proposal_event = events
-        .iter()
-        .enumerate()
-        .find_map(|(i, event)| extract_proposal_id(event).map(|event| (i, event)));
-
-      if let Some((_, event)) = maybe_proposal_event {
-        Some(event.proposal)
-      } else {
-        None
-      }
-    };
+    let identity_id = self.identity.id();
+    let identity_token_id = self.identity_token.id();
 
     match self.tx_kind {
-      TxKind::Create { .. } => client
-        .move_object_contents(maybe_proposal_id.expect("tx was successful"), None)
+      // Only a pending proposal needs to be recovered from the transaction's events.
+      TxKind::Create { .. } => {
+        async {
+          let events = client
+            .events(
+              EventFilter::default().with_transaction_digest(effects.digest().to_string()),
+              PaginationFilter::default(),
+            )
+            .await
+            .map_err(|e| AccessSubIdentityErrorKind::RpcError(e.into()))?
+            .data;
+
+          // Extract the event for the proposal we are expecting.
+          let proposal_id = events
+            .iter()
+            .filter(|event| event.move_type.repr.contains("identity::ProposalEvent"))
+            .filter_map(|event| bcs::from_bytes::<ProposalEvent>(&decode_b64(event.bcs.0.as_str()).ok()?).ok())
+            .find(|event| event.identity == identity_id && event.controller == identity_token_id)
+            .map(|event| event.proposal)
+            .expect("tx was successful");
+
+          client
+            .move_object_contents(proposal_id, None)
+            .await
+            .map(|value| {
+              ProposedTxResult::Pending(
+                serde_json::from_value(value.expect("proposal exists")).expect("proposal is valid"),
+              )
+            })
+            .map_err(|e| AccessSubIdentityErrorKind::RpcError(e.into()))
+        }
         .await
-        .map(|value| {
-          ProposedTxResult::Pending(serde_json::from_value(value.expect("proposal exists")).expect("proposal is valid"))
-        })
-        .map_err(|e| AccessSubIdentityErrorKind::RpcError(e.into())),
+      }
       TxKind::CreateAndExecute { sub_tx, .. } | TxKind::Execute { sub_tx, .. } => sub_tx
         .apply_effects(client, effects)
         .await

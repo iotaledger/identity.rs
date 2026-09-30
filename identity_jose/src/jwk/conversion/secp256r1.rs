@@ -23,5 +23,5 @@ pub(crate) fn pk_to_jwk(pk: &Secp256r1PublicKey) -> Jwk {
 
 pub(crate) fn jwk_to_keypair(jwk: &Jwk) -> anyhow::Result<Secp256r1PrivateKey> {
   let sk = SecretKey::from_jwk_str(&serde_json::to_string(jwk)?)?;
-  Secp256r1PrivateKey::from_bytes(&sk.to_bytes()).context("failed to create secp256r1 keypair from JWK")
+  Secp256r1PrivateKey::from_bytes(sk.to_bytes()).context("failed to create secp256r1 keypair from JWK")
 }

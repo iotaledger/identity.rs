@@ -4,15 +4,15 @@
 
 use anyhow::anyhow;
 use anyhow::Context;
-use async_trait::async_trait;
-use identity_iota_core::rebased::client::IdentityClientReadOnly;
-use identity_iota_core::rebased::keytool::KeytoolSigner;
+use identity_iota_core::rebased::client::IdentityClient;
 use identity_iota_core::rebased::utils::request_funds;
 use identity_iota_core::rebased::Error;
 use identity_iota_core::IotaDID;
+use identity_jose::jwk::FromJwk;
 use identity_jose::jwk::Jwk;
 use identity_jose::jwk::ToJwk as _;
 use identity_jose::jws::JwsAlgorithm;
+use identity_storage::JwkGenOutput;
 use identity_storage::JwkMemStore;
 use identity_storage::JwkStorage;
 use identity_storage::KeyId;
@@ -23,43 +23,29 @@ use identity_storage::MethodDigest;
 use identity_storage::Storage;
 use identity_storage::StorageSigner;
 use identity_verification::VerificationMethod;
-use iota_interaction::rpc_types::IotaTransactionBlockEffectsAPI;
-use iota_interaction::types::transaction::ProgrammableTransaction;
-use iota_interaction::IotaKeySignature;
-use iota_interaction::IotaTransactionBlockEffectsMutAPI;
-use iota_interaction::OptionalSync;
-use iota_interaction_rust::IotaClientAdapter;
-use iota_sdk::rpc_types::IotaObjectDataOptions;
-use iota_sdk::rpc_types::IotaObjectResponse;
-use iota_sdk::rpc_types::IotaTransactionBlockEffects;
-use iota_sdk::types::base_types::Address;
-use iota_sdk::types::base_types::ObjectId;
+use iota_sdk::graphql_client::faucet::FaucetClient;
+use iota_sdk::graphql_client::Client as IotaClient;
+use iota_sdk::transaction_builder::TransactionBuilder;
 use iota_sdk::types::crypto::PublicKey;
 use iota_sdk::types::crypto::SignatureScheme;
 use iota_sdk::types::object::Owner;
-use iota_sdk::types::programmable_transaction_builder::ProgrammableTransactionBuilder;
-use product_common::core_client::CoreClient;
-use product_common::core_client::CoreClientReadOnly;
-use product_common::network_name::NetworkName;
-
-use iota_interaction::IotaClientTrait;
+use iota_sdk::types::Address;
+use iota_sdk::types::ObjectId;
+use iota_sdk::types::StructTag;
+use iota_sdk::types::TransactionEffects;
 use iota_sdk::types::TypeTag;
-use iota_sdk::types::IOTA_FRAMEWORK_PACKAGE_ID;
-use iota_sdk::IotaClient;
-use iota_sdk::IotaClientBuilder;
-use iota_sdk::IOTA_LOCAL_NETWORK_URL;
-use lazy_static::lazy_static;
-use move_core_types::ident_str;
-use move_core_types::language_storage::StructTag;
-use product_common::transaction::transaction_builder::Transaction;
-use product_common::transaction::transaction_builder::TransactionBuilder;
-use secret_storage::Signer;
+
+use product_core::operation::Operation;
+use product_core::operation::OperationBuilder;
+use product_core::product_client::ProductClient;
+use secret_storage::iota::TransactionSigner;
 use serde::Deserialize;
 use serde_json::Value;
 use std::io::Write;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::Arc;
+use std::sync::LazyLock;
 use tokio::process::Command;
 use tokio::sync::OnceCell;
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
@@ -89,16 +75,14 @@ pub const TEST_DOC: &[u8] = &[
   52, 45, 48, 53, 45, 50, 50, 84, 49, 50, 58, 49, 52, 58, 51, 50, 90, 34, 125, 125,
 ];
 
-lazy_static! {
-  pub static ref TEST_COIN_TYPE: StructTag = "0x2::coin::Coin<bool>".parse().unwrap();
-}
+pub static TEST_COIN_TYPE: LazyLock<StructTag> = LazyLock::new(|| "0x2::coin::Coin<bool>".parse().unwrap());
 
 pub async fn get_funded_test_client() -> anyhow::Result<TestClient> {
   TestClient::new().await
 }
 
 async fn init(iota_client: &IotaClient) -> anyhow::Result<ObjectId> {
-  let network_id = iota_client.read_api().get_chain_identifier().await?;
+  let network_id = iota_client.chain_id().await?;
   let address = get_active_address().await?;
 
   if let Ok(id) = std::env::var("IOTA_IDENTITY_PKG_ID").or(get_cached_id(&network_id).await) {
@@ -162,7 +146,7 @@ async fn publish_package(active_address: Address) -> anyhow::Result<ObjectId> {
 }
 
 pub async fn get_key_data() -> Result<(Storage<JwkMemStore, KeyIdMemstore>, KeyId, Jwk, Vec<u8>), anyhow::Error> {
-  let storage = Storage::<JwkMemStore, KeyIdMemstore>::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let storage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
   let generate = storage
     .key_storage()
     .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
@@ -213,14 +197,35 @@ async fn get_balance(address: Address) -> anyhow::Result<u64> {
 
 #[derive(Clone)]
 pub struct TestClient {
-  client: Arc<IdentityClientReadOnly<KeytoolSigner>>,
+  client: Arc<IdentityClient>,
   storage: Arc<MemStorage>,
+  signer: StorageSigner<'static, JwkMemStore, KeyIdMemstore>,
 }
 
 impl Deref for TestClient {
-  type Target = IdentityClientReadOnly<KeytoolSigner>;
+  type Target = IdentityClient;
   fn deref(&self) -> &Self::Target {
     &self.client
+  }
+}
+
+impl AsRef<IotaClient> for TestClient {
+  fn as_ref(&self) -> &IotaClient {
+    self.client.as_ref()
+  }
+}
+
+impl ProductClient for TestClient {
+  fn package_id(&self) -> ObjectId {
+    self.client.package_id()
+  }
+
+  fn network(&self) -> product_core::network::Network {
+    self.client.network()
+  }
+
+  fn type_origin_table(&self) -> &product_core::type_origin_table::TypeOriginTable {
+    self.client.type_origin_table()
   }
 }
 
@@ -231,25 +236,31 @@ impl TestClient {
   }
 
   pub async fn new_from_address(address: Address) -> anyhow::Result<Self> {
-    let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| IOTA_LOCAL_NETWORK_URL.to_string());
-    let client = IotaClientBuilder::default().build(&api_endpoint).await?;
+    let api_endpoint = std::env::var("API_ENDPOINT").unwrap_or_else(|_| "http://127.0.0.1:9125/graphql".to_string());
+    let client = IotaClient::new(&api_endpoint)?;
     let package_id = PACKAGE_ID.get_or_try_init(|| init(&client)).await.copied()?;
 
     let balance = get_balance(address).await?;
     if balance < TEST_GAS_BUDGET {
-      request_funds(&address).await?;
+      request_funds(address).await?;
     }
 
     let storage = Arc::new(Storage::new(JwkMemStore::new(), KeyIdMemstore::new()));
-    let signer = KeytoolSigner::builder().build()?;
-    let client = IdentityClientReadOnly::from_iota_client(client, package_id)
-      .await?
-      .with_signer(signer)
+    let client = IdentityClient::from_iota_client(client, package_id).await?;
+
+    let JwkGenOutput { key_id, jwk, .. } = storage
+      .key_storage()
+      .generate(KeyType::from_static_str("Ed25519"), JwsAlgorithm::EdDSA)
       .await?;
+    // Safety: transmuting the lifetime to 'static (actually a logical 'self) is safe because the storage is heap
+    // allocated and only accessible through self.
+    let static_signer = unsafe { std::mem::transmute(storage.as_ref()) };
+    let signer = StorageSigner::new(static_signer, key_id, PublicKey::from_jwk(&jwk).unwrap());
 
     Ok(TestClient {
       client: Arc::new(client),
       storage,
+      signer,
     })
   }
 
@@ -263,7 +274,7 @@ impl TestClient {
       .arg("client")
       .arg("switch")
       .arg("--address")
-      .arg(self.client.sender_address().to_string())
+      .arg(self.signer.address().to_string())
       .output()
       .await?;
 
@@ -281,19 +292,15 @@ impl TestClient {
     self.client.package_id()
   }
 
-  pub fn signer(&self) -> &KeytoolSigner {
-    self.client.signer()
+  pub fn signer(&self) -> &StorageSigner<'_, JwkMemStore, KeyIdMemstore> {
+    &self.signer
   }
 
-  pub async fn store_key_id_for_verification_method(
-    &self,
-    identity_client: IdentityClientReadOnly<StorageSigner<'_, JwkMemStore, KeyIdMemstore>>,
-    did: IotaDID,
-  ) -> anyhow::Result<()> {
-    let public_key = identity_client.signer().public_key();
-    let key_id = identity_client.signer().key_id();
+  pub async fn store_key_id_for_verification_method(&self, signer: &MemSigner<'_>, did: IotaDID) -> anyhow::Result<()> {
+    let public_key = signer.public_key().clone();
+    let key_id = signer.key_id();
     let fragment = key_id.as_str();
-    let method = VerificationMethod::new_from_jwk(did, public_key.await?.to_jwk()?, Some(fragment))?;
+    let method = VerificationMethod::new_from_jwk(did, public_key.to_jwk()?, Some(fragment))?;
     let method_digest: MethodDigest = MethodDigest::new(&method)?;
 
     self
@@ -305,67 +312,43 @@ impl TestClient {
     Ok(())
   }
 
-  pub async fn new_user_client(&self) -> anyhow::Result<IdentityClientReadOnly<MemSigner<'_>>> {
+  pub async fn new_signer(&self) -> anyhow::Result<MemSigner<'_>> {
     let generate = self
       .storage
       .key_storage()
       .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
       .await?;
     let public_key_jwk = generate.jwk.to_public().expect("public components should be derivable");
-    let signer = StorageSigner::new(&self.storage, generate.key_id, public_key_jwk);
+    let signer = StorageSigner::new(
+      &self.storage,
+      generate.key_id,
+      PublicKey::from_jwk(&public_key_jwk).unwrap(),
+    );
 
-    #[allow(deprecated)]
-    let user_client = IdentityClientReadOnly::new((*self.client).clone(), signer).await?;
+    FaucetClient::new_localnet()
+      .request_and_wait_for_finalized(signer.address(), &self)
+      .await?;
 
-    request_funds(&user_client.sender_address()).await?;
-
-    Ok(user_client)
+    Ok(signer)
   }
 }
 
-impl CoreClientReadOnly for TestClient {
-  fn package_id(&self) -> ObjectId {
-    self.client.package_id()
-  }
-
-  fn network_name(&self) -> &NetworkName {
-    self.client.network_name()
-  }
-
-  fn client_adapter(&self) -> &IotaClientAdapter {
-    self.client.client_adapter()
-  }
-}
-
-impl CoreClient<KeytoolSigner> for TestClient {
-  fn signer(&self) -> &KeytoolSigner {
-    self.client.signer()
-  }
-
-  fn sender_address(&self) -> Address {
-    self.client.sender_address()
-  }
-
-  fn sender_public_key(&self) -> &PublicKey {
-    self.client.sender_public_key()
-  }
-}
-
-pub async fn get_test_coin<S>(recipient: Address, client: &IdentityClientReadOnly<S>) -> anyhow::Result<ObjectId>
-where
-  S: Signer<IotaKeySignature> + OptionalSync,
-{
-  TransactionBuilder::new(GetTestCoin { recipient })
-    .build_and_execute(client)
+pub async fn get_test_coin(
+  recipient: Address,
+  signer: &impl TransactionSigner,
+  client: &IdentityClient,
+) -> anyhow::Result<ObjectId> {
+  OperationBuilder::new(GetTestCoin { recipient })
+    .execute(signer, client)
     .await
-    .context("failed to get test coins")
+    .map_err(|e| anyhow!(e))
     .map(|tx_output| tx_output.output)
 }
 
 pub async fn make_address(key_type: SignatureScheme) -> anyhow::Result<Address> {
   if !matches!(
     key_type,
-    SignatureScheme::ED25519 | SignatureScheme::Secp256k1 | SignatureScheme::Secp256r1
+    SignatureScheme::Ed25519 | SignatureScheme::Secp256k1 | SignatureScheme::Secp256r1
   ) {
     anyhow::bail!("key type {key_type} is not supported");
   }
@@ -394,7 +377,7 @@ pub async fn make_address(key_type: SignatureScheme) -> anyhow::Result<Address> 
     address_str.parse()?
   };
 
-  request_funds(&new_address).await?;
+  request_funds(new_address).await?;
 
   Ok(new_address)
 }
@@ -403,68 +386,36 @@ struct GetTestCoin {
   recipient: Address,
 }
 
-#[async_trait]
-impl Transaction for GetTestCoin {
+impl Operation for GetTestCoin {
+  type Client = IdentityClient;
   type Output = ObjectId;
-
   type Error = Error;
 
-  async fn build_programmable_transaction<C>(&self, _client: &C) -> Result<ProgrammableTransaction, Self::Error>
-  where
-    C: CoreClientReadOnly + OptionalSync,
-  {
-    let mut ptb = ProgrammableTransactionBuilder::new();
-    let coin = ptb.programmable_move_call(
-      IOTA_FRAMEWORK_PACKAGE_ID,
-      ident_str!("coin").into(),
-      ident_str!("zero").into(),
-      vec![TypeTag::Bool],
-      vec![],
-    );
-    ptb.transfer_args(self.recipient, vec![coin]);
-    Ok(ptb.finish())
+  async fn to_transaction(
+    &self,
+    _client: &IdentityClient,
+    mut tx_builder: TransactionBuilder<IotaClient>,
+  ) -> Result<TransactionBuilder<IotaClient>, Self::Error> {
+    let coin = tx_builder
+      .move_call(ObjectId::FRAMEWORK, "coin", "zero")
+      .type_tags([TypeTag::Bool])
+      .result();
+    tx_builder.transfer_objects(self.recipient, [coin]);
+    Ok(tx_builder)
   }
 
-  async fn apply<C>(self, effects: &mut IotaTransactionBlockEffects, client: &C) -> Result<Self::Output, Self::Error>
-  where
-    C: CoreClientReadOnly + OptionalSync,
-  {
-    let created_objects = effects
+  async fn apply_effects(
+    self,
+    _client: &IdentityClient,
+    effects: &mut TransactionEffects,
+  ) -> Result<Self::Output, Self::Error> {
+    let coin_obj = effects
+      .as_v1()
       .created()
-      .iter()
-      .enumerate()
-      .filter(|(_, obj)| matches!(obj.owner, Owner::AddressOwner(address) if address == self.recipient))
-      .map(|(i, obj_ref)| (i, obj_ref.object_id()));
+      .into_iter()
+      .find(|obj| obj.owner == Owner::Address(self.recipient))
+      .expect("transaction creates a coin object owned by the recipient");
 
-    let is_target_coin =
-      |obj_info: &IotaObjectResponse| obj_info.data.as_ref().unwrap().type_.as_ref().unwrap().is_coin();
-
-    let mut i = None;
-    let mut id = None;
-    for (pos, obj) in created_objects {
-      let coin_info = client
-        .client_adapter()
-        .read_api()
-        .get_object_with_options(obj, IotaObjectDataOptions::new().with_type())
-        .await;
-      match coin_info {
-        Ok(info) if is_target_coin(&info) => {
-          i = Some(pos);
-          id = Some(obj);
-          break;
-        }
-        _ => continue,
-      }
-    }
-
-    if let (Some(i), Some(id)) = (i, id) {
-      effects.created_mut().swap_remove(i);
-      Ok(id)
-    } else {
-      Err(Error::TransactionUnexpectedResponse(format!(
-        "transaction didn't create any coins for address {}",
-        self.recipient
-      )))
-    }
+    Ok(coin_obj.reference.object_id)
   }
 }
